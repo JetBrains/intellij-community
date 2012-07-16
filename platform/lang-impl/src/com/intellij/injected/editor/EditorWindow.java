@@ -790,6 +790,11 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   @Override
+  public void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback) {
+    myDelegate.registerScrollBarRepaintCallback(callback);
+  }
+
+  @Override
   public void setPrefixTextAndAttributes(@Nullable String prefixText, @Nullable TextAttributes attributes) {
     myDelegate.setPrefixTextAndAttributes(prefixText, attributes);
   }

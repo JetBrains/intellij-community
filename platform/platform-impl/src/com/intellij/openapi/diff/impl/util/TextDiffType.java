@@ -124,11 +124,18 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
 
   @Nullable
   public Color getPolygonColor(Editor editor) {
-    return getLegendColor(editor.getColorsScheme());
+    if (isApplied()) {
+      return getLegendColor(editor.getColorsScheme());
+    }
+    else {
+      TextAttributes attributes = getTextAttributes(editor.getColorsScheme());
+      return attributes == null ? null : attributes.getBackgroundColor();
+    }
   }
 
-  public TextAttributes getTextAttributes(Editor editor1) {
-    return getTextAttributes(editor1.getColorsScheme());
+  @Nullable
+  public TextAttributes getTextAttributes(Editor editor) {
+    return getTextAttributes(editor.getColorsScheme());
   }
 
   @Nullable

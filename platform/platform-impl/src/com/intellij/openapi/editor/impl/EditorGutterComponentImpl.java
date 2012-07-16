@@ -66,8 +66,10 @@ import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorGutterComponentImpl");
@@ -185,7 +187,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
 
       UISettings.setupAntialiasing(g);
-      paintLineNumbers(g, clip);
+      paintLineNumbersBackground(g, clip);
       paintAnnotations(g, clip);
 
       Object hint = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
@@ -197,6 +199,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         paintFoldingBackground(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintLineMarkers(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
+        paintLineNumbers(g, clip);
       }
       finally {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
@@ -322,10 +325,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void paintLineNumbers(Graphics g, Rectangle clip) {
     if (isLineNumbersShown()) {
-      paintBackground(g, clip, getLineNumberAreaOffset(), getLineNumberAreaWidth());
       int x = getLineNumberAreaOffset() + getLineNumberAreaWidth() - 2;
       UIUtil.drawVDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height, null, getOutlineColor(false));
       doPaintLineNumbers(g, clip);
+    }
+  }
+
+  private void paintLineNumbersBackground(Graphics g, Rectangle clip) {
+    if (isLineNumbersShown()) {
+      paintBackground(g, clip, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     }
   }
 

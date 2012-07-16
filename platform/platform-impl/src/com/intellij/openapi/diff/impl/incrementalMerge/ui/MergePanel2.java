@@ -440,7 +440,7 @@ public class MergePanel2 implements DiffViewer {
     }
 
     @Nullable
-    public Editor createEditor() {
+    public EditorEx createEditor() {
       Document document = getDocument();
       if (document == null) return null;
       Project project = myData.getProject();

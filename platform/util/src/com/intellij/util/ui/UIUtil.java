@@ -113,6 +113,21 @@ public class UIUtil {
                                 MacUIUtil.getInvertedTextCursor(): Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
+  /**
+   * Draws two horizontal lines, the first at {@code topY}, the second at {@code bottomY}.
+   * The purpose of this method (and the ground of the name) is to draw two lines framing a horizontal filled rectangle.
+   * @param g       Graphics context to draw with.
+   * @param startX  x-start point.
+   * @param endX    x-end point.
+   * @param topY    y-coordinate of the first line.
+   * @param bottomY y-coordinate of the second line.
+   * @param color   color of the lines.
+   */
+  public static void drawFramingLines(@NotNull Graphics2D g, int startX, int endX, int topY, int bottomY, @NotNull Color color) {
+    drawLine(g, startX, topY, endX, topY, null, color);
+    drawLine(g, startX, bottomY, endX, bottomY, null, color);
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
   public enum ComponentStyle {REGULAR, SMALL, MINI}
   public enum FontColor {NORMAL, BRIGHTER}

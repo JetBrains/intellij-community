@@ -75,10 +75,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.Alarm;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
-import com.intellij.util.Producer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashMap;
@@ -526,6 +523,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setPurePaintingMode(boolean enabled) {
     myPurePaintingMode = enabled;
+  }
+
+  @Override
+  public void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback) {
+    myVerticalScrollBar.registerRepaintCallback(callback);
   }
 
   @Override
@@ -4381,6 +4383,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   class MyScrollBar extends JBScrollBar implements IdeGlassPane.TopComponent {
     @NonNls private static final String APPLE_LAF_AQUA_SCROLL_BAR_UI_CLASS = "apple.laf.AquaScrollBarUI";
     private ScrollBarUI myPersistentUI;
+    @Nullable private RepaintCallback myRepaintCallback;
 
     private MyScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
@@ -4400,6 +4403,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     public void setUI(ScrollBarUI ui) {
       if (myPersistentUI == null) myPersistentUI = ui;
       super.setUI(myPersistentUI);
+    }
+
+    @Override
+    public void paint(Graphics g) {
+      super.paint(g);
+      if (myRepaintCallback != null) {
+        myRepaintCallback.call(g);
+      }
     }
 
     /**
@@ -4471,6 +4482,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       JViewport vp = myScrollPane.getViewport();
       Rectangle vr = vp.getViewRect();
       return myEditorComponent.getScrollableBlockIncrement(vr, SwingConstants.VERTICAL, direction);
+    }
+
+    public void registerRepaintCallback(@Nullable RepaintCallback callback) {
+      myRepaintCallback = callback;
     }
   }
 

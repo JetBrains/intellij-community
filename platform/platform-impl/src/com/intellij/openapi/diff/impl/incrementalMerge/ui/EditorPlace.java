@@ -17,19 +17,14 @@ package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.EditingSides;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.splitter.DividerPolygon;
 import com.intellij.openapi.diff.impl.util.DiffDivider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.event.CaretEvent;
-import com.intellij.openapi.editor.event.CaretListener;
-import com.intellij.openapi.editor.event.VisibleAreaEvent;
-import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,26 +36,19 @@ import java.util.ArrayList;
 /**
  * The container for an {@link Editor}, which is added then to {@link com.intellij.openapi.diff.impl.util.ThreePanels}.
  */
-public class EditorPlace extends JComponent implements Disposable {
+public class EditorPlace extends JComponent implements Disposable, EditorEx.RepaintCallback {
   private static final Logger LOG = Logger.getInstance(EditorPlace.class);
 
   @NotNull private final MergePanel2.DiffEditorState myState;
   @NotNull private final MergePanelColumn myColumn;
-  @NotNull private final SideInfo mySideInfo;
+  @NotNull private final MergePanel2 myMergePanel;
   @NotNull private final ArrayList<EditorListener> myListeners = new ArrayList<EditorListener>();
-
-  @Nullable private Editor myEditor;
-
-  private final VisibleAreaListener myVisibleAreaListener = new VisibleAreaListener() {
-    public void visibleAreaChanged(VisibleAreaEvent e) {
-      repaint();
-    }
-  };
+  @Nullable private EditorEx myEditor;
 
   public EditorPlace(@NotNull MergePanel2.DiffEditorState state, @NotNull MergePanelColumn column, @NotNull MergePanel2 mergePanel) {
     myState = state;
     myColumn = column;
-    mySideInfo = SideInfo.convertFromColumn(mergePanel, myColumn);
+    myMergePanel = mergePanel;
 
     setLayout(new BorderLayout());
   }
@@ -68,96 +56,62 @@ public class EditorPlace extends JComponent implements Disposable {
   @Override
   public void paint(Graphics g) {
     super.paint(g);
+    paintThis(g);
+  }
 
+  public void call(Graphics g) {
+    repaintScrollbar();
+  }
+
+  private void repaintScrollbar() {
+    if (myEditor == null || myColumn != MergePanelColumn.BASE) {
+      return; // we draw above the scrollbar only in the central column
+    }
+    Component editorComponent = myEditor.getComponent();
+    JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
+    repaint(editorComponent.getWidth() - scrollBar.getWidth(), 0, scrollBar.getWidth(), scrollBar.getHeight());
+  }
+
+  private void paintThis(Graphics g) {
     if (myEditor != null) {
-      Graphics2D g2 = (Graphics2D)g;
-      drawAbove(true, g2, mySideInfo.createPolygonsForGutter(), mySideInfo.isTakeLeftSideOfPolygonForGutter());
-      drawAbove(false, g2, mySideInfo.createPolygonsForScrollbar(), mySideInfo.isTakeLeftSideOfPolygonForScrollbar());
-    }
-  }
+      ArrayList<DividerPolygon> polygons = DividerPolygon.createVisiblePolygons(myMergePanel.getSecondEditingSide(), FragmentSide.SIDE1,
+                                                                                DiffDivider.MERGE_DIVIDER_POLYGONS_OFFSET);
+      for (DividerPolygon polygon : polygons) {
+        int startY = polygon.getTopLeftY();
+        int endY = polygon.getBottomLeftY();
+        int height = endY - startY;
 
-  private void drawAbove(boolean gutter, Graphics2D g2, ArrayList<DividerPolygon> polygons, boolean takeLeftSideOfPolygon) {
-    for (DividerPolygon polygon : polygons) {
-      int startY = takeLeftSideOfPolygon ? polygon.getTopLeftY() :polygon.getTopRightY();
-      int endY = takeLeftSideOfPolygon ? polygon.getBottomLeftY() : polygon.getBottomRightY();
-      int height = endY - startY;
+        if (height == 0) { // draw at least a one-pixel line (e.g. for insertion or deletion), as it is done in highlighters
+          height = 1;
+        }
 
-      if (height == 0) { // draw at least a one-pixel line (e.g. for insertion or deletion), as it is done in highlighters
-        height = 1;
-      }
-
-      if (gutter) {
-        drawAboveGutter(g2, startY, height, polygon.getColor(), polygon.isApplied());
-      }
-      else {
-        drawAboveScrollBar(g2, startY, height, polygon.getColor(), polygon.isApplied());
+        drawPolygonAboveScrollBar((Graphics2D)g, startY, height, polygon.getColor(), polygon.isApplied());
       }
     }
   }
 
-  private void drawAboveGutter(@NotNull Graphics2D g, int startY, int height, @NotNull Color color, boolean applied) {
-    EditorGutterComponentEx gutter = ((EditorEx)myEditor).getGutterComponentEx();
+  private void drawPolygonAboveScrollBar(@NotNull Graphics2D g, int startY, int height, @NotNull Color color, boolean applied) {
+    // painting only above the central scrollbar, because painting on edge scrollbars is not needed, and there are error stripes
+    if (myColumn != MergePanelColumn.BASE) {
+      return;
+    }
+
     g.setColor(color);
-    if (((EditorEx)myEditor).getVerticalScrollbarOrientation() == EditorEx.VERTICAL_SCROLLBAR_RIGHT) {
-      // scrollbar is at the right => the gutter is at the left (central editor case)
-      int startX = gutter.getX();
-      if (!applied) {
-        if (height > 2) {
-          g.fillRect(startX, startY, gutter.getWidth() + 1, height);
-          drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height, DividerPolygon.FRAMING_LINE_COLOR);
-        }
-        else {
-          drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height, color);
-        }
+    JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
+    int startX = scrollBar.getX();
+    int endX = startX + scrollBar.getWidth() - 1;
+    if (!applied) {
+      if (height > 2) {
+        g.fillRect(startX, startY, scrollBar.getWidth(), height);
+        UIUtil.drawFramingLines(g, startX, endX, startY, startY + height, DividerPolygon.FRAMING_LINE_COLOR);
       }
       else {
-        drawBoldDottedFramingLines(g, startX, gutter.getWidth() + 1, startY, height, color);
+        UIUtil.drawFramingLines(g, startX, endX, startY, startY + height, color);
       }
     }
     else {
-      JComponent editorComponent = myEditor.getComponent();
-      int startX = editorComponent.getX() + editorComponent.getWidth() - gutter.getWidth() - 1;
-      if (!applied) {
-        g.fillRect(startX, startY, gutter.getWidth() + 1, height);
-        drawFramingLines(g, startX, startY, startX + gutter.getWidth(), startY + height, DividerPolygon.FRAMING_LINE_COLOR);
-      }
-      else {
-        int endX = startX + gutter.getWidth() + 1;
-        drawBoldDottedFramingLines(g, startX, endX, startY, height, color);
-      }
+      DiffUtil.drawBoldDottedFramingLines(g, startX, endX, startY, startY + height, color);
     }
-  }
-
-  private static void drawBoldDottedFramingLines(Graphics2D g, int startX, int endX, int startY, int height, Color color) {
-    UIUtil.drawBoldDottedLine(g, startX, endX, startY, null, color, false);
-    UIUtil.drawBoldDottedLine(g, startX, endX, startY + height, null, color, false);
-  }
-
-  private void drawAboveScrollBar(@NotNull Graphics2D g, int startY, int height, @NotNull Color color, boolean applied) {
-    // painting only above the central scrollbar, because painting on edge scrollbars is not needed, and there are error stripes
-    if (myColumn == MergePanelColumn.BASE) {
-      g.setColor(color);
-      JScrollBar scrollBar = ((EditorEx)myEditor).getScrollPane().getVerticalScrollBar();
-      int startX = scrollBar.getX();
-      int endX = startX + scrollBar.getWidth();
-      if (!applied) {
-        if (height > 2) {
-          g.fillRect(startX, startY, scrollBar.getWidth(), height);
-          drawFramingLines(g, startX, startY, endX, startY + height, DividerPolygon.FRAMING_LINE_COLOR);
-        }
-        else {
-          drawFramingLines(g, startX, startY, endX, startY + height, color);
-        }
-      }
-      else {
-        drawBoldDottedFramingLines(g, startX, endX, startY, height, color);
-      }
-    }
-  }
-
-  private static void drawFramingLines(@NotNull Graphics2D g, int startX, int topY, int endX, int bottomY, @NotNull Color color) {
-    UIUtil.drawLine(g, startX, topY, endX, topY, null, color);
-    UIUtil.drawLine(g, startX, bottomY, endX, bottomY, null, color);
   }
 
   public void addNotify() {
@@ -175,13 +129,8 @@ public class EditorPlace extends JComponent implements Disposable {
     myEditor = myState.createEditor();
     if (myEditor == null) return;
     add(myEditor.getComponent(), BorderLayout.CENTER);
-    myEditor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
-    myEditor.getCaretModel().addCaretListener(new CaretListener() {
-      @Override
-      public void caretPositionChanged(CaretEvent e) {
-        repaint();
-      }
-    });
+    myEditor.registerScrollBarRepaintCallback(this);
+
     repaint();
     fireEditorCreated();
   }
@@ -217,7 +166,7 @@ public class EditorPlace extends JComponent implements Disposable {
 
   private void removeEditor() {
     if (myEditor != null) {
-      myEditor.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
+      myEditor.registerScrollBarRepaintCallback(null);
       Editor releasedEditor = myEditor;
       remove(myEditor.getComponent());
       getEditorFactory().releaseEditor(myEditor);
@@ -264,67 +213,4 @@ public class EditorPlace extends JComponent implements Disposable {
   public void dispose() {
     removeEditor();
   }
-
-  /**
-   * Helper structure to encapsulate the legacy-style ({@link EditingSides}, {@link FragmentSide}) information about merge columns.
-   */
-  private static class SideInfo {
-    @NotNull private final EditingSides myEditingSidesForGutter;
-    @NotNull private final FragmentSide myFragmentSideForGutter;
-    private final boolean myTakeLeftSideOfPolygonForGutter;
-    @NotNull private final EditingSides myEditingSidesForScrollbar;
-    @NotNull private final FragmentSide myFragmentSideForScrollbar;
-    private final boolean myTakeLeftSideOfPolygonForScrollbar;
-
-    private SideInfo(@NotNull EditingSides editingSidesForGutter, @NotNull FragmentSide fragmentSideForGutter,
-                     boolean takeLeftSideOfPolygonForGutter,
-                     @NotNull EditingSides editingSidesForScrollbar, @NotNull FragmentSide fragmentSideForScrollbar,
-                     boolean takeLeftSideOfPolygonForScrollbar) {
-      myEditingSidesForGutter = editingSidesForGutter;
-      myFragmentSideForGutter = fragmentSideForGutter;
-      myTakeLeftSideOfPolygonForGutter = takeLeftSideOfPolygonForGutter;
-      myEditingSidesForScrollbar = editingSidesForScrollbar;
-      myFragmentSideForScrollbar = fragmentSideForScrollbar;
-      myTakeLeftSideOfPolygonForScrollbar = takeLeftSideOfPolygonForScrollbar;
-    }
-
-    public SideInfo(EditingSides side, FragmentSide fragmentSide, boolean takeLeftSideOfPolygon) {
-      this(side, fragmentSide, takeLeftSideOfPolygon, side, fragmentSide, takeLeftSideOfPolygon);
-    }
-
-    public ArrayList<DividerPolygon> createPolygonsForGutter() {
-      return DividerPolygon.createVisiblePolygons(myEditingSidesForGutter, myFragmentSideForGutter,
-                                                  DiffDivider.MERGE_DIVIDER_POLYGONS_OFFSET);
-    }
-
-    public ArrayList<DividerPolygon> createPolygonsForScrollbar() {
-      return DividerPolygon.createVisiblePolygons(myEditingSidesForScrollbar, myFragmentSideForScrollbar,
-                                                  DiffDivider.MERGE_DIVIDER_POLYGONS_OFFSET);
-    }
-
-    public boolean isTakeLeftSideOfPolygonForGutter() {
-      return myTakeLeftSideOfPolygonForGutter;
-    }
-
-    public boolean isTakeLeftSideOfPolygonForScrollbar() {
-      return myTakeLeftSideOfPolygonForScrollbar;
-    }
-
-    @NotNull
-    private static SideInfo convertFromColumn(@NotNull MergePanel2 mergePanel, @NotNull MergePanelColumn column) {
-      switch (column) {
-        case LEFT:
-          return new SideInfo(mergePanel.getFirstEditingSide(), FragmentSide.SIDE2, true);
-        case BASE:
-          return new SideInfo(mergePanel.getFirstEditingSide(), FragmentSide.SIDE2, false,
-                              mergePanel.getSecondEditingSide(), FragmentSide.SIDE1, true);
-        case RIGHT:
-          return new SideInfo(mergePanel.getSecondEditingSide(), FragmentSide.SIDE1, false);
-        default:
-          throw new IllegalStateException("Incorrect column value: " + column);
-      }
-    }
-
-  }
-
 }

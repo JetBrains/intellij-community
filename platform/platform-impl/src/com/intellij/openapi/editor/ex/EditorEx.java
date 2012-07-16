@@ -237,4 +237,19 @@ public interface EditorEx extends Editor {
    * @param enabled  'pure painting mode' status to use
    */
   void setPurePaintingMode(boolean enabled);
+
+  /**
+   * Allows to register a callback that will be called one each repaint of the editor vertical scrollbar.
+   * This is needed to allow a parent component draw above the scrollbar components (e.g. in the merge tool),
+   * otherwise the drawings are cleared once the scrollbar gets repainted (which may happen suddenly, because the scrollbar UI uses the
+   * {@link com.intellij.util.ui.Animator} to draw itself.
+   * @param callback  callback which will be called from the {@link javax.swing.JComponent#paint(java.awt.Graphics)} method of
+   *                  the editor vertical scrollbar.
+   */
+  void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback);
+
+  interface RepaintCallback {
+    void call(Graphics g);
+  }
+
 }

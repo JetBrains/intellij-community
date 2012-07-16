@@ -21,7 +21,6 @@ import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
@@ -65,7 +64,9 @@ public class DividerPolygon {
     else {
       g.setColor(myColor);
       UIUtil.drawLine(g, 0, myStart1 + 1, width, myStart2 + 1);
+      UIUtil.drawLine(g, 0, myStart1 + 2, width, myStart2 + 2);
       UIUtil.drawLine(g, 0, myEnd1 + 1, width, myEnd2 + 1);
+      UIUtil.drawLine(g, 0, myEnd1, width, myEnd2);
     }
   }
 
@@ -157,7 +158,7 @@ public class DividerPolygon {
     int end2 = rightTransform.transform(base2.getEnd());
     return new DividerPolygon(start1 - diffDividerPolygonsOffset, start2 - diffDividerPolygonsOffset,
                               end1 - diffDividerPolygonsOffset, end2 - diffDividerPolygonsOffset,
-                              applied ? color : ColorUtil.toAlpha(color, TRANSPARENCY), applied);
+                              color, applied);
   }
 
   static Interval getVisibleInterval(Editor editor) {
