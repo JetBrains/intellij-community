@@ -24,6 +24,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
+import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -103,6 +104,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private                              TooltipProvider myTooltipProvider = null;
   private final FileEditorManager    myFileEditorManager;
   private final DocumentationManager myDocumentationManager;
+  private final IdeTooltipManager    myTooltipManager;
+  @Nullable private Point myPrevMouseLocation;
 
   private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
@@ -166,6 +169,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         return;
       }
       MouseEvent mouseEvent = e.getMouseEvent();
+      
+      if (isMouseOverTooltip(mouseEvent.getLocationOnScreen()) || isMouseMovedTowardTooltip(mouseEvent.getLocationOnScreen())) {
+        myPrevMouseLocation = mouseEvent.getLocationOnScreen();
+        return;
+      }
+      myPrevMouseLocation = mouseEvent.getLocationOnScreen();
 
       Editor editor = e.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
@@ -206,7 +215,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager,
                           FileEditorManager fileEditorManager, @NotNull DocumentationManager documentationManager,
-                          @NotNull final EditorFactory editorFactory)
+                          @NotNull final EditorFactory editorFactory, @NotNull IdeTooltipManager tooltipManager)
   {
     super(project);
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
@@ -225,6 +234,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     ourReferenceAttributes = colorsManager.getGlobalScheme().getAttributes(CTRL_CLICKABLE_ATTRIBUTES_KEY);
     myFileEditorManager = fileEditorManager;
     myDocumentationManager = documentationManager;
+    myTooltipManager = tooltipManager;
   }
 
   @NotNull
@@ -232,6 +242,72 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     return "CtrlMouseHandler";
   }
 
+  private boolean isMouseOverTooltip(@NotNull Point mouseLocationOnScreen) {
+    Rectangle bounds = getHintBounds(myTooltipManager.getCurrentTooltip());
+    return bounds != null && bounds.contains(mouseLocationOnScreen);
+  }
+
+  private boolean isMouseMovedTowardTooltip(@NotNull Point mouseLocationOnScreen) {
+    Rectangle bounds = getHintBounds(myTooltipManager.getCurrentTooltip());
+    if (bounds == null) {
+      return false;
+    }
+
+    Point prevLocation = myPrevMouseLocation;
+    if (prevLocation == null) {
+      myPrevMouseLocation = mouseLocationOnScreen;
+      return true;
+    }
+    else if (prevLocation.equals(mouseLocationOnScreen)) {
+      return true;
+    }
+
+    int dx = prevLocation.x - mouseLocationOnScreen.x;
+    if (dx == 0) {
+      return mouseLocationOnScreen.x > bounds.x && mouseLocationOnScreen.x < bounds.x + bounds.width;
+    }
+    
+    // Check if the mouse goes out of the control.
+    if (mouseLocationOnScreen.x < prevLocation.x && bounds.x > prevLocation.x) return false;
+    if (mouseLocationOnScreen.y < prevLocation.y && bounds.y > prevLocation.y) return false;
+    
+    // Calculate line equation parameters - y = a * x + b
+    float dy = prevLocation.y - mouseLocationOnScreen.y;
+    float a = dy / dx;
+    float b = mouseLocationOnScreen.y - a * mouseLocationOnScreen.x;
+
+    // Check if crossing point with any tooltip border line is within bounds. Don't bother with floating point inaccuracy here.
+    
+    // Left border.
+    float crossY = a * bounds.x + b;
+    if (crossY >= bounds.y && crossY < bounds.y + bounds.height) return true;
+    
+    // Right border.
+    crossY = a * (bounds.x + bounds.width) + b;
+    if (crossY >= bounds.y && crossY < bounds.y + bounds.height) return true;
+    
+    // Top border.
+    float crossX = (bounds.y - b) / a;
+    if (crossX >= bounds.x && crossX < bounds.x + bounds.width) return true;
+    
+    // Bottom border
+    crossX = (bounds.y + bounds.height - b) / a;
+    return crossX >= bounds.x && crossX < bounds.x + bounds.width;
+  }
+
+  @Nullable
+  private static Rectangle getHintBounds(@Nullable IdeTooltip tooltip) {
+    if (tooltip == null) {
+      return null;
+    }
+    JComponent component = tooltip.getTipComponent();
+    if (component == null || !component.isVisible()) {
+      return null;
+    }
+
+    return new Rectangle(component.getLocationOnScreen(), component.getBounds().getSize());
+  }
+  
   private static BrowseMode getBrowseMode(@JdkConstants.InputEventMask int modifiers) {
     if (modifiers != 0) {
       final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
@@ -634,8 +710,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null
                                    ? null
-                                   : new QuickDocHyperlinkListener(myProject, myDocumentationManager, docInfo.docProvider,
-                                                                   info.myElementAtPointer);
+                                   : new QuickDocHyperlinkListener(docInfo.docProvider, info.myElementAtPointer);
       final Ref<QuickDocInfoPane> quickDocPaneRef = new Ref<QuickDocInfoPane>();
       MouseListener mouseListener = new MouseAdapter() {
         @Override
@@ -812,20 +887,12 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   }
 
-  private static class QuickDocHyperlinkListener implements HyperlinkListener {
+  private class QuickDocHyperlinkListener implements HyperlinkListener {
 
-    @NotNull private final Project               myProject;
-    @NotNull private final DocumentationManager  myDocumentationManager;
     @NotNull private final DocumentationProvider myProvider;
     @NotNull private final PsiElement            myContext;
 
-    QuickDocHyperlinkListener(@NotNull Project project,
-                              @NotNull DocumentationManager manager,
-                              @NotNull DocumentationProvider provider,
-                              @NotNull PsiElement context)
-    {
-      myProject = project;
-      myDocumentationManager = manager;
+    QuickDocHyperlinkListener(@NotNull DocumentationProvider provider, @NotNull PsiElement context) {
       myProvider = provider;
       myContext = context;
     }
@@ -845,7 +912,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       final PsiElement targetElement = myProvider.getDocumentationElementForLink(PsiManager.getInstance(myProject), elementName, myContext);
       if (targetElement != null) {
-        ApplicationManager.getApplication().getComponent(IdeTooltipManager.class).hideCurrentNow(false);
+        myTooltipManager.hideCurrentNow(false);
         myDocumentationManager.showJavaDocInfo(targetElement, myContext, true, null);
       }
     }

@@ -85,7 +85,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private Runnable   myShowRequest;
   private IdeTooltip myQueuedTooltip;
 
-
   public IdeTooltipManager(JBPopupFactory popupFactory) {
     myPopupFactory = popupFactory;
   }
