@@ -48,6 +48,8 @@ public class Splash extends JDialog implements StartupProgress {
   private float myProgress;
   private boolean mySplashIsVisible;
   private int myProgressLastPosition = 0;
+  private final JLabel myLabel;
+
 
   public Splash(String imageName, final Color textColor) {
     setUndecorated(true);
@@ -57,7 +59,7 @@ public class Splash extends JDialog implements StartupProgress {
 
     Icon originalImage = IconLoader.getIcon(imageName);
     myImage = new SplashImage(originalImage, textColor);
-    JLabel label = new JLabel(myImage) {
+    myLabel = new JLabel(myImage) {
       @Override
       protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -68,7 +70,7 @@ public class Splash extends JDialog implements StartupProgress {
     };
     Container contentPane = getContentPane();
     contentPane.setLayout(new BorderLayout());
-    contentPane.add(label, BorderLayout.CENTER);
+    contentPane.add(myLabel, BorderLayout.CENTER);
     Dimension size = getPreferredSize();
     setSize(size);
     pack();
@@ -100,7 +102,7 @@ public class Splash extends JDialog implements StartupProgress {
     if (getProgressColor() == null) return;
     //myMessage = message;
     myProgress = progress;
-    paintProgress(getGraphics());
+    myLabel.paintImmediately(0, 0, myImage.getIconWidth(), myImage.getIconHeight());
   }
 
   private void paintProgress(Graphics g) {
@@ -113,11 +115,14 @@ public class Splash extends JDialog implements StartupProgress {
     }
 
     final int progressWidth = (int)((myImage.getIconWidth() - 2) * myProgress);
-    if (progressWidth > myProgressLastPosition + 1) {
-      g.setColor(color);
-      g.fillRect(myProgressLastPosition + 1, getProgressY(), (progressWidth - myProgressLastPosition), getProgressHeight());
-      myProgressLastPosition = progressWidth;
-    }
+    //if (progressWidth > myProgressLastPosition + 1) {
+    //g.setColor(ColorUtil.withAlpha(color, 0.6));
+    final int width = progressWidth - myProgressLastPosition;
+    //g.fillOval(width - 10, getProgressY() - 2, 12, getProgressHeight() + 4);
+    g.setColor(color);
+    g.fillRect(myProgressLastPosition + 1, getProgressY(), width, getProgressHeight());
+    myProgressLastPosition = progressWidth;
+    //}
   }
 
   private int getProgressHeight() {
