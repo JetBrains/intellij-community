@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
@@ -29,8 +30,11 @@ import org.jetbrains.annotations.NotNull;
  * A type of item with a distinct highlighting in an editor or in other views.
  */
 public final class TextAttributesKey implements Comparable<TextAttributesKey>, JDOMExternalizable {
-  public String myExternalName;
+  private static final TextAttributes NULL_ATTRIBUTES = new TextAttributes();
   private static final ConcurrentHashMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<String, TextAttributesKey>();
+
+  public String myExternalName;
+  public TextAttributes myDefaultAttributes = NULL_ATTRIBUTES;
 
   private TextAttributesKey(String externalName) {
     myExternalName = externalName;
@@ -90,4 +94,42 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
   public int hashCode() {
     return myExternalName.hashCode();
   }
+
+  /**
+   * Returns the default text attributes associated with the key.
+   *
+   * @return the text attributes.
+   */
+  public TextAttributes getDefaultAttributes() {
+    if (myDefaultAttributes == NULL_ATTRIBUTES) {
+      // E.g. if one text key reuse default attributes of some other predefined key
+      myDefaultAttributes = null;
+      if (myDefaultsProvider != null)
+        myDefaultAttributes = myDefaultsProvider.getDefaultAttributes(this);
+    }
+    return myDefaultAttributes;
+  }
+
+  /**
+   * Registers a text attribute key with the specified identifier and default attributes.
+   *
+   * @param externalName      the unique identifier of the key.
+   * @param defaultAttributes the default text attributes associated with the key.
+   * @return the new key instance, or an existing instance if the key with the same
+   *         identifier was already registered.
+   */
+  @NotNull
+  public static TextAttributesKey createTextAttributesKey(@NonNls @NotNull String externalName, TextAttributes defaultAttributes) {
+    TextAttributesKey key = find(externalName);
+    if (key.myDefaultAttributes == null || key.myDefaultAttributes == NULL_ATTRIBUTES) {
+      key.myDefaultAttributes = defaultAttributes;
+    }
+    return key;
+  }
+
+  public interface TextAttributeKeyDefaultsProvider {
+    TextAttributes getDefaultAttributes(TextAttributesKey key);
+  }
+
+  public static TextAttributeKeyDefaultsProvider myDefaultsProvider;
 }
