@@ -46,6 +46,7 @@ import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.index.XmlNamespaceIndex;
 import com.intellij.xml.util.XmlNSDescriptorSequence;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.TObjectIntHashMap;
@@ -53,6 +54,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -128,6 +130,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     return myRootTag;
   }
 
+  @SuppressWarnings("ConstantConditions")
   public XmlNSDescriptor getRootTagNSDescriptor() {
     XmlTag rootTag = getRootTag();
     return rootTag != null ? rootTag.getNSDescriptor(rootTag.getNamespace(), false) : null;
@@ -291,7 +294,12 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     LOG.debug("DTD url for doctype " + doctype.getText() + " in file " + filePath + " is " + dtdUri);
     
     if (dtdUri != null && dtdUri.length() > 0){
-      final XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
+      XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
+      if (xmlFile == null && dtdUri.endsWith(".dtd")) {
+        // try to auto-detect it
+        String name = new File(dtdUri).getName();
+        xmlFile = XmlNamespaceIndex.guessDtd(name, containingFile);
+      }
       final String schemaFilePath = getFilePathForLogging(xmlFile);
       
       LOG.debug("Schema file for " + filePath + " is " + schemaFilePath);

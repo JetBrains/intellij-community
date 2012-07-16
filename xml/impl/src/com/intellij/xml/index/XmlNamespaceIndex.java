@@ -158,10 +158,18 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   public static XmlFile guessSchema(String namespace,
                                     @Nullable final String tagName,
                                     @Nullable final String version,
-                                    PsiFile file) {
+                                    @NotNull PsiFile file) {
 
     IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
       guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file));
     return resource == null ? null : (XmlFile)file.getManager().findFile(resource.getFile());
+  }
+
+  @Nullable
+  public static XmlFile guessDtd(String dtdFileName, @NotNull PsiFile baseFile) {
+
+    List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
+      list = getResourcesByNamespace(dtdFileName, baseFile.getProject(), ModuleUtilCore.findModuleForPsiElement(baseFile));
+    return list.isEmpty() ? null : (XmlFile)baseFile.getManager().findFile(list.get(0).getFile());
   }
 }
