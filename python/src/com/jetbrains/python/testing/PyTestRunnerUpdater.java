@@ -122,7 +122,7 @@ public class PyTestRunnerUpdater implements StartupActivity {
               //check if installed in sdk
               for (Module module : ModuleManager.getInstance(project).getModules()) {
                 final Sdk sdk = PythonSdkType.findPythonSdk(module);
-                if (sdk != null && testRunner.isEmpty()) {
+                if (sdk != null && sdk.getSdkType() instanceof PythonSdkType && testRunner.isEmpty()) {
                   String sdkHome = sdk.getHomePath();
                   if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.NOSETESTSEARCHER))
                     testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
