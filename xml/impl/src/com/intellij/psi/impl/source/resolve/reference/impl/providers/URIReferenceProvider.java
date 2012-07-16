@@ -34,8 +34,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.XmlAttributeDescriptor;
-import com.intellij.xml.impl.dtd.XmlAttributeDescriptorImpl;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -144,13 +142,6 @@ public class URIReferenceProvider extends PsiReferenceProvider {
           )
          )
       ) {
-      if (parent instanceof XmlAttribute) {
-        XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
-        // no namespaces in DTD-based schemas
-        if (descriptor instanceof XmlAttributeDescriptorImpl) {
-          return PsiReference.EMPTY_ARRAY;
-        }
-      }
       if (!s.startsWith(XmlUtil.TAG_DIR_NS_PREFIX)) {
         boolean namespaceSoftRef = parent instanceof XmlAttribute &&
           NAMESPACE_ATTR_NAME.equals(((XmlAttribute)parent).getName()) &&
