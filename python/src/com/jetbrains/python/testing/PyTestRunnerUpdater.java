@@ -8,7 +8,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -22,6 +21,7 @@ import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -119,19 +119,24 @@ public class PyTestRunnerUpdater implements StartupActivity {
               }
             }
             if (testRunner.isEmpty()) {
-              testRunner = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
               //check if installed in sdk
-              final Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-              if (sdk != null) {
-                String sdkHome = sdk.getHomePath();
-                if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.NOSETESTSEARCHER))
-                  testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-                else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.PYTESTSEARCHER))
-                  testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-                else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.ATTESTSEARCHER))
-                  testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
+              for (Module module : ModuleManager.getInstance(project).getModules()) {
+                final Sdk sdk = PythonSdkType.findPythonSdk(module);
+                if (sdk != null && testRunner.isEmpty()) {
+                  String sdkHome = sdk.getHomePath();
+                  if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.NOSETESTSEARCHER))
+                    testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
+                  else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.PYTESTSEARCHER))
+                    testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
+                  else if (VFSTestFrameworkListener.isTestFrameworkInstalled(sdkHome, VFSTestFrameworkListener.ATTESTSEARCHER))
+                    testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
+                }
+
               }
             }
+
+            if (testRunner.isEmpty()) testRunner = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME;
+
             TestRunnerService.getInstance(project).setProjectConfiguration(testRunner);
             if (PyDocumentationSettings.getInstance(project).getFormat().isEmpty())
               PyDocumentationSettings.getInstance(project).setFormat(DocStringFormat.PLAIN);
