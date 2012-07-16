@@ -27,7 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,6 +58,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.List;
 
@@ -244,7 +245,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
       }
       if (dataContextElement != null) {
         if (!PlatformUtils.isCidr()) { // TODO: have an API to disable module scopes.
-          Module module = ModuleUtil.findModuleForPsiElement(dataContextElement);
+          Module module = ModuleUtilCore.findModuleForPsiElement(dataContextElement);
           if (module == null) {
             module = LangDataKeys.MODULE.getData(dataContext);
           }
@@ -417,6 +418,26 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   private static class IgnoringComboBox extends JComboBox {
+    private int myDirection = 0;
+
+    @Override
+    public void processKeyEvent(KeyEvent e) {
+      if (e.getID() == KeyEvent.KEY_PRESSED && e.getModifiers() == 0) {
+        if (e.getKeyCode() == KeyEvent.VK_UP) {
+          myDirection = -1;
+        }
+        else if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+          myDirection = 1;
+        }
+      }
+      try {
+        super.processKeyEvent(e);
+      }
+      finally {
+        myDirection = 0;
+      }
+    }
+
     @Override
     public void setSelectedItem(final Object item) {
       if (!(item instanceof ScopeSeparator)) {
@@ -426,9 +447,15 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     @Override
     public void setSelectedIndex(final int anIndex) {
-      final Object item = super.getItemAt(anIndex);
+      Object item = super.getItemAt(anIndex);
       if (!(item instanceof ScopeSeparator)) {
         super.setSelectedIndex(anIndex);
+      }
+      else if (myDirection != 0) {
+        item = super.getItemAt(anIndex + myDirection);
+        if (!(item instanceof ScopeSeparator)) {
+          super.setSelectedIndex(anIndex + myDirection);
+        }
       }
     }
   }
