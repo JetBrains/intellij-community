@@ -220,6 +220,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     final CompletionResultSet result = JavaCompletionSorting.addJavaSorting(parameters, _result);
 
     if (ANNOTATION_ATTRIBUTE_NAME.accepts(position) && !JavaCompletionData.isAfterPrimitiveOrArrayType(position)) {
+      JavaCompletionData.addExpectedTypeMembers(parameters, result, position);
       completeAnnotationAttributeName(result, position, parameters);
       result.stopHere();
       return;

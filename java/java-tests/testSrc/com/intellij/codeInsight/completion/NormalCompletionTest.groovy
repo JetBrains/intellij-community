@@ -993,6 +993,7 @@ public class ListUtils {
 
   public void testSuggestExpectedTypeMembers() throws Throwable { doTest('\n') }
   public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }
+  public void testSuggestExpectedTypeMembersInAnno() throws Throwable { doTest('\n') }
   public void testExpectedTypesDotSelectsItem() throws Throwable { doTest('.') }
 
   public void testExpectedTypeMembersVersusStaticImports() throws Throwable {
