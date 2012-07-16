@@ -20,6 +20,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.endsWith;
+import static com.intellij.openapi.util.text.StringUtil.joinOrNull;
 import static com.intellij.openapi.util.text.StringUtil.startsWith;
 
 /**
@@ -353,6 +354,16 @@ public class PythonStringUtil {
     }
     else {
       return new TextRange(0, element.getTextLength());
+    }
+  }
+
+  @Nullable
+  public static String getText(@Nullable PyExpression ex) {
+    if (ex == null) {
+      return null;
+    }
+    else {
+      return ex.getText();
     }
   }
 
