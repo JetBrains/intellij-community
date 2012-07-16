@@ -47,6 +47,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.jetbrains.android.actions.CreateResourceFileAction;
 import org.jetbrains.android.actions.CreateXmlResourceDialog;
+import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.resourceManagers.ResourceManager;
@@ -80,6 +81,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   private static final String TYPE_KEY = "ResourceType";
 
   private static final String TEXT = "Text";
+  private static final String TABS = "Tabs";
   private static final String IMAGE = "Image";
   private static final String NONE = "None";
 
@@ -366,7 +368,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
         myResultResourceName = prefix + element.getName();
       }
 
-      //panel.showPreview(element, isProjectPanel); // XXX
+      panel.showPreview(element, isProjectPanel);
     }
   }
 
@@ -382,10 +384,12 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
     private final JPanel myPreviewPanel;
     private final JTextArea myTextArea;
+    private final JBTabbedPane myTabbedPane;
     private final JLabel myImageComponent;
     private final JLabel myNoPreviewComponent;
 
     private final ResourceGroup[] myGroups;
+    private final ResourceManager myManager;
 
     public ResourcePanel(AndroidFacet facet, ResourceType[] types, boolean system) {
       myTree = new Tree();
@@ -407,11 +411,11 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       ToolTipManager.sharedInstance().registerComponent(myTree);
       TreeUtil.installActions(myTree);
 
-      ResourceManager manager = facet.getResourceManager(system ? AndroidUtils.SYSTEM_RESOURCE_PACKAGE : null);
+      myManager = facet.getResourceManager(system ? AndroidUtils.SYSTEM_RESOURCE_PACKAGE : null);
       myGroups = new ResourceGroup[types.length];
 
       for (int i = 0; i < types.length; i++) {
-        myGroups[i] = new ResourceGroup(types[i], manager);
+        myGroups[i] = new ResourceGroup(types[i], myManager);
       }
 
       myTreeBuilder =
@@ -447,10 +451,12 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       myComponent.add(ScrollPaneFactory.createScrollPane(myTree), BorderLayout.CENTER);
 
       myPreviewPanel = new JPanel(new CardLayout());
-      //myComponent.add(myPreviewPanel, BorderLayout.SOUTH); // XXX
+      myComponent.add(myPreviewPanel, BorderLayout.SOUTH);
 
       myTextArea = new JTextArea(5, 20);
       myPreviewPanel.add(ScrollPaneFactory.createScrollPane(myTextArea), TEXT);
+
+      myPreviewPanel.add(myTabbedPane = new JBTabbedPane(JTabbedPane.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT), TABS);
 
       myImageComponent = new JLabel();
       myImageComponent.setHorizontalAlignment(SwingConstants.CENTER);
@@ -474,7 +480,50 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       try {
         VirtualFile file = element.getFile();
         if (file == null) {
-          myTextArea.setText(null); // XXX
+          String value = element.getPreviewString();
+          if (value == null) {
+            String[] values = element.getPreviewStrings();
+
+            if (values == null) {
+              long time = System.currentTimeMillis();
+              List<ResourceElement> resources = myManager.findValueResources(element.getGroup().getType().getName(), element.toString());
+              System.out.println("Time: " + (System.currentTimeMillis() - time));
+
+              int size = resources.size();
+              if (size == 1) {
+                value = resources.get(0).getRawText();
+                element.setPreviewString(value);
+              }
+              else if (size > 1) {
+                values = new String[size];
+                String[] tabNames = new String[size];
+                for (int i = 0; i < size; i++) {
+                  ResourceElement resource = resources.get(i);
+                  values[i] = resource.getRawText();
+
+                  String tabName = resource.getXmlTag().getContainingFile().getParent().getName();
+                  tabNames[i] = tabName.substring(tabName.indexOf('-') + 1);
+                }
+                element.setPreviewStrings(values, tabNames);
+              }
+            }
+
+            if (values != null) {
+              myTabbedPane.removeAll();
+
+              String[] tabNames = element.getTabNames();
+              for (int i = 0; i < tabNames.length; i++) {
+                JTextArea textArea = new JTextArea(5, 20);
+                textArea.setText(values[i]);
+                textArea.setEditable(isProjectPanel);
+                myTabbedPane.addTab(tabNames[i], ScrollPaneFactory.createScrollPane(textArea));
+              }
+
+              layout.show(myPreviewPanel, TABS);
+              return;
+            }
+          }
+          myTextArea.setText(value);
           myTextArea.setEditable(isProjectPanel);
           layout.show(myPreviewPanel, TEXT);
         }
@@ -588,6 +637,8 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     private final VirtualFile myFile;
     private final Icon myIcon;
     private String myPreviewString;
+    private String[] myPreviewStrings;
+    private String[] myNames;
     private Icon myPreviewIcon;
 
     public ResourceItem(@NotNull ResourceGroup group, @NotNull String name, @Nullable VirtualFile file, Icon icon) {
@@ -619,6 +670,19 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
     public void setPreviewString(String previewString) {
       myPreviewString = previewString;
+    }
+
+    public String[] getPreviewStrings() {
+      return myPreviewStrings;
+    }
+
+    public String[] getTabNames() {
+      return myNames;
+    }
+
+    public void setPreviewStrings(String[] previewStrings, String[] names) {
+      myPreviewStrings = previewStrings;
+      myNames = names;
     }
 
     public Icon getPreviewIcon() {
