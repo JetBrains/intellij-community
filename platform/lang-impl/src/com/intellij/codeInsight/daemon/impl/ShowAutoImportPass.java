@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -102,7 +103,8 @@ public class ShowAutoImportPass extends TextEditorHighlightingPass {
         if (!info.hasHint() || info.getSeverity() != HighlightSeverity.ERROR) {
           return true;
         }
-        if (TextRange.create(info.getActualStartOffset(), info.getActualEndOffset()).containsOffset(caretOffset)) return true;
+        PsiReference reference = myFile.findReferenceAt(info.getActualStartOffset());
+        if (reference != null && reference.getElement().getTextRange().containsOffset(caretOffset)) return true;
         infos.add(info);
         return true;
       }

@@ -75,13 +75,19 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
       @Override
       @NotNull
       public Map<String, XsdNamespaceBuilder> map(final FileContent inputData) {
-        final XsdNamespaceBuilder
+        final XsdNamespaceBuilder builder;
+        if ("dtd".equals(inputData.getFile().getExtension())) {
+          builder = new XsdNamespaceBuilder(inputData.getFileName(), "", Collections.<String>emptyList());
+        }
+        else {
           builder = XsdNamespaceBuilder.computeNamespace(CharArrayUtil.readerFromCharSequence(inputData.getContentAsText()));
+        }
         final HashMap<String, XsdNamespaceBuilder> map = new HashMap<String, XsdNamespaceBuilder>(2);
         String namespace = builder.getNamespace();
         if (namespace != null) {
           map.put(namespace, builder);
         }
+        // so that we could get ns by file url (see getNamespace method above)
         map.put(inputData.getFile().getUrl(), builder);
         return map;
       }

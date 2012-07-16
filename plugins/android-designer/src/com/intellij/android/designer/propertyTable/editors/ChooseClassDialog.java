@@ -97,7 +97,10 @@ public class ChooseClassDialog extends DialogWrapper implements ListSelectionLis
   }
 
   @Nullable
-  public static PsiClass findClass(Module module, String name) {
+  public static PsiClass findClass(Module module, @Nullable String name) {
+    if (name == null) {
+      return null;
+    }
     Project project = module.getProject();
     return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
   }

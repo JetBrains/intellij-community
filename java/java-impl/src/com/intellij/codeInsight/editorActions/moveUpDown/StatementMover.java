@@ -105,12 +105,43 @@ class StatementMover extends LineMover {
     return true;
   }
 
-  private boolean calcInsertOffset(PsiFile file, final Editor editor, LineRange range, @NotNull final MoveInfo info, final boolean down) {
-    int line = down ? range.endLine+1 : range.startLine - 1;
+  private int getDestLineForAnon(PsiFile file, Editor editor, LineRange range, MoveInfo info, boolean down) {
+    int destLine = down ? range.endLine+1 : range.startLine - 1;
+    if (!(range.firstElement instanceof PsiStatement)) {
+      return destLine;
+    }
+    PsiElement sibling =
+      StatementUpDownMover.firstNonWhiteElement(down ? range.firstElement.getNextSibling() : range.firstElement.getPrevSibling(), down);
+    PsiElement toMove = sibling;
+    if (!(sibling instanceof PsiStatement)) {
+      return destLine;
+    }
+    if (sibling instanceof PsiDeclarationStatement) {
+      PsiElement[] elements = ((PsiDeclarationStatement)sibling).getDeclaredElements();
+      if (elements.length == 0) return destLine;
+      sibling = down ? elements[elements.length - 1] : elements[0];
+    }
+    if (sibling instanceof PsiVariable) {
+      sibling = ((PsiVariable)sibling).getInitializer();
+    }
+    if (sibling instanceof PsiExpressionStatement) {
+      sibling = ((PsiExpressionStatement)sibling).getExpression();
+    }
+    if (sibling instanceof PsiNewExpression) {
+      sibling = ((PsiNewExpression)sibling).getAnonymousClass();
+    }
+    if (!(sibling instanceof PsiClass)) return destLine;
+    destLine = editor.getDocument().getLineNumber(down ? toMove.getTextRange().getEndOffset() : toMove.getTextRange().getStartOffset());
+
+    return destLine;
+  }
+  private boolean calcInsertOffset(@NotNull PsiFile file, @NotNull Editor editor, @NotNull LineRange range, @NotNull final MoveInfo info, final boolean down) {
+    int destLine = getDestLineForAnon(file, editor, range, info, down);
+
     int startLine = down ? range.endLine : range.startLine - 1;
-    if (line < 0 || startLine < 0) return false;
+    if (destLine < 0 || startLine < 0) return false;
     while (true) {
-      final int offset = editor.logicalPositionToOffset(new LogicalPosition(line, 0));
+      final int offset = editor.logicalPositionToOffset(new LogicalPosition(destLine, 0));
       PsiElement element = firstNonWhiteElement(offset, file, true);
 
       while (element != null && !(element instanceof PsiFile)) {
@@ -133,7 +164,7 @@ class StatementMover extends LineMover {
           if (found) {
             statementToSurroundWithCodeBlock = elementToSurround;
             info.toMove = range;
-            int endLine = line;
+            int endLine = destLine;
             if (startLine > endLine) {
               int tmp = endLine;
               endLine = startLine;
@@ -146,8 +177,8 @@ class StatementMover extends LineMover {
         }
         element = element.getParent();
       }
-      line += down ? 1 : -1;
-      if (line == 0 || line >= editor.getDocument().getLineCount()) {
+      destLine += down ? 1 : -1;
+      if (destLine == 0 || destLine >= editor.getDocument().getLineCount()) {
         return false;
       }
     }
