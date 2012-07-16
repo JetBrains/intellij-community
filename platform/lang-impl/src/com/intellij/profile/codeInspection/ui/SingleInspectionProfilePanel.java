@@ -527,9 +527,9 @@ public class SingleInspectionProfilePanel extends JPanel {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)event.getPath().getLastPathComponent();
         final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
         if (parentProfile != null) {
-          parentProfile.getExpandedNodes().collapseNode(node);
+          parentProfile.getExpandedNodes().saveVisibleState(myTree);
         }
-        selected.getExpandedNodes().collapseNode(node);
+        selected.getExpandedNodes().saveVisibleState(myTree);
       }
 
       public void treeExpanded(TreeExpansionEvent event) {
