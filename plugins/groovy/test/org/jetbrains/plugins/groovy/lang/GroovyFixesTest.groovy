@@ -2,14 +2,13 @@
  * Copyright (c) 2000-2005 by JetBrains s.r.o. All Rights Reserved.
  * Use is subject to license terms.
  */
-package org.jetbrains.plugins.groovy.lang;
-
-
+package org.jetbrains.plugins.groovy.lang
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyConstantIfStatementInspection
 import org.jetbrains.plugins.groovy.codeInspection.gpath.GroovySetterCallCanBePropertyAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUnresolvedAccessInspection
-
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 /**
  * @author peter
  */
@@ -79,6 +78,22 @@ if (true) {
   }
 }
 """
+  }
+
+  public void testFixPackageName() {
+    def file = myFixture.configureByText('Foo.groovy', '''\
+#!/usr/bin/groovy
+
+class Foo {}
+''')
+    ApplicationManager.application.runWriteAction { ((GroovyFile) myFixture.file).packageName = 'foo' }
+    myFixture.checkResult '''\
+#!/usr/bin/groovy
+package foo
+
+class Foo {}
+'''
+
   }
 
 }
