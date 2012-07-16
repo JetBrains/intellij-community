@@ -159,6 +159,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testRawSubstitution() throws Exception {
     doTest();
   }
+  
+  public void testSubstitution() throws Exception {
+    doTest();
+  }
 
   public void testParamNameConflictsWithLocalVar() throws Exception {
     doTest();
