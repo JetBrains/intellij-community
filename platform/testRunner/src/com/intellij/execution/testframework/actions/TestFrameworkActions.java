@@ -38,6 +38,15 @@ public class TestFrameworkActions {
         }
       };
     addPropertyListener(TestConsoleProperties.HIDE_PASSED_TESTS, hidePropertyListener, model, true);
+
+    final TestConsoleProperties ignoreProperties = model.getProperties();
+    final TestFrameworkPropertyListener<Boolean> ignorePropertyListener = new TestFrameworkPropertyListener<Boolean>() {
+      public void onChanged(final Boolean value) {
+        final boolean shouldFilter = TestConsoleProperties.HIDE_IGNORED_TEST.value(ignoreProperties);
+        model.setFilter(shouldFilter ? Filter.IGNORED.not() : Filter.NO_FILTER);
+      }
+    };
+    addPropertyListener(TestConsoleProperties.HIDE_IGNORED_TEST, ignorePropertyListener, model, true);
   }
 
   public static void addPropertyListener(final AbstractProperty<Boolean> property,

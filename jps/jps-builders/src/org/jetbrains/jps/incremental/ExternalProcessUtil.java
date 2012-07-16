@@ -4,7 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.server.ClasspathBootstrap;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 
 import java.io.*;
 import java.util.ArrayList;

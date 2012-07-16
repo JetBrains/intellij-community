@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.designSurface.AndroidPasteFactory;
 import com.intellij.android.designer.designSurface.RootView;
 import com.intellij.designer.model.MetaManager;
@@ -306,6 +307,11 @@ public class ModelParser extends XmlRecursiveElementVisitor {
           XmlElementFactory.getInstance(project).createTagFromText("\n" + tagBuilder.compute(), language);
 
         if (checkTag(parentTag)) {
+          String namespacePrefix = parentTag.getPrefixByNamespace(SdkConstants.NS_RESOURCES);
+          if (!"android".equals(namespacePrefix)) {
+            convertNamespacePrefix(xmlTag, namespacePrefix);
+          }
+
           if (nextTag == null) {
             xmlTag = parentTag.addSubTag(xmlTag, false);
           }
@@ -314,7 +320,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
           }
         }
         else {
-          xmlTag.setAttribute("xmlns:android", "http://schemas.android.com/apk/res/android");
+          xmlTag.setAttribute("xmlns:android", SdkConstants.NS_RESOURCES);
           xmlTag = (XmlTag)xmlFile.getDocument().add(xmlTag);
           XmlUtil.expandTag(xmlTag);
 
@@ -335,12 +341,23 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     }
   }
 
+  private static void convertNamespacePrefix(XmlTag xmlTag, String namespacePrefix) {
+    for (XmlAttribute attribute : xmlTag.getAttributes()) {
+      if ("android".equals(attribute.getNamespacePrefix())) {
+        attribute.setName(namespacePrefix + ":" + attribute.getLocalName());
+      }
+    }
+    for (XmlTag subTag : xmlTag.getSubTags()) {
+      convertNamespacePrefix(subTag, namespacePrefix);
+    }
+  }
+
   public static void deleteAttribute(RadComponent component, String name) {
     deleteAttribute(((RadViewComponent)component).getTag(), name);
   }
 
   public static void deleteAttribute(XmlTag tag, String name) {
-    XmlAttribute attribute = tag.getAttribute(name);
+    XmlAttribute attribute = tag.getAttribute(name, SdkConstants.NS_RESOURCES);
     if (attribute != null) {
       attribute.delete();
     }
@@ -414,6 +431,28 @@ public class ModelParser extends XmlRecursiveElementVisitor {
       if (!(childComponent instanceof RadRequestFocus)) {
         updateComponent(childComponent, views.get(viewIndex++), nativeComponent, left, top);
       }
+    }
+  }
+
+  public static void printTree(StringBuilder builder, RadComponent component, int level) {
+    for (int i = 0; i < level; i++) {
+      builder.append('\t');
+    }
+    builder.append(component).append(" | ").append(component.getLayout()).append(" | ").append(component.getMetaModel().getTag())
+      .append(" | ").append(component.getMetaModel().getTarget()).append(" = ").append(component.getChildren().size()).append("\n");
+    for (RadComponent childComponent : component.getChildren()) {
+      printTree(builder, childComponent, level + 1);
+    }
+  }
+
+  public static void printTree(StringBuilder builder, ViewInfo viewInfo, int level) {
+    for (int i = 0; i < level; i++) {
+      builder.append('\t');
+    }
+    builder.append(viewInfo.getClassName()).append(" | ").append(viewInfo.getViewObject()).append(" | ")
+      .append(viewInfo.getLayoutParamsObject()).append(" = ").append(viewInfo.getChildren().size()).append("\n");
+    for (ViewInfo childViewInfo : viewInfo.getChildren()) {
+      printTree(builder, childViewInfo, level + 1);
     }
   }
 }

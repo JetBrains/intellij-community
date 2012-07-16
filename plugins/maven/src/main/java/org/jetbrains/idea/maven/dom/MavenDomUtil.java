@@ -22,6 +22,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -155,7 +156,7 @@ public class MavenDomUtil {
     result.getArtifactId().setStringValue(parentId.getArtifactId());
     result.getVersion().setStringValue(parentId.getVersion());
 
-    if (pomFile.getParent().getParent() != parentProject.getDirectoryFile()) {
+    if (!Comparing.equal(pomFile.getParent().getParent(), parentProject.getDirectoryFile())) {
       result.getRelativePath().setValue(PsiManager.getInstance(project).findFile(parentProject.getFile()));
     }
 

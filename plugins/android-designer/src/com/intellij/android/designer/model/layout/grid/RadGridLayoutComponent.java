@@ -16,6 +16,7 @@
 package com.intellij.android.designer.model.layout.grid;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewContainer;
@@ -46,10 +47,10 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
     XmlTag tag = getTag();
     StringBuilder value = new StringBuilder(" (");
 
-    String rowCount = tag.getAttributeValue("android:rowCount");
+    String rowCount = tag.getAttributeValue("rowCount", SdkConstants.NS_RESOURCES);
     value.append(StringUtil.isEmpty(rowCount) ? "?" : rowCount).append(", ");
 
-    String columnCount = tag.getAttributeValue("android:columnCount");
+    String columnCount = tag.getAttributeValue("columnCount", SdkConstants.NS_RESOURCES);
     value.append(StringUtil.isEmpty(columnCount) ? "?" : columnCount).append(", ");
 
     value.append(isHorizontal() ? "horizontal" : "vertical");
@@ -58,7 +59,7 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
   }
 
   public boolean isHorizontal() {
-    return !"vertical".equals(getTag().getAttributeValue("android:orientation"));
+    return !"vertical".equals(getTag().getAttributeValue("orientation", SdkConstants.NS_RESOURCES));
   }
 
   @Override
@@ -192,13 +193,15 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
       Rectangle cellInfo = getCellInfo(child);
 
       if (fillSpans) {
-        for (int row = 0; row < cellInfo.height; row++) {
-          for (int column = 0; column < cellInfo.width; column++) {
-            components[cellInfo.y + row][cellInfo.x + column] = child;
+        int rowEnd = Math.min(cellInfo.y + cellInfo.height, gridInfo.rowCount);
+        int columnEnd = Math.min(cellInfo.x + cellInfo.width, gridInfo.columnCount);
+        for (int row = cellInfo.y; row < rowEnd; row++) {
+          for (int column = cellInfo.x; column < columnEnd; column++) {
+            components[row][column] = child;
           }
         }
       }
-      else {
+      else if (cellInfo.y < gridInfo.rowCount && cellInfo.x < gridInfo.columnCount) {
         components[cellInfo.y][cellInfo.x] = child;
       }
     }
@@ -249,13 +252,13 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)component).getTag();
-        tag.setAttribute("android:layout_row", Integer.toString(row));
-        tag.setAttribute("android:layout_column", Integer.toString(column));
+        tag.setAttribute("layout_row", SdkConstants.NS_RESOURCES, Integer.toString(row));
+        tag.setAttribute("layout_column", SdkConstants.NS_RESOURCES, Integer.toString(column));
         if (clearRowSpan) {
-          ModelParser.deleteAttribute(tag, "android:layout_rowSpan");
+          ModelParser.deleteAttribute(tag, "layout_rowSpan");
         }
         if (clearColumnSpan) {
-          ModelParser.deleteAttribute(tag, "android:layout_columnSpan");
+          ModelParser.deleteAttribute(tag, "layout_columnSpan");
         }
       }
     });
@@ -263,7 +266,8 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
 
   public static int getSpan(RadComponent component, boolean row) {
     try {
-      String span = ((RadViewComponent)component).getTag().getAttributeValue(row ? "android:layout_rowSpan" : "android:layout_columnSpan");
+      String span =
+        ((RadViewComponent)component).getTag().getAttributeValue(row ? "layout_rowSpan" : "layout_columnSpan", SdkConstants.NS_RESOURCES);
       return Integer.parseInt(span);
     }
     catch (Throwable e) {
@@ -276,7 +280,7 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)component).getTag();
-        tag.setAttribute(row ? "android:layout_rowSpan" : "android:layout_columnSpan", Integer.toString(span));
+        tag.setAttribute(row ? "layout_rowSpan" : "layout_columnSpan", SdkConstants.NS_RESOURCES, Integer.toString(span));
       }
     });
   }
@@ -286,8 +290,8 @@ public class RadGridLayoutComponent extends RadViewContainer implements ICompone
       @Override
       public void run() {
         XmlTag tag = ((RadViewComponent)component).getTag();
-        ModelParser.deleteAttribute(tag, "android:layout_rowSpan");
-        ModelParser.deleteAttribute(tag, "android:layout_columnSpan");
+        ModelParser.deleteAttribute(tag, "layout_rowSpan");
+        ModelParser.deleteAttribute(tag, "layout_columnSpan");
       }
     });
   }

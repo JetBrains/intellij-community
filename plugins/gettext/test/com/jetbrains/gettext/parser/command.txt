@@ -1,0 +1,8 @@
+GNU GetText File
+  MSG_BLOCK
+    HEADER
+      <empty list>
+    PsiErrorElement:Not enough commands
+      PsiErrorElement:Unexpected token
+        <empty list>
+      PsiElement(COMMAND)('msg')

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -67,7 +68,7 @@ public class RefreshWorker {
         final VirtualFileSystemEntry file = (VirtualFileSystemEntry)myRefreshQueue.pullFirst();
         if (!file.isDirty()) continue;
 
-        int attributes = file == root ? rootAttributes : delegate.getBooleanAttributes(file, -1);
+        int attributes = Comparing.equal(file, root) ? rootAttributes : delegate.getBooleanAttributes(file, -1);
         VirtualFileSystemEntry parent = file.getParent();
         if (parent != null && checkAndScheduleAttributesChange(parent, file, delegate, attributes)) {
           // ignore everything else

@@ -141,6 +141,11 @@ public class TestProxy extends AbstractTestProxy {
     return getMagnitude() == PoolOfTestStates.TERMINATED_INDEX;
   }
 
+  @Override
+  public boolean isIgnored() {
+    return getMagnitude() == PoolOfTestStates.IGNORED_INDEX;
+  }
+
   public boolean isPassed() {
     return getMagnitude() <= PoolOfTestStates.PASSED_INDEX;
   }

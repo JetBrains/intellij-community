@@ -97,7 +97,7 @@ public class EclipseClasspathWriter {
         for (SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
           final String srcUrl = sourceFolder.getUrl();
           String relativePath = EPathUtil.collapse2EclipsePath(srcUrl, myModel);
-          if (contentRoot != EPathUtil.getContentRoot(myModel)) {
+          if (!Comparing.equal(contentRoot, EPathUtil.getContentRoot(myModel))) {
             final String linkedPath = EclipseModuleManager.getInstance(entry.getOwnerModule()).getEclipseLinkedSrcVariablePath(srcUrl);
             if (linkedPath != null) {
               relativePath = linkedPath;

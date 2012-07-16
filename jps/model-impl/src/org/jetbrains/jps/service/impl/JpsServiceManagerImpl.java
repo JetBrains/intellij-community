@@ -2,10 +2,7 @@ package org.jetbrains.jps.service.impl;
 
 import org.jetbrains.jps.service.JpsServiceManager;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.ServiceConfigurationError;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -13,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class JpsServiceManagerImpl extends JpsServiceManager {
   private final ConcurrentHashMap<Class, Object> myServices = new ConcurrentHashMap<Class, Object>();
-  private final ConcurrentHashMap<Class, List<Object>> myExtensions = new ConcurrentHashMap<Class, List<Object>>();
+  private final ConcurrentHashMap<Class, List<?>> myExtensions = new ConcurrentHashMap<Class, List<?>>();
 
   @Override
   public <T> T getService(Class<T> serviceClass) {
@@ -30,12 +27,25 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
           "More than one implementation for " + serviceClass + " found: " + service.getClass() + " and " + iterator.next().getClass());
       }
       myServices.putIfAbsent(serviceClass, service);
+      //noinspection unchecked
+      service = (T)myServices.get(serviceClass);
     }
     return service;
   }
 
   @Override
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
-    return ServiceLoader.load(extensionClass);
+    List<?> cached = myExtensions.get(extensionClass);
+    if (cached == null) {
+      final ServiceLoader<T> loader = ServiceLoader.load(extensionClass);
+      List<T> extensions = new ArrayList<T>();
+      for (T t : loader) {
+        extensions.add(t);
+      }
+      myExtensions.putIfAbsent(extensionClass, extensions);
+      cached = myExtensions.get(extensionClass);
+    }
+    //noinspection unchecked
+    return (List<T>)cached;
   }
 }

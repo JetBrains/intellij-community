@@ -59,7 +59,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.*;
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings({"HardCodedStringLiteral", "ConstantConditions"})
 public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/xml/";
 
@@ -634,13 +634,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testXHtmlValidation2() throws Exception {
-    disableHtmlSupport();
-    try {
-      doTest();
-    }
-    finally {
-      enableHtmlSupport();
-    }
+    configureByFile(getFullRelativeTestName());
+    doDoTest(true, true, true);
   }
 
   public void testXHtmlValidation3() throws Exception {
@@ -697,12 +692,12 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testComplexSchemaValidation() throws Exception {
-    disableHtmlSupport();
+//    disableHtmlSupport();
     try {
       doTest(getFullRelativeTestName(), false, false);
     }
     finally {
-      enableHtmlSupport();
+//      enableHtmlSupport();
     }
   }
 

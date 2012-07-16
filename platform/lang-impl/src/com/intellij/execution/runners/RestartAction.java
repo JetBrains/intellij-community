@@ -20,6 +20,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAware;
@@ -38,15 +39,15 @@ public class RestartAction extends AnAction implements DumbAware {
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
   private final RunContentDescriptor myDescriptor;
-  private final Executor myExecutor;
+  @NotNull private final Executor myExecutor;
   private final Icon myIcon;
   private final ExecutionEnvironment myEnvironment;
 
-  public RestartAction(final Executor executor,
+  public RestartAction(@NotNull final Executor executor,
                        final ProgramRunner runner,
                        final ProcessHandler processHandler,
                        final Icon icon,
-                       final RunContentDescriptor descritor,
+                       final RunContentDescriptor descriptor,
                        @NotNull final ExecutionEnvironment env) {
     super(null, null, icon);
     myIcon = icon;
@@ -54,7 +55,7 @@ public class RestartAction extends AnAction implements DumbAware {
     getTemplatePresentation().setEnabled(false);
     myProcessHandler = processHandler;
     myRunner = runner;
-    myDescriptor = descritor;
+    myDescriptor = descriptor;
     myExecutor = executor;
     // see IDEADEV-698
   }
@@ -94,7 +95,10 @@ public class RestartAction extends AnAction implements DumbAware {
 
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", myEnvironment.getRunProfile().getName()));
+    String name = myEnvironment.getRunProfile().getName();
+    if (name.startsWith(ActionsBundle.message("action.RerunFailedTests.text")))
+      name = myEnvironment.getRunnerAndConfigurationSettings().getName();
+    presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", name));
     final boolean isRunning = myProcessHandler != null && !myProcessHandler.isProcessTerminated();
     if (myProcessHandler != null && !isRunning) {
       myProcessHandler = null; // already terminated

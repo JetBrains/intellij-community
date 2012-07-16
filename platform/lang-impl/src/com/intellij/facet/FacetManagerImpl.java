@@ -38,6 +38,8 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.facet.FacetManagerState;
+import org.jetbrains.jps.model.serialization.facet.FacetState;
 
 import java.util.*;
 
@@ -54,10 +56,6 @@ import java.util.*;
 )
 public class FacetManagerImpl extends FacetManager implements ModuleComponent, PersistentStateComponent<FacetManagerState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.FacetManagerImpl");
-  @NonNls public static final String FACET_ELEMENT = "facet";
-  @NonNls public static final String TYPE_ATTRIBUTE = "type";
-  @NonNls public static final String CONFIGURATION_ELEMENT = "configuration";
-  @NonNls public static final String NAME_ATTRIBUTE = "name";
   @NonNls public static final String COMPONENT_NAME = "FacetManager";
 
   private final Module myModule;

@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -79,7 +80,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
           public void run() {
             if (myProject.isDisposed()) return;
             for (Bookmark bookmark : myBookmarks) {
-              if (bookmark.getFile() == file) {
+              if (Comparing.equal(bookmark.getFile(), file)) {
                 bookmark.createHighlighter((MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, true));
               }
             }
@@ -165,7 +166,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   @Nullable
   public Bookmark findFileBookmark(@NotNull VirtualFile file) {
     for (Bookmark bookmark : myBookmarks) {
-      if (bookmark.getFile() == file && bookmark.getLine() == -1) return bookmark;
+      if (Comparing.equal(bookmark.getFile(), file) && bookmark.getLine() == -1) return bookmark;
     }
 
     return null;

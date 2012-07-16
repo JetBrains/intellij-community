@@ -142,7 +142,7 @@ public final class LoadTextUtil {
   }
 
   @Nullable("null means no luck, otherwise it's tuple(guessed encoding, hint about content if was unable to guess, BOM)")
-  public static Trinity<Charset, CharsetToolkit.GuessedEncoding,byte[]> guessFromContent(VirtualFile virtualFile, byte[] content, int length) {
+  public static Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessFromContent(VirtualFile virtualFile, byte[] content, int length) {
     EncodingRegistry settings = EncodingRegistry.getInstance();
     boolean shouldGuess = settings != null && settings.isUseUTFGuessing(virtualFile);
     CharsetToolkit toolkit = shouldGuess ? new CharsetToolkit(content, EncodingRegistry.getInstance().getDefaultCharset()) : null;

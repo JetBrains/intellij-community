@@ -28,11 +28,18 @@ import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.*
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
+  }
+
+  @Override
+  protected void setUp() {
+    super.setUp()
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
   }
 
   public void testSimple() throws Exception {

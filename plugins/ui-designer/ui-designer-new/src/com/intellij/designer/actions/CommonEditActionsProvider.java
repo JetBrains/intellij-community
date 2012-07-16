@@ -93,8 +93,17 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
           return;
         }
 
+        myDesigner.getToolProvider().loadDefaultTool();
+
         List<RadComponent> components = RadComponent.getPureSelection(selection);
+
         RadComponent newSelection = getNewSelection(components.get(0), selection);
+        if (newSelection == null) {
+          area.deselectAll();
+        }
+        else {
+          area.select(newSelection);
+        }
 
         if (components.get(0) instanceof IGroupDeleteComponent) {
           ((IGroupDeleteComponent)components.get(0)).delete(components);
@@ -103,13 +112,6 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
           for (RadComponent component : components) {
             component.delete();
           }
-        }
-
-        if (newSelection == null) {
-          area.deselectAll();
-        }
-        else {
-          area.select(newSelection);
         }
       }
     }, DesignerBundle.message("command.delete.selection"), true);

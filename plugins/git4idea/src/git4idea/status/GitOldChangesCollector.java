@@ -16,6 +16,7 @@
 package git4idea.status;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -226,7 +227,7 @@ class GitOldChangesCollector extends GitChangesCollector {
       sc.skipChars(2);
       if ('?' == status) {
         VirtualFile file = myVcsRoot.findFileByRelativePath(GitUtil.unescapePath(sc.line()));
-        if (GitUtil.gitRootOrNull(file) == myVcsRoot) {
+        if (Comparing.equal(GitUtil.gitRootOrNull(file), myVcsRoot)) {
           myUnversioned.add(file);
         }
       }
@@ -235,7 +236,7 @@ class GitOldChangesCollector extends GitChangesCollector {
           sc.boundedToken('\t');
           String file = GitUtil.unescapePath(sc.line());
           VirtualFile vFile = myVcsRoot.findFileByRelativePath(file);
-          if (GitUtil.gitRootOrNull(vFile) != myVcsRoot) {
+          if (!Comparing.equal(GitUtil.gitRootOrNull(vFile), myVcsRoot)) {
             continue;
           }
           if (!myUnmergedNames.add(file)) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.designSurface.layout.grid.GridSelectionDecorator;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
@@ -409,7 +410,7 @@ public abstract class LayoutSpanOperation implements EditOperation {
     XmlTag tag = myComponent.getTag();
 
     if (cellFix) {
-      tag.setAttribute(cell, Integer.toString(myCells[myIndex]));
+      tag.setAttribute(cell, SdkConstants.NS_RESOURCES, Integer.toString(myCells[myIndex]));
     }
 
     int spanValue = mySpans[myIndex];
@@ -417,7 +418,7 @@ public abstract class LayoutSpanOperation implements EditOperation {
       ModelParser.deleteAttribute(tag, span);
     }
     else {
-      tag.setAttribute(span, Integer.toString(spanValue));
+      tag.setAttribute(span, SdkConstants.NS_RESOURCES, Integer.toString(spanValue));
     }
   }
 

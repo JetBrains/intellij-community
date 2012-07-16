@@ -87,10 +87,8 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
           }
           for (OrderEntry orderEntry : orderEntries) {
             Module ownerModule = orderEntry.getOwnerModule();
-            if (ownerModule != null) {
-              if (ownerModule.equals(module)) {
-                return true;
-              }
+            if (ownerModule.equals(module)) {
+              return true;
             }
           }
         }

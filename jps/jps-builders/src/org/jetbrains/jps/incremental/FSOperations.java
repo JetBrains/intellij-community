@@ -3,10 +3,10 @@ package org.jetbrains.jps.incremental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.File;
 import java.io.IOException;

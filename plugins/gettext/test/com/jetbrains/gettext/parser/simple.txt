@@ -1,0 +1,54 @@
+GNU GetText File
+  PsiComment(COMMENT_SYMBOLS)('#')
+  PsiComment(COMMENT_SYMBOLS)(' ')
+  PsiComment(COMMENT)('test')
+  PsiWhiteSpace('\n')
+  PsiComment(COMMENT_SYMBOLS)('#')
+  MSG_BLOCK
+    HEADER
+      PsiElement(EXTR_COMMENT)('. another')
+      PsiWhiteSpace('\n')
+      PsiComment(COMMENT_SYMBOLS)('#')
+      PsiElement(REFERENCE)(': ref')
+      PsiWhiteSpace('\n')
+      PsiComment(COMMENT_SYMBOLS)('#')
+      PsiElement(PREVIOUS_TRANSLATE_COMMENT)('| msgid test')
+    PsiWhiteSpace('\n')
+    MSG_CONTENT
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"new string to translate"')
+      PsiWhiteSpace('\n')
+      MSGSTR
+        PsiElement(MSGSTR)('msgstr')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"translated string"')
+  PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n')
+  PsiComment(COMMENT_SYMBOLS)('#')
+  PsiComment(COMMENT_SYMBOLS)(' ')
+  PsiComment(COMMENT)('t')
+  PsiWhiteSpace('\n')
+  PsiComment(COMMENT_SYMBOLS)('#')
+  MSG_BLOCK
+    HEADER
+      PsiElement(EXTR_COMMENT)('. another')
+      PsiWhiteSpace('\n')
+      PsiComment(COMMENT_SYMBOLS)('#')
+      PsiElement(REFERENCE)(': ref')
+      PsiWhiteSpace('\n')
+      PsiComment(COMMENT_SYMBOLS)('#')
+      PsiElement(PREVIOUS_TRANSLATE_COMMENT)('| msgid test')
+    PsiWhiteSpace('\n')
+    MSG_CONTENT
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"new string to translate"')
+      PsiWhiteSpace('\n')
+      MSGSTR
+        PsiElement(MSGSTR)('msgstr')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"translated string"')
+  PsiWhiteSpace('\n')

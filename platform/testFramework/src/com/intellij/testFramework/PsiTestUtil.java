@@ -31,6 +31,7 @@ import com.intellij.openapi.roots.impl.ContentEntryImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -189,7 +190,7 @@ public class PsiTestUtil {
       }
     }.execute().throwException();
     for (ContentEntry entry : rootManager.getContentEntries()) {
-      if (entry.getFile() == vDir) {
+      if (Comparing.equal(entry.getFile(), vDir)) {
         Assert.assertFalse(((ContentEntryImpl)entry).isDisposed());
         return entry;
       }

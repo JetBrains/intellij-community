@@ -4,12 +4,14 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * @author peter
@@ -17,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 public class CamelHumpMatcher extends PrefixMatcher {
   private final MinusculeMatcher myMatcher;
   private final boolean myCaseSensitive;
+  private static boolean ourForceStartMatching;
+
 
   public CamelHumpMatcher(@NotNull final String prefix) {
     this(prefix, true);
@@ -78,7 +82,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   public static String applyMiddleMatching(String prefix) {
-    if (Registry.is("ide.completion.middle.matching") && !prefix.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
+    if (Registry.is("ide.completion.middle.matching") && !prefix.isEmpty() && !ourForceStartMatching) {
       return "*" + StringUtil.replace(prefix, ".", ". ").trim();
     }
     return prefix;
@@ -87,6 +91,18 @@ public class CamelHumpMatcher extends PrefixMatcher {
   @Override
   public String toString() {
     return myPrefix;
+  }
+
+  @TestOnly
+  public static void forceStartMatching(Disposable parent) {
+    ourForceStartMatching = true;
+    Disposer.register(parent, new Disposable() {
+      @Override
+      public void dispose() {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourForceStartMatching = false;
+      }
+    });
   }
 
 }

@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.formatter;
 
 
 import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
 
 /**

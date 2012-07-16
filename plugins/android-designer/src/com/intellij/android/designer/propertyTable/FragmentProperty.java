@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.propertyTable;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.RadComponent;
@@ -44,7 +45,7 @@ public class FragmentProperty extends Property<RadViewComponent> implements IXml
     myEditor = editor;
     myJavadocText = javadocText;
     setImportant(true);
-    myAttribute = "android:" + name;
+    myAttribute = name;
   }
 
   @Override
@@ -54,7 +55,7 @@ public class FragmentProperty extends Property<RadViewComponent> implements IXml
 
   @Override
   public Object getValue(RadViewComponent component) throws Exception {
-    String value = component.getTag().getAttributeValue(myAttribute);
+    String value = component.getTag().getAttributeValue(myAttribute, SdkConstants.NS_RESOURCES);
     return value == null ? "" : value;
   }
 
@@ -67,7 +68,7 @@ public class FragmentProperty extends Property<RadViewComponent> implements IXml
           ModelParser.deleteAttribute(component, myAttribute);
         }
         else {
-          component.getTag().setAttribute(myAttribute, (String)value);
+          component.getTag().setAttribute(myAttribute, SdkConstants.NS_RESOURCES, (String)value);
         }
       }
     });
@@ -75,12 +76,12 @@ public class FragmentProperty extends Property<RadViewComponent> implements IXml
 
   @Override
   public boolean isDefaultValue(RadViewComponent component) throws Exception {
-    return component.getTag().getAttribute(myAttribute) == null;
+    return component.getTag().getAttribute(myAttribute, SdkConstants.NS_RESOURCES) == null;
   }
 
   @Override
   public void setDefaultValue(RadViewComponent component) throws Exception {
-    if (component.getTag().getAttribute(myAttribute) != null) {
+    if (component.getTag().getAttribute(myAttribute, SdkConstants.NS_RESOURCES) != null) {
       setValue(component, null);
     }
   }
@@ -108,6 +109,6 @@ public class FragmentProperty extends Property<RadViewComponent> implements IXml
 
   @Override
   public boolean checkAttribute(RadViewComponent component, XmlAttribute attribute) {
-    return component.getTag().getAttribute(myAttribute) == attribute;
+    return component.getTag().getAttribute(myAttribute, SdkConstants.NS_RESOURCES) == attribute;
   }
 }

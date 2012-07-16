@@ -15,7 +15,6 @@
  */
 package com.intellij.compiler.options;
 
-import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerSettingsFactory;
@@ -171,7 +170,6 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
         excludes.apply();
         SwingUtilities.invokeLater(new Runnable() {
           public void run() {
-            CompileServerManager.getInstance().sendReloadRequest(project);
             BuildManager.getInstance().clearState(project);
           }
         });

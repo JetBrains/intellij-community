@@ -18,6 +18,8 @@ package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class XmlSerializerUtil {
   private XmlSerializerUtil() {
   }
@@ -39,5 +41,9 @@ public class XmlSerializerUtil {
     catch (Exception ignored) {
     }
     return null;
+  }
+
+  public static List<Accessor> getAccessors(Class aClass) {
+    return BeanBinding.getAccessors(aClass);
   }
 }

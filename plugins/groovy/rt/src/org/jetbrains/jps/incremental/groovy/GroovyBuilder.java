@@ -13,6 +13,7 @@ import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper;
 import org.jetbrains.jps.*;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
@@ -22,7 +23,6 @@ import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.javac.OutputFileObject;
-import org.jetbrains.jps.server.ClasspathBootstrap;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,9 +58,6 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   public ModuleLevelBuilder.ExitCode build(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     try {
       final List<File> toCompile = collectChangedFiles(context, chunk);
-      if (Utils.IS_TEST_MODE) {
-        LOG.info((myForStubs ? "stubs" : "groovyc") + ", toCompile=" + toCompile);
-      }
       if (toCompile.isEmpty()) {
         return ExitCode.NOTHING_DONE;
       }
@@ -120,18 +117,12 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
 
       for (CompilerMessage message : handler.getCompilerMessages()) {
-        if (Utils.IS_TEST_MODE) {
-          LOG.info(message.toString());
-        }
         context.processMessage(message);
       }
 
 
       List<GroovycOSProcessHandler.OutputItem> compiled = new ArrayList<GroovycOSProcessHandler.OutputItem>();
       for (GroovycOSProcessHandler.OutputItem item : handler.getSuccessfullyCompiled()) {
-        if (Utils.IS_TEST_MODE) {
-          LOG.info("Compiled " + item);
-        }
         compiled.add(ensureCorrectOutput(context, chunk, item, generationOutputs, compilerOutput));
       }
 

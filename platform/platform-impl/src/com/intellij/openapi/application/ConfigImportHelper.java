@@ -185,6 +185,10 @@ public class ConfigImportHelper {
     if (!dest.isDirectory()) {
       throw new IOException(ApplicationBundle.message("config.import.invalid.directory.error", dest.getAbsolutePath()));
     }
+    if (FileUtil.filesEqual(src, dest)) {
+      return;
+    }
+
     FileUtil.copyDir(src, dest);
 
     // Delete plugins just imported. They're most probably incompatible with newer idea version.

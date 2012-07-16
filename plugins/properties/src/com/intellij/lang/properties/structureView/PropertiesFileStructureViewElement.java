@@ -21,7 +21,6 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Iconable;
 import org.jetbrains.annotations.NotNull;
 

@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.artifacts.Artifact;
+import org.jetbrains.jps.cmdline.ClasspathBootstrap;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
@@ -32,8 +34,6 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.server.ClasspathBootstrap;
-import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.File;
 import java.io.IOException;

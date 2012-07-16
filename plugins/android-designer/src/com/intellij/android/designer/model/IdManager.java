@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -78,7 +79,7 @@ public class IdManager {
 
     myIdList.add(nextIdValue);
     String newId = "@+id/" + idValue + (index == 0 ? "" : Integer.toString(index));
-    component.getTag().setAttribute("android:id", newId);
+    component.getTag().setAttribute("id", SdkConstants.NS_RESOURCES, newId);
     return newId;
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.morphing;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ComponentMorphingTool;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
@@ -60,8 +61,8 @@ public class TableLayout {
         XmlTag tag = myNewComponent.getTag();
         if (components.length > 0) {
           String columnCount = Integer.toString(components[0].length);
-          tag.setAttribute("android:rowCount", Integer.toString(components.length));
-          tag.setAttribute("android:columnCount", columnCount);
+          tag.setAttribute("rowCount", SdkConstants.NS_RESOURCES, Integer.toString(components.length));
+          tag.setAttribute("columnCount", SdkConstants.NS_RESOURCES, columnCount);
 
           for (int i = 0; i < components.length; i++) {
             RadComponent[] rowComponents = components[i];
@@ -69,25 +70,25 @@ public class TableLayout {
             RadComponent firstCellComponent = rowComponents[0];
             if (firstCellComponent != null && firstCellComponent.extractClientProperty(TABLE_ROW_KEY) == Boolean.TRUE) {
               XmlTag cellTag = ((RadViewComponent)firstCellComponent).getTag();
-              ModelParser.deleteAttribute(cellTag, "android:layout_span");
-              cellTag.setAttribute("android:layout_column", "0");
-              cellTag.setAttribute("android:layout_columnSpan", columnCount);
-              cellTag.setAttribute("android:layout_gravity", "fill_horizontal");
+              ModelParser.deleteAttribute(cellTag, "layout_span");
+              cellTag.setAttribute("layout_column", SdkConstants.NS_RESOURCES, "0");
+              cellTag.setAttribute("layout_columnSpan", SdkConstants.NS_RESOURCES, columnCount);
+              cellTag.setAttribute("layout_gravity", SdkConstants.NS_RESOURCES, "fill_horizontal");
             }
 
             for (RadComponent cellComponent : rowComponents) {
               if (cellComponent != null) {
                 XmlTag cellTag = ((RadViewComponent)cellComponent).getTag();
-                cellTag.setAttribute("android:layout_row", Integer.toString(i));
+                cellTag.setAttribute("layout_row", SdkConstants.NS_RESOURCES, Integer.toString(i));
                 break;
               }
             }
           }
 
           for (RadComponent childComponent : myNewComponent.getChildren()) {
-            XmlAttribute attribute = ((RadViewComponent)childComponent).getTag().getAttribute("android:layout_span");
+            XmlAttribute attribute = ((RadViewComponent)childComponent).getTag().getAttribute("layout_span", SdkConstants.NS_RESOURCES);
             if (attribute != null) {
-              attribute.setName("android:layout_columnSpan");
+              attribute.setName(attribute.getNamespacePrefix() + ":layout_columnSpan");
             }
           }
         }

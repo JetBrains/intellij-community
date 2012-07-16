@@ -290,11 +290,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static Future<Void> asyncDelete(@NotNull File file) {
-    final File tempFile = renameToTempFileOrDelete(file);
-    if (tempFile == null) {
-      return new CompletedFuture<Void>();
-    }
-    return startDeletionThread(tempFile);
+    return asyncDelete(Collections.singleton(file));
   }
 
   @NotNull

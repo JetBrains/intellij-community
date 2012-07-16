@@ -124,7 +124,9 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
   }
 
   protected EditorTextField createNameField(String initialMethodName) {
-    return new EditorTextField(initialMethodName);
+    EditorTextField field = new EditorTextField(initialMethodName);
+    field.selectAll();
+    return field;
   }
 
   protected boolean areTypesDirected() {

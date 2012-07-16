@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 /**
  * @author peter
@@ -58,10 +59,6 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
 
   public void doTest() throws Throwable {
     myFixture.testCompletion(getTestName(false) + ".gdsl", getTestName(false) + "_after.gdsl")
-  }
-
-  public void doPlainTest() throws Throwable {
-    myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy")
   }
 
   public void testCompleteTopLevel() throws Throwable {
@@ -132,6 +129,7 @@ public class GroovyDslTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testClassContext() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     doCustomTest( """
      def ctx = context(scope: classScope(name: /.*WsSecurityConfig/))
      
@@ -161,6 +159,7 @@ public class MyCategory {
   }
 
   public void testPathRegexp() {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     addGdsl "contributor(pathRegexp: '.*aaa.*') { property name:'fffooo', type:'int' }"
 
     myFixture.configureFromExistingVirtualFile myFixture.addFileToProject("aaa/foo.groovy", "fff<caret>x").virtualFile
@@ -173,6 +172,7 @@ public class MyCategory {
   }
 
   public void testNamedParameters() {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[:], namedParams:[
     parameter(name:'param1', type:String),
@@ -185,6 +185,7 @@ public class MyCategory {
   }
 
   public void testNamedParametersGroovyConvention() {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     addGdsl '''contribute(currentType(String.name)) {
   method name:'foo', type:void, params:[args:[
       parameter(name:'param1', type:String, doc:'My doc'),

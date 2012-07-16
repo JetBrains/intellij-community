@@ -27,6 +27,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -164,14 +165,14 @@ public class VariableInlineHandler extends InlineActionHandler {
     });
     final Editor e = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     for (TextRange range : ranges) {
-      final TextAttributes textAttributes = EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes();
+      final TextAttributes textAttributes = TextAttributesKeyDefaults.getDefaultAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       final Color color = getScrollmarkColor(textAttributes);
       highlighter.addOccurrenceHighlight(e, range.getStartOffset(), range.getEndOffset(), textAttributes,
               HighlightManagerImpl.HIDE_BY_ESCAPE, highlighters, color);
     }
 
     highlighter.addOccurrenceHighlights(e, new PsiElement[]{((XsltVariable)variable).getNameIdentifier()},
-            EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
+            TextAttributesKeyDefaults.getDefaultAttributes(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES), false, highlighters);
 
     if (!hasExternalRefs) {
       if (!ApplicationManager.getApplication().isUnitTestMode() &&

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.compiler;
 
-import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.execution.ExecutionException;
@@ -133,7 +132,6 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
                 jdkTable.removeJdk(jdkTable.getInternalJdk());
               }
             }.execute();
-            CompileServerManager.getInstance().shutdownServer();
           }
 
           myMainOutput.tearDown();
@@ -233,7 +231,6 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       public void run() {
         try {
           final VirtualFile virtualFile = file.getVirtualFile();
-          System.out.println("Changing file text: psiFile= " + file + "; vFile= " + virtualFile);
           VfsUtil.saveText(ObjectUtils.assertNotNull(virtualFile), barText);
         }
         catch (IOException e) {

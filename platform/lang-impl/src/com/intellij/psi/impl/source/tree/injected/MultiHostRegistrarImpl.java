@@ -345,7 +345,10 @@ public class MultiHostRegistrarImpl implements MultiHostRegistrar, ModificationT
     assert documentWindow.getText().equals(psiFile.getText()) : "Document window text mismatch";
     assert injectedFileViewProvider.getDocument() == documentWindow : "Provider document mismatch";
     assert documentManager.getCachedDocument(psiFile) == documentWindow : "Cached document mismatch";
-    assert psiFile.getVirtualFile() == injectedFileViewProvider.getVirtualFile() : "Virtual file mismatch: "+psiFile.getVirtualFile()+"; "+injectedFileViewProvider.getVirtualFile();
+    assert Comparing.equal(psiFile.getVirtualFile(), injectedFileViewProvider.getVirtualFile()) : "Virtual file mismatch: " +
+                                                                                                  psiFile.getVirtualFile() +
+                                                                                                  "; " +
+                                                                                                  injectedFileViewProvider.getVirtualFile();
     PsiDocumentManagerImpl.checkConsistency(psiFile, documentWindow);
   }
 

@@ -18,7 +18,7 @@ package org.jetbrains.plugins.groovy.lang.formatter;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
 import java.util.List;

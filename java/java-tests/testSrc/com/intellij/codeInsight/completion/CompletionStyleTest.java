@@ -110,6 +110,7 @@ public class CompletionStyleTest extends LightCodeInsightTestCase{
 
     configureByFile(path + "/before3.java");
     performSmartCompletion();
+    select(Lookup.NORMAL_SELECT_CHAR, 0);
     checkResultByFile(path + "/after3.java");
   }
 

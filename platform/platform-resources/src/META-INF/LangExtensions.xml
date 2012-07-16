@@ -515,7 +515,6 @@
 
   <usageFilteringRuleProvider implementation="com.intellij.usages.impl.UsageFilteringRuleProviderImpl"/>
   <usageGroupingRuleProvider implementation="com.intellij.usages.impl.UsageGroupingRuleProviderImpl"/>
-  <usageGroupingRuleProvider implementation="com.intellij.ide.favoritesTreeView.WorkingSetUsageActionProvider"/>
 
   <projectService serviceInterface="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"
                   serviceImplementation="com.intellij.psi.templateLanguages.TemplateDataLanguageMappings"/>
@@ -734,9 +733,6 @@
   <applicationService serviceInterface="com.intellij.ide.todo.TodoConfiguration"
                       serviceImplementation="com.intellij.ide.todo.TodoConfiguration"/>
   <indexPatternProvider implementation="com.intellij.ide.todo.TodoIndexPatternProvider"/>
-  
-  <applicationService serviceImplementation="com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager"/>
-  <postStartupActivity implementation="com.intellij.codeInsight.documentation.QuickDocOnMouseOverStartupActivity"/>
   
   <hectorComponentProvider implementation="com.intellij.codeInsight.daemon.PowerSaveHectorProvider"/>
 

@@ -147,7 +147,8 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
       boolean[] emptyColumns = gridInfo.emptyColumns;
 
       for (int i = 0; i < lines.length - 1; i++) {
-        components.add(new RadCaptionTableColumn(container,
+        components.add(new RadCaptionTableColumn(mainArea,
+                                                 container,
                                                  i,
                                                  lines[i],
                                                  lines[i + 1] - lines[i],
@@ -156,7 +157,7 @@ public class RadTableLayout extends RadViewLayoutWithData implements ILayoutDeco
     }
     else {
       for (RadComponent component : children) {
-        components.add(new RadCaptionTableRow((RadViewComponent)component));
+        components.add(new RadCaptionTableRow(mainArea, (RadViewComponent)component));
       }
     }
 

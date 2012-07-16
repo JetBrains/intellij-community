@@ -175,18 +175,11 @@ public abstract class RecentProjectsManagerBase implements PersistentStateCompon
 
     for (final String path : paths) {
       final String projectName = getProjectName(path);
-      boolean needShowPath = false;
       String displayName = myState.names.get(path);
       if (StringUtil.isEmptyOrSpaces(displayName)) {
-        if (map.get(projectName) > 1) {
-          displayName = path;
-        }
-        else {
-          displayName = projectName;
-          needShowPath = true;
-        }
+        displayName = map.get(projectName) > 1 ? path : projectName;
       }
-      actions.add(new ReopenProjectAction(path, displayName, needShowPath));
+      actions.add(new ReopenProjectAction(path, projectName, displayName));
     }
 
     if (actions.isEmpty()) {

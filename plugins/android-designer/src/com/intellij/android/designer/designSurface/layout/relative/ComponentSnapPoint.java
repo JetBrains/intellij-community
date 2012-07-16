@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
@@ -192,28 +193,28 @@ public class ComponentSnapPoint extends SnapPoint {
     final String attribute;
 
     if (myBeginSide == Side.top && myEndSide == Side.top) {
-      attribute = "android:layout_alignTop";
+      attribute = "layout_alignTop";
     }
     else if (myBeginSide == Side.bottom && myEndSide == Side.bottom) {
-      attribute = "android:layout_alignBottom";
+      attribute = "layout_alignBottom";
     }
     else if (myBeginSide == Side.top && myEndSide == Side.bottom) {
-      attribute = "android:layout_below";
+      attribute = "layout_below";
     }
     else if (myBeginSide == Side.bottom && myEndSide == Side.top) {
-      attribute = "android:layout_above";
+      attribute = "layout_above";
     }
     else if (myBeginSide == Side.left && myEndSide == Side.left) {
-      attribute = "android:layout_alignLeft";
+      attribute = "layout_alignLeft";
     }
     else if (myBeginSide == Side.right && myEndSide == Side.right) {
-      attribute = "android:layout_alignRight";
+      attribute = "layout_alignRight";
     }
     else if (myBeginSide == Side.left && myEndSide == Side.right) {
-      attribute = "android:layout_toRightOf";
+      attribute = "layout_toRightOf";
     }
     else if (myBeginSide == Side.right && myEndSide == Side.left) {
-      attribute = "android:layout_toLeftOf";
+      attribute = "layout_toLeftOf";
     }
     else {
       return;
@@ -226,7 +227,7 @@ public class ComponentSnapPoint extends SnapPoint {
 
         for (RadComponent component : components) {
           XmlTag tag = ((RadViewComponent)component).getTag();
-          tag.setAttribute(attribute, componentId);
+          tag.setAttribute(attribute, SdkConstants.NS_RESOURCES, componentId);
         }
       }
     });

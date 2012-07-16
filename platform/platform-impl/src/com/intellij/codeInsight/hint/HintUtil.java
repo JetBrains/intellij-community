@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,19 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 public class HintUtil {
   public static final Color INFORMATION_COLOR = new Color(253, 254, 226);
@@ -44,7 +51,14 @@ public class HintUtil {
   private HintUtil() {
   }
 
-  public static JComponent createInformationLabel(String text) {
+  public static JComponent createInformationLabel(@NotNull String text) {
+    return createInformationLabel(text, null, null);
+  }
+
+  public static JComponent createInformationLabel(@NotNull String text,
+                                                  @Nullable HyperlinkListener hyperlinkListener,
+                                                  @Nullable MouseListener mouseListener)
+  {
     HintHint hintHint = new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
 
     HintLabel label = new HintLabel();
@@ -57,6 +71,13 @@ public class HintUtil {
       label.setFont(getBoldFont());
       label.setBackground(INFORMATION_COLOR);
       label.setOpaque(true);
+    }
+
+    if (hyperlinkListener != null) {
+      label.myPane.addHyperlinkListener(hyperlinkListener);
+    }
+    if (mouseListener != null) {
+      label.myPane.addMouseListener(mouseListener);
     }
 
     return label;

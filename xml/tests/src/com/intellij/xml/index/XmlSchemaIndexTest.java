@@ -8,6 +8,8 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -16,6 +18,8 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
+
+  private static final String NS = "http://java.jb.com/xml/ns/javaee";
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public XmlSchemaIndexTest() {
@@ -44,6 +48,14 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
     assertTrue(xstags.contains("schema"));
   }
 
+  public void testXsdNamespaceBuilder() throws Exception {
+    VirtualFile file = myFixture.copyFileToProject("web-app_2_5.xsd");
+    final XsdNamespaceBuilder builder = XsdNamespaceBuilder.computeNamespace(new InputStreamReader(file.getInputStream()));
+    assertEquals(NS, builder.getNamespace());
+    assertEquals("2.5", builder.getVersion());
+    assertEquals(Arrays.asList("web-app"), builder.getTags());
+  }
+
   public void testTagNameIndex() {
 
     myFixture.copyDirectoryToProject("", "");
@@ -54,29 +66,42 @@ public class XmlSchemaIndexTest extends CodeInsightFixtureTestCase {
     final Collection<VirtualFile> files = XmlTagNamesIndex.getFilesByTagName("bean", project);
     assertEquals(1, files.size());
 
-    final Collection<VirtualFile> files1 = XmlTagNamesIndex.getFilesByTagName("schema", project);
+    final Collection<VirtualFile> files1 = XmlTagNamesIndex.getFilesByTagName("web-app", project);
     assertEquals(files1.toString(), 2, files1.size());
 
-    Collection<String> names = ContainerUtil.map(files1, new Function<VirtualFile, String>() {
+    List<String> names = new ArrayList<String>(ContainerUtil.map(files1, new Function<VirtualFile, String>() {
       @Override
       public String fun(VirtualFile virtualFile) {
         return virtualFile.getName();
       }
-    });
-    List<String> expected = Arrays.asList("XMLSchema.xsd", "XMLSchema.xsd");
-    names.removeAll(expected);
-    assertTrue(files1.toString(), names.isEmpty());
+    }));
+    assertEquals(Arrays.asList("web-app_3_0.xsd", "web-app_2_5.xsd"), names);
   }
 
   public void testNamespaceIndex() {
 
     myFixture.copyDirectoryToProject("", "");
 
-    final List<IndexedRelevantResource<String, String>> files =
-      XmlNamespaceIndex.getResourcesByNamespace("http://www.springframework.org/schema/beans",
+    final List<IndexedRelevantResource<String, XsdNamespaceBuilder>> files =
+      XmlNamespaceIndex.getResourcesByNamespace(NS,
                                                 getProject(),
                                                 myModule);
-    assertEquals(1, files.size());
+    assertEquals(2, files.size());
+
+    IndexedRelevantResource<String, XsdNamespaceBuilder>
+      resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "3.0", myModule);
+    assertNotNull(resource);
+    XsdNamespaceBuilder builder = resource.getValue();
+    assertEquals(NS, builder.getNamespace());
+    assertEquals("3.0", builder.getVersion());
+    assertEquals(Arrays.asList("web-app"), builder.getTags());
+
+    resource = XmlNamespaceIndex.guessSchema(NS, "web-app", "2.5", myModule);
+    assertNotNull(resource);
+    builder = resource.getValue();
+    assertEquals(NS, builder.getNamespace());
+    assertEquals("2.5", builder.getVersion());
+    assertEquals(Arrays.asList("web-app"), builder.getTags());
   }
 
   @Override

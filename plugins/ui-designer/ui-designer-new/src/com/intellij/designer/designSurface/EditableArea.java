@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -54,6 +55,8 @@ public interface EditableArea {
   void appendSelection(@NotNull RadComponent component);
 
   void setSelection(@NotNull List<RadComponent> components);
+
+  void deselect(@NotNull Collection<RadComponent> components);
 
   void deselectAll();
 

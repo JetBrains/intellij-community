@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.impl.EditorFileSwapper;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -66,7 +67,7 @@ public class JavaEditorFileSwapper extends EditorFileSwapper {
 
       if (member != null) {
         PsiElement navigationElement = member.getNavigationElement();
-        if (navigationElement.getContainingFile().getVirtualFile() == sourceFile) {
+        if (Comparing.equal(navigationElement.getContainingFile().getVirtualFile(), sourceFile)) {
           position = navigationElement.getTextOffset();
         }
       }

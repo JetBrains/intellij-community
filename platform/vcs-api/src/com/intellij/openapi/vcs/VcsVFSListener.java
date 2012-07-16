@@ -269,7 +269,7 @@ public abstract class VcsVFSListener implements Disposable {
       final String newPath = newParentPath + "/" + newName;
       boolean foundExistingInfo = false;
       for (MovedFileInfo info : myMovedFiles) {
-        if (info.myFile == file) {
+        if (Comparing.equal(info.myFile, file)) {
           info.myNewPath = newPath;
           foundExistingInfo = true;
           break;

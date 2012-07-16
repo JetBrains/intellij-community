@@ -29,7 +29,6 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.server.ProjectDescriptor;
 
 import java.io.*;
 import java.util.*;
@@ -669,6 +668,10 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private class ConstantSearch implements Callbacks.ConstantAffectionResolver {
+
+    private ConstantSearch() {
+    }
+
     @Nullable @Override
     public Future<Callbacks.ConstantAffection> request(String ownerClassName, String fieldName, int accessFlags, boolean fieldRemoved, boolean accessChanged) {
       final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask.Builder task =
@@ -678,7 +681,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       task.setAccessFlags(accessFlags);
       task.setIsAccessChanged(accessChanged);
       task.setIsFieldRemoved(fieldRemoved);
-      final ConstantSearchFuture future = new ConstantSearchFuture();
+      final ConstantSearchFuture future = new ConstantSearchFuture(BuildSession.this);
       final ConstantSearchFuture prev = mySearchTasks.put(new Pair<String, String>(ownerClassName, fieldName), future);
       if (prev != null) {
         prev.setDone();
@@ -694,8 +697,10 @@ final class BuildSession implements Runnable, CanceledStatus {
 
   private static class ConstantSearchFuture extends BasicFuture<Callbacks.ConstantAffection> {
     private volatile Callbacks.ConstantAffection myResult = Callbacks.ConstantAffection.EMPTY;
+    private final CanceledStatus myCanceledStatus;
 
-    private ConstantSearchFuture() {
+    private ConstantSearchFuture(CanceledStatus canceledStatus) {
+      myCanceledStatus = canceledStatus;
     }
 
     public void setResult(final Collection<File> affectedFiles) {
@@ -705,8 +710,16 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     @Override
     public Callbacks.ConstantAffection get() throws InterruptedException, ExecutionException {
-      super.get();
-      return myResult;
+      while (true) {
+        try {
+          return get(300L, TimeUnit.MILLISECONDS);
+        }
+        catch (TimeoutException ignored) {
+        }
+        if (myCanceledStatus.isCanceled()) {
+          return myResult;
+        }
+      }
     }
 
     @Override

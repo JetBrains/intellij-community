@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,8 @@ import java.awt.event.MouseEvent;
 
 public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
 
+  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
+
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private RegistryValue myIsEnabled;
 
@@ -64,8 +66,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private Component myQueuedComponent;
 
   private BalloonImpl myCurrentTipUi;
-  private MouseEvent myCurrentEvent;
-  private boolean myCurrentTipIsCentered;
+  private MouseEvent  myCurrentEvent;
+  private boolean     myCurrentTipIsCentered;
 
   private Runnable myHideRunnable;
 
@@ -75,12 +77,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   private final Alarm myAlarm = new Alarm();
 
-  private int myX;
-  private int myY;
+  private int           myX;
+  private int           myY;
   private RegistryValue myMode;
 
   private IdeTooltip myCurrentTooltip;
-  private Runnable myShowRequest;
+  private Runnable   myShowRequest;
   private IdeTooltip myQueuedTooltip;
 
 
@@ -341,7 +343,11 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }, tooltip.getDismissDelay());
   }
-
+  
+  @Nullable
+  public IdeTooltip getCurrentTooltip() {
+    return myCurrentTooltip;
+  }
 
   public Color getTextForeground(boolean awtTooltip) {
     return useGraphite(awtTooltip) ? Color.white : UIUtil.getToolTipForeground();
@@ -398,6 +404,9 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
+    if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(RelativePoint.fromScreen(me.getLocationOnScreen()))) {
+      return false;
+    }
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
@@ -441,7 +450,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return true;
   }
 
-  private void hideCurrentNow(boolean animationEnabled) {
+  public void hideCurrentNow(boolean animationEnabled) {
     if (myCurrentTipUi != null) {
       myCurrentTipUi.setAnimationEnabled(animationEnabled);
       myCurrentTipUi.hide();

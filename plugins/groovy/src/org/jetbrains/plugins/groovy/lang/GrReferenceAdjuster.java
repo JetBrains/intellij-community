@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -125,7 +126,8 @@ public class GrReferenceAdjuster {
 
   private static boolean checkIsInnerClass(PsiClass resolved) {
     final PsiClass containingClass = resolved.getContainingClass();
-    return containingClass == null || CodeStyleSettingsManager.getSettings(resolved.getProject()).INSERT_INNER_CLASS_IMPORTS;
+    return containingClass == null || CodeStyleSettingsManager.getSettings(resolved.getProject())
+      .getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS;
   }
 
   @Nullable
@@ -157,10 +159,10 @@ public class GrReferenceAdjuster {
     if (ref instanceof GrReferenceElementImpl && ((GrReferenceElementImpl)ref).isFullyQualified()) {
       final GrDocComment doc = PsiTreeUtil.getParentOfType(ref, GrDocComment.class);
       if (doc != null) {
-        if (CodeStyleSettingsManager.getSettings(ref.getProject()).USE_FQ_CLASS_NAMES_IN_JAVADOC) return false;
+        if (CodeStyleSettingsManager.getSettings(ref.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).USE_FQ_CLASS_NAMES_IN_JAVADOC) return false;
       }
       else {
-        if (CodeStyleSettingsManager.getSettings(ref.getProject()).USE_FQ_CLASS_NAMES) return false;
+        if (CodeStyleSettingsManager.getSettings(ref.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).USE_FQ_CLASS_NAMES) return false;
       }
     }
 

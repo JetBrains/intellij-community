@@ -52,6 +52,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
@@ -183,7 +184,7 @@ public class AndroidUtils {
     final List<String> packages = new ArrayList<String>();
     file = file.getParent();
 
-    while (file != null && projectDir != file && !sourceRoots.contains(file)) {
+    while (file != null && !Comparing.equal(projectDir, file) && !sourceRoots.contains(file)) {
       packages.add(file.getName());
       file = file.getParent();
     }

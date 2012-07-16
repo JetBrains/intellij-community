@@ -21,9 +21,13 @@ public abstract class JpsLoaderBase {
   }
 
   protected Element loadRootElement(final File file) {
+    return loadRootElement(file, myMacroExpander);
+  }
+
+  protected static Element loadRootElement(final File file, final JpsMacroExpander macroExpander) {
     try {
       final Element element = JDOMUtil.loadDocument(file).getRootElement();
-      myMacroExpander.substitute(element, SystemInfo.isFileSystemCaseSensitive);
+      macroExpander.substitute(element, SystemInfo.isFileSystemCaseSensitive);
       return element;
     }
     catch (JDOMException e) {
@@ -35,11 +39,11 @@ public abstract class JpsLoaderBase {
   }
 
   protected static boolean isXmlFile(File file) {
-    return file.isFile() && FileUtil.getNameWithoutExtension(file).equalsIgnoreCase("xml");
+    return file.isFile() && FileUtil.getExtension(file.getName()).equalsIgnoreCase("xml");
   }
 
   @Nullable
-  public static Element findComponent(Element root, String componentName) {
+  protected static Element findComponent(Element root, String componentName) {
     for (Element element : JDOMUtil.getChildren(root, "component")) {
       if (componentName.equals(element.getAttributeValue("name"))) {
         return element;

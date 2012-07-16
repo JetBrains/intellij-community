@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.morphing;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ComponentMorphingTool;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.relative.RadRelativeLayout;
@@ -38,10 +39,10 @@ public class RelativeLayout {
         for (RadComponent childComponent : myNewComponent.getChildren()) {
           Rectangle bounds = childComponent.getBounds();
           XmlTag tag = ((RadViewComponent)childComponent).getTag();
-          tag.setAttribute("android:layout_alignParentLeft", "true");
-          tag.setAttribute("android:layout_marginLeft", Integer.toString(bounds.x - parentBounds.x) + "dp");
-          tag.setAttribute("android:layout_alignParentTop", "true");
-          tag.setAttribute("android:layout_marginTop", Integer.toString(bounds.y - parentBounds.y) + "dp");
+          tag.setAttribute("layout_alignParentLeft", SdkConstants.NS_RESOURCES, "true");
+          tag.setAttribute("layout_marginLeft", SdkConstants.NS_RESOURCES, Integer.toString(bounds.x - parentBounds.x) + "dp");
+          tag.setAttribute("layout_alignParentTop", SdkConstants.NS_RESOURCES, "true");
+          tag.setAttribute("layout_marginTop", SdkConstants.NS_RESOURCES, Integer.toString(bounds.y - parentBounds.y) + "dp");
         }
       }
     }.result();

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -28,6 +29,7 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
     doTest("");
   }
   protected void doTest(String directory) {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     final List<String> stringList = TestUtils.readInput(getTestDataPath() + "/" + getTestName(true) + ".test");
     if (directory.length()!=0) directory += "/";
     final String fileName = directory + getTestName(true) + "." + getExtension();

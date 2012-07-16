@@ -603,6 +603,10 @@
       <pattern>\Q\j\E</pattern>
       <expected>OK</expected>
     </test>
+    <test>
+      <pattern>\c0</pattern>
+      <expected>OK</expected>
+    </test>
   </escapes>
 
   <anchors>

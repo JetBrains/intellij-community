@@ -1,5 +1,6 @@
 package org.jetbrains.android.intentions;
 
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -36,6 +37,7 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
   }
 
   public void test1() throws IOException {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     doTest();
   }
 
@@ -82,6 +84,7 @@ public class AndroidAddStringResourceActionTest extends AndroidTestCase {
   }
 
   public void test11() throws IOException {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     doTest(new Runnable() {
       @Override
       public void run() {

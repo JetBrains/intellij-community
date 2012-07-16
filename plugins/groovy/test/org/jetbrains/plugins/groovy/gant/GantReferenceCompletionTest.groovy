@@ -29,8 +29,9 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
- /**
+/**
  * @author ilyas
  */
 public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase {
@@ -57,6 +58,7 @@ public class GantReferenceCompletionTest extends LightCodeInsightFixtureTestCase
   }
 
   public void testDep() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     checkVariants """
 target(aaa: "") {
     dep<caret>
@@ -79,6 +81,7 @@ target(aaa: "") {
   }
 
   public void testInclude() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     checkVariants "inc<caret>", "includeTool", "includeTargets"
   }
 
@@ -130,6 +133,7 @@ ant.zip {
   }
   
   public void testTagsInsideTagsInGantTarget() throws Exception {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     checkVariants """
 target(aaa: "") {
   zip {

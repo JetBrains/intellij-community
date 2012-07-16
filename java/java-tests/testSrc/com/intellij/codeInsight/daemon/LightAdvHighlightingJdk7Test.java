@@ -30,6 +30,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -128,6 +129,11 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
     }
   }
 
+  public void testJavacQuirks() throws Exception {
+    setLanguageLevel(LanguageLevel.JDK_1_6);
+    doTest(true, false);
+  }
+
   public void testNumericLiterals() throws Exception { doTest(false, false); }
   public void testMultiCatch() throws Exception { doTest(false, false); }
   public void testTryWithResources() throws Exception { doTest(false, false); }
@@ -136,7 +142,6 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testUncheckedGenericsArrayCreation() throws Exception { doTest(true, false); }
   public void testPreciseRethrow() throws Exception { doTest(false, false); }
   public void testImprovedCatchAnalysis() throws Exception { doTest(true, false); }
-  public void testJavacQuirks() throws Exception { doTest(true, false); }
   public void testPolymorphicTypeCast() throws Exception { doTest(true, false); }
   public void testErasureClashConfusion() throws Exception { doTest(true, false, new UnusedDeclarationInspection()); }
   public void testUnused() throws Exception { doTest(true, false, new UnusedDeclarationInspection()); }

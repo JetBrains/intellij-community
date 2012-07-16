@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.psi.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -683,6 +684,12 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     GrStatement branch = ((GrIfStatement)statements[0]).getThenBranch();
     LOG.assertTrue(branch instanceof GrBlockStatement);
     return (GrBlockStatement)branch;
+  }
+
+  @Override
+  public GrModifierList createModifierList(String text) {
+    final GrMethod method = createMethodFromText(text + " void foo()");
+    return method.getModifierList();
   }
 
   public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {

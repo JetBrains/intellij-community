@@ -121,6 +121,7 @@ public interface RegExpTT {
             ESC_CTRL_CHARACTER,
             ESC_CHARACTER,
             CTRL_CHARACTER,
+            CTRL,
             UNICODE_CHAR,
             HEX_CHAR, BAD_HEX_VALUE,
             OCT_CHAR, BAD_OCT_VALUE,

@@ -30,6 +30,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.facet.JpsFacetLoader;
 
 import java.lang.reflect.TypeVariable;
 import java.util.Arrays;
@@ -94,7 +95,7 @@ public class FacetUtil {
       return XmlSerializer.serialize(state, new SkipDefaultValuesSerializationFilters());
     }
     else {
-      final Element config = new Element(FacetManagerImpl.CONFIGURATION_ELEMENT);
+      final Element config = new Element(JpsFacetLoader.CONFIGURATION_ELEMENT);
       configuration.writeExternal(config);
       return config;
     }

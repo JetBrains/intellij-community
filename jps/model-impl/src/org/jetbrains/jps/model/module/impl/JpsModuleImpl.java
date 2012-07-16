@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, JpsProjectImpl> implements JpsModule {
+public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl> implements JpsModule {
   private static final JpsTypedDataKind<JpsModuleType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleType<?>>();
   private static final JpsUrlListKind CONTENT_ROOTS_KIND = new JpsUrlListKind("content roots");
   private static final JpsUrlListKind EXCLUDED_ROOTS_KIND = new JpsUrlListKind("excluded roots");
@@ -28,6 +28,7 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
     myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleType<?>>(type, properties));
     myContainer.setChild(CONTENT_ROOTS_KIND);
     myContainer.setChild(EXCLUDED_ROOTS_KIND);
+    myContainer.setChild(JpsFacetKind.COLLECTION_KIND);
     myContainer.setChild(DEPENDENCIES_LIST_KIND, new JpsDependenciesListImpl());
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryKind.LIBRARIES_COLLECTION_KIND));
     myContainer.setChild(JpsModuleSourceRootKind.ROOT_COLLECTION_KIND);
@@ -89,6 +90,18 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl, J
         break;
       }
     }
+  }
+
+  @NotNull
+  @Override
+  public <P extends JpsElementProperties> JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<P> type, @NotNull P properties) {
+    return myContainer.getChild(JpsFacetKind.COLLECTION_KIND).addChild(new JpsFacetImpl(type, name, properties));
+  }
+
+  @NotNull
+  @Override
+  public List<JpsFacet> getFacets() {
+    return myContainer.getChild(JpsFacetKind.COLLECTION_KIND).getElements();
   }
 
   @NotNull

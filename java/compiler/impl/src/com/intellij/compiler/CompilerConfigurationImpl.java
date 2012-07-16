@@ -57,7 +57,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
@@ -180,13 +179,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
     if (!Comparing.equal(previous, level)) {
       final Project project = module.getProject();
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (!project.isDisposed()) {
-            CompileServerManager.getInstance().sendReloadRequest(project);
-          }
-        }
-      });
     }
   }
 

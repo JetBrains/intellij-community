@@ -24,6 +24,8 @@ import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -54,12 +56,17 @@ public class TextOccurrencesUtil {
     }, factory);
   }
 
-  public static void processTextOccurences(@NotNull PsiElement element,
+  public static void processTextOccurences(@NotNull final PsiElement element,
                                            @NotNull String stringToSearch,
                                            @NotNull GlobalSearchScope searchScope,
                                            @NotNull final Processor<UsageInfo> processor,
                                            @NotNull final UsageInfoFactory factory) {
-    PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
+    PsiSearchHelper helper = ApplicationManager.getApplication().runReadAction(new Computable<PsiSearchHelper>() {
+      @Override
+      public PsiSearchHelper compute() {
+        return PsiSearchHelper.SERVICE.getInstance(element.getProject());
+      }
+    });
 
     helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
       public boolean process(PsiFile psiFile, int startOffset, int endOffset) {

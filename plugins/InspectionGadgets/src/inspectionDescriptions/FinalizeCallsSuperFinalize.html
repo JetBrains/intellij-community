@@ -3,6 +3,7 @@
 This inspection reports any implementations of the <b>Object.finalize()</b> method
 which do not call <b>super.finalize()</b>. Failing to call <b>super.finalize()</b> may result in objects failing to properly
 free any resources held or do other cleanup activities.
+<!-- tooltip end -->
 <p>
 Use the checkboxes below to ignore direct subclasses of <b>java.lang.Object</b>
 or to ignore <b>finalize()</b> implementations with an empty

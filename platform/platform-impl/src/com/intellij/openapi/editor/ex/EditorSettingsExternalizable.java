@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableApplicationComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -51,8 +50,6 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     public boolean IS_CARET_INSIDE_TABS;
     @NonNls public String STRIP_TRAILING_SPACES = "Changed";
     public boolean IS_ENSURE_NEWLINE_AT_EOF = false;
-    public boolean SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = false;
-    public long QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = 500;
     public boolean IS_CARET_BLINKING = true;
     public int CARET_BLINKING_PERIOD = 500;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
@@ -368,28 +365,6 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     myOptions.STRIP_TRAILING_SPACES = stripTrailingSpaces;
   }
 
-  public boolean isShowQuickDocOnMouseOverElement() {
-    return myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT;
-  }
-  
-  public void setShowQuickDocOnMouseOverElement(boolean show) {
-    myOptions.SHOW_QUICK_DOC_ON_MOUSE_OVER_ELEMENT = show;
-  }
-
-  public long getQuickDocOnMouseOverElementDelayMillis() {
-    return myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS;
-  }
-
-  public void setQuickDocOnMouseOverElementDelayMillis(long delay) throws IllegalArgumentException {
-    if (delay <= 0) {
-      throw new IllegalArgumentException(String.format(
-        "Non-positive delay for the 'show quick doc on mouse over element' value detected! Expected positive value but got %d",
-        delay
-      ));
-    }
-    myOptions.QUICK_DOC_ON_MOUSE_OVER_DELAY_MS = delay;
-  }
-  
   public boolean isRefrainFromScrolling() {
     return myOptions.REFRAIN_FROM_SCROLLING;
   }

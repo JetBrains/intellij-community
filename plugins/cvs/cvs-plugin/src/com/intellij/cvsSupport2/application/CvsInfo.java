@@ -27,6 +27,7 @@ import com.intellij.cvsSupport2.errorHandling.ErrorRegistry;
 import com.intellij.cvsSupport2.javacvsImpl.io.ReadWriteStatistics;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -142,7 +143,7 @@ public class CvsInfo {
   }
 
   private void loadEntries() {
-    if (myParent != DUMMY_ROOT) {
+    if (!Comparing.equal(myParent, DUMMY_ROOT)) {
       myEntries = createEntriesFor(getParentFile());
     }
     else {

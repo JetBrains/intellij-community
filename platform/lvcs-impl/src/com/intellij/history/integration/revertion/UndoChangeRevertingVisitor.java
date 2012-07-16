@@ -25,6 +25,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.command.impl.DocumentUndoProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
@@ -101,7 +102,7 @@ public class UndoChangeRevertingVisitor extends ChangeVisitor {
       if (f != null) {
         VirtualFile existing = f.getParent().findChild(c.getOldName());
         try {
-          if (existing != null && existing != f) {
+          if (existing != null && !Comparing.equal(existing, f)) {
             existing.delete(LocalHistory.VFS_EVENT_REQUESTOR);
           }
           f.rename(LocalHistory.VFS_EVENT_REQUESTOR, c.getOldName());

@@ -94,6 +94,10 @@ public class ShadowBorderPainter {
       right.paintIcon(c, g, width - sideSize, _y);
     }
 
+    g.setColor(new Color(0, 0, 0, 30));
+    g.drawRect(SIDE_SIZE - 1, TOP_SIZE - 1,
+               width - SIDE_SIZE * 2 + 1, height - TOP_SIZE - BOTTOM_SIZE + 1);
+
     g.dispose();
     return image;
   }

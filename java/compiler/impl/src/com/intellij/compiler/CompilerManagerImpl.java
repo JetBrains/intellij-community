@@ -21,6 +21,7 @@ import com.intellij.compiler.impl.javaCompiler.JavaCompiler;
 import com.intellij.compiler.impl.resourceCompiler.ResourceCompiler;
 import com.intellij.compiler.impl.rmiCompiler.RmicCompiler;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.extensions.Extensions;
@@ -94,6 +95,9 @@ public class CompilerManagerImpl extends CompilerManager {
     Disposer.register(project, new Disposable() {
       public void dispose() {
         lfs.removeWatchedRoots(myWatchRoots);
+        if (ApplicationManager.getApplication().isUnitTestMode()) {    // force cleanup for created compiler system directory with generated sources
+          FileUtil.delete(CompilerPaths.getCompilerSystemDirectory(project));
+        }
       }
     });
 

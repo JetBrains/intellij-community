@@ -1437,7 +1437,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
     
     if (restrictedFile != null) {
-      if(vFile != restrictedFile) {
+      if (!Comparing.equal(vFile, restrictedFile)) {
         return false;
       }
     } 
@@ -2000,7 +2000,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
                              boolean onlyRemoveOutdatedData) {
       myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
       for (VirtualFile file: getAllFilesToUpdate()) {
-        if (filter == null || filter.accept(file) || file == restrictedTo) {
+        if (filter == null || filter.accept(file) || Comparing.equal(file, restrictedTo)) {
           try {
             myForceUpdateSemaphore.down();
             // process only files that can affect result

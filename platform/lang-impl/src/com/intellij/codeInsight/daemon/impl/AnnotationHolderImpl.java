@@ -22,6 +22,7 @@ import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -130,7 +131,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
     LOG.assertTrue(containingFile != null, node);
     VirtualFile containingVFile = containingFile.getVirtualFile();
     VirtualFile myVFile = myFile.getVirtualFile();
-    if (containingVFile != myVFile) {
+    if (!Comparing.equal(containingVFile, myVFile)) {
       LOG.error(
         "Annotation must be registered for an element inside '" + myFile + "' which is in '" + myVFile + "'.\n" +
         "Element passed: '" + node + "' is inside the '" + containingFile + "' which is in '" + containingVFile + "'");

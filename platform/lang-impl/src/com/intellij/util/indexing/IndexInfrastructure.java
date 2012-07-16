@@ -84,7 +84,7 @@ public class IndexInfrastructure {
     finally {
       ourIndexIdToCreationStamp.clear();
       os.close();
-      long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue + 2000, ourLastStamp));
+      long max = Math.max(System.currentTimeMillis(), Math.max(prevLastModifiedValue, ourLastStamp) + 2000);
       ourLastStamp = max;
       file.setLastModified(max);
     }

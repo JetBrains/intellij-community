@@ -17,24 +17,30 @@ package com.intellij.android.designer.model.grid;
 
 import com.intellij.android.designer.designSurface.layout.CaptionStaticDecorator;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadComponentVisitor;
 import com.intellij.designer.model.RadVisualComponent;
+import com.intellij.util.containers.hash.HashSet;
 
 import java.awt.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alexander Lobas
  */
 public abstract class RadCaptionComponent<T extends RadViewComponent> extends RadVisualComponent {
   private final StaticDecorator myDecorator;
+  private final EditableArea myMainArea;
   protected final T myContainer;
   protected final int myIndex;
   protected final int myOffset;
   protected final int myWidth;
 
-  public RadCaptionComponent(T container, int index, int offset, int width, boolean empty) {
+  public RadCaptionComponent(EditableArea mainArea, T container, int index, int offset, int width, boolean empty) {
+    myMainArea = mainArea;
     myContainer = container;
     myIndex = index;
     myOffset = offset;
@@ -57,5 +63,18 @@ public abstract class RadCaptionComponent<T extends RadViewComponent> extends Ra
   @Override
   public void addStaticDecorators(List<StaticDecorator> decorators, List<RadComponent> selection) {
     decorators.add(myDecorator);
+  }
+
+  protected final void deselect(List<RadComponent> components) {
+    final Set<RadComponent> allComponents = new HashSet<RadComponent>();
+    for (RadComponent component : components) {
+      component.accept(new RadComponentVisitor() {
+        @Override
+        public void endVisit(RadComponent component) {
+          allComponents.add(component);
+        }
+      }, true);
+    }
+    myMainArea.deselect(allComponents);
   }
 }

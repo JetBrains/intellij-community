@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -111,7 +112,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
       final VirtualFile sourceRoot = fileIndex.getSourceRootForFile(sourceFile);
       if (sourceRoot != null) {
         for (PsiDirectory dir : directories) {
-          if (fileIndex.getSourceRootForFile(dir.getVirtualFile()) == sourceRoot) {
+          if (Comparing.equal(fileIndex.getSourceRootForFile(dir.getVirtualFile()), sourceRoot)) {
             return dir;
           }
         }

@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG;
 
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import org.intellij.plugins.testUtil.CopyFile;
 
 /**
@@ -42,6 +43,7 @@ public class RngCompletionTest extends HighlightingTestBase {
   }
 
   public void testCompleteRef4() throws Throwable {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     doTestCompletion("complete-ref-4", "rng");
   }
 }

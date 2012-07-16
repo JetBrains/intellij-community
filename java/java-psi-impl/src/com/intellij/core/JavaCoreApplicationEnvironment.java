@@ -23,13 +23,13 @@ import com.intellij.lang.LanguageASTFactory;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.projectRoots.JavaVersionService;
-import com.intellij.psi.ClassFileViewProviderFactory;
-import com.intellij.psi.EmptySubstitutor;
-import com.intellij.psi.FileTypeFileViewProviders;
-import com.intellij.psi.JavaDirectoryService;
+import com.intellij.openapi.util.ClassExtension;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.EmptySubstitutorImpl;
 import com.intellij.psi.impl.LanguageConstantExpressionEvaluator;
@@ -39,6 +39,7 @@ import com.intellij.psi.impl.compiled.ClsStubBuilderFactory;
 import com.intellij.psi.impl.compiled.DefaultClsStubBuilderFactory;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
 import com.intellij.psi.impl.source.tree.CoreJavaASTFactory;
+import com.intellij.psi.presentation.java.*;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
 
 /**
@@ -70,5 +71,24 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
     myApplication.registerService(EmptySubstitutor.class, new EmptySubstitutorImpl());
     myApplication.registerService(JavaDirectoryService.class, new CoreJavaDirectoryService());
     myApplication.registerService(JavaVersionService.class, new JavaVersionService());
+
+    addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiPackage.class, new PackagePresentationProvider());
+    addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiClass.class, new ClassPresentationProvider());
+    addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiMethod.class, new MethodPresentationProvider());
+    addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiField.class, new FieldPresentationProvider());
+    addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiLocalVariable.class, new VariablePresentationProvider());
+    addExplicitExtension(ItemPresentationProviders.INSTANCE, PsiParameter.class, new VariablePresentationProvider());
   }
+
+  protected <T> void addExplicitExtension(final ClassExtension<T> instance, final Class clazz, final T object) {
+    instance.addExplicitExtension(clazz, object);
+    Disposer.register(getParentDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        instance.removeExplicitExtension(clazz, object);
+      }
+    });
+  }
+
+
 }

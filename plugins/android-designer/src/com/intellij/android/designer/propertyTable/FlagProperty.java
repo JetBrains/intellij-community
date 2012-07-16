@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.propertyTable;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.propertyTable.IPropertyDecorator;
@@ -116,7 +117,7 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
 
   @Nullable
   protected XmlAttribute getAttribute(RadViewComponent component) {
-    return component.getTag().getAttribute("android:" + myDefinition.getName());
+    return component.getTag().getAttribute(myDefinition.getName(), SdkConstants.NS_RESOURCES);
   }
 
   @Override
@@ -125,7 +126,7 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
   }
 
   protected Set<String> getOptions(RadViewComponent component) throws Exception {
-    String value = component.getTag().getAttributeValue("android:" + myDefinition.getName());
+    String value = component.getTag().getAttributeValue(myDefinition.getName(), SdkConstants.NS_RESOURCES);
     if (value == null) {
       return Collections.emptySet();
     }
@@ -161,7 +162,7 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
           }
         }
         else {
-          component.getTag().setAttribute("android:" + myDefinition.getName(), StringUtil.join(options, "|"));
+          component.getTag().setAttribute(myDefinition.getName(), SdkConstants.NS_RESOURCES, StringUtil.join(options, "|"));
         }
       }
     });

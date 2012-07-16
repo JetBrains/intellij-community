@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
@@ -186,7 +187,7 @@ public class ContainerSnapPoint extends SnapPoint {
         if (attribute != null) {
           for (RadComponent component : components) {
             XmlTag tag = ((RadViewComponent)component).getTag();
-            tag.setAttribute("android:layout_" + attribute, "true");
+            tag.setAttribute("layout_" + attribute, SdkConstants.NS_RESOURCES, "true");
           }
         }
       }

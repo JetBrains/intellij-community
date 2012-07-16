@@ -23,6 +23,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,8 +69,21 @@ public class DeleteAction extends AnAction implements DumbAware {
     }
     DeleteProvider provider = getDeleteProvider(dataContext);
     if (event.getInputEvent() instanceof KeyEvent) {
+      KeyEvent keyEvent = (KeyEvent)event.getInputEvent();
       Object component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       if (component instanceof JTextComponent) provider = null; // Do not override text deletion
+      if (keyEvent.getKeyCode() == KeyEvent.VK_BACK_SPACE) {
+        // Do not override text deletion in speed search
+        if (component instanceof JComponent) {
+          SpeedSearchSupply searchSupply = SpeedSearchSupply.getSupply((JComponent)component);
+          if (searchSupply != null) provider = null;
+        }
+
+        String activeSpeedSearchFilter = SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.getData(dataContext);
+        if (!StringUtil.isEmpty(activeSpeedSearchFilter)) {
+          provider = null;
+        }
+      }
     }
     if (provider instanceof TitledHandler) {
       presentation.setText(((TitledHandler)provider).getActionTitle());

@@ -9,6 +9,7 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.annotations.NotNull
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 /**
  * @author ilyas
@@ -18,6 +19,12 @@ class GroovyTransformationsTest extends LightCodeInsightFixtureTestCase {
     @Override def void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
       PsiTestUtil.addLibrary(module, model, "GROOVY", TestUtils.getMockGroovy1_7LibraryHome(), TestUtils.GROOVY_JAR_17);
     }
+  }
+
+  @Override
+  protected void setUp() {
+    super.setUp()
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
   }
 
   @Override

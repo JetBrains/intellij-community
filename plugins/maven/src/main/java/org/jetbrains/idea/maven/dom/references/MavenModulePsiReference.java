@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -64,7 +65,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
     for (DomFileElement<MavenDomProjectModel> eachDomFile : files) {
       VirtualFile eachVFile = eachDomFile.getOriginalFile().getVirtualFile();
-      if (eachVFile == myVirtualFile) continue;
+      if (Comparing.equal(eachVFile, myVirtualFile)) continue;
 
       PsiFile psiFile = eachDomFile.getFile();
       String modulePath = calcRelativeModulePath(myVirtualFile, eachVFile);

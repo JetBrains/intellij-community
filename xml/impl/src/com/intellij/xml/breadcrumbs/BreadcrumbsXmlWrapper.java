@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -119,7 +120,7 @@ public class BreadcrumbsXmlWrapper implements BreadcrumbsItemListener<Breadcrumb
       public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
         PsiFile psiFile = event.getFile();
         VirtualFile file = psiFile == null ? null : psiFile.getVirtualFile();
-        if (file != myFile) return;
+        if (!Comparing.equal(file, myFile)) return;
         queueUpdate(editor);
       }
 

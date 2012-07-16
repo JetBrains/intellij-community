@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsModule> {
+public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsModule>, JpsCompositeElement {
   @NotNull
   JpsUrlList getContentRootsList();
 
@@ -32,10 +32,14 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
 
   void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);
 
-  JpsDependenciesList getDependenciesList();
+  @NotNull
+  <P extends JpsElementProperties>
+  JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<P> type, @NotNull P properties);
 
   @NotNull
-  JpsElementContainer getContainer();
+  List<JpsFacet> getFacets();
+
+  JpsDependenciesList getDependenciesList();
 
   @NotNull
   JpsModuleReference createReference();
@@ -53,4 +57,5 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   JpsSdkReferencesTable getSdkReferencesTable();
 
   void delete();
+
 }

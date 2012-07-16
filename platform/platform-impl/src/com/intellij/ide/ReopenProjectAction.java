@@ -33,15 +33,13 @@ import java.io.File;
 public class ReopenProjectAction extends AnAction implements DumbAware {
   private final String myProjectPath;
   private final String myProjectName;
-  private final boolean myNeedShowPath;
 
-  public ReopenProjectAction(final String projectPath, final String projectName, boolean needShowPath) {
+  public ReopenProjectAction(final String projectPath, final String projectName, final String displayName) {
     myProjectPath = projectPath;
     myProjectName = projectName;
-    myNeedShowPath = needShowPath;
 
     final Presentation presentation = getTemplatePresentation();
-    String text = myProjectPath.equals(myProjectName) ? FileUtil.getLocationRelativeToUserHome(myProjectPath) : myProjectName;
+    String text = projectPath.equals(displayName) ? FileUtil.getLocationRelativeToUserHome(projectPath) : displayName;
     presentation.setText(text, false);
     presentation.setDescription(projectPath);
   }
@@ -64,10 +62,6 @@ public class ReopenProjectAction extends AnAction implements DumbAware {
     return myProjectPath;
   }
   
-  public boolean needShowPath() {
-    return myNeedShowPath;
-  }
-
   public String getProjectName() {
     return myProjectName;
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.relative;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.feedbacks.TextFeedback;
 import com.intellij.designer.model.RadComponent;
@@ -70,20 +71,20 @@ public class AutoSnapPoint extends SnapPoint {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        String attribute = "android:layout_" + getAttribute();
+        String attribute = "layout_" + getAttribute();
         String marginAttribute = null;
         String marginValue = null;
 
         if (myMargin > 0) {
-          marginAttribute = myHorizontal ? "android:layout_marginLeft" : "android:layout_marginTop";
+          marginAttribute = myHorizontal ? "layout_marginLeft" : "layout_marginTop";
           marginValue = Integer.toString(myMargin) + "dp";
         }
 
         for (RadComponent component : components) {
           XmlTag tag = ((RadViewComponent)component).getTag();
-          tag.setAttribute(attribute, "true");
+          tag.setAttribute(attribute, SdkConstants.NS_RESOURCES, "true");
           if (marginValue != null) {
-            tag.setAttribute(marginAttribute, marginValue);
+            tag.setAttribute(marginAttribute, SdkConstants.NS_RESOURCES, marginValue);
           }
         }
       }
