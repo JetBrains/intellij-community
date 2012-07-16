@@ -163,6 +163,10 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
     assert "add" == presentation.itemText
+    assert "(int index, String element)" == presentation.tailText
+    assert "void" == presentation.typeText
+
+    presentation = renderElement(myItems[1])
     assert "(String o)" == presentation.tailText
     assert "boolean" == presentation.typeText
 
