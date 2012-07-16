@@ -1871,6 +1871,18 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     );
   }
 
+  public void testSchemaAutodetection() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "SchemaAutodetection/policy.xml"),
+        getVirtualFile(BASE_PATH + "SchemaAutodetection/cs-xacml-schema-policy-01.xsd"),
+        getVirtualFile(BASE_PATH + "SchemaAutodetection/cs-xacml-schema-context-01.xsd")
+      },
+      true,
+      false
+    );
+  }
+
   public void testSchemaWithXmlId() throws Exception {
     final String testName = getTestName(false);
 

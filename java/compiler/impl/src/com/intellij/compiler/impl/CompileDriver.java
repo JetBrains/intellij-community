@@ -589,7 +589,7 @@ public class CompileDriver {
           }
           final long start = System.currentTimeMillis();
           try {
-            LOG.info("COMPILATION STARTED " + (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild() ? "(BUILD PROCESS)" : "(COMPILE SERVER)"));
+            LOG.info("COMPILATION STARTED (BUILD PROCESS)");
             if (message != null) {
               compileContext.addMessage(message);
             }
@@ -615,7 +615,7 @@ public class CompileDriver {
           finally {
             final long finish = System.currentTimeMillis();
             CompilerUtil.logDuration(
-              "\tCOMPILATION FINISHED " + (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild() ? "(BUILD PROCESS)" : "(COMPILE SERVER)") + "; Errors: " +
+              "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
               compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
               "; warnings: " +
               compileContext.getMessageCount(CompilerMessageCategory.WARNING),

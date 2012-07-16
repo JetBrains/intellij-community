@@ -259,34 +259,32 @@ public class BuildManager implements ApplicationComponent{
     if (IS_UNIT_TEST_MODE || PowerSaveMode.isEnabled()) {
       return;
     }
-    if (CompilerWorkspaceConfiguration.useServerlessOutOfProcessBuild()) {
-      addMakeRequest(new Runnable() {
-        @Override
-        public void run() {
-          if (!myAutoMakeInProgress.getAndSet(true)) {
-            try {
-              ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-                @Override
-                public void run() {
-                  try {
-                    runAutoMake();
-                  }
-                  finally {
-                    myAutoMakeInProgress.set(false);
-                  }
+    addMakeRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (!myAutoMakeInProgress.getAndSet(true)) {
+          try {
+            ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  runAutoMake();
                 }
-              });
-            }
-            catch (RejectedExecutionException ignored) {
-              // we were shut down
-            }
+                finally {
+                  myAutoMakeInProgress.set(false);
+                }
+              }
+            });
           }
-          else {
-            addMakeRequest(this);
+          catch (RejectedExecutionException ignored) {
+            // we were shut down
           }
         }
-      });
-    }
+        else {
+          addMakeRequest(this);
+        }
+      }
+    });
   }
 
   private void addMakeRequest(Runnable runnable) {
@@ -747,6 +745,7 @@ public class BuildManager implements ApplicationComponent{
     if (IS_UNIT_TEST_MODE) {
       cmdLine.addParameter("-Dtest.mode=true");
     }
+    cmdLine.addParameter("-Djdt.compiler.useSingleThread=true"); // always run eclipse compiler in single-threaded mode
 
     final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
     if (shouldGenerateIndex != null) {
@@ -948,6 +947,7 @@ public class BuildManager implements ApplicationComponent{
           scheduleAutoMake();
         }
       });
+      scheduleAutoMake(); // run automake on project opening
     }
 
     @Override
