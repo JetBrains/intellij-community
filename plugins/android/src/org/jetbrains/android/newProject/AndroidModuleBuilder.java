@@ -419,7 +419,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     ResourceElement appNameResElement = null;
     final String appNameResource = "app_name";
 
-    for (ResourceElement resElement : manager.getValueResources("string")) {
+    for (ResourceElement resElement : manager.getValueResources(ResourceType.STRING.getName())) {
       if (appNameResource.equals(resElement.getName().getValue())) {
         appNameResElement = resElement;
       }
@@ -440,7 +440,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     final Manifest manifest = facet.getManifest();
 
     if (manifest != null) {
-      manifest.getApplication().getLabel().setValue(ResourceValue.referenceTo('@', null, "string", appNameResource));
+      manifest.getApplication().getLabel().setValue(ResourceValue.referenceTo('@', null, ResourceType.STRING.getName(), appNameResource));
       }
     }
 

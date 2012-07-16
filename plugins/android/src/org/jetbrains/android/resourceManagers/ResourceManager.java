@@ -281,7 +281,7 @@ public abstract class ResourceManager {
     final Set<String> result = new HashSet<String>();
     result.addAll(getValueResourceNames(type));
     result.addAll(getFileResourcesNames(type));
-    if (type.equals("id")) {
+    if (type.equals(ResourceType.ID.getName())) {
       result.addAll(getIds());
     }
     return result;

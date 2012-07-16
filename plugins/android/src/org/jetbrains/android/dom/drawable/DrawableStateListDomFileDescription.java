@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.drawable;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -23,9 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
  * @author Eugene.Kudelevsky
  */
@@ -33,7 +31,7 @@ public class DrawableStateListDomFileDescription extends AndroidResourceDomFileD
   @NonNls public static final String SELECTOR_TAG_NAME = "selector";
 
   public DrawableStateListDomFileDescription() {
-    super(DrawableSelector.class, SELECTOR_TAG_NAME, "drawable");
+    super(DrawableSelector.class, SELECTOR_TAG_NAME, ResourceType.DRAWABLE.getName());
   }
 
   @Override

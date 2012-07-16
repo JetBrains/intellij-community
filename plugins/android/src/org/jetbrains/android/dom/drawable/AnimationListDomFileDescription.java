@@ -1,5 +1,6 @@
 package org.jetbrains.android.dom.drawable;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -15,7 +16,7 @@ public class AnimationListDomFileDescription extends AndroidResourceDomFileDescr
   @NonNls static final String ANIMATION_LIST_TAG = "animation-list";
 
   public AnimationListDomFileDescription() {
-    super(AnimationList.class, ANIMATION_LIST_TAG, "drawable");
+    super(AnimationList.class, ANIMATION_LIST_TAG, ResourceType.DRAWABLE.getName());
   }
 
   @Override

@@ -15,11 +15,13 @@
  */
 package org.jetbrains.android.dom.converters;
 
+import com.android.resources.ResourceType;
+
 /**
  * @author Eugene.Kudelevsky
  */
 public class ParentStyleConverter extends ResourceReferenceConverter {
   public ParentStyleConverter() {
-    super("style", false, false);
+    super(ResourceType.STYLE.getName(), false, false);
   }
 }

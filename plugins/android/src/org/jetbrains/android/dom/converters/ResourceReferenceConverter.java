@@ -108,7 +108,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     final Set<String> recommendedTypes = getResourceTypes(context);
 
     // hack to check if it is a real id attribute
-    if (recommendedTypes.contains("id") && recommendedTypes.size() == 1) {
+    if (recommendedTypes.contains(ResourceType.ID.getName()) && recommendedTypes.size() == 1) {
       result.add(ResourceValue.reference(AndroidResourceUtil.NEW_ID_PREFIX));
     }
 
