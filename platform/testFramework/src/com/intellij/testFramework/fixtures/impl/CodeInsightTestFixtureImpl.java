@@ -563,7 +563,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     configureByFiles(filesBefore);
     complete(CompletionType.BASIC);
-    checkResultByFile(fileAfter);
+    try {
+      checkResultByFile(fileAfter);
+    }
+    catch (RuntimeException e) {
+      System.out.println("LookupElementStrings = " + getLookupElementStrings());
+      throw e;
+    }
   }
 
   protected void assertInitialized() {
