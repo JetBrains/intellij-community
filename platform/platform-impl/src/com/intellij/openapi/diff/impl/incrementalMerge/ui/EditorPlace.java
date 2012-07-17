@@ -25,11 +25,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.ScrollBarUI;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -100,18 +102,73 @@ public class EditorPlace extends JComponent implements Disposable, EditorEx.Repa
     JScrollBar scrollBar = myEditor.getScrollPane().getVerticalScrollBar();
     int startX = scrollBar.getX();
     int endX = startX + scrollBar.getWidth() - 1;
+
+    Rectangle thumb = calcThumbBounds(scrollBar);
+
+    int endY = startY + height;
     if (!applied) {
       if (height > 2) {
-        g.fillRect(startX, startY, scrollBar.getWidth(), height);
-        UIUtil.drawFramingLines(g, startX, endX, startY, startY + height, DiffUtil.getFramingColor(color));
+        fillRectAboveScrollBar(g, startX, startY, scrollBar.getWidth(), height, thumb);
+
+        Color framingColor = DiffUtil.getFramingColor(color);
+        if (outsideBounds(startY, thumb)) {
+          UIUtil.drawLine(g, startX, startY, endX, startY, null, framingColor);
+        }
+        if (outsideBounds(endY, thumb)) {
+          UIUtil.drawLine(g, startX, endY, endX, endY, null, framingColor);
+        }
       }
       else {
-        DiffUtil.drawDoubleShadowedLine(g, startX, endX, startY, color);
+        if (outsideBounds(startY, thumb)) {
+          DiffUtil.drawDoubleShadowedLine(g, startX, endX, startY, color);
+        }
       }
     }
     else {
-      DiffUtil.drawBoldDottedFramingLines(g, startX, endX, startY, startY + height, color);
+      if (outsideBounds(startY, thumb)) {
+        UIUtil.drawBoldDottedLine(g, startX, endX, startY, null, color, false);
+      }
+      if (outsideBounds(endY, thumb)) {
+        UIUtil.drawBoldDottedLine(g, startX, endX, endY, null, color, false);
+      }
     }
+  }
+
+  private static void fillRectAboveScrollBar(Graphics2D g, int startX, int startY, int width, int height, Rectangle thumb) {
+    int endY = startY + height;
+    int thumbEndY = thumb == null ? 0 : thumb.y + thumb.height;  // it's for further readability (could have a 2-level ifs for the variable)
+    if (thumb == null) {
+      g.fillRect(startX, startY, width, height);
+    }
+    else if (outsideBounds(startY, thumb) && !outsideBounds(endY, thumb)) {
+      g.fillRect(startX, startY, width, thumb.y - startY);
+    }
+    else if (!outsideBounds(startY, thumb) && outsideBounds(endY, thumb)) {
+      g.fillRect(startX, thumbEndY, width, endY - thumbEndY);
+    }
+    else if (startY < thumb.y && endY > thumbEndY) {  // surrounding the thumb
+      g.fillRect(startX, startY, width, thumb.y - startY);
+      g.fillRect(startX, thumbEndY, width, endY - thumbEndY);
+    }
+    else if (outsideBounds(startY, thumb) && outsideBounds(endY, thumb)) {    // outside without intersection
+      g.fillRect(startX, startY, width, height);
+    }
+  }
+
+  private static boolean outsideBounds(int y, @Nullable Rectangle rectangle) {
+    if (rectangle == null) {
+      return true;
+    }
+    return y < rectangle.y || y > rectangle.y + rectangle.height;
+  }
+
+  @Nullable
+  private static Rectangle calcThumbBounds(JScrollBar scrollBar) {
+    ScrollBarUI scrollBarUI = scrollBar.getUI();
+    if (scrollBarUI instanceof ButtonlessScrollBarUI) {
+      return ((ButtonlessScrollBarUI)scrollBarUI).getThumbBounds();
+    }
+    return null;
   }
 
   public void addNotify() {
