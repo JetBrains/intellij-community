@@ -62,6 +62,7 @@ class AnnotateStackTraceAction extends AnAction {
   private int newestLine = -1;
   private int maxDateLength = 0;
   private final Editor myEditor;
+  private boolean myGutterShowed = false;
 
   AnnotateStackTraceAction(ConsoleViewImpl consoleView) {
     super("Annotate", null, AllIcons.Actions.Annotate);
@@ -143,8 +144,11 @@ class AnnotateStackTraceAction extends AnAction {
 
           @Override
           public void gutterClosed() {
+            myGutterShowed = false;
           }
         });
+
+        myGutterShowed = true;
       }
 
       @Override
@@ -205,7 +209,7 @@ class AnnotateStackTraceAction extends AnAction {
                     }
                     ApplicationManager.getApplication().invokeLater(new Runnable() {
                       public void run() {
-                        if (cache.keySet().size() == 1) {
+                        if (!myGutterShowed) {
                           showGutter();
                         } else {
                           ((EditorGutterComponentEx)myEditor.getGutter()).revalidateMarkup();
@@ -217,6 +221,7 @@ class AnnotateStackTraceAction extends AnAction {
               }
             }
             catch (VcsException ignored) {
+              ignored.printStackTrace();
             }
           }
 
@@ -227,6 +232,6 @@ class AnnotateStackTraceAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(cache == null);
+    e.getPresentation().setEnabled(cache == null || !myGutterShowed);
   }
 }
