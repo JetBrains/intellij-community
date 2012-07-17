@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.incrementalMerge;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.diff.impl.splitter.DividerPolygon;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Editor;
@@ -182,11 +181,11 @@ class ChangeHighlighterHolder {
         if (height > 2) {
           g.setColor(color);
           g.fillRect(x, y, width, height);
-          UIUtil.drawFramingLines(g2, x, x + width, y - 1, y + height - 1, DividerPolygon.FRAMING_LINE_COLOR);
+          UIUtil.drawFramingLines(g2, x, x + width, y - 1, y + height - 1, color.darker());
         }
         else {
-          // insertion or deletion, when a range is null, and the text highlighter is a 2 pixel line
-          UIUtil.drawFramingLines(g2, x, x + width, y - 1, y + height, color);
+          // insertion or deletion, when a range is null. matching the text highlighter which is a 2 pixel line
+          DiffUtil.drawDoubleShadowedLine(g2, x, x + width, y - 1, color);
         }
       }
       else {

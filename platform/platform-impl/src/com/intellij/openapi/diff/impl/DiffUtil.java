@@ -101,4 +101,14 @@ public class DiffUtil {
     UIUtil.drawBoldDottedLine(g, startX, endX, startY, null, color, false);
     UIUtil.drawBoldDottedLine(g, startX, endX, bottomY, null, color, false);
   }
+
+  public static void drawDoubleShadowedLine(@NotNull Graphics2D g, int startX, int endX, int y, @NotNull Color color) {
+    UIUtil.drawLine(g, startX, y, endX, y, null, getFramingColor(color));
+    UIUtil.drawLine(g, startX, y + 1, endX, y + 1, null, color);
+  }
+
+  public static Color getFramingColor(@NotNull Color backgroundColor) {
+    return backgroundColor.darker();
+  }
+
 }

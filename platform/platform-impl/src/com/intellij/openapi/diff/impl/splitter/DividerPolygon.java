@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.splitter;
 
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.EditingSides;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
@@ -30,8 +31,6 @@ import java.util.ArrayList;
  * A polygon, which is drawn between editors in merge or diff dialogs, and which indicates the change flow from one editor to another.
  */
 public class DividerPolygon {
-  public static final int TRANSPARENCY = 150;
-  public static final Color FRAMING_LINE_COLOR = Color.LIGHT_GRAY;
 
   private final Color myColor;
   private final int myStart1;
@@ -57,7 +56,7 @@ public class DividerPolygon {
     if (!myApplied) {
       g.setColor(myColor);
       g.fill(new Polygon(new int[]{0, 0, width, width}, new int[]{myStart1, myEnd1, myEnd2, myStart2}, 4));
-      g.setColor(FRAMING_LINE_COLOR);
+      g.setColor(DiffUtil.getFramingColor(myColor));
       UIUtil.drawLine(g, 0, myStart1, width, myStart2);
       UIUtil.drawLine(g, 0, myEnd1, width, myEnd2);
     }

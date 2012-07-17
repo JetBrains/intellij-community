@@ -103,10 +103,10 @@ public class EditorPlace extends JComponent implements Disposable, EditorEx.Repa
     if (!applied) {
       if (height > 2) {
         g.fillRect(startX, startY, scrollBar.getWidth(), height);
-        UIUtil.drawFramingLines(g, startX, endX, startY, startY + height, DividerPolygon.FRAMING_LINE_COLOR);
+        UIUtil.drawFramingLines(g, startX, endX, startY, startY + height, DiffUtil.getFramingColor(color));
       }
       else {
-        UIUtil.drawFramingLines(g, startX, endX, startY, startY + height, color);
+        DiffUtil.drawDoubleShadowedLine(g, startX, endX, startY, color);
       }
     }
     else {
