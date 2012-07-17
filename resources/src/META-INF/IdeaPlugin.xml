@@ -622,6 +622,10 @@
       <category>Declaration</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.PushConditionInCallAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction</className>
       <category>Declaration</category>
     </intentionAction>
