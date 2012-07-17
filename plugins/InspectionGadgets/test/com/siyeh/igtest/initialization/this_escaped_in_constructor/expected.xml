@@ -34,4 +34,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'this' reference escaped in object construction</problem_class>
     <description>Escape of &lt;code&gt;this&lt;/code&gt; during object construction #loc</description>
   </problem>
+
+  <problem>
+    <file>MethodUsers.java</file>
+    <line>24</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'this' reference escaped in object construction</problem_class>
+    <description>Escape of &lt;code&gt;this&lt;/code&gt; during object construction #loc</description>
+  </problem>
 </problems>
