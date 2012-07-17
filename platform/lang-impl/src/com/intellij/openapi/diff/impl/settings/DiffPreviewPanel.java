@@ -54,9 +54,6 @@ public class DiffPreviewPanel implements PreviewPanel {
     myPanel.add(myMergePanelComponent, BorderLayout.CENTER);
     myMergePanelComponent.setToolbarEnabled(false);
     MergePanel2 mergePanel = getMergePanel();
-    mergePanel.setShowLineNumbers(false);
-    mergePanel.setAdditionalLinesAndColumns(1, 1);
-    mergePanel.setScrollToFirstDiff(false);
 
     for (int i = 0; i < MergePanel2.EDITORS_COUNT; i++) {
       final EditorMouseListener motionListener = new EditorMouseListener(i);
