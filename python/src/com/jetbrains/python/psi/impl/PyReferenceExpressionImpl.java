@@ -153,7 +153,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
         else if (ret == null && elt instanceof PyElement && target.isValidResult()) {
           // remember this result, but a further reference may be the next resolve result
-          ret = new QualifiedResolveResultImpl(target.getElement(), qualifiers, target instanceof ImplicitResolveResult);
+          ret = new QualifiedResolveResultImpl(elt, qualifiers, target instanceof ImplicitResolveResult);
         }
       }
       // all resolve results checked, reassignment not detected, nothing more to do
@@ -232,7 +232,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
               return Ref.<PyType>create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
             }
             final Maybe<PyFunction> accessor = property.getByDirection(AccessDirection.of(this));
-            final PyFunction function = accessor.value();
+            final PyFunction function = accessor.valueOrNull();
             final PyType type = (function != null) ? function.getReturnType(context, this) : null;
             return Ref.create(type);
           }
