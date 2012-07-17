@@ -291,36 +291,36 @@
       <option name="DIFF_CONFLICT">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="ffc8bd"/>
+          <option name="BACKGROUND" value="ffded8"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="ff6647"/>
+          <option name="ERROR_STRIPE_COLOR" value="ffc8bd"/>
         </value>
       </option>
 
       <option name="DIFF_DELETED">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="cbcbcb"/>
+          <option name="BACKGROUND" value="e0e0e0"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="747474"/>
+          <option name="ERROR_STRIPE_COLOR" value="cbcbcb"/>
         </value>
       </option>
 
       <option name="DIFF_INSERTED">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="baeeba"/>
+          <option name="BACKGROUND" value="d6f5d6"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="99ff99"/>
+          <option name="ERROR_STRIPE_COLOR" value="baeeba"/>
         </value>
       </option>
 
       <option name="DIFF_MODIFIED">
         <value>
           <option name="FOREGROUND"/>
-          <option name="BACKGROUND" value="bccff9"/>
+          <option name="BACKGROUND" value="d7e2fb"/>
           <option name="EFFECT_COLOR"/>
-          <option name="ERROR_STRIPE_COLOR" value="99ccff"/>
+          <option name="ERROR_STRIPE_COLOR" value="bccff9"/>
         </value>
       </option>
 
