@@ -29,6 +29,7 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
@@ -368,7 +369,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
         myResultResourceName = prefix + element.getName();
       }
 
-      panel.showPreview(element, isProjectPanel);
+      panel.showPreview(element);
     }
   }
 
@@ -469,7 +470,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       myPreviewPanel.add(myNoPreviewComponent, NONE);
     }
 
-    public void showPreview(@Nullable ResourceItem element, boolean isProjectPanel) {
+    public void showPreview(@Nullable ResourceItem element) {
       CardLayout layout = (CardLayout)myPreviewPanel.getLayout();
 
       if (element == null) {
@@ -487,7 +488,9 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
             if (values == null) {
               long time = System.currentTimeMillis();
               List<ResourceElement> resources = myManager.findValueResources(element.getGroup().getType().getName(), element.toString());
-              System.out.println("Time: " + (System.currentTimeMillis() - time));
+              if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+                System.out.println("Time: " + (System.currentTimeMillis() - time)); // XXX
+              }
 
               int size = resources.size();
               if (size == 1) {
@@ -506,25 +509,48 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
                 }
                 element.setPreviewStrings(values, tabNames);
               }
+              else {
+                layout.show(myPreviewPanel, NONE);
+                return;
+              }
             }
 
             if (values != null) {
+              int selectedIndex = myTabbedPane.getSelectedIndex();
               myTabbedPane.removeAll();
 
               String[] tabNames = element.getTabNames();
+
+              if (selectedIndex == -1) {
+                for (int i = 0; i < tabNames.length; i++) {
+                  if (tabNames[i].startsWith("en")) {
+                    selectedIndex = i;
+                    break;
+                  }
+                }
+              }
+
               for (int i = 0; i < tabNames.length; i++) {
                 JTextArea textArea = new JTextArea(5, 20);
                 textArea.setText(values[i]);
-                textArea.setEditable(isProjectPanel);
+                textArea.setEditable(false);
                 myTabbedPane.addTab(tabNames[i], ScrollPaneFactory.createScrollPane(textArea));
               }
 
+              if (selectedIndex >= 0 && selectedIndex < tabNames.length) {
+                myTabbedPane.setSelectedIndex(selectedIndex);
+              }
               layout.show(myPreviewPanel, TABS);
               return;
             }
           }
+          if (value == null) {
+            layout.show(myPreviewPanel, NONE);
+            return;
+          }
+
           myTextArea.setText(value);
-          myTextArea.setEditable(isProjectPanel);
+          myTextArea.setEditable(false);
           layout.show(myPreviewPanel, TEXT);
         }
         else if (ImageFileTypeManager.getInstance().isImage(file)) {
@@ -543,7 +569,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
             element.setPreviewString(value);
           }
           myTextArea.setText(value);
-          myTextArea.setEditable(isProjectPanel);
+          myTextArea.setEditable(false);
           layout.show(myPreviewPanel, TEXT);
         }
         else {

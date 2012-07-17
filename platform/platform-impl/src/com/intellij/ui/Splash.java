@@ -37,6 +37,7 @@ import java.util.List;
  * <p><code>textColor</code> is HEX representation of text color for user name
  * <p><code>progressColor</code> is progress bar color
  * <p><code>progressY</code> is Y coordinate of the progress bar
+ * <p><code>progressTailIcon</code> is a path to flame effect icon
  *
  * @author Konstantin Bulenkov
  */
@@ -49,6 +50,8 @@ public class Splash extends JDialog implements StartupProgress {
   private boolean mySplashIsVisible;
   private int myProgressLastPosition = 0;
   private final JLabel myLabel;
+  private Icon myProgressTail;
+
 
 
   public Splash(String imageName, final Color textColor) {
@@ -84,6 +87,7 @@ public class Splash extends JDialog implements StartupProgress {
       myProgressHeight = 2;
       myProgressColor = appInfo.getProgressColor();
       myProgressY = appInfo.getProgressY();
+      myProgressTail = appInfo.getProgressTailIcon();
     }
   }
 
@@ -115,14 +119,13 @@ public class Splash extends JDialog implements StartupProgress {
     }
 
     final int progressWidth = (int)((myImage.getIconWidth() - 2) * myProgress);
-    //if (progressWidth > myProgressLastPosition + 1) {
-    //g.setColor(ColorUtil.withAlpha(color, 0.6));
     final int width = progressWidth - myProgressLastPosition;
-    //g.fillOval(width - 10, getProgressY() - 2, 12, getProgressHeight() + 4);
     g.setColor(color);
-    g.fillRect(myProgressLastPosition + 1, getProgressY(), width, getProgressHeight());
+    g.fillRect(1, getProgressY(), width, getProgressHeight());
+    if (myProgressTail != null) {
+      myProgressTail.paintIcon(this, g, width - (myProgressTail.getIconWidth()/2), getProgressY() - (myProgressTail.getIconHeight() - getProgressHeight())/2);
+    }
     myProgressLastPosition = progressWidth;
-    //}
   }
 
   private int getProgressHeight() {
@@ -184,4 +187,24 @@ public class Splash extends JDialog implements StartupProgress {
       return myIcon.getIconHeight();
     }
   }
+
+  //public static void main(String[] args) {
+  //  final ImageIcon icon = new ImageIcon("c:\\IDEA\\ultimate\\ultimate-resources\\src\\progress_tail.png");
+  //
+  //  final int w = icon.getIconWidth();
+  //  final int h = icon.getIconHeight();
+  //  final BufferedImage image = GraphicsEnvironment.getLocalGraphicsEnvironment()
+  //    .getDefaultScreenDevice().getDefaultConfiguration().createCompatibleImage(w, h, Color.TRANSLUCENT);
+  //  final Graphics2D g = image.createGraphics();
+  //  icon.paintIcon(null, g, 0, 0);
+  //  g.dispose();
+  //
+  //  for (int y = 0; y < image.getHeight(); y++) {
+  //    for (int x = 0; x < image.getWidth(); x++) {
+  //      final Color c = new Color(image.getRGB(x, y), true);
+  //      System.out.print(String.format("[%3d,%3d,%3d,%3d]  ", c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha()));
+  //    }
+  //    System.out.println("");
+  //  }
+  //}
 }

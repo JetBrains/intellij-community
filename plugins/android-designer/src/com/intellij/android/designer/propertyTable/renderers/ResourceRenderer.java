@@ -27,6 +27,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
+import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidUtils;
@@ -35,7 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
@@ -77,6 +79,7 @@ public class ResourceRenderer implements PropertyRenderer {
 
   protected void formatValue(RadComponent component, String value) {
     if (!StringUtil.isEmpty(value)) {
+      StringBuilder colorValue = new StringBuilder();
       boolean system = false;
       int prefix = -1;
       if (value.startsWith("#")) {
@@ -91,7 +94,7 @@ public class ResourceRenderer implements PropertyRenderer {
       }
       if (prefix != -1) {
         myColoredComponent.append(value.substring(0, prefix), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-        myColoredComponent.append(value.substring(prefix), textStyle(component, value, system));
+        myColoredComponent.append(value.substring(prefix), textStyle(component, value, system, colorValue));
       }
       else if (myFormats.contains(AttributeFormat.Dimension) && value.length() > 2) {
         int index = value.length() - 2;
@@ -107,6 +110,9 @@ public class ResourceRenderer implements PropertyRenderer {
       else {
         myColoredComponent.append(value);
       }
+      if (colorValue.length() > 0) {
+        value = colorValue.toString();
+      }
       if (myFormats.contains(AttributeFormat.Color) && value.startsWith("#")) {
         try {
           Color color = parseColor(value);
@@ -121,7 +127,7 @@ public class ResourceRenderer implements PropertyRenderer {
     }
   }
 
-  private static SimpleTextAttributes textStyle(RadComponent component, String value, boolean system) {
+  private static SimpleTextAttributes textStyle(RadComponent component, String value, boolean system, StringBuilder colorValue) {
     if (value.startsWith("@") && !value.startsWith("@id/") && !value.startsWith("@+id/") && !value.startsWith("@android:id/")) {
       try {
         int start = system ? ANDROID_PREFIX.length() : 1;
@@ -132,8 +138,13 @@ public class ResourceRenderer implements PropertyRenderer {
         ModuleProvider moduleProvider = component.getRoot().getClientProperty(ModelParser.MODULE_KEY);
         AndroidFacet facet = AndroidFacet.getInstance(moduleProvider.getModule());
         ResourceManager manager = facet.getResourceManager(system ? AndroidUtils.SYSTEM_RESOURCE_PACKAGE : null);
+        List<ResourceElement> resources = manager.findValueResources(type, name, false);
 
-        if (manager.findValueResources(type, name, false).isEmpty() && manager.findResourceFiles(type, name, false).isEmpty()) {
+        if ("color".equalsIgnoreCase(type) && !resources.isEmpty()) {
+          colorValue.append(resources.get(0).getRawText());
+        }
+
+        if (resources.isEmpty() && manager.findResourceFiles(type, name, false).isEmpty()) {
           return SimpleTextAttributes.ERROR_ATTRIBUTES;
         }
       }

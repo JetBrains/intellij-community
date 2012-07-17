@@ -18,6 +18,7 @@ package com.intellij.android.designer.propertyTable.editors;
 import com.android.resources.ResourceType;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
+import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
@@ -31,6 +32,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.dom.attrs.AttributeFormat;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +57,7 @@ public class ResourceEditor extends PropertyEditor {
   private final Border myCheckBoxBorder = new JTextField().getBorder();
   private boolean myIgnoreCheckBoxValue;
   private String myBooleanResourceValue;
+  private final boolean myIsDimension;
 
   public ResourceEditor(Set<AttributeFormat> formats, String[] values) {
     this(convertTypes(formats), formats, values);
@@ -62,6 +65,7 @@ public class ResourceEditor extends PropertyEditor {
 
   public ResourceEditor(ResourceType[] types, Set<AttributeFormat> formats, String[] values) {
     myTypes = types;
+    myIsDimension = formats.contains(AttributeFormat.Dimension);
 
     if (formats.contains(AttributeFormat.Boolean)) {
       myCheckBox = new JCheckBox();
@@ -262,7 +266,23 @@ public class ResourceEditor extends PropertyEditor {
       return myBooleanResourceValue == null ? Boolean.toString(myCheckBox.isSelected()) : myBooleanResourceValue;
     }
     String value = text.getText();
-    return value == StringsComboEditor.UNSET || StringUtil.isEmpty(value) ? null : value;
+    if (value == StringsComboEditor.UNSET || StringUtil.isEmpty(value)) {
+      return null;
+    }
+    if (myIsDimension &&
+        !value.equalsIgnoreCase("wrap_content") &&
+        !value.equalsIgnoreCase("fill_parent") &&
+        !value.equalsIgnoreCase("match_parent")) {
+      if (value.length() <= 2) {
+        return value + "dp";
+      }
+      int index = value.length() - 2;
+      String dimension = value.substring(index);
+      if (ArrayUtil.indexOf(ResourceRenderer.DIMENSIONS, dimension) == -1) {
+        return value + "dp";
+      }
+    }
+    return value;
   }
 
   @Override

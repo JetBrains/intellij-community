@@ -2,14 +2,12 @@ package org.jetbrains.jps.idea
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.jps.*
 import org.jetbrains.jps.artifacts.Artifact
 
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
-
-import org.jetbrains.jps.*
-
 /**
  * @author max
  */
@@ -652,7 +650,7 @@ public class IdeaProjectLoader {
       case "JDK_1_5": return "1.5"
       case "JDK_1_6": return "1.6"
       case "JDK_1_7": return "1.7"
-      case "JDK_1_8": return "1.8"
+      case "JDK_1_8": return "8"
     }
 
     final String prefix = "JDK_";
