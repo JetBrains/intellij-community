@@ -195,6 +195,9 @@
     <projectService serviceInterface="org.jetbrains.android.maven.AndroidExternalApklibDependenciesManager"
                        serviceImplementation="org.jetbrains.android.maven.AndroidExternalApklibDependenciesManager"/>
     <xml.xmlExtension implementation="org.jetbrains.android.dom.AndroidXmlExtension" order="first"/>
+    <psi.referenceProvider language="XML" providerClass="org.jetbrains.android.dom.AndroidXmlReferenceProvider">
+      <pattern type="xml">xmlTag()</pattern>
+    </psi.referenceProvider>
     <fileBasedIndex implementation="org.jetbrains.android.AndroidIdIndex"/>
     <fileBasedIndex implementation="org.jetbrains.android.AndroidValueResourcesIndex"/>
     <referencesSearch implementation="org.jetbrains.android.AndroidReferenceSearchExecutor"/>

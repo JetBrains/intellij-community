@@ -150,13 +150,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     String prefix = getNamespacePrefix();
 
     TagNameReference startTagRef = TagNameReference.createTagNameReference(this, startTagName, true);
-    refs.add(startTagRef);
+    if (startTagRef != null) {
+      refs.add(startTagRef);
+    }
     if (prefix.length() > 0) {
       refs.add(createPrefixReference(startTagName, prefix, startTagRef));
     }
     if (endTagName != null) {
       TagNameReference endTagRef = TagNameReference.createTagNameReference(this, endTagName, false);
-      refs.add(endTagRef);
+      if (endTagRef != null) {
+        refs.add(endTagRef);
+      }
       prefix = XmlUtil.findPrefixByQualifiedName(endTagName.getText());
       if (StringUtil.isNotEmpty(prefix)) {
         refs.add(createPrefixReference(endTagName, prefix, endTagRef));

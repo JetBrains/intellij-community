@@ -133,6 +133,16 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testCustomPreference1() throws Throwable {
+    copyFileToProject("MyPreference.java", "src/p1/p2/MyPreference.java");
+    toTestCompletion("customPref1.xml", "customPref1_after.xml");
+  }
+
+  public void testCustomPreference2() throws Throwable {
+    copyFileToProject("MyPreference.java", "src/p1/p2/MyPreference.java");
+    toTestCompletion("customPref2.xml", "customPref2_after.xml");
+  }
+
   public void testPreferenceHeaders1() throws Throwable {
     doTestCompletion();
   }

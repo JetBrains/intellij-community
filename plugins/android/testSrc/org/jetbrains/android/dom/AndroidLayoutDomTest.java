@@ -2,6 +2,7 @@ package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -97,6 +98,68 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   public void testCustomTagCompletion() throws Throwable {
     copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
     toTestCompletion("ctn.xml", "ctn_after.xml");
+  }
+
+  public void testCustomTagCompletion1() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    copyFileToProject("LabelView1.java", "src/p1/p2/LabelView1.java");
+    copyFileToProject("IncorrectView.java", "src/p1/p2/IncorrectView.java");
+    doTestCompletionVariants("ctn1.xml", "p2.LabelView", "p2.LabelView1");
+  }
+
+  public void testCustomTagCompletion2() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    VirtualFile file = copyFileToProject("ctn2.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type("p1\n");
+    myFixture.checkResultByFile(testFolder + '/' + "ctn2_after.xml");
+  }
+
+  public void testCustomTagCompletion3() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    toTestCompletion("ctn3.xml", "ctn3_after.xml");
+  }
+
+  public void testCustomTagCompletion4() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    doTestCompletionVariants("ctn4.xml", "LabelView");
+  }
+
+  public void testCustomTagCompletion5() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    VirtualFile file = copyFileToProject("ctn5.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type("p1\n");
+    myFixture.checkResultByFile(testFolder + '/' + "ctn5_after.xml");
+  }
+
+  public void testCustomTagCompletion6() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    toTestCompletion("ctn6.xml", "ctn6_after.xml");
+  }
+
+  public void testCustomTagCompletion7() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    toTestCompletion("ctn7.xml", "ctn6_after.xml");
+  }
+
+  public void testCustomTagCompletion8() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    copyFileToProject("LabelView1.java", "src/p1/p2/LabelView1.java");
+    doTestCompletionVariants("ctn8.xml", "LabelView");
+  }
+
+  public void testCustomTagCompletion9() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    toTestCompletion("ctn9.xml", "ctn9_after.xml");
+  }
+
+  public void testCustomTagCompletion10() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    copyFileToProject("LabelView1.java", "src/p1/p2/LabelView1.java");
+    doTestCompletionVariants("ctn10.xml", "LabelView");
   }
 
   public void testCustomAttributeNameCompletion() throws Throwable {
@@ -302,7 +365,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     myFixture.configureFromExistingVirtualFile(file);
     PsiFile psiFile = myFixture.getFile();
     String text = psiFile.getText();
-    int rootOffset = text.indexOf("android.widget.ScrollView");
+    int rootOffset = text.indexOf("ScrollView");
     PsiReference rootReference = psiFile.findReferenceAt(rootOffset);
     assertNotNull(rootReference);
     PsiElement rootViewClass = rootReference.resolve();
