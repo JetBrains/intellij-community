@@ -346,8 +346,7 @@ public class ExternalDocumentValidator {
     if (rootTag == null) return;
 
     String namespace = rootTag.getNamespace();
-    // todo: remove this dirty fix
-    if (XmlUtil.ANT_URI.equals(namespace) || "urn:ui:com.google.gwt.uibinder".equals(namespace)) return;
+    if (XmlUtil.ANT_URI.equals(namespace)) return;
 
     final Project project = document.getProject();
 
