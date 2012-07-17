@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.incrementalMerge.ui;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * <p>
@@ -29,28 +30,28 @@ import com.intellij.openapi.editor.ex.EditorEx;
 enum MergeToolEditorSetting {
   WHITESPACES(false) {
     @Override
-    protected void apply(Editor editor, boolean state) {
+    protected void apply(@NotNull Editor editor, boolean state) {
       editor.getSettings().setWhitespacesShown(state);
       editor.getComponent().repaint();
     }
   },
   LINE_NUMBERS(false) {
     @Override
-    protected void apply(Editor editor, boolean state) {
+    protected void apply(@NotNull Editor editor, boolean state) {
       editor.getSettings().setLineNumbersShown(state);
       editor.getComponent().repaint();
     }
   },
   INDENT_LINES(false) {
     @Override
-    protected void apply(Editor editor, boolean state) {
+    protected void apply(@NotNull Editor editor, boolean state) {
       editor.getSettings().setIndentGuidesShown(state);
       editor.getComponent().repaint();
     }
   },
   SOFT_WRAPS(false) {
     @Override
-    protected void apply(Editor editor, boolean state) {
+    protected void apply(@NotNull Editor editor, boolean state) {
       editor.getSettings().setUseSoftWraps(state);
       if (editor instanceof EditorEx) {
         ((EditorEx)editor).reinitSettings();
@@ -64,7 +65,7 @@ enum MergeToolEditorSetting {
     myDefault = aDefault;
   }
 
-  protected abstract void apply(Editor editor, boolean state);
+  protected abstract void apply(@NotNull Editor editor, boolean state);
 
   boolean getDefault() {
     return myDefault;
