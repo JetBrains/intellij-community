@@ -33,7 +33,7 @@
 #define LOG_ENV_ERROR "error"
 #define LOG_ENV_OFF "off"
 
-#define VERSION "1.1"
+#define VERSION "1.2"
 #define VERSION_MSG "fsnotifier " VERSION "\n"
 
 #define USAGE_MSG \
@@ -215,6 +215,7 @@ static bool read_input() {
   userlog(LOG_DEBUG, "input: %s", (line ? line : "<null>"));
 
   if (line == NULL || strcmp(line, "EXIT") == 0) {
+    userlog(LOG_INFO, "exiting: %s", line);
     return false;
   }
 
@@ -241,6 +242,12 @@ static bool read_input() {
     return update_roots(new_roots);
   }
 
+  if (strcmp(line, "VERSION") == 0) {
+    output(VERSION "\n");
+    return true;
+  }
+
+  userlog(LOG_INFO, "unrecognised command: %s", line);
   return true;
 }
 
@@ -302,15 +309,22 @@ static void unregister_roots() {
 static bool register_roots(array* new_roots, array* unwatchable, array* mounts) {
   for (int i=0; i<array_size(new_roots); i++) {
     char* new_root = array_get(new_roots, i);
+    char* unflattened = new_root;
+    if (unflattened[0] == '|') ++unflattened;
     userlog(LOG_INFO, "registering root: %s", new_root);
 
-    char* root = new_root;
-    if (*root == '|') ++root;
+    if (unflattened[0] != '/') {
+      userlog(LOG_WARNING, "  ... not valid, skipped");
+      free(new_root);
+      continue;
+    }
+
     char* skip = NULL;
     for (int j=0; j<array_size(mounts); j++) {
       char* mount = array_get(mounts, j);
-      if (strncmp(mount, root, strlen(mount)) == 0) {
-        skip = root;
+      if (strncmp(mount, unflattened, strlen(mount)) == 0) {
+        userlog(LOG_DEBUG, "path %s is under unwatchable %s - ignoring", unflattened, mount);
+        skip = unflattened;
         break;
       }
     }
@@ -319,18 +333,21 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
       continue;
     }
 
-    // todo: consider a mount point under a watch root
-    int id = watch(new_root, unwatchable);
+    // todo: consider a mount point under a watch root?
+    int id = watch(new_root);
 
-    if (id == ERR_ABORT) {
-      return false;
-    }
-    else if (id >= 0) {
+    if (id >= 0) {
       watch_root* root = malloc(sizeof(watch_root));
       CHECK_NULL(root, false);
       root->id = id;
       root->name = new_root;
       CHECK_NULL(array_push(roots, root), false);
+    }
+    else if (id == ERR_ABORT) {
+      return false;
+    }
+    else if (id == ERR_IGNORE) {
+      free(new_root);
     }
     else {
       if (show_warning && watch_limit_reached()) {
@@ -339,7 +356,10 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
         output("MESSAGE\n" INOTIFY_LIMIT_MSG, limit);
         show_warning = false;  // warn only once
       }
-      CHECK_NULL(array_push(unwatchable, new_root), false);
+      char* copy = strdup(unflattened);
+      CHECK_NULL(copy, false);
+      CHECK_NULL(array_push(unwatchable, copy), false);
+      free(new_root);
     }
   }
 
