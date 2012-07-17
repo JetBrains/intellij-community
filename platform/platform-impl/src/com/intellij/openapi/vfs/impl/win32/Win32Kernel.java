@@ -17,12 +17,12 @@ package com.intellij.openapi.vfs.impl.win32;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -37,13 +37,14 @@ public class Win32Kernel {
 
   private final IdeaWin32 myKernel = new IdeaWin32();
 
-  private final Map<String, FileInfo> myCache = new HashMap<String, FileInfo>();
+  private final Map<String, FileInfo> myCache = new THashMap<String, FileInfo>();
 
   void clearCache() {
     myCache.clear();
   }
 
-  public String[] list(String absolutePath) {
+  @NotNull
+  public String[] list(@NotNull String absolutePath) {
     FileInfo[] fileInfos = myKernel.listChildren(absolutePath.replace('/', '\\') + "\\*.*");
     if (fileInfos == null) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
@@ -64,32 +65,32 @@ public class Win32Kernel {
     return ArrayUtil.toStringArray(names);
   }
 
-  public void exists(String path) throws FileNotFoundException {
+  public void exists(@NotNull String path) throws FileNotFoundException {
     getInfo(path);
   }
 
-  public boolean isDirectory(String path) throws FileNotFoundException {
+  public boolean isDirectory(@NotNull String path) throws FileNotFoundException {
     FileInfo data = getInfo(path);
     return (data.attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
   }
 
-  public boolean isWritable(String path) throws FileNotFoundException {
+  public boolean isWritable(@NotNull String path) throws FileNotFoundException {
     FileInfo fileInfo = getInfo(path);
     myCache.remove(path);
     return (fileInfo.attributes & FILE_ATTRIBUTE_READONLY) == 0;
   }
 
-  public long getTimeStamp(String path) throws FileNotFoundException {
+  public long getTimeStamp(@NotNull String path) throws FileNotFoundException {
     long timestamp = getInfo(path).timestamp;
     return timestamp / 10000 - 11644473600000l;
   }
 
-  public long getLength(String path) throws FileNotFoundException {
+  public long getLength(@NotNull String path) throws FileNotFoundException {
     return getInfo(path).length;
   }
 
   @NotNull
-  private FileInfo getInfo(String path) throws FileNotFoundException {
+  private FileInfo getInfo(@NotNull String path) throws FileNotFoundException {
     FileInfo info = doGetInfo(path);
     if (info == null) {
       throw new FileNotFoundException(path);
@@ -98,7 +99,7 @@ public class Win32Kernel {
   }
 
   @Nullable
-  FileInfo doGetInfo(String path) {
+  FileInfo doGetInfo(@NotNull String path) {
     FileInfo info = myCache.get(path);
     if (info == null) {
       info = myKernel.getInfo(path.replace('/', '\\'));
