@@ -18,6 +18,7 @@ package org.intellij.lang.xpath.completion;
 
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -89,6 +90,10 @@ public class XPathCompletionContributor extends CompletionContributor {
         }
 
         final NamespaceContext namespaceContext = parent.getXPathContext().getNamespaceContext();
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          System.out.println("XPathCompletionContributor.addCompletions");
+          System.out.println("namespaceContext = " + namespaceContext);
+        }
         if (namespaceContext != null) {
           final String prefixForURI = namespaceContext.getPrefixForURI(XPath2Type.XMLSCHEMA_NS, parent.getXPathContext().getContextElement());
           if (prefixForURI != null && prefixForURI.length() > 0) {
