@@ -217,7 +217,7 @@ static void rm_watch(int wd, bool update_parent) {
 
 
 static int walk_tree(const char* path, watch_node* parent, bool recursive) {
-  DIR* dir;
+  DIR* dir = NULL;
   if (recursive) {
     if ((dir = opendir(path)) == NULL) {
       if (errno == EACCES || errno == ENOENT) {
