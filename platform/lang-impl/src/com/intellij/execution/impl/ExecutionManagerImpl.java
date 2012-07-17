@@ -104,7 +104,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     return handlers.toArray(new ProcessHandler[handlers.size()]);
   }
 
-  public void compileAndRun(@NotNull final Runnable startRunnable, @NotNull final ExecutionEnvironment env, final @Nullable RunProfileState state, @Nullable final Runnable onCancelRunnable) {
+  public void compileAndRun(@NotNull final Runnable startRunnable,
+                            @NotNull final ExecutionEnvironment env,
+                            final @Nullable RunProfileState state,
+                            @Nullable final Runnable onCancelRunnable) {
     RunProfile profile = env.getRunProfile();
 
     if (profile instanceof RunConfiguration) {
@@ -125,7 +128,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           public void run() {
             for (BeforeRunTask task : activeTasks) {
               BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
-              if(provider != null && !provider.executeTask(dataContext, runConfiguration, env, task)) {
+              if (provider != null && !provider.executeTask(dataContext, runConfiguration, env, task)) {
                 if (onCancelRunnable != null) {
                   SwingUtilities.invokeLater(onCancelRunnable);
                 }
@@ -157,7 +160,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   @Override
   public void startRunProfile(@NotNull final RunProfileStarter starter, @NotNull final RunProfileState state,
                               @NotNull final Project project, @NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
-    final RunContentDescriptor reuseContent = ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, env.getContentToReuse());
+    final RunContentDescriptor reuseContent =
+      ExecutionManager.getInstance(project).getContentManager().getReuseContent(executor, env.getContentToReuse());
     final RunProfile profile = env.getRunProfile();
 
     project.getMessageBus().syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.getId(), env);
@@ -213,65 +217,74 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   public void restartRunProfile(@NotNull final Project project,
                                 @NotNull final Executor executor,
                                 @NotNull final ExecutionTarget target,
-                                @NotNull final RunnerAndConfigurationSettings configuration) {
+                                @NotNull final RunnerAndConfigurationSettings configuration,
+                                @Nullable final ProcessHandler handler) {
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     final RunManagerConfig config = runManager.getConfig();
+    final List<ProcessHandler> allHandlers = new ArrayList<ProcessHandler>();
+    final List<ProcessHandler> handlersToStop = new ArrayList<ProcessHandler>();
     final List<Pair<RunContentDescriptor, Executor>> pairs = getRunningDescriptors(configuration);
+    if (configuration.isSingleton()) {
+      for (Pair<RunContentDescriptor, Executor> pair : pairs) {
+        allHandlers.add(pair.getFirst().getProcessHandler());
+      }
+    }
+    else if (handler != null) {
+      allHandlers.add(handler);
+    }
 
-    for (Pair<RunContentDescriptor, Executor> pair : pairs) {
-      ProcessHandler processHandler = pair.getFirst().getProcessHandler();
-      if (processHandler == null)
-        continue;
-      if (!processHandler.isProcessTerminated()) {
-        if (config.isRestartRequiresConfirmation()) {
-          DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
-            @Override
-            public boolean isToBeShown() {
-              return config.isRestartRequiresConfirmation();
-            }
-
-            @Override
-            public void setToBeShown(boolean value, int exitCode) {
-              config.setRestartRequiresConfirmation(value);
-            }                                                                                  /**/
-
-            @Override
-            public boolean canBeHidden() {
-              return true;
-            }
-
-            @Override
-            public boolean shouldSaveOptionsOnCancel() {
-              return false;
-            }
-
-            @Override
-            public String getDoNotShowMessage() {
-              return CommonBundle.message("dialog.options.do.not.show");
-            }
-          };
-          if (Messages.OK != Messages.showOkCancelDialog(ExecutionBundle.message("rerun.confirmation.message", configuration.getName()),
-                                                         ExecutionBundle.message("rerun.confirmation.title") + " ("+pair.getSecond().getId()+")",
-                                                         CommonBundle.message("button.ok"),
-                                                         CommonBundle.message("button.cancel"),
-                                                         Messages.getQuestionIcon(), option)) {
-            return;
-          }
+    if (!allHandlers.isEmpty()) {
+      for (Pair<RunContentDescriptor, Executor> pair : pairs) {
+        ProcessHandler processHandler = pair.getFirst().getProcessHandler();
+        if (processHandler == null || !allHandlers.contains(processHandler)) {
+          continue;
         }
-        stop(processHandler);
-        for (
-          Iterator<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> iterator = myRunningConfigurations.iterator();
-          iterator.hasNext(); ) {
-          Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity = iterator.next();
-          if (trinity.getFirst() == pair.getFirst()) {
-            iterator.remove();
-            break;
+        if (!processHandler.isProcessTerminated()) {
+          if (config.isRestartRequiresConfirmation()) {
+            DialogWrapper.DoNotAskOption option = new DialogWrapper.DoNotAskOption() {
+              @Override
+              public boolean isToBeShown() {
+                return config.isRestartRequiresConfirmation();
+              }
+
+              @Override
+              public void setToBeShown(boolean value, int exitCode) {
+                config.setRestartRequiresConfirmation(value);
+              }
+
+              @Override
+              public boolean canBeHidden() {
+                return true;
+              }
+
+              @Override
+              public boolean shouldSaveOptionsOnCancel() {
+                return false;
+              }
+
+              @Override
+              public String getDoNotShowMessage() {
+                return CommonBundle.message("dialog.options.do.not.show");
+              }
+            };
+            if (Messages.OK != Messages.showOkCancelDialog(ExecutionBundle.message("rerun.confirmation.message", configuration.getName()),
+                                                           ExecutionBundle.message("rerun.confirmation.title") +
+                                                           " (" +
+                                                           pair.getSecond().getId() +
+                                                           ")",
+                                                           CommonBundle.message("button.ok"),
+                                                           CommonBundle.message("button.cancel"),
+                                                           Messages.getQuestionIcon(), option)) {
+              return;
+            }
           }
+          handlersToStop.add(processHandler);
+          stop(pair.getFirst());
         }
       }
     }
 
-    if (pairs.isEmpty()) {
+    if (handlersToStop.isEmpty()) {
       ProgramRunnerUtil.executeConfiguration(project, configuration, executor, target);
       return;
     }
@@ -279,10 +292,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     Runnable runnable = new Runnable() {
       @Override
       public void run() {
-        for (Pair<RunContentDescriptor, Executor> pair : pairs) {
-          ProcessHandler processHandler = pair.getFirst().getProcessHandler();
-          if (processHandler == null)
-            continue;
+        for (ProcessHandler processHandler : handlersToStop) {
           if (!processHandler.isProcessTerminated()) {
             awaitingTerminationAlarm.addRequest(this, 100);
             return;
@@ -292,6 +302,18 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       }
     };
     awaitingTerminationAlarm.addRequest(runnable, 100);
+  }
+
+  private void forgetRunContentDescriptor(RunContentDescriptor runContentDescriptor) {
+    for (
+      Iterator<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> iterator = myRunningConfigurations.iterator();
+      iterator.hasNext(); ) {
+      Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity = iterator.next();
+      if (trinity.getFirst() == runContentDescriptor) {
+        iterator.remove();
+        return;
+      }
+    }
   }
 
   private List<Pair<RunContentDescriptor, Executor>> getRunningDescriptors(RunnerAndConfigurationSettings configuration) {
@@ -305,18 +327,25 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
 
-
-  private static void stop(ProcessHandler processHandler) {
-    if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
-      ((KillableProcess)processHandler).killProcess();
+  private void stop(@NotNull RunContentDescriptor runContentDescriptor) {
+    ProcessHandler processHandler = runContentDescriptor.getProcessHandler();
+    if (processHandler == null)
       return;
-    }
+    try {
+      if (processHandler instanceof KillableProcess && processHandler.isProcessTerminating()) {
+        ((KillableProcess)processHandler).killProcess();
+        return;
+      }
 
-    if (processHandler.detachIsDefault()) {
-      processHandler.detachProcess();
+      if (processHandler.detachIsDefault()) {
+        processHandler.detachProcess();
+      }
+      else {
+        processHandler.destroyProcess();
+      }
     }
-    else {
-      processHandler.destroyProcess();
+    finally {
+      forgetRunContentDescriptor(runContentDescriptor);
     }
   }
 
