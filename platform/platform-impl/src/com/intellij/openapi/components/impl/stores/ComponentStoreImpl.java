@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,16 +77,21 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     if (!isSerializable) return;
 
-    ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
-      public void run() {
-        if (component instanceof PersistentStateComponent) {
-          initPersistentComponent((PersistentStateComponent<?>)component, false);
+    try {
+      ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
+        public void run() {
+          if (component instanceof PersistentStateComponent) {
+            initPersistentComponent((PersistentStateComponent<?>)component, false);
+          }
+          else {
+            initJdomExternalizable((JDOMExternalizable)component);
+          }
         }
-        else {
-          initJdomExternalizable((JDOMExternalizable)component);
-        }
-      }
-    });
+      });
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   public boolean isSaving() {
