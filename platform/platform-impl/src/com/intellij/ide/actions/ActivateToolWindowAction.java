@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.SizedIcon;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -53,7 +54,8 @@ public class ActivateToolWindowAction extends AnAction implements DumbAware {
     presentation.setEnabled(toolWindow!=null&&toolWindow.isAvailable());
     presentation.setVisible(toolWindow!=null);
     if (toolWindow != null) {
-      presentation.setIcon(toolWindow.getIcon());
+      Icon icon = toolWindow.getIcon();
+      presentation.setIcon(icon == null ? null : new SizedIcon(icon, icon.getIconHeight(), icon.getIconHeight()));
     }
   }
 
