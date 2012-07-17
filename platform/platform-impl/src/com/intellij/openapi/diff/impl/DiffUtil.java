@@ -32,10 +32,12 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class DiffUtil {
   private DiffUtil() {
@@ -93,5 +95,10 @@ public class DiffUtil {
     editor.setSoftWrapAppliancePlace(SoftWrapAppliancePlaces.VCS_DIFF);
     editor.getGutterComponentEx().revalidateMarkup();
     return editor;
+  }
+
+  public static void drawBoldDottedFramingLines(Graphics2D g, int startX, int endX, int startY, int bottomY, Color color) {
+    UIUtil.drawBoldDottedLine(g, startX, endX, startY, null, color, false);
+    UIUtil.drawBoldDottedLine(g, startX, endX, bottomY, null, color, false);
   }
 }

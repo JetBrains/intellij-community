@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.actions.NextDiffAction;
@@ -51,11 +52,10 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -101,7 +101,7 @@ public class MergePanel2 implements DiffViewer {
       }
     };
     for (int i = 0; i < EDITORS_COUNT; i++) {
-      EditorPlace editorPlace = new EditorPlace(new DiffEditorState(i));
+      EditorPlace editorPlace = new EditorPlace(new DiffEditorState(i), indexToColumn(i), this);
       Disposer.register(parent, editorPlace);
       editorPlaces.add(editorPlace);
       editorPlace.addListener(placeListener);
@@ -110,70 +110,74 @@ public class MergePanel2 implements DiffViewer {
       myEditorsPanels[i].setComponent(editorPlace);
     }
     FontSizeSynchronizer.attachTo(editorPlaces);
-    myPanel = new DiffPanelOuterComponent(TextDiffType.MERGE_TYPES, TOOLBAR);
+    myPanel = new DiffPanelOuterComponent(TextDiffType.MERGE_TYPES, createToolbar());
     myPanel.insertDiffComponent(new ThreePanels(myEditorsPanels, myDividers), new MyScrollingPanel());
     myProvider = new MyDataProvider();
     myPanel.setDataProvider(myProvider);
     myBuilder = builder;
   }
 
-  private static final EditorPlace.ViewProperty<EditorColorsScheme> EDITOR_SCHEME = new EditorPlace.ViewProperty<EditorColorsScheme>(null) {
-    public void doUpdateEditor(EditorEx editorEx, EditorColorsScheme scheme, EditorPlace.ComponentState state) {
-      if (scheme != null) editorEx.setColorsScheme(scheme);
+  /**
+   * Convert legacy-style editor (or panel) number to the {@link MergePanelColumn}.
+   * @param i 0, 1 or 2
+   * @return  Left, base or right, respectively.
+   */
+  private static MergePanelColumn indexToColumn(int i) {
+    switch (i) {
+      case 0: return MergePanelColumn.LEFT;
+      case 1: return MergePanelColumn.BASE;
+      case 2: return MergePanelColumn.RIGHT;
+      default: throw new IllegalStateException("Incorrect value for a merge column: " + i);
     }
-  };
-  public static final EditorPlace.ViewProperty<Boolean> LINE_NUMBERS = new EditorPlace.ViewProperty<Boolean>(Boolean.TRUE) {
-    public void doUpdateEditor(EditorEx editorEx, Boolean aBoolean, EditorPlace.ComponentState state) {
-      editorEx.getSettings().setLineNumbersShown(aBoolean.booleanValue());
-    }
-  };
-  public static final EditorPlace.ViewProperty<Boolean> LINE_MARKERS_AREA = new EditorPlace.ViewProperty<Boolean>(Boolean.TRUE) {
-    public void doUpdateEditor(EditorEx editorEx, Boolean aBoolean, EditorPlace.ComponentState state) {
-      editorEx.getSettings().setLineMarkerAreaShown(aBoolean.booleanValue());
-    }
-  };
-  public static final EditorPlace.ViewProperty<Integer> ADDITIONAL_LINES = new EditorPlace.ViewProperty<Integer>(null) {
-    public void doUpdateEditor(EditorEx editorEx, Integer integer, EditorPlace.ComponentState state) {
-      if (integer != null) editorEx.getSettings().setAdditionalLinesCount(integer.intValue());
-    }
-  };
-  public static final EditorPlace.ViewProperty<Integer> ADDITIONAL_COLUMNS = new EditorPlace.ViewProperty<Integer>(null) {
-    public void doUpdateEditor(EditorEx editorEx, Integer integer, EditorPlace.ComponentState state) {
-      if (integer != null) editorEx.getSettings().setAdditionalColumnsCount(integer.intValue());
-    }
-  };
-  public static final EditorPlace.ViewProperty<EditorColorsScheme> HIGHLIGHTER_SETTINGS =
-    new EditorPlace.ViewProperty<EditorColorsScheme>(null) {
-      public void doUpdateEditor(EditorEx editorEx, EditorColorsScheme settings, EditorPlace.ComponentState state) {
-        if (settings == null) settings = EditorColorsManager.getInstance().getGlobalScheme();
-        DiffEditorState editorState = (DiffEditorState)state;
-        editorEx.setHighlighter(
-          EditorHighlighterFactory.getInstance().createEditorHighlighter(editorState.getFileType(), settings, editorState.getProject()));
+  }
+
+  @NotNull
+  private DiffRequest.ToolbarAddons createToolbar() {
+    return new DiffRequest.ToolbarAddons() {
+      public void customize(DiffToolbar toolbar) {
+        ActionManager actionManager = ActionManager.getInstance();
+        toolbar.addAction(actionManager.getAction(IdeActions.ACTION_COPY));
+        toolbar.addAction(actionManager.getAction(IdeActions.ACTION_FIND));
+        toolbar.addAction(PreviousDiffAction.find());
+        toolbar.addAction(NextDiffAction.find());
+        toolbar.addSeparator();
+        toolbar.addAction(new OpenPartialDiffAction(1, 0, AllIcons.Diff.LeftDiff));
+        toolbar.addAction(new OpenPartialDiffAction(1, 2, AllIcons.Diff.RightDiff));
+        toolbar.addAction(new OpenPartialDiffAction(0, 2, AllIcons.Diff.BranchDiff));
+        toolbar.addSeparator();
+        toolbar.addAction(new ApplyNonConflicts());
+        toolbar.addSeparator();
+        toolbar.addAction(new MergeToolSettingsAction(getEditors()));
       }
     };
-  private static final Collection<EditorPlace.ViewProperty> ALL_PROPERTIES = Arrays.<EditorPlace.ViewProperty>asList
-    (ADDITIONAL_COLUMNS, ADDITIONAL_LINES, EDITOR_SCHEME, HIGHLIGHTER_SETTINGS, LINE_MARKERS_AREA, LINE_NUMBERS);
+  }
 
-  private static final DiffRequest.ToolbarAddons TOOLBAR = new DiffRequest.ToolbarAddons() {
-    public void customize(DiffToolbar toolbar) {
-      ActionManager actionManager = ActionManager.getInstance();
-      toolbar.addAction(actionManager.getAction(IdeActions.ACTION_COPY));
-      toolbar.addAction(actionManager.getAction(IdeActions.ACTION_FIND));
-      toolbar.addAction(PreviousDiffAction.find());
-      toolbar.addAction(NextDiffAction.find());
-      toolbar.addSeparator();
-      toolbar.addAction(new OpenPartialDiffAction(1, 0, AllIcons.Diff.LeftDiff));
-      toolbar.addAction(new OpenPartialDiffAction(1, 2, AllIcons.Diff.RightDiff));
-      toolbar.addAction(new OpenPartialDiffAction(0, 2, AllIcons.Diff.BranchDiff));
-      toolbar.addSeparator();
-      toolbar.addAction(new ApplyNonConflicts());
+  @NotNull
+  private Collection<Editor> getEditors() {
+    Collection<Editor> editors = new ArrayList<Editor>(3);
+    for (EditorPlace place : getEditorPlaces()) {
+      editors.add(place.getEditor());
     }
-  };
+    return editors;
+  }
+
+  @NotNull
+  private Collection<EditorPlace> getEditorPlaces() {
+    Collection<EditorPlace> editorPlaces = new ArrayList<EditorPlace>(3);
+    for (LabeledComponent editorsPanel : myEditorsPanels) {
+      editorPlaces.add((EditorPlace) editorsPanel.getComponent());
+    }
+    return editorPlaces;
+  }
 
   public void setScrollToFirstDiff(final boolean scrollToFirstDiff) {
     myScrollToFirstDiff = scrollToFirstDiff;
   }
 
+  /**
+   * @deprecated Because it references by index.
+   */
+  @Deprecated
   public Editor getEditor(int index) {
     return getEditorPlace(index).getEditor();
   }
@@ -182,10 +186,18 @@ public class MergePanel2 implements DiffViewer {
     return myData == null ? FileTypes.PLAIN_TEXT : getContentType(myData);
   }
 
+  /**
+   * @deprecated Because it references by index.
+   */
+  @Deprecated
   public String getVersionTitle(int index) {
     return myEditorsPanels[index].getRawText();
   }
 
+  /**
+   * @deprecated Because it references by index.
+   */
+  @Deprecated
   public EditorPlace getEditorPlace(int index) {
     return (EditorPlace)myEditorsPanels[index].getComponent();
   }
@@ -194,7 +206,9 @@ public class MergePanel2 implements DiffViewer {
     if (myData == null) return;
     DiffContent[] contents = myData.getContents();
     for (int i = 0; i < EDITORS_COUNT; i++) {
-      getEditorPlace(i).setDocument(contents[i].getDocument());
+      EditorPlace editorPlace = getEditorPlace(i);
+      editorPlace.setDocument(contents[i].getDocument());
+      setHighlighterSettings(null, editorPlace);
     }
     tryInitView();
   }
@@ -209,8 +223,9 @@ public class MergePanel2 implements DiffViewer {
       Editor left = getEditor(0);
       Editor base = getEditor(1);
       Editor right = getEditor(2);
+
       myMergeList.setMarkups(left, base, right);
-      EditingSides[] sides = {new MyEditingSides(FragmentSide.SIDE1), new MyEditingSides(FragmentSide.SIDE2)};
+      EditingSides[] sides = {getFirstEditingSide(), getSecondEditingSide()};
       myScrollSupport.install(sides);
       for (int i = 0; i < myDividers.length; i++) {
         myDividers[i].listenEditors(sides[i]);
@@ -226,6 +241,54 @@ public class MergePanel2 implements DiffViewer {
         }
       });
     }
+  }
+
+  @NotNull
+  EditingSides getFirstEditingSide() {
+    return new MyEditingSides(FragmentSide.SIDE1);
+  }
+
+  @NotNull
+  EditingSides getSecondEditingSide() {
+    return new MyEditingSides(FragmentSide.SIDE2);
+  }
+
+  public void setHighlighterSettings(@Nullable EditorColorsScheme settings) {
+    for (EditorPlace place : getEditorPlaces()) {
+      setHighlighterSettings(settings, place);
+    }
+  }
+
+  private void setHighlighterSettings(@Nullable EditorColorsScheme settings, @NotNull EditorPlace place) {
+    if (settings == null) {
+      settings = EditorColorsManager.getInstance().getGlobalScheme();
+    }
+    Editor editor = place.getEditor();
+    DiffEditorState editorState = place.getState();
+    ((EditorEx)editor).setHighlighter(EditorHighlighterFactory.getInstance().
+      createEditorHighlighter(editorState.getFileType(), settings, editorState.getProject()));
+  }
+
+  public void setAdditionalLinesAndColumns(int lines, int columns) {
+    for (Editor editor : getEditors()) {
+      editor.getSettings().setAdditionalLinesCount(lines);
+      editor.getSettings().setAdditionalColumnsCount(columns);
+    }
+  }
+
+  public void setShowLineNumbers(boolean show) {
+    for (Editor editor : getEditors()) {
+      MergeToolEditorSetting.LINE_NUMBERS.apply(editor, show);
+    }
+  }
+
+  private static void initEditorSettings(@NotNull Editor editor) {
+    Project project = editor.getProject();
+    MergeToolSettings settings = project == null ? null : ServiceManager.getService(project, MergeToolSettings.class);
+    for (MergeToolEditorSetting property : MergeToolEditorSetting.values()) {
+      property.apply(editor, settings == null ? property.getDefault() : settings.getPreference(property));
+    }
+    editor.getSettings().setLineMarkerAreaShown(true);
   }
 
   private void disposeMergeList() {
@@ -361,15 +424,24 @@ public class MergePanel2 implements DiffViewer {
     }
   }
 
-  private class DiffEditorState extends EditorPlace.ComponentState {
-    private final HashMap<EditorPlace.ViewProperty, Object> myProperties = new HashMap<EditorPlace.ViewProperty, Object>();
+  class DiffEditorState {
     private final int myIndex;
+    private Document myDocument;
 
     private DiffEditorState(int index) {
       myIndex = index;
     }
 
-    public Editor createEditor() {
+    public void setDocument(Document document) {
+      myDocument = document;
+    }
+
+    public Document getDocument() {
+      return myDocument;
+    }
+
+    @Nullable
+    public EditorEx createEditor() {
       Document document = getDocument();
       if (document == null) return null;
       Project project = myData.getProject();
@@ -382,20 +454,12 @@ public class MergePanel2 implements DiffViewer {
       if (myIndex != 1) ((EditorMarkupModel)editor.getMarkupModel()).setErrorStripeVisible(true);
       editor.getSettings().setFoldingOutlineShown(false);
       editor.getFoldingModel().setFoldingEnabled(false);
-      HashSet<EditorPlace.ViewProperty> notProcessedDefaults = new HashSet<EditorPlace.ViewProperty>(ALL_PROPERTIES);
-      for (EditorPlace.ViewProperty viewProperty : myProperties.keySet()) {
-        notProcessedDefaults.remove(viewProperty);
-        viewProperty.updateEditor(editor, myProperties.get(viewProperty), this);
-      }
-      for (EditorPlace.ViewProperty viewProperty : notProcessedDefaults) {
-        viewProperty.updateEditor(editor, null, this);
-      }
-      return editor;
-    }
+      editor.getSettings().setLineMarkerAreaShown(false);
+      editor.getSettings().setFoldingOutlineShown(false);
+      editor.getGutterComponentEx().setShowDefaultGutterPopup(false);
+      initEditorSettings(editor);
 
-    public <T> void updateValue(Editor editor, EditorPlace.ViewProperty<T> property, T value) {
-      myProperties.put(property, value);
-      property.updateEditor(editor, value, this);
+      return editor;
     }
 
     public FileType getFileType() {
@@ -485,15 +549,10 @@ public class MergePanel2 implements DiffViewer {
     return myMergeList;
   }
 
-  public <T> void setEditorProperty(EditorPlace.ViewProperty<T> property, T value) {
-    for (int i = 0; i < EDITORS_COUNT; i++) {
-      EditorPlace editorPlace = getEditorPlace(i);
-      editorPlace.getState().updateValue(editorPlace.getEditor(), property, value);
-    }
-  }
-
   public void setColorScheme(EditorColorsScheme scheme) {
-    setEditorProperty(EDITOR_SCHEME, scheme);
+    for (Editor editor : getEditors()) {
+      ((EditorEx)editor).setColorsScheme(scheme);
+    }
     myPanel.setColorScheme(scheme);
   }
 

@@ -24,10 +24,12 @@ import java.awt.*;
 public class DiffDividerPaint {
   private final EditingSides mySides;
   private final FragmentSide myLeftSide;
+  private final int myDiffDividerPolygonsOffset;
 
-  public DiffDividerPaint(EditingSides sides, FragmentSide leftSide) {
+  public DiffDividerPaint(EditingSides sides, FragmentSide leftSide, int diffDividerPolygonsOffset) {
     mySides = sides;
     myLeftSide = leftSide;
+    myDiffDividerPolygonsOffset = diffDividerPolygonsOffset;
   }
 
   public void paint(Graphics g, JComponent component) {
@@ -36,7 +38,7 @@ public class DiffDividerPaint {
     int height = component.getHeight();
     int editorHeight = mySides.getEditor(myLeftSide).getComponent().getHeight();
     Graphics2D gg = (Graphics2D)g.create(0, height - editorHeight, width, editorHeight);
-    DividerPolygon.paintPolygons(DividerPolygon.createVisiblePolygons(mySides, myLeftSide), gg, width);
+    DividerPolygon.paintPolygons(DividerPolygon.createVisiblePolygons(mySides, myLeftSide, myDiffDividerPolygonsOffset), gg, width);
     gg.dispose();
   }
 

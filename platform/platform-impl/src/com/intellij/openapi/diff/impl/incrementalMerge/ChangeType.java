@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diff.ex.DiffFragment;
-import com.intellij.openapi.diff.impl.highlighting.LineRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.*;
@@ -37,6 +36,8 @@ public class ChangeType {
 
   private final TextDiffType myDiffType;
   private final boolean myApplied;
+
+  private static final EmptyRangeLineSeparatorRenderer EMPTY_RANGE_LINE_SEPARATOR_RENDERER = new EmptyRangeLineSeparatorRenderer();
 
   private ChangeType(TextDiffType diffType, boolean applied) {
     myApplied = applied;
@@ -79,32 +80,32 @@ public class ChangeType {
   }
 
   @Nullable
-  private RangeHighlighter addBlock(String text, ChangeSide changeSide, ChangeHighlighterHolder markup, TextDiffType diffType) {
+  private RangeHighlighter addBlock(String text, ChangeSide changeSide, final ChangeHighlighterHolder markup, TextDiffType diffType) {
     EditorColorsScheme colorScheme = markup.getEditor().getColorsScheme();
     Color separatorColor = getSeparatorColor(diffType.getLegendColor(colorScheme));
-    LineSeparatorRenderer separatorRenderer = new LineSeparatorRenderer() {
-      @Override
-      public void drawLine(Graphics g, int x1, int x2, int y) {
-        Graphics2D g2 = (Graphics2D) g;
-        if (myApplied) {
-          UIUtil.drawBoldDottedLine(g2, x1, x2, y, g2.getBackground(), g2.getColor(), false);
-        }
-        else {
-          UIUtil.drawDottedLine(g2, x1, y, x2, y, g2.getBackground(), g2.getColor());
-        }
-      }
-    };
 
     int length = text.length();
     int start = changeSide.getStart();
     int end = start + length;
     RangeHighlighter highlighter = markup.addRangeHighlighter(start, end, LAYER, diffType, HighlighterTargetArea.EXACT_RANGE, myApplied);
 
+    LineSeparatorRenderer lineSeparatorRenderer = new LineSeparatorRenderer() {
+      @Override
+      public void drawLine(Graphics g, int x1, int x2, int y) {
+        Graphics2D g2 = (Graphics2D)g;
+        if (myApplied) {
+          UIUtil.drawBoldDottedLine(g2, x1, x2, y, null, myDiffType.getPolygonColor(markup.getEditor()), false);
+        }
+        else {
+          UIUtil.drawDottedLine(g2, x1, y, x2, y, null, g2.getColor());
+        }
+      }
+    };
+
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
       highlighter.setLineSeparatorColor(separatorColor);
-      highlighter.setLineSeparatorRenderer(separatorRenderer);
-      highlighter.setLineMarkerRenderer(LineRenderer.top());
+      highlighter.setLineSeparatorRenderer(lineSeparatorRenderer);
     }
 
     if (text.charAt(length - 1) == '\n') {
@@ -115,8 +116,7 @@ public class ChangeType {
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
       highlighter.setLineSeparatorColor(separatorColor);
-      highlighter.setLineSeparatorRenderer(separatorRenderer);
-      highlighter.setLineMarkerRenderer(LineRenderer.bottom());
+      highlighter.setLineSeparatorRenderer(lineSeparatorRenderer);
     }
     return highlighter;
   }
@@ -128,6 +128,7 @@ public class ChangeType {
       return null;
     }
     highlighter.setLineSeparatorPlacement(placement);
+    highlighter.setLineSeparatorRenderer(EMPTY_RANGE_LINE_SEPARATOR_RENDERER);
     return highlighter;
   }
 
@@ -156,4 +157,15 @@ public class ChangeType {
   }
 
 
+  /**
+   * Insertion or deletion change have an empty range on one of the sides (inserting to, deleting from).
+   * A solid line is used to indicate this change in the target/original editor.
+   */
+  private static class EmptyRangeLineSeparatorRenderer implements LineSeparatorRenderer {
+    @Override
+    public void drawLine(Graphics g, int x1, int x2, int y) {
+      g.drawLine(x1, y, x2, y);
+      g.drawLine(x1, y + 1, x2, y + 1);
+    }
+  }
 }
