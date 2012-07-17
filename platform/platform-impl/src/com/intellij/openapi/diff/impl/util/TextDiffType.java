@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl.util;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.diff.ex.DiffStatusBar;
-import com.intellij.openapi.diff.impl.splitter.DividerPolygon;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -113,10 +112,7 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
       return null;
     }
     TextAttributes overridingAttributes = new TextAttributes();
-    if (!myApplied) {
-        overridingAttributes.setBackgroundColor(getMiddle(originalAttrs.getBackgroundColor(), scheme.getDefaultBackground()));
-    }
-    else {
+    if (myApplied) {
       overridingAttributes.setBackgroundColor(scheme.getDefaultBackground());
     }
     return TextAttributes.merge(originalAttrs, overridingAttributes);
@@ -150,21 +146,6 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
 
   public TextDiffTypeEnum getType() {
     return myType;
-  }
-
-  @NotNull
-  public static Color getMiddle(@NotNull Color highlight, @NotNull Color background) {
-    return new Color(avg(highlight.getRed(), background.getRed()),
-                     avg(highlight.getGreen(), background.getGreen()),
-                     avg(highlight.getBlue(), background.getBlue()));
-  }
-
-  private static int avg(int highlight, int background) {
-    // transparency can't be used in the editor
-    // => emulating transparency, so that editor highlighting would be the same color as diff dividers
-    double coeff = DividerPolygon.TRANSPARENCY / 255.0;
-    double addendum = 1 - coeff;
-    return (int)(highlight * coeff + background * addendum);
   }
 
 }
