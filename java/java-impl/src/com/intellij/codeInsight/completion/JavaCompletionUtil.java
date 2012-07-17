@@ -418,7 +418,7 @@ public class JavaCompletionUtil {
 
   public static Set<LookupElement> processJavaReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
                                                         final boolean checkAccess, boolean filterStaticAfterInstance, final PrefixMatcher matcher, CompletionParameters parameters) {
-    final THashSet<LookupElement> set = new THashSet<LookupElement>();
+    final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
     final Condition<String> nameCondition = new Condition<String>() {
       public boolean value(String s) {
         return matcher.prefixMatches(s);
