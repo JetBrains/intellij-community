@@ -19,20 +19,15 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.CreateNSDeclarationIntentionFix;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -97,20 +92,5 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
     final TextRange range = tag.getAttribute(XSI_SCHEMA_LOCATION_ATTR_NAME).getValueElement().getTextRange();
     final TextRange textRange = new TextRange(range.getEndOffset() - offset - 1, range.getEndOffset() - 1);
     editor.getCaretModel().moveToOffset(textRange.getStartOffset());
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!(file instanceof XmlFile)) return false;
-
-    PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
-    XmlAttributeValue value = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
-    if (value == null) return false;
-    XmlAttribute attribute = PsiTreeUtil.getParentOfType(value, XmlAttribute.class);
-    if (attribute != null && attribute.isNamespaceDeclaration()) {
-      setText(XmlBundle.message(getQuickFixKeyId()));
-      return true;
-    }
-    return false;
   }
 }

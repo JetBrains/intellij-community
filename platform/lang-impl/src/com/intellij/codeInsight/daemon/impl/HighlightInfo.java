@@ -570,6 +570,11 @@ public class HighlightInfo implements Segment {
     public Icon getIcon() {
       return myIcon;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof IntentionActionDescriptor && myAction.equals(((IntentionActionDescriptor)obj).myAction);
+    }
   }
 
   @Override
