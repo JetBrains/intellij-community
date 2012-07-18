@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -98,6 +99,49 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   public void testCustomTagCompletion() throws Throwable {
     copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
     toTestCompletion("ctn.xml", "ctn_after.xml");
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  public void testCustomTagCompletion0() throws Throwable {
+    final VirtualFile labelViewJava = copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+
+    VirtualFile lf1 = myFixture.copyFileToProject(testFolder + '/' + "ctn0.xml", "res/layout/layout1.xml");
+    myFixture.configureFromExistingVirtualFile(lf1);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertTrue(variants.contains("p1.p2.LabelView"));
+
+    final PsiFile psiLabelViewFile = PsiManager.getInstance(getProject()).findFile(labelViewJava);
+    assertInstanceOf(psiLabelViewFile, PsiJavaFile.class);
+    final PsiClass labelViewClass = ((PsiJavaFile)psiLabelViewFile).getClasses()[0];
+    assertNotNull(labelViewClass);
+    myFixture.renameElement(labelViewClass, "LabelView1");
+
+    VirtualFile lf2 = myFixture.copyFileToProject(testFolder + '/' + "ctn0.xml", "res/layout/layout2.xml");
+    myFixture.configureFromExistingVirtualFile(lf2);
+    myFixture.complete(CompletionType.BASIC);
+    variants = myFixture.getLookupElementStrings();
+    assertFalse(variants.contains("p1.p2.LabelView"));
+    assertTrue(variants.contains("p1.p2.LabelView1"));
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          labelViewJava.delete(null);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+
+    VirtualFile lf3 = myFixture.copyFileToProject(testFolder + '/' + "ctn0.xml", "res/layout/layout3.xml");
+    myFixture.configureFromExistingVirtualFile(lf3);
+    myFixture.complete(CompletionType.BASIC);
+    variants = myFixture.getLookupElementStrings();
+    assertFalse(variants.contains("p1.p2.LabelView"));
+    assertFalse(variants.contains("p1.p2.LabelView1"));
   }
 
   public void testCustomTagCompletion1() throws Throwable {
