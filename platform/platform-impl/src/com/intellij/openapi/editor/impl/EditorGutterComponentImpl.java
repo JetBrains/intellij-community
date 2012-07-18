@@ -295,7 +295,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       doPaintFoldingTree((Graphics2D)g, clip, firstVisibleOffset, lastVisibleOffset);
     }
     else {
-      UIUtil.drawVDottedLine((Graphics2D)g, clip.x + clip.width - 1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
+      UIUtil.drawVDottedLine((Graphics2D)g, clip.x + clip.width -1, clip.y, clip.y + clip.height, null, getOutlineColor(false));
     }
   }
 
@@ -561,7 +561,8 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     });
 
     myLineMarkerAreaWidth = myIconsAreaWidth + FREE_PAINTERS_AREA_WIDTH +
-                            (isFoldingOutlineShown() ? getFoldingAnchorWidth() / 2 : 0);
+                            // if folding outline is shown, there will be enough place for change markers, otherwise add place for it.
+                            (isFoldingOutlineShown() ? 0 : getFoldingAnchorWidth() / 2);
   }
 
   private void paintGutterRenderers(final Graphics g, int firstVisibleOffset, int lastVisibleOffset) {
