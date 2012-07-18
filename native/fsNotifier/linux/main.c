@@ -289,7 +289,7 @@ static bool update_roots(array* new_roots) {
 
   array_delete_vs_data(unwatchable);
   array_delete_vs_data(mounts);
-  array_delete(new_roots);
+  array_delete_vs_data(new_roots);
 
   return true;
 }
@@ -315,7 +315,6 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
 
     if (unflattened[0] != '/') {
       userlog(LOG_WARNING, "  ... not valid, skipped");
-      free(new_root);
       continue;
     }
 
@@ -324,7 +323,8 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
       char* mount = array_get(mounts, j);
       if (strncmp(mount, unflattened, strlen(mount)) == 0) {
         userlog(LOG_DEBUG, "path %s is under unwatchable %s - ignoring", unflattened, mount);
-        skip = unflattened;
+        skip = strdup(unflattened);
+        CHECK_NULL(skip, false);
         break;
       }
     }
@@ -340,26 +340,21 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
       watch_root* root = malloc(sizeof(watch_root));
       CHECK_NULL(root, false);
       root->id = id;
-      root->name = new_root;
+      root->name = strdup(new_root);
+      CHECK_NULL(root->name, false);
       CHECK_NULL(array_push(roots, root), false);
     }
     else if (id == ERR_ABORT) {
       return false;
     }
-    else if (id == ERR_IGNORE) {
-      free(new_root);
-    }
-    else {
+    else if (id != ERR_IGNORE) {
       if (show_warning && watch_limit_reached()) {
         int limit = get_watch_count();
         userlog(LOG_WARNING, "watch limit (%d) reached", limit);
         output("MESSAGE\n" INOTIFY_LIMIT_MSG, limit);
         show_warning = false;  // warn only once
       }
-      char* copy = strdup(unflattened);
-      CHECK_NULL(copy, false);
-      CHECK_NULL(array_push(unwatchable, copy), false);
-      free(new_root);
+      CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false);
     }
   }
 
