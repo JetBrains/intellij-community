@@ -14,6 +14,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.psi.statistics.StatisticsManager
 
 public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   private static final String BASE_PATH = "/codeInsight/completion/normalSorting";
@@ -395,6 +396,41 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     myFixture.completeBasic();
     assert lookup
     assert lookup.currentItem.lookupString == 'JComponent'
+  }
+
+  public void testStatisticsByPrefix() {
+    Closure repeatCompletion = { String letter ->
+      String var1 = "_${letter}oo1"
+      String var2 = "_${letter}oo2"
+
+      myFixture.type("_$letter");
+      myFixture.completeBasic();
+      assertPreferredItems(0, var1, var2)
+      myFixture.type('2\n;\n')
+
+      for (i in 0..<StatisticsManager.OBLIVION_THRESHOLD - 2) {
+        myFixture.type('_');
+        myFixture.completeBasic();
+        assert myFixture.lookupElementStrings.indexOf(var2) < myFixture.lookupElementStrings.indexOf(var1)
+        myFixture.type(letter)
+        assertPreferredItems(0, var2, var1)
+        myFixture.type('\n;\n')
+      }
+    }
+
+    configureByFile(getTestName(false) + ".java")
+    repeatCompletion 'g'
+    repeatCompletion 'f'
+    repeatCompletion 'b'
+
+    myFixture.completeBasic();
+    assertPreferredItems(0, 'return', '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
+    myFixture.type('_');
+    assertPreferredItems(0, '_boo2', '_foo2', '_boo1', '_foo1', '_goo1', '_goo2')
+    myFixture.type('g')
+    assertPreferredItems(0, '_goo2', '_goo1')
+    myFixture.type('o')
+    assertPreferredItems(0, '_goo2', '_goo1')
   }
 
 }

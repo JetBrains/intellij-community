@@ -245,6 +245,9 @@ public class CompletionServiceImpl extends CompletionService{
       if ("prefix".equals(id)) {
         sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new PrefixMatchingClassifier(location)));
       }
+      else if ("stats".equals(id)) {
+        sorter = sorter.withClassifier(CompletionSorterImpl.weighingFactory(new StatisticsWeigher.LookupStatisticsWeigher(location)));
+      }
       else {
         sorter = sorter.weigh(new LookupElementWeigher(id, true, false) {
           @Override

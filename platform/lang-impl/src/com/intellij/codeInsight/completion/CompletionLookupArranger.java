@@ -258,20 +258,19 @@ public class CompletionLookupArranger extends LookupArranger {
     final List<LookupElement> items = lookupImpl.getItems();
     final int count = Math.min(3, lookupImpl.getList().getSelectedIndex());
 
-    final List<StatisticsInfo> ignored = new ArrayList<StatisticsInfo>();
+    final List<StatisticsInfo> toIncrement = new ArrayList<StatisticsInfo>();
     for (int i = 0; i < count; i++) {
       final LookupElement element = items.get(i);
       StatisticsInfo baseInfo = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, element, myLocation);
       if (baseInfo != null && baseInfo != StatisticsInfo.EMPTY && StatisticsManager.getInstance().getUseCount(baseInfo) == 0) {
-        ignored.add(new StatisticsInfo(composeContextWithValue(baseInfo), IGNORED));
+        toIncrement.add(new StatisticsInfo(composeContextWithValue(baseInfo), IGNORED));
       }
     }
+    if (main != null && main != StatisticsInfo.EMPTY) {
+      toIncrement.addAll(StatisticsWeigher.composeStatsWithPrefix(main, myLocation, item));
+    }
 
-    StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
-    final StatisticsInfo selected =
-      info != null && info != StatisticsInfo.EMPTY ? new StatisticsInfo(composeContextWithValue(info), SELECTED) : null;
-
-    StatisticsUpdate update = new StatisticsUpdate(ignored, selected, main);
+    StatisticsUpdate update = new StatisticsUpdate(toIncrement);
     ourPendingUpdate = update;
     Disposer.register(update, new Disposable() {
       @Override
@@ -363,26 +362,16 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   static class StatisticsUpdate implements Disposable {
-    private final List<StatisticsInfo> myIgnored;
-    private final StatisticsInfo mySelected;
-    private final StatisticsInfo myMain;
+    private final List<StatisticsInfo> myInfos;
     private int mySpared;
 
-    public StatisticsUpdate(List<StatisticsInfo> ignored, StatisticsInfo selected, StatisticsInfo main) {
-      myIgnored = ignored;
-      mySelected = selected;
-      myMain = main;
+    public StatisticsUpdate(List<StatisticsInfo> infos) {
+      myInfos = infos;
     }
 
     void performUpdate() {
-      for (StatisticsInfo statisticsInfo : myIgnored) {
+      for (StatisticsInfo statisticsInfo : myInfos) {
         StatisticsManager.getInstance().incUseCount(statisticsInfo);
-      }
-      if (mySelected != null) {
-        StatisticsManager.getInstance().incUseCount(mySelected);
-      }
-      if (myMain != null) {
-        StatisticsManager.getInstance().incUseCount(myMain);
       }
       ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics().registerInvocation(mySpared);
     }
