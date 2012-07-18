@@ -121,6 +121,15 @@ public class AndroidSdkUtils {
       addJavaDocAndSources(result, sdkDir);
     }
 
+    // todo: replace it by target.getPath(SOURCES) when it'll be up to date
+    final VirtualFile sourcesDir = sdkDir.findChild(SdkConstants.FD_PKG_SOURCES);
+    if (sourcesDir != null && sourcesDir.isDirectory()) {
+      final VirtualFile platformSourcesDir = sourcesDir.findChild(platformDir.getName());
+      if (platformSourcesDir != null && platformSourcesDir.isDirectory()) {
+        result.add(new OrderRoot(platformSourcesDir, OrderRootType.SOURCES));
+      }
+    }
+
     final String resFolderPath = target.getPath(IAndroidTarget.RESOURCES);
 
     if (resFolderPath != null) {
