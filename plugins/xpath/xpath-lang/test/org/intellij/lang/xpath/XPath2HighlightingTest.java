@@ -15,8 +15,6 @@
  */
 package org.intellij.lang.xpath;
 
-import org.intellij.lang.xpath.context.ContextProvider;
-
 /*
 * Created by IntelliJ IDEA.
 * User: sweinreuter
@@ -64,7 +62,7 @@ public class XPath2HighlightingTest extends XPath2HighlightingTestBase {
   }
 
   public void testValidOperations2() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 

@@ -22,6 +22,7 @@
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="dom-impl" scope="RUNTIME" />
+    <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
   </component>
 </module>
 
