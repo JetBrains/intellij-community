@@ -235,6 +235,8 @@ public class ChooseRunConfigurationPopup {
   private static Action createNumberAction(final int number, final ListPopupImpl listPopup, final Executor executor) {
     return new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
+        if (listPopup.getSpeedSearch().isHoldingFilter())
+          return;
         for (final Object item : listPopup.getListStep().getValues()) {
           if (item instanceof ItemWrapper && ((ItemWrapper)item).getMnemonic() == number) {
             listPopup.setFinalRunnable(new Runnable() {
@@ -901,7 +903,7 @@ public class ChooseRunConfigurationPopup {
       if (value instanceof Wrapper) {
         Wrapper wrapper = (Wrapper)value;
         final int mnemonic = wrapper.getMnemonic();
-        if (mnemonic != -1) {
+        if (mnemonic != -1 && !myPopup1.getSpeedSearch().isHoldingFilter()) {
           myLabel.setText(mnemonic + ".");
           myLabel.setDisplayedMnemonicIndex(0);
         }
