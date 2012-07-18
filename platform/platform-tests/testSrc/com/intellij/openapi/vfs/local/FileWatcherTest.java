@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -393,8 +394,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 */
 
-  @SuppressWarnings("UnusedDeclaration")
-  public void _testSubst() throws Exception {
+  public void testSubst() throws Exception {
     if (!SystemInfo.isWindows) {
       System.err.println("Ignored: Windows required");
       return;
@@ -421,8 +421,11 @@ public class FileWatcherTest extends PlatformLangTestCase {
     final int rv = new GeneralCommandLine("subst", subst + ":", targetDir.getAbsolutePath()).createProcess().waitFor();
     assertEquals(0, rv);
 
-    final String substRoot = (subst + ":\\").toUpperCase(Locale.US);
+    final String substRoot = (subst + ":").toUpperCase(Locale.US);
     VirtualDirectoryImpl.allowRootAccess(substRoot);
+
+    final VirtualFile vfsRoot = myFileSystem.findFileByPath(substRoot);
+    assertNotNull(substRoot, vfsRoot);
 
     try {
       final File substDir = new File(substRoot, subDir.getName());
@@ -457,6 +460,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     finally {
       delete(targetDir);
       new GeneralCommandLine("subst", subst + ":", "/d").createProcess().waitFor();
+      ((NewVirtualFile)vfsRoot).markDirty();
       myFileSystem.refresh(false);
       VirtualDirectoryImpl.disallowRootAccess(substRoot);
     }
