@@ -1,6 +1,6 @@
 class X {
   void bar(boolean b) {
-    String str = <spot>foo(b ? "true": "false")</spot>;
+    String str = foo(b ? "true": "false");
   }
 
   String foo(String p) {
