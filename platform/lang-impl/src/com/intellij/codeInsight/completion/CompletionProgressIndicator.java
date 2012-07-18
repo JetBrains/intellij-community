@@ -53,6 +53,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
@@ -119,6 +120,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   private volatile int myCount;
   private final ConcurrentHashMap<LookupElement, CompletionSorterImpl> myItemSorters = new ConcurrentHashMap<LookupElement, CompletionSorterImpl>(TObjectHashingStrategy.IDENTITY);
   private final PropertyChangeListener myLookupManagerListener;
+  private final int myStartCaret;
 
   public CompletionProgressIndicator(final Editor editor, CompletionParameters parameters, CodeCompletionHandlerBase handler, Semaphore freezeSemaphore,
                                      final OffsetMap offsetMap, boolean hasModifiers) {
@@ -128,6 +130,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myFreezeSemaphore = freezeSemaphore;
     myOffsetMap = offsetMap;
     myLookup = (LookupImpl)parameters.getLookup();
+    myStartCaret = myEditor.getCaretModel().getOffset();
 
     myLookup.setArranger(new CompletionLookupArranger(parameters, this));
 
@@ -329,10 +332,10 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private boolean updateLookup() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (isOutdated()) return false;
+    if (isOutdated() || !shouldShowLookup()) return false;
 
     boolean justShown = false;
-    if (!myLookup.isShown() && shouldShowLookup()) {
+    if (!myLookup.isShown()) {
       if (hideAutopopupIfMeaningless()) {
         return false;
       }
@@ -392,6 +395,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     myCount++;
 
     if (myCount == 1) {
+      // real middle matching variants are added only with prefix of length >=2
+      addWatchedPrefix(myParameters.getOffset() - item.getPrefixMatcher().getPrefix().length(), StandardPatterns.string().withLength(2));
+
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         public void run() {
           try {
@@ -494,14 +500,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
         myLookup.setCalculating(false);
 
-        if (hideAutopopupIfMeaningless()) {
-          return;
-        }
-
         if (myCount == 0) {
+          LookupManager.getInstance(getProject()).hideActiveLookup();
           if (!isAutopopupCompletion()) {
-            LookupManager.getInstance(getProject()).hideActiveLookup();
-
             final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
             LOG.assertTrue(current == null, current + "!=" + CompletionProgressIndicator.this);
 
@@ -610,8 +611,14 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
   public void prefixUpdated() {
-    final CharSequence text = myEditor.getDocument().getCharsSequence();
     final int caretOffset = myEditor.getCaretModel().getOffset();
+    if (caretOffset < myStartCaret) {
+      scheduleRestart();
+      myRestartingPrefixConditions.clear();
+      return;
+    }
+
+    final CharSequence text = myEditor.getDocument().getCharsSequence();
     for (Pair<Integer, ElementPattern<String>> pair : myRestartingPrefixConditions) {
       int start = pair.first;
       if (caretOffset >= start) {
@@ -656,7 +663,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
           @Override
           public void run() {
             if (phase.checkExpired()) return;
-    
+
             CompletionAutoPopupHandler.invokeCompletion(myParameters.getCompletionType(),
                                                         isAutopopupCompletion(), project, myEditor, myParameters.getInvocationCount(), true);
           }
