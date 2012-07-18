@@ -39,7 +39,6 @@ public class PushConditionInCallAction extends PsiElementBaseIntentionAction {
     if (element instanceof PsiCompiledElement) return false;
     if (!element.getManager().isInProject(element)) return false;
 
-    if (!(element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.QUEST)) return false;
     final PsiConditionalExpression conditionalExpression = PsiTreeUtil.getParentOfType(element, PsiConditionalExpression.class);
     if (conditionalExpression == null) return false;
     final PsiExpression thenExpression = conditionalExpression.getThenExpression();
@@ -75,7 +74,7 @@ public class PushConditionInCallAction extends PsiElementBaseIntentionAction {
         }
       }
     }
-    setText("Push condition " + conditionalExpression.getCondition().getText() + " inside " + 
+    setText("Push condition '" + conditionalExpression.getCondition().getText() + "' inside " +
             (thenMethod.isConstructor() ? "constructor" : "method") + " call");
     return true;
   }
