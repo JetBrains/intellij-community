@@ -118,7 +118,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   @Override
   public boolean isInProject(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
-    if (file instanceof PsiFileImpl && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) return true;
+    if (file != null && file.isPhysical() && file.getViewProvider().getVirtualFile() instanceof LightVirtualFile) return true;
 
     if (element instanceof PsiDirectoryContainer) {
       PsiDirectory[] dirs = ((PsiDirectoryContainer) element).getDirectories();
