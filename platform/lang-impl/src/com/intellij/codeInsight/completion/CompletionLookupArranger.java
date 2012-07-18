@@ -52,8 +52,6 @@ public class CompletionLookupArranger extends LookupArranger {
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
-  private static final String SELECTED = "selected";
-  static final String IGNORED = "ignored";
   static {
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
       @Override
@@ -250,24 +248,14 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   public static StatisticsUpdate collectStatisticChanges(CompletionProgressIndicator indicator, LookupElement item) {
-    LookupImpl lookupImpl = indicator.getLookup();
     applyLastCompletionStatisticsUpdate();
 
-    CompletionLocation myLocation = new CompletionLocation(indicator.getParameters());
-    final StatisticsInfo main = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
-    final List<LookupElement> items = lookupImpl.getItems();
-    final int count = Math.min(3, lookupImpl.getList().getSelectedIndex());
+    CompletionLocation location = new CompletionLocation(indicator.getParameters());
+    final StatisticsInfo main = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
 
     final List<StatisticsInfo> toIncrement = new ArrayList<StatisticsInfo>();
-    for (int i = 0; i < count; i++) {
-      final LookupElement element = items.get(i);
-      StatisticsInfo baseInfo = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, element, myLocation);
-      if (baseInfo != null && baseInfo != StatisticsInfo.EMPTY && StatisticsManager.getInstance().getUseCount(baseInfo) == 0) {
-        toIncrement.add(new StatisticsInfo(composeContextWithValue(baseInfo), IGNORED));
-      }
-    }
     if (main != null && main != StatisticsInfo.EMPTY) {
-      toIncrement.addAll(StatisticsWeigher.composeStatsWithPrefix(main, myLocation, item));
+      toIncrement.addAll(StatisticsWeigher.composeStatsWithPrefix(main, location, item));
     }
 
     StatisticsUpdate update = new StatisticsUpdate(toIncrement);
