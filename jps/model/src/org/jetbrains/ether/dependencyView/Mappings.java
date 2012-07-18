@@ -21,6 +21,7 @@ import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by IntelliJ IDEA.
@@ -76,7 +77,6 @@ public class Mappings {
   private Mappings(final Mappings base) throws IOException {
     myLock = base.myLock;
     myIsDelta = true;
-    myPostPasses = new LinkedList<PostPass>();
     myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myChangedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myDeletedClasses = new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
@@ -93,7 +93,6 @@ public class Mappings {
   public Mappings(final File rootDir, final boolean transientDelta) throws IOException {
     myLock = new Object();
     myIsDelta = false;
-    myPostPasses = new LinkedList<PostPass>();
     myChangedClasses = null;
     myChangedFiles = null;
     myDeletedClasses = null;
@@ -189,24 +188,7 @@ public class Mappings {
     return myAddedSuperClasses;
   }
 
-  private static abstract class PostPass {
-   private  boolean myPerformed = false;
-
-    protected abstract void perform();
-
-    void run() {
-      if (!myPerformed) {
-        myPerformed = true;
-        perform();
-      }
-    }
-  }
-
-  private final List<PostPass> myPostPasses;
-
-  private void addPostPass(final PostPass p) {
-    myPostPasses.add(p);
-  }
+  private final LinkedBlockingQueue<Runnable> myPostPasses = new LinkedBlockingQueue<Runnable>();
 
   private void runPostPasses() {
     final Set<ClassRepr> deleted = myDeletedClasses;
@@ -215,9 +197,8 @@ public class Mappings {
         myChangedClasses.remove(repr.name);
       }
     }
-
-    for (final PostPass p : myPostPasses) {
-      p.run();
+    for (Runnable pass = myPostPasses.poll(); pass != null; pass = myPostPasses.poll()) {
+      pass.run();
     }
   }
 
@@ -2088,21 +2069,21 @@ public class Mappings {
         }
 
         if (!allImports.isEmpty()) {
-          addPostPass(new PostPass() {
-            protected void perform() {
-              final int rootClassName = myContext.get(className.replace(".", "/"));
-              final int fileName = myClassToSourceFile.get(rootClassName);
-              final ClassRepr repr = fileName > 0? getReprByName(rootClassName) : null;
+          myPostPasses.offer(new Runnable() {
+                  public void run() {
+                    final int rootClassName = myContext.get(className.replace(".", "/"));
+                    final int fileName = myClassToSourceFile.get(rootClassName);
+                    final ClassRepr repr = fileName > 0? getReprByName(rootClassName) : null;
 
-              for (final String i : allImports) {
-                final int iname = myContext.get(i.replace(".", "/"));
-                myClassToClassDependency.put(iname, rootClassName);
-                if (repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
-                  mySourceFileToClasses.put(fileName, repr);
-                }
-              }
-            }
-          });
+                    for (final String i : allImports) {
+                      final int iname = myContext.get(i.replace(".", "/"));
+                      myClassToClassDependency.put(iname, rootClassName);
+                      if (repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
+                        mySourceFileToClasses.put(fileName, repr);
+                      }
+                    }
+                  }
+                });
         }
       }
     };
