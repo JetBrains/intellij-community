@@ -563,6 +563,7 @@
 
     <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoSettingsPyCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoAsViewArgsCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoMetaAttributesCompletionContributor"/>
 
     <intentionAction>
       <className>com.jetbrains.django.ref.DjangoClassViewMigrationIntention</className>

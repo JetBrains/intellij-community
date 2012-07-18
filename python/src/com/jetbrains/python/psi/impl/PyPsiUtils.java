@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Lists;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -330,6 +331,47 @@ public class PyPsiUtils {
       }
     }
     return ScopeUtil.getScopeOwner(element) instanceof PsiFile;
+  }
+
+  @Nullable
+  public static PyTargetExpression getAttribute(@NotNull final PyFile file, @NotNull final String name) {
+    PyTargetExpression attr = file.findTopLevelAttribute(name);
+    if (attr == null) {
+      for (PyFromImportStatement element : file.getFromImports()) {
+        PyReferenceExpression expression = element.getImportSource();
+        if (expression == null) continue;
+        final PsiElement resolved = expression.getReference().resolve();
+        if (resolved instanceof PyFile && resolved != file) {
+          return ((PyFile)resolved).findTopLevelAttribute(name);
+        }
+      }
+    }
+    return attr;
+  }
+
+  public static List<PyExpression> getAttributeValuesFromFile(@NotNull PyFile file, @NotNull String name) {
+    List<PyExpression> result = Lists.newArrayList();
+    final PyTargetExpression attr = file.findTopLevelAttribute(name);
+    if (attr != null) {
+      PyExpression value = PyUtil.flattenParens(attr.findAssignedValue());
+      if (value instanceof PySequenceExpression) {
+        result.addAll(Lists.newArrayList(((PySequenceExpression)value).getElements()));
+      }
+      else if (value instanceof PyStringLiteralExpression) {
+        result.add(value);
+      }
+    }
+    return result;
+  }
+
+  public static List<String> getStringValues(PyExpression[] elements) {
+    List<String> results = Lists.newArrayList();
+    for (PyExpression element : elements) {
+      if (element instanceof PyStringLiteralExpression) {
+        results.add(((PyStringLiteralExpression)element).getStringValue());
+      }
+    }
+    return results;
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
