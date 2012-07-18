@@ -34,7 +34,7 @@ public class CompletionSorterImpl extends CompletionSorter {
     myMembers = members;
   }
 
-  private static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
+  public static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
     final String id = weigher.toString();
     return new ClassifierFactory<LookupElement>(id) {
       @Override

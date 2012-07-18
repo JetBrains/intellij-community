@@ -50,6 +50,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private static final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
+  public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
   private static final String SELECTED = "selected";
   static final String IGNORED = "ignored";
@@ -67,6 +68,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private final CompletionProgressIndicator myProcess;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<CompletionSorterImpl, Classifier<LookupElement>>();
+  private int myPrefixChanges;
 
   public CompletionLookupArranger(final CompletionParameters parameters, CompletionProgressIndicator process) {
     myParameters = parameters;
@@ -108,7 +110,7 @@ public class CompletionLookupArranger extends LookupArranger {
       }
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
       if (classifier != null) {
-        classifier.describeItems(subMap, new ProcessingContext());
+        classifier.describeItems(subMap, createContext(false));
       }
     }
 
@@ -149,7 +151,8 @@ public class CompletionLookupArranger extends LookupArranger {
 
     final List<LookupElement> byRelevance = new ArrayList<LookupElement>();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
-      ContainerUtil.addAll(byRelevance, myClassifiers.get(sorter).classify(inputBySorter.get(sorter), new ProcessingContext()));
+      ProcessingContext context = createContext(false);
+      ContainerUtil.addAll(byRelevance, myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context));
     }
 
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
@@ -183,6 +186,15 @@ public class CompletionLookupArranger extends LookupArranger {
     ArrayList<LookupElement> listModel = new ArrayList<LookupElement>(model);
 
     return new Pair<List<LookupElement>, Integer>(listModel, getItemToSelect(lookup, listModel, inputBySorter, onExplicitAction));
+  }
+
+  private ProcessingContext createContext(boolean pureRelevance) {
+    ProcessingContext context = new ProcessingContext();
+    context.put(PREFIX_CHANGES, myPrefixChanges);
+    if (pureRelevance) {
+      context.put(PURE_RELEVANCE, Boolean.TRUE);
+    }
+    return context;
   }
 
 
@@ -222,8 +234,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     final CompletionPreselectSkipper[] skippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
-      ProcessingContext context = new ProcessingContext();
-      context.put(PURE_RELEVANCE, Boolean.TRUE);
+      ProcessingContext context = createContext(true);
       for (LookupElement element : myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context)) {
         if (!shouldSkip(skippers, element)) {
           return items.indexOf(element);
@@ -346,6 +357,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public void prefixChanged() {
+    myPrefixChanges++;
     myFrozenItems.clear();
     super.prefixChanged();
   }
