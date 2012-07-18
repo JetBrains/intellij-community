@@ -333,6 +333,24 @@ public class Mappings {
       return result;
     }
 
+    private boolean hasOverriddenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate) {
+      for (int superName : fromClass.getSupers()) {
+        final ClassRepr superClass = reprByName(superName);
+        if (superClass == null) {
+          return true; // assumption
+        }
+        for (MethodRepr mm : superClass.findMethods(predicate)) {
+          if (isVisibleIn(superClass, mm, fromClass)) {
+            return true;
+          }
+        }
+        if (hasOverriddenMethods(superClass, predicate)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     private void addOverridenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container) {
       for (int superName : fromClass.getSupers()) {
         final ClassRepr superClass = reprByName(superName);
@@ -457,7 +475,7 @@ public class Mappings {
         if (r.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
           return true;
         }
-        return findOverriddenMethods(m, r).size() > 0;
+        return hasOverriddenMethods(r, MethodRepr.equalByJavaRules(m));
       }
       return false;
     }
@@ -960,7 +978,7 @@ public class Mappings {
           }
           final ClassRepr oldIt = oldItRef.get();
 
-          if (oldIt != null && myOriginal.findOverriddenMethods(m, oldIt).size() > 0) {
+          if (oldIt != null && myOriginal.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m))) {
 
           }
           else {
