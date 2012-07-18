@@ -114,6 +114,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     try {
       myConnection.disconnect();
       myWatcher.shutdown();
+      assertFalse(myWatcher.isOperational());
     }
     finally {
       myFileSystem = null;
