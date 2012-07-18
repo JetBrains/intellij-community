@@ -189,34 +189,10 @@ public class Mappings {
     return myAddedSuperClasses;
   }
 
-  private static class Option<X> {
-    static final Option<Boolean> TRUE = new Option<Boolean>(Boolean.TRUE);
-    static final Option<Boolean> FALSE = new Option<Boolean>(Boolean.FALSE);
-    static final Option<Boolean> UNKNOWN = new Option<Boolean>();
+  private static abstract class PostPass {
+   private  boolean myPerformed = false;
 
-    private final X myValue;
-
-    Option(final X value) {
-      this.myValue = value;
-    }
-
-    Option() {
-      myValue = null;
-    }
-
-    public boolean isDefined() {
-      return myValue != null;
-    }
-
-    public X value() {
-      return myValue;
-    }
-  }
-
-  private abstract class PostPass {
-    boolean myPerformed = false;
-
-    abstract void perform();
+    protected abstract void perform();
 
     void run() {
       if (!myPerformed) {
@@ -324,8 +300,8 @@ public class Mappings {
           }
 
           for (int i = 0; i < than.myArgumentTypes.length; i++) {
-            final Option<Boolean> subtypeOf = isSubtypeOf(than.myArgumentTypes[i], m.myArgumentTypes[i]);
-            if (subtypeOf.isDefined() && !subtypeOf.value()) {
+            final Boolean subtypeOf = isSubtypeOf(than.myArgumentTypes[i], m.myArgumentTypes[i]);
+            if (subtypeOf != null && !subtypeOf) {
               return false;
             }
           }
@@ -444,32 +420,34 @@ public class Mappings {
       return getReprByName(name);
     }
 
-    Option<Boolean> isInheritorOf(final int who, final int whom) {
+    @Nullable
+    private Boolean isInheritorOf(final int who, final int whom) {
       if (who == whom) {
-        return Option.TRUE;
+        return Boolean.TRUE;
       }
 
       final ClassRepr repr = reprByName(who);
 
       if (repr != null) {
         for (int s : repr.getSupers()) {
-          final Option<Boolean> inheritorOf = isInheritorOf(s, whom);
-          if (inheritorOf.isDefined() && inheritorOf.value()) {
+          final Boolean inheritorOf = isInheritorOf(s, whom);
+          if (inheritorOf != null && inheritorOf) {
             return inheritorOf;
           }
         }
       }
 
-      return Option.UNKNOWN;
+      return null;
     }
 
-    Option<Boolean> isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
+    @Nullable
+    private Boolean isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
       if (who.equals(whom)) {
-        return Option.TRUE;
+        return Boolean.TRUE;
       }
 
       if (who instanceof TypeRepr.PrimitiveType || whom instanceof TypeRepr.PrimitiveType) {
-        return Option.FALSE;
+        return Boolean.FALSE;
       }
 
       if (who instanceof TypeRepr.ArrayType) {
@@ -480,34 +458,31 @@ public class Mappings {
         final String descr = whom.getDescr(myContext);
 
         if (descr.equals("Ljava/lang/Cloneable") || descr.equals("Ljava/lang/Object") || descr.equals("Ljava/io/Serializable")) {
-          return Option.TRUE;
+          return Boolean.TRUE;
         }
 
-        return Option.FALSE;
+        return Boolean.FALSE;
       }
 
       if (whom instanceof TypeRepr.ClassType) {
         return isInheritorOf(((TypeRepr.ClassType)who).myClassName, ((TypeRepr.ClassType)whom).myClassName);
       }
 
-      return Option.FALSE;
+      return Boolean.FALSE;
     }
 
-    boolean methodVisible(final int className, final MethodRepr m) {
+    private boolean isMethodVisible(final int className, final MethodRepr m) {
       final ClassRepr r = reprByName(className);
-
       if (r != null) {
         if (r.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
           return true;
         }
-
         return findOverriddenMethods(m, r).size() > 0;
       }
-
       return false;
     }
 
-    private boolean fieldVisible(final int className, final FieldRepr field) {
+    private boolean isFieldVisible(final int className, final FieldRepr field) {
       final ClassRepr r = reprByName(className);
       if (r == null || r.getFields().contains(field)) {
         return true;
@@ -519,7 +494,6 @@ public class Mappings {
       debug("Affecting subclasses of class: ", className);
 
       final int fileName = myClassToSourceFile.get(className);
-
       if (fileName <= 0) {
         debug("No source file detected for class ", className);
         debug("End of affectSubclasses");
@@ -532,7 +506,6 @@ public class Mappings {
         debug("Class usages affection requested");
 
         final ClassRepr classRepr = reprByName(className);
-
         if (classRepr != null) {
           debug("Added class usage for ", classRepr.name);
           affectedUsages.add(classRepr.createUsage());
@@ -540,15 +513,12 @@ public class Mappings {
       }
 
       final TIntHashSet depClasses = myClassToClassDependency.get(className);
-
       if (depClasses != null) {
         addAll(dependants, depClasses);
       }
-
       affectedFiles.add(new File(myContext.getValue(fileName)));
 
       final TIntHashSet directSubclasses = myClassToSubclasses.get(className);
-
       if (directSubclasses != null) {
         directSubclasses.forEach(new TIntProcedure() {
           @Override
@@ -567,11 +537,9 @@ public class Mappings {
         @Override
         public boolean execute(int p) {
           final TIntHashSet deps = myClassToClassDependency.get(p);
-
           if (deps != null) {
             addAll(dependents, deps);
           }
-
           debug("Affect field usage referenced of class ", p);
           affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(myContext, p) : field.createUsage(myContext, p));
           return true;
@@ -586,7 +554,6 @@ public class Mappings {
           @Override
           public boolean execute(int p) {
             final TIntHashSet deps = myClassToClassDependency.get(p);
-
             if (deps != null) {
               addAll(dependents, deps);
             }
@@ -613,7 +580,6 @@ public class Mappings {
               final int depFile = myClassToSourceFile.get(depClass);
               if (depFile > 0 && depFile != sourceFile) {
                 final File theFile = new File(myContext.getValue(depFile));
-
                 if (filter == null || filter.accept(theFile)) {
                   affectedFiles.add(theFile);
                 }
@@ -652,8 +618,8 @@ public class Mappings {
 
       @Override
       public boolean checkResidence(final int residence) {
-        final Option<Boolean> inheritorOf = isInheritorOf(residence, rootClass);
-        return !inheritorOf.isDefined() || !inheritorOf.value() || super.checkResidence(residence);
+        final Boolean inheritorOf = isInheritorOf(residence, rootClass);
+        return inheritorOf == null || !inheritorOf || super.checkResidence(residence);
       }
     }
 
@@ -1056,8 +1022,8 @@ public class Mappings {
             if (methodClass == MOCK_CLASS) {
               continue;
             }
-            final Option<Boolean> inheritorOf = mySelf.isInheritorOf(methodClass.name, it.name);
-            final boolean isInheritor = inheritorOf.isDefined() && inheritorOf.value();
+            final Boolean inheritorOf = mySelf.isInheritorOf(methodClass.name, it.name);
+            final boolean isInheritor = inheritorOf != null && inheritorOf;
 
             debug("Method: ", method.name);
             debug("Class : ", methodClass.name);
@@ -1103,7 +1069,7 @@ public class Mappings {
                   final int sourceFileName = myClassToSourceFile.get(subClass);
                   if (sourceFileName > 0) {
                     final int outerClass = r.getOuterClassName();
-                    if (myUpdated.methodVisible(outerClass, m)) {
+                    if (myUpdated.isMethodVisible(outerClass, m)) {
                       affectedFiles.add(sourceFileName);
                       debug("Affecting file due to local overriding: ", sourceFileName);
                     }
@@ -1345,7 +1311,7 @@ public class Mappings {
                   }
                   else {
                     final int outerClass = r.getOuterClassName();
-                    if (!isEmpty(outerClass) && myUpdated.fieldVisible(outerClass, f)) {
+                    if (!isEmpty(outerClass) && myUpdated.isFieldVisible(outerClass, f)) {
                       debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
                       myAffectedFiles.add(new File(myContext.getValue(sourceFileName)));
                     }
@@ -2123,7 +2089,7 @@ public class Mappings {
 
         if (!allImports.isEmpty()) {
           addPostPass(new PostPass() {
-            public void perform() {
+            protected void perform() {
               final int rootClassName = myContext.get(className.replace(".", "/"));
               final int fileName = myClassToSourceFile.get(rootClassName);
               final ClassRepr repr = fileName > 0? getReprByName(rootClassName) : null;
