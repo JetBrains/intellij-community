@@ -382,7 +382,11 @@ public class JavaDocInfoGenerator {
 
   @Nullable
   private static PsiDocComment getDocComment(final PsiDocCommentOwner docOwner) {
-    PsiDocComment comment = ((PsiDocCommentOwner)docOwner.getNavigationElement()).getDocComment();
+    PsiElement navElement = docOwner.getNavigationElement();
+    if (!(navElement instanceof PsiDocCommentOwner)) {
+      throw new AssertionError("Wrong navElement: " + navElement + "; original = " + docOwner + " of class " + docOwner.getClass());
+    }
+    PsiDocComment comment = ((PsiDocCommentOwner)navElement).getDocComment();
     if (comment == null) { //check for non-normalized fields
       final PsiModifierList modifierList = docOwner.getModifierList();
       if (modifierList != null) {
