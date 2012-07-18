@@ -12,6 +12,7 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.Pass;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLocalVariable;
@@ -272,7 +273,14 @@ public class IntroduceParameterTest extends LightRefactoringTestCase  {
   }
 
   public void testDiamondOccurrences() throws Exception {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+    final LanguageLevel oldLevel = getLanguageLevel();
+    try {
+      setLanguageLevel(LanguageLevel.JDK_1_7);
+      doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_ALL, true, false, true, false);
+    }
+    finally {
+      setLanguageLevel(oldLevel);
+    }
   }
 
   public void testPreserveDiamondOccurrences() throws Exception {
