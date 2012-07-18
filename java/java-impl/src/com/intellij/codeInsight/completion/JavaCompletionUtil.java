@@ -736,7 +736,9 @@ public class JavaCompletionUtil {
     PsiElement element = file.findElementAt(startOffset);
     if (element instanceof PsiIdentifier) {
       PsiElement parent = element.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified() && !(parent.getParent() instanceof PsiPackageStatement)) {
+      if (parent instanceof PsiJavaCodeReferenceElement &&
+          !((PsiJavaCodeReferenceElement)parent).isQualified() &&
+          !(parent.getParent() instanceof PsiPackageStatement)) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
 
         if (psiClass.isValid() && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
@@ -750,8 +752,8 @@ public class JavaCompletionUtil {
           documentManager.commitDocument(document);
 
           newElement = CodeInsightUtilBase.findElementInRange(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
-                                                                  PsiJavaCodeReferenceElement.class,
-                                                                  JavaLanguage.INSTANCE);
+                                                              PsiJavaCodeReferenceElement.class,
+                                                              JavaLanguage.INSTANCE);
           rangeMarker.dispose();
           if (newElement != null) {
             newEndOffset = newElement.getTextRange().getEndOffset();
@@ -762,7 +764,9 @@ public class JavaCompletionUtil {
               }
             }
 
-            if (!staticImport && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement))) {
+            if (!staticImport &&
+                !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement)) &&
+                !PsiUtil.isInnerClass(psiClass)) {
               final String qName = psiClass.getQualifiedName();
               if (qName != null) {
                 document.replaceString(newElement.getTextRange().getStartOffset(), newEndOffset, qName);

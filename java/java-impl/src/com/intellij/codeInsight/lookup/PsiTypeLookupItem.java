@@ -187,10 +187,10 @@ public class PsiTypeLookupItem extends LookupItem {
         Set<String> allStrings = new HashSet<String>();
         String lookupString = psiClass.getName();
         allStrings.add(lookupString);
-        if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
+        if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
           // inner class name should be shown qualified if its not accessible by single name
           PsiClass aClass = psiClass.getContainingClass();
-          while (aClass != null) {
+          while (aClass != null && !PsiUtil.isInnerClass(aClass)) {
             lookupString = aClass.getName() + '.' + lookupString;
             allStrings.add(lookupString);
             aClass = aClass.getContainingClass();

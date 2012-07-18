@@ -1111,6 +1111,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.addClass("package bar; public class Bar implements foo.Foo {}");
     doTest();
   }
+  public void testAfterQualifiedNew() throws Exception {
+    myFixture.addClass("class Aa { public class B { } }");
+    doTest();
+  }
 
   public void testTabAfterNew() throws Exception {
     doFirstItemTest('\t');
