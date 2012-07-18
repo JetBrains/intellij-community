@@ -167,6 +167,20 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
       }
     });
   }
+  public StringPattern shorterThan(final int maxLength) {
+    return with(new PatternCondition<String>("shorterThan") {
+      public boolean accepts(@NotNull final String s, final ProcessingContext context) {
+        return s.length() < maxLength;
+      }
+    });
+  }
+  public StringPattern withLength(final int length) {
+    return with(new PatternCondition<String>("withLength") {
+      public boolean accepts(@NotNull final String s, final ProcessingContext context) {
+        return s.length() == length;
+      }
+    });
+  }
 
   @NotNull
   public StringPattern oneOf(@NonNls final String... values) {
