@@ -171,6 +171,11 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestCompletionVariants("cav.xml", "@color/color0", "@color/color1", "@color/color2");
   }
 
+  public void testIdea64993() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    doTestHighlighting();
+  }
+
   public void testTagNameCompletion1() throws Throwable {
     toTestCompletion("tn1.xml", "tn1_after.xml");
   }
