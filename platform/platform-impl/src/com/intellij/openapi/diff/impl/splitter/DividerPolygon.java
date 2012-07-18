@@ -22,9 +22,11 @@ import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.GraphicsUtil;
 
 import java.awt.*;
+import java.awt.geom.CubicCurve2D;
+import java.awt.geom.Path2D;
 import java.util.ArrayList;
 
 /**
@@ -38,6 +40,8 @@ public class DividerPolygon {
   private final int myEnd1;
   private final int myEnd2;
   private final boolean myApplied;
+
+  public static final double CTRL_PROXIMITY_X = 0.3;
 
   public DividerPolygon(int start1, int start2, int end1, int end2, Color color, boolean applied) {
     myApplied = applied;
@@ -53,19 +57,44 @@ public class DividerPolygon {
   }
 
   private void paint(Graphics2D g, int width) {
+    GraphicsUtil.setupAntialiasing(g);
+
+
     if (!myApplied) {
+      Shape upperCurve = makeCurve(width, myStart1, myStart2, true);
+      Shape lowerCurve = makeCurve(width, myEnd1, myEnd2, false);
+
+      Path2D path = new Path2D.Double();
+      path.append(upperCurve, true);
+      path.append(lowerCurve, true);
       g.setColor(myColor);
-      g.fill(new Polygon(new int[]{0, 0, width, width}, new int[]{myStart1, myEnd1, myEnd2, myStart2}, 4));
+      g.fill(path);
+
       g.setColor(DiffUtil.getFramingColor(myColor));
-      UIUtil.drawLine(g, 0, myStart1, width, myStart2);
-      UIUtil.drawLine(g, 0, myEnd1, width, myEnd2);
+      g.draw(upperCurve);
+      g.draw(lowerCurve);
     }
     else {
       g.setColor(myColor);
-      UIUtil.drawLine(g, 0, myStart1 + 1, width, myStart2 + 1);
-      UIUtil.drawLine(g, 0, myStart1 + 2, width, myStart2 + 2);
-      UIUtil.drawLine(g, 0, myEnd1 + 1, width, myEnd2 + 1);
-      UIUtil.drawLine(g, 0, myEnd1, width, myEnd2);
+      g.draw(makeCurve(width, myStart1 + 1, myStart2 + 1, true));
+      g.draw(makeCurve(width, myStart1 + 2, myStart2 + 2, true));
+      g.draw(makeCurve(width, myEnd1 + 1, myEnd2 + 1, false));
+      g.draw(makeCurve(width, myEnd1 + 2, myEnd2 + 2, false));
+    }
+  }
+
+  private static Shape makeCurve(int width, int y1, int y2, boolean forward) {
+    if (forward) {
+      return new CubicCurve2D.Double(0, y1,
+                                     width * CTRL_PROXIMITY_X, y1,
+                                     width * (1.0 - CTRL_PROXIMITY_X), y2,
+                                     width, y2);
+    }
+    else {
+      return new CubicCurve2D.Double(width, y2,
+                                     width * (1.0 - CTRL_PROXIMITY_X), y2,
+                                     width * CTRL_PROXIMITY_X, y1,
+                                     0, y1);
     }
   }
 
