@@ -369,6 +369,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return getLineBlocks().getCount() > 0 || myNotCalculateDiffPanel != null;
   }
 
+  @Nullable
   public JComponent getPreferredFocusedComponent() {
     return myCurrentSide.getFocusableComponent();
   }

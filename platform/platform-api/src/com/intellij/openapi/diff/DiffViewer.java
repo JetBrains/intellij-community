@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.diff;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
@@ -25,6 +27,7 @@ public interface DiffViewer {
 
   JComponent getComponent();
 
+  @Nullable
   JComponent getPreferredFocusedComponent();
 
   int getContentsNumber();
