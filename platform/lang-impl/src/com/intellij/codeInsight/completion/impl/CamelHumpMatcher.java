@@ -111,4 +111,8 @@ public class CamelHumpMatcher extends PrefixMatcher {
     });
   }
 
+  @Override
+  public int matchingDegree(String string) {
+    return myMatcher.matchingDegree(string);
+  }
 }
