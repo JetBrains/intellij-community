@@ -214,6 +214,15 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
   }
 
+  public void testMiddleMatchingMinimumTwoConsecutiveLettersInWordMiddle() {
+    assertMatches("*fo", "reformat");
+    assertMatches("*f", "reFormat");
+    assertMatches("*f", "format");
+    assertMatches("*f", "Format");
+    assertMatches("*Stri", "string");
+    assertDoesntMatch("*f", "reformat");
+  }
+
   public void testMiddleMatching() {
     assertTrue(caseInsensitiveMatcher("*old").matches("folder"));
     assertMatches("SWU*H*7", "SWUpgradeHdlrFSPR7Test");
@@ -395,9 +404,9 @@ public class NameUtilTest extends UsefulTestCase {
   public void testPreferStartMatchToMiddleMatch() {
     assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
-    assertPreference("*f", "barfoo", "barFoo");
-    assertPreference("*f", "barfoo", "foo");
-    assertPreference("*f", "asdf", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("*fo", "barfoo", "barFoo");
+    assertPreference("*fo", "barfoo", "foo");
+    assertPreference("*fo", "asdfo", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" sto", "ArrayStoreException", "StackOverflowError", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" EUC-", "x-EUC-TW", "EUC-JP");
     assertPreference(" boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
@@ -450,10 +459,10 @@ public class NameUtilTest extends UsefulTestCase {
       public void run() {
         for (int i = 0; i < 100000; i++) {
           for (MinusculeMatcher matcher : matching) {
-            assertTrue(matcher.matches(longName));
+            assertTrue(matcher.toString(), matcher.matches(longName));
           }
           for (MinusculeMatcher matcher : nonMatching) {
-            assertFalse(matcher.matches(longName));
+            assertFalse(matcher.toString(), matcher.matches(longName));
           }
         }
       }

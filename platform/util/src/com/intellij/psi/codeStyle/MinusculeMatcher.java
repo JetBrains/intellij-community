@@ -177,6 +177,7 @@ public class MinusculeMatcher implements Matcher {
 
   @Nullable
   private FList<TextRange> skipChars(String name, int patternIndex, int nameIndex, boolean maySkipNextChar) {
+    boolean veryStart = patternIndex == 0;
     while ('*' == myPattern[patternIndex]) {
       patternIndex++;
       if (patternIndex == myPattern.length) {
@@ -199,6 +200,17 @@ public class MinusculeMatcher implements Matcher {
       if (upper && next > 0 && !Character.isUpperCase(name.charAt(next))) {
         fromIndex = next + 1;
         continue;
+      }
+
+      if (veryStart && next > 0 && !NameUtil.isWordStart(name, next)) {
+        if (next == name.length() - 1) {
+          return null;
+        }
+        if (patternIndex == myPattern.length - 1 ||
+            myPattern[patternIndex + 1] != name.charAt(next + 1) && Character.isLetter(myPattern[patternIndex + 1])) {
+          fromIndex = next + 1;
+          continue;
+        }
       }
 
       FList<TextRange> ranges = matchName(name, patternIndex, next);
@@ -323,5 +335,13 @@ public class MinusculeMatcher implements Matcher {
     }
 
     return matchName(name, 0, 0);
+  }
+
+  @Override
+  public String toString() {
+    return "MinusculeMatcher{" +
+           "myPattern=" + new String(myPattern) +
+           ", myOptions=" + myOptions +
+           '}';
   }
 }

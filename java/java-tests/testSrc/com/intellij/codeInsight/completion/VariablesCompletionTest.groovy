@@ -137,7 +137,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testFieldOutOfAnonymous() throws Exception {
-    doSelectTest("TestFieldOutOfAnonymous.java", "TestFieldOutOfAnonymousResult.java");
+    doTest("TestFieldOutOfAnonymous.java", "TestFieldOutOfAnonymousResult.java");
   }
 
   public void testUnresolvedMethodName() throws Exception {

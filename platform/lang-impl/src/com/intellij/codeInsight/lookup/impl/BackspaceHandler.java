@@ -56,6 +56,10 @@ public class BackspaceHandler extends EditorActionHandler {
       return;
     }
 
+    if (process != null) {
+      process.prefixUpdated();
+    }
+
     if (hideOffset < editor.getCaretModel().getOffset()) {
       if (process != null) {
         process.scheduleRestart();

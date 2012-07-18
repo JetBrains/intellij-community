@@ -558,11 +558,15 @@ public interface Test {
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     assert myFixture.editor.caretModel.offset == offset + 1
+    joinAutopopup()
+    joinCompletion()
     assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     assert myFixture.editor.caretModel.offset == offset
+    joinAutopopup()
+    joinCompletion()
     assertContains "if", "iterable", "int"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
@@ -773,7 +777,7 @@ class Foo {
   public void testRestartWithVisibleLookup() {
     registerContributor(LongContributor, LoadingOrder.FIRST)
 
-    myFixture.configureByText("a.java", """ class Foo { { int abcdef; a<caret> } } """)
+    myFixture.configureByText("a.java", """ class Foo { { int abcdef, abcdefg; ab<caret> } } """)
     myFixture.completeBasic()
     while (!lookup.shown) {
       Thread.sleep(1)
@@ -781,10 +785,10 @@ class Foo {
     def l = lookup
     edt {
       assert lookup.calculating
-      myFixture.type 'b'
+      myFixture.type 'c'
     }
     joinCommit {
-      myFixture.type 'c'
+      myFixture.type 'd'
     }
     joinAutopopup()
     joinCompletion()
