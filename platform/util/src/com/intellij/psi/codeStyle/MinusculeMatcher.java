@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -291,8 +292,11 @@ public class MinusculeMatcher implements Matcher {
       return 0;
     }
 
+    int skipCount = CharArrayUtil.shiftForward(myPattern, 0, " *");
     int commonStart = 0;
-    while (commonStart < name.length() && commonStart < myPattern.length && name.charAt(commonStart) == myPattern[commonStart]) {
+    while (commonStart < name.length() &&
+           commonStart + skipCount < myPattern.length &&
+           name.charAt(commonStart) == myPattern[commonStart + skipCount]) {
       commonStart++;
     }
 
@@ -300,7 +304,7 @@ public class MinusculeMatcher implements Matcher {
     boolean prefixMatching = isStartMatch(name, startIndex);
     boolean middleWordStart = !prefixMatching && NameUtil.isWordStart(name, first.getStartOffset());
 
-    return -fragmentCount + matchingCase * 10 + commonStart - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
+    return -fragmentCount + matchingCase * 2 + commonStart * 3 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
   }
 
   public boolean isStartMatch(String name) {

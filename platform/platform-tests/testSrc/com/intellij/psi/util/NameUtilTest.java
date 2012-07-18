@@ -414,6 +414,7 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testPreferWordBoundaryMatch() {
+    assertPreference("*ap", "add_profile", "application", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
     assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.NONE);
   }
