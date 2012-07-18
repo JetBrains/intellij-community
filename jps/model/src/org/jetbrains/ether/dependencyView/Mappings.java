@@ -72,6 +72,7 @@ public class Mappings {
   private IntIntTransientMultiMaplet myRemovedSuperClasses;
   private IntIntTransientMultiMaplet myAddedSuperClasses;
 
+  @Nullable
   private Collection<String> myRemovedFiles;
 
   private Mappings(final Mappings base) throws IOException {
@@ -206,18 +207,19 @@ public class Mappings {
   private static final MethodRepr MOCK_METHOD = null;
 
   private class Util {
-    final Mappings myDelta;
+    @Nullable
+    private final Mappings myMappings;
 
     private Util() {
-      myDelta = null;
+      myMappings = null;
     }
 
-    private Util(Mappings delta) {
-      this.myDelta = delta;
+    private Util(@NotNull Mappings mappings) {
+      myMappings = mappings;
     }
 
     void appendDependents(final ClassRepr c, final TIntHashSet result) {
-      final TIntHashSet depClasses = myDelta.myClassToClassDependency.get(c.name);
+      final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
 
       if (depClasses != null) {
         addAll(result, depClasses);
@@ -226,7 +228,6 @@ public class Mappings {
 
     void propagateMemberAccessRec(final TIntHashSet acc, final boolean isField, final boolean root, final int name, final int reflcass) {
       final ClassRepr repr = reprByName(reflcass);
-
       if (repr != null) {
         if (!root) {
           final Collection members = isField ? repr.getFields() : repr.getMethods();
@@ -258,9 +259,7 @@ public class Mappings {
 
     TIntHashSet propagateMemberAccess(final boolean isField, final int name, final int className) {
       final TIntHashSet acc = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-
       propagateMemberAccessRec(acc, isField, true, name, className);
-
       return acc;
     }
 
@@ -390,8 +389,8 @@ public class Mappings {
 
     @Nullable
     ClassRepr reprByName(final int name) {
-      if (myDelta != null) {
-        final ClassRepr r = myDelta.getReprByName(name);
+      if (myMappings != null) {
+        final ClassRepr r = myMappings.getReprByName(name);
 
         if (r != null) {
           return r;
@@ -550,28 +549,6 @@ public class Mappings {
       }
     }
 
-    private void affectAll(final int className, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
-      final int sourceFile = myClassToSourceFile.get(className);
-      if (sourceFile > 0) {
-        final TIntHashSet dependants = myClassToClassDependency.get(className);
-        if (dependants != null) {
-          dependants.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int depClass) {
-              final int depFile = myClassToSourceFile.get(depClass);
-              if (depFile > 0 && depFile != sourceFile) {
-                final File theFile = new File(myContext.getValue(depFile));
-                if (filter == null || filter.accept(theFile)) {
-                  affectedFiles.add(theFile);
-                }
-              }
-              return true;
-            }
-          });
-        }
-      }
-    }
-
     public abstract class UsageConstraint {
       public abstract boolean checkResidence(final int residence);
     }
@@ -633,6 +610,28 @@ public class Mappings {
     }
   }
 
+  private void affectAll(final int className, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
+    final int sourceFile = myClassToSourceFile.get(className);
+    if (sourceFile > 0) {
+      final TIntHashSet dependants = myClassToClassDependency.get(className);
+      if (dependants != null) {
+        dependants.forEach(new TIntProcedure() {
+          @Override
+          public boolean execute(int depClass) {
+            final int depFile = myClassToSourceFile.get(depClass);
+            if (depFile > 0 && depFile != sourceFile) {
+              final File theFile = new File(myContext.getValue(depFile));
+              if (filter == null || filter.accept(theFile)) {
+                affectedFiles.add(theFile);
+              }
+            }
+            return true;
+          }
+        });
+      }
+    }
+  }
+
   private static boolean isVisibleIn(final ClassRepr c, final ProtoMember m, final ClassRepr scope) {
     final boolean privacy = ((m.access & Opcodes.ACC_PRIVATE) > 0) && c.name != scope.name;
     final boolean packageLocality = Difference.isPackageLocal(m.access) && !c.getPackageName().equals(scope.getPackageName());
@@ -669,7 +668,7 @@ public class Mappings {
 
   private boolean incrementalDecision(final int owner, final Proto member, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
-    final Util self = new Util(this);
+    final Util self = new Util();
 
     // Public branch --- hopeless
     if ((member.access & Opcodes.ACC_PUBLIC) > 0) {
@@ -761,10 +760,9 @@ public class Mappings {
     final DelayedWorks myDelayedWorks;
 
     final Util myUpdated;
-    final Util mySelf;
     final Util myOriginal;
 
-    final boolean myEasyMode;
+    final boolean myPreprocessOnly;
 
     private class DelayedWorks {
       class Triple {
@@ -870,10 +868,9 @@ public class Mappings {
       myDelayedWorks = null;
 
       myUpdated = null;
-      mySelf = null;
       myOriginal = null;
 
-      myEasyMode = true;
+      myPreprocessOnly = true;
 
       delta.myIsRebuild = true;
     }
@@ -890,11 +887,9 @@ public class Mappings {
 
       myDelayedWorks = null;
 
-      myUpdated = new Util(myDelta);
-      mySelf = new Util(Mappings.this);
+      myUpdated = new Util(delta);
       myOriginal = new Util();
-
-      myEasyMode = true;
+      myPreprocessOnly = true;
     }
 
     private Differential(final Mappings delta,
@@ -915,17 +910,16 @@ public class Mappings {
 
       myDelayedWorks = new DelayedWorks();
 
-      myUpdated = new Util(myDelta);
-      mySelf = new Util(Mappings.this);
+      myUpdated = new Util(delta);
       myOriginal = new Util();
 
-      myEasyMode = false;
+      myPreprocessOnly = false;
     }
 
     private void processDisappearedClasses() {
       myDelta.compensateRemovedContent(myFilesToCompile);
 
-      final Collection<String> removed = myDelta.getRemovedFiles();
+      final Collection<String> removed = myDelta.myRemovedFiles;
 
       if (removed != null) {
         for (final String file : removed) {
@@ -934,7 +928,7 @@ public class Mappings {
           if (classes != null) {
             for (ClassRepr c : classes) {
               debug("Affecting usages of removed class ", c.name);
-              myUpdated.affectAll(c.name, myAffectedFiles, myFilter);
+              affectAll(c.name, myAffectedFiles, myFilter);
             }
           }
         }
@@ -966,7 +960,7 @@ public class Mappings {
           }
           final ClassRepr oldIt = oldItRef.get();
 
-          if (oldIt != null && mySelf.findOverriddenMethods(m, oldIt).size() > 0) {
+          if (oldIt != null && myOriginal.findOverriddenMethods(m, oldIt).size() > 0) {
 
           }
           else {
@@ -1003,7 +997,7 @@ public class Mappings {
             if (methodClass == MOCK_CLASS) {
               continue;
             }
-            final Boolean inheritorOf = mySelf.isInheritorOf(methodClass.name, it.name);
+            final Boolean inheritorOf = myOriginal.isInheritorOf(methodClass.name, it.name);
             final boolean isInheritor = inheritorOf != null && inheritorOf;
 
             debug("Method: ", method.name);
@@ -1022,7 +1016,7 @@ public class Mappings {
             else {
               debug("Current method does not override that found");
 
-              final TIntHashSet yetPropagated = mySelf.propagateMethodAccess(method.name, it.name);
+              final TIntHashSet yetPropagated = myOriginal.propagateMethodAccess(method.name, it.name);
 
               if (isInheritor) {
                 final TIntHashSet deps = myClassToClassDependency.get(methodClass.name);
@@ -1511,11 +1505,11 @@ public class Mappings {
           }
         }
 
-        if (myEasyMode) {
+        if (myPreprocessOnly) {
           return false;
         }
 
-        mySelf.appendDependents(it, state.myDependants);
+        myOriginal.appendDependents(it, state.myDependants);
 
         if (superClassChanged || interfacesChanged || signatureChanged) {
           debug("Superclass changed: ", superClassChanged);
@@ -1640,8 +1634,8 @@ public class Mappings {
           myDelta.myChangedFiles.add(fileName);
         }
 
-        if (!myEasyMode) {
-          mySelf.appendDependents(c, state.myDependants);
+        if (!myPreprocessOnly) {
+          myOriginal.appendDependents(c, state.myDependants);
           debug("Adding usages of class ", c.name);
           state.myAffectedUsages.add(c.createUsage());
         }
@@ -1659,7 +1653,7 @@ public class Mappings {
           myDelta.registerAddedSuperClass(c.name, sup);
         }
 
-        if (!myEasyMode) {
+        if (!myPreprocessOnly) {
           final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
 
           if (depClasses != null) {
@@ -1768,7 +1762,7 @@ public class Mappings {
         }
 
         debug("Begin of Differentiate:");
-        debug("Easy mode: ", myEasyMode);
+        debug("Easy mode: ", myPreprocessOnly);
 
         processDisappearedClasses();
 
@@ -1787,7 +1781,7 @@ public class Mappings {
           final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
           final DiffState state = new DiffState(Difference.make(pastClasses, classes));
 
-          if (!processChangedClasses(state) && !myEasyMode) {
+          if (!processChangedClasses(state) && !myPreprocessOnly) {
             // turning non-incremental
             return false;
           }
@@ -1795,16 +1789,15 @@ public class Mappings {
           processRemovedClases(state);
           processAddedClasses(state);
 
-          if (!myEasyMode) {
+          if (!myPreprocessOnly) {
             calculateAffectedFiles(state);
           }
         }
 
         debug("End of Differentiate.");
 
-        if (!myEasyMode) {
-          final Collection<String> removed = myDelta.getRemovedFiles();
-
+        if (!myPreprocessOnly) {
+          final Collection<String> removed = myDelta.myRemovedFiles;
           if (removed != null) {
             for (final String r : removed) {
               myAffectedFiles.remove(new File(r));
@@ -1881,7 +1874,7 @@ public class Mappings {
       try {
         assert (delta.isDifferentiated());
 
-        final Collection<String> removed = delta.getRemovedFiles();
+        final Collection<String> removed = delta.myRemovedFiles;
 
         delta.runPostPasses();
 
@@ -2212,10 +2205,6 @@ public class Mappings {
 
   private TIntHashSet getChangedFiles() {
     return myChangedFiles;
-  }
-
-  private Collection<String> getRemovedFiles() {
-    return myRemovedFiles;
   }
 
   private static void debug(final String s) {
