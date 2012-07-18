@@ -192,7 +192,7 @@ public class AndroidXmlReferenceProvider extends PsiReferenceProvider {
       }
       final List<Object> result = new ArrayList<Object>();
 
-      ClassInheritorsSearch.search(baseClass, myModule.getModuleWithDependenciesScope(), true, true, false).forEach(
+      ClassInheritorsSearch.search(baseClass, myModule.getModuleWithDependenciesAndLibrariesScope(false), true, true, false).forEach(
         new Processor<PsiClass>() {
           @Override
           public boolean process(PsiClass psiClass) {

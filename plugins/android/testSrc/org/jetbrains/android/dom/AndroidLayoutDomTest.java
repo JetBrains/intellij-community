@@ -241,6 +241,45 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     toTestCompletion("tn5.xml", "tn5_after.xml");
   }
 
+  public void testTagNameCompletion6() throws Throwable {
+    VirtualFile file = copyFileToProject("tn6.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertFalse(lookupElementStrings.contains("android.widget.Button"));
+  }
+
+  public void testTagNameCompletion7() throws Throwable {
+    toTestCompletion("tn7.xml", "tn7_after.xml");
+  }
+
+  public void testTagNameCompletion8() throws Throwable {
+    VirtualFile file = copyFileToProject("tn8.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertTrue(lookupElementStrings.contains("widget.Button"));
+  }
+
+  public void testTagNameCompletion9() throws Throwable {
+    toTestCompletion("tn9.xml", "tn9_after.xml");
+  }
+
+  public void testTagNameCompletion10() throws Throwable {
+    VirtualFile file = copyFileToProject("tn10.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertFalse(lookupElementStrings.contains("android.widget.Button"));
+  }
+
+  public void testTagNameCompletion11() throws Throwable {
+    toTestCompletion("tn11.xml", "tn11_after.xml");
+  }
+
   public void testIdCompletion1() throws Throwable {
     doTestCompletionVariants("idcompl1.xml", "@android:", "@+id/", "@id/idd1", "@id/idd2");
   }

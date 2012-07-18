@@ -27,6 +27,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
 import com.intellij.util.xml.reflect.DomExtension;
@@ -68,7 +69,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.*;
-import java.util.HashSet;
 
 import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
 
@@ -260,11 +260,12 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
   }
 
   public static void registerExtensionsForXmlResources(AndroidFacet facet,
-                                                       String tagName,
+                                                       XmlTag tag,
                                                        XmlResourceElement element,
                                                        DomExtensionsRegistrar registrar,
                                                        Set<String> registeredSubtags,
                                                        Set<XmlName> skipAttrNames) {
+    final String tagName = tag.getName();
     String styleableName = AndroidXmlResourcesUtil.SPECIAL_STYLEABLE_NAMES.get(tagName);
     if (styleableName != null) {
       String[] attrsToSkip = element instanceof Intent ? new String[]{"action"} : ArrayUtil.EMPTY_STRING_ARRAY;
@@ -328,9 +329,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     }
 
     if (c != null && isPreference(prefClassMap, c)) {
-      for (String subtagName : prefClassMap.keySet()) {
-        registerSubtags(subtagName, PreferenceElement.class, registrar, registeredSubtags);
-      }
+      registerClassNameSubtags(tag, prefClassMap, PreferenceElement.class, registeredSubtags, registrar);
     }
   }
 
@@ -508,15 +507,48 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
         registerAttributes(facet, element, styleableNames, registrar, ourLayoutAttrsProcessor, skipAttrNames);
       }
     }
-
     registerLayoutAttributes(facet, element, tag, registrar, ourLayoutAttrsProcessor, skipAttrNames);
+    registerClassNameSubtags(tag, map, LayoutViewElement.class, registeredSubtags, registrar);
+  }
 
-    for (String viewClassName : map.keySet()) {
-      PsiClass viewClass = map.get(viewClassName);
-      if (!AndroidUtils.isAbstract(viewClass)) {
-        registerSubtags(viewClassName, LayoutViewElement.class, registrar, registeredSubtags);
+  private static void registerClassNameSubtags(XmlTag tag,
+                                               Map<String, PsiClass> classMap,
+                                               Type type,
+                                               Set<String> registeredSubtags,
+                                               DomExtensionsRegistrar registrar) {
+    final Set<String> allAllowedTags = new HashSet<String>();
+    final Map<String, String> class2Name = new HashMap<String, String>();
+
+    for (String tagName : classMap.keySet()) {
+      final PsiClass aClass = classMap.get(tagName);
+      if (!AndroidUtils.isAbstract(aClass)) {
+        allAllowedTags.add(tagName);
+        final String qName = aClass.getQualifiedName();
+        final String prevTagName = class2Name.get(qName);
+
+        if (prevTagName == null || tagName.indexOf('.') == -1) {
+          class2Name.put(qName, tagName);
+        }
       }
     }
+    registerSubtags(registrar, tag, allAllowedTags, class2Name.values(), registeredSubtags, type);
+  }
+
+  private static void registerSubtags(DomExtensionsRegistrar registrar,
+                                      XmlTag tag,
+                                      final Set<String> allowedTags,
+                                      Collection<String> tagsToComplete,
+                                      Set<String> registeredSubtags,
+                                      Type type) {
+    for (String tagName : tagsToComplete) {
+      registerSubtags(tagName, type, registrar, registeredSubtags);
+    }
+    registerExistingSubtags(tag, registrar, new Processor<String>() {
+      @Override
+      public boolean process(String s) {
+        return allowedTags.contains(s);
+      }
+    }, type);
   }
 
   public static void registerExtensionsForManifest(AndroidFacet facet,
@@ -582,24 +614,12 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
       registerAttributes(facet, element, styleableName, SYSTEM_RESOURCE_PACKAGE, registrar, skippedAttributes);
     }
     else if (element instanceof XmlResourceElement) {
-      registerExtensionsForXmlResources(facet, tagName, (XmlResourceElement)element, registrar, registeredSubtags, skippedAttributes);
+      registerExtensionsForXmlResources(facet, tag, (XmlResourceElement)element, registrar, registeredSubtags, skippedAttributes);
     }
     else if (element instanceof DrawableDomElement || element instanceof ColorDomElement) {
       registerExtensionsForDrawable(facet, tagName, element, registrar, skippedAttributes);
     }
     Collections.addAll(registeredSubtags, AndroidDomUtil.getStaticallyDefinedSubtags(element));
-
-    /*if (!(element instanceof LayoutElement) &&
-        !(element instanceof ColorDomElement) &&
-        !(element instanceof DrawableDomElement)) {
-      Processor<String> existingSubtagsFilter = element instanceof XmlResourceElement ?
-                                                new Processor<String>() {
-                                                  public boolean process(String s) {
-                                                    return s.length() > 0 && Character.isLowerCase(s.charAt(0));
-                                                  }
-                                                } : null;
-      registerExistingSubtags(tag, registrar, registeredSubtags, existingSubtagsFilter);
-    }*/
   }
 
   private static void registerExtensionsForDrawable(AndroidFacet facet,
@@ -642,16 +662,16 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     registeredTags.add(name);
   }
 
-  private static void registerExistingSubtags(XmlTag tag,
-                                              DomExtensionsRegistrar registrar,
-                                              Set<String> skipNames,
-                                              @Nullable Processor<String> filter) {
+  private static void registerExistingSubtags(@NotNull XmlTag tag,
+                                              @NotNull DomExtensionsRegistrar registrar,
+                                              @Nullable Processor<String> filter,
+                                              @NotNull Type type) {
     XmlTag[] subtags = tag.getSubTags();
     for (XmlTag subtag : subtags) {
       String localName = subtag.getLocalName();
-      if (!skipNames.contains(localName) && (filter == null || filter.process(localName))) {
+      if (filter == null || filter.process(localName)) {
         if (!localName.endsWith(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) {
-          registrar.registerCollectionChildrenExtension(new XmlName(localName), AndroidDomElement.class);
+          registrar.registerCollectionChildrenExtension(new XmlName(localName), type);
         }
       }
     }
