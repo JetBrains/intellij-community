@@ -102,17 +102,6 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                                     DomExtensionsRegistrar registrar,
                                                     MyAttributeProcessor processor,
                                                     Set<XmlName> skippedAttrSet) {
-    /*Collections.addAll(skippedAttrSet, skipNames);
-
-    if (!shouldValidateAttributes(element)) {
-      XmlAttribute[] existingAttrs = element.getXmlTag().getAttributes();
-      for (XmlAttribute attr : existingAttrs) {
-        if (attr.getNamespace().equals(namespace)) {
-          skippedAttrSet.add(attr.getLocalName());
-        }
-      }
-    }*/
-
     for (StyleableDefinition styleable : styleables) {
       for (AttributeDefinition attrDef : styleable.getAttributes()) {
         String attrName = attrDef.getName();
