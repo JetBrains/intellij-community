@@ -300,7 +300,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       return null;
     }
     JComponent component = tooltip.getTipComponent();
-    if (component == null || !component.isVisible()) {
+    if (component == null || !component.isShowing()) {
       return null;
     }
 
