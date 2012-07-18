@@ -32,6 +32,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,8 +67,18 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
     builder.setValidator(new InputValidatorEx() {
       @Override
       public String getErrorText(String inputString) {
-        if (inputString.length() > 0 && !JavaPsiFacade.getInstance(project).getNameHelper().isQualifiedName(inputString)) {
-          return "This is not a valid Java qualified name";
+        if (inputString.length() > 0) {
+          final List<String> tokens = inputString.contains(".") ? StringUtil.split(inputString, ".") : Arrays.asList(inputString);
+          for (String classOrPackageName : tokens) {
+            if (!JavaPsiFacade.getInstance(project).getNameHelper().isQualifiedName(classOrPackageName)) {
+              return classOrPackageName.isEmpty()
+                     || ".".equals(classOrPackageName)
+                     || classOrPackageName.startsWith(".")
+                     || classOrPackageName.endsWith(".")
+                     ? "Class or Package name should not be empty"
+                     : "'" + classOrPackageName + "' is not a valid Java qualified name";
+            }
+          }
         }
         return null;
       }
@@ -95,6 +107,14 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   protected final PsiClass doCreate(PsiDirectory dir, String className, String templateName) throws IncorrectOperationException {
+    if (className.contains(".")) {
+      final List<String> packages = StringUtil.split(className, ".");
+      className = packages.remove(packages.size() - 1);
+
+      for (String aPackage : packages) {
+        dir = dir.createSubdirectory(aPackage);
+      }
+    }
     return JavaDirectoryService.getInstance().createClass(dir, className, templateName, true);
   }
 
