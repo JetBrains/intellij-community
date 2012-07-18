@@ -19,17 +19,14 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,17 +40,15 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
 
     int offset = editor.getCaretModel().getOffset();
     String uri = findUri(file, offset);
-    if (uri == null || !isAcceptableUri(uri)) return false;
 
-    PsiElement element = file.findElementAt(offset);
-    XmlAttributeValue value = PsiTreeUtil.getParentOfType(element, XmlAttributeValue.class);
-    if (value == null) return false;
-    XmlAttribute attribute = PsiTreeUtil.getParentOfType(value, XmlAttribute.class);
-    if (attribute != null && attribute.isNamespaceDeclaration()) {
-      setText(XmlBundle.message(getQuickFixKeyId()));
-      return true;
-    }
-    return false;
+
+    if (uri == null) return false;
+
+    XmlFile xmlFile = XmlUtil.findNamespaceByLocation(file, uri);
+    if (xmlFile != null) return false;
+    if (!isAcceptableUri(uri)) return false;
+    setText(XmlBundle.message(getQuickFixKeyId()));
+    return true;
   }
 
   protected boolean isAcceptableUri(final String uri) {
