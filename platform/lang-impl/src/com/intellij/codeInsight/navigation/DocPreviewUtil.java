@@ -17,12 +17,12 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,13 +36,33 @@ import java.util.regex.Pattern;
  */
 public class DocPreviewUtil {
 
+  /**
+   * We shorten links text from fully qualified name to short names (e.g. from <code>'java.lang.String'</code> to <code>'String'</code>).
+   * There is a possible situation then that we have two replacements where one key is a simple name and another one is a fully qualified
+   * one. We want to apply <code>'from fully qualified name'</code> replacement first then.
+   */
+  private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(@NotNull String o1, @NotNull String o2) {
+      if (o1.endsWith(o2)) {
+        return -1;
+      }
+      else if (o2.endsWith(o1)) {
+        return 1;
+      }
+      else {
+        return o1.compareTo(o2);
+      }
+    }
+  };
+
   private DocPreviewUtil() {
   }
 
   /**
    * Allows to build a documentation preview from the given arguments. Basically, takes given 'header' text and tries to modify
    * it by using hyperlink information encapsulated at the given 'full text'.
-   * 
+   *
    * @param header                     target documentation header. Is expected to be a result of the
    *                                   {@link DocumentationProvider#getQuickNavigateInfo(PsiElement, PsiElement)} call
    * @param qName                      there is a possible case that not all documentation text will be included to the preview
@@ -55,25 +75,60 @@ public class DocPreviewUtil {
     if (fullText == null) {
       return header;
     }
-    
+
     // Build links info.
     Map<String/*qName*/, String/*address*/> links = new HashMap<String, String>();
     process(fullText, new LinksCollector(links));
     if (qName != null) {
       links.put(qName, DocumentationManager.PSI_ELEMENT_PROTOCOL + qName);
     }
-
+    
     // Apply links info to the header template.
-    String result = header.replace("\n", "<br/>");
-    for (Map.Entry<String, String> entry : links.entrySet()) {
-      String visibleName = entry.getKey();
+    List<TextRange> modifiedRanges = new ArrayList<TextRange>();
+    List<String> sortedReplacements = new ArrayList<String>(links.keySet());
+    Collections.sort(sortedReplacements, REPLACEMENTS_COMPARATOR);
+    StringBuilder buffer = new StringBuilder(header);
+    replace(buffer, "\n", "<br/>", modifiedRanges);
+    for (String replaceFrom : sortedReplacements) {
+      String visibleName = replaceFrom;
       int i = visibleName.lastIndexOf('.');
       if (i > 0 && i < visibleName.length() - 1) {
         visibleName = visibleName.substring(i + 1);
       }
-      result = result.replace(entry.getKey(), String.format("<a href=\"%s\">%s</a>", entry.getValue(), visibleName));
+      replace(buffer, replaceFrom, String.format("<a href=\"%s\">%s</a>", links.get(replaceFrom), visibleName), modifiedRanges);
     }
-    return result;
+    return buffer.toString();
+  }
+
+  private static void replace(@NotNull StringBuilder text,
+                              @NotNull String replaceFrom,
+                              @NotNull String replaceTo,
+                              @NotNull List<TextRange> readOnlyChanges)
+  {
+    for (int i = text.indexOf(replaceFrom); i >= 0 && i < text.length() - 1; i = text.indexOf(replaceFrom, i + 1)) {
+      int end = i + replaceFrom.length();
+      if (intersects(readOnlyChanges, i, end)) {
+        continue;
+      }
+      text.replace(i, end, replaceTo);
+      int diff = replaceTo.length() - replaceFrom.length();
+      for (int j = 0; j < readOnlyChanges.size(); j++) {
+        TextRange range = readOnlyChanges.get(j);
+        if (range.getStartOffset() >= end) {
+          readOnlyChanges.set(j, range.shiftRight(diff));
+        }
+      }
+      readOnlyChanges.add(new TextRange(i, i + replaceTo.length()));
+    }
+  }
+  
+  private static boolean intersects(@NotNull List<TextRange> ranges, int start, int end) {
+    for (TextRange range : ranges) {
+      if (range.intersectsStrict(start, end)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private enum State {TEXT, INSIDE_OPEN_TAG, INSIDE_CLOSE_TAG}

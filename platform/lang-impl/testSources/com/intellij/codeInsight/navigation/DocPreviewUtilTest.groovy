@@ -128,4 +128,21 @@ Bar
     def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText)
     assertEquals(expected, actual)
   }
+
+  @Test
+  void crossingLinks() {
+    def header = '''\
+OCCompletionPriority
+com.jetbrains.objc.lang.completion.OCCompletionPriority SMART_COMPLETION_PRIORITY'''
+    
+    def fullText = '''\
+<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority"><code>com.jetbrains.objc.lang.completion.OCCompletionPriority</code></a></b></small><PRE><a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority"><code>OCCompletionPriority</code></a> <b>SMART_COMPLETION_PRIORITY</b></PRE></body></html>
+
+Qname'''
+    
+    def expected = '''\
+<a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority">OCCompletionPriority</a><br/><a href="psi_element://com.jetbrains.objc.lang.completion.OCCompletionPriority">OCCompletionPriority</a> SMART_COMPLETION_PRIORITY'''
+    
+    assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
+  }
 }
