@@ -511,10 +511,15 @@ public class HighlightUtil {
     if (suppressed(Kind.RETURN_STATEMENT, statement)) return null;
 
     PsiMethod method = null;
+    PsiLambdaExpression lambda = null;
     PsiElement parent = statement.getParent();
     while (true) {
       if (parent instanceof PsiFile) break;
       if (parent instanceof PsiClassInitializer) break;
+      if (parent instanceof PsiLambdaExpression){
+        lambda = (PsiLambdaExpression)parent;
+        break;
+      }
       if (parent instanceof PsiMethod) {
         method = (PsiMethod)parent;
         break;
@@ -524,7 +529,9 @@ public class HighlightUtil {
     String description;
     int navigationShift = 0;
     HighlightInfo errorResult = null;
-    if (method == null && !(parent instanceof JspFile)) {
+    if (method == null && lambda != null) {
+      //todo check return statements type inside lambda
+    } else if (method == null && !(parent instanceof JspFile)) {
       description = JavaErrorMessages.message("return.outside.method");
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
     }
