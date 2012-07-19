@@ -74,7 +74,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     return isProjectFile(file) || super.isFileVisible(file, showHiddenFiles) && file.isDirectory();
   }
 
-  private static boolean isProjectFile(final VirtualFile file) {
+  public static boolean isProjectFile(final VirtualFile file) {
     if (isIprFile(file)) return true;
     final ProjectOpenProcessor importProvider = ProjectOpenProcessor.getImportProvider(file);
     return importProvider != null;

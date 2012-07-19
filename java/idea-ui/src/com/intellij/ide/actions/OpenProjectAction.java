@@ -72,4 +72,10 @@ public class OpenProjectAction extends AnAction implements DumbAware {
       }
     });
   }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setVisible(false);
+  }
 }

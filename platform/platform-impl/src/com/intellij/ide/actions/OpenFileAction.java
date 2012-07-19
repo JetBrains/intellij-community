@@ -16,26 +16,26 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.util.Consumer;
@@ -47,15 +47,44 @@ import java.util.List;
 public class OpenFileAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     @Nullable final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null &&
-        PlatformProjectOpenProcessor.getInstanceIfItExists() == null) {
-      return;
+    final boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
+
+    final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(true) {
+      @Override
+      public boolean isFileSelectable(VirtualFile file) {
+        if (super.isFileSelectable(file)) {
+          return true;
+        }
+        if (file.isDirectory()) {
+          return false;
+        }
+        return showFiles && !FileElement.isArchive(file);
+      }
+
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        if (!file.isDirectory() && isFileSelectable(file)) {
+          if (!showHiddenFiles && FileElement.isFileHidden(file)) return false;
+          return true;
+        }
+        return super.isFileVisible(file, showHiddenFiles);
+      }
+
+      @Override
+      public boolean isChooseMultiple() {
+        return showFiles;
+      }
+    };
+    descriptor.setTitle(showFiles ? "Open File or Project" : "Open Project");
+
+    VirtualFile userHomeDir = null;
+    if (SystemInfo.isUnix) {
+      userHomeDir = VfsUtil.getUserHomeDir();
     }
 
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createMultipleFilesNoJarsDescriptor();
-    descriptor.setTitle(IdeBundle.message("title.open.file"));
+    descriptor.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, Boolean.TRUE);
 
-    FileChooser.chooseFiles(descriptor, project, null, new Consumer<List<VirtualFile>>() {
+    FileChooser.chooseFiles(descriptor, project, userHomeDir, new Consumer<List<VirtualFile>>() {
       @Override
       public void consume(final List<VirtualFile> files) {
         doOpenFile(project, files);
@@ -66,24 +95,29 @@ public class OpenFileAction extends AnAction implements DumbAware {
   private static void doOpenFile(@Nullable final Project project,
                                  @NotNull final List<VirtualFile> result) {
     for (final VirtualFile file : result) {
-      if (isProjectFile(file.getName())) {
+      if (file.isDirectory()) {
+        ProjectUtil.openOrImport(file.getPath(), project, false);
+        return;
+      }
+
+      if (OpenProjectFileChooserDescriptor.isProjectFile(file)) {
         int answer = Messages.showYesNoDialog(project,
-                                              IdeBundle.message("message.open.file.is.project", file.getName(),
-                                                                ApplicationNamesInfo.getInstance().getProductName()),
+                                              IdeBundle.message("message.open.file.is.project", file.getName()),
                                               IdeBundle.message("title.open.project"),
                                               Messages.getQuestionIcon());
         if (answer == 0) {
-          ProjectUtil.openProject(file.getPath(), project, false);
+          ProjectUtil.openOrImport(file.getPath(), project, false);
           return;
         }
       }
 
-      FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file,project);
+      FileType type = FileTypeChooser.getKnownFileTypeOrAssociate(file, project);
       if (type == null) return;
 
       if (project != null) {
         openFile(file, project);
-      } else {
+      }
+      else {
         PlatformProjectOpenProcessor.getInstance().doOpenProject(file, null, false);
       }
     }
@@ -111,14 +145,4 @@ public class OpenFileAction extends AnAction implements DumbAware {
     FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
   }
 
-  public static boolean isProjectFile(final String file) {
-    return FileTypeManager.getInstance().getFileTypeByFileName(file) instanceof ProjectFileType;
-  }
-
-  public void update(AnActionEvent event) {
-    Presentation presentation = event.getPresentation();
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
-    presentation.setEnabled(project != null ||
-                            PlatformProjectOpenProcessor.getInstanceIfItExists() != null);
-  }
 }
