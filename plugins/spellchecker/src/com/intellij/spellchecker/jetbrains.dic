@@ -15,6 +15,7 @@ auth
 authid
 autoboxing
 autocommit
+autodetect
 autoextend
 autoincrement
 autorelease
