@@ -101,7 +101,9 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   public boolean loadInitialCheckBoxState() {
-    return getPropertiesStorage().isTrueValue("GoToAction.allIncluded");
+    PropertiesComponent propertiesComponent = getPropertiesStorage();
+    return Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded")) &&
+           propertiesComponent.isTrueValue("GoToAction.allIncluded");
   }
 
   private PropertiesComponent getPropertiesStorage() {
@@ -109,7 +111,10 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
   }
 
   public void saveInitialCheckBoxState(boolean state) {
-    getPropertiesStorage().setValue("GoToAction.allIncluded", Boolean.toString(state));
+    PropertiesComponent propertiesComponent = getPropertiesStorage();
+    if (Boolean.TRUE.toString().equals(propertiesComponent.getValue("GoToAction.toSaveAllIncluded"))) {
+      propertiesComponent.setValue("GoToAction.allIncluded", Boolean.toString(state));
+    }
   }
 
   public ListCellRenderer getListCellRenderer() {
