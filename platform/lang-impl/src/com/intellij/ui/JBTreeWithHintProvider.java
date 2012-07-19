@@ -15,9 +15,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiElement;
@@ -26,7 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -70,12 +69,8 @@ public class JBTreeWithHintProvider extends DnDAwareTree {
 
   @Nullable
   protected PsiElement getPsiElementForHint(final Object selectedValue) {
-    // default implementation for NodeDescriptor based trees
-    Object userObject = selectedValue instanceof DefaultMutableTreeNode
-                        ? ((DefaultMutableTreeNode)selectedValue).getUserObject() : null;
-    Object element = userObject instanceof AbstractTreeNode ? ((AbstractTreeNode)userObject).getValue() :
-                     userObject instanceof NodeDescriptor ? ((NodeDescriptor)userObject).getElement() : null;
-    return element instanceof PsiElement ? (PsiElement)element : null;
+    // default implementation
+    return LangDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this));
   }
 
   public void registerHint(final JBPopup hint) {
