@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.rearranger;
+package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.rearranger.RearrangerEntry;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Enumerates all possible {@link RearrangerEntry entry} types.
+ * Stands for the {@link ArrangementEntry} which provides information about its type.
  * <p/>
- * This enum is expected to be populated every time new entry type is introduced.
+ * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:14 AM
+ * @since 7/17/12 11:17 AM
  */
-public enum RearrangerEntryType {
+public interface TypeAwareArrangementEntry extends ArrangementEntry {
   
-  CLASS, FIELD, METHOD
+  @Nullable
+  ArrangementEntryType getType();
 }

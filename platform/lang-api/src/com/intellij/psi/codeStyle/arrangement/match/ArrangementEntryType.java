@@ -13,16 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.rearranger;
+package com.intellij.psi.codeStyle.arrangement.match;
 
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 
 /**
+ * Enumerates all possible {@link ArrangementEntry entry} types.
+ * <p/>
+ * This enum is expected to be populated every time new entry type is introduced.
+ * 
  * @author Denis Zhdanov
- * @since 7/17/12 8:57 PM
+ * @since 7/17/12 11:14 AM
  */
-public interface ModifierAwareRearrangerEntry extends RearrangerEntry {
+public enum ArrangementEntryType {
   
-  @NotNull
-  RearrangerModifier getModifier();
+  CLASS, FIELD, METHOD
 }

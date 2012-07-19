@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.rearranger;
+package com.intellij.psi.codeStyle.arrangement.match;
+
+import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 7/17/12 8:54 PM
+ * @since 7/17/12 8:57 PM
  */
-public enum RearrangerModifier {
-
-  //region Visibility
-  PUBLIC, PROTECTED, PRIVATE, PACKAGE_PRIVATE,
-  //endregion
+public interface ModifierAwareArrangementEntry extends ArrangementEntry {
   
-  STATIC, FINAL
+  @NotNull
+  ArrangementModifier getModifier();
 }

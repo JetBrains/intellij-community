@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.rearranger;
-
-import org.jetbrains.annotations.NotNull;
+package com.intellij.psi.codeStyle.arrangement.match;
 
 /**
- * Stands for the {@link RearrangerEntry} which provides information about its type.
- * <p/>
- * Implementations of this interface are not obliged to be thread-safe.
- * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:17 AM
+ * @since 7/17/12 8:54 PM
  */
-public interface TypeAwareRearrangerEntry extends RearrangerEntry {
+public enum ArrangementModifier {
+
+  //region Visibility
+  PUBLIC, PROTECTED, PRIVATE, PACKAGE_PRIVATE,
+  //endregion
   
-  @NotNull
-  RearrangerEntryType getType();
+  STATIC, FINAL
 }
