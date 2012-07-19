@@ -171,7 +171,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     }
   }
 
-  private class AddXBreakpointAction extends AnAction {
+  private static class AddXBreakpointAction extends AnAction {
 
     private final XBreakpointType<?, ?> myType;
 
