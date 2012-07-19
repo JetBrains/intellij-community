@@ -98,6 +98,11 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
 
   public static void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
                               PsiElement psiElement) {
+    GlobalInspectionContextImpl inspectionContext = createContext(baseTool, managerEx, psiElement);
+    inspectionContext.doInspections(scope, managerEx);
+  }
+
+  public static GlobalInspectionContextImpl createContext(InspectionProfileEntry baseTool, InspectionManagerEx managerEx, PsiElement psiElement) {
     final InspectionProfileImpl profile = new InspectionProfileImpl(baseTool.getDisplayName());
     final InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
     model.disableAllTools();
@@ -113,7 +118,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     model.setEditable(baseTool.getDisplayName());
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(model);
-    inspectionContext.doInspections(scope, managerEx);
+    return inspectionContext;
   }
 
   public boolean startInWriteAction() {

@@ -493,6 +493,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
       myTools.put(tool.getShortName(), toolsList);
     }
+    if (mySource != null) {
+      copyToolsConfigurations(mySource, project);
+    }
     return true;
   }
 

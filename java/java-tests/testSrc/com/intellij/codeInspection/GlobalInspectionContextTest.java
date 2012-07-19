@@ -18,8 +18,12 @@ package com.intellij.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.CodeInsightTestCase;
+import com.intellij.codeInspection.actions.RunInspectionIntention;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.visibility.VisibilityInspection;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
+
+import java.util.ArrayList;
 
 /**
  * @author Dmitry Avdeev
@@ -48,6 +52,14 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     tools = context.getTools().get(shortName);
     tool = (GlobalInspectionToolWrapper)tools.getTool();
     assertEquals(1, tool.getProblemDescriptors().size());
+  }
+
+  public void testRunInspectionContext() throws Exception {
+    InspectionProfileEntry tool =
+      ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getInspectionTool("CanBeFinal");
+    GlobalInspectionContextImpl context = RunInspectionIntention.createContext(tool, (InspectionManagerEx)InspectionManager.getInstance(myProject), null);
+    context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
+    assertEquals(1, context.getTools().size());
   }
 
   @Override
