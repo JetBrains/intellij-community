@@ -1232,6 +1232,23 @@ public class Mappings {
             if (!affected) {
               debug("Return type, throws list or signature changed --- affecting method usages");
               myUpdated.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+
+              final List<Pair<MethodRepr, ClassRepr>> overridingMethods = new LinkedList<Pair<MethodRepr, ClassRepr>>();
+
+              myUpdated.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods);
+
+              for(final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
+                final ClassRepr aClass = p.getSecond();
+
+                if (aClass != MOCK_CLASS) {
+                  final int fileName = myClassToSourceFile.get(aClass.name);
+
+                  if (fileName > 0) {
+                    myAffectedFiles.add(new File(myContext.getValue(fileName)));
+                  }
+                }
+              }
+
               state.myAffectedUsages.addAll(usages);
             }
           }
