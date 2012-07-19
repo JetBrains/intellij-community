@@ -457,7 +457,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       for (VcsDirtyScope scope : scopes) {
         AbstractVcs vcs = scope.getVcs();
-        if (vcs.isTrackingUnchangedContent()) {
+        if (vcs != null && vcs.isTrackingUnchangedContent()) {
           scope.iterateExistingInsideScope(new Processor<VirtualFile>() {
             @Override
             public boolean process(VirtualFile file) {
