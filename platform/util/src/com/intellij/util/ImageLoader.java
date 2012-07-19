@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,8 +95,14 @@ public class ImageLoader implements Serializable {
   }
 
   public static List<Pair<String, Integer>> getFileNames(@NotNull String file) {
-    if (UIUtil.isRetina()) {
-      return Arrays.asList(Pair.create(FileUtil.getNameWithoutExtension(file) + "@2x." + FileUtil.getExtension(file), 2),
+    final boolean dark = UIUtil.isUnderDarcula();
+    final boolean retina = UIUtil.isRetina();
+    if (retina || dark) {
+      String suffix = "";
+      if (retina) suffix += "@2x";
+      if (dark) suffix += "_dark";
+      suffix += ".";
+      return Arrays.asList(Pair.create(FileUtil.getNameWithoutExtension(file) + suffix + FileUtil.getExtension(file), retina ? 2 : 1),
                            Pair.create(file, 1));
     }
     return Collections.singletonList(Pair.create(file, 1));

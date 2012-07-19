@@ -36,9 +36,9 @@ import java.util.Properties;
 /**
  * @author Konstantin Bulenkov
  */
-final class IdeaDarkLaf extends BasicLookAndFeel {
+final class DurculaLaf extends BasicLookAndFeel {
   BasicLookAndFeel base;
-  public IdeaDarkLaf() {
+  public DurculaLaf() {
     try {
       if (SystemInfo.isWindows) {
         base = new IdeaLaf();
@@ -160,7 +160,7 @@ final class IdeaDarkLaf extends BasicLookAndFeel {
       final Properties properties = new Properties();
       final String secondPart = postfix == null ? "" : "_" + postfix;
       final String name = "darcula" + secondPart + ".properties";
-      final InputStream stream = IdeaDarkLaf.class.getResourceAsStream(name);
+      final InputStream stream = DurculaLaf.class.getResourceAsStream(name);
       properties.load(stream);
       for (String key : properties.stringPropertyNames()) {
         final String value = properties.getProperty(key);
