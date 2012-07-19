@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.impl.source.tree.java.LambdaUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
