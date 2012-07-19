@@ -34,14 +34,12 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author ven
@@ -111,11 +109,8 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
 
       context.commitDocument();
 
-      if (context.getCompletionChar() == ' ') {
-        GrExpression expr = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(context.getStartOffset()), GrExpression.class);
-        if (expr != null && PsiUtil.isExpressionStatement(expr)) {
-          return;
-        }
+      if (context.getCompletionChar() == ' ' && MethodParenthesesHandler.hasParams(item, context.getElements(), true, method)) {
+        return;
       }
 
       new MethodParenthesesHandler(method, true).handleInsert(context, item);

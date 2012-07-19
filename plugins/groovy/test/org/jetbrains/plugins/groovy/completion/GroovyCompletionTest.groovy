@@ -547,6 +547,10 @@ class A {
 """
   }
 
+  public void "test finish method call with space in field initializer"() {
+    checkCompletion 'class Foo { boolean b = eq<caret>x }', ' ', 'class Foo { boolean b = equals <caret>x }'
+  }
+
   public void testCompletionNamedArgumentWithNewLine2() {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 class A {
