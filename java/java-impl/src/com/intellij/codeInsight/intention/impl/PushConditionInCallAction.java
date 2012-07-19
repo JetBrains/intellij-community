@@ -39,7 +39,7 @@ public class PushConditionInCallAction extends PsiElementBaseIntentionAction {
     if (element instanceof PsiCompiledElement) return false;
     if (!element.getManager().isInProject(element)) return false;
 
-    if (!(element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.QUEST)) return false;
+   // if (!(element instanceof PsiJavaToken && ((PsiJavaToken)element).getTokenType() == JavaTokenType.QUEST)) return false;
     final PsiConditionalExpression conditionalExpression = PsiTreeUtil.getParentOfType(element, PsiConditionalExpression.class);
     if (conditionalExpression == null) return false;
     final PsiExpression thenExpression = conditionalExpression.getThenExpression();
