@@ -1,9 +1,10 @@
-package com.siyeh.igtest.abstraction;
+package com.siyeh.igtest.abstraction.magic_number;
 
 import java.util.Set;
 import java.util.HashSet;
 
-public class MagicNumberInspection
+@Size(max = 15)
+public class MagicNumber
 {
     private static final int s_foo = 400;
     private int m_foo = 400;
@@ -21,10 +22,10 @@ public class MagicNumberInspection
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final MagicNumberInspection magicNumberInspection = (MagicNumberInspection) o;
+        final MagicNumber magicNumber = (MagicNumber) o;
 
-        if (m_foo != magicNumberInspection.m_foo) return false;
-        if (m_foo2 != magicNumberInspection.m_foo2) return false;
+        if (m_foo != magicNumber.m_foo) return false;
+        if (m_foo2 != magicNumber.m_foo2) return false;
 
         return true;
     }
@@ -35,4 +36,7 @@ public class MagicNumberInspection
         result = 29 * result + m_foo2;
         return result;
     }
+}
+@interface Size {
+  int max();
 }
