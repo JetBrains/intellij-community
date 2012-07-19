@@ -19,11 +19,13 @@ package com.intellij.packageDependencies;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -47,7 +49,12 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
 
   public BackwardDependenciesBuilder(final Project project, final AnalysisScope scope, final @Nullable AnalysisScope scopeOfInterest) {
     super(project, scope, scopeOfInterest);
-    myForwardScope = getScope().getNarrowedComplementaryScope(getProject());
+    myForwardScope = ApplicationManager.getApplication().runReadAction(new Computable<AnalysisScope>() {
+      @Override
+      public AnalysisScope compute() {
+        return getScope().getNarrowedComplementaryScope(getProject());
+      }
+    });
     myFileCount = myForwardScope.getFileCount();
     myTotalFileCount = myFileCount + scope.getFileCount();
   }
