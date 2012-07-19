@@ -11,8 +11,9 @@ class Foo {
   };
 
   void bazz() {
-    bar((String s) -> {
-      System.out.println(s);});
+    bar<error descr="'bar(I)' in 'Foo' cannot be applied to '(<lambda expression>)'">((String s) -> {
+      System.out.println(s);})</error>;
+    bar((int i) -> {System.out.println(i);});
   } 
   void bar(I i){}
 }

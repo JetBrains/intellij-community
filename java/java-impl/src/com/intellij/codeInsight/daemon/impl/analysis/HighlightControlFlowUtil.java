@@ -692,6 +692,27 @@ public class HighlightControlFlowUtil {
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
       QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass));
       return highlightInfo;
+    }  else {
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
+      if (lambdaExpression != null) {
+        if (variable instanceof PsiParameter) {
+          final PsiElement parent = variable.getParent();
+          if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
+            return null;
+          }
+        }
+        boolean effectivelyFinal = true;
+        for (PsiReference reference : ReferencesSearch.search(variable)) {
+          final PsiElement element = reference.getElement();
+          if (element instanceof PsiExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
+            effectivelyFinal = false;
+            break;
+          }
+        }
+        if (!effectivelyFinal ) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, "Variable used in lambda expression should be effectively final");
+        }
+      }
     }
     return null;
   }

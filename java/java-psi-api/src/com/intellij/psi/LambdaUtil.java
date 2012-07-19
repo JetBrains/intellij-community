@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.tree.java;
+package com.intellij.psi;
 
-import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -170,5 +169,24 @@ public class LambdaUtil {
       }
     }
     return null;
+  }
+
+  public static boolean isAcceptable(PsiLambdaExpression lambdaExpression, final PsiType leftType) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
+    final MethodSignature methodSignature = getFunction(resolveResult.getElement());
+    if (methodSignature == null) return false;
+    final PsiParameter[] lambdaParameters = lambdaExpression.getParameterList().getParameters();
+    final PsiType[] parameterTypes = methodSignature.getParameterTypes();
+    if (lambdaParameters.length != parameterTypes.length) return false;
+    for (int lambdaParamIdx = 0, length = lambdaParameters.length; lambdaParamIdx < length; lambdaParamIdx++) {
+      PsiParameter parameter = lambdaParameters[lambdaParamIdx];
+      final PsiTypeElement typeElement = parameter.getTypeElement();
+      if (typeElement != null) {
+        if (!typeElement.getType().equals(resolveResult.getSubstitutor().substitute(parameterTypes[lambdaParamIdx]))) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

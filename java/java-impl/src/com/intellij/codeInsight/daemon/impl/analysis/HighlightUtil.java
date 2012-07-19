@@ -331,6 +331,9 @@ public class HighlightUtil {
     PsiType checkType = typeElement.getType();
     PsiType operandType = operand.getType();
     if (operandType == null) return null;
+    if (operandType instanceof PsiLambdaExpressionType) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, "Lambda expression is not expected here");
+    }
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
         || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
         || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
