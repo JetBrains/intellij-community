@@ -196,7 +196,8 @@ public class MinusculeMatcher implements Matcher {
         break;
       }
       if (next == 0 && myOptions != NameUtil.MatchingCaseSensitivity.NONE && name.charAt(next) != nextChar) {
-        return null;
+        fromIndex = next + 1;
+        continue;
       }
       if (upper && next > 0 && !Character.isUpperCase(name.charAt(next))) {
         fromIndex = next + 1;
