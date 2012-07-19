@@ -221,6 +221,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*f", "Format");
     assertMatches("*Stri", "string");
     assertDoesntMatch("*f", "reformat");
+    assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
   }
 
   public void testMiddleMatching() {

@@ -208,7 +208,8 @@ public class MinusculeMatcher implements Matcher {
           return null;
         }
         if (patternIndex == myPattern.length - 1 ||
-            myPattern[patternIndex + 1] != name.charAt(next + 1) && Character.isLetter(myPattern[patternIndex + 1])) {
+            Character.isLetter(myPattern[patternIndex + 1]) && (myPattern[patternIndex + 1] != name.charAt(next + 1) ||
+                                                                NameUtil.isWordStart(name, next + 1))) {
           fromIndex = next + 1;
           continue;
         }
