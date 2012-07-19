@@ -456,13 +456,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       });
 
       for (VcsDirtyScope scope : scopes) {
-        scope.iterateExistingInsideScope(new Processor<VirtualFile>() {
-          @Override
-          public boolean process(VirtualFile file) {
-            LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
-            return true;
-          }
-        });
+        AbstractVcs vcs = scope.getVcs();
+        if (vcs.isTrackingUnchangedContent()) {
+          scope.iterateExistingInsideScope(new Processor<VirtualFile>() {
+            @Override
+            public boolean process(VirtualFile file) {
+              LastUnchangedContentTracker.markUntouched(file); //todo what if it has become dirty again during update?
+              return true;
+            }
+          });
+        }
       }
 
 
