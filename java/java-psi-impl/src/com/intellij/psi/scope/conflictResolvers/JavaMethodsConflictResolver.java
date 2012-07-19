@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.impl.source.tree.java.LambdaUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -86,9 +87,47 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkPrimitiveVarargs(conflicts, myActualParameterTypes.length);
     if (conflicts.size() == 1) return conflicts.get(0);
 
+    checkLambdaApplicable(conflicts);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
     THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
     if (uniques.size() == 1) return uniques.iterator().next();
     return null;
+  }
+
+  private void checkLambdaApplicable(List<CandidateInfo> conflicts) {
+    for (int i = 0; i < myActualParameterTypes.length; i++) {
+      PsiType parameterType = myActualParameterTypes[i];
+      if (parameterType instanceof PsiLambdaExpressionType) {
+        final PsiLambdaExpression lambdaExpression = ((PsiLambdaExpressionType)parameterType).getExpression();
+        final int parametersCount = lambdaExpression.getParameterList().getParametersCount();
+        for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
+          final CandidateInfo conflict = iterator.next();
+          final PsiMethod method = (PsiMethod)conflict.getElement();
+          if (method != null) {
+            final PsiParameter[] methodParameters = method.getParameterList().getParameters();
+            final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
+            final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(param.getType());
+            final MethodSignature function = LambdaUtil.getFunction(resolveResult.getElement());
+            if (function != null && function.getParameterTypes().length == parametersCount) {
+              boolean correctArgs = true;
+              final PsiParameter[] lambdaParameters = lambdaExpression.getParameterList().getParameters();
+              for (int lambdaParamIdx = 0, length = lambdaParameters.length; lambdaParamIdx < length; lambdaParamIdx++) {
+                PsiParameter parameter = lambdaParameters[lambdaParamIdx];
+                final PsiTypeElement typeElement = parameter.getTypeElement();
+                if (typeElement != null) {
+                  if (!typeElement.getType().equals(resolveResult.getSubstitutor().substitute(function.getParameterTypes()[lambdaParamIdx]))) {
+                    correctArgs = false;
+                  }
+                }
+              }
+              if (correctArgs) continue;
+            }
+            iterator.remove();
+          }
+        }
+      }
+    }
   }
 
   private void checkSpecifics(List<CandidateInfo> conflicts, @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel) {

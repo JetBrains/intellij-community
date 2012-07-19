@@ -28,6 +28,10 @@ public class LambdaParamsTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testMethodApplicability() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }

@@ -99,6 +99,7 @@ public class LambdaUtil {
 
   @Nullable
   public static MethodSignature getFunction(PsiClass psiClass) {
+    if (psiClass == null) return null;
     final List<MethodSignature> functions = findFunctionCandidates(psiClass);
     if (functions != null && functions.size() == 1) {
       return functions.get(0);
@@ -123,12 +124,9 @@ public class LambdaUtil {
           }
           if (type instanceof PsiClassType) {
             final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-            final PsiClass psiClass = resolveResult.getElement();
-            if (psiClass != null) {
-              final MethodSignature methodSignature = getFunction(psiClass);
-              if (methodSignature != null) {
-                return resolveResult.getSubstitutor().substitute(methodSignature.getParameterTypes()[parameterIndex]);
-              }
+            final MethodSignature methodSignature = getFunction(resolveResult.getElement());
+            if (methodSignature != null) {
+              return resolveResult.getSubstitutor().substitute(methodSignature.getParameterTypes()[parameterIndex]);
             }
           }
         }
