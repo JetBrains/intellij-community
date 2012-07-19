@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,7 @@ import com.intellij.analysis.BaseAnalysisActionDialog;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionBase;
@@ -40,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiSearchScopeUtil;
 import com.intellij.psi.search.SearchScope;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -137,22 +134,6 @@ public class RunInspectionAction extends GotoActionBase {
     if (!dlg.isOK()) return;
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     scope = dlg.getScope(uiOptions, scope, project, module);
-
-    final InspectionProfileImpl profile = new InspectionProfileImpl(profileEntry.getDisplayName());
-    final InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
-    model.disableAllTools();
-    model.enableTool(profileEntry.getShortName());
-    try {
-      Element element = new Element("toCopy");
-      profileEntry.writeSettings(element);
-      model.getInspectionTool(profileEntry.getShortName()).readSettings(element);
-    }
-    catch (Exception e) {
-      //skip
-    }
-    model.setEditable(profileEntry.getDisplayName());
-    final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
-    inspectionContext.setExternalProfile(model);
-    inspectionContext.doInspections(scope, managerEx);
+    RunInspectionIntention.rerunInspection(profileEntry, managerEx, scope, psiFile);
   }
 }
