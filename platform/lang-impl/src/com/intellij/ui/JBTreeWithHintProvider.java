@@ -15,14 +15,18 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.popup.PopupUpdateProcessor;
-import com.intellij.ui.treeStructure.Tree;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -30,9 +34,9 @@ import javax.swing.tree.TreePath;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class JBTreeWithHintProvider extends Tree {
+public class JBTreeWithHintProvider extends DnDAwareTree {
   private JBPopup myHint;
-  
+
   public JBTreeWithHintProvider() {
     addSelectionListener();
   }
@@ -51,7 +55,7 @@ public abstract class JBTreeWithHintProvider extends Tree {
     addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(final TreeSelectionEvent e) {
-        if (getClientProperty(PopupChooserBuilder.SELECTED_BY_MOUSE_EVENT) != Boolean.TRUE) {
+        if (isHintBeingShown() && getClientProperty(PopupChooserBuilder.SELECTED_BY_MOUSE_EVENT) != Boolean.TRUE) {
           final TreePath path = getSelectionPath();
           if (path != null) {
             final PsiElement psiElement = getPsiElementForHint(path.getLastPathComponent());
@@ -63,8 +67,16 @@ public abstract class JBTreeWithHintProvider extends Tree {
       }
     });
   }
-  
-  protected abstract PsiElement getPsiElementForHint(final Object selectedValue);
+
+  @Nullable
+  protected PsiElement getPsiElementForHint(final Object selectedValue) {
+    // default implementation for NodeDescriptor based trees
+    Object userObject = selectedValue instanceof DefaultMutableTreeNode
+                        ? ((DefaultMutableTreeNode)selectedValue).getUserObject() : null;
+    Object element = userObject instanceof AbstractTreeNode ? ((AbstractTreeNode)userObject).getValue() :
+                     userObject instanceof NodeDescriptor ? ((NodeDescriptor)userObject).getElement() : null;
+    return element instanceof PsiElement ? (PsiElement)element : null;
+  }
 
   public void registerHint(final JBPopup hint) {
     hideHint();
@@ -72,7 +84,7 @@ public abstract class JBTreeWithHintProvider extends Tree {
   }
 
   public void hideHint() {
-    if (myHint != null && myHint.isVisible()) {
+    if (isHintBeingShown()) {
       myHint.cancel();
     }
 
@@ -80,11 +92,15 @@ public abstract class JBTreeWithHintProvider extends Tree {
   }
 
   public void updateHint(PsiElement element) {
-    if (myHint == null || !myHint.isVisible()) return;
+    if (!isHintBeingShown()) return;
 
     final PopupUpdateProcessor updateProcessor = myHint.getUserData(PopupUpdateProcessor.class);
     if (updateProcessor != null) {
       updateProcessor.updatePopup(element);
     }
+  }
+
+  private boolean isHintBeingShown() {
+    return myHint != null && myHint.isVisible();
   }
 }
