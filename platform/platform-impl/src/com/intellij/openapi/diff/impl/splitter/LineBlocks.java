@@ -60,10 +60,10 @@ public class LineBlocks {
   }
 
   public int getCount() {
-    return getBegginings(FragmentSide.SIDE1).length;
+    return getBeginnings(FragmentSide.SIDE1).length;
   }
 
-  public int[] getBegginings(FragmentSide side) {
+  public int[] getBeginnings(FragmentSide side) {
     IntArrayList result = new IntArrayList(getIntervals(side).length);
     int previousBeginning = Integer.MIN_VALUE;
     Interval[] sideIntervals = getIntervals(side);

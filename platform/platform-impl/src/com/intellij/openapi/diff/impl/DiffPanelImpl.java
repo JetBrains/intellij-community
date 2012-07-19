@@ -335,7 +335,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   int[] getFragmentBeginnings(FragmentSide side) {
-    return getLineBlocks().getBegginings(side);
+    return getLineBlocks().getBeginnings(side);
   }
 
   public void dispose() {
