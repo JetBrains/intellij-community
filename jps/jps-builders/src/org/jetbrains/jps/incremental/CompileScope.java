@@ -1,10 +1,11 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.artifacts.Artifact;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.util.Set;
@@ -16,10 +17,12 @@ import java.util.Set;
 public abstract class CompileScope {
   @NotNull
   private final Project myProject;
+  private final JpsProject myJpsProject;
   private final Set<Artifact> myArtifacts;
 
-  protected CompileScope(@NotNull Project project, Set<Artifact> artifacts) {
+  protected CompileScope(@NotNull Project project, JpsProject jpsProject, Set<Artifact> artifacts) {
     myProject = project;
+    myJpsProject = jpsProject;
     myArtifacts = artifacts;
   }
 
@@ -34,7 +37,7 @@ public abstract class CompileScope {
   public abstract boolean isRecompilationForced(@NotNull String moduleName);
 
   public final boolean isAffected(ModuleChunk chunk) {
-    for (Module module : chunk.getModules()) {
+    for (JpsModule module : chunk.getModules()) {
       if (isAffected(module.getName())) {
         return true;
       }
@@ -49,5 +52,9 @@ public abstract class CompileScope {
   @NotNull
   public final Project getProject() {
     return myProject;
+  }
+
+  public JpsProject getJpsProject() {
+    return myJpsProject;
   }
 }

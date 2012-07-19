@@ -5,11 +5,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.serialization.facet.JpsFacetPropertiesLoader;
+import org.jetbrains.jps.model.serialization.facet.JpsModuleExtensionLoader;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,6 +21,9 @@ import java.util.List;
 public abstract class JpsModelLoaderExtension {
 
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
+  }
+
+  public void loadProjectRoots(JpsProject project, Element rootManagerElement) {
   }
 
   @Nullable
@@ -51,11 +55,11 @@ public abstract class JpsModelLoaderExtension {
   }
 
   @NotNull
-  public List<JpsSdkPropertiesLoader<?>> getSdkPropertiesLoaders() {
+  public List<? extends JpsSdkPropertiesLoader<?>> getSdkPropertiesLoaders() {
     return Collections.emptyList();
   }
 
-  public List<? extends JpsFacetPropertiesLoader<?>> getFacetPropertiesLoaders() {
+  public List<? extends JpsModuleExtensionLoader<?>> getModuleExtensionLoaders() {
     return Collections.emptyList();
   }
 

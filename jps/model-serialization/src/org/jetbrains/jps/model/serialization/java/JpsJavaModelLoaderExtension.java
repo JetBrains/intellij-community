@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.serialization.java;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -18,6 +19,26 @@ public class JpsJavaModelLoaderExtension extends JpsModelLoaderExtension {
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
     loadExplodedDirectoryExtension(module, rootModel);
     loadJavaModuleExtension(module, rootModel);
+  }
+
+  @Override
+  public void loadProjectRoots(JpsProject project, Element rootManagerElement) {
+    loadJavaProjectExtensions(project, rootManagerElement);
+  }
+
+  private static void loadJavaProjectExtensions(JpsProject project, Element rootManagerElement) {
+    JpsJavaProjectExtension extension = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project);
+    final Element output = rootManagerElement.getChild("output");
+    if (output != null) {
+      String url = output.getAttributeValue("url");
+      if (url != null) {
+        extension.setOutputUrl(url);
+      }
+    }
+    String languageLevel = rootManagerElement.getAttributeValue("languageLevel");
+    if (languageLevel != null) {
+      extension.setLanguageLevel(LanguageLevel.valueOf(languageLevel));
+    }
   }
 
   @Override

@@ -28,6 +28,7 @@ import org.jetbrains.jps.Project;
 import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.artifacts.ArtifactLayoutElement;
 import org.jetbrains.jps.artifacts.ComplexLayoutElement;
+import org.jetbrains.jps.model.JpsModel;
 
 import java.util.*;
 
@@ -36,11 +37,13 @@ import java.util.*;
  */
 public class ArtifactSorter {
   private final Project myProject;
+  private final JpsModel myModel;
   private Map<String, String> myArtifactToSelfIncludingName;
   private List<String> mySortedArtifacts;
 
-  public ArtifactSorter(Project project) {
+  public ArtifactSorter(Project project, JpsModel model) {
     myProject = project;
+    myModel = model;
   }
 
   public Map<String, String> getArtifactToSelfIncludingNameMap() {
@@ -117,16 +120,20 @@ public class ArtifactSorter {
   }
 
   @NotNull
-  public static Set<Artifact> addIncludedArtifacts(@NotNull Collection<Artifact> artifacts, @NotNull Project project) {
+  public static Set<Artifact> addIncludedArtifacts(@NotNull Collection<Artifact> artifacts, @NotNull Project project, JpsModel model) {
     Set<Artifact> result = new HashSet<Artifact>();
     for (Artifact artifact : artifacts) {
-      collectIncludedArtifacts(artifact, project, new HashSet<Artifact>(), result, true);
+      collectIncludedArtifacts(artifact, project, model, new HashSet<Artifact>(), result, true);
     }
     return result;
   }
 
-  private static void collectIncludedArtifacts(Artifact artifact, final Project project,
-                                               final Set<Artifact> processed, final Set<Artifact> result, final boolean withOutputPathOnly) {
+  private static void collectIncludedArtifacts(Artifact artifact,
+                                               final Project project,
+                                               final JpsModel model,
+                                               final Set<Artifact> processed,
+                                               final Set<Artifact> result,
+                                               final boolean withOutputPathOnly) {
     if (!processed.add(artifact)) {
       return;
     }
@@ -134,22 +141,22 @@ public class ArtifactSorter {
       result.add(artifact);
     }
 
-    processIncludedArtifacts(artifact, project, new Consumer<Artifact>() {
+    processIncludedArtifacts(artifact, project, model, new Consumer<Artifact>() {
       @Override
       public void consume(Artifact included) {
-        collectIncludedArtifacts(included, project, processed, result, withOutputPathOnly);
+        collectIncludedArtifacts(included, project, model, processed, result, withOutputPathOnly);
       }
     });
   }
 
   private GraphGenerator<String> createArtifactsGraph() {
-    return GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(myProject)));
+    return GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(myProject, myModel)));
   }
 
   private static void processIncludedArtifacts(Artifact artifact,
                                                final Project project,
-                                               final Consumer<Artifact> consumer) {
-    artifact.getRootElement().process(project, new Closure(consumer) {
+                                               JpsModel model, final Consumer<Artifact> consumer) {
+    artifact.getRootElement().process(project, model, new Closure(consumer) {
       @Override
       public Object call(Object arguments) {
         if (arguments instanceof ArtifactLayoutElement) {
@@ -169,9 +176,11 @@ public class ArtifactSorter {
   private static class ArtifactsGraph implements GraphGenerator.SemiGraph<String> {
     private final Set<String> myArtifactNames;
     private final Project myProject;
+    private final JpsModel myModel;
 
-    public ArtifactsGraph(Project project) {
+    public ArtifactsGraph(Project project, JpsModel model) {
       myProject = project;
+      myModel = model;
       myArtifactNames = new LinkedHashSet<String>(project.getArtifacts().keySet());
     }
 
@@ -193,7 +202,7 @@ public class ArtifactSorter {
             }
           }
         };
-        processIncludedArtifacts(artifact, myProject, consumer);
+        processIncludedArtifacts(artifact, myProject, myModel, consumer);
       }
       return included.iterator();
     }

@@ -1,41 +1,17 @@
 package org.jetbrains.jps.idea
-
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.*
 import org.jetbrains.jps.artifacts.Artifact
-
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.Future
 /**
  * @author max
  */
 public class IdeaProjectLoader {
-  private int libraryCount = 0
   Project project
-  private String projectOutputPath
-  private String projectLanguageLevel
   private Map<String, String> pathVariables
   private ProjectMacroExpander projectMacroExpander
   private ProjectLoadingErrorReporter errorReporter
-  private static final List<AdditionalRootsProviderService> rootsProviderLoader = OwnServiceLoader.load(AdditionalRootsProviderService.class).collect()
   private final XmlParser xmlParser = new XmlParser(false, false)
-  private static final ExecutorService ourThreadPool = Executors.newFixedThreadPool(2 * Runtime.getRuntime().availableProcessors())
-
-  public static String guessHome(Script script) {
-    File home = new File(script["gant.file"].substring("file:".length()))
-
-    while (home != null) {
-      if (home.isDirectory()) {
-        if (new File(home, ".idea").exists()) return home.getCanonicalPath()
-      }
-
-      home = home.getParentFile()
-    }
-
-    return null
-  }
 
   public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables) {
     return loadFromPath(project, path, pathVariables, "")
@@ -62,9 +38,6 @@ public class IdeaProjectLoader {
     return loader.projectMacroExpander;
   }
 
-  public static ProjectMacroExpander loadFromPath(Project project, String path, String script) {
-    return loadFromPath(project, path, [:], script);
-  }
 
   private def IdeaProjectLoader(Project project, Map<String, String> pathVariables, ProjectLoadingErrorReporter errorReporter) {
     this.project = project;
@@ -107,12 +80,9 @@ public class IdeaProjectLoader {
     projectMacroExpander = new ProjectMacroExpander(pathVariables, iprFile.parentFile.absolutePath)
 
     def root = xmlParser.parse(iprFile)
-    loadProjectJdkAndOutput(root)
     loadCompilerConfiguration(root)
     loadProjectFileEncodings(root)
     loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
-    loadProjectLibraries(getComponent(root, "libraryTable"))
-    loadModules(getComponent(root, "ProjectModuleManager"))
     loadUiDesignerConfiguration(root)
     loadArtifacts(getComponent(root, "ArtifactManager"))
     loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
@@ -122,13 +92,6 @@ public class IdeaProjectLoader {
     project.projectName = getDirectoryBaseProjectName(dir)
     project.locationHash = dir.absolutePath.hashCode()
     projectMacroExpander = new ProjectMacroExpander(pathVariables, dir.parentFile.absolutePath)
-    def miscXml = new File(dir, "misc.xml")
-    if (miscXml.exists()) {
-      loadProjectJdkAndOutput(xmlParser.parse(miscXml))
-    }
-    else {
-      errorReporter.error("Cannot find misc.xml in $dir")
-    }
 
     def encodingsXml = new File(dir, "encodings.xml")
     if (encodingsXml.exists()) {
@@ -140,25 +103,6 @@ public class IdeaProjectLoader {
       loadCompilerConfiguration(xmlParser.parse(compilerXml))
     }
     loadWorkspaceConfiguration(new File(dir, "workspace.xml"))
-
-    def librariesFolder = new File(dir, "libraries")
-    if (librariesFolder.isDirectory()) {
-      librariesFolder.eachFile {File file ->
-        if (isXmlFile(file)) {
-          Node librariesComponent = xmlParser.parse(file)
-          loadProjectLibraries(librariesComponent)
-        }
-      }
-    }
-
-    def modulesXml = new File(dir, "modules.xml")
-    if (modulesXml.exists()) {
-      Node modulesXmlRoot = xmlParser.parse(modulesXml)
-      loadModules(modulesXmlRoot.component[0])
-    }
-    else {
-      errorReporter.error("Cannot find modules.xml in $dir")
-    }
 
     def uiDesignerXml = new File(dir, "uiDesigner.xml")
     if (uiDesignerXml.exists()) {
@@ -284,7 +228,7 @@ public class IdeaProjectLoader {
     }
 
     def targetLevels = componentTag?.bytecodeTargetLevel
-    if (!targetLevels.isEmpty()) {
+    if (targetLevels != null && !targetLevels.isEmpty()) {
       def targetLevelTag = targetLevels.first()
       configuration.bytecodeTarget.projectBytecodeTarget = targetLevelTag."@target" ?: null;
       targetLevelTag.module?.each {
@@ -304,7 +248,7 @@ public class IdeaProjectLoader {
   }
 
   private File getFileByUrl(final String url) {
-    return new File(FileUtil.toCanonicalPath(projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url))))
+    return new File(FileUtil.toCanonicalPath(projectMacroExpander.expandMacros(JpsPathUtil.urlToPath(url))))
   }
 
   private static boolean parseBoolean(Object value, boolean defaultValue) {
@@ -333,20 +277,6 @@ public class IdeaProjectLoader {
     return pattern
   }
 
-  private def loadProjectJdkAndOutput(Node root) {
-    def componentTag = getComponent(root, "ProjectRootManager")
-    def sdkName = componentTag?."@project-jdk-name"
-    def sdk = project.sdks[sdkName]
-    if (sdk == null) {
-      errorReporter.info("Project SDK '$sdkName' is not defined. Embedded javac will be used")
-    }
-    def outputTag = componentTag?.output?.getAt(0)
-    String outputPath = outputTag != null ? IdeaProjectLoadingUtil.pathFromUrl(outputTag.'@url') : null
-    projectOutputPath = outputPath != null && outputPath.length() > 0 ? FileUtil.toCanonicalPath(projectMacroExpander.expandMacros(outputPath)) : null
-    project.projectSdk = sdk
-    projectLanguageLevel = componentTag?."@languageLevel"
-  }
-
   private def loadProjectFileEncodings(Node root) {
     def componentTag = getComponent(root, "Encoding");
     if (componentTag == null) return;
@@ -359,16 +289,10 @@ public class IdeaProjectLoader {
           project.projectCharset = charset;
         }
         else {
-          def path = projectMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url));
+          def path = projectMacroExpander.expandMacros(JpsPathUtil.urlToPath(url));
           project.filePathToCharset[FileUtil.toCanonicalPath(path)] = charset;
         }
       }
-    }
-  }
-
-  private NodeList loadProjectLibraries(Node librariesComponent) {
-    return (NodeList)librariesComponent?.library?.each {Node libTag ->
-      initLibrary(libTag, projectMacroExpander, project.createLibrary(libTag."@name", Closure.IDENTITY))
     }
   }
 
@@ -393,287 +317,6 @@ public class IdeaProjectLoader {
       RunConfiguration runConf = new RunConfiguration(project, projectMacroExpander, confTag);
       project.runConfigurations[name] = runConf;
     }
-  }
-
-  private def loadModules(Node modulesComponent) {
-    List<String> imlPaths = []
-    modulesComponent?.modules?.module?.each {Node moduleTag ->
-      def imlPath = projectMacroExpander.expandMacros(moduleTag.@filepath)
-      project.createModule(moduleName(imlPath), {})
-      imlPaths << imlPath
-    }
-
-    List<Future> futures = []
-    imlPaths.each { String path ->
-      futures << (ourThreadPool.submit { loadModule(path) })
-    }
-    futures.each { it.run(); it.get() }
-
-    Set<File> allContentRoots = project.modules.values().collect { it.contentRoots }.flatten().collect { new File(it) } as Set
-
-    futures.clear()
-    project.modules.values().each { module ->
-      futures << (ourThreadPool.submit {
-        Set<File> myRoots = module.contentRoots.collect { new File(it) } as Set
-        for (root in allContentRoots) {
-          if (!(root in myRoots) && PathUtil.isUnder(myRoots, root)) {
-            module.excludes << FileUtil.toCanonicalPath(root.path)
-          }
-        }
-      })
-    }
-    futures.each { it.run(); it.get() }
-  }
-
-  private Library loadLibrary(Project project, String name, Node libraryTag, MacroExpander macroExpander) {
-    return initLibrary(libraryTag, macroExpander, new Library(project, name))
-  }
-
-  private Library initLibrary(Node libraryTag, MacroExpander macroExpander, Library library) {
-      Map<String, Boolean> jarDirs = [:]
-      libraryTag.jarDirectory.each {Node dirNode ->
-        jarDirs[dirNode.@url] = Boolean.parseBoolean(dirNode.@recursive)
-      }
-
-      libraryTag.CLASSES.root.each {Node rootTag ->
-        def url = rootTag.@url
-        def path = macroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(url))
-        if (url in jarDirs.keySet()) {
-          def paths = []
-          collectChildJars(new File(path), jarDirs[url], paths)
-          paths.each {
-            library.addClasspath it.toString()
-          }
-        }
-        else {
-          library.addClasspath path
-        }
-      }
-
-      libraryTag.SOURCES.root.each {Node rootTag ->
-        library.src macroExpander.expandMacros(rootTag.@url)
-      }
-    return library
-  }
-
-  private def collectChildJars(File dir, boolean recursively, List<String> paths) {
-    dir.listFiles()?.each {File child ->
-      if (child.isDirectory()) {
-        if (recursively) {
-          collectChildJars(child, recursively, paths)
-        }
-      }
-      else if (child.name.endsWith(".jar") || child.name.endsWith(".zip")) {
-        paths << child.absolutePath
-      }
-    }
-  }
-
-  private void loadModule(String imlPath) {
-    def moduleFile = new File(imlPath)
-    if (!moduleFile.exists()) {
-      errorReporter.error("Module file $imlPath not found")
-      return
-    }
-    def moduleBasePath = FileUtil.toSystemIndependentName(moduleFile.getParentFile().getAbsolutePath())
-    MacroExpander moduleMacroExpander = new ModuleMacroExpander(projectMacroExpander, moduleBasePath)
-    def currentModuleName = moduleName(imlPath)
-      Module currentModule = project.modules[currentModuleName]
-      currentModule.basePath = moduleBasePath
-      def root
-      synchronized (xmlParser) {
-        root = xmlParser.parse(moduleFile);
-      }
-      def componentTag = getComponent(root, "NewModuleRootManager")
-      if (componentTag != null) {
-        loadModuleOrderEntries(componentTag, currentModule, moduleMacroExpander, currentModuleName)
-
-        def srcFolderExists = componentTag.content.sourceFolder[0] != null;
-
-        loadSrcFolders(componentTag, moduleMacroExpander, currentModule)
-
-        componentTag.content.excludeFolder.each {Node exTag ->
-          String path = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(exTag.@url))
-          currentModule.exclude path
-        }
-
-        def languageLevel = componentTag."@LANGUAGE_LEVEL"
-        if (languageLevel == null) {
-          languageLevel = projectLanguageLevel
-        }
-        if (languageLevel != null) {
-          currentModule.languageLevel = convertLanguageLevel(languageLevel)
-        }
-
-        rootsProviderLoader.each {AdditionalRootsProviderService service ->
-          def sourceRoots = service.getAdditionalSourceRoots(currentModule)
-          currentModule.sourceRoots.addAll(sourceRoots)
-          currentModule.generatedSourceRoots.addAll(sourceRoots)
-          if (!sourceRoots.isEmpty()) {
-            srcFolderExists = true
-          }
-        }
-        if (srcFolderExists) {
-          loadOutputPaths(componentTag, currentModuleName, currentModule, moduleMacroExpander)
-        }
-      }
-
-      def facetManagerTag = getComponent(root, "FacetManager")
-      if (facetManagerTag != null) {
-        def facetLoader = new FacetLoader(currentModule, moduleMacroExpander)
-        facetLoader.loadFacets(facetManagerTag)
-      }
-  }
-
-  public void loadOutputPaths(Node componentTag, String currentModuleName, Module currentModule, ModuleMacroExpander moduleMacroExpander) {
-    if (componentTag."@inherit-compiler-output" == "true") {
-      if (projectOutputPath == null) {
-        errorReporter.error("Module '$currentModuleName' uses output path inherited from project but project output path is not specified")
-      }
-      else {
-        currentModule.outputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "production"), currentModuleName).absolutePath)
-        currentModule.testOutputPath = FileUtil.toSystemIndependentName(new File(new File(projectOutputPath, "test"), currentModuleName).absolutePath)
-      }
-    }
-    else {
-      currentModule.outputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag.output[0]?.@url)))
-      currentModule.testOutputPath = FileUtil.toCanonicalPath(moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(componentTag."output-test"[0]?.'@url')))
-      if (currentModule.testOutputPath == null) {
-        currentModule.testOutputPath = currentModule.outputPath
-      }
-    }
-  }
-
-  public void loadSrcFolders(Node componentTag, moduleMacroExpander, currentModule) {
-    componentTag.content.each {Node contentTag ->
-      currentModule.content moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(contentTag.@url))
-    }
-
-    componentTag.content.sourceFolder.each {Node folderTag ->
-      String path = moduleMacroExpander.expandMacros(IdeaProjectLoadingUtil.pathFromUrl(folderTag.@url))
-      String prefix = folderTag.@packagePrefix
-
-      if (folderTag.attribute("isTestSource") == "true") {
-        currentModule.testSrc path
-      }
-      else {
-        currentModule.src path
-      }
-
-      if (prefix != null && prefix != "") {
-        currentModule.sourceRootPrefixes[path] = (prefix.replace('.', '/'))
-      }
-    }
-  }
-
-  public void loadModuleOrderEntries(Node componentTag, currentModule, MacroExpander moduleMacroExpander, currentModuleName) {
-    componentTag.orderEntry.each {Node entryTag ->
-      String type = entryTag.@type
-      DependencyScope scope = getScopeById(entryTag.@scope)
-      boolean exported = entryTag.@exported != null
-      switch (type) {
-        case "module":
-          def moduleName = entryTag.attribute("module-name")
-          def module = project.modules[moduleName]
-          if (module == null) {
-            errorReporter.warning("Cannot resolve module $moduleName in $currentModuleName")
-          }
-          else {
-            currentModule.dependency(module, scope, exported)
-          }
-          break
-
-        case "sourceFolder":
-          currentModule.moduleSource()
-          break
-
-        case "module-library":
-          def libraryTag = entryTag.library[0]
-          def libraryName = libraryTag."@name"
-          def moduleLibrary = loadLibrary(project, libraryName != null ? libraryName : "moduleLibrary#${libraryCount++}",
-                                          libraryTag, moduleMacroExpander)
-          currentModule.dependency(moduleLibrary, scope, exported)
-
-          if (libraryName != null) {
-            currentModule.libraries[libraryName] = moduleLibrary
-          }
-          break;
-
-        case "library":
-          def name = entryTag.attribute("name")
-          def library = null
-          if (entryTag.@level == "project") {
-            library = project.libraries[name]
-            if (library == null) {
-              errorReporter.warning("Cannot resolve project library '$name' in module '$currentModuleName'")
-            }
-          }
-          else {
-            library = project.globalLibraries[name]
-            if (library == null) {
-              errorReporter.warning("Cannot resolve global library '$name' in module '$currentModuleName'")
-            }
-          }
-
-          if (library != null) {
-            currentModule.dependency(library, scope, exported)
-          }
-          break
-
-        case "jdk":
-          def name = entryTag.@jdkName
-          def sdk = project.sdks[name]
-          if (sdk == null) {
-            errorReporter.warning("Cannot resolve SDK '$name' in module '$currentModuleName'. Embedded javac will be used")
-          }
-          else {
-            currentModule.sdk = sdk
-            currentModule.dependency(sdk, PredefinedDependencyScopes.COMPILE, false)
-          }
-          break
-
-        case "inheritedJdk":
-          def sdk = project.projectSdk
-          if (sdk != null) {
-            currentModule.sdk = sdk
-            currentModule.dependency(sdk, PredefinedDependencyScopes.COMPILE, false)
-          }
-          break
-      }
-    }
-  }
-
-  private String convertLanguageLevel(String imlPropertyText) {
-    switch (imlPropertyText) {
-      case "JDK_1_3": return "1.3"
-      case "JDK_1_4": return "1.4"
-      case "JDK_1_5": return "1.5"
-      case "JDK_1_6": return "1.6"
-      case "JDK_1_7": return "1.7"
-      case "JDK_1_8": return "8"
-    }
-
-    final String prefix = "JDK_";
-    if (imlPropertyText != null && imlPropertyText.startsWith(prefix)) {
-      return imlPropertyText.substring(prefix.length()).replace('_', '.');
-    }
-
-    return "1.6"
-  }
-
-  private DependencyScope getScopeById(String id) {
-    switch (id) {
-      case "COMPILE": return PredefinedDependencyScopes.COMPILE
-      case "RUNTIME": return PredefinedDependencyScopes.RUNTIME
-      case "TEST": return PredefinedDependencyScopes.TEST
-      case "PROVIDED": return PredefinedDependencyScopes.PROVIDED
-      default: return PredefinedDependencyScopes.COMPILE
-    }
-  }
-
-  private String moduleName(String imlPath) {
-    def fileName = new File(imlPath).getName()
-    return fileName.substring(0, fileName.length() - ".iml".length())
   }
 
   Node getComponent(Node root, String name) {

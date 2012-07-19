@@ -4,11 +4,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ClassMap;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.artifacts.*;
 import org.jetbrains.jps.idea.OwnServiceLoader;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.util.List;
@@ -61,7 +61,7 @@ public class LayoutElementBuildersRegistry {
   private void generateSubstitutionInstructions(ComplexLayoutElement element,
                                                 ArtifactCompilerInstructionCreator instructionCreator,
                                                 ArtifactInstructionsBuilderContext builderContext) {
-    final List<LayoutElement> substitution = element.getSubstitution(builderContext.getProject());
+    final List<LayoutElement> substitution = element.getSubstitution(builderContext.getProject(), builderContext.getJpsModel());
     if (substitution != null) {
       generateInstructions(substitution, instructionCreator, builderContext);
     }
@@ -78,7 +78,7 @@ public class LayoutElementBuildersRegistry {
                                                        boolean tests,
                                                        ArtifactCompilerInstructionCreator creator,
                                                        ArtifactInstructionsBuilderContext context) {
-    final Module module = context.getProject().getModules().get(moduleName);
+    final JpsModule module = context.getRootsIndex().getModuleByName(moduleName);
     if (module != null) {
       final File outputDir = context.getProjectPaths().getModuleOutputDir(module, tests);
       if (outputDir != null) {

@@ -40,7 +40,7 @@ public class JpsModuleOrderEntry extends JpsExportableOrderEntry<JpsModuleDepend
 
   @Override
   public Module getModule() {
-    final JpsModule module = myDependencyElement.getModuleReference().resolve();
+    final JpsModule module = myDependencyElement.getModule();
     if (module != null) return null;
     return JpsModelManager.getInstance(myRootModel.getProject()).getModuleManager().getModule(module);
   }

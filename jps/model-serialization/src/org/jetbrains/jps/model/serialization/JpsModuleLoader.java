@@ -21,7 +21,7 @@ import static com.intellij.openapi.util.JDOMUtil.getChildren;
 public class JpsModuleLoader {
   private static final String URL_ATTRIBUTE = "url";
 
-  public static void loadRootModel(JpsModule module, Element rootModelComponent) {
+  public static void loadRootModel(JpsModule module, Element rootModelComponent, JpsSdkType<?> projectSdkType) {
     for (Element contentElement : getChildren(rootModelComponent, "content")) {
       final String url = contentElement.getAttributeValue(URL_ATTRIBUTE);
       module.getContentRootsList().addUrl(url);
@@ -29,7 +29,7 @@ public class JpsModuleLoader {
         final String sourceUrl = sourceElement.getAttributeValue(URL_ATTRIBUTE);
         final String packagePrefix = StringUtil.notNullize(sourceElement.getAttributeValue("packagePrefix"));
         final boolean testSource = Boolean.parseBoolean(sourceElement.getAttributeValue("isTestSource"));
-        final JavaSourceRootType rootType = testSource ? JavaSourceRootType.SOURCE : JavaSourceRootType.TEST_SOURCE;
+        final JavaSourceRootType rootType = testSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
         module.addSourceRoot(sourceUrl, rootType, new JavaSourceRootProperties(packagePrefix));
       }
       for (Element excludeElement : getChildren(contentElement, "excludeFolder")) {
@@ -47,13 +47,13 @@ public class JpsModuleLoader {
       }
       else if ("jdk".equals(type)) {
         String sdkName = orderEntry.getAttributeValue("jdkName");
-        String sdkTypeId = orderEntry.getAttributeValue("jskType");
-        final JpsSdkType<?> sdkType = getSdkType(sdkTypeId);
+        String sdkTypeId = orderEntry.getAttributeValue("jdkType");
+        final JpsSdkType<?> sdkType = JpsSdkTableLoader.getSdkType(sdkTypeId);
         dependenciesList.addSdkDependency(sdkType);
-        module.getSdkReferencesTable().setSdkReference(sdkType, elementFactory.createSdkReference(sdkName, sdkType));
+        JpsSdkTableLoader.setSdkReference(module.getSdkReferencesTable(), sdkName, sdkType);
       }
       else if ("inheritedJdk".equals(type)) {
-        dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
+        dependenciesList.addSdkDependency(projectSdkType != null ? projectSdkType : JpsJavaSdkType.INSTANCE);
       }
       else if ("library".equals(type)) {
         String name = orderEntry.getAttributeValue("name");
@@ -112,9 +112,5 @@ public class JpsModuleLoader {
 
   private static Iterable<JpsModelLoaderExtension> getLoaderExtensions() {
     return JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class);
-  }
-
-  public static JpsSdkType<?> getSdkType(String typeId) {
-    return JpsSdkTableLoader.getSdkPropertiesLoader(typeId).getType();
   }
 }

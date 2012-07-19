@@ -14,6 +14,7 @@ import org.jetbrains.jps.incremental.artifacts.instructions.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
+import org.jetbrains.jps.model.JpsModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private final Project myProject;
   private final Artifact myArtifact;
   private final int myArtifactId;
+  private final JpsModel myModel;
   private final ModuleRootsIndex myRootsIndex;
   private final ArtifactSourceTimestampStorage myTimestampStorage;
   private Map<String, IntArrayList> myChangedFiles = new HashMap<String, IntArrayList>();
@@ -37,11 +39,12 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private File myOutSrcMappingsFile;
 
   public ArtifactSourceFilesState(Artifact artifact, int artifactId, Project project,
-                                  ModuleRootsIndex rootsIndex,
+                                  JpsModel model, ModuleRootsIndex rootsIndex,
                                   ArtifactSourceTimestampStorage timestampStorage,
                                   File mappingsDir) {
     myProject = project;
     myArtifact = artifact;
+    myModel = model;
     myRootsIndex = rootsIndex;
     myTimestampStorage = timestampStorage;
     myArtifactId = artifactId;
@@ -145,7 +148,8 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
 
   private ArtifactInstructionsBuilder computeInstructions() {
     final LayoutElement rootElement = myArtifact.getRootElement();
-    ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(myProject, new ProjectPaths(myProject));
+    ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(myProject,
+                                                                                            myModel, myRootsIndex, new ProjectPaths(myModel.getProject()));
     final ArtifactInstructionsBuilderImpl instructionsBuilder = new ArtifactInstructionsBuilderImpl(myRootsIndex, myProject.getIgnoredFilePatterns());
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(instructionsBuilder, myArtifact.getOutputPath());
     LayoutElementBuildersRegistry.getInstance().generateInstructions(rootElement, instructionCreator, context);

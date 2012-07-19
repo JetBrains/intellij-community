@@ -2,10 +2,10 @@ package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl;
 import org.jetbrains.jps.model.library.impl.JpsSdkReferenceImpl;
@@ -39,10 +39,10 @@ public class JpsElementFactoryImpl extends JpsElementFactory {
 
 
   @Override
-  public <P extends JpsElementProperties> JpsLibrary createLibrary(@NotNull String name,
+  public <P extends JpsElementProperties> JpsTypedLibrary<P> createLibrary(@NotNull String name,
                                                                    @NotNull JpsLibraryType<P> type,
                                                                    @NotNull P properties) {
-    return new JpsLibraryImpl(name, type, properties);
+    return new JpsLibraryImpl<P>(name, type, properties);
   }
 
   @NotNull

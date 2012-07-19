@@ -1,12 +1,11 @@
 package org.jetbrains.jps.artifacts
-
 import org.jetbrains.jps.Project
-
+import org.jetbrains.jps.model.JpsModel
 /**
  * @author nik
  */
 abstract class LayoutElement {
-  boolean process(Project project, Closure processor) {
+  boolean process(Project project, JpsModel model, Closure processor) {
     return processor(this)
   }
 }

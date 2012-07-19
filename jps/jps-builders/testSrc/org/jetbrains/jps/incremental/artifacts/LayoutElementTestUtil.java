@@ -16,9 +16,9 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.Library;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.artifacts.*;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.Collections;
 
@@ -73,7 +73,7 @@ public class LayoutElementTestUtil {
       return element(new DirectoryCopyElement(dirPath));
     }
 
-    public LayoutElementCreator module(Module module) {
+    public LayoutElementCreator module(JpsModule module) {
       final ModuleOutputElement element = new ModuleOutputElement();
       element.setModuleName(module.getName());
       return element(element);
@@ -84,7 +84,7 @@ public class LayoutElementTestUtil {
       return this;
     }
 
-    public LayoutElementCreator lib(Library library) {
+    public LayoutElementCreator lib(JpsLibrary library) {
       final LibraryFilesElement element = new LibraryFilesElement();
       element.setLibraryName(library.getName());
       element.setLibraryLevel(LibraryFilesElement.PROJECT_LEVEL);

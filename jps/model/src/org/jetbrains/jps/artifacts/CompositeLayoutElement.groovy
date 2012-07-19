@@ -1,7 +1,7 @@
 package org.jetbrains.jps.artifacts
 
 import org.jetbrains.jps.Project
-
+import org.jetbrains.jps.model.JpsModel
 /**
  * @author nik
  */
@@ -18,9 +18,9 @@ abstract class CompositeLayoutElement extends LayoutElement {
     return child
   }
 
-  boolean process(Project project, Closure processor) {
+  boolean process(Project project, JpsModel model, Closure processor) {
     if (processor(this)) {
-      children*.process(project, processor)
+      children*.process(project, model, processor)
     }
   }
 }

@@ -11,6 +11,7 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
@@ -27,7 +28,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final ProjectChunks myTestChunks;
   private final MessageHandler myDelegateMessageHandler;
   private volatile boolean myCompilingTests = false;
-  private final Set<Pair<Module, FSOperations.DirtyMarkScope>> myNonIncrementalModules = new HashSet<Pair<Module, FSOperations.DirtyMarkScope>>();
+  private final Set<Pair<JpsModule, FSOperations.DirtyMarkScope>> myNonIncrementalModules = new HashSet<Pair<JpsModule, FSOperations.DirtyMarkScope>>();
 
   private final ProjectPaths myProjectPaths;
   private final long myCompilationStartStamp;
@@ -36,7 +37,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final CanceledStatus myCancelStatus;
   private volatile float myDone = -1.0f;
   private EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
-  private Map<Module, AnnotationProcessingProfile> myAnnotationProcessingProfileMap;
+  private Map<JpsModule, AnnotationProcessingProfile> myAnnotationProcessingProfileMap;
 
   public CompileContextImpl(CompileScope scope,
                             ProjectDescriptor pd, boolean isMake,
@@ -56,8 +57,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     myProductionChunks = productionChunks;
     myTestChunks = testChunks;
     myDelegateMessageHandler = delegateMessageHandler;
-    final Project project = scope.getProject();
-    myProjectPaths = new ProjectPaths(project);
+    myProjectPaths = new ProjectPaths(pd.jpsProject);
   }
 
   @Override
@@ -113,19 +113,19 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   @Override
   @NotNull
-  public AnnotationProcessingProfile getAnnotationProcessingProfile(Module module) {
+  public AnnotationProcessingProfile getAnnotationProcessingProfile(JpsModule module) {
     final CompilerConfiguration compilerConfig = getProjectDescriptor().project.getCompilerConfiguration();
-    Map<Module, AnnotationProcessingProfile> map = myAnnotationProcessingProfileMap;
+    Map<JpsModule, AnnotationProcessingProfile> map = myAnnotationProcessingProfileMap;
     if (map == null) {
-      map = new HashMap<Module, AnnotationProcessingProfile>();
-      final Map<String, Module> namesMap = new HashMap<String, Module>();
-      for (Module m : getProjectDescriptor().project.getModules().values()) {
+      map = new HashMap<JpsModule, AnnotationProcessingProfile>();
+      final Map<String, JpsModule> namesMap = new HashMap<String, JpsModule>();
+      for (JpsModule m : getProjectDescriptor().jpsProject.getModules()) {
         namesMap.put(m.getName(), m);
       }
       if (!namesMap.isEmpty()) {
         for (AnnotationProcessingProfile profile : compilerConfig.getModuleAnnotationProcessingProfiles()) {
           for (String name : profile.getProcessModule()) {
-            final Module mod = namesMap.get(name);
+            final JpsModule mod = namesMap.get(name);
             if (mod != null) {
               map.put(mod, profile);
             }
@@ -139,11 +139,11 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void markNonIncremental(Module module) {
+  public void markNonIncremental(JpsModule module) {
     if (!isCompilingTests()) {
-      myNonIncrementalModules.add(new Pair<Module, FSOperations.DirtyMarkScope>(module, FSOperations.DirtyMarkScope.PRODUCTION));
+      myNonIncrementalModules.add(new Pair<JpsModule, FSOperations.DirtyMarkScope>(module, FSOperations.DirtyMarkScope.PRODUCTION));
     }
-    myNonIncrementalModules.add(new Pair<Module, FSOperations.DirtyMarkScope>(module, FSOperations.DirtyMarkScope.TESTS));
+    myNonIncrementalModules.add(new Pair<JpsModule, FSOperations.DirtyMarkScope>(module, FSOperations.DirtyMarkScope.TESTS));
   }
 
   @Override
@@ -153,8 +153,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       return true;
     }
     final FSOperations.DirtyMarkScope dirtyScope = forTests ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION;
-    for (Module module : chunk.getModules()) {
-      if (myNonIncrementalModules.contains(new Pair<Module, FSOperations.DirtyMarkScope>(module, dirtyScope))) {
+    for (JpsModule module : chunk.getModules()) {
+      if (myNonIncrementalModules.contains(new Pair<JpsModule, FSOperations.DirtyMarkScope>(module, dirtyScope))) {
         return false;
       }
     }
@@ -183,9 +183,9 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void clearNonIncrementalMark(Module module) {
-    final Pair<Module, FSOperations.DirtyMarkScope> pair =
-      new Pair<Module, FSOperations.DirtyMarkScope>(module, isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS
+  public void clearNonIncrementalMark(JpsModule module) {
+    final Pair<JpsModule, FSOperations.DirtyMarkScope> pair =
+      new Pair<JpsModule, FSOperations.DirtyMarkScope>(module, isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS
                                                                                : FSOperations.DirtyMarkScope.PRODUCTION);
     myNonIncrementalModules.remove(pair);
   }

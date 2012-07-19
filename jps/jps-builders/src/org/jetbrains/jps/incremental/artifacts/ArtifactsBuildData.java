@@ -7,6 +7,7 @@ import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
+import org.jetbrains.jps.model.JpsModel;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,11 +36,11 @@ public class ArtifactsBuildData extends CompositeStorageOwner {
     }
   }
 
-  public ArtifactSourceFilesState getOrCreateState(Artifact artifact, Project project, ModuleRootsIndex index) {
+  public ArtifactSourceFilesState getOrCreateState(Artifact artifact, Project project, JpsModel model, ModuleRootsIndex index) {
     ArtifactSourceFilesState state = myArtifactState.get(artifact);
     if (state == null) {
       final int artifactId = myPersistentData.getId(artifact.getName());
-      state = new ArtifactSourceFilesState(artifact, artifactId, project, index, myTimestampStorage, myMappingsDir);
+      state = new ArtifactSourceFilesState(artifact, artifactId, project, model, index, myTimestampStorage, myMappingsDir);
       myArtifactState.put(artifact, state);
     }
     return state;

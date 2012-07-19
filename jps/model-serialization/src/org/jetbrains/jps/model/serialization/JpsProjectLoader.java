@@ -66,8 +66,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private void loadFromDirectory(File dir) {
-    loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
-    loadModules(loadRootElement(new File(dir, "modules.xml")));
+    JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
+    loadModules(loadRootElement(new File(dir, "modules.xml")), projectSdkType);
     final File[] libraryFiles = new File(dir, "libraries").listFiles();
     if (libraryFiles != null) {
       for (File libraryFile : libraryFiles) {
@@ -80,28 +80,34 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   private void loadFromIpr(File iprFile) {
     final Element root = loadRootElement(iprFile);
-    loadProjectRoot(root);
-    loadModules(root);
+    JpsSdkType<?> projectSdkType = loadProjectRoot(root);
+    loadModules(root, projectSdkType);
     loadProjectLibraries(findComponent(root, "libraryTable"));
   }
 
-  private void loadProjectRoot(Element root) {
+  @Nullable
+  private JpsSdkType<?> loadProjectRoot(Element root) {
+    JpsSdkType<?> sdkType = null;
     Element rootManagerElement = findComponent(root, "ProjectRootManager");
     if (rootManagerElement != null) {
       String sdkName = rootManagerElement.getAttributeValue("project-jdk-name");
       String sdkTypeId = rootManagerElement.getAttributeValue("project-jdk-type");
       if (sdkName != null && sdkTypeId != null) {
-        JpsSdkType<?> sdkType = JpsModuleLoader.getSdkType(sdkTypeId);
-        myProject.getSdkReferencesTable().setSdkReference(sdkType, JpsElementFactory.getInstance().createSdkReference(sdkName, sdkType));
+        sdkType = JpsSdkTableLoader.getSdkType(sdkTypeId);
+        JpsSdkTableLoader.setSdkReference(myProject.getSdkReferencesTable(), sdkName, sdkType);
+      }
+      for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+        extension.loadProjectRoots(myProject, rootManagerElement);
       }
     }
+    return sdkType;
   }
 
   private void loadProjectLibraries(Element libraryTableElement) {
     JpsLibraryTableLoader.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
-  private void loadModules(Element root) {
+  private void loadModules(Element root, final JpsSdkType<?> projectSdkType) {
     Element componentRoot = findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
@@ -111,7 +117,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
       futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
         @Override
         public JpsModule call() throws Exception {
-          return loadModule(path);
+          return loadModule(path, projectSdkType);
         }
       }));
     }
@@ -125,7 +131,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     }
   }
 
-  private JpsModule loadModule(String path) {
+  private JpsModule loadModule(String path, JpsSdkType<?> projectSdkType) {
     final File file = new File(path);
     String name = FileUtil.getNameWithoutExtension(file);
     final JpsMacroExpander expander = new JpsMacroExpander(myPathVariables);
@@ -134,8 +140,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesLoader<?> loader = getModulePropertiesLoader(typeId);
     final JpsModule module = createModule(name, moduleRoot, loader);
-    JpsModuleLoader.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"));
-    JpsFacetLoader.loadFacets(module, findComponent(moduleRoot, "FacetManager"));
+    JpsModuleLoader.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
+    JpsFacetLoader.loadFacets(module, findComponent(moduleRoot, "FacetManager"), FileUtil.toSystemIndependentName(path));
     return module;
   }
 

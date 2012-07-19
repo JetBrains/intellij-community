@@ -1,8 +1,9 @@
 package org.jetbrains.jps.android;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.idea.AdditionalRootsProviderService;
+import org.jetbrains.jps.builders.AdditionalRootsProviderService;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -15,8 +16,8 @@ public class AndroidAdditionalRootProviderService extends AdditionalRootsProvide
 
   @NotNull
   @Override
-  public List<String> getAdditionalSourceRoots(@NotNull Module module) {
-    final File generatedSourcesRoot = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+  public List<String> getAdditionalSourceRoots(@NotNull JpsModule module, BuildDataManager dataManager) {
+    final File generatedSourcesRoot = AndroidJpsUtil.getGeneratedSourcesStorage(module, dataManager);
     final List<String> result = new ArrayList<String>();
 
     result.add(new File(generatedSourcesRoot, AndroidJpsUtil.AAPT_GENERATED_SOURCE_ROOT_NAME).getPath());

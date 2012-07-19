@@ -41,13 +41,13 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         affected.add(artifact);
       }
     }
-    final Set<Artifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected, context.getProjectDescriptor().project);
+    final Set<Artifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected, context.getProjectDescriptor().project, context.getProjectDescriptor().jpsModel);
     Map<String, Artifact> artifactsMap = new HashMap<String, Artifact>();
     for (Artifact artifact : toBuild) {
       artifactsMap.put(artifact.getName(), artifact);
     }
 
-    final ArtifactSorter sorter = new ArtifactSorter(context.getProjectDescriptor().project);
+    final ArtifactSorter sorter = new ArtifactSorter(context.getProjectDescriptor().project, context.getProjectDescriptor().jpsModel);
     final Map<String, String> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
     for (String artifactName : sorter.getArtifactsSortedByInclusion()) {
       context.checkCanceled();
@@ -71,7 +71,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
   private static void buildArtifact(Artifact artifact, final CompileContext context) throws ProjectBuildException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     try {
-      final ArtifactSourceFilesState state = pd.dataManager.getArtifactsBuildData().getOrCreateState(artifact, pd.project, pd.rootsIndex);
+      final ArtifactSourceFilesState state = pd.dataManager.getArtifactsBuildData().getOrCreateState(artifact, pd.project, pd.jpsModel, pd.rootsIndex);
       state.initState(pd.dataManager);
       final Set<String> deletedFiles = state.getDeletedFiles();
       final Map<String,IntArrayList> changedFiles = state.getChangedFiles();

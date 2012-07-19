@@ -5,23 +5,21 @@ import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.*;
 import org.jetbrains.jps.model.library.*;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
-public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl> implements JpsLibrary {
-  private static final JpsElementCollectionKind<JpsLibraryRoot> LIBRARY_ROOTS_COLLECTION =
-    new JpsElementCollectionKind<JpsLibraryRoot>(JpsLibraryRootKind.INSTANCE);
+public class JpsLibraryImpl<P extends JpsElementProperties> extends JpsNamedCompositeElementBase<JpsLibraryImpl<P>> implements JpsTypedLibrary<P> {
   private static final JpsTypedDataKind<JpsLibraryType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsLibraryType<?>>();
 
-  public <P extends JpsElementProperties> JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties) {
+  public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties) {
     super(name);
     myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsLibraryType<?>>(type, properties));
-    myContainer.setChild(LIBRARY_ROOTS_COLLECTION);
   }
 
-  private JpsLibraryImpl(@NotNull JpsLibraryImpl original) {
+  private JpsLibraryImpl(@NotNull JpsLibraryImpl<P> original) {
     super(original);
   }
 
@@ -33,8 +31,15 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl>
 
   @NotNull
   @Override
+  public P getProperties() {
+    return (P)myContainer.getChild(TYPED_DATA_KIND).getProperties();
+  }
+
+  @NotNull
+  @Override
   public List<JpsLibraryRoot> getRoots(@NotNull JpsOrderRootType rootType) {
-    return getRootsCollection().getElements();
+    final JpsElementCollection<JpsLibraryRoot> rootsCollection = myContainer.getChild(getKind(rootType));
+    return rootsCollection != null ? rootsCollection.getElements() : Collections.<JpsLibraryRoot>emptyList();
   }
 
   @Override
@@ -45,22 +50,24 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl>
   @Override
   public void addRoot(@NotNull final String url, @NotNull final JpsOrderRootType rootType,
                       @NotNull JpsLibraryRoot.InclusionOptions options) {
-    getRootsCollection().addChild(new JpsLibraryRootImpl(url, rootType, options));
-  }
-
-  private JpsElementCollectionImpl<JpsLibraryRoot> getRootsCollection() {
-    return myContainer.getChild(LIBRARY_ROOTS_COLLECTION);
+    myContainer.getOrSetChild(getKind(rootType)).addChild(new JpsLibraryRootImpl(url, rootType, options));
   }
 
   @Override
   public void removeUrl(@NotNull final String url, @NotNull final JpsOrderRootType rootType) {
-    final JpsElementCollection<JpsLibraryRoot> rootsCollection = getRootsCollection();
-    for (JpsLibraryRoot root : rootsCollection.getElements()) {
-      if (root.getUrl().equals(url) && root.getRootType().equals(rootType)) {
-        rootsCollection.removeChild(root);
-        break;
+    final JpsElementCollection<JpsLibraryRoot> rootsCollection = myContainer.getChild(getKind(rootType));
+    if (rootsCollection != null) {
+      for (JpsLibraryRoot root : rootsCollection.getElements()) {
+        if (root.getUrl().equals(url) && root.getRootType().equals(rootType)) {
+          rootsCollection.removeChild(root);
+          break;
+        }
       }
     }
+  }
+
+  private static JpsElementCollectionKind<JpsLibraryRoot> getKind(JpsOrderRootType type) {
+    return new JpsElementCollectionKind<JpsLibraryRoot>(new JpsLibraryRootKind(type));
   }
 
   @Override
@@ -75,8 +82,8 @@ public class JpsLibraryImpl extends JpsNamedCompositeElementBase<JpsLibraryImpl>
 
   @NotNull
   @Override
-  public JpsLibraryImpl createCopy() {
-    return new JpsLibraryImpl(this);
+  public JpsLibraryImpl<P> createCopy() {
+    return new JpsLibraryImpl<P>(this);
   }
 
   @NotNull

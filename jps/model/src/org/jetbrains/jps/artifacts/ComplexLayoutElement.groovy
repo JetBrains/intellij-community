@@ -1,18 +1,20 @@
 package org.jetbrains.jps.artifacts
 
-import org.jetbrains.jps.Library
 import org.jetbrains.jps.Project
+import org.jetbrains.jps.ProjectPaths
 import org.jetbrains.jps.idea.ProjectLoadingErrorReporter
-
+import org.jetbrains.jps.model.JpsModel
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsLibraryCollection
 /**
  * @author nik
  */
 abstract class ComplexLayoutElement extends LayoutElement {
-  abstract List<LayoutElement> getSubstitution(Project project)
+  abstract List<LayoutElement> getSubstitution(Project project, JpsModel model)
 
-  boolean process(Project project, Closure processor) {
+  boolean process(Project project, JpsModel model, Closure processor) {
     if (processor(this)) {
-      getSubstitution(project)*.process(project, processor)
+      getSubstitution(project, model)*.process(project, model, processor)
     }
   }
 }
@@ -23,29 +25,32 @@ class LibraryFilesElement extends ComplexLayoutElement {
   String libraryName
   String libraryLevel
 
-  List<LayoutElement> getSubstitution(Project project) {
-    Library library
+  List<LayoutElement> getSubstitution(Project project, JpsModel model) {
+    JpsLibraryCollection libraries = null
     switch (libraryLevel) {
       case PROJECT_LEVEL:
-        library = project.libraries[libraryName]
+        libraries = model.project.libraryCollection
         break
       case "module":
-        library = project.modules[moduleName]?.libraries[libraryName]
+        libraries = model.project.modules.find {it.name.equals(moduleName)}?.libraryCollection
         break
       case "application":
-        library = project.globalLibraries[libraryName]
+        libraries = model.global.libraryCollection
         break
     }
+    JpsLibrary library = libraries?.findLibrary(libraryName)
     if (library == null) {
       return []
     }
 
-    return library.classpath.collect {String path ->
-      if (new File(path).isDirectory()) {
-        return new DirectoryCopyElement(dirPath: path)
+    List<File> files = new ArrayList<File>()
+    ProjectPaths.addLibraryFiles(files, library)
+    return files.collect {File file ->
+      if (file.isDirectory()) {
+        return new DirectoryCopyElement(dirPath: file.absolutePath)
       }
       else {
-        return new FileCopyElement(filePath: path)
+        return new FileCopyElement(filePath: file.absolutePath)
       }
     }
   }
@@ -55,7 +60,7 @@ class ArtifactLayoutElement extends ComplexLayoutElement {
   String artifactName
   ProjectLoadingErrorReporter errorReporter
 
-  List<LayoutElement> getSubstitution(Project project) {
+  List<LayoutElement> getSubstitution(Project project, JpsModel model) {
     Artifact artifact = project.artifacts[artifactName]
     if (artifact == null) {
       errorReporter.error("unknown artifact: $artifactName")

@@ -5,10 +5,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
-import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsLibraryCollection;
-import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
+import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
+import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.HashMap;
@@ -101,5 +100,23 @@ public class JpsSdkTableLoader {
   private static String getAttributeValue(Element element, String childName) {
     final Element child = element.getChild(childName);
     return child != null ? child.getAttributeValue("value") : null;
+  }
+
+  public static JpsSdkType<?> getSdkType(String typeId) {
+    return getSdkPropertiesLoader(typeId).getType();
+  }
+
+  public static void setSdkReference(final JpsSdkReferencesTable table, String sdkName, JpsSdkType<?> sdkType) {
+    JpsLibraryReference reference = JpsElementFactory.getInstance().createSdkReference(sdkName, sdkType);
+    table.setSdkReference(sdkType, reference);
+    if (sdkType instanceof JpsJavaSdkTypeWrapper) {
+      JpsLibrary jpsLibrary = reference.resolve();
+      if (jpsLibrary != null) {
+        String name = ((JpsJavaSdkTypeWrapper)sdkType).getJavaSdkName((JpsSdkProperties)jpsLibrary.getProperties());
+        if (name != null) {
+          table.setSdkReference(JpsJavaSdkType.INSTANCE, JpsElementFactory.getInstance().createSdkReference(name, JpsJavaSdkType.INSTANCE));
+        }
+      }
+    }
   }
 }

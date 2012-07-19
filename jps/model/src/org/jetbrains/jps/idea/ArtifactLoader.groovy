@@ -56,17 +56,9 @@ class ArtifactLoader {
         return new ExtractedDirectoryElement(jarPath: jarPath, pathInJar: pathInJar)
       case "module-output":
         def name = tag."@name"
-        if (project.modules[name] == null) {
-          errorReporter.error("Unknown module '$name' in '$artifactName' artifact")
-          return null
-        }
         return new ModuleOutputElement(moduleName: name);
       case "module-test-output":
         def name = tag."@name"
-        if (project.modules[name] == null) {
-          errorReporter.error("Unknown module '$name' in '$artifactName' artifact")
-          return null
-        }
         return new ModuleTestOutputElement(moduleName: name);
       case "library":
         return new LibraryFilesElement(libraryLevel: tag."@level", libraryName: tag."@name", moduleName: tag."@module-name");

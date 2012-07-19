@@ -4,9 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.*;
-import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsLibraryCollection;
-import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryKind;
 import org.jetbrains.jps.model.module.*;
@@ -114,6 +112,25 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl> i
   @NotNull
   public JpsSdkReferencesTable getSdkReferencesTable() {
     return myContainer.getChild(JpsSdkReferencesTableImpl.KIND);
+  }
+
+  @Override
+  public JpsLibraryReference getSdkReference(@NotNull JpsSdkType<?> type) {
+    JpsLibraryReference sdkReference = getSdkReferencesTable().getSdkReference(type);
+    if (sdkReference != null) {
+      return sdkReference;
+    }
+    JpsProject project = getProject();
+    if (project != null) {
+      return project.getSdkReferencesTable().getSdkReference(type);
+    }
+    return null;
+  }
+
+  @Override
+  public <P extends JpsSdkProperties> JpsTypedLibrary<P> getSdk(@NotNull JpsSdkType<P> type) {
+    final JpsLibraryReference reference = getSdkReference(type);
+    return reference != null ? (JpsTypedLibrary<P>)reference.resolve() : null;
   }
 
   @Override

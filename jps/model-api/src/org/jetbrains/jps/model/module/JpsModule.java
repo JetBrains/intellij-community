@@ -1,10 +1,9 @@
 package org.jetbrains.jps.model.module;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsLibraryCollection;
-import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.*;
 
 import java.util.List;
 
@@ -17,7 +16,6 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
 
   @NotNull
   JpsUrlList getExcludeRootsList();
-
 
   @NotNull
   List<JpsModuleSourceRoot> getSourceRoots();
@@ -56,6 +54,14 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   @NotNull
   JpsSdkReferencesTable getSdkReferencesTable();
 
+  @Nullable
+  JpsLibraryReference getSdkReference(@NotNull JpsSdkType<?> type);
+
+  @Nullable
+  <P extends JpsSdkProperties>
+  JpsTypedLibrary<P> getSdk(@NotNull JpsSdkType<P> type);
+
   void delete();
 
+  JpsProject getProject();
 }

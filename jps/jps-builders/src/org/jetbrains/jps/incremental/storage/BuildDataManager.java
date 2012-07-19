@@ -4,9 +4,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
 import java.util.Collection;
@@ -183,7 +183,7 @@ public class BuildDataManager implements StorageOwner {
     final Map<String, SourceToOutputMapping> storageMap = testSources? myTestSourceToOutputs : myProductionSourceToOutputs;
     synchronized (mySourceToOutputLock) {
       for (ModuleChunk chunk : chunks) {
-        for (Module module : chunk.getModules()) {
+        for (JpsModule module : chunk.getModules()) {
           final String moduleName = module.getName().toLowerCase(Locale.US);
           final SourceToOutputMapping mapping = storageMap.remove(moduleName);
           if (mapping != null) {

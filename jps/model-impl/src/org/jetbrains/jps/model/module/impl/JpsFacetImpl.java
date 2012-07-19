@@ -21,7 +21,7 @@ public class JpsFacetImpl extends JpsNamedCompositeElementBase<JpsFacetImpl> imp
   private static final JpsTypedDataKind<JpsFacetType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsFacetType<?>>();
   private static final JpsElementKind<JpsFacetReference> PARENT_FACET_REFERENCE = new JpsElementKindBase<JpsFacetReference>("parent facet");
 
-  public <P extends JpsElementProperties> JpsFacetImpl(JpsFacetType<?> facetType, @NotNull String name, @NotNull P properties) {
+  public <P extends JpsElementProperties>JpsFacetImpl(JpsFacetType<?> facetType, @NotNull String name, @NotNull P properties) {
     super(name);
     myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsFacetType<?>>(facetType, properties));
     myContainer.setChild(JpsFacetKind.COLLECTION_KIND);
@@ -43,7 +43,6 @@ public class JpsFacetImpl extends JpsNamedCompositeElementBase<JpsFacetImpl> imp
     return myContainer.getChild(TYPED_DATA_KIND).getType();
   }
 
-  @Override
   public <P extends JpsElementProperties> P getProperties(@NotNull JpsFacetType<P> type) {
     return myContainer.getChild(TYPED_DATA_KIND).getProperties(type);
   }

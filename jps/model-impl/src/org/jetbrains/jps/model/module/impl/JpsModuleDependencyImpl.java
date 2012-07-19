@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.module.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
@@ -25,6 +26,11 @@ public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleD
   @Override
   public JpsModuleReference getModuleReference() {
     return myContainer.getChild(MODULE_REFERENCE_KIND);
+  }
+
+  @Override
+  public JpsModule getModule() {
+    return getModuleReference().resolve();
   }
 
   @NotNull

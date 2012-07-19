@@ -2,9 +2,10 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PathUtil;
-import org.jetbrains.jps.Library;
-import org.jetbrains.jps.Module;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.artifacts.Artifact;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -132,7 +133,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
   }
 
   public void testCopyLibrary() {
-    final Library library = addProjectLibrary("lib", getJUnitJarPath());
+    final JpsLibrary library = addProjectLibrary("lib", getJUnitJarPath());
     final Artifact a = addArtifact(root().lib(library));
     buildAll();
     assertOutput(a, fs().file("junit.jar"));
@@ -140,7 +141,7 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
 
   public void testModuleOutput() {
     final String file = createFile("src/A.java", "public class A {}");
-    final Module module = addModule("a", PathUtil.getParentPath(file));
+    final JpsModule module = addModule("a", PathUtil.getParentPath(file));
     final Artifact artifact = addArtifact(root().module(module));
 
     buildArtifacts(artifact);
@@ -170,9 +171,9 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     final String excluded = PathUtil.getParentPath(file);
     final String dir = PathUtil.getParentPath(excluded);
 
-    final Module module = addModule("myModule");
-    module.getContentRoots().add(dir);
-    module.addExcludedRoot(excluded);
+    final JpsModule module = addModule("myModule");
+    module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(dir));
+    module.getExcludeRootsList().addUrl(JpsPathUtil.pathToUrl(excluded));
 
     final Artifact a = addArtifact(root().dirCopy(excluded));
     buildAll();
@@ -186,9 +187,9 @@ public class ArtifactBuilderTest extends ArtifactBuilderTestCase {
     createFile("xxx/CVS");
     final String dir = PathUtil.getParentPath(PathUtil.getParentPath(file));
 
-    Module module = addModule("myModule");
-    module.getContentRoots().add(dir);
-    module.addExcludedRoot(PathUtil.getParentPath(file));
+    JpsModule module = addModule("myModule");
+    module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(dir));
+    module.getExcludeRootsList().addUrl(JpsPathUtil.pathToUrl(PathUtil.getParentPath(file)));
 
     final Artifact a = addArtifact(root().dirCopy(dir));
     buildAll();
