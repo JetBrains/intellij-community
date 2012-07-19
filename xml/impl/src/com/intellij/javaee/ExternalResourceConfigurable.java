@@ -46,20 +46,20 @@ import java.util.List;
 
 public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll {
   private JPanel myPanel;
-  private List<EditLocationDialog.NameLocationPair> myPairs;
+  private List<NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
   private String myDefaultHtmlDoctype;
-  private AddEditRemovePanel<EditLocationDialog.NameLocationPair> myExtPanel;
+  private AddEditRemovePanel<NameLocationPair> myExtPanel;
   private AddEditRemovePanel<String> myIgnorePanel;
   private HtmlLanguageLevelForm myHtmlLanguageLevelForm;
   @Nullable private final Project myProject;
-  private final List<EditLocationDialog.NameLocationPair> myNewPairs;
+  private final List<NameLocationPair> myNewPairs;
 
   public ExternalResourceConfigurable(@Nullable Project project) {
-    this(project, Collections.<EditLocationDialog.NameLocationPair>emptyList());
+    this(project, Collections.<NameLocationPair>emptyList());
   }
 
-  public ExternalResourceConfigurable(@Nullable Project project, List<EditLocationDialog.NameLocationPair> newResources) {
+  public ExternalResourceConfigurable(@Nullable Project project, List<NameLocationPair> newResources) {
     myProject = project;
     myNewPairs = newResources;
   }
@@ -75,17 +75,17 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       }
     };
 
-    myExtPanel = new AddEditRemovePanel<EditLocationDialog.NameLocationPair>(new ExtUrlsTableModel(), myPairs, XmlBundle.message("label.edit.external.resource.configure.external.resources")) {
-      protected EditLocationDialog.NameLocationPair addItem() {
+    myExtPanel = new AddEditRemovePanel<NameLocationPair>(new ExtUrlsTableModel(), myPairs, XmlBundle.message("label.edit.external.resource.configure.external.resources")) {
+      protected NameLocationPair addItem() {
         return addExtLocation();
       }
 
-      protected boolean removeItem(EditLocationDialog.NameLocationPair o) {
+      protected boolean removeItem(NameLocationPair o) {
         setModified(true);
         return true;
       }
 
-      protected EditLocationDialog.NameLocationPair editItem(EditLocationDialog.NameLocationPair o) {
+      protected NameLocationPair editItem(NameLocationPair o) {
         return editExtLocation(o);
       }
     };
@@ -161,7 +161,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
           manager.clearAllResources(myProject);
         }
         for (Object myPair : myPairs) {
-          EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)myPair;
+          NameLocationPair pair = (NameLocationPair)myPair;
           String s = FileUtil.toSystemIndependentName(pair.myLocation);
           if (myProject == null || pair.myShared) {
             manager.addResource(pair.myName, s);
@@ -186,19 +186,19 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
 
   public void reset() {
 
-    myPairs = new ArrayList<EditLocationDialog.NameLocationPair>(myNewPairs);
+    myPairs = new ArrayList<NameLocationPair>(myNewPairs);
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
 
     String[] urls = manager.getAvailableUrls();
     for (String url : urls) {
       String loc = myProject == null ? manager.getResourceLocation(url, (String)null) : manager.getResourceLocation(url, myProject);
-      myPairs.add(new EditLocationDialog.NameLocationPair(url, FileUtil.toSystemDependentName(loc), true));
+      myPairs.add(new NameLocationPair(url, FileUtil.toSystemDependentName(loc), true));
     }
     if (myProject != null) {
       urls = manager.getAvailableUrls(myProject);
       for (String url : urls) {
         String loc = manager.getResourceLocation(url, myProject);
-        myPairs.add(new EditLocationDialog.NameLocationPair(url, FileUtil.toSystemDependentName(loc), false));
+        myPairs.add(new NameLocationPair(url, FileUtil.toSystemDependentName(loc), false));
       }
     }
 
@@ -216,7 +216,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       if (!myNewPairs.isEmpty()) {
         ListSelectionModel selectionModel = myExtPanel.getTable().getSelectionModel();
         selectionModel.clearSelection();
-        for (EditLocationDialog.NameLocationPair newPair : myNewPairs) {
+        for (NameLocationPair newPair : myNewPairs) {
           int index = myPairs.indexOf(newPair);
           selectionModel.addSelectionInterval(index, index);
         }
@@ -243,25 +243,24 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   }
 
   @Nullable
-  private EditLocationDialog.NameLocationPair addExtLocation() {
-    EditLocationDialog dialog = new EditLocationDialog(null, true);
+  private NameLocationPair addExtLocation() {
+    MapExternalResourceDialog dialog = new MapExternalResourceDialog(null, myProject, null, null);
     dialog.show();
     if (!dialog.isOK()) return null;
     setModified(true);
-    return dialog.getPair();
+    return new NameLocationPair(dialog.getUri(), dialog.getResourceLocation(), false);
   }
 
   @Nullable
-  private EditLocationDialog.NameLocationPair editExtLocation(Object o) {
-    EditLocationDialog dialog = new EditLocationDialog(null, true);
-    final EditLocationDialog.NameLocationPair pair = (EditLocationDialog.NameLocationPair)o;
-    dialog.init(pair);
+  private NameLocationPair editExtLocation(Object o) {
+    NameLocationPair pair = (NameLocationPair)o;
+    MapExternalResourceDialog dialog = new MapExternalResourceDialog(pair.getName(), myProject, null, pair.getLocation());
     dialog.show();
     if (!dialog.isOK()) {
       return null;
     }
     setModified(true);
-    return dialog.getPair();
+    return new NameLocationPair(dialog.getUri(), dialog.getResourceLocation(), pair.myShared);
   }
 
   @Nullable
@@ -276,15 +275,11 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   @Nullable
   private String editIgnoreLocation(Object o) {
     EditLocationDialog dialog = new EditLocationDialog(null, false);
-    dialog.init(new EditLocationDialog.NameLocationPair(o.toString(), null, false));
+    dialog.init(new NameLocationPair(o.toString(), null, false));
     dialog.show();
     if (!dialog.isOK()) return null;
     setModified(true);
     return dialog.getPair().myName;
-  }
-
-  public void selectResource(final String uri) {
-    myExtPanel.setSelected(new EditLocationDialog.NameLocationPair(uri, null, false));
   }
 
   private static class PathRenderer extends DefaultTableCellRenderer {
@@ -335,7 +330,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     }
   }
 
-  private class ExtUrlsTableModel extends AddEditRemovePanel.TableModel<EditLocationDialog.NameLocationPair> {
+  private class ExtUrlsTableModel extends AddEditRemovePanel.TableModel<NameLocationPair> {
     final String[] myNames;
 
     {
@@ -352,7 +347,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       return myNames.length;
     }
 
-    public Object getField(EditLocationDialog.NameLocationPair pair, int columnIndex) {
+    public Object getField(NameLocationPair pair, int columnIndex) {
       switch (columnIndex) {
         case 0:
           return pair.myName;
@@ -373,7 +368,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
       return column == 2;
     }
 
-    public void setValue(Object aValue, EditLocationDialog.NameLocationPair data, int columnIndex) {
+    public void setValue(Object aValue, NameLocationPair data, int columnIndex) {
       data.myShared = !((Boolean)aValue).booleanValue();
     }
 

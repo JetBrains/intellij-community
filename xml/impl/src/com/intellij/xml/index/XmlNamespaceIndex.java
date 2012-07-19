@@ -54,13 +54,10 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return resources;
   }
 
-  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(@NotNull final Module module) {
-    return getAllResources(module, null);
-  }
-
-  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(@NotNull final Module module,
+  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(@Nullable final Module module,
+                                                                                           @NotNull Project project,
                                                                                            @Nullable NullableFunction<List<IndexedRelevantResource<String, XsdNamespaceBuilder>>, IndexedRelevantResource<String, XsdNamespaceBuilder>> chooser) {
-    return IndexedRelevantResource.getAllResources(NAME, module, chooser);
+    return IndexedRelevantResource.getAllResources(NAME, module, project, chooser);
   }
   
   private static final ID<String,XsdNamespaceBuilder> NAME = ID.create("XmlNamespaces");

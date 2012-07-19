@@ -1,33 +1,37 @@
-package com.intellij.util.xml.config;
+package com.intellij.xml.config;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 public abstract class ConfigFileSearcher {
 
   private final MultiMap<Module, PsiFile> myFiles = new MultiMap<Module, PsiFile>();
   private final MultiMap<VirtualFile, PsiFile> myJars = new MultiMap<VirtualFile, PsiFile>();
-  private final List<VirtualFile> myVirtualFiles = new ArrayList<VirtualFile>();
-  private final @NotNull Module myModule;
+  private final MultiMap<VirtualFile, PsiFile> myVirtualFiles = new MultiMap<VirtualFile, PsiFile>();
+  private final @Nullable Module myModule;
+  @NotNull private final Project myProject;
 
-  public ConfigFileSearcher(@NotNull Module module) {
+  public ConfigFileSearcher(@Nullable Module module, @NotNull Project project) {
     myModule = module;
+    myProject = project;
   }
 
   public void search() {
     myFiles.clear();
     myJars.clear();
 
-    for (PsiFile file : search(myModule)) {
+    PsiManager psiManager = PsiManager.getInstance(myProject);
+    for (PsiFile file : search(myModule, myProject)) {
       VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file.getVirtualFile());
       if (jar != null) {
         myJars.putValue(jar, file);
@@ -37,11 +41,15 @@ public abstract class ConfigFileSearcher {
         if (module != null) {
           myFiles.putValue(module, file);
         }
+        else {
+          VirtualFile virtualFile = file.getVirtualFile();
+          myVirtualFiles.putValue(virtualFile.getParent(), psiManager.findFile(virtualFile));
+        }
       }
     }
   }
 
-  public abstract Set<PsiFile> search(@NotNull Module module);
+  public abstract Set<PsiFile> search(@Nullable Module module, @NotNull Project project);
 
   public MultiMap<Module, PsiFile> getFilesByModules() {
     return myFiles;
@@ -51,7 +59,7 @@ public abstract class ConfigFileSearcher {
     return myJars;
   }
 
-  public List<VirtualFile> getVirtualFiles() {
+  public MultiMap<VirtualFile, PsiFile> getVirtualFiles() {
     return myVirtualFiles;
   }
 }

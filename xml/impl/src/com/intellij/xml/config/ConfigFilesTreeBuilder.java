@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.config;
+package com.intellij.xml.config;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.module.Module;
@@ -21,7 +21,6 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -44,6 +43,7 @@ public class ConfigFilesTreeBuilder {
 
   public ConfigFilesTreeBuilder(JTree tree) {
     myTree = tree;
+    installSearch(tree);
   }
 
   public Set<PsiFile> buildTree(ConfigFileSearcher searcher, DefaultMutableTreeNode root) {
@@ -51,10 +51,21 @@ public class ConfigFilesTreeBuilder {
     final MultiMap<Module,PsiFile> files = searcher.getFilesByModules();
     final MultiMap<VirtualFile, PsiFile> jars = searcher.getJars();
     final Set<PsiFile> psiFiles = buildModuleNodes(files, jars, root);
-    final List<VirtualFile> virtualFiles = searcher.getVirtualFiles();
+    final MultiMap<VirtualFile, PsiFile> virtualFiles = searcher.getVirtualFiles();
 
-    for (VirtualFile virtualFile : virtualFiles) {
-      addFile(virtualFile);
+    for (Map.Entry<VirtualFile, Collection<PsiFile>> entry : virtualFiles.entrySet()) {
+      DefaultMutableTreeNode node = createFileNode(entry.getKey());
+      List<PsiFile> list = new ArrayList<PsiFile>(entry.getValue());
+      Collections.sort(list, new Comparator<PsiFile>() {
+        @Override
+        public int compare(PsiFile o1, PsiFile o2) {
+          return o1.getName().compareToIgnoreCase(o2.getName());
+        }
+      });
+      for (PsiFile file : list) {
+        node.add(createFileNode(file));
+      }
+      root.add(node);
     }
     return psiFiles;
   }
@@ -80,8 +91,7 @@ public class ConfigFilesTreeBuilder {
       }
     });
     for (Module module: modules) {
-      CheckedTreeNode moduleNode = new CheckedTreeNode(module);
-      moduleNode.setChecked(false);
+      DefaultMutableTreeNode moduleNode = createFileNode(module);
       root.add(moduleNode);
       if (files.containsKey(module)) {
         List<PsiFile> moduleFiles = new ArrayList<PsiFile>(files.get(module));
@@ -97,8 +107,7 @@ public class ConfigFilesTreeBuilder {
       final List<PsiFile> list = new ArrayList<PsiFile>(jars.get(file));
       final PsiFile jar = list.get(0).getManager().findFile(file);
       if (jar != null) {
-        final CheckedTreeNode jarNode = new CheckedTreeNode(jar);
-        jarNode.setChecked(false);
+        final DefaultMutableTreeNode jarNode = createFileNode(jar);
         root.add(jarNode);
         Collections.sort(list, FILE_COMPARATOR);
         for (PsiFile psiFile: list) {
