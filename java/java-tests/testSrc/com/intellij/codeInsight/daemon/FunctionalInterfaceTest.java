@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.impl.source.tree.java.FunctionalInterfaceUtil;
+import com.intellij.psi.impl.source.tree.java.LambdaUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public class FunctionalInterfaceTest extends LightDaemonAnalyzerTestCase {
     final PsiClass psiClass = getJavaFacade().findClass("Foo", GlobalSearchScope.projectScope(getProject()));
     assertNotNull("Class Foo not found", psiClass);
 
-    final String errorMessage = FunctionalInterfaceUtil.checkInterfaceFunctional(psiClass);
+    final String errorMessage = LambdaUtil.checkInterfaceFunctional(psiClass);
     assertEquals(expectedErrorMessage, errorMessage);
   }
 

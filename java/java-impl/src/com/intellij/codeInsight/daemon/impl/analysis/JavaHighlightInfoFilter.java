@@ -36,13 +36,12 @@ public class JavaHighlightInfoFilter implements HighlightInfoFilter {
 
     final PsiElement element = file.findElementAt(info.getStartOffset());
     if (element == null) return true;
-
-    return !isInsideLambda(element) &&
-           !isLambdaInAmbiguousCall(info, element);
-  }
-
-  private static boolean isInsideLambda(final PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false) != null;
+    final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class, false);
+    if (lambdaExpression != null) {
+      if (lambdaExpression.getParent() instanceof PsiExpressionList) return false;
+      if (isLambdaInAmbiguousCall(info, element)) return false;
+    }
+    return true;
   }
 
   private static boolean isLambdaInAmbiguousCall(final HighlightInfo info, final PsiElement element) {

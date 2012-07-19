@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInsight.daemon;
 
-import java.util.*;
+import org.jetbrains.annotations.NonNls;
 
-class C {
-  interface Simplest {
-    void m();
+public class LambdaParamsTest extends LightDaemonAnalyzerTestCase {
+  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/params";
+
+  public void testFormalParams() throws Exception {
+    doTest();
   }
-  void use(Simplest s) { }
-
-  interface IntParser {
-    int parse(String s);
-  }
-
-  void test() {
-    Simplest simplest = () -> { };
-    use(<weak_warning descr="Lambda expressions type check is not yet implemented">() -> { }</weak_warning>);
-
-    IntParser intParser = (String s) -> Integer.parseInt(s);
+  
+  public void testInferredParams() throws Exception {
+    doTest();
   }
 
-  Runnable foo() {
-    return () -> { System.out.println("foo"); };
+  private void doTest() throws Exception {
+    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }
 }

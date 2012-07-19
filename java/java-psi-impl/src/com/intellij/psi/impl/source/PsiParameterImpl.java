@@ -29,6 +29,7 @@ import com.intellij.psi.impl.java.stubs.PsiParameterStub;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.JavaSharedImplUtil;
+import com.intellij.psi.impl.source.tree.java.LambdaUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.RowIcon;
@@ -121,7 +122,7 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
 
     final PsiTypeElement typeElement = getTypeElement();
     if (typeElement == null && isLambdaParameter()) {
-      return new PsiLambdaParameterType(this);
+      return LambdaUtil.getLambdaParameterType(this);
     }
 
     return JavaSharedImplUtil.getType(typeElement, getNameIdentifier(), this);
