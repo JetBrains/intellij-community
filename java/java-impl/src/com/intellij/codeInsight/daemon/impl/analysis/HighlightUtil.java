@@ -2635,13 +2635,6 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkLambdaFeature(final PsiLambdaExpression expression) {
-    final HighlightInfo info = checkFeature(expression, Feature.LAMBDA_EXPRESSIONS);
-    if (info != null) return info;
-    if (expression.getParent() instanceof PsiExpressionList) {
-      // todo[r.sh] stub; remove after implementing support in TypeConversionUtil
-      final String message = "Lambda expressions type check is not yet implemented";
-      return HighlightInfo.createHighlightInfo(HighlightInfoType.WEAK_WARNING, expression, message);
-    }
-    return null;
+    return checkFeature(expression, Feature.LAMBDA_EXPRESSIONS);
   }
 }

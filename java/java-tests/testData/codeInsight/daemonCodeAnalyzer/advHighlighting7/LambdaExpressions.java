@@ -28,7 +28,7 @@ class C {
 
   void test() {
     Simplest simplest = () -> { };
-    use(<weak_warning descr="Lambda expressions type check is not yet implemented">() -> { }</weak_warning>);
+    use(() -> { });
 
     IntParser intParser = (String s) -> Integer.parseInt(s);
   }

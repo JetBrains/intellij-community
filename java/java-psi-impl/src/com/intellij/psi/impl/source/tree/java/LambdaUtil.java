@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,24 +115,60 @@ public class LambdaUtil {
       final int parameterIndex = ((PsiParameterList)paramParent).getParameterIndex(param);
       if (parameterIndex > -1) {
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
-        if (lambdaExpression != null) {
-          final PsiElement parent = lambdaExpression.getParent();
-          PsiType type = null;
-          if (parent instanceof PsiTypeCastExpression) {
-            type = ((PsiTypeCastExpression)parent).getType();
-          } else if (parent instanceof PsiVariable) {
-            type = ((PsiVariable)parent).getType();
-          }
-          if (type instanceof PsiClassType) {
-            final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
-            final MethodSignature methodSignature = getFunction(resolveResult.getElement());
-            if (methodSignature != null) {
-              return resolveResult.getSubstitutor().substitute(methodSignature.getParameterTypes()[parameterIndex]);
+        final PsiClassType.ClassResolveResult resolveResult = getFunctionInterfaceType(lambdaExpression);
+        if (resolveResult != null) {
+          final MethodSignature methodSignature = getFunction(resolveResult.getElement());
+          if (methodSignature != null) {
+            final PsiType[] types = methodSignature.getParameterTypes();
+            if (parameterIndex < types.length) {
+              return resolveResult.getSubstitutor().substitute(types[parameterIndex]);
             }
           }
         }
       }
     }
     return new PsiLambdaParameterType(param);
+  }
+
+  @Nullable
+  public static PsiClassType.ClassResolveResult getFunctionInterfaceType(@Nullable PsiLambdaExpression lambdaExpression) {
+    if (lambdaExpression != null) {
+      final PsiElement parent = lambdaExpression.getParent();
+      PsiType type = null;
+      if (parent instanceof PsiTypeCastExpression) {
+        type = ((PsiTypeCastExpression)parent).getType();
+      }
+      else if (parent instanceof PsiVariable) {
+        type = ((PsiVariable)parent).getType();
+      }
+      else if (parent instanceof PsiExpressionList) {
+        final PsiExpressionList expressionList = (PsiExpressionList)parent;
+        final int lambdaIdx = ArrayUtil.find(expressionList.getExpressions(), lambdaExpression);
+        if (lambdaIdx > -1) {
+          final PsiElement gParent = expressionList.getParent();
+          if (gParent instanceof PsiMethodCallExpression) {
+            final JavaResolveResult resolveResult = ((PsiMethodCallExpression)gParent).resolveMethodGenerics();
+            final PsiElement resolve = resolveResult.getElement();
+            if (resolve instanceof PsiMethod) {
+              final PsiParameter[] parameters = ((PsiMethod)resolve).getParameterList().getParameters();
+              if (lambdaIdx < parameters.length) {
+                type = resolveResult.getSubstitutor().substitute(parameters[lambdaIdx].getType());
+              }
+            }
+          }
+        }
+      }
+      else if (parent instanceof PsiReturnStatement) {
+        final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        if (method != null) {
+          type = method.getReturnType();
+        }
+      }
+
+      if (type instanceof PsiClassType) {
+        return ((PsiClassType)type).resolveGenerics();
+      }
+    }
+    return null;
   }
 }

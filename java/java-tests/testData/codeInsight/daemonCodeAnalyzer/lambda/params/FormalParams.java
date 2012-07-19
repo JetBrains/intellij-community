@@ -9,4 +9,10 @@ class Foo {
   I ii1 = (final int k)->{
     <error descr="Incompatible types. Found: 'int', required: 'java.lang.String'">String s = k;</error>
   };
+
+  void bazz() {
+    bar((String s) -> {
+      System.out.println(s);});
+  } 
+  void bar(I i){}
 }
