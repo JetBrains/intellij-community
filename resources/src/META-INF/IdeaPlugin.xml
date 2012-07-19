@@ -970,6 +970,8 @@
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
 
+    <bundledColorSchemesProvider implementation="com.intellij.codeStyle.IdeaColorSchemesProvider"/>
+
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>
 
