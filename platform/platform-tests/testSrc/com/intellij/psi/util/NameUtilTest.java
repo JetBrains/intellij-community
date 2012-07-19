@@ -224,6 +224,12 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
   }
 
+  public void testMiddleMatchingUnderscore() {
+    assertMatches("*_dark", "collapseAll_dark.png");
+    assertMatches("*_dark.png", "collapseAll_dark.png");
+    assertMatches("**_dark.png", "collapseAll_dark.png");
+  }
+
   public void testMiddleMatching() {
     assertTrue(caseInsensitiveMatcher("*old").matches("folder"));
     assertMatches("SWU*H*7", "SWUpgradeHdlrFSPR7Test");

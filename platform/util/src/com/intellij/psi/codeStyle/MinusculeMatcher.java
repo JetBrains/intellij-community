@@ -204,7 +204,7 @@ public class MinusculeMatcher implements Matcher {
         continue;
       }
 
-      if (veryStart && next > 0 && !NameUtil.isWordStart(name, next)) {
+      if (veryStart && next > 0 && !NameUtil.isWordStart(name, next) && !NameUtil.isWordSeparator(nextChar)) {
         if (next == name.length() - 1) {
           return null;
         }
