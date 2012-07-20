@@ -40,7 +40,6 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
     ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
-    TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
     if (state != null) {
       state.gotoEnd();
     }
@@ -147,9 +146,13 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   public void testToar() throws Throwable {
     configure();
-    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate("toar", "other"));
-    TemplateManagerImpl.getTemplateState(getEditor()).gotoEnd();
+    startTemplate("toar", "other")
+    state.gotoEnd();
     checkResult();
+  }
+
+  def startTemplate(String name, String group) {
+    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate(name, group));
   }
 
   private void configure() {
@@ -158,17 +161,19 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   public void testIter() throws Throwable {
     configure();
-    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate("iter", "iterations"));
-    final TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+    startTemplate("iter", "iterations")
     state.nextTab();
     ((LookupImpl)LookupManagerImpl.getActiveLookup(getEditor())).finishLookup((char)0);
     checkResult();
   }
 
+  private TemplateState getState() {
+    TemplateManagerImpl.getTemplateState(getEditor())
+  }
+
   public void testIter1() throws Throwable {
     configure();
-    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate("iter", "iterations"));
-    final TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+    startTemplate("iter", "iterations")
     state.nextTab();
     checkResult();
   }
@@ -178,7 +183,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
     try {
       configure();
-      TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate("iter", "iterations"));
+      startTemplate("iter", "iterations")
       stripTrailingSpaces();
       checkResult();
     }
@@ -196,20 +201,20 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   public void testIterParameterizedInner() {
     configure();
-    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate("iter", "iterations"));
+    startTemplate("iter", "iterations")
     stripTrailingSpaces();
     checkResult();
   }
 
   public void testVarargToar() {
     configure();
-    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate("toar", "other"));
+    startTemplate("toar", "other")
     checkResult();
   }
 
   public void testSoutp() {
     configure();
-    TemplateManager.getInstance(getProject()).startTemplate(getEditor(), TemplateSettings.getInstance().getTemplate("soutp", "output"));
+    startTemplate("soutp", "output")
     checkResult();
   }
 
@@ -354,7 +359,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
     writeCommand { manager.startTemplate(editor, template) }
 
-    final TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+    final TemplateState state = getState();
 
     for (int i = 0; i < 3; i++) {
       assertFalse(String.valueOf(i), state.isFinished());
