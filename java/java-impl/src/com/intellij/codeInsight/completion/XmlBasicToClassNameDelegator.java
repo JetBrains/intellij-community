@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.StdLanguages;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.Consumer;
 
 /**
@@ -29,9 +30,10 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
     PsiElement position = parameters.getPosition();
+    PsiFile file = position.getContainingFile();
     if (parameters.getCompletionType() != CompletionType.BASIC ||
         !JavaCompletionContributor.mayStartClassName(result) ||
-        !position.getContainingFile().getLanguage().isKindOf(StdLanguages.XML)) {
+        !file.getLanguage().isKindOf(StdLanguages.XML)) {
       return;
     }
 
@@ -41,7 +43,8 @@ public class XmlBasicToClassNameDelegator extends CompletionContributor {
       result.restartCompletionWhenNothingMatches();
     }
 
-    if (empty || parameters.isExtendedCompletion()) {
+    if (empty && JavaClassReferenceCompletionContributor.findJavaClassReference(file, parameters.getOffset()) != null ||
+        parameters.isExtendedCompletion()) {
       CompletionService.getCompletionService().getVariantsFromContributors(parameters.delegateToClassName(), null, new Consumer<CompletionResult>() {
         public void consume(final CompletionResult completionResult) {
           LookupElement lookupElement = completionResult.getLookupElement();
