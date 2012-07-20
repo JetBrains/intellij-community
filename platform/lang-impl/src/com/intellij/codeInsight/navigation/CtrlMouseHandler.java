@@ -72,7 +72,10 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
+import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -168,7 +171,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         return;
       }
       MouseEvent mouseEvent = e.getMouseEvent();
-      
+
       if (isMouseOverTooltip(mouseEvent.getLocationOnScreen()) || isMouseMovedTowardTooltip(mouseEvent.getLocationOnScreen())) {
         myPrevMouseLocation = mouseEvent.getLocationOnScreen();
         return;
@@ -212,6 +215,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     TextAttributesKey
       .createTextAttributesKey("CTRL_CLICKABLE", new TextAttributes(Color.blue, null, Color.blue, EffectType.LINE_UNDERSCORE, 0));
 
+  @NotNull private final Alarm myDocAlarm;
+
   public CtrlMouseHandler(final Project project, StartupManager startupManager, EditorColorsManager colorsManager,
                           FileEditorManager fileEditorManager, @NotNull DocumentationManager documentationManager,
                           @NotNull final EditorFactory editorFactory, @NotNull IdeTooltipManager tooltipManager)
@@ -234,6 +239,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     myFileEditorManager = fileEditorManager;
     myDocumentationManager = documentationManager;
     myTooltipManager = tooltipManager;
+    myDocAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, myProject);
   }
 
   @NotNull
@@ -265,7 +271,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     if (dx == 0) {
       return mouseLocationOnScreen.x > bounds.x && mouseLocationOnScreen.x < bounds.x + bounds.width;
     }
-    
+
     // Check if the mouse goes out of the control.
     if (mouseLocationOnScreen.x < prevLocation.x && bounds.x > prevLocation.x) return false;
     if (mouseLocationOnScreen.y < prevLocation.y && bounds.y > prevLocation.y) return false;
@@ -341,13 +347,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private static DocInfo generateInfo(PsiElement element, PsiElement atPointer) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element, atPointer);
     String result = doGenerateInfo(element, atPointer, documentationProvider);
-    if (result != null) {
-      String fullText = documentationProvider.generateDoc(element, atPointer);
-      String qName = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
-      String text = DocPreviewUtil.buildPreview(result, qName, fullText);
-      return new DocInfo(text, documentationProvider, element);
-    }
-    return DocInfo.EMPTY;
+    return result == null ? DocInfo.EMPTY : new DocInfo(result, documentationProvider, element);
   }
 
   @Nullable
@@ -611,6 +611,40 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   }
 
+  private void fulfillDocInfo(@NotNull final String header,
+                              @NotNull final DocumentationProvider provider,
+                              @NotNull final PsiElement originalElement,
+                              @NotNull final PsiElement anchorElement,
+                              @NotNull final Consumer<String> newTextConsumer)
+  {
+    myDocAlarm.cancelAllRequests();
+    myDocAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        final Ref<String> fullTextRef = new Ref<String>();
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
+          public void run() {
+            fullTextRef.set(provider.generateDoc(anchorElement, originalElement)); 
+          }
+        });
+        String fullText = fullTextRef.get();
+        if (fullText == null) {
+          return;
+        }
+        String qName = anchorElement instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)anchorElement).getQualifiedName()
+                                                                         : null;
+        final String updatedText = DocPreviewUtil.buildPreview(header, qName, fullText);
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            newTextConsumer.consume(updatedText); 
+          }
+        });
+      }
+    }, 0);
+  }
+
   private class TooltipProvider {
     private final Editor myEditor;
     private final LogicalPosition myPosition;
@@ -727,8 +761,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             pane.mouseExited(e);
           }
         }
-      }; 
-      JComponent label = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, mouseListener);
+      };
+      Ref<Consumer<String>> newTextConsumerRef = new Ref<Consumer<String>>();
+      JComponent label = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, mouseListener, newTextConsumerRef);
+      Consumer<String> newTextConsumer = newTextConsumerRef.get();
+      myDocAlarm.cancelAllRequests();
+      if (newTextConsumer != null && docInfo.docProvider != null && docInfo.documentationAnchor != null) {
+        fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer, docInfo.documentationAnchor, newTextConsumer);
+      }
       QuickDocInfoPane quickDocPane = null;
       if (docInfo.documentationAnchor != null) {
         quickDocPane = new QuickDocInfoPane(docInfo.documentationAnchor, info.myElementAtPointer, label);
@@ -744,7 +784,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
                                  0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, HintManager.ABOVE).setContentActive(false));
     }
   }
-
+  
   private HighlightersSet installHighlighterSet(Info info, Editor editor) {
     final JComponent internalComponent = editor.getContentComponent();
     internalComponent.addKeyListener(myEditorKeyListener);
@@ -875,7 +915,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (myDocumentationManager.hasActiveDockedDocWindow()) {
         return;
       }
-      
+
       // Skip event triggered when mouse leaves action button area. 
       if (!mouseEntered && new Rectangle(getLocationOnScreen(), getSize()).contains(mouseScreenLocation)) {
         return;
