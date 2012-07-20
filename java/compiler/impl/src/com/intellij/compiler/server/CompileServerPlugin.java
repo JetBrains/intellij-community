@@ -15,7 +15,7 @@ public class CompileServerPlugin implements PluginAware {
 
   /**
    * Specifies path to a jar file which should be added to the classpath of the compile server. The path is relative to the plugin 'lib' directory.
-   * In the development node the name of this file without extension is treated as a module name and the output directory of the module is added to the classpath.
+   * In the development mode the name of this file without extension is treated as a module name and the output directory of the module is added to the classpath.
    */
   @Attribute("jar-path")
   public String getJarPath() {
