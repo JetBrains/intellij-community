@@ -695,18 +695,30 @@ public class HighlightControlFlowUtil {
     }  else {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
       if (lambdaExpression != null) {
+        boolean effectivelyFinal;
         if (variable instanceof PsiParameter) {
           final PsiElement parent = variable.getParent();
           if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
             return null;
           }
-        }
-        boolean effectivelyFinal = true;
-        for (PsiReference reference : ReferencesSearch.search(variable)) {
-          final PsiElement element = reference.getElement();
-          if (element instanceof PsiExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
+          effectivelyFinal = isAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()));
+        } else {
+          final ControlFlow controlFlow;
+          try {
+            controlFlow = getControlFlow(PsiUtil.getVariableCodeBlock(variable, context));
+          }
+          catch (AnalysisCanceledException e) {
+            return null;
+          }
+
+          if (ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow)) {
+            final Collection<ControlFlowUtil.VariableInfo> initializedTwice = ControlFlowUtil.getInitializedTwice(controlFlow);
+            effectivelyFinal = !initializedTwice.contains(new ControlFlowUtil.VariableInfo(variable, null));
+            if (effectivelyFinal) {
+              effectivelyFinal = isAccessedForWriting(variable, new LocalSearchScope(lambdaExpression));
+            }
+          } else {
             effectivelyFinal = false;
-            break;
           }
         }
         if (!effectivelyFinal ) {
@@ -715,6 +727,16 @@ public class HighlightControlFlowUtil {
       }
     }
     return null;
+  }
+
+  private static boolean isAccessedForWriting(PsiVariable variable, final LocalSearchScope searchScope) {
+    for (PsiReference reference : ReferencesSearch.search(variable, searchScope)) {
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable
