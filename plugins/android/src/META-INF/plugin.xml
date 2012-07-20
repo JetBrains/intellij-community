@@ -229,25 +229,8 @@
     <packaging.artifactPropertiesProvider implementation="org.jetbrains.android.compiler.artifact.AndroidArtifactPropertiesProvider"/>
     <packaging.artifactType implementation="org.jetbrains.android.compiler.artifact.AndroidApplicationArtifactType"/>
 
-    <compileServer.plugin jar-path="jps/android-jps-plugin.jar"/>
-    <compileServer.plugin jar-path="android-common.jar"/>
-    <compileServer.plugin jar-path="android-rt.jar"/>
-
-    <compileServer.plugin jar-path="sdklib.jar"/>
-    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/sdklib.jar"/>
-    <compileServer.plugin jar-path="../../../../../plugins/android/lib/sdklib.jar"/>
-
-    <compileServer.plugin jar-path="common.jar"/>
-    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/common.jar"/>
-    <compileServer.plugin jar-path="../../../../../plugins/android/lib/common.jar"/>
-
-    <compileServer.plugin jar-path="jarutils.jar"/>
-    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/jarutils.jar"/>
-    <compileServer.plugin jar-path="../../../../../plugins/android/lib/jarutils.jar"/>
-
-    <compileServer.plugin jar-path="androidprefs.jar"/>
-    <compileServer.plugin jar-path="../../../../../community/plugins/android/lib/androidprefs.jar"/>
-    <compileServer.plugin jar-path="../../../../../plugins/android/lib/androidprefs.jar"/>
+    <compileServer.plugin classpath="jps/android-jps-plugin.jar;android-common.jar;android-rt.jar"/>
+    <compileServer.plugin classpath="sdklib.jar;common.jar;jarutils.jar;androidprefs.jar"/>
   </extensions>
 
   <extensionPoints>

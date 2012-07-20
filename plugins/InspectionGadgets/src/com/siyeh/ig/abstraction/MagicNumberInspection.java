@@ -39,6 +39,9 @@ public class MagicNumberInspection extends BaseInspection {
   @SuppressWarnings("PublicField")
   public boolean ignoreInTestCode = false;
 
+  @SuppressWarnings("PublicField")
+  public boolean ignoreInAnnotations = true;
+
   @Override
   @NotNull
   public String getDisplayName() {
@@ -56,6 +59,7 @@ public class MagicNumberInspection extends BaseInspection {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("magic.number.ignore.option"), "ignoreInHashCode");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.test.code"), "ignoreInTestCode");
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.in.annotations"),"ignoreInAnnotations");
     return panel;
   }
 
@@ -102,6 +106,9 @@ public class MagicNumberInspection extends BaseInspection {
         return;
       }
       final PsiElement parent = expression.getParent();
+      if (ignoreInAnnotations && parent instanceof PsiNameValuePair) {
+        return;
+      }
       if (parent instanceof PsiPrefixExpression) {
         registerError(parent);
       }

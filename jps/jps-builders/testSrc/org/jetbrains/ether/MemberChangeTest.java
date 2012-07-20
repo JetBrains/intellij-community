@@ -96,10 +96,9 @@ public class MemberChangeTest extends IncrementalTestCase {
     doTest();
   }
 
-  // todo: fixme
-  //public void testChangeMethodGenericReturnType() throws Exception {
-  //  doTest();
-  //}
+  public void testChangeMethodGenericReturnType() throws Exception {
+    doTest();
+  }
 
   public void testDeleteConstructor() throws Exception {
     doTest();

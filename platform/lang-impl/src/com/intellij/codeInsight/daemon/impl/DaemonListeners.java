@@ -20,7 +20,6 @@ import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.openapi.Disposable;
@@ -160,7 +159,6 @@ class DaemonListeners implements Disposable {
           // editor appear in modal context, re-enable the daemon
           myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
         }
-        preInstantiateTools();
       }
     };
     myEditorTracker.addEditorTrackerListener(editorTrackerListener, this);
@@ -296,34 +294,6 @@ class DaemonListeners implements Disposable {
       }
     };
     LaterInvocator.addModalityStateListener(modalityStateListener,this);
-  }
-
-  private void preInstantiateTools() {
-    final InspectionProfileWrapper profile = InspectionProjectProfileManager.getInstance(myProject).getProfileWrapper();
-    if (profile == null || profile.areToolsInstantiated()) return;
-    Collection<FileEditor> editors = getSelectedEditors();
-    for (FileEditor fe : editors) {
-      if (!(fe instanceof TextEditor)) continue;
-      Editor editor = ((TextEditor)fe).getEditor();
-      if (editor.getProject() != myProject) continue;
-      final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-      if (psiFile == null) continue;
-      // optimization: do expensive classloading outside readaction
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-        @Override
-        public void run() {
-          if (!psiFile.getManager().isDisposed() && !profile.areToolsInstantiated()) {
-            try {
-              profile.preInstantiateTools(psiFile);
-            }
-            catch (Throwable ignored) {
-              // app still can be disposed in the middle, ignore
-            }
-          }
-        }
-      });
-      break;
-    }
   }
 
   static boolean isUnderIgnoredAction(@Nullable Object action) {

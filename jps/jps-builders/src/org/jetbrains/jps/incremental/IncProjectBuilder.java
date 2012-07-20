@@ -1020,6 +1020,12 @@ public class IncProjectBuilder {
     }
   }
 
+  private static final Set<Key> GLOBAL_CONTEXT_KEYS = new HashSet<Key>();
+  static {
+    // keys for data that must be visible to all threads
+    GLOBAL_CONTEXT_KEYS.add(ExternalJavacDescriptor.KEY);
+  }
+
   private static CompileContext createContextWrapper(final CompileContext delegate) {
     final ClassLoader loader = delegate.getClass().getClassLoader();
     final UserDataHolderBase localDataHolder = new UserDataHolderBase();
@@ -1031,23 +1037,27 @@ public class IncProjectBuilder {
       public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         final Class<?> declaringClass = method.getDeclaringClass();
         if (dataHolderinterface.equals(declaringClass)) {
-          final boolean isWriteOperation = args.length == 2 /*&& void.class.equals(method.getReturnType())*/;
-          if (isWriteOperation) {
-            if (args[1] == null) {
-              deletedKeysSet.add(args[0]);
+          final Object firstArgument = args[0];
+          final boolean isGlobalContextKey = firstArgument instanceof Key && GLOBAL_CONTEXT_KEYS.contains((Key)firstArgument);
+          if (!isGlobalContextKey) {
+            final boolean isWriteOperation = args.length == 2 /*&& void.class.equals(method.getReturnType())*/;
+            if (isWriteOperation) {
+              if (args[1] == null) {
+                deletedKeysSet.add(firstArgument);
+              }
+              else {
+                deletedKeysSet.remove(firstArgument);
+              }
             }
             else {
-              deletedKeysSet.remove(args[0]);
+              if (deletedKeysSet.contains(firstArgument)) {
+                return null;
+              }
             }
-          }
-          else {
-            if (deletedKeysSet.contains(args[0])) {
-              return null;
+            final Object result = method.invoke(localDataHolder, args);
+            if (isWriteOperation || result != null) {
+              return result;
             }
-          }
-          final Object result = method.invoke(localDataHolder, args);
-          if (isWriteOperation || result != null) {
-            return result;
           }
         }
         else if (messageHandlerinterface.equals(declaringClass)) {

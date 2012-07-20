@@ -449,6 +449,10 @@ public class TemplateImpl extends Template implements SchemeElement {
     return myVariables.get(i).skipOnStart();
   }
 
+  public ArrayList<Variable> getVariables() {
+    return myVariables;
+  }
+
   private static class Segment {
     public String name;
     public int offset;

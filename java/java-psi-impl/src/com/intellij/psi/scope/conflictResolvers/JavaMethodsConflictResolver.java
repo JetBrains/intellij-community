@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
+import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.PsiConflictResolver;
@@ -86,9 +87,32 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     checkPrimitiveVarargs(conflicts, myActualParameterTypes.length);
     if (conflicts.size() == 1) return conflicts.get(0);
 
+    checkLambdaApplicable(conflicts);
+    if (conflicts.size() == 1) return conflicts.get(0);
+
     THashSet<CandidateInfo> uniques = new THashSet<CandidateInfo>(conflicts);
     if (uniques.size() == 1) return uniques.iterator().next();
     return null;
+  }
+
+  private void checkLambdaApplicable(List<CandidateInfo> conflicts) {
+    for (int i = 0; i < myActualParameterTypes.length; i++) {
+      PsiType parameterType = myActualParameterTypes[i];
+      if (parameterType instanceof PsiLambdaExpressionType) {
+        final PsiLambdaExpression lambdaExpression = ((PsiLambdaExpressionType)parameterType).getExpression();
+        for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
+          final CandidateInfo conflict = iterator.next();
+          final PsiMethod method = (PsiMethod)conflict.getElement();
+          if (method != null) {
+            final PsiParameter[] methodParameters = method.getParameterList().getParameters();
+            final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
+            if (!LambdaUtil.isAcceptable(lambdaExpression, param.getType())) {
+              iterator.remove();
+            }
+          }
+        }
+      }
+    }
   }
 
   private void checkSpecifics(List<CandidateInfo> conflicts, @MethodCandidateInfo.ApplicabilityLevelConstant int applicabilityLevel) {

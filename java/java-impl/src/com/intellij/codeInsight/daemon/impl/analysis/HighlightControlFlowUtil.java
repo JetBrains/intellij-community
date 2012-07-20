@@ -692,8 +692,51 @@ public class HighlightControlFlowUtil {
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
       QuickFixAction.registerQuickFixAction(highlightInfo, new VariableAccessFromInnerClassFix(variable, innerClass));
       return highlightInfo;
+    }  else {
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
+      if (lambdaExpression != null) {
+        boolean effectivelyFinal;
+        if (variable instanceof PsiParameter) {
+          final PsiElement parent = variable.getParent();
+          if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
+            return null;
+          }
+          effectivelyFinal = isAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()));
+        } else {
+          final ControlFlow controlFlow;
+          try {
+            controlFlow = getControlFlow(PsiUtil.getVariableCodeBlock(variable, context));
+          }
+          catch (AnalysisCanceledException e) {
+            return null;
+          }
+
+          if (ControlFlowUtil.isVariableDefinitelyAssigned(variable, controlFlow)) {
+            final Collection<ControlFlowUtil.VariableInfo> initializedTwice = ControlFlowUtil.getInitializedTwice(controlFlow);
+            effectivelyFinal = !initializedTwice.contains(new ControlFlowUtil.VariableInfo(variable, null));
+            if (effectivelyFinal) {
+              effectivelyFinal = isAccessedForWriting(variable, new LocalSearchScope(lambdaExpression));
+            }
+          } else {
+            effectivelyFinal = false;
+          }
+        }
+        if (!effectivelyFinal ) {
+          return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, "Variable used in lambda expression should be effectively final");
+        }
+      }
     }
     return null;
+  }
+
+  private static boolean isAccessedForWriting(PsiVariable variable, final LocalSearchScope searchScope) {
+    for (PsiReference reference : ReferencesSearch.search(variable, searchScope)) {
+      final PsiElement element = reference.getElement();
+      if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable

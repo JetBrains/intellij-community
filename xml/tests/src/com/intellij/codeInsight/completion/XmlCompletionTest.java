@@ -547,7 +547,8 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("public class ABxxZ {}");
 
     final String testName = getTestName(false);
-    configureByFile(testName + ".xml");
+    myFixture.configureByFile(testName + ".xml");
+    myFixture.complete(CompletionType.BASIC, 2);
     assertEquals("ABxxZ", myFixture.getLookupElements()[0].getLookupString());
     assertEquals("ABxxCDEF", myFixture.getLookupElements()[1].getLookupString());
     selectItem(myFixture.getLookupElements()[1], Lookup.NORMAL_SELECT_CHAR);
@@ -558,7 +559,8 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.addClass("package foo; public class SomeClass {}");
 
     final String testName = getTestName(false);
-    configureByFile(testName + ".xml");
+    myFixture.configureByFile(testName + ".xml");
+    myFixture.complete(CompletionType.BASIC, 2);
     selectItem(assertOneElement(myFixture.getLookupElements()), Lookup.NORMAL_SELECT_CHAR);
     checkResultByFile(testName + "_after.xml");
   }

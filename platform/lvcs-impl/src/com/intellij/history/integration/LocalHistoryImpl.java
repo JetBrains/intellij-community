@@ -89,12 +89,14 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
     fm.addVirtualFileListener(myEventDispatcher);
     fm.addVirtualFileManagerListener(myEventDispatcher);
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      @Override
-      public void run() {
-        validateStorage();
-      }
-    });
+    if (ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode()) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          validateStorage();
+        }
+      });
+    }
   }
 
   private void validateStorage() {

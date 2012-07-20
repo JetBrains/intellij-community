@@ -644,6 +644,10 @@ public class UIUtil {
     return UIManager.getColor("Panel.background");
   }
 
+  public static Color getTreeBackground() {
+    return UIManager.getColor("Tree.background");
+  }
+
   public static Color getTreeForeground() {
     return UIManager.getColor("Tree.foreground");
   }

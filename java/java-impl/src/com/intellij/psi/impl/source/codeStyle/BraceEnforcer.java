@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,14 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.jsp.JavaJspRecursiveElementVisitor;
 import com.intellij.psi.jsp.JspFile;
@@ -96,13 +99,16 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
   
   private void processStatement(PsiStatement statement, PsiStatement blockCandidate, int options) {
     if (blockCandidate instanceof PsiBlockStatement || blockCandidate == null) return;
-    if (options == CodeStyleSettings.FORCE_BRACES_ALWAYS ||
-        options == CodeStyleSettings.FORCE_BRACES_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(statement)) {
-      replaceWithBlock(statement, blockCandidate);
+    boolean forceNewLine = !FormatterUtil.isFormatterCalledExplicitly() && !ApplicationManager.getApplication().isUnitTestMode();
+    if (forceNewLine
+        || options == CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
+        || (options == CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(statement)))
+    {
+      replaceWithBlock(statement, blockCandidate, forceNewLine);
     }
   }
 
-  private void replaceWithBlock(@NotNull PsiStatement statement, PsiStatement blockCandidate) {
+  private void replaceWithBlock(@NotNull PsiStatement statement, PsiStatement blockCandidate, boolean forceNewLine) {
     if (!statement.isValid()) {
       LOG.assertTrue(false);
     }
@@ -123,7 +129,7 @@ public class BraceEnforcer extends JavaJspRecursiveElementVisitor {
     int lastLineCommentIndex = oldText.indexOf("//", lastLineFeedIndex);
     StringBuilder buf = new StringBuilder(oldText.length() + 5);
     buf.append("{ ").append(oldText);
-    if (lastLineCommentIndex >= 0) {
+    if (forceNewLine || lastLineCommentIndex >= 0) {
       buf.append("\n");
     }
     buf.append(" }");

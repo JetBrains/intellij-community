@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -43,7 +44,7 @@ public abstract class JpsLoaderBase {
   }
 
   @Nullable
-  protected static Element findComponent(Element root, String componentName) {
+  public static Element findComponent(@Nullable Element root, @NotNull String componentName) {
     for (Element element : JDOMUtil.getChildren(root, "component")) {
       if (componentName.equals(element.getAttributeValue("name"))) {
         return element;

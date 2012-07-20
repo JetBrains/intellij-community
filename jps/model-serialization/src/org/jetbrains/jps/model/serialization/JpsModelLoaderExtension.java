@@ -7,7 +7,6 @@ import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.facet.JpsModuleExtensionLoader;
@@ -31,11 +30,6 @@ public abstract class JpsModelLoaderExtension {
     return null;
   }
 
-  @Nullable
-  public JpsSdkType<?> getSdkType(@NotNull String typeId) {
-    return null;
-  }
-
   public void loadModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
   }
 
@@ -45,7 +39,7 @@ public abstract class JpsModelLoaderExtension {
   }
 
   @NotNull
-  public List<JpsModulePropertiesLoader<?>> getModulePropertiesLoaders() {
+  public List<? extends JpsModulePropertiesLoader<?>> getModulePropertiesLoaders() {
     return Collections.emptyList();
   }
 

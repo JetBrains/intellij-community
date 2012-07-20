@@ -17,7 +17,6 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
-import com.intellij.facet.impl.ui.FacetEditorContextBase;
 import com.intellij.facet.impl.ui.FacetEditorImpl;
 import com.intellij.facet.impl.ui.FacetTreeModel;
 import com.intellij.facet.impl.ui.ProjectConfigurableContext;
@@ -25,7 +24,6 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
@@ -44,7 +42,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.ChangeListener {
+public class ProjectFacetsConfigurator implements FacetsProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.ProjectFacetsConfigurator");
   private final Map<Module, ModifiableFacetModel> myModifiableModels = new HashMap<Module, ModifiableFacetModel>();
   private final Map<Facet, FacetEditorImpl> myEditors = new HashMap<Facet, FacetEditorImpl>();
@@ -170,11 +168,6 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
     ModifiableFacetModel model = myModifiableModels.get(module);
     if (model == null) {
       model = FacetManager.getInstance(module).createModifiableModel();
-      model.addListener(new ModifiableFacetModel.Listener() {
-        public void onChanged() {
-          fireFacetModelChanged(module);
-        }
-      }, null);
       myModifiableModels.put(module, model);
     }
     return model;
@@ -324,26 +317,6 @@ public class ProjectFacetsConfigurator implements FacetsProvider, ModuleEditor.C
   @Nullable
   public <F extends Facet> F findFacet(final Module module, final FacetTypeId<F> type, final String name) {
     return getFacetModel(module).findFacet(type, name);
-  }
-
-  public void moduleStateChanged(final ModifiableRootModel moduleRootModel) {
-    Module module = moduleRootModel.getModule();
-    Facet[] allFacets = getAllFacets(module);
-    for (Facet facet : allFacets) {
-      FacetEditorImpl facetEditor = myEditors.get(facet);
-      if (facetEditor != null) {
-        ((FacetEditorContextBase)facetEditor.getContext()).fireModuleRootsChanged(moduleRootModel);
-      }
-    }
-  }
-
-  private void fireFacetModelChanged(Module module) {
-    for (Facet facet : getAllFacets(module)) {
-      FacetEditorImpl facetEditor = myEditors.get(facet);
-      if (facetEditor != null) {
-        ((FacetEditorContextBase)facetEditor.getContext()).fireFacetModelChanged(module);
-      }
-    }
   }
 
   private UserDataHolder getProjectData() {

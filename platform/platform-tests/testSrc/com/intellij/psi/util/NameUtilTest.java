@@ -224,6 +224,12 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
   }
 
+  public void testMiddleMatchingUnderscore() {
+    assertMatches("*_dark", "collapseAll_dark.png");
+    assertMatches("*_dark.png", "collapseAll_dark.png");
+    assertMatches("**_dark.png", "collapseAll_dark.png");
+  }
+
   public void testMiddleMatching() {
     assertTrue(caseInsensitiveMatcher("*old").matches("folder"));
     assertMatches("SWU*H*7", "SWUpgradeHdlrFSPR7Test");
@@ -256,6 +262,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertFalse(firstLetterMatcher(" a").matches("Aaa"));
     assertFalse(firstLetterMatcher(" _bl").matches("_top"));
     assertFalse(firstLetterMatcher("*Ch").matches("char"));
+    assertTrue(firstLetterMatcher("*codes").matches("CFLocaleCopyISOCountryCodes"));
   }
 
   private static Matcher firstLetterMatcher(String pattern) {

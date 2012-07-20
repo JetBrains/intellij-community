@@ -116,7 +116,7 @@ public class ProjectStructureConfigurable extends BaseConfigurable implements Se
     myFacetStructureConfigurable = facetStructureConfigurable;
     myArtifactsStructureConfigurable = artifactsStructureConfigurable;
 
-    myModuleConfigurator = new ModulesConfigurator(myProject, myProjectJdksModel);
+    myModuleConfigurator = new ModulesConfigurator(myProject);
     myContext = new StructureConfigurableContext(myProject, myModuleConfigurator);
     myModuleConfigurator.setContext(myContext);
 

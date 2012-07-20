@@ -1,5 +1,3 @@
-import java.lang.String;
-
 interface I {
   void m(int i);
 }
@@ -19,5 +17,19 @@ class Foo {
     String s = ab;
     <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">int i = ab;</error>
   };
+
+  A<Integer> bazz() {
+    bar((o) -> {
+      String s = o;
+      <error descr="Incompatible types. Found: 'java.lang.String', required: 'int'">int i = o;</error>
+    });
+    return (i) -> {
+      Integer k = i;
+      int n = i;
+      <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">String s = i;</error>
+    };
+  }
+
+  void bar(A<String> a){}
 }
 

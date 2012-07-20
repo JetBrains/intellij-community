@@ -924,7 +924,7 @@ public class ExpectedTypesProvider {
         }
       }
 
-      final PsiExpression[] args = argumentList.getExpressions();
+      final PsiExpression[] args = argumentList.getExpressions().clone();
       final int index = ArrayUtil.indexOf(args, argument);
       LOG.assertTrue(index >= 0);
 
@@ -932,6 +932,9 @@ public class ExpectedTypesProvider {
       if (index <= args.length - 1) {
         leftArgs = new PsiExpression[index];
         System.arraycopy(args, 0, leftArgs, 0, index);
+        if (forCompletion) {
+          args[index] = null;
+        }
       }
       else {
         leftArgs = null;
@@ -945,7 +948,7 @@ public class ExpectedTypesProvider {
         PsiSubstitutor substitutor;
         if (candidateInfo instanceof MethodCandidateInfo) {
           final MethodCandidateInfo info = (MethodCandidateInfo)candidateInfo;
-          substitutor = info.inferTypeArguments(policy);
+          substitutor = info.inferTypeArguments(policy, args);
           if (!info.isStaticsScopeCorrect() && method != null && !method.hasModifierProperty(PsiModifier.STATIC)) continue;
         }
         else {

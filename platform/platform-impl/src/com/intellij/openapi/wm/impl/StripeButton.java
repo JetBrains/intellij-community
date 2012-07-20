@@ -21,6 +21,9 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -62,10 +65,12 @@ public final class StripeButton extends AnchoredButton implements ActionListener
   private Stripe myLastStripe;
   private KeyEventDispatcher myDragKeyEventDispatcher;
   private boolean myDragCancelled = false;
+  private final StripeButton.MyKeymapListener myKeymapListener;
 
   StripeButton(@NotNull final InternalDecorator decorator, ToolWindowsPane pane) {
     myDecorator = decorator;
     myToolWindowHandler = new MyPropertyChangeListener();
+    myKeymapListener = new MyKeymapListener();
     myPane = pane;
 
     init();
@@ -121,6 +126,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
         processDrag(e);
       }
     });
+    KeymapManager.getInstance().addKeymapManagerListener(myKeymapListener);
   }
 
   
@@ -286,6 +292,7 @@ public final class StripeButton extends AnchoredButton implements ActionListener
 
   void dispose() {
     myDecorator.getToolWindow().removePropertyChangeListener(myToolWindowHandler);
+    KeymapManager.getInstance().removeKeymapManagerListener(myKeymapListener);
   }
 
   private void showPopup(final Component component, final int x, final int y) {
@@ -358,6 +365,13 @@ public final class StripeButton extends AnchoredButton implements ActionListener
         setIcon(icon);
         setDisabledIcon(disabledIcon);
       }
+    }
+  }
+  
+  private final class MyKeymapListener implements KeymapManagerListener {
+    @Override
+    public void activeKeymapChanged(Keymap keymap) {
+      updateText();
     }
   }
 
