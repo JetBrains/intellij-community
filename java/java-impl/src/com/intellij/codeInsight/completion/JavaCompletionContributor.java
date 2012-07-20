@@ -43,11 +43,9 @@ import com.intellij.psi.filters.classes.AssignableFromContextFilter;
 import com.intellij.psi.filters.element.ExcludeDeclaredFilter;
 import com.intellij.psi.filters.element.ModifierFilter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
-import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.PsiLabelReference;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -106,21 +104,6 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static final ElementPattern<PsiElement> IMPORT_REFERENCE =
     psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).withParent(PsiImportStatementBase.class));
 
-  static final ElementPattern<PsiElement> IN_CATCH_TYPE =
-    psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
-      withParent(psiElement(PsiTypeElement.class).
-        withParent(or(psiElement(PsiCatchSection.class),
-                      psiElement(PsiVariable.class).withParent(PsiCatchSection.class)))));
-  static final ElementPattern<PsiElement> IN_MULTI_CATCH_TYPE =
-    or(psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiCatchSection.class)),
-       psiElement().afterLeaf(psiElement().withText("|").withParent(PsiTypeElement.class).withSuperParent(2, PsiParameter.class).withSuperParent(3, PsiCatchSection.class)));
-  static final ElementPattern<PsiElement> INSIDE_METHOD_THROWS_CLAUSE =
-    psiElement().afterLeaf(PsiKeyword.THROWS, ",").inside(psiElement(JavaElementType.THROWS_LIST));
-  static final ElementPattern<PsiElement> IN_RESOURCE_TYPE =
-    psiElement().withParent(psiElement(PsiJavaCodeReferenceElement.class).
-      withParent(psiElement(PsiTypeElement.class).
-        withParent(or(psiElement(PsiResourceVariable.class), psiElement(PsiResourceList.class)))));
-
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
     // Completion after extends in interface, type parameter and implements in class
@@ -132,10 +115,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (JavaCompletionData.DECLARATION_START.accepts(position) ||
         JavaCompletionData.isInsideParameterList(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
-    }
-
-    if (INSIDE_METHOD_THROWS_CLAUSE.accepts(position)) {
-      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
     if (psiElement().afterLeaf(PsiKeyword.INSTANCEOF).accepts(position)) {
@@ -155,18 +134,6 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (JavaCompletionData.START_FOR.accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.VARIABLE);
-    }
-
-    if (IN_CATCH_TYPE.accepts(position) || IN_MULTI_CATCH_TYPE.accepts(position)) {
-      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
-    }
-
-    if (IN_RESOURCE_TYPE.accepts(position)) {
-      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
-    }
-
-    if (JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position)) {
-      return new AssignableFromFilter(CommonClassNames.JAVA_LANG_THROWABLE);
     }
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
