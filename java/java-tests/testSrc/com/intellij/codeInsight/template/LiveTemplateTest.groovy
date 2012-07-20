@@ -167,6 +167,16 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     checkResult();
   }
 
+  public void testPreferStartMatchesInLookups() throws Throwable {
+    configure();
+    startTemplate("iter", "iterations")
+    myFixture.type('ese\n') //for entrySet
+    assert myFixture.lookupElementStrings == ['barGooStringBuilderEntry', 'gooStringBuilderEntry', 'stringBuilderEntry', 'builderEntry', 'entry']
+    myFixture.type('e')
+    assert myFixture.lookupElementStrings == ['entry', 'barGooStringBuilderEntry', 'gooStringBuilderEntry', 'stringBuilderEntry', 'builderEntry']
+    assert LookupManager.getActiveLookup(editor).currentItem.lookupString == 'entry'
+  }
+
   private TemplateState getState() {
     TemplateManagerImpl.getTemplateState(getEditor())
   }

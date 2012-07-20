@@ -285,18 +285,21 @@ public class CompletionServiceImpl extends CompletionService{
 
     @Override
     public Comparable weigh(@NotNull LookupElement element) {
-      PrefixMatcher itemMatcher = getItemMatcher(element, myLocation);
-      for (String ls : element.getAllLookupStrings()) {
-        if (itemMatcher.isStartMatch(ls)) {
-          return false;
-        }
-      }
-      return true;
+      return !isStartMatch(element, myLocation.getCompletionParameters().getLookup());
     }
   }
 
-  private static PrefixMatcher getItemMatcher(LookupElement element, CompletionLocation location) {
-    Lookup lookup = location.getCompletionParameters().getLookup();
+  public static boolean isStartMatch(LookupElement element, Lookup lookup) {
+    PrefixMatcher itemMatcher = getItemMatcher(element, lookup);
+    for (String ls : element.getAllLookupStrings()) {
+      if (itemMatcher.isStartMatch(ls)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static PrefixMatcher getItemMatcher(LookupElement element, Lookup lookup) {
     PrefixMatcher itemMatcher = lookup.itemMatcher(element);
     String pattern = lookup.itemPattern(element);
     if (!pattern.equals(itemMatcher.getPrefix())) {
@@ -315,7 +318,7 @@ public class CompletionServiceImpl extends CompletionService{
 
     @Override
     public Comparable weigh(@NotNull LookupElement element) {
-      final PrefixMatcher matcher = getItemMatcher(element, myLocation);
+      final PrefixMatcher matcher = getItemMatcher(element, myLocation.getCompletionParameters().getLookup());
 
       int max = Integer.MIN_VALUE;
       for (String lookupString : element.getAllLookupStrings()) {
