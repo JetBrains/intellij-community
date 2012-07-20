@@ -70,4 +70,8 @@ public class PsiLambdaParameterType extends PsiType {
   public PsiType[] getSuperTypes() {
     return PsiType.EMPTY_ARRAY;
   }
+
+  public PsiParameter getParameter() {
+    return myParameter;
+  }
 }

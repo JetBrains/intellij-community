@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,8 @@ import java.util.List;
  * Date: 7/17/12
  */
 public class LambdaUtil {
+  private static final Logger LOG = Logger.getInstance("#" + LambdaUtil.class.getName());
+
   @Nullable
   public static String checkInterfaceFunctional(@NotNull PsiClass psiClass) {
     final List<MethodSignature> signatures = findFunctionCandidates(psiClass);
@@ -140,6 +143,10 @@ public class LambdaUtil {
       else if (parent instanceof PsiVariable) {
         type = ((PsiVariable)parent).getType();
       }
+      else if (parent instanceof PsiAssignmentExpression) {
+        final PsiExpression lExpression = ((PsiAssignmentExpression)parent).getLExpression();
+        type = lExpression.getType();
+      }
       else if (parent instanceof PsiExpressionList) {
         final PsiExpressionList expressionList = (PsiExpressionList)parent;
         final int lambdaIdx = ArrayUtil.find(expressionList.getExpressions(), lambdaExpression);
@@ -173,7 +180,8 @@ public class LambdaUtil {
 
   public static boolean isAcceptable(PsiLambdaExpression lambdaExpression, final PsiType leftType) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);
-    final MethodSignature methodSignature = getFunction(resolveResult.getElement());
+    final PsiClass psiClass = resolveResult.getElement();
+    final MethodSignature methodSignature = getFunction(psiClass);
     if (methodSignature == null) return false;
     final PsiParameter[] lambdaParameters = lambdaExpression.getParameterList().getParameters();
     final PsiType[] parameterTypes = methodSignature.getParameterTypes();
@@ -182,11 +190,57 @@ public class LambdaUtil {
       PsiParameter parameter = lambdaParameters[lambdaParamIdx];
       final PsiTypeElement typeElement = parameter.getTypeElement();
       if (typeElement != null) {
-        if (!typeElement.getType().equals(resolveResult.getSubstitutor().substitute(parameterTypes[lambdaParamIdx]))) {
+        final PsiType lambdaFormalType = typeElement.getType();
+        final PsiType methodParameterType = parameterTypes[lambdaParamIdx];
+        if (lambdaFormalType instanceof PsiPrimitiveType){
+          if (methodParameterType instanceof PsiPrimitiveType) return methodParameterType.isAssignableFrom(lambdaFormalType);
+          return false;
+        }
+
+        if (!resolveResult.getSubstitutor().substitute(methodParameterType).isAssignableFrom(lambdaFormalType)) {
           return false;
         }
       }
     }
+    PsiMethod method = null;
+    LOG.assertTrue(psiClass != null);
+    final PsiMethod[] methodsByName = psiClass.findMethodsByName(methodSignature.getName(), true);
+    for (PsiMethod psiMethod : methodsByName) {
+      if (MethodSignatureUtil.areSignaturesEqual(getMethodSignature(psiMethod, psiClass, psiMethod.getContainingClass()), methodSignature)) {
+        method = psiMethod;
+        break;
+      }
+    }
+    LOG.assertTrue(method != null);
+    PsiType methodReturnType = method.getReturnType();
+    if (methodReturnType != null && methodReturnType != PsiType.VOID) {
+      methodReturnType = resolveResult.getSubstitutor().substitute(methodReturnType);
+      final PsiElement body = lambdaExpression.getBody();
+      if (body instanceof PsiCodeBlock) {
+        final PsiCodeBlock block = (PsiCodeBlock)body;
+        for (PsiStatement statement : block.getStatements()) {
+          if (statement instanceof PsiReturnStatement) {
+            final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
+            if (returnValue != null) {
+              if (!checkReturnTypeAssignability(returnValue.getType(), parameterTypes, lambdaExpression, methodReturnType)) return false;
+            }
+          }
+        }
+      } else if (body instanceof PsiExpression) {
+        return checkReturnTypeAssignability(((PsiExpression)body).getType(), parameterTypes, lambdaExpression, methodReturnType);
+      }
+    }
     return true;
+  }
+
+  private static boolean checkReturnTypeAssignability(PsiType lambdaReturnType, PsiType[] parameterTypes, PsiLambdaExpression lambdaExpression, PsiType methodReturnType) {
+    if (lambdaReturnType instanceof PsiLambdaParameterType) {
+      final PsiParameter parameter = ((PsiLambdaParameterType)lambdaReturnType).getParameter();
+      final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex(parameter);
+      if (parameterIndex > -1) {
+        lambdaReturnType = parameterTypes[parameterIndex];
+      }
+    }
+    return lambdaReturnType != null && methodReturnType.isAssignableFrom(lambdaReturnType);
   }
 }

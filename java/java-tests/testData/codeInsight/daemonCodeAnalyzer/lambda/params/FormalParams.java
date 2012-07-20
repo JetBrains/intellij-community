@@ -17,3 +17,19 @@ class Foo {
   } 
   void bar(I i){}
 }
+
+class ReturnTypeCompatibility {
+
+    interface I1<L> {
+        L m(L x);
+    }
+
+    static <P> void call(I1<P> i2) {
+        i2.m(null);
+    }
+
+    public static void main(String[] args) {
+        call((String i)->{ return i;});
+        call<error descr="'call(ReturnTypeCompatibility.I1<java.lang.Object>)' in 'ReturnTypeCompatibility' cannot be applied to '(<lambda expression>)'">((int i)->{ return i;})</error>;
+    }
+}
