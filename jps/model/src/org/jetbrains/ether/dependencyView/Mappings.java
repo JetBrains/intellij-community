@@ -780,7 +780,7 @@ public class Mappings {
     final Util myFuture;
     final Util myPresent;
 
-    final boolean myPreprocessOnly;
+    final boolean myEasyMode; // true means: no need to search for affected files, only preprocess data for integrate
 
     private class DelayedWorks {
       class Triple {
@@ -820,7 +820,7 @@ public class Mappings {
         myQueue.add(new Triple(ownerClass, changedField, future));
       }
 
-      boolean doWork(final Collection<File> affectedFiles) {
+      boolean doWork(@NotNull final Collection<File> affectedFiles) {
         if (!myQueue.isEmpty()) {
           debug("Starting delayed works.");
 
@@ -888,7 +888,7 @@ public class Mappings {
       myFuture = null;
       myPresent = null;
 
-      myPreprocessOnly = true;
+      myEasyMode = true;
 
       delta.myIsRebuild = true;
     }
@@ -907,7 +907,7 @@ public class Mappings {
 
       myFuture = new Util(delta);
       myPresent = new Util();
-      myPreprocessOnly = true;
+      myEasyMode = true;
     }
 
     private Differential(final Mappings delta,
@@ -931,22 +931,24 @@ public class Mappings {
       myFuture = new Util(delta);
       myPresent = new Util();
 
-      myPreprocessOnly = false;
+      myEasyMode = false;
     }
 
     private void processDisappearedClasses() {
       myDelta.compensateRemovedContent(myFilesToCompile);
 
-      final Collection<String> removed = myDelta.myRemovedFiles;
+      if (!myEasyMode) {
+        final Collection<String> removed = myDelta.myRemovedFiles;
 
-      if (removed != null) {
-        for (final String file : removed) {
-          final Collection<ClassRepr> classes = mySourceFileToClasses.get(myContext.get(file));
+        if (removed != null) {
+          for (final String file : removed) {
+            final Collection<ClassRepr> classes = mySourceFileToClasses.get(myContext.get(file));
 
-          if (classes != null) {
-            for (ClassRepr c : classes) {
-              debug("Affecting usages of removed class ", c.name);
-              affectAll(c.name, myAffectedFiles, myFilter);
+            if (classes != null) {
+              for (ClassRepr c : classes) {
+                debug("Affecting usages of removed class ", c.name);
+                affectAll(c.name, myAffectedFiles, myFilter);
+              }
             }
           }
         }
@@ -1542,8 +1544,8 @@ public class Mappings {
           }
         }
 
-        if (myPreprocessOnly) {
-          return false;
+        if (myEasyMode) {
+          continue;
         }
 
         myPresent.appendDependents(it, state.myDependants);
@@ -1657,7 +1659,7 @@ public class Mappings {
       }
       debug("End of changed classes processing");
 
-      return true;
+      return !myEasyMode;
     }
 
     private void processRemovedClases(final DiffState state) {
@@ -1671,7 +1673,7 @@ public class Mappings {
           myDelta.myChangedFiles.add(fileName);
         }
 
-        if (!myPreprocessOnly) {
+        if (!myEasyMode) {
           myPresent.appendDependents(c, state.myDependants);
           debug("Adding usages of class ", c.name);
           state.myAffectedUsages.add(c.createUsage());
@@ -1690,7 +1692,7 @@ public class Mappings {
           myDelta.registerAddedSuperClass(c.name, sup);
         }
 
-        if (!myPreprocessOnly) {
+        if (!myEasyMode) {
           final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
 
           if (depClasses != null) {
@@ -1799,7 +1801,7 @@ public class Mappings {
         }
 
         debug("Begin of Differentiate:");
-        debug("Easy mode: ", myPreprocessOnly);
+        debug("Easy mode: ", myEasyMode);
 
         processDisappearedClasses();
 
@@ -1818,34 +1820,34 @@ public class Mappings {
           final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
           final DiffState state = new DiffState(Difference.make(pastClasses, classes));
 
-          if (!processChangedClasses(state) && !myPreprocessOnly) {
-            // turning non-incremental
-            return false;
+          if (!processChangedClasses(state)) {
+            if (!myEasyMode) {
+              // turning non-incremental
+              return false;
+            }
           }
 
           processRemovedClases(state);
           processAddedClasses(state);
 
-          if (!myPreprocessOnly) {
+          if (!myEasyMode) {
             calculateAffectedFiles(state);
           }
         }
 
         debug("End of Differentiate.");
 
-        if (!myPreprocessOnly) {
-          final Collection<String> removed = myDelta.myRemovedFiles;
-          if (removed != null) {
-            for (final String r : removed) {
-              myAffectedFiles.remove(new File(r));
-            }
-          }
-
-          return myDelayedWorks.doWork(myAffectedFiles);
-        }
-        else {
+        if (myEasyMode) {
           return false;
         }
+
+        final Collection<String> removed = myDelta.myRemovedFiles;
+        if (removed != null) {
+          for (final String r : removed) {
+            myAffectedFiles.remove(new File(r));
+          }
+        }
+        return myDelayedWorks.doWork(myAffectedFiles);
       }
     }
   }
