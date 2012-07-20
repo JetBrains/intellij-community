@@ -11,6 +11,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,13 +34,16 @@ public class PyDocStubIntention extends BaseIntentionAction {
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PyFunction function = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFunction.class);
-    if (function != null) {
+    PyStatementList list = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStatementList.class,
+                                                       false, PyFunction.class);
+    if (function != null && list == null) {
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()),
                                                                           PyDocStringOwner.class);
       if (docStringOwner != null) {
         if (docStringOwner.getDocStringExpression() != null) return false;
       }
-      if (function.getStatementList() != null && function.getStatementList().getStatements().length != 0)
+      final PyStatementList statementList = function.getStatementList();
+      if (statementList != null && statementList.getStatements().length != 0)
         return true;
     }
     return  false;

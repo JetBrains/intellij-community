@@ -8,9 +8,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -64,7 +62,9 @@ public class DocstringQuickFix implements LocalQuickFix {
   private static Editor getEditor(Project project, PsiFile file) {
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document != null) {
-      Editor[] editors = EditorFactory.getInstance().getEditors(document);
+      final EditorFactory instance = EditorFactory.getInstance();
+      if (instance == null) return null;
+      Editor[] editors = instance.getEditors(document);
       if (editors.length > 0)
         return editors[0];
     }
@@ -74,14 +74,12 @@ public class DocstringQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PyDocStringOwner.class);
     if (docStringOwner == null) return;
-    PyStringLiteralExpression element = docStringOwner.getDocStringExpression();
-    if (element == null && myMissing == null && myUnexpected == null) {
+    PyStringLiteralExpression docStringExpression = docStringOwner.getDocStringExpression();
+    if (docStringExpression == null && myMissing == null && myUnexpected == null) {
       if (docStringOwner instanceof PyFunction) {
-        PsiDocumentManager.getInstance(project).getDocument(docStringOwner.getContainingFile());
         PythonDocumentationProvider.inserDocStub((PyFunction)docStringOwner, project, getEditor(project, docStringOwner.getContainingFile()));
       }
       if (docStringOwner instanceof PyClass) {
-        PsiDocumentManager.getInstance(project).getDocument(docStringOwner.getContainingFile());
         PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false);
         if (init == null) return;
         PythonDocumentationProvider.inserDocStub(init, ((PyClass)docStringOwner).getStatementList(),
@@ -89,25 +87,26 @@ public class DocstringQuickFix implements LocalQuickFix {
       }
       return;
     }
+    if (docStringExpression == null) return;
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(element.getProject());
-    if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
+    PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
+    if (documentationSettings.isEpydocFormat(docStringExpression.getContainingFile())) {
       myPrefix = "@";
     }
     else {
       myPrefix = ":";
     }
 
-    String replacement = element.getText();
+    String replacement = docStringExpression.getText();
     if (myMissing != null) {
-      replacement = createMissingReplacement(element);
+      replacement = createMissingReplacement(docStringOwner);
     }
     if (myUnexpected != null) {
       replacement = createUnexpectedReplacement(replacement);
     }
-    if (!replacement.equals(element.getText())) {
+    if (!replacement.equals(docStringExpression.getText())) {
       PyExpression str = elementGenerator.createDocstring(replacement).getExpression();
-      element.replace(str);
+      docStringExpression.replace(str);
     }
   }
 
@@ -145,66 +144,7 @@ public class DocstringQuickFix implements LocalQuickFix {
     return newText.toString();
   }
 
-  private String createMissingReplacement(PsiElement element) {
-    String text = element.getText();
-    String[] lines = LineTokenizer.tokenize(text, true);
-    StringBuilder replacementText = new StringBuilder();
-    int ind = lines.length - 1;
-    if (lines.length == 1) {
-      return createSingleLineReplacement(element);
-    }
-    for (int i = 0; i != lines.length - 1; ++i) {
-      String line = lines[i];
-      if (line.contains(myPrefix)) {
-        ind = i;
-        break;
-      }
-      replacementText.append(line);
-    }
-    addParam(replacementText, element, false);
-    for (int i = ind; i != lines.length; ++i) {
-      String line = lines[i];
-      replacementText.append(line);
-    }
-    return replacementText.toString();
-  }
-
-  private void addParam(StringBuilder replacementText, PsiElement element, boolean addWS) {
-    PyFunction fun = PsiTreeUtil.getParentOfType(element, PyFunction.class);
-    PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(fun.getStatementList(), PsiWhiteSpace.class);
-    String ws = "\n";
-    if (whitespace != null) {
-      String[] spaces = whitespace.getText().split("\n");
-      if (spaces.length > 1) {
-        ws = ws + whitespace.getText().split("\n")[1];
-      }
-    }
-    if (replacementText.length() > 0)
-      replacementText.deleteCharAt(replacementText.length() - 1);
-    replacementText.append(ws);
-
-    String paramText = myMissingText;
-    replacementText.append(myPrefix).append("param ").append(paramText).append(": ");
-    if (addWS)
-      replacementText.append(ws);
-    else
-      replacementText.append("\n");
-  }
-
-  private String createSingleLineReplacement(PsiElement element) {
-    String text = element.getText();
-    StringBuilder replacementText = new StringBuilder();
-    String closingQuotes = "";
-    if (text.endsWith("'''") || text.endsWith("\"\"\"")) {
-      replacementText.append(text.substring(0, text.length() - 2));
-      closingQuotes = text.substring(text.length() - 3);
-    }
-    else {
-      replacementText.append(text.substring(0, text.length()));
-      closingQuotes = text.substring(text.length() - 1);
-    }
-    addParam(replacementText, element, true);
-    replacementText.append(closingQuotes);
-    return replacementText.toString();
+  private String createMissingReplacement(PyDocStringOwner docstring) {
+    return PythonDocumentationProvider.addParamToDocstring(docstring, "param", myMissingText, myPrefix).getFirst();
   }
 }

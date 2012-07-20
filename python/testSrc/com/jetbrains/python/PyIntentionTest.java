@@ -226,6 +226,14 @@ public class PyIntentionTest extends PyTestCase {
     doTest("Convert to 'import sys'");
   }
 
+  public void testTypeInDocstring() {
+    doTest(PyBundle.message("INTN.specify.type"));
+  }
+
+  public void testTypeAssertion() {
+    doTest(PyBundle.message("INTN.insert.assertion"));
+  }
+
   public void testDocStub() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
