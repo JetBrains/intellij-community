@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.util.Collection;
 
 public class BreakpointChooser {
@@ -149,7 +150,7 @@ public class BreakpointChooser {
     };
     setSelectedBreakpoint(baseBreakpoint);
     myActionToolbar = ActionManager.getInstance().createActionToolbar("asdad", new DefaultActionGroup(myComboBoxAction), true);
-
+    myActionToolbar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
   }
 
   public void setBreakpointItems(Collection<BreakpointItem> items) {
