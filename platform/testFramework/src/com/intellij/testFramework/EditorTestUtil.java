@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
 import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +36,10 @@ import java.util.List;
  * Time: 21:00:49
  */
 public class EditorTestUtil {
+  public static final String CARET_TAG = "<caret>";
+  public static final String SELECTION_START_TAG = "<selection>";
+  public static final String SELECTION_END_TAG = "</selection>";
+
   public static final char BACKSPACE_FAKE_CHAR = '\uFFFF';
   public static final char SMART_ENTER_FAKE_CHAR = '\uFFFE';
 
@@ -82,5 +87,34 @@ public class EditorTestUtil {
       iterator.advance();
     }
     return tokens;
+  }
+
+  public static int getCaretPosition(@NotNull final String content) {
+    return getCaretAndSelectionPosition(content)[0];
+  }
+
+  public static int[] getCaretAndSelectionPosition(@NotNull final String content) {
+    int caretPosInSourceFile = content.indexOf(CARET_TAG);
+    int selectionStartInSourceFile = content.indexOf(SELECTION_START_TAG);
+    int selectionEndInSourceFile = content.indexOf(SELECTION_END_TAG);
+    if (selectionStartInSourceFile >= 0) {
+      if (caretPosInSourceFile >= 0) {
+        if (caretPosInSourceFile < selectionStartInSourceFile) {
+          selectionStartInSourceFile -= CARET_TAG.length();
+          selectionEndInSourceFile -= CARET_TAG.length();
+        }
+        else {
+          if (caretPosInSourceFile < selectionEndInSourceFile) {
+            caretPosInSourceFile -= SELECTION_START_TAG.length();
+          }
+          else {
+            caretPosInSourceFile -= SELECTION_START_TAG.length() + SELECTION_END_TAG.length();
+          }
+        }
+      }
+      selectionEndInSourceFile -= SELECTION_START_TAG.length();
+    }
+
+    return new int[]{caretPosInSourceFile, selectionStartInSourceFile, selectionEndInSourceFile};
   }
 }
