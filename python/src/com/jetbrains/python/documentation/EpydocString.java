@@ -261,7 +261,12 @@ public class EpydocString extends StructuredDocString {
 
   @Nullable
   private static String inlineMarkupToHTML(@Nullable Substring s) {
-    return inlineMarkupToHTML(s != null ? s.concatTrimmedLines(" ") : null);
+    String text = "";
+    if (s != null) {
+      text = s.concatTrimmedLines(" ");
+      if (!text.endsWith(".")) text +=".";
+    }
+    return inlineMarkupToHTML(text);
   }
 
   public List<String> getAdditionalTags() {
