@@ -176,15 +176,17 @@ public final class ExecutionHandler {
         final long buildTime = System.currentTimeMillis() - startTime;
         checkCancelTask.cancel();
         parser.setStopped(true);
+        final OutputPacketProcessor dispatcher = handler.getErr().getEventsDispatcher();
+        errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            if (project.isDisposed()) return;
+            if (project.isDisposed()) {
+              return;
+            }
             errorView.removeProgressPanel();
             ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
             if (toolWindow != null) { // can be null if project is closed
               toolWindow.activate(null, false);
-              final OutputPacketProcessor dispatcher = handler.getErr().getEventsDispatcher();
-              errorView.buildFinished(progress != null && progress.isCanceled(), buildTime, antBuildListener, dispatcher);
             }
           }
         }, ModalityState.NON_MODAL);

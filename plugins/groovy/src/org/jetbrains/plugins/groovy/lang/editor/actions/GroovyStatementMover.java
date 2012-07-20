@@ -78,7 +78,8 @@ public class GroovyStatementMover extends StatementUpDownMover {
     final GroovyPsiElement scope = PsiTreeUtil.getParentOfType(pivot, GrMethod.class, GrTypeDefinitionBody.class, GroovyFileBase.class);
 
     final boolean stmtLevel = isStatement(pivot);
-    final List<LineRange> allRanges = allRanges(scope, stmtLevel);
+    boolean topLevel = pivot instanceof GrTypeDefinition && pivot.getParent() instanceof GroovyFileBase;
+    final List<LineRange> allRanges = allRanges(scope, stmtLevel, topLevel);
     LineRange prev = null;
     LineRange next = null;
 
@@ -125,7 +126,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
     });
   }
 
-  private List<LineRange> allRanges(final GroovyPsiElement scope, final boolean stmtLevel) {
+  private List<LineRange> allRanges(final GroovyPsiElement scope, final boolean stmtLevel, final boolean topLevel) {
     final ArrayList<LineRange> result = new ArrayList<LineRange>();
     scope.accept(new PsiRecursiveElementVisitor() {
       int lastStart = -1;
@@ -167,7 +168,7 @@ public class GroovyStatementMover extends StatementUpDownMover {
         else if (element instanceof GroovyFileBase) {
           addChildRanges(((GroovyFileBase)element).getTopStatements());
         }
-        else if (!stmtLevel && element instanceof GrTypeDefinitionBody) {
+        else if (!stmtLevel && !topLevel && element instanceof GrTypeDefinitionBody) {
           addChildRanges(((GrTypeDefinitionBody)element).getMemberDeclarations());
         }
         else {

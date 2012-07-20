@@ -266,8 +266,8 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testObjectsInThrowsBlock() throws Exception {
     configureByFile("InThrowsCompletion.java");
-    assert "C" in myFixture.lookupElementStrings
-    assert !("B" in myFixture.lookupElementStrings)
+    assert "C" == myFixture.lookupElementStrings[0]
+    assert "B" in myFixture.lookupElementStrings
   }
 
   public void testAfterInstanceof() throws Exception {
@@ -1028,10 +1028,10 @@ public class ListUtils {
 
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
 
-  public void testOnlyExceptionsInCatch1() throws Exception { doTest() }
-  public void testOnlyExceptionsInCatch2() throws Exception { doTest() }
-  public void testOnlyExceptionsInCatch3() throws Exception { doTest() }
-  public void testOnlyExceptionsInCatch4() throws Exception { doTest() }
+  public void testOnlyExceptionsInCatch1() throws Exception { doTest('\n') }
+  public void testOnlyExceptionsInCatch2() throws Exception { doTest('\n') }
+  public void testOnlyExceptionsInCatch3() throws Exception { doTest('\n') }
+  public void testOnlyExceptionsInCatch4() throws Exception { doTest('\n') }
 
   public void testCommaAfterVariable() throws Throwable { doTest(',') }
 

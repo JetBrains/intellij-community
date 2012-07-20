@@ -62,7 +62,7 @@ public class JavaCompletionSorting {
       ContainerUtil.addIfNotNull(afterNegativeStats, preferStatics(position, expectedTypes));
     }
     if (!JavaCompletionData.START_FOR.accepts(position)) {
-      afterNegativeStats.add(new PreferLocalVariablesLiteralsAndAnnoMethodsWeigher(type, position));
+      afterNegativeStats.add(new PreferByKindWeigher(type, position));
     }
     ContainerUtil.addIfNotNull(afterNegativeStats, recursion(parameters, expectedTypes));
     if (!smart && !afterNew) {

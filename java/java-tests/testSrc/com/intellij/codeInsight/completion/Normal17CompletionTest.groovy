@@ -39,8 +39,16 @@ public class Normal17CompletionTest extends LightFixtureCompletionTestCase {
   public void testOnlyResourcesInResourceList3() { doTest() }
   public void testOnlyResourcesInResourceList4() { doTest() }
 
+  public void testResourceParentInResourceList() {
+    configureByFile(getTestName(false) + ".java")
+    assert 'MyOuterResource' == myFixture.lookupElementStrings[0]
+    assert 'MyClass' in myFixture.lookupElementStrings
+    myFixture.type('C\n')
+    checkResultByFile(getTestName(false) + "_after.java") }
+
   private void doTest() {
     configureByFile(getTestName(false) + ".java")
+    myFixture.type('\n')
     checkResultByFile(getTestName(false) + "_after.java")
   }
 }
