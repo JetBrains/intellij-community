@@ -151,6 +151,12 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       else if (selectionModel.hasSelection()) {
         int selectionStart = selectionModel.getSelectionStart();
         int selectionEnd = selectionModel.getSelectionEnd();
+        if (commenter instanceof IndentedCommenter) {
+          final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
+          if (value != null && value == Boolean.TRUE) {
+            selectionStart = myDocument.getLineStartOffset(myDocument.getLineNumber(selectionStart));
+          }
+        }
         commentRange(selectionStart, selectionEnd, prefix, suffix, commenter);
       }
       else {
