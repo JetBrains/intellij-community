@@ -120,14 +120,15 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     if (editorMarkupModel.isErrorStripeVisible()) {
       ErrorStripeRenderer renderer = editorMarkupModel.getErrorStripeRenderer();
       if (renderer instanceof TrafficLightRenderer) {
-        ((TrafficLightRenderer)renderer).refresh();
+        TrafficLightRenderer tlr = (TrafficLightRenderer)renderer;
+        tlr.refresh();
         ((EditorMarkupModelImpl)editorMarkupModel).repaintVerticalScrollBar();
+        if (tlr.myFile == null || tlr.myFile.isValid()) return;
+        Disposer.dispose(tlr);
       }
-      else {
-        renderer = new TrafficLightRenderer(project, document, file);
-        Disposer.register(((EditorImpl)editorMarkupModel.getEditor()).getDisposable(), (Disposable)renderer);
-        editorMarkupModel.setErrorStripeRenderer(renderer);
-      }
+      renderer = new TrafficLightRenderer(project, document, file);
+      Disposer.register(((EditorImpl)editorMarkupModel.getEditor()).getDisposable(), (Disposable)renderer);
+      editorMarkupModel.setErrorStripeRenderer(renderer);
     }
   }
 
