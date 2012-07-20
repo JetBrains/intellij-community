@@ -88,7 +88,7 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
   private StructureConfigurableContext myContext;
   private final List<ModuleEditor.ChangeListener> myAllModulesChangeListeners = new ArrayList<ModuleEditor.ChangeListener>();
 
-  public ModulesConfigurator(Project project, ProjectSdksModel projectJdksModel) {
+  public ModulesConfigurator(Project project) {
     myProject = project;
     myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
   }
@@ -163,15 +163,13 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
       }
     };
 
-    final ProjectFacetsConfigurator configurator = myFacetsConfigurator;
-    moduleEditor.addChangeListener(configurator);
+    myModuleEditors.add(moduleEditor);
     myModuleEditors.add(moduleEditor);
 
     moduleEditor.addChangeListener(this);
     Disposer.register(moduleEditor, new Disposable() {
       public void dispose() {
         moduleEditor.removeChangeListener(ModulesConfigurator.this);
-        moduleEditor.removeChangeListener(configurator);
       }
     });
     return moduleEditor;
@@ -318,24 +316,9 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
         finally {
           ModuleStructureConfigurable.getInstance(myProject).getFacetEditorFacade().clearMaps(false);
 
-          for (final ModuleEditor moduleEditor : myModuleEditors) {
-            moduleEditor.removeChangeListener(myFacetsConfigurator);
-          }
-
           myFacetsConfigurator = createFacetsConfigurator();
           myModuleModel = ModuleManager.getInstance(myProject).getModifiableModel();
           myModuleModelCommitted = false;
-
-          final ProjectFacetsConfigurator configurator = myFacetsConfigurator;
-
-          for (final ModuleEditor moduleEditor : myModuleEditors) {
-            moduleEditor.addChangeListener(configurator);
-            Disposer.register(moduleEditor, new Disposable() {
-              public void dispose() {
-                moduleEditor.removeChangeListener(configurator);
-              }
-            });
-          }
         }
       }
     });
