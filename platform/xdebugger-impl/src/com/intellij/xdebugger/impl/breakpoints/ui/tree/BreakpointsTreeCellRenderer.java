@@ -18,7 +18,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 
 import javax.swing.*;
