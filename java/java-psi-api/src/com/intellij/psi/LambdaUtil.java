@@ -123,7 +123,14 @@ public class LambdaUtil {
           if (methodSignature != null) {
             final PsiType[] types = methodSignature.getParameterTypes();
             if (parameterIndex < types.length) {
-              return resolveResult.getSubstitutor().substitute(types[parameterIndex]);
+              final PsiType psiType = resolveResult.getSubstitutor().substitute(types[parameterIndex]);
+              if (psiType instanceof PsiWildcardType) {
+                final PsiType bound = ((PsiWildcardType)psiType).getBound();
+                if (bound != null) {
+                  return bound;
+                }
+              } 
+              return psiType;
             }
           }
         }

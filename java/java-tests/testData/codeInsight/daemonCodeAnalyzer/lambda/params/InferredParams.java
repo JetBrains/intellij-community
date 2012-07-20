@@ -58,3 +58,17 @@ class CastInference {
     I1<Integer> i1 = (I1<Integer>)() -> 42;
   }
 }
+
+class WildcardBoundsUsage {
+  interface I<X> {
+    boolean foo(X x);
+  }
+
+  public I<Character> bar(I<? super Character> predicate) {
+    return null;
+  }
+
+  {
+    I<Character> i = bar(c -> c.compareTo('x') < 0);
+  }
+}
