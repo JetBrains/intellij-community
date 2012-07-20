@@ -104,7 +104,7 @@ implements <a href="psi_element://java.io.Serializable"><code>java.io.Serializab
 '''
     
     def expected = '''\
-java.lang<br/> public final class <a href="psi_element://java.lang.String">String</a> extends Object<br/> implements <a href="psi_element://java.io.Serializable">Serializable</a>, <a href="psi_element://java.lang.Comparable">Comparable</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt;, <a href="psi_element://java.lang.CharSequence">CharSequence</a>\
+java.lang<br/> public final class <a href="psi_element://java.lang.String">String</a> extends <a href="psi_element://java.lang.Object">Object</a><br/> implements <a href="psi_element://java.io.Serializable">Serializable</a>, <a href="psi_element://java.lang.Comparable">Comparable</a>&lt;<a href="psi_element://java.lang.String">String</a>&gt;, <a href="psi_element://java.lang.CharSequence">CharSequence</a>\
 '''
 
     def actual = DocPreviewUtil.buildPreview(header, "java.lang.String", fullText)
