@@ -26,7 +26,10 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
@@ -102,11 +105,8 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     inspectionContext.doInspections(scope, managerEx);
   }
 
-  public static GlobalInspectionContextImpl createContext(InspectionProfileEntry baseTool, InspectionManagerEx managerEx, PsiElement psiElement) {
-    final InspectionProfileImpl profile = new InspectionProfileImpl(baseTool.getDisplayName());
-    final InspectionProfileImpl model = (InspectionProfileImpl)profile.getModifiableModel();
-    model.disableAllTools();
-    model.enableTool(baseTool.getShortName());
+  public static GlobalInspectionContextImpl createContext(final InspectionProfileEntry baseTool, InspectionManagerEx managerEx, PsiElement psiElement) {
+    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(baseTool.getDisplayName(), baseTool);
     try {
       Element element = new Element("toCopy");
       baseTool.writeSettings(element);
