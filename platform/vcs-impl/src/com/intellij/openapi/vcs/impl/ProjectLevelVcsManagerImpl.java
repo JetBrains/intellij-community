@@ -56,7 +56,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ContentsUtil;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.messages.MessageBus;
@@ -522,7 +521,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
   @Override
   public void iterateVcsRoot(VirtualFile root,
                              Processor<FilePath> iterator,
-                             @Nullable PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
+                             @Nullable VirtualFileFilter directoryFilter) {
     VcsRootIterator.iterateVcsRoot(myProject, root, iterator, directoryFilter);
   }
 
