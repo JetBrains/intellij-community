@@ -247,7 +247,7 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
   }
 
   @Override
-  void iterateVcsRoot(VirtualFile root, Processor<FilePath> iterator, VirtualFileFilter directoryFilter) {
+  void iterateVcsRoot(VirtualFile root, Processor<FilePath> iterator, com.intellij.openapi.vcs.VirtualFileFilter directoryFilter) {
     throw new UnsupportedOperationException()
   }
 
