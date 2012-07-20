@@ -26,7 +26,6 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jetbrains.annotations.Nullable;
 
-import java.beans.PropertyChangeSupport;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,8 +51,6 @@ public abstract class MetaManager {
   private final List<PaletteGroup> myPaletteGroups = new ArrayList<PaletteGroup>();
   private final List<MetaModel> myWrapModels = new ArrayList<MetaModel>();
 
-  private PropertyChangeSupport myPaletteChangeSupport;
-
   private Map<Object, Object> myCache = new HashMap<Object, Object>();
 
   protected MetaManager(Project project, String name) {
@@ -62,45 +59,48 @@ public abstract class MetaManager {
       Document document = new SAXBuilder().build(stream);
       stream.close();
 
-      Element rootElement = document.getRootElement();
-      ClassLoader classLoader = getClass().getClassLoader();
-
-      Map<MetaModel, List<String>> modelToMorphing = new HashMap<MetaModel, List<String>>();
-
-      for (Object element : rootElement.getChildren(META)) {
-        loadModel(classLoader, (Element)element, modelToMorphing);
-      }
-
-      for (Object element : rootElement.getChild(PALETTE).getChildren(GROUP)) {
-        loadGroup((Element)element);
-      }
-
-      Element wrapInElement = rootElement.getChild(WRAP_IN);
-      if (wrapInElement != null) {
-        for (Object element : wrapInElement.getChildren(ITEM)) {
-          Element item = (Element)element;
-          myWrapModels.add(myTag2Model.get(item.getAttributeValue("tag")));
-        }
-      }
-
-      for (Map.Entry<MetaModel, List<String>> entry : modelToMorphing.entrySet()) {
-        MetaModel meta = entry.getKey();
-        List<MetaModel> morphingModels = new ArrayList<MetaModel>();
-
-        for (String tag : entry.getValue()) {
-          MetaModel morphingModel = myTag2Model.get(tag);
-          if (morphingModel != null) {
-            morphingModels.add(morphingModel);
-          }
-        }
-
-        if (!morphingModels.isEmpty()) {
-          meta.setMorphingModels(morphingModels);
-        }
-      }
+      loadDocument(document.getRootElement());
     }
     catch (Throwable e) {
       LOG.error(e);
+    }
+  }
+
+  protected void loadDocument(Element rootElement) throws Exception {
+    ClassLoader classLoader = getClass().getClassLoader();
+
+    Map<MetaModel, List<String>> modelToMorphing = new HashMap<MetaModel, List<String>>();
+
+    for (Object element : rootElement.getChildren(META)) {
+      loadModel(classLoader, (Element)element, modelToMorphing);
+    }
+
+    for (Object element : rootElement.getChild(PALETTE).getChildren(GROUP)) {
+      loadGroup((Element)element);
+    }
+
+    Element wrapInElement = rootElement.getChild(WRAP_IN);
+    if (wrapInElement != null) {
+      for (Object element : wrapInElement.getChildren(ITEM)) {
+        Element item = (Element)element;
+        myWrapModels.add(myTag2Model.get(item.getAttributeValue("tag")));
+      }
+    }
+
+    for (Map.Entry<MetaModel, List<String>> entry : modelToMorphing.entrySet()) {
+      MetaModel meta = entry.getKey();
+      List<MetaModel> morphingModels = new ArrayList<MetaModel>();
+
+      for (String tag : entry.getValue()) {
+        MetaModel morphingModel = myTag2Model.get(tag);
+        if (morphingModel != null) {
+          morphingModels.add(morphingModel);
+        }
+      }
+
+      if (!morphingModels.isEmpty()) {
+        meta.setMorphingModels(morphingModels);
+      }
     }
   }
 
@@ -241,9 +241,5 @@ public abstract class MetaManager {
 
   public List<PaletteGroup> getPaletteGroups() {
     return myPaletteGroups;
-  }
-
-  public void setPaletteChangeSupport(PropertyChangeSupport paletteChangeSupport) {
-    myPaletteChangeSupport = paletteChangeSupport;
   }
 }
