@@ -15,6 +15,8 @@
  */
 package com.intellij.compiler;
 
+import com.intellij.compiler.make.CacheCorruptedException;
+import com.intellij.compiler.make.CachingSearcher;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
@@ -25,5 +27,5 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 public interface DependencyProcessor {
   ExtensionPointName<DependencyProcessor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.compiler.makeDependencyProcessor");
   
-  void processDependencies(CompileContext context, int classQualifiedName);
+  void processDependencies(CompileContext context, int classQualifiedName, CachingSearcher searcher) throws CacheCorruptedException;
 }
