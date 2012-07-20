@@ -252,6 +252,10 @@ public class TemplateListPanel extends JPanel implements Disposable {
         return false;
       }
 
+      if (!newTemplate.getVariables().equals(originalTemplate.getVariables())) {
+        return false;
+      }
+
       if (!areOptionsEqual(newTemplate, originalTemplate)) {
         return false;
       }
