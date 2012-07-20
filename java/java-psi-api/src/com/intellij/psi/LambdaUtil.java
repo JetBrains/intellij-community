@@ -204,7 +204,7 @@ public class LambdaUtil {
           return false;
         }
 
-        if (!resolveResult.getSubstitutor().substitute(methodParameterType).isAssignableFrom(lambdaFormalType)) {
+        if (!resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType)).isAssignableFrom(lambdaFormalType)) {
           return false;
         }
       }
@@ -221,7 +221,7 @@ public class LambdaUtil {
     LOG.assertTrue(method != null);
     PsiType methodReturnType = method.getReturnType();
     if (methodReturnType != null && methodReturnType != PsiType.VOID) {
-      methodReturnType = resolveResult.getSubstitutor().substitute(methodReturnType);
+      methodReturnType = resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodReturnType));
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
         final PsiCodeBlock block = (PsiCodeBlock)body;
