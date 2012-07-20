@@ -124,6 +124,17 @@ public class Variable implements Cloneable {
     return result;
   }
 
+  @Override
+  public String toString() {
+    return "Variable{" +
+           "myName='" + myName + '\'' +
+           ", myAlwaysStopAt=" + myAlwaysStopAt +
+           ", myExpressionString='" + myExpressionString + '\'' +
+           ", myDefaultValueString='" + myDefaultValueString + '\'' +
+           ", mySkipOnStart=" + mySkipOnStart +
+           '}';
+  }
+
   public boolean skipOnStart() {
     return mySkipOnStart;
   }
