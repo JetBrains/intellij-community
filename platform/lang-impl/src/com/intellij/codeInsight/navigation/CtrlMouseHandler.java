@@ -622,19 +622,21 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       @Override
       public void run() {
         final Ref<String> fullTextRef = new Ref<String>();
+        final Ref<String> qualifiedNameRef = new Ref<String>();
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            fullTextRef.set(provider.generateDoc(anchorElement, originalElement)); 
+            fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
+            if (anchorElement instanceof PsiQualifiedNamedElement) {
+              qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
+            }
           }
         });
         String fullText = fullTextRef.get();
         if (fullText == null) {
           return;
         }
-        String qName = anchorElement instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)anchorElement).getQualifiedName()
-                                                                         : null;
-        final String updatedText = DocPreviewUtil.buildPreview(header, qName, fullText);
+        final String updatedText = DocPreviewUtil.buildPreview(header, qualifiedNameRef.get(), fullText);
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
