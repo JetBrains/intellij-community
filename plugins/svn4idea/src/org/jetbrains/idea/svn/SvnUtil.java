@@ -48,6 +48,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.*;
 
@@ -683,7 +684,9 @@ public class SvnUtil {
 
   public static byte[] decode(final Charset charset, final byte[] buffer) {
     if (charset != null && ! CharsetToolkit.UTF8_CHARSET.equals(charset)) {
-      return CharsetToolkit.UTF8_CHARSET.encode(charset.decode(ByteBuffer.wrap(buffer))).array();
+      final CharBuffer decoded = charset.decode(ByteBuffer.wrap(buffer));
+      final ByteBuffer byteBuffer = CharsetToolkit.UTF8_CHARSET.encode(decoded);
+      return ArrayUtil.realloc(byteBuffer.array(), byteBuffer.remaining());
     }
     return buffer;
   }
