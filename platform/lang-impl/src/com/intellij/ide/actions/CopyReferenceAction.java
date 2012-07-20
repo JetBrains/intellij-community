@@ -122,7 +122,8 @@ public class CopyReferenceAction extends AnAction {
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    boolean enabled = editor != null && (FileDocumentManager.getInstance().getFile(editor.getDocument()) != null || getElementToCopy(editor, dataContext) != null);
+    boolean enabled = (editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null) ||
+                      getElementToCopy(editor, dataContext) != null;
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(enabled);
@@ -169,7 +170,7 @@ public class CopyReferenceAction extends AnAction {
   }
 
   @Nullable
-  private static PsiElement getElementToCopy(final Editor editor, final DataContext dataContext) {
+  private static PsiElement getElementToCopy(@Nullable final Editor editor, final DataContext dataContext) {
     PsiElement element = null;
     if (editor != null) {
       PsiReference reference = TargetElementUtilBase.findReference(editor);
