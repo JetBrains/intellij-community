@@ -11,19 +11,22 @@ import com.intellij.util.xmlb.annotations.Attribute;
 public class CompileServerPlugin implements PluginAware {
   public static final ExtensionPointName<CompileServerPlugin> EP_NAME = ExtensionPointName.create("com.intellij.compileServer.plugin");
   private PluginDescriptor myPluginDescriptor;
-  private String myJarPath;
+  private String myClasspath;
 
   /**
-   * Specifies path to a jar file which should be added to the classpath of the compile server. The path is relative to the plugin 'lib' directory.
-   * In the development mode the name of this file without extension is treated as a module name and the output directory of the module is added to the classpath.
+   * Specifies semicolon-separated list of paths which should be added to the classpath of the compile server. The paths are relative to the plugin 'lib' directory.
+   * <p>
+   * In the development mode the name of each file without extension is treated as a module name and the output directory of the module
+   * is added to the classpath. If such file doesn't exists the jar is searched under 'lib' directory of the plugin sources home directory.
+   * </p>
    */
-  @Attribute("jar-path")
-  public String getJarPath() {
-    return myJarPath;
+  @Attribute("classpath")
+  public String getClasspath() {
+    return myClasspath;
   }
 
-  public void setJarPath(String jarPath) {
-    myJarPath = jarPath;
+  public void setClasspath(String classpath) {
+    myClasspath = classpath;
   }
 
   @Override
