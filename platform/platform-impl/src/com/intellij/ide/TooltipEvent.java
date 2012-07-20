@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 
@@ -25,19 +26,12 @@ public class TooltipEvent {
   private InputEvent myInputEvent;
   private boolean myIsEventInsideBalloon;
 
+  @Nullable
   private AnAction myAction;
+  @Nullable
   private AnActionEvent myActionEvent;
 
-  public TooltipEvent(InputEvent inputEvent) {
-    myInputEvent = inputEvent;
-  }
-
-  public TooltipEvent(InputEvent inputEvent, boolean isInside) {
-    myInputEvent = inputEvent;
-    myIsEventInsideBalloon = isInside;
-  }
-
-  public TooltipEvent(InputEvent inputEvent, boolean isEventInsideBalloon, AnAction action, AnActionEvent actionEvent) {
+  public TooltipEvent(InputEvent inputEvent, boolean isEventInsideBalloon, @Nullable AnAction action, @Nullable AnActionEvent actionEvent) {
     myInputEvent = inputEvent;
     myIsEventInsideBalloon = isEventInsideBalloon;
     myAction = action;
@@ -52,10 +46,12 @@ public class TooltipEvent {
     return myIsEventInsideBalloon;
   }
 
+  @Nullable
   public AnAction getAction() {
     return myAction;
   }
 
+  @Nullable
   public AnActionEvent getActionEvent() {
     return myActionEvent;
   }
