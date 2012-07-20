@@ -44,6 +44,11 @@ public class DocPreviewUtil {
   private static final Comparator<String> REPLACEMENTS_COMPARATOR = new Comparator<String>() {
     @Override
     public int compare(@NotNull String o1, @NotNull String o2) {
+      String shortName1 = extractShortName(o1);
+      String shortName2 = extractShortName(o2);
+      if (!shortName1.equals(shortName2)) {
+        return shortName1.compareTo(shortName2);
+      }
       if (o1.endsWith(o2)) {
         return -1;
       }
@@ -53,6 +58,11 @@ public class DocPreviewUtil {
       else {
         return o1.compareTo(o2);
       }
+    }
+
+    private String extractShortName(@NotNull String s) {
+      int i = s.lastIndexOf('.');
+      return i > 0 && i < s.length() - 1 ? s.substring(i + 1) : s;
     }
   };
 
@@ -79,6 +89,17 @@ public class DocPreviewUtil {
     // Build links info.
     Map<String/*qName*/, String/*address*/> links = new HashMap<String, String>();
     process(fullText, new LinksCollector(links));
+    
+    // Add short names.
+    Map<String, String> toAdd = new HashMap<String, String>();
+    for (Map.Entry<String, String> entry : links.entrySet()) {
+      String key = entry.getKey();
+      int i = key.lastIndexOf('.');
+      if (i > 0 && i < key.length() - 1) {
+        toAdd.put(key.substring(i + 1), entry.getValue());
+      }
+    }
+    links.putAll(toAdd);
     if (qName != null) {
       links.put(qName, DocumentationManager.PSI_ELEMENT_PROTOCOL + qName);
     }
