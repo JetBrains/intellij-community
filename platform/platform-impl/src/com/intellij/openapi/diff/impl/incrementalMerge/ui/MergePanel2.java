@@ -145,7 +145,7 @@ public class MergePanel2 implements DiffViewer {
         toolbar.addAction(new OpenPartialDiffAction(1, 2, AllIcons.Diff.RightDiff));
         toolbar.addAction(new OpenPartialDiffAction(0, 2, AllIcons.Diff.BranchDiff));
         toolbar.addSeparator();
-        toolbar.addAction(new ApplyNonConflicts());
+        toolbar.addAction(new ApplyNonConflicts(myPanel));
         toolbar.addSeparator();
         toolbar.addAction(new MergeToolSettingsAction(getEditors()));
       }
@@ -414,7 +414,7 @@ public class MergePanel2 implements DiffViewer {
     private int[] getPrimaryBeginnings(DiffDividerPaint paint) {
       FragmentSide primarySide = paint.getLeftSide();
       LOG.assertTrue(getEditor(1) == paint.getSides().getEditor(primarySide));
-      return paint.getSides().getLineBlocks().getBeginnings(primarySide);
+      return paint.getSides().getLineBlocks().getBeginnings(primarySide, true);
     }
   }
 

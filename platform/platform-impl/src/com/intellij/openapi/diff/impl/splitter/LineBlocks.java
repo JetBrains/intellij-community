@@ -22,7 +22,7 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeList;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
-import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -61,16 +61,33 @@ public class LineBlocks {
     return getBeginnings(FragmentSide.SIDE1).length;
   }
 
+  /**
+   * Get beginnings of all the changes from the specified side.
+   * @param side Side of the changes.
+   */
   public int[] getBeginnings(FragmentSide side) {
-    IntArrayList result = new IntArrayList(getIntervals(side).length);
+    return getBeginnings(side, false);
+  }
+
+  /**
+   * Get beginnings of the changes from the specified side.
+   * @param side          Side of the changes.
+   * @param unappliedOnly If true - only unapplied changes will be considered, if false - all changes (both applied and not applied).
+   */
+  public int[] getBeginnings(FragmentSide side, boolean unappliedOnly) {
+    List<Integer> result = new ArrayList<Integer>(myDiffs.size());
     int previousBeginning = Integer.MIN_VALUE;
-    Interval[] sideIntervals = getIntervals(side);
-    for (Interval sideInterval : sideIntervals) {
-      int start = sideInterval.getStart();
-      if (start != previousBeginning) result.add(start);
-      previousBeginning = start;
+
+    for (Diff diff : myDiffs) {
+      if (!unappliedOnly || !diff.getDiffType().isApplied()) {
+        Interval interval = diff.getInterval(side);
+        int start = interval.getStart();
+        if (start != previousBeginning) result.add(start);
+        previousBeginning = start;
+      }
     }
-    return result.toArray();
+
+    return ArrayUtil.toIntArray(result);
   }
 
   static int getMaxStartedIndex(Interval[] intervals, int start) {

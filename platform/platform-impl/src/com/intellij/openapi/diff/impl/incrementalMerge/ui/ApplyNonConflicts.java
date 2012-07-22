@@ -22,17 +22,22 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
 import com.intellij.openapi.diff.impl.incrementalMerge.MergeList;
+import com.intellij.openapi.diff.impl.util.DiffPanelOuterComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FilteringIterator;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class ApplyNonConflicts extends AnAction implements DumbAware {
-  public ApplyNonConflicts() {
+  @Nullable private final DiffPanelOuterComponent myDiffPanel;
+
+  public ApplyNonConflicts(@Nullable DiffPanelOuterComponent diffPanel) {
     super(DiffBundle.message("merge.dialog.apply.all.non.conflicting.changes.action.name"), null, AllIcons.Diff.ApplyNotConflicts);
+    myDiffPanel = diffPanel;
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -40,6 +45,9 @@ public class ApplyNonConflicts extends AnAction implements DumbAware {
     List<Change> notConflicts = ContainerUtil.collect(getNotConflicts(dataContext));
     for (Change change : notConflicts) {
       Change.apply(change, MergeList.BRANCH_SIDE);
+    }
+    if (myDiffPanel != null) {
+      myDiffPanel.requestScrollEditors();
     }
   }
 
