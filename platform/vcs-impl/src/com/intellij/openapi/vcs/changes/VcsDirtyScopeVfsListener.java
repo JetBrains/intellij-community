@@ -136,7 +136,7 @@ public class VcsDirtyScopeVfsListener implements ApplicationComponent, BulkFileL
         if (!file.isInLocalFileSystem()) { continue; }
         dirtyFilesAndDirs.add(file, true);
       } else if (event instanceof VFileMoveEvent || event instanceof VFilePropertyChangeEvent) {
-        dirtyFilesAndDirs.add(file, false);
+        dirtyFilesAndDirs.add(file, true);
       }
     }
     // and notify VCSDirtyScopeManager
