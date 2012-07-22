@@ -79,6 +79,8 @@ import java.util.List;
  *         Time: 4:00 PM
  */
 public class ChangesFragmentedDiffPanel implements Disposable {
+  private static final int SHORT_DIFF_DIVIDER_POLYGONS_OFFSET = 2;
+
   private final JPanel myPanel;
   private final Project myProject;
   private final JComponent myParent;
@@ -346,7 +348,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
   }
 
   private DiffPanel createPanel(final boolean horizontal) {
-    final DiffPanel diffPanel = new DiffPanelImpl(null, myProject, false, horizontal){
+    final DiffPanel diffPanel = new DiffPanelImpl(null, myProject, false, horizontal, SHORT_DIFF_DIVIDER_POLYGONS_OFFSET){
       @Override
       protected DiffPanelState createDiffPanelState(@NotNull Disposable parentDisposable) {
         return new FragmentedDiffPanelState(this, myProject, ! horizontal, parentDisposable);

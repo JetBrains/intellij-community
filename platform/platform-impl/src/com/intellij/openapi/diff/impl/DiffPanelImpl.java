@@ -77,7 +77,6 @@ import java.util.List;
 
 public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSidesContainer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.DiffPanelImpl");
-  public static final int DIFF_DIVIDER_POLYGONS_OFFSET = 3;
 
   private final DiffSplitterI mySplitter;
   private final DiffPanelOuterComponent myPanel;
@@ -111,7 +110,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
   private final VisibleAreaListener myVisibleAreaListener;
 
-  public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horizontal) {
+  public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horizontal, int diffDividerPolygonsOffset) {
     myProject = project;
     myIsHorizontal = horizontal;
     myOptions = new DiffPanelOptions(this);
@@ -130,7 +129,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     if (horizontal) {
       mySplitter = new DiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent(),
-                                    new DiffDividerPaint(this, FragmentSide.SIDE1, DIFF_DIVIDER_POLYGONS_OFFSET), myData);
+                                    new DiffDividerPaint(this, FragmentSide.SIDE1, diffDividerPolygonsOffset), myData);
     }
     else {
       mySplitter = new HorizontalDiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent());
