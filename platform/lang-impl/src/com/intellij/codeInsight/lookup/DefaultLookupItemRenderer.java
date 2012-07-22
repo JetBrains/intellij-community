@@ -73,14 +73,9 @@ public class DefaultLookupItemRenderer extends LookupElementRenderer<LookupItem>
       return ((Iconable)o).getIcon(Iconable.ICON_FLAG_VISIBILITY);
     }
 
-    if (o instanceof LookupValueWithPsiElement) {
-      o = ((LookupValueWithPsiElement)o).getElement();
-    }
-    if (o instanceof PsiElement) {
-      final PsiElement element = (PsiElement)o;
-      if (element.isValid()) {
-        return element.getIcon(Iconable.ICON_FLAG_VISIBILITY);
-      }
+    final PsiElement element = item.getPsiElement();
+    if (element != null && element.isValid()) {
+      return element.getIcon(Iconable.ICON_FLAG_VISIBILITY);
     }
     return null;
   }
