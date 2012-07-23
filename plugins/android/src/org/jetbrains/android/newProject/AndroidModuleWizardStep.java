@@ -241,8 +241,12 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   }
 
   public JComponent getComponent() {
-    myAppPropertiesEditor.getApplicationNameField().setText(myModuleBuilder.getName());
+    final String moduleName = myModuleBuilder.getName();
 
+    if (moduleName != null) {
+      myAppPropertiesEditor.getApplicationNameField().setText(moduleName);
+      myAppPropertiesEditor.getPackageNameField().setText(AndroidAppPropertiesEditor.getDefaultPackageNameByModuleName(moduleName));
+    }
     Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     

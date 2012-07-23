@@ -45,11 +45,11 @@ public class AndroidAppPropertiesEditor {
   private JLabel myErrorLabel;
   private JPanel myContentPanel;
 
-  private final String myModuleName;
-
   public AndroidAppPropertiesEditor(String moduleName) {
-    myModuleName = moduleName;
-    myApplicationNameField.setText(moduleName);
+    if (moduleName != null) {
+      myApplicationNameField.setText(moduleName);
+      myPackageNameField.setText(getDefaultPackageNameByModuleName(moduleName));
+    }
     myHelloAndroidCheckBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         updateActivityPanel();
@@ -69,6 +69,31 @@ public class AndroidAppPropertiesEditor {
         myErrorLabel.setText(message);
       }
     });
+  }
+
+  @NotNull
+  public static String getDefaultPackageNameByModuleName(@NotNull String moduleName) {
+    return "com.example." + toIdentifier(moduleName);
+  }
+
+  @NotNull
+  private static String toIdentifier(@NotNull String s) {
+    final StringBuilder result = new StringBuilder();
+
+    for (int i = 0, n = s.length(); i < n; i++) {
+      final char c = s.charAt(i);
+
+      if (Character.isJavaIdentifierPart(c)) {
+        if (i == 0 && !Character.isJavaIdentifierStart(c)) {
+          result.append('_');
+        }
+        result.append(c);
+      }
+      else {
+        result.append('_');
+      }
+    }
+    return result.toString();
   }
 
   public void updateActivityPanel() {
@@ -153,6 +178,10 @@ public class AndroidAppPropertiesEditor {
 
   public JTextField getApplicationNameField() {
     return myApplicationNameField;
+  }
+
+  public JTextField getPackageNameField() {
+    return myPackageNameField;
   }
 
   public JPanel getActivtiyPanel() {

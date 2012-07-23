@@ -51,7 +51,7 @@
               </grid>
             </constraints>
             <properties>
-              <text value="com.example"/>
+              <text value=""/>
             </properties>
           </component>
           <component id="9ff82" class="javax.swing.JCheckBox" binding="myHelloAndroidCheckBox">
