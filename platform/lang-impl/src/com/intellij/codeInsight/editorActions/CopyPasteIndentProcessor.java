@@ -113,12 +113,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
           }
         });
         if (toIndent < 0 || toString.startsWith("\n")) {
-          if (StringUtil.isEmptyOrSpaces(toString) && toString.length() > 0) {
-            toIndent = toString.length();
-          }
-          else {
-            toIndent = caretColumn;
-          }
+          toIndent = caretColumn;
         }
 
         // actual difference in indentation level
