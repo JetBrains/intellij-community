@@ -570,7 +570,7 @@ public abstract class BreakpointPropertiesPanel {
     PsiElement context = breakpoint.getEvaluationElement();
     myPassCountCheckbox.setSelected(breakpoint.COUNT_FILTER_ENABLED);
 
-    myConditionCheckbox.setSelected(breakpoint.CONDITION_ENABLED);
+    myConditionCheckbox.setSelected(breakpoint.CONDITION_ENABLED || breakpoint.getCondition() == null || breakpoint.getCondition().isEmpty());
 
     myConditionCombo.setEnabled(myBreakpoint.CONDITION_ENABLED);
 
