@@ -29,10 +29,7 @@ import org.jdom.IllegalNameException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class MavenJDOMUtil {
   @Nullable
@@ -101,16 +98,13 @@ public class MavenJDOMUtil {
         String name = localName.toString();
         if (StringUtil.isEmptyOrSpaces(name)) return;
 
-        int index = -1;
-        for (int i = stack.size() - 1; i >= 0; i--) {
-          if (stack.get(i).getName().equals(name)) {
-            index = i;
+        for (Iterator<Element> itr = stack.descendingIterator(); itr.hasNext(); ) {
+          Element element = itr.next();
+
+          if (element.getName().equals(name)) {
+            while (stack.removeLast() != element) {}
             break;
           }
-        }
-        if (index == -1) return;
-        while (stack.size() > index) {
-          stack.removeLast();
         }
       }
 
