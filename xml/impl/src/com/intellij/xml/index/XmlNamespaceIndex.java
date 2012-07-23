@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -163,8 +164,11 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   }
 
   @Nullable
-  public static XmlFile guessDtd(String dtdFileName, @NotNull PsiFile baseFile) {
+  public static XmlFile guessDtd(String dtdUri, @NotNull PsiFile baseFile) {
 
+    if (!dtdUri.endsWith(".dtd")) return null;
+
+    String dtdFileName = new File(dtdUri).getName();
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
       list = getResourcesByNamespace(dtdFileName, baseFile.getProject(), ModuleUtilCore.findModuleForPsiElement(baseFile));
     return list.isEmpty() ? null : (XmlFile)baseFile.getManager().findFile(list.get(0).getFile());
