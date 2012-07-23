@@ -29,7 +29,6 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <margin top="2" left="0" bottom="2" right="2"/>
               <selected value="true"/>
               <text resource-bundle="messages/IdeBundle" key="checkbox.reopen.last.project.on.startup"/>
             </properties>
@@ -44,7 +43,6 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <margin top="2" left="0" bottom="2" right="2"/>
               <text resource-bundle="messages/IdeBundle" key="checkbox.confirm.application.exit"/>
             </properties>
           </component>
@@ -53,7 +51,6 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <margin top="2" left="0" bottom="2" right="2"/>
               <text value="Confirm window to open project in"/>
             </properties>
           </component>
@@ -75,7 +72,6 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <margin top="2" left="0" bottom="2" right="2"/>
               <selected value="true"/>
               <text resource-bundle="messages/IdeBundle" key="checkbox.synchronize.files.on.frame.activation"/>
             </properties>
@@ -95,7 +91,6 @@
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <margin top="2" left="0" bottom="2" right="2"/>
               <selected value="true"/>
               <text resource-bundle="messages/IdeBundle" key="checkbox.save.files.on.frame.deactivation"/>
             </properties>
@@ -105,7 +100,6 @@
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <margin top="2" left="0" bottom="2" right="2"/>
               <text resource-bundle="messages/IdeBundle" key="checkbox.save.files.automatically"/>
             </properties>
           </component>
@@ -137,9 +131,6 @@
                   <columns value="10"/>
                   <margin top="0" left="2" bottom="0" right="4"/>
                 </properties>
-                <clientProperties>
-                  <caretAspectRatio class="java.lang.Float" value="0.04"/>
-                </clientProperties>
               </component>
             </children>
           </grid>
