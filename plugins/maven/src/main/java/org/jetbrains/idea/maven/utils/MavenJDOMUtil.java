@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import org.jdom.Element;
+import org.jdom.IllegalNameException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -79,7 +80,13 @@ public class MavenJDOMUtil {
         String name = localName.toString();
         if (StringUtil.isEmptyOrSpaces(name)) return ProcessingOrder.TAGS;
 
-        Element newElement = new Element(name);
+        Element newElement;
+        try {
+          newElement = new Element(name);
+        }
+        catch (IllegalNameException e) {
+          newElement = new Element("invalidName");
+        }
 
         Element parent = stack.isEmpty() ? null : stack.getLast();
         if (parent == null) {
