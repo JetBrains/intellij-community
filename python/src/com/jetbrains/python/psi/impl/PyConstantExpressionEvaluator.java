@@ -21,24 +21,37 @@ public class PyConstantExpressionEvaluator {
       final PyNumericLiteralExpression numericLiteral = (PyNumericLiteralExpression)expr;
       if (numericLiteral.isIntegerLiteral()) {
         final BigInteger value = numericLiteral.getBigIntegerValue();
-        if ((long) value.intValue() == value.longValue()) {
+        if ((long)value.intValue() == value.longValue()) {
           return value.intValue();
         }
       }
     }
-    if (expr instanceof PyBoolLiteralExpression){
+    if (expr instanceof PyBoolLiteralExpression) {
       return ((PyBoolLiteralExpression)expr).getValue();
     }
-    if (expr instanceof PyReferenceExpression){
+    if (expr instanceof PyReferenceExpression) {
       final String text = expr.getText();
-      if ("true".equals(text) || "True".equals(text)){
+      if ("true".equals(text) || "True".equals(text)) {
         return true;
       }
-      if ("false".equals(text) || "False".equals(text)){
+      if ("false".equals(text) || "False".equals(text)) {
         return false;
       }
     }
     return null;
   }
 
+  public static boolean evaluateBoolean(final PyExpression expr, boolean defaultValue) {
+    Object result = evaluate(expr);
+    if (result instanceof Boolean) {
+      return (Boolean)result;
+    }
+    else {
+      return defaultValue;
+    }
+  }
+
+  public static boolean evaluateBoolean(final PyExpression expr) {
+    return evaluateBoolean(expr, true);
+  }
 }

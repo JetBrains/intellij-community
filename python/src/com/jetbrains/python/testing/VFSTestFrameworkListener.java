@@ -8,7 +8,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -56,9 +55,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
-          VirtualFile vFile = event.getFile();
-          if (vFile == null) continue;
-          String path = vFile.getUrl().toLowerCase();
+          String path = event.getPath();
           boolean containsNose = path.contains(PyNames.NOSE_TEST);
           boolean containsPy = path.contains("py-1") || path.contains(PyNames.PY_TEST);
           boolean containsAt = path.contains(PyNames.AT_TEST);
@@ -66,7 +63,7 @@ public class VFSTestFrameworkListener implements ApplicationComponent, Persisten
           SDKLOOP:
           for (Sdk sdk : PythonSdkType.getAllSdks()) {
             for (String root : sdk.getRootProvider().getUrls(OrderRootType.CLASSES)) {
-              if (vFile.getUrl().contains(root)) {
+              if (path.contains(root)) {
                 if (containsNose) {
                   updateTestFrameworks(sdk.getHomePath(), NOSETESTSEARCHER, PyNames.NOSE_TEST);
                   break SDKLOOP;
