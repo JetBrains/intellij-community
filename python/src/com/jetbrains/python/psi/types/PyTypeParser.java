@@ -178,11 +178,15 @@ public class PyTypeParser {
       for (PyFromImportStatement fromImportStatement : fromImports) {
         final PyImportElement[] elements = fromImportStatement.getImportElements();
         for (PyImportElement element : elements) {
-          final PyReferenceExpression referenceExpression = element.getImportReferenceExpression();
-          if (referenceExpression == null) continue;
-          final PyType referenceType = referenceExpression.getType(TypeEvalContext.fast());
-          if (referenceType instanceof PyClassType) {
-            return referenceType;
+          final String visibleName = element.getVisibleName();
+          if (type.equals(visibleName)) {
+            final PyQualifiedName importSourceQName = fromImportStatement.getImportSourceQName();
+            if (importSourceQName != null) {
+              String qName = importSourceQName.toString() + "." + visibleName;
+              final PyType pyType = getTypeFromQName(anchor, qName, whole, types, fullRanges, offset);
+              if (pyType != null)
+                return pyType;
+            }
           }
         }
       }
@@ -196,21 +200,29 @@ public class PyTypeParser {
         return t;
       }
     }
-    if (CharMatcher.JAVA_LETTER_OR_DIGIT.or(CharMatcher.is('.')).or(CharMatcher.is('_')).matchesAllOf(type)) {
-      final List<TextRange> ranges = splitRanges(type, ".");
-      final TextRange classRange = !ranges.isEmpty() ? ranges.remove(ranges.size() - 1) : new TextRange(0, type.length());
+    return getTypeFromQName(anchor, type, whole, types, fullRanges, offset);
+  }
+
+  @Nullable
+  public static PyType getTypeFromQName(@NotNull PsiElement anchor, @NotNull String qName, TextRange whole,
+                                        @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType,
+                                        TextRange> fullRanges, int offset) {
+    final PsiFile anchorFile = anchor.getContainingFile();
+    if (CharMatcher.JAVA_LETTER_OR_DIGIT.or(CharMatcher.is('.')).or(CharMatcher.is('_')).matchesAllOf(qName)) {
+      final List<TextRange> ranges = splitRanges(qName, ".");
+      final TextRange classRange = !ranges.isEmpty() ? ranges.remove(ranges.size() - 1) : new TextRange(0, qName.length());
       PyType moduleType = null;
       if (!ranges.isEmpty()) {
         final TextRange first = ranges.get(0);
         for (TextRange range : ranges) {
-          final PyQualifiedName moduleName = PyQualifiedName.fromDottedString(first.union(range).substring(type));
+          final PyQualifiedName moduleName = PyQualifiedName.fromDottedString(first.union(range).substring(qName));
           if (anchorFile instanceof PyFile) {
             moduleType = new PyImportedModuleType(new PyImportedModule(null, (PyFile)anchorFile, moduleName));
             types.put(range.shiftRight(offset), moduleType);
           }
         }
       }
-      final String shortName = classRange.substring(type);
+      final String shortName = classRange.substring(qName);
       if (moduleType != null) {
         final PyResolveContext context = PyResolveContext.defaultContext();
         final List<? extends RatedResolveResult> results = moduleType.resolveMember(shortName, null, AccessDirection.READ, context);
@@ -230,7 +242,7 @@ public class PyTypeParser {
       }
       final Collection<PyClass> classes = PyClassNameIndex.find(shortName, anchor.getProject(), true);
       for (PyClass aClass : classes) {
-        if (type.equals(aClass.getQualifiedName())) {
+        if (qName.equals(aClass.getQualifiedName())) {
           final PyType t = new PyClassType(aClass, false);
           types.put(classRange.shiftRight(offset), t);
           fullRanges.put(t, whole);
