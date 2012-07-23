@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.vfs.impl.win32;
+package com.intellij.openapi.util.io.win32;
 
 import org.intellij.lang.annotations.MagicConstant;
 
 /**
+ * Do not use this class directly.
+ *
  * @author Dmitry Avdeev
+ * @since 12.0
  */
 public class FileInfo {
-
-  static {
-    initIDs();
-  }
-
-  private static native void initIDs();
+  public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
+  public static final int FILE_ATTRIBUTE_HIDDEN = 0x0002;
+  public static final int FILE_ATTRIBUTE_DIRECTORY = 0x0010;
+  public static final int FILE_ATTRIBUTE_DEVICE = 0x0040;
+  public static final int FILE_ATTRIBUTE_REPARSE_POINT = 0x0400;  // is set only for symlinks
 
   public String name;
-
-  @MagicConstant(flagsFromClass = Win32Kernel.class)
+  @MagicConstant(flagsFromClass = FileInfo.class)
   public int attributes;
-
   public long timestamp;
   public long length;
 
