@@ -69,11 +69,32 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         cat.append("class ").append(cls_name).append("\n");
         // It would be nice to have class import info here, but we don't know the ctrl+hovered reference and context
       }
-      return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1)).toString();
+      String summary = "";
+      final PyStringLiteralExpression docStringExpression = func.getDocStringExpression();
+      if (docStringExpression != null) {
+        final StructuredDocString docString = StructuredDocString.parse(docStringExpression.getStringValue());
+        if (docString != null)
+          summary = docString.getSummary();
+      }
+      return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1))
+        .toString() + summary;
     }
     else if (element instanceof PyClass) {
       PyClass cls = (PyClass)element;
-      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString();
+      String summary = "";
+      PyStringLiteralExpression docStringExpression = cls.getDocStringExpression();
+      if (docStringExpression == null) {
+        final PyFunction initOrNew = cls.findInitOrNew(false);
+        if (initOrNew != null)
+          docStringExpression = initOrNew.getDocStringExpression();
+      }
+      if (docStringExpression != null) {
+        final StructuredDocString docString = StructuredDocString.parse(docStringExpression.getStringValue());
+        if (docString != null)
+          summary = docString.getSummary();
+      }
+
+      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString() + summary;
     }
     else if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
       return describeExpression((PyExpression)element, originalElement);
