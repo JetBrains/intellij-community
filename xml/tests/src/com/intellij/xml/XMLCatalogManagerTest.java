@@ -42,8 +42,14 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
     assertTrue(filePath, new File(new URI(filePath)).exists());
   }
 
-  public void testResolve() throws Exception {
+  public void testResolvePublic() throws Exception {
     String resolve = getManager().resolve("-//W3C//DTD XHTML 1.0 Strict//EN");
+    assertNotNull(resolve);
+    assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
+  }
+
+  public void testResolveSystem() throws Exception {
+    String resolve = getManager().resolve("http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd");
     assertNotNull(resolve);
     assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
   }

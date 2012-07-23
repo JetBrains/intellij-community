@@ -17,6 +17,7 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.apache.xml.resolver.Catalog;
 import org.apache.xml.resolver.CatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +74,10 @@ public class XMLCatalogManager {
   @Nullable
   public String resolve(String uri) {
     try {
-      return myManager.getCatalog().resolvePublic(uri, null);
+      Catalog catalog = myManager.getCatalog();
+      if (catalog == null) return null;
+      String resolved = catalog.resolveSystem(uri);
+      return resolved == null ? catalog.resolvePublic(uri, null) : resolved;
     }
     catch (IOException e) {
       LOG.warn(e);
