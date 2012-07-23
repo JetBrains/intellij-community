@@ -77,7 +77,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           summary = docString.getSummary();
       }
       return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1))
-        .toString() + summary;
+        .toString() + "\n" + summary;
     }
     else if (element instanceof PyClass) {
       PyClass cls = (PyClass)element;
@@ -94,7 +94,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           summary = docString.getSummary();
       }
 
-      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString() + summary;
+      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString() + "\n" + summary;
     }
     else if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
       return describeExpression((PyExpression)element, originalElement);

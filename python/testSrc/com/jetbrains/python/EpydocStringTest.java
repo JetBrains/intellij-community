@@ -64,7 +64,7 @@ public class EpydocStringTest extends UsefulTestCase {
     assertOrderedEquals(params, "euid", "egid", "function", "*args", "**kwargs");
     assertEquals("effective UID used to call the function.", docString.getParamDescription("euid"));
     assertEquals("effective GID used to call the function.", docString.getParamDescription("egid"));
-    assertEquals("arguments passed to function", docString.getParamDescription("args"));
+    assertEquals("arguments passed to function.", docString.getParamDescription("args"));
   }
 
   public void testInlineMarkupToHTML() {
