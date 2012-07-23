@@ -35,15 +35,16 @@ import java.awt.event.MouseListener;
 /**
 * @author Konstantin Bulenkov
 */
-public class MacTreeUI extends BasicTreeUI {
-  private static final Color DECORATED_ROW_BG_COLOR = new Color(242, 245, 249);
+public class WideSelectionTreeUI extends BasicTreeUI {
   @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
   @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
 
   private static final Icon TREE_COLLAPSED_ICON = UIUtil.getTreeCollapsedIcon();
   private static final Icon TREE_EXPANDED_ICON = UIUtil.getTreeExpandedIcon();
-  private static final Icon TREE_SELECTED_COLLAPSED_ICON = AllIcons.Mac.Tree_white_right_arrow;
-  private static final Icon TREE_SELECTED_EXPANDED_ICON = AllIcons.Mac.Tree_white_down_arrow;
+  private static final Icon TREE_SELECTED_COLLAPSED_ICON = UIUtil.isUnderAquaBasedLookAndFeel() ? AllIcons.Mac.Tree_white_right_arrow
+                                                                                                : TREE_COLLAPSED_ICON;
+  private static final Icon TREE_SELECTED_EXPANDED_ICON = UIUtil.isUnderAquaBasedLookAndFeel() ? AllIcons.Mac.Tree_white_down_arrow
+                                                                                               : TREE_EXPANDED_ICON;
 
   private static final Border LIST_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListSelectionBackgroundPainter");
@@ -54,11 +55,11 @@ public class MacTreeUI extends BasicTreeUI {
   private boolean myAlwaysPaintRowBackground;
   private boolean myOldRepaintAllRowValue;
 
-  public MacTreeUI() {
+  public WideSelectionTreeUI() {
     this(true, true);
   }
 
-  public MacTreeUI(final boolean wideSelection, boolean alwaysPaintRowBackground) {
+  public WideSelectionTreeUI(final boolean wideSelection, boolean alwaysPaintRowBackground) {
     myWideSelection = wideSelection;
     myAlwaysPaintRowBackground = alwaysPaintRowBackground;
   }
@@ -214,7 +215,9 @@ public class MacTreeUI extends BasicTreeUI {
                                           final boolean isExpanded,
                                           final boolean hasBeenExpanded,
                                           final boolean isLeaf) {
-
+    if (!UIUtil.isUnderAquaBasedLookAndFeel()) {
+      super.paintHorizontalPartOfLeg(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
+    }
   }
 
   @Override
@@ -224,10 +227,16 @@ public class MacTreeUI extends BasicTreeUI {
 
   @Override
   protected void paintVerticalPartOfLeg(final Graphics g, final Rectangle clipBounds, final Insets insets, final TreePath path) {
+    if (!UIUtil.isUnderAquaBasedLookAndFeel()) {
+      super.paintVerticalPartOfLeg(g, clipBounds, insets, path);
+    }
   }
 
   @Override
   protected void paintHorizontalLine(Graphics g, JComponent c, int y, int left, int right) {
+    if (!UIUtil.isUnderAquaBasedLookAndFeel()) {
+      super.paintHorizontalLine(g, c, y, left, right);
+    }
   }
 
   public boolean isWideSelection() {
@@ -274,15 +283,15 @@ public class MacTreeUI extends BasicTreeUI {
         }
       }
       else {
-        Color bg = tree.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
-        if (!selected) {
-          bg = background;
-        }
+        //Color bg = tree.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
+        //if (!selected) {
+        //  bg = background;
+        //}
 
-        if (myAlwaysPaintRowBackground || selected) {
-          rowGraphics.setColor(bg);
-          rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
-        }
+        //if (/*myAlwaysPaintRowBackground || */selected) {
+        //  rowGraphics.setColor(bg);
+        //  rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
+        //}
       }
 
       if (shouldPaintExpandControl(path, row, isExpanded, hasBeenExpanded, isLeaf)) {
@@ -299,6 +308,9 @@ public class MacTreeUI extends BasicTreeUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
+    if (myAlwaysPaintRowBackground && myWideSelection) {
+      paintSelectedRows(g, ((JTree)c));
+    }
     if (myWideSelection) {
       final int containerWidth = tree.getParent() instanceof JViewport ? tree.getParent().getWidth() : tree.getWidth();
       final int xOffset = tree.getParent() instanceof JViewport ? ((JViewport)tree.getParent()).getViewPosition().x : 0;
@@ -315,6 +327,23 @@ public class MacTreeUI extends BasicTreeUI {
     }
 
     super.paint(g, c);
+  }
+
+  protected void paintSelectedRows(Graphics g, JTree tr) {
+    final Rectangle rect = tr.getVisibleRect();
+    final int firstVisibleRow = tr.getClosestRowForLocation(rect.x, rect.y);
+    final int lastVisibleRow = tr.getClosestRowForLocation(rect.x, rect.y + rect.height);
+
+    for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
+      if (tr.getSelectionModel().isRowSelected(row)) {
+          final Rectangle bounds = tr.getRowBounds(row);
+          Color color = tr.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
+          if (color != null) {
+            g.setColor(color);
+            g.fillRect(0, bounds.y, tr.getWidth(), bounds.height);
+          }
+      }
+    }
   }
 
   @Override

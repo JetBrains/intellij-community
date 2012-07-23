@@ -27,7 +27,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.MacTreeUI;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,8 +96,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setUI(final TreeUI ui) {
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
-      if (!(ui instanceof MacTreeUI) && UIUtil.isUnderAquaBasedLookAndFeel()) {
-        actualUI = new MacTreeUI(isMacWideSelection(), !isFileColorsEnabled());
+      if (!(ui instanceof WideSelectionTreeUI) /*&& UIUtil.isUnderAquaBasedLookAndFeel()*/) {
+        actualUI = new WideSelectionTreeUI(isMacWideSelection(), !isFileColorsEnabled());
       }
     }
     super.setUI(actualUI);

@@ -54,4 +54,5 @@ public abstract class DebuggerManagerEx extends DebuggerManager {
                                                        boolean pollConnection
   ) throws ExecutionException;
 
+  public abstract DebuggerSession attachVirtualMachine(DebugEnvironment environment) throws ExecutionException;
 }
