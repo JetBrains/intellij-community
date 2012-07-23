@@ -1163,6 +1163,17 @@ public class StringUtil extends StringUtilRt {
     return join((Iterable<T>)items, f, separator);
   }
 
+  public static String join(@NotNull Iterable<?> items, @NotNull @NonNls String separator) {
+    StringBuilder result = new StringBuilder();
+    for (Object item : items) {
+      result.append(item).append(separator);
+    }
+    if (result.length() > 0) {
+      result.setLength(result.length() - 1);
+    }
+    return result.toString();
+  }
+  
   @NotNull
   public static <T> String join(@NotNull Iterable<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();

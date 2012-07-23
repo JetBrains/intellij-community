@@ -177,6 +177,8 @@
   <applicationService serviceInterface="com.intellij.openapi.roots.impl.libraries.JarDirectoryWatcherFactory"
                       serviceImplementation="com.intellij.openapi.roots.impl.libraries.JarDirectoryWatcherFactoryImpl"/>
 
+  <applicationService serviceImplementation="com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine"/>
+
   <projectService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
                   serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
 

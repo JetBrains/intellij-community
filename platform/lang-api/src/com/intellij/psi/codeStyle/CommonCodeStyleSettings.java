@@ -20,7 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
-import com.intellij.psi.codeStyle.arrangement.ArrangementRuleUtil;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -120,6 +120,16 @@ public class CommonCodeStyleSettings {
     return myIndentOptions;
   }
 
+  @NotNull
+  public List<ArrangementRule> getArrangementRules() {
+    return myArrangementRules;
+  }
+
+  public void setArrangementRules(@NotNull List<ArrangementRule> rules) {
+    myArrangementRules.clear();
+    myArrangementRules.addAll(rules);
+  }
+
   public CommonCodeStyleSettings clone(CodeStyleSettings rootSettings) {
     assert rootSettings != null;
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
@@ -168,10 +178,7 @@ public class CommonCodeStyleSettings {
   private static void copyFieldValue(final Object from, Object to, final Field field)
     throws IllegalAccessException {
     Class<?> fieldType = field.getType();
-    if (fieldType.isPrimitive()) {
-      field.set(to, field.get(from));
-    }
-    else if (fieldType.equals(String.class)) {
+    if (fieldType.isPrimitive() || fieldType.equals(String.class)) {
       field.set(to, field.get(from));
     }
     else {
@@ -202,7 +209,7 @@ public class CommonCodeStyleSettings {
     }
     Element arrangementRulesContainer = element.getChild(ARRANGEMENT_ELEMENT_NAME);
     if (arrangementRulesContainer != null) {
-      myArrangementRules.addAll(ArrangementRuleUtil.readExternal(arrangementRulesContainer, myLanguage));
+      myArrangementRules.addAll(ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage));
     }
   }
 
@@ -224,7 +231,7 @@ public class CommonCodeStyleSettings {
 
     if (!myArrangementRules.isEmpty()) {
       Element container = new Element(ARRANGEMENT_ELEMENT_NAME);
-      ArrangementRuleUtil.writeExternal(container, myArrangementRules, myLanguage);
+      ArrangementUtil.writeExternal(container, myArrangementRules, myLanguage);
       if (!container.getChildren().isEmpty()) {
         element.addContent(container);
       }

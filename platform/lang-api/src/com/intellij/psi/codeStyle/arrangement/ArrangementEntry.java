@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,4 +67,15 @@ public interface ArrangementEntry {
    *            to move rearranged entries
    */
   int getEndOffset();
+
+  /**
+   * Sometimes we want particular entry to serve just as another entries holder. For example, we might want to arrange
+   * anonymous class entries but don't want the class itself, say, to be arranged with normal inner classes.
+   * <p/>
+   * That is achieved for entries which return <code>'false'</code> from this method call.
+   * 
+   * @return    <code>true</code> if current entry can be {@link ArrangementEntryMatcher#isMatched(ArrangementEntry) matched};
+   *            <code>false</code> otherwise
+   */
+  boolean canBeMatched();
 }

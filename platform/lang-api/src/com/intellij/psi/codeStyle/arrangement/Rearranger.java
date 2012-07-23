@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.LanguageExtension;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -33,15 +34,16 @@ import java.util.Collection;
  */
 public interface Rearranger<E extends ArrangementEntry> {
 
-  LanguageExtension<Rearranger<?>> EXTENSION = new LanguageExtension<Rearranger<?>>("com.intellij.rearranger.facade");
+  LanguageExtension<Rearranger<?>> EXTENSION = new LanguageExtension<Rearranger<?>>("com.intellij.lang.rearranger");
 
   /**
    * Allows to build rearranger-interested data for the given element.
    *
-   * @param root  root element which children should be parsed for the rearrangement
-   * @param range target offsets range to use for filtering given root's children
-   * @return given root's children that are subject for further rearrangement
+   * @param root      root element which children should be parsed for the rearrangement
+   * @param document  document which corresponds to the target PSI tree
+   * @param ranges    target offsets ranges to use for filtering given root's children
+   * @return       given root's children which are subject for further rearrangement
    */
   @NotNull
-  Collection<E> parse(@NotNull PsiElement root, @NotNull TextRange range);
+  Collection<E> parse(@NotNull PsiElement root, @NotNull Document document, @NotNull Collection<TextRange> ranges);
 }

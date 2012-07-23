@@ -17,7 +17,7 @@ package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.ArrangementRuleSerializer;
-import com.intellij.psi.codeStyle.arrangement.ArrangementRuleUtil;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.DefaultArrangementRuleSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -48,13 +48,13 @@ public class DefaultArrangementRuleSerializerTest {
   
   @Test
   public void compositeMatchers() {
-    doTest(ArrangementRuleUtil.or(
+    doTest(ArrangementUtil.or(
       new ByTypeArrangementEntryMatcher(ArrangementEntryType.FIELD),
       new ByTypeArrangementEntryMatcher(ArrangementEntryType.METHOD))
     );
     
-    doTest(ArrangementRuleUtil.and(
-      ArrangementRuleUtil.or(
+    doTest(ArrangementUtil.and(
+      ArrangementUtil.or(
         new ByTypeArrangementEntryMatcher(ArrangementEntryType.METHOD),
         new ByNameArrangementEntryMatcher("get*")
       )
