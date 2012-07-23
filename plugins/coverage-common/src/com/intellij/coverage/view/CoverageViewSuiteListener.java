@@ -1,8 +1,6 @@
 package com.intellij.coverage.view;
 
-import com.intellij.coverage.CoverageDataManager;
-import com.intellij.coverage.CoverageSuiteListener;
-import com.intellij.coverage.CoverageSuitesBundle;
+import com.intellij.coverage.*;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -29,7 +27,15 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
     final CoverageSuitesBundle suitesBundle = myDataManager.getCurrentSuitesBundle();
     final CoverageViewManager viewManager = CoverageViewManager.getInstance(myProject);
     if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle, viewManager.getState()) != null) {
-      viewManager.createToolWindow(CoverageViewManager.getDisplayName(suitesBundle));
+      viewManager.createToolWindow(CoverageViewManager.getDisplayName(suitesBundle), shouldActivate(suitesBundle));
     }
+  }
+
+  private static boolean shouldActivate(CoverageSuitesBundle suitesBundle) {
+    final CoverageSuite[] suites = suitesBundle.getSuites();
+    for (CoverageSuite suite : suites) {
+      if (!(suite.getCoverageDataFileProvider() instanceof DefaultCoverageFileProvider)) return false; 
+    }
+    return true;
   }
 }
