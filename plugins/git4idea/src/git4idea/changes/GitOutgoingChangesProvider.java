@@ -92,7 +92,12 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     if (searcher.getLocal() == null || searcher.getRemote() == null) {
       return new ArrayList<Change>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
     }
-    final GitRevisionNumber base = searcher.getLocal().getMergeBase(myProject, vcsRoot, searcher.getRemote());
+    final GitRevisionNumber base;
+    try {
+      base = searcher.getLocal().getMergeBase(myProject, vcsRoot, searcher.getRemote());
+    } catch (VcsException e) {
+      return new ArrayList<Change>(localChanges);
+    }
     if (base == null) {
       return new ArrayList<Change>(localChanges); // no information, better strict approach (see getOutgoingChanges() code)
     }
