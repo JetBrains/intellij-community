@@ -672,7 +672,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       });
     }
 
-    steps.add(new AndroidModuleWizardStep(this, wizardContext));
+    steps.add(new AndroidModuleWizardStep(this, wizardContext, modulesProvider));
     return steps.toArray(new ModuleWizardStep[steps.size()]);
   }
 
