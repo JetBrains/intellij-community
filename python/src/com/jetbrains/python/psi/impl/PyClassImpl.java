@@ -998,7 +998,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     else {
-      PyResolveUtil.scopeCrawlUp(processor, this, this);
+      PyResolveUtil.scopeCrawlUp(processor, this, null, this);
     }
     return true;
   }

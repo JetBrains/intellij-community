@@ -103,8 +103,9 @@ public class PyResolveUtil {
     scopeCrawlUp(processor, owner, originalOwner, name, roof);
   }
 
-  public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull ScopeOwner scopeOwner, @Nullable PsiElement roof) {
-    scopeCrawlUp(processor, scopeOwner, scopeOwner, null, roof);
+  public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull ScopeOwner scopeOwner, @Nullable String name,
+                                  @Nullable PsiElement roof) {
+    scopeCrawlUp(processor, scopeOwner, scopeOwner, name, roof);
   }
 
   private static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @Nullable ScopeOwner scopeOwner,
