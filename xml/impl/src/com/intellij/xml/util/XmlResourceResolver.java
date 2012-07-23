@@ -144,6 +144,9 @@ public class XmlResourceResolver implements XMLEntityResolver {
         // autodetection
         if (psiFile == null) {
           psiFile = XmlNamespaceIndex.guessSchema(systemId, tagName, version, myFile);
+          if (psiFile == null) {
+            psiFile = XmlNamespaceIndex.guessDtd(systemId, myFile);
+          }
         }
 
         if (psiFile == null && baseSystemId != null) {

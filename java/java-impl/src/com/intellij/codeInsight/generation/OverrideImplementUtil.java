@@ -266,7 +266,7 @@ public class OverrideImplementUtil {
       
       PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();
       PsiMethod result = (PsiMethod)factory.createClass("Dummy").add(method1);
-      if (result instanceof PsiAnnotationMethod) {
+      if (PsiUtil.isAnnotationMethod(result)) {
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)result).getDefaultValue();
         if (defaultValue != null) {
           PsiElement defaultKeyword = defaultValue;

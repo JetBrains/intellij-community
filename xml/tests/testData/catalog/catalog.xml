@@ -4,5 +4,6 @@
 
   <public publicId="-//W3C//DTD XHTML 1.0 Strict//EN"
     uri="xhtml1-strict.dtd"/>
-
+  <system systemId="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+            uri="xhtml1-strict.dtd"/>
 </catalog>

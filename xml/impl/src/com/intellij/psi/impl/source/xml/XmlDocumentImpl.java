@@ -54,7 +54,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -295,10 +294,9 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     
     if (dtdUri != null && dtdUri.length() > 0){
       XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
-      if (xmlFile == null && dtdUri.endsWith(".dtd")) {
+      if (xmlFile == null) {
         // try to auto-detect it
-        String name = new File(dtdUri).getName();
-        xmlFile = XmlNamespaceIndex.guessDtd(name, containingFile);
+        xmlFile = XmlNamespaceIndex.guessDtd(dtdUri, containingFile);
       }
       final String schemaFilePath = getFilePathForLogging(xmlFile);
       

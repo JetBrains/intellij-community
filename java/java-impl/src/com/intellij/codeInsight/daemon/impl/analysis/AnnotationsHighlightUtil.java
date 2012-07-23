@@ -188,7 +188,7 @@ public class AnnotationsHighlightUtil {
       PsiMethod[] annotationMethods = aClass.getMethods();
       List<String> missed = new ArrayList<String>();
       for (PsiMethod method : annotationMethods) {
-        if (method instanceof PsiAnnotationMethod) {
+        if (PsiUtil.isAnnotationMethod(method)) {
           PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
           if (annotationMethod.getDefaultValue() == null) {
             if (!names.contains(annotationMethod.getName())) {
@@ -216,7 +216,7 @@ public class AnnotationsHighlightUtil {
   @Nullable
   public static HighlightInfo checkConstantExpression(PsiExpression expression) {
     final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiAnnotationMethod || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
+    if (PsiUtil.isAnnotationMethod(parent) || parent instanceof PsiNameValuePair || parent instanceof PsiArrayInitializerMemberValue) {
       if (!PsiUtil.isConstantExpression(expression)) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, JavaErrorMessages.message("annotation.nonconstant.attribute.value"));
       }
@@ -312,7 +312,7 @@ public class AnnotationsHighlightUtil {
   }
 
   public static HighlightInfo checkAnnotationDeclaration(final PsiElement parent, final PsiReferenceList list) {
-    if (parent instanceof PsiAnnotationMethod) {
+    if (PsiUtil.isAnnotationMethod(parent)) {
       PsiAnnotationMethod method = (PsiAnnotationMethod)parent;
       if (list == method.getThrowsList()) {
         return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, JavaErrorMessages.message("annotation.members.may.not.have.throws.list"));

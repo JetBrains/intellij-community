@@ -15,6 +15,7 @@
  */
 package com.intellij.patterns;
 
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
@@ -30,6 +31,10 @@ public class PlatformPatterns extends StandardPatterns {
 
   public static PsiElementPattern.Capture<PsiElement> psiElement() {
     return new PsiElementPattern.Capture<PsiElement>(PsiElement.class);
+  }
+
+  public static PsiElementPattern.Capture<PsiComment> psiComment() {
+    return new PsiElementPattern.Capture<PsiComment>(PsiComment.class);
   }
 
   public static PsiElementPattern.Capture<PomTargetPsiElement> pomElement(final ElementPattern<? extends PomTarget> targetPattern) {
