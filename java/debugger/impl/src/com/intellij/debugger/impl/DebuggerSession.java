@@ -15,9 +15,7 @@
  */
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -359,22 +357,29 @@ public class DebuggerSession implements AbstractDebuggerSession {
   }
 
   @Nullable
-  protected ExecutionResult attach(@NotNull final Executor executor, @NotNull final ProgramRunner runner, final ModuleRunProfile profile, final RunProfileState state, final RemoteConnection remoteConnection, final boolean pollConnection) throws ExecutionException {
+  protected ExecutionResult attach(@NotNull final Executor executor,
+                                   @NotNull final ProgramRunner runner,
+                                   final ModuleRunProfile profile,
+                                   final RunProfileState state,
+                                   final RemoteConnection remoteConnection,
+                                   final boolean pollConnection) throws ExecutionException {
+    return attach(new DefaultDebugEnvironment(myDebugProcess.getProject(),
+                                              executor,
+                                              runner,
+                                              profile,
+                                              state,
+                                              null,
+                                              remoteConnection,
+                                              pollConnection));
+  }
+
+  @Nullable
+  protected ExecutionResult attach(DebugEnvironment environment) throws ExecutionException {
+    RemoteConnection remoteConnection = environment.getRemoteConnection();
     final String addressDisplayName = DebuggerBundle.getAddressDisplayName(remoteConnection);
     final String transportName = DebuggerBundle.getTransportName(remoteConnection);
-    final Module[] modules = profile.getModules();
-    if (modules.length == 0) {
-      mySearchScope = GlobalSearchScope.allScope(getProject());
-    }
-    else {
-      GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(modules[0], true);
-      for (int idx = 1; idx < modules.length; idx++) {
-        Module module = modules[idx];
-        scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(module, true));
-      }
-      mySearchScope = scope;
-    }
-    final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(executor, runner, this, state, remoteConnection, pollConnection);
+    mySearchScope = environment.getSearchScope();
+    final ExecutionResult executionResult = myDebugProcess.attachVirtualMachine(environment, this);
     getContextManager().setState(SESSION_EMPTY_CONTEXT, STATE_WAITING_ATTACH, EVENT_START_WAIT_ATTACH, DebuggerBundle.message("status.waiting.attach", addressDisplayName, transportName));
     return executionResult;
   }

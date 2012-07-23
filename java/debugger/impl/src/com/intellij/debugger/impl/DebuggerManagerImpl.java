@@ -71,7 +71,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   private final BreakpointManager myBreakpointManager;
   private final List<NameMapper> myNameMappers = ContainerUtil.createEmptyCOWList();
   private final List<Function<DebugProcess, PositionManager>> myCustomPositionManagerFactories = new ArrayList<Function<DebugProcess, PositionManager>>();
-  
+
   private final EventDispatcher<DebuggerManagerListener> myDispatcher = EventDispatcher.create(DebuggerManagerListener.class);
   private final MyDebuggerStateManager myDebuggerStateManager = new MyDebuggerStateManager();
 
@@ -182,7 +182,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     myBreakpointManager.writeExternal(element);
   }
 
-                                                
+
   public DebuggerSession attachVirtualMachine(Executor executor,
                                               ProgramRunner runner,
                                               ModuleRunProfile profile,
@@ -190,6 +190,17 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
                                               RemoteConnection remoteConnection,
                                               boolean pollConnection
   ) throws ExecutionException {
+    return attachVirtualMachine(new DefaultDebugEnvironment(myProject,
+                                                            executor,
+                                                            runner,
+                                                            profile,
+                                                            state,
+                                                            null,
+                                                            remoteConnection,
+                                                            pollConnection));
+  }
+
+  public DebuggerSession attachVirtualMachine(DebugEnvironment environment) throws ExecutionException {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final DebugProcessEvents debugProcess = new DebugProcessEvents(myProject);
     debugProcess.addDebugProcessListener(new DebugProcessAdapter() {
@@ -215,9 +226,9 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
         debugProcess.removeDebugProcessListener(this);
       }
     });
-    final DebuggerSession session = new DebuggerSession(profile.getName(), debugProcess);
+    final DebuggerSession session = new DebuggerSession(environment.getSessionName(), debugProcess);
 
-    final ExecutionResult executionResult = session.attach(executor, runner, profile, state, remoteConnection, pollConnection);
+    final ExecutionResult executionResult = session.attach(environment);
     if (executionResult == null) {
       return null;
     }
@@ -225,11 +236,11 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     getContextManager().setState(DebuggerContextUtil.createDebuggerContext(session, session.getContextManager().getContext().getSuspendContext()), session.getState(), DebuggerSession.EVENT_CONTEXT, null);
 
     final ProcessHandler processHandler = executionResult.getProcessHandler();
-    
+
     synchronized (mySessions) {
       mySessions.put(processHandler, session);
     }
-    
+
     if (!(processHandler instanceof RemoteDebugProcessHandler)) {
       // add listener only to non-remote process handler:
       // on Unix systems destroying process does not cause VMDeathEvent to be generated,
