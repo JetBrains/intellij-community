@@ -15,7 +15,7 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebugEnvironment;
+import com.intellij.debugger.DebugUIEnvironment;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -83,7 +83,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
   private final FramesPanel myFramesPanel;
-  private DebugEnvironment myEnvironment;
+  private DebugUIEnvironment myEnvironment;
 
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
@@ -257,6 +257,8 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
+    myEnvironment.initLogs(myRunContentDescriptor, getLogManager());
+
     DefaultActionGroup group = new DefaultActionGroup();
 
     if (executionResult instanceof DefaultExecutionResult) {
@@ -322,7 +324,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     addActionToGroup(group, PinToolwindowTabAction.ACTION_NAME);
 
-    myEnvironment.initContent(myRunContentDescriptor, getLogManager(), group);
+    myEnvironment.initActions(myRunContentDescriptor, group);
 
     myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
 
@@ -373,7 +375,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   }
 
   public String getSessionName() {
-    return myEnvironment.getSessionName();
+    return myEnvironment.getEnvironment().getSessionName();
   }
 
   public DebuggerStateManager getContextManager() {
@@ -416,7 +418,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
   }
 
-  public RunContentDescriptor attachToSession(final DebuggerSession session, DebugEnvironment environment) throws ExecutionException {
+  public RunContentDescriptor attachToSession(final DebuggerSession session, DebugUIEnvironment environment) throws ExecutionException {
     disposeSession();
     myDebuggerSession = session;
     myEnvironment = environment;

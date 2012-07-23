@@ -15,28 +15,28 @@
  */
 package com.intellij.debugger;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.ExecutionResult;
-import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.diagnostic.logging.LogFilesManager;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * Created by IntelliJ IDEA.
  * User: michael.golubev
  */
-public interface DebugEnvironment {
+public interface DebugUIEnvironment {
+
+  DebugEnvironment getEnvironment();
 
   @Nullable
-  ExecutionResult createExecutionResult() throws ExecutionException;
+  RunContentDescriptor getReuseContent();
 
-  GlobalSearchScope getSearchScope();
+  @Nullable
+  Icon getIcon();
 
-  boolean isRemote();
+  void initLogs(RunContentDescriptor content, LogFilesManager logFilesManager);
 
-  RemoteConnection getRemoteConnection();
-
-  boolean isPollConnection();
-
-  String getSessionName();
+  void initActions(RunContentDescriptor content, DefaultActionGroup actionGroup);
 }

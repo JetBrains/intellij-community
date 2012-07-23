@@ -15,10 +15,7 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.debugger.DebugEnvironment;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.DefaultDebugEnvironment;
+import com.intellij.debugger.*;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
@@ -103,7 +100,7 @@ public class DebuggerPanelsManager implements ProjectComponent {
                                                    RunContentDescriptor reuseContent,
                                                    RemoteConnection remoteConnection,
                                                    boolean pollConnection) throws ExecutionException {
-    return attachVirtualMachine(new DefaultDebugEnvironment(myProject,
+    return attachVirtualMachine(new DefaultDebugUIEnvironment(myProject,
                                                             executor,
                                                             runner,
                                                             environment,
@@ -114,8 +111,9 @@ public class DebuggerPanelsManager implements ProjectComponent {
   }
 
   @Nullable
-  public RunContentDescriptor attachVirtualMachine(DebugEnvironment environment) throws ExecutionException {
-    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(environment);
+  public RunContentDescriptor attachVirtualMachine(DebugUIEnvironment environment) throws ExecutionException {
+    final DebugEnvironment modelEnvironment = environment.getEnvironment();
+    final DebuggerSession debuggerSession = DebuggerManagerEx.getInstanceEx(myProject).attachVirtualMachine(modelEnvironment);
     if (debuggerSession == null) {
       return null;
     }
@@ -125,13 +123,13 @@ public class DebuggerPanelsManager implements ProjectComponent {
       debuggerSession.dispose();
       return null;
     }
-    if (environment.isRemote()) {
+    if (modelEnvironment.isRemote()) {
       // optimization: that way BatchEvaluator will not try to lookup the class file in remote VM
       // which is an expensive operation when executed first time
       debugProcess.putUserData(BatchEvaluator.REMOTE_SESSION_KEY, Boolean.TRUE);
     }
 
-    final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject, environment.getSessionName(), environment.getIcon());
+    final DebuggerSessionTab sessionTab = new DebuggerSessionTab(myProject, modelEnvironment.getSessionName(), environment.getIcon());
     Disposer.register(myProject, sessionTab);
     RunContentDescriptor runContentDescriptor = sessionTab.attachToSession(debuggerSession, environment);
     RunContentDescriptor reuseContent = environment.getReuseContent();

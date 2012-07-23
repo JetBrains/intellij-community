@@ -195,7 +195,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
                                                             runner,
                                                             profile,
                                                             state,
-                                                            null,
                                                             remoteConnection,
                                                             pollConnection));
   }

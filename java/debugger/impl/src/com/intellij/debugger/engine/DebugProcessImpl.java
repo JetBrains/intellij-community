@@ -43,13 +43,8 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.filters.ExceptionFilters;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
@@ -1630,19 +1625,18 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   @Nullable
   public ExecutionResult attachVirtualMachine(final Executor executor,
-                                                        final ProgramRunner runner,
-                                                        final DebuggerSession session,
-                                                        final RunProfileState state,
-                                                        final RemoteConnection remoteConnection,
-                                                        boolean pollConnection) throws ExecutionException {
+                                              final ProgramRunner runner,
+                                              final DebuggerSession session,
+                                              final RunProfileState state,
+                                              final RemoteConnection remoteConnection,
+                                              boolean pollConnection) throws ExecutionException {
     return attachVirtualMachine(new DefaultDebugEnvironment(myProject,
-                                                            executor,
-                                                            runner,
-                                                            state.getRunnerSettings().getRunProfile(),
-                                                            state,
-                                                            null,
-                                                            remoteConnection,
-                                                            pollConnection),
+                                                        executor,
+                                                        runner,
+                                                        state.getRunnerSettings().getRunProfile(),
+                                                        state,
+                                                        remoteConnection,
+                                                        pollConnection),
                                 session);
   }
 
