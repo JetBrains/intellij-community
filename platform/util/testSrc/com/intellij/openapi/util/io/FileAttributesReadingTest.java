@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -29,6 +30,12 @@ import static org.junit.Assume.assumeTrue;
 public class FileAttributesReadingTest {
   private final byte[] myTestData = new byte[]{'t', 'e', 's', 't'};
   private File myTempDirectory;
+
+  @BeforeClass
+  public static void checkMediator() throws Exception {
+    final String expectedName = SystemInfo.isWindows ? "IdeaWin32" : "JnaUnix";
+    assertEquals(expectedName, FileSystemUtil.getMediatorName());
+  }
 
   @Before
   public void setUp() throws Exception {
@@ -116,7 +123,7 @@ public class FileAttributesReadingTest {
   @Test
   public void linkToDirectory() throws Exception {
     final File file = FileUtil.createTempDirectory(myTempDirectory, "test.", ".tmp");
-    assertTrue(file.setWritable(false, false));
+    if (SystemInfo.isUnix) assertTrue(file.setWritable(false, false));
     assertTrue(file.setLastModified(file.lastModified() - 5000));
     final File link = IoTestUtil.createTempLink(file.getPath(), new File(myTempDirectory, "link").getPath());
 
@@ -124,7 +131,7 @@ public class FileAttributesReadingTest {
     assertEquals(FileAttributes.DIRECTORY | FileAttributes.SYM_LINK, attributes.type);
     assertEquals(file.length(), attributes.length);
     assertTimestampEquals(file.lastModified(), attributes.lastModified);
-    assertFalse(attributes.isWritable());
+    if (SystemInfo.isUnix) assertFalse(attributes.isWritable());
 
     final String target = FileSystemUtil.resolveSymLink(link);
     assertEquals(file.getPath(), target);

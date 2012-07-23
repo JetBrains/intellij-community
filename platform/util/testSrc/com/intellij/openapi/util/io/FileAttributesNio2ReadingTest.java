@@ -20,6 +20,7 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 public class FileAttributesNio2ReadingTest extends FileAttributesReadingTest {
@@ -27,6 +28,7 @@ public class FileAttributesNio2ReadingTest extends FileAttributesReadingTest {
   public static void setUpClass() throws Exception {
     System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "true");
     FileSystemUtil.resetMediator();
+    assertEquals("NIO2", FileSystemUtil.getMediatorName());
   }
 
   @AfterClass

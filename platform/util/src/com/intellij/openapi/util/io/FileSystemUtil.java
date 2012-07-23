@@ -44,6 +44,19 @@ public class FileSystemUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 
+  private interface Mediator {
+    @Nullable
+    FileAttributes getAttributes(@NotNull String path) throws Exception;
+
+    @Nullable
+    String resolveSymLink(@NotNull String path) throws Exception;
+
+    void setPermissions(@NotNull String path, int permissions) throws Exception;
+
+    @NotNull
+    String getName();
+  }
+
   @NotNull
   private static Mediator ourMediator = getMediator();
 
@@ -51,16 +64,16 @@ public class FileSystemUtil {
     final boolean forceUseNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
     final String quickTestPath = SystemInfo.isWindows ? "C:\\" :  "/";
 
-    // todo: move IdeaWin32 interface to this package, add mediator
-
-    if (!forceUseNio2 && (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD)) {
-      try {
-        final Mediator mediator = new JnaUnixMediatorImpl();
-        mediator.getAttributes(quickTestPath);
-        return mediator;
-      }
-      catch (Throwable t) {
-        LOG.warn(t);
+    if (!forceUseNio2) {
+      if (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) {
+        try {
+          final Mediator mediator = new JnaUnixMediatorImpl();
+          mediator.getAttributes(quickTestPath);
+          return mediator;
+        }
+        catch (Throwable t) {
+          LOG.warn(t);
+        }
       }
     }
 
@@ -82,6 +95,11 @@ public class FileSystemUtil {
   @TestOnly
   static void resetMediator() {
     ourMediator = getMediator();
+  }
+
+  @TestOnly
+  static String getMediatorName() {
+    return ourMediator.getName();
   }
 
   private FileSystemUtil() { }
@@ -161,15 +179,6 @@ public class FileSystemUtil {
     setPermissions(file.getAbsolutePath(), permissions);
   }
 
-  private interface Mediator {
-    @Nullable
-    FileAttributes getAttributes(@NotNull String path) throws Exception;
-
-    @Nullable
-    String resolveSymLink(@NotNull String path) throws Exception;
-
-    void setPermissions(@NotNull String path, int permissions) throws Exception;
-  }
 
   // todo[r.sh] remove reflection after migration to JDK 7
   @SuppressWarnings("OctalInteger")
@@ -267,6 +276,12 @@ public class FileSystemUtil {
       }
     }
 
+    @NotNull
+    @Override
+    public String getName() {
+      return "NIO2";
+    }
+
     private static final Map<String, Integer> ATTRIBUTES_MAP;
     static {
       ATTRIBUTES_MAP = new HashMap<String, Integer>();
@@ -313,6 +328,7 @@ public class FileSystemUtil {
       return null;
     }
   }
+
 
   // thanks to SVNKit for the idea
   private static class JnaUnixMediatorImpl implements Mediator {
@@ -390,7 +406,14 @@ public class FileSystemUtil {
     public void setPermissions(@NotNull final String path, final int permissions) throws Exception {
       myLibC.chmod(path, permissions & LibC.PERM_MASK);
     }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "JnaUnix";
+    }
   }
+
 
   private static class StandardMediatorImpl implements Mediator {
     // from java.io.FileSystem
@@ -451,6 +474,12 @@ public class FileSystemUtil {
 
     @Override
     public void setPermissions(@NotNull final String path, final int permissions) throws Exception {
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "fallback";
     }
   }
 }
