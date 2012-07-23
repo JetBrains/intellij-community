@@ -464,7 +464,8 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       AndroidPlatform platform = AndroidPlatform.parse(mySdk);
 
       if (platform == null) {
-        Messages.showErrorDialog(project, "Cannot parse Android SDK: 'default.properties' won't be generated", CommonBundle.getErrorTitle());
+        Messages.showErrorDialog(project, "Cannot parse Android SDK: '" + SdkConstants.FN_PROJECT_PROPERTIES + "' won't be generated",
+                                 CommonBundle.getErrorTitle());
         return;
       }
 
