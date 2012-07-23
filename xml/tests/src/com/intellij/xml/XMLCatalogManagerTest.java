@@ -18,7 +18,7 @@ package com.intellij.xml;
 import com.intellij.javaee.XMLCatalogManager;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.sun.org.apache.xml.internal.resolver.CatalogManager;
+import org.apache.xml.resolver.CatalogManager;
 
 import java.io.File;
 import java.io.IOException;

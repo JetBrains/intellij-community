@@ -17,7 +17,7 @@ package com.intellij.javaee;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.sun.org.apache.xml.internal.resolver.CatalogManager;
+import org.apache.xml.resolver.CatalogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -53,17 +53,20 @@ public class XMLCatalogManager {
 
   private final CatalogManager myManager = new CatalogManager();
 
-  public XMLCatalogManager(@NotNull String propertiesFilePath) throws IOException {
+  public XMLCatalogManager(@NotNull String propertiesFilePath) {
 
     File file = new File(propertiesFilePath);
-    String s = FileUtil.loadFile(file);
-    PropertyResourceBundle bundle = new PropertyResourceBundle(new StringReader(s));
     try {
+      String s = FileUtil.loadFile(file);
+      PropertyResourceBundle bundle = new PropertyResourceBundle(new StringReader(s));
       ourResources.set(myManager, bundle);
       ourPropertyFileUri.set(myManager, file.toURI().toURL());
     }
     catch (IllegalAccessException e) {
       LOG.error(e);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
     }
   }
 

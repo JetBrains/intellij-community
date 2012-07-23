@@ -35,7 +35,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.util.XmlUtil;
-import com.sun.org.apache.xml.internal.resolver.CatalogManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +77,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   private String myDefaultHtmlDoctype = Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
 
   private String myCatalogPropertiesFile;
-  private CatalogManager myCatalogManager;
+  private XMLCatalogManager myCatalogManager;
 
 
   protected Map<String, Map<String, Resource>> computeStdResources() {
@@ -449,9 +448,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     myCatalogPropertiesFile = filePath;
   }
 
-  private CatalogManager getCatalogManager() {
-    if (myCatalogManager == null) {
-      myCatalogManager = new CatalogManager(myCatalogPropertiesFile);
+  @Nullable
+  private XMLCatalogManager getCatalogManager() {
+    if (myCatalogManager == null && myCatalogPropertiesFile != null) {
+      myCatalogManager = new XMLCatalogManager(myCatalogPropertiesFile);
     }
     return myCatalogManager;
   }

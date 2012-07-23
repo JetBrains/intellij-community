@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="ant" scope="TEST" />
     <orderEntry type="module" module-name="xpath" scope="TEST" />
     <orderEntry type="module" module-name="dom-impl" scope="TEST" />
+    <orderEntry type="library" name="XmlBeans" level="project" />
   </component>
   <component name="copyright">
     <Base>
