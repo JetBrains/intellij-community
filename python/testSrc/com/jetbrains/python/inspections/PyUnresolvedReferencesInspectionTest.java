@@ -131,6 +131,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doMultiFileTest("a.py");
   }
 
+  // PY-7022
+  public void testReturnedQualifiedReferenceUnionType() {
+    doMultiFileTest("a.py");
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);

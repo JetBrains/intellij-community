@@ -508,9 +508,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       registerProblem(point, description, hl_type, null, range, actions.toArray(new LocalQuickFix[actions.size()]));
     }
 
-    private static boolean ignoreUnresolvedMemberForType(PyType qtype, PsiReference reference, String refText) {
-      if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
-          (qtype instanceof PyUnionType && ((PyUnionType)qtype).isWeak())) {
+    private static boolean ignoreUnresolvedMemberForType(@NotNull PyType qtype, PsiReference reference, String refText) {
+      if (qtype instanceof PyNoneType || PyTypeChecker.isUnknown(qtype)) {
         // this almost always means that we don't know the type, so don't show an error in this case
         return true;
       }

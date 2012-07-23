@@ -84,7 +84,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
     }
 
-    if ((qualifierType == null || qualifierType instanceof PyTypeReference) &&
+    if (PyTypeChecker.isUnknown(qualifierType) &&
         myContext.allowImplicits() && canQualifyAnImplicitName(qualifier, qualifierType)) {
       addImplicitResolveResults(referencedName, ret);
     }
