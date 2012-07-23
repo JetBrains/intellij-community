@@ -19,6 +19,7 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMethod;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nullable;
 
 enum InitializerRequirement {
@@ -32,7 +33,7 @@ enum InitializerRequirement {
     InitializerRequirement r = NONE_REQUIRED;
     final PsiMethod[] methods = psiClass.getMethods();
     for (PsiMethod method : methods) {
-      if (method instanceof PsiAnnotationMethod) {
+      if (PsiUtil.isAnnotationMethod(method)) {
         final PsiAnnotationMethod annotationMethod = (PsiAnnotationMethod)method;
         if (annotationMethod.getDefaultValue() == null) {
           if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(annotationMethod.getName())) {

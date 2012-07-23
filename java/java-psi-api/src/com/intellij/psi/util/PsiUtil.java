@@ -690,6 +690,12 @@ public final class PsiUtil extends PsiUtilCore {
     return file;
   }
 
+  public static boolean isAnnotationMethod(PsiElement element) {
+    if (!(element instanceof PsiAnnotationMethod)) return false;
+    PsiClass psiClass = ((PsiAnnotationMethod)element).getContainingClass();
+    return psiClass != null && psiClass.isAnnotationType();
+  }
+
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {
     private int myIndex;
     private PsiTypeParameterListOwner myCurrentOwner;

@@ -154,7 +154,7 @@ class JavaClassNameInsertHandler implements InsertHandler<JavaPsiClassReferenceE
         final PsiModifierListOwner parent = PsiTreeUtil.getParentOfType(elementAt, PsiModifierListOwner.class, false, PsiCodeBlock.class);
         if (parent != null) {
           for (PsiMethod m : ((PsiClass)item.getObject()).getMethods()) {
-            if (!(m instanceof PsiAnnotationMethod)) continue;
+            if (!PsiUtil.isAnnotationMethod(m)) continue;
             final PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)m).getDefaultValue();
             if (defaultValue == null) return true;
           }

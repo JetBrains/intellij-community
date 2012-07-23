@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -122,6 +123,6 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
     if (pair == null) return null;
     final PsiReference reference = pair.getReference();
     final PsiElement resolved = reference != null ? reference.resolve():null;
-    return resolved instanceof PsiAnnotationMethod ? (PsiAnnotationMethod)resolved : null;
+    return PsiUtil.isAnnotationMethod(resolved) ? (PsiAnnotationMethod)resolved : null;
   }
 }

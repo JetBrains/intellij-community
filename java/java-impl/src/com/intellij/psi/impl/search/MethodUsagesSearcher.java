@@ -7,6 +7,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +38,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
         processConstructorReferences(consumer, method, searchScope, !strictSignatureSearch, strictSignatureSearch, collector);
     }
 
-    if (method instanceof PsiAnnotationMethod &&
+    if (PsiUtil.isAnnotationMethod(method) &&
         PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) &&
         method.getParameterList().getParametersCount() == 0) {
       ReferencesSearch.search(method.getContainingClass(), p.getScope()).forEach(PsiAnnotationMethodReferencesSearcher.createImplicitDefaultAnnotationMethodConsumer(
