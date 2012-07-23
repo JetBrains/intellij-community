@@ -16,9 +16,11 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +47,21 @@ public abstract class LookupElement extends UserDataHolderBase {
   @NotNull
   public Object getObject() {
     return this;
+  }
+
+  @Nullable
+  public PsiElement getPsiElement() {
+    Object o = getObject();
+    if (o instanceof PsiElement) {
+      return (PsiElement)o;
+    }
+    if (o instanceof ResolveResult) {
+      return ((ResolveResult)o).getElement();
+    }
+    if (o instanceof PsiElementNavigationItem) {
+      return ((PsiElementNavigationItem)o).getTargetElement();
+    }
+    return null;
   }
 
   public boolean isValid() {

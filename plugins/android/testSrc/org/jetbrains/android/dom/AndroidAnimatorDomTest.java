@@ -42,13 +42,19 @@ public class AndroidAnimatorDomTest extends AndroidDomTest {
     toTestCompletion("root.xml", "root_after.xml");
   }
 
-  public void testHighlighting() throws Throwable {
-    doTestHighlighting("hl.xml");
-  }
-
   public void testTagNames() throws Throwable {
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     toTestCompletion("tn.xml", "tn_after.xml");
+  }
+
+  // todo: provide normal mock android jar and add public interpolator into it
+  /*public void testHighlighting() throws Throwable {
+    doTestHighlighting("hl.xml");
+  }*/
+
+  public void testHighlighting1() throws Throwable {
+    copyFileToProject("myInterpolator.xml", "res/interpolator/myInterpolator.xml");
+    doTestHighlighting("hl1.xml");
   }
 
   public void testAttributeNames() throws Throwable {

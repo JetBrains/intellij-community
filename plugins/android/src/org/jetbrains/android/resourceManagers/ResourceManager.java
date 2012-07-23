@@ -75,6 +75,30 @@ public abstract class ResourceManager {
   @Nullable
   public abstract VirtualFile getResourceDir();
 
+  public boolean processFileResources(@Nullable String resourceType, @NotNull FileResourceProcessor processor) {
+    return processFileResources(resourceType, processor, true);
+  }
+
+  public boolean processFileResources(@Nullable String resourceType, @NotNull FileResourceProcessor processor, boolean publicOnly) {
+    for (VirtualFile resSubdir : getResourceSubdirs(resourceType)) {
+      final String resType = AndroidCommonUtils.getResourceTypeByDirName(resSubdir.getName());
+
+      if (resType != null) {
+        assert resourceType == null || resourceType.equals(resType);
+        for (VirtualFile resFile : resSubdir.getChildren()) {
+          final String resName = AndroidCommonUtils.getResourceName(resType, resFile.getName());
+
+          if (!resFile.isDirectory() && (!publicOnly || isResourcePublic(resType, resName))) {
+            if (!processor.process(resFile, resName, resType)) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+    return true;
+  }
+
   public boolean isResourceDir(@NotNull VirtualFile dir) {
     return dir.equals(getResourceDir());
   }
@@ -84,38 +108,44 @@ public abstract class ResourceManager {
     return VirtualFile.EMPTY_ARRAY;
   }
 
+  protected boolean isResourcePublic(@NotNull String type, @NotNull String name) {
+    return true;
+  }
+
   @NotNull
   public List<VirtualFile> getResourceSubdirs(@Nullable String resourceType) {
     return AndroidResourceUtil.getResourceSubdirs(resourceType, getAllResourceDirs());
   }
 
   @NotNull
-  public List<PsiFile> findResourceFiles(@NotNull String resType,
-                                         @Nullable String resName,
-                                         boolean distinguishDelimetersInName,
-                                         @NotNull String... extensions) {
-    List<PsiFile> result = new ArrayList<PsiFile>();
-    Set<String> extensionSet = new HashSet<String>();
+  public List<PsiFile> findResourceFiles(@NotNull final String resType1,
+                                         @Nullable final String resName1,
+                                         final boolean distinguishDelimetersInName,
+                                         @NotNull final String... extensions) {
+    final List<PsiFile> result = new ArrayList<PsiFile>();
+    final Set<String> extensionSet = new HashSet<String>();
     addAll(extensionSet, extensions);
-    for (VirtualFile dir : getResourceSubdirs(resType)) {
-      for (final VirtualFile resFile : dir.getChildren()) {
-        String extension = resFile.getExtension();
-        if (extensions.length == 0 || extensionSet.contains(extension)) {
-          String s = AndroidCommonUtils.getResourceName(resType, resFile.getName());
-          if (resName == null || AndroidUtils.equal(resName, s, distinguishDelimetersInName)) {
-            PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-              @Nullable
-              public PsiFile compute() {
-                return PsiManager.getInstance(myModule.getProject()).findFile(resFile);
-              }
-            });
-            if (file != null) {
-              result.add(file);
+
+    processFileResources(resType1, new FileResourceProcessor() {
+      @Override
+      public boolean process(@NotNull final VirtualFile resFile, @NotNull String resName, @NotNull String resFolderType) {
+        final String extension = resFile.getExtension();
+
+        if ((extensions.length == 0 || extensionSet.contains(extension)) &&
+            (resName1 == null || AndroidUtils.equal(resName1, resName, distinguishDelimetersInName))) {
+          final PsiFile file = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+            @Nullable
+            public PsiFile compute() {
+              return PsiManager.getInstance(myModule.getProject()).findFile(resFile);
             }
+          });
+          if (file != null) {
+            result.add(file);
           }
         }
+        return true;
       }
-    }
+    });
     return result;
   }
 
@@ -171,7 +201,14 @@ public abstract class ResourceManager {
           if (!resources.isValid() || myModule.isDisposed() || myModule.getProject().isDisposed()) {
             return;
           }
-          result.addAll(AndroidResourceUtil.getValueResourcesFromElement(resourceType, resources));
+          final List<ResourceElement> valueResources = AndroidResourceUtil.getValueResourcesFromElement(resourceType, resources);
+          for (ResourceElement valueResource : valueResources) {
+            final String resName = valueResource.getName().getValue();
+
+            if (resName != null && isResourcePublic(resourceType, resName)) {
+              result.add(valueResource);
+            }
+          }
         }
       });
     }
@@ -207,15 +244,16 @@ public abstract class ResourceManager {
   }
 
   @NotNull
-  public Set<String> getFileResourcesNames(@NotNull String resourceType) {
-    Set<String> result = new HashSet<String>();
-    List<VirtualFile> dirs = getResourceSubdirs(resourceType);
-    for (VirtualFile dir : dirs) {
-      for (VirtualFile resourceFile : dir.getChildren()) {
-        if (resourceFile.isDirectory()) continue;
-        result.add(AndroidCommonUtils.getResourceName(resourceType, resourceFile.getName()));
+  public Set<String> getFileResourcesNames(@NotNull final String resourceType) {
+    final Set<String> result = new HashSet<String>();
+
+    processFileResources(resourceType, new FileResourceProcessor() {
+      @Override
+      public boolean process(@NotNull VirtualFile resFile, @NotNull String resName, @NotNull String resFolderType) {
+        result.add(resName);
+        return true;
       }
-    }
+    });
     return result;
   }
 
@@ -269,7 +307,9 @@ public abstract class ResourceManager {
 
       if (entries != null) {
         for (ResourceEntry entry : entries) {
-          result.add(entry);
+          if (isResourcePublic(entry.getType(), entry.getName())) {
+            result.add(entry);
+          }
         }
       }
     }
@@ -293,6 +333,10 @@ public abstract class ResourceManager {
   // searches only declarations such as "@+id/..."
   @Nullable
   public List<PsiElement> findIdDeclarations(@NotNull final String id) {
+    if (!isResourcePublic(ResourceType.ID.getName(), id)) {
+      return Collections.emptyList();
+    }
+
     final List<PsiElement> declarations = new ArrayList<PsiElement>();
     final Collection<VirtualFile> files =
       FileBasedIndex.getInstance().getContainingFiles(AndroidIdIndex.INDEX_ID, id, GlobalSearchScope.allScope(myModule.getProject()));
@@ -357,9 +401,13 @@ public abstract class ResourceManager {
     for (VirtualFile resSubdir : getResourceSubdirsToSearchIds()) {
       for (VirtualFile resFile : resSubdir.getChildren()) {
         final Set<String> ids = file2ids.get(resFile);
-        
+
         if (ids != null) {
-          result.addAll(ids);
+          for (String id : ids) {
+            if (isResourcePublic(ResourceType.ID.getName(), id)) {
+              result.add(id);
+            }
+          }
         }
       }
     }

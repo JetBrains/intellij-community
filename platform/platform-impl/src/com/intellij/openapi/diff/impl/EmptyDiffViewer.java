@@ -21,6 +21,7 @@ import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.diff.DiffViewerType;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -46,6 +47,7 @@ public class EmptyDiffViewer implements DiffViewer {
     return wrapper;
   }
 
+  @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
     return null;

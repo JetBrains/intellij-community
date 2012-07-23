@@ -51,8 +51,8 @@ import org.jetbrains.android.actions.CreateXmlResourceDialog;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.resourceManagers.FileResourceProcessor;
 import org.jetbrains.android.resourceManagers.ResourceManager;
-import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.Nls;
@@ -603,25 +603,23 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     public ResourceGroup(ResourceType type, ResourceManager manager) {
       myType = type;
 
-      String resourceType = type.getName();
+      final String resourceType = type.getName();
 
       Collection<String> resourceNames = manager.getValueResourceNames(resourceType);
       for (String resourceName : resourceNames) {
         myItems.add(new ResourceItem(this, resourceName, null, RESOURCE_ITEM_ICON));
       }
+      final Set<String> fileNames = new HashSet<String>();
 
-      Set<String> fileNames = new HashSet<String>();
-      List<VirtualFile> dirs = manager.getResourceSubdirs(resourceType);
-      for (VirtualFile dir : dirs) {
-        for (VirtualFile resourceFile : dir.getChildren()) {
-          if (!resourceFile.isDirectory()) {
-            String fileName = AndroidCommonUtils.getResourceName(resourceType, resourceFile.getName());
-            if (fileNames.add(fileName)) {
-              myItems.add(new ResourceItem(this, fileName, resourceFile, resourceFile.getFileType().getIcon()));
-            }
+      manager.processFileResources(resourceType, new FileResourceProcessor() {
+        @Override
+        public boolean process(@NotNull VirtualFile resFile, @NotNull String resName, @NotNull String resFolderType) {
+          if (fileNames.add(resName)) {
+            myItems.add(new ResourceItem(ResourceGroup.this, resName, resFile, resFile.getFileType().getIcon()));
           }
+          return true;
         }
-      }
+      });
 
       if (type == ResourceType.ID) {
         for (String id : manager.getIds()) {

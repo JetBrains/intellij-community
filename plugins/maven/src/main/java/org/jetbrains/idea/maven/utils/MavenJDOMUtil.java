@@ -25,13 +25,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilder;
 import com.intellij.psi.impl.source.parsing.xml.XmlBuilderDriver;
 import org.jdom.Element;
+import org.jdom.IllegalNameException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 public class MavenJDOMUtil {
   @Nullable
@@ -76,7 +74,13 @@ public class MavenJDOMUtil {
         String name = localName.toString();
         if (StringUtil.isEmptyOrSpaces(name)) return ProcessingOrder.TAGS;
 
-        Element newElement = new Element(name);
+        Element newElement;
+        try {
+          newElement = new Element(name);
+        }
+        catch (IllegalNameException e) {
+          newElement = new Element("invalidName");
+        }
 
         Element parent = stack.isEmpty() ? null : stack.getLast();
         if (parent == null) {
@@ -94,16 +98,13 @@ public class MavenJDOMUtil {
         String name = localName.toString();
         if (StringUtil.isEmptyOrSpaces(name)) return;
 
-        int index = -1;
-        for (int i = stack.size() - 1; i >= 0; i--) {
-          if (stack.get(i).getName().equals(name)) {
-            index = i;
+        for (Iterator<Element> itr = stack.descendingIterator(); itr.hasNext(); ) {
+          Element element = itr.next();
+
+          if (element.getName().equals(name)) {
+            while (stack.removeLast() != element) {}
             break;
           }
-        }
-        if (index == -1) return;
-        while (stack.size() > index) {
-          stack.removeLast();
         }
       }
 

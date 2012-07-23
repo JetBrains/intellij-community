@@ -237,7 +237,7 @@ public class EditorPlace extends JComponent implements Disposable, EditorEx.Repa
     return myEditor;
   }
 
-  public void setDocument(Document document) {
+  public void setDocument(@Nullable Document document) {
     if (document == getDocument()) return;
     removeEditor();
     myState.setDocument(document);

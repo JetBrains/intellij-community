@@ -25,6 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
+import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
@@ -96,7 +97,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
                                  @NotNull final List<VirtualFile> result) {
     for (final VirtualFile file : result) {
       if (file.isDirectory()) {
-        ProjectUtil.openOrImport(file.getPath(), project, false);
+        FileChooserUtil.setLastOpenedFile(ProjectUtil.openOrImport(file.getPath(), project, false), file);
         return;
       }
 
@@ -106,7 +107,7 @@ public class OpenFileAction extends AnAction implements DumbAware {
                                               IdeBundle.message("title.open.project"),
                                               Messages.getQuestionIcon());
         if (answer == 0) {
-          ProjectUtil.openOrImport(file.getPath(), project, false);
+          FileChooserUtil.setLastOpenedFile(ProjectUtil.openOrImport(file.getPath(), project, false), file);
           return;
         }
       }

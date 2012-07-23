@@ -652,6 +652,11 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     hideAutopopupIfMeaningless();
 
+    CompletionPhase oldPhase = CompletionServiceImpl.getCompletionPhase();
+    if (oldPhase instanceof CompletionPhase.CommittingDocuments) {
+      ((CompletionPhase.CommittingDocuments)oldPhase).replaced = true;
+    }
+
     final CompletionPhase.CommittingDocuments phase = new CompletionPhase.CommittingDocuments(this, myEditor);
     CompletionServiceImpl.setCompletionPhase(phase);
 

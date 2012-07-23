@@ -925,7 +925,7 @@ public class GenericsHighlightUtil {
                                                parameterList,
                                                JavaErrorMessages.message("generics.enum.may.not.have.type.parameters"));
     }
-    if (parent instanceof PsiAnnotationMethod) {
+    if (PsiUtil.isAnnotationMethod(parent)) {
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, parameterList, JavaErrorMessages.message("generics.annotation.members.may.not.have.type.parameters"));
     }
     else if (parent instanceof PsiClass && ((PsiClass)parent).isAnnotationType()) {

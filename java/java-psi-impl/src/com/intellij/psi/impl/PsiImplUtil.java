@@ -96,7 +96,7 @@ public class PsiImplUtil {
       if (resolved != null) {
         PsiMethod[] methods = ((PsiClass)resolved).getMethods();
         for (PsiMethod method : methods) {
-          if (method instanceof PsiAnnotationMethod && Comparing.equal(method.getName(), attributeName)) {
+          if (PsiUtil.isAnnotationMethod(method) && Comparing.equal(method.getName(), attributeName)) {
             return ((PsiAnnotationMethod)method).getDefaultValue();
           }
         }

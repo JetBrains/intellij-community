@@ -37,6 +37,48 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testReturnTypeCompatibility() throws Exception {
+    doTest();
+  }
+  
+  public void testTypeArgsConsistency() throws Exception {
+    doTest();
+  }
+
+  public void testWildcardBounds() throws Exception {
+    doTest();
+  }
+  
+  public void testAmbiguity1() throws Exception {
+    doTest();
+  }
+  
+  public void testAmbiguityVarargs() throws Exception {
+    doTest();
+  }
+
+  public void testAmbiguityRawGenerics() throws Exception {
+    doTest();
+  }
+  
+ 
+  
+  public void testNoInferenceResult() throws Exception {
+    doTest();
+  }
+
+  public void testInferenceFromArgs() throws Exception {
+    doTest();
+  }
+
+  public void testInContexts() throws Exception {
+    doTest();
+  }
+
+  public void testCastInContexts() throws Exception {
+    doTest();
+  }
+
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
   }

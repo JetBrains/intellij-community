@@ -32,6 +32,7 @@ import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadVisualComponent;
 import com.intellij.designer.model.WrapInProvider;
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
@@ -178,7 +179,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     createRenderer(parser.getLayoutXmlText(), new MyThrowable(), new ThrowableConsumer<RenderSession, Throwable>() {
       @Override
       public void consume(RenderSession session) throws Throwable {
-        RootView rootView = new RootView(session.getImage(), 30, 20);
+        RootView rootView = new RootView(30, 20, session.getImage());
         try {
           parser.updateRootComponent(session, rootView);
         }
@@ -360,7 +361,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   private void removeNativeRoot() {
     if (myRootComponent != null) {
-      Component component = ((RadViewComponent)myRootComponent).getNativeComponent();
+      Component component = ((RadVisualComponent)myRootComponent).getNativeComponent();
       if (component != null) {
         myLayeredPane.remove(component.getParent());
       }

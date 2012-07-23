@@ -164,7 +164,6 @@ public class ModulesConfigurator implements ModulesProvider, ModuleEditor.Change
     };
 
     myModuleEditors.add(moduleEditor);
-    myModuleEditors.add(moduleEditor);
 
     moduleEditor.addChangeListener(this);
     Disposer.register(moduleEditor, new Disposable() {

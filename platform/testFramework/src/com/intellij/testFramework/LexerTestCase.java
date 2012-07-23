@@ -93,12 +93,17 @@ public abstract class LexerTestCase extends UsefulTestCase {
     String fileName = PathManager.getHomePath() + "/" + getDirPath() + "/" + getTestName(true) + "." + fileExt;
     String text = "";
     try {
-      text = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)).trim());
+      String fileText = FileUtil.loadFile(new File(fileName));
+      text = StringUtil.convertLineSeparators(shouldTrim() ? fileText.trim() : fileText);
     }
     catch (IOException e) {
       fail("can't load file " + fileName + ": " + e.getMessage());
     }
     doTest(text);
+  }
+
+  protected boolean shouldTrim() {
+    return true;
   }
 
   private static String getTokenText(Lexer lexer) {

@@ -45,6 +45,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
+import junit.framework.Test
+import junit.framework.TestSuite
 
 /**
  * @author peter
@@ -560,6 +562,7 @@ public interface Test {
     assert myFixture.editor.caretModel.offset == offset + 1
     joinAutopopup()
     joinCompletion()
+    assert !lookup.calculating
     assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
@@ -567,12 +570,14 @@ public interface Test {
     assert myFixture.editor.caretModel.offset == offset
     joinAutopopup()
     joinCompletion()
+    assert !lookup.calculating
     assertContains "if", "iterable", "int"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     joinAutopopup()
     joinCompletion()
+    assert !lookup.calculating
     assert lookup.items.size() > 3
 
     for (i in 0.."iter".size()) {

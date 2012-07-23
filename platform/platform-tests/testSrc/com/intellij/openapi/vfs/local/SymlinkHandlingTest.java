@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.vfs.local;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,6 +26,8 @@ import com.intellij.testFramework.LightPlatformLangTestCase;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+
+import static com.intellij.openapi.util.io.IoTestUtil.createTempLink;
 
 public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   private LocalFileSystem myFileSystem;
@@ -263,32 +262,6 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertEquals(vSubChild, vSubChildRel);
     vSubChildRel = LocalFileSystem.getInstance().findFileByPath(vLink.getPath() + "/" + relPath);
     assertEquals(vSubChild, vSubChildRel);
-  }
-
-  // todo[r.sh] use NIO2 API after migration to JDK 7
-  public static File createTempLink(final String target, final String link) throws InterruptedException, ExecutionException {
-    final boolean isAbsolute = SystemInfo.isUnix && StringUtil.startsWithChar(link, '/') ||
-                               SystemInfo.isWindows && link.matches("^[c-zC-Z]:[/\\\\].*$");
-    final File linkFile = isAbsolute ? new File(link) : new File(FileUtil.getTempDirectory(), link);
-    assertTrue(link, !linkFile.exists() || linkFile.delete());
-    final File parentDir = linkFile.getParentFile();
-    assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
-
-    final GeneralCommandLine commandLine;
-    if (SystemInfo.isWindows) {
-      commandLine = new File(target).isDirectory()
-                    ? new GeneralCommandLine("cmd", "/C", "mklink", "/D", linkFile.getAbsolutePath(), target)
-                    : new GeneralCommandLine("cmd", "/C", "mklink", linkFile.getAbsolutePath(), target);
-    }
-    else {
-      commandLine = new GeneralCommandLine("ln", "-s", target, linkFile.getAbsolutePath());
-    }
-    final int res = commandLine.createProcess().waitFor();
-    assertEquals(commandLine.getCommandLineString(), 0, res);
-
-    final File targetFile = new File(target);
-    assertEquals("target=" + target + ", link=" + linkFile, targetFile.exists(), linkFile.exists());
-    return linkFile;
   }
 
   @Nullable

@@ -78,7 +78,12 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
                     }
                   }
                 }
-                if (importList.findSingleImportStatement(refExpr.getReferenceName()) == null) {
+                final PsiImportStatementBase importStatement = importList.findSingleImportStatement(refExpr.getReferenceName());
+                if (importStatement == null) {
+                  return qName;
+                }
+                final PsiElement resolve = importStatement.resolve();
+                if (resolve instanceof PsiMember && ((PsiMember)resolve).getContainingClass() != aClass) {
                   return qName;
                 }
               }

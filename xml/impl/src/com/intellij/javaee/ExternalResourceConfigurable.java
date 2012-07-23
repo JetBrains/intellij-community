@@ -44,7 +44,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalResourceConfigurable extends BaseConfigurable implements SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll {
+public class ExternalResourceConfigurable extends BaseConfigurable
+  implements SearchableConfigurable, OptionalConfigurable, Configurable.NoScroll, Configurable.Composite {
   private JPanel myPanel;
   private List<NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
@@ -54,6 +55,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
   private HtmlLanguageLevelForm myHtmlLanguageLevelForm;
   @Nullable private final Project myProject;
   private final List<NameLocationPair> myNewPairs;
+  private Configurable[] myConfigurables;
 
   public ExternalResourceConfigurable(@Nullable Project project) {
     this(project, Collections.<NameLocationPair>emptyList());
@@ -280,6 +282,14 @@ public class ExternalResourceConfigurable extends BaseConfigurable implements Se
     if (!dialog.isOK()) return null;
     setModified(true);
     return dialog.getPair().myName;
+  }
+
+  @Override
+  public Configurable[] getConfigurables() {
+    if (myConfigurables == null) {
+      myConfigurables = new Configurable[]{new XMLCatalogConfigurable()};
+    }
+    return myConfigurables;
   }
 
   private static class PathRenderer extends DefaultTableCellRenderer {

@@ -33,9 +33,9 @@ import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.inspections.CreateFileResourceQuickFix;
 import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
+import org.jetbrains.android.resourceManagers.FileResourceProcessor;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
-import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -164,13 +164,15 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     final Set<String> result = new HashSet<String>();
     final LocalResourceManager manager = facet.getLocalResourceManager();
 
-    for (VirtualFile resSubdir : manager.getResourceSubdirs(null)) {
-      final String resType = AndroidCommonUtils.getResourceTypeByDirName(resSubdir.getName());
-
-      if (resType != null && ResourceType.getEnum(resType) != null) {
-        result.add(resType);
+    manager.processFileResources(null, new FileResourceProcessor() {
+      @Override
+      public boolean process(@NotNull VirtualFile resFile, @NotNull String resName, @NotNull String resFolderType) {
+        if (ResourceType.getEnum(resFolderType) != null) {
+          result.add(resFolderType);
+        }
+        return true;
       }
-    }
+    });
 
     result.addAll(manager.getValueResourceTypes());
     if (manager.getIds().size() > 0) {

@@ -17,11 +17,13 @@ package com.intellij.openapi.diff.impl.util;
 
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.Nullable;
 
 public interface FocusDiffSide {
   DataKey<FocusDiffSide> DATA_KEY = DataKey.create("focusedDiffSide");
   @Deprecated String FOCUSED_DIFF_SIDE = DATA_KEY.getName();
 
+  @Nullable
   Editor getEditor();
 
   int[] getFragmentStartingLines();

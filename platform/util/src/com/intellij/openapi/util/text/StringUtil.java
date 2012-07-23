@@ -1953,6 +1953,22 @@ public class StringUtil extends StringUtilRt {
     return res;
   }
 
+  public static int getOccurrenceCount(@NotNull String text, final String s) {
+    int res = 0;
+    int i = 0;
+    while (i < text.length()) {
+      i = text.indexOf(s, i);
+      if (i >= 0) {
+        res++;
+        i++;
+      }
+      else {
+        break;
+      }
+    }
+    return res;
+  }
+
   @NotNull
   public static String fixVariableNameDerivedFromPropertyName(@NotNull String name) {
     char c = name.charAt(0);

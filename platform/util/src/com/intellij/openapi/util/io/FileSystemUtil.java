@@ -18,12 +18,14 @@ package com.intellij.openapi.util.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.lang.reflect.Array;
@@ -31,47 +33,73 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import static com.intellij.util.BitUtil.isSet;
+import static com.intellij.util.BitUtil.notSet;
+
 /**
  * @version 11.1
  */
 public class FileSystemUtil {
+  public static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 
+  private interface Mediator {
+    @Nullable
+    FileAttributes getAttributes(@NotNull String path) throws Exception;
+
+    @Nullable
+    String resolveSymLink(@NotNull String path) throws Exception;
+
+    void setPermissions(@NotNull String path, int permissions) throws Exception;
+
+    @NotNull
+    String getName();
+  }
+
   @NotNull
-  private static final Mediator ourMediator;
-  static {
-    Mediator mediator = null;
+  private static Mediator ourMediator = getMediator();
 
-    // todo: move IdeaWin32 interface to this package, add mediator
+  private static Mediator getMediator() {
+    final boolean forceUseNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
+    final String quickTestPath = SystemInfo.isWindows ? "C:\\" :  "/";
 
-    if (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) {
+    if (!forceUseNio2) {
+      if (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) {
+        try {
+          final Mediator mediator = new JnaUnixMediatorImpl();
+          mediator.getAttributes(quickTestPath);
+          return mediator;
+        }
+        catch (Throwable t) {
+          LOG.warn(t);
+        }
+      }
+    }
+
+    if (SystemInfo.isJavaVersionAtLeast("1.7") && !"1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
       try {
-        mediator = new JnaUnixMediatorImpl();
-        mediator.getAttributes("/");  // quick test
+        final Mediator mediator = new Nio2MediatorImpl();
+        mediator.getAttributes(quickTestPath);
+        return mediator;
       }
       catch (Throwable t) {
-        LOG.error(t);
-        mediator = null;
+        LOG.warn(t);
       }
     }
 
-    if (mediator == null && SystemInfo.isJavaVersionAtLeast("1.7") && !"1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
-      try {
-        mediator = new Jdk7MediatorImpl();
-        mediator.getAttributes("/");  // quick test
-      }
-      catch (Throwable t) {
-        LOG.error(t);
-        mediator = null;
-      }
-    }
+    // todo: after introducing IdeaWin32 mediator, fail tests at this point, or issue a warning in production
+    return new StandardMediatorImpl();
+  }
 
-    if (mediator == null) {
-      // todo: after introducing IdeaWin32 mediator, fail tests at this point, or issue a warning in production
-      mediator = new StandardMediatorImpl();
-    }
+  @TestOnly
+  static void resetMediator() {
+    ourMediator = getMediator();
+  }
 
-    ourMediator = mediator;
+  @TestOnly
+  static String getMediatorName() {
+    return ourMediator.getName();
   }
 
   private FileSystemUtil() { }
@@ -87,14 +115,21 @@ public class FileSystemUtil {
     return null;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Nullable
+  public static FileAttributes getAttributes(@NotNull final File file) {
+    return getAttributes(file.getAbsolutePath());
+  }
+
   public static boolean isSymLink(@NotNull final String path) {
     if (SystemInfo.areSymLinksSupported) {
       final FileAttributes attributes = getAttributes(path);
-      return attributes != null && attributes.isSymlink;
+      return attributes != null && attributes.isSymLink();
     }
     return false;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public static boolean isSymLink(@NotNull final File file) {
     return isSymLink(file.getAbsolutePath());
   }
@@ -113,6 +148,7 @@ public class FileSystemUtil {
     return null;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public static String resolveSymLink(@NotNull final File file) {
     return resolveSymLink(file.getAbsolutePath());
@@ -123,6 +159,7 @@ public class FileSystemUtil {
     return attributes != null ? attributes.permissions : -1;
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   public static int getPermissions(@NotNull final File file) {
     return getPermissions(file.getAbsolutePath());
   }
@@ -142,19 +179,10 @@ public class FileSystemUtil {
     setPermissions(file.getAbsolutePath(), permissions);
   }
 
-  private interface Mediator {
-    @Nullable
-    FileAttributes getAttributes(@NotNull String path) throws Exception;
-
-    @Nullable
-    String resolveSymLink(@NotNull String path) throws Exception;
-
-    void setPermissions(@NotNull String path, int permissions) throws Exception;
-  }
 
   // todo[r.sh] remove reflection after migration to JDK 7
   @SuppressWarnings("OctalInteger")
-  private static class Jdk7MediatorImpl implements Mediator {
+  private static class Nio2MediatorImpl implements Mediator {
     private final Object myDefaultFileSystem;
     private final Method myGetPath;
     private final Method myIsSymbolicLink;
@@ -163,8 +191,9 @@ public class FileSystemUtil {
     private final Method myReadAttributes;
     private final Method mySetAttribute;
     private final Method myToMillis;
+    private final String mySchema;
 
-    private Jdk7MediatorImpl() throws Exception {
+    private Nio2MediatorImpl() throws Exception {
       myDefaultFileSystem = Class.forName("java.nio.file.FileSystems").getMethod("getDefault").invoke(null);
 
       myGetPath = Class.forName("java.nio.file.FileSystem").getMethod("getPath", String.class, String[].class);
@@ -189,29 +218,33 @@ public class FileSystemUtil {
       final Class<?> fileTimeClass = Class.forName("java.nio.file.attribute.FileTime");
       myToMillis = fileTimeClass.getMethod("toMillis");
       myToMillis.setAccessible(true);
+
+      mySchema = SystemInfo.isWindows ? "dos:*" : "posix:*";
     }
 
     @Override
     public FileAttributes getAttributes(@NotNull final String path) throws Exception {
       try {
         final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
+
+        Map attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myNoFollowLinkOptions);
+        final Boolean isSymbolicLink = (Boolean)attributes.get("isSymbolicLink");
+        if (isSymbolicLink) {
+          attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myLinkOptions);
+        }
+
+        final boolean isDirectory = (Boolean)attributes.get("isDirectory");
+        final boolean isOther = (Boolean)attributes.get("isOther");
+        final long size = (Long)attributes.get("size");
+        final long lastModified = (Long)myToMillis.invoke(attributes.get("lastModifiedTime"));
         if (SystemInfo.isWindows) {
-          final Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "dos:*", myNoFollowLinkOptions);
-          return new FileAttributes((Boolean)attributes.get("isDirectory"),
-                                    (Boolean)attributes.get("isSymbolicLink"),
-                                    (Boolean)attributes.get("isOther"),
-                                    (Long)attributes.get("size"),
-                                    (Long)myToMillis.invoke(attributes.get("lastModifiedTime")),
-                                    !(Boolean)attributes.get("readonly"));
+          final boolean isHidden = (Boolean)attributes.get("hidden");
+          final boolean isWritable = !(Boolean)attributes.get("readonly");
+          return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
         }
         else {
-          final Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "posix:*", myNoFollowLinkOptions);
-          return new FileAttributes((Boolean)attributes.get("isDirectory"),
-                                    (Boolean)attributes.get("isSymbolicLink"),
-                                    (Boolean)attributes.get("isOther"),
-                                    (Long)attributes.get("size"),
-                                    (Long)myToMillis.invoke(attributes.get("lastModifiedTime")),
-                                    decodePermissions(attributes.get("permissions")));
+          final int permissions = decodePermissions(attributes.get("permissions"));
+          return new FileAttributes(isDirectory, isOther, isSymbolicLink, size, lastModified, permissions);
         }
       }
       catch (InvocationTargetException e) {
@@ -241,6 +274,12 @@ public class FileSystemUtil {
       if (attribute != null) {
         mySetAttribute.invoke(null, pathObj, "posix:permissions", attribute, myLinkOptions);
       }
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "NIO2";
     }
 
     private static final Map<String, Integer> ATTRIBUTES_MAP;
@@ -290,6 +329,7 @@ public class FileSystemUtil {
     }
   }
 
+
   // thanks to SVNKit for the idea
   private static class JnaUnixMediatorImpl implements Mediator {
     @SuppressWarnings("OctalInteger")
@@ -302,7 +342,9 @@ public class FileSystemUtil {
       int PERM_MASK = 0777;
 
       int lstat(String path, Pointer stat);
+      int stat(String path, Pointer stat);
       int __lxstat64(int ver, String path, Pointer stat);
+      int __xstat64(int ver, String path, Pointer stat);
       int chmod(String path, int mode);
     }
 
@@ -333,20 +375,26 @@ public class FileSystemUtil {
     @Override
     public synchronized FileAttributes getAttributes(@NotNull final String path) throws Exception {
       mySharedMem.clear();
-      final int res = SystemInfo.isLinux ? myLibC.__lxstat64(0, path, mySharedMem) : myLibC.lstat(path, mySharedMem);
-      if (res == 0) {
-        final int mode = (SystemInfo.isLinux ? mySharedMem.getInt(myModeOffset) : mySharedMem.getShort(myModeOffset)) & LibC.S_MASK;
-        final boolean isDirectory = (mode & LibC.S_IFDIR) == LibC.S_IFDIR;
-        final boolean isSymlink = (mode & LibC.S_IFLNK) == LibC.S_IFLNK;
-        final boolean isSpecial = !isDirectory && !isSymlink && (mode & LibC.S_IFREG) == 0;
-        final long size = mySharedMem.getLong(mySizeOffset);
-        final long mTime1 = SystemInfo.is32Bit ? mySharedMem.getInt(myTimeOffset) : mySharedMem.getLong(myTimeOffset);
-        final long mTime2 = SystemInfo.is32Bit ? mySharedMem.getInt(myTimeOffset + 4) : mySharedMem.getLong(myTimeOffset + 8);
-        final long mTime = mTime1 * 1000 + mTime2 / 1000000;
-        @FileAttributes.Permissions final int permissions = mode & LibC.PERM_MASK;
-        return new FileAttributes(isDirectory, isSymlink, isSpecial, size, mTime, permissions);
+      int res = SystemInfo.isLinux ? myLibC.__lxstat64(0, path, mySharedMem) : myLibC.lstat(path, mySharedMem);
+      if (res != 0) return null;
+
+      int mode = (SystemInfo.isLinux ? mySharedMem.getInt(myModeOffset) : mySharedMem.getShort(myModeOffset)) & LibC.S_MASK;
+      final boolean isSymlink = (mode & LibC.S_IFLNK) == LibC.S_IFLNK;
+      if (isSymlink) {
+        mySharedMem.clear();
+        res = SystemInfo.isLinux ? myLibC.__xstat64(0, path, mySharedMem) : myLibC.stat(path, mySharedMem);
+        if (res != 0) return null;
+        mode = (SystemInfo.isLinux ? mySharedMem.getInt(myModeOffset) : mySharedMem.getShort(myModeOffset)) & LibC.S_MASK;
       }
-      return null;
+
+      final boolean isDirectory = (mode & LibC.S_IFDIR) == LibC.S_IFDIR;
+      final boolean isSpecial = !isDirectory && (mode & LibC.S_IFREG) == 0;
+      final long size = mySharedMem.getLong(mySizeOffset);
+      final long mTime1 = SystemInfo.is32Bit ? mySharedMem.getInt(myTimeOffset) : mySharedMem.getLong(myTimeOffset);
+      final long mTime2 = SystemInfo.is32Bit ? mySharedMem.getInt(myTimeOffset + 4) : mySharedMem.getLong(myTimeOffset + 8);
+      final long mTime = mTime1 * 1000 + mTime2 / 1000000;
+      @FileAttributes.Permissions final int permissions = mode & LibC.PERM_MASK;
+      return new FileAttributes(isDirectory, isSpecial, isSymlink, size, mTime, permissions);
     }
 
     @Override
@@ -358,12 +406,20 @@ public class FileSystemUtil {
     public void setPermissions(@NotNull final String path, final int permissions) throws Exception {
       myLibC.chmod(path, permissions & LibC.PERM_MASK);
     }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "JnaUnix";
+    }
   }
+
 
   private static class StandardMediatorImpl implements Mediator {
     // from java.io.FileSystem
     private static final int BA_REGULAR   = 0x02;
     private static final int BA_DIRECTORY = 0x04;
+    private static final int BA_HIDDEN    = 0x08;
 
     private final Object myFileSystem;
     private final Method myGetBooleanAttributes;
@@ -393,16 +449,18 @@ public class FileSystemUtil {
       if (myFileSystem != null) {
         final int flags = (Integer)myGetBooleanAttributes.invoke(myFileSystem, file);
         if (flags != 0) {
-          final boolean isDirectory = (flags & BA_DIRECTORY) != 0;
-          final boolean isSpecial = (flags & (BA_REGULAR | BA_DIRECTORY)) == 0;
-          return new FileAttributes(isDirectory, false, isSpecial, file.length(), file.lastModified(), file.canWrite());
+          final boolean isDirectory = isSet(flags, BA_DIRECTORY);
+          final boolean isSpecial = notSet(flags, BA_REGULAR | BA_DIRECTORY);
+          final boolean isHidden = isSet(flags, BA_HIDDEN);
+          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
         }
       }
       else {
         if (file.exists()) {
           final boolean isDirectory = file.isDirectory();
           final boolean isSpecial = !isDirectory && !file.isFile();
-          return new FileAttributes(isDirectory, false, isSpecial, file.length(), file.lastModified(), file.canWrite());
+          final boolean isHidden = file.isHidden();
+          return new FileAttributes(isDirectory, isSpecial, false, isHidden, file.length(), file.lastModified(), file.canWrite());
         }
       }
 
@@ -416,6 +474,12 @@ public class FileSystemUtil {
 
     @Override
     public void setPermissions(@NotNull final String path, final int permissions) throws Exception {
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "fallback";
     }
   }
 }

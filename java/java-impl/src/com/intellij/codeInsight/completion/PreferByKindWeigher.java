@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +151,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
         return MyResult.classLiteral;
       }
 
-      if (object instanceof PsiAnnotationMethod && ((PsiAnnotationMethod)object).getContainingClass().isAnnotationType()) {
+      if (object instanceof PsiMethod && PsiUtil.isAnnotationMethod((PsiElement)object)) {
         return MyResult.annoMethod;
       }
 

@@ -334,7 +334,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   }
 
   public void testIdCompletion2() throws Throwable {
-    doTestCompletionVariants("idcompl2.xml", "@android:id/text", "@android:id/text1", "@android:id/text2");
+    doTestCompletionVariants("idcompl2.xml", "@android:id/text1", "@android:id/text2");
   }
 
   public void testIdHighlighting() throws Throwable {
@@ -597,6 +597,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doCreateFileResourceFromUsage(virtualFile);
     myFixture.type("selector");
     myFixture.checkResultByFile("res/drawable/unknown.xml", testFolder + '/' + getTestName(true) + "_drawable_after.xml", true);
+  }
+
+  public void testPrivateAndPublicResources() throws Throwable {
+    doTestHighlighting();
   }
 
   private void doCreateFileResourceFromUsage(VirtualFile virtualFile) {

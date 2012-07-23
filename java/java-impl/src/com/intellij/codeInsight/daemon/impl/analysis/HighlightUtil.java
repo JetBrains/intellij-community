@@ -2537,7 +2537,7 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkAnnotationMethodParameters(@NotNull PsiParameterList list) {
-    if (list.getParent() instanceof PsiAnnotationMethod && list.getParametersCount() > 0) {
+    if (PsiUtil.isAnnotationMethod(list.getParent()) && list.getParametersCount() > 0) {
       final String message = JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters");
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, message);
     }
