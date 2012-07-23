@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.MacTreeUI;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +97,7 @@ public class ActionsTree {
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
 
-    myTree.putClientProperty(MacTreeUI.STRIPED_CLIENT_PROPERTY, Boolean.TRUE);
+    myTree.putClientProperty(WideSelectionTreeUI.STRIPED_CLIENT_PROPERTY, Boolean.TRUE);
     myTree.setCellRenderer(new KeymapsRenderer());
 
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
