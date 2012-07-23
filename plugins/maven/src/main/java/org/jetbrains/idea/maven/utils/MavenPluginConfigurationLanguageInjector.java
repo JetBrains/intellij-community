@@ -66,13 +66,20 @@ public class MavenPluginConfigurationLanguageInjector implements LanguageInjecto
     PsiElement configurationTag = sourceTag.getParent();
     if (!isTagOfName(configurationTag, "configuration")) return;
 
-    PsiElement executionTag = configurationTag.getParent();
-    if (!isTagOfName(executionTag, "execution")) return;
+    PsiElement configurationParent = configurationTag.getParent();
 
-    PsiElement executionsTag = executionTag.getParent();
-    if (!isTagOfName(executionsTag, "executions")) return;
+    PsiElement pluginTag;
 
-    PsiElement pluginTag = executionsTag.getParent();
+    if (isTagOfName(configurationParent, "execution")) {
+      PsiElement executionsTag = configurationParent.getParent();
+      if (!isTagOfName(executionsTag, "executions")) return;
+
+      pluginTag = executionsTag.getParent();
+    }
+    else {
+      pluginTag = configurationParent;
+    }
+
     if (!isTagOfName(pluginTag, "plugin")) return;
 
     XmlTag plugin = (XmlTag)pluginTag;
