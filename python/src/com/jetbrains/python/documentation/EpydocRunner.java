@@ -4,15 +4,12 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 
 /**
  * @author yole
@@ -29,20 +26,21 @@ public class EpydocRunner {
     if (sdk == null) {
       return null;
     }
-    final Charset charset = EncodingProjectManager.getInstance(module.getProject()).getDefaultCharset();
+    //final Charset charset = EncodingProjectManager.getInstance(module.getProject()).getDefaultCharset();
     String sdkHome = sdk.getHomePath();
     final String formatter = PythonHelpersLocator.getHelperPath("epydoc_formatter.py");
-    final ByteBuffer encoded = charset.encode(text);
-    final byte[] data = new byte[encoded.limit()];
-    encoded.get(data);
+    //final ByteBuffer encoded = charset.encode(text);
+    //final byte[] data = new byte[encoded.limit()];
+    //encoded.get(data);
     ProcessOutput output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(),
                                                       new String[]{
                                                         sdkHome,
-                                                        formatter
+                                                        formatter,
+                                                        text
                                                       },
                                                       null,
-                                                      2000,
-                                                      data);
+                                                      5000/*,
+                                                      data*/);
     if (output.isTimeout()) {
       LOG.info("timeout when calculating docstring");
       return null;

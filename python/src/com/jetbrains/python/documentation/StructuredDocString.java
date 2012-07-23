@@ -2,6 +2,7 @@ package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Maps;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,6 +65,15 @@ public abstract class StructuredDocString {
 
   public String getDescription() {
     return myDescription;
+  }
+
+  public String getSummary() {
+    final List<String> strings = StringUtil.split(StringUtil.trimLeading(myDescription), "\n", true, false);
+    if (strings.size() > 1) {
+      if (strings.get(1).isEmpty())
+        return strings.get(0);
+    }
+    return "";
   }
 
   @NotNull

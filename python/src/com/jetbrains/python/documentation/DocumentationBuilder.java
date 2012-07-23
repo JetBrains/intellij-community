@@ -315,14 +315,9 @@ class DocumentationBuilder {
     String preparedDocstring = StringUtil.join(lines, "\n");
     if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
       Module module = ModuleUtil.findModuleForPsiElement(element);
-      String formatted = null;
       final EpydocString epydocString = new EpydocString(preparedDocstring);
-      if (module != null) {
-        formatted = EpydocRunner.formatDocstring(module, preparedDocstring);
-      }
-      if (formatted == null) {
-        formatted = epydocString.getDescription();
-      }
+
+      String formatted = epydocString.getDescription();
       result.add(formatted);
       result.add(formatStructuredDocString(epydocString));
       unformattedOutput.add(result);
@@ -500,7 +495,11 @@ class DocumentationBuilder {
       result.append("<br><b>").append(keyword ? "Keyword arguments:" : "Parameters").append("</b><br>");
       for (String parameter : parameters) {
         final String description = keyword ? docString.getKeywordArgumentDescription(parameter) : docString.getParamDescription(parameter);
-        result.append("<b>").append(parameter).append("</b>: ").append(description);
+        result.append("<b>");
+        result.append(parameter);
+        result.append("</b>: ");
+        if (description != null)
+          result.append(description);
         final String paramType = docString.getParamType(parameter);
         if (paramType != null) {
           result.append(" <i>Type: ").append(paramType).append("</i>");

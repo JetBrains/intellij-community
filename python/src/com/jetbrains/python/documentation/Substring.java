@@ -133,6 +133,10 @@ public class Substring implements CharSequence {
     return indexOf(prefix) == 0;
   }
 
+  public boolean endsWith(@NotNull String prefix) {
+    return myString.lastIndexOf(prefix) == length();
+  }
+
   public int indexOf(@NotNull String s) {
     int n = myString.indexOf(s, myStartOffset);
     return n < myEndOffset ? n - myStartOffset : -1;

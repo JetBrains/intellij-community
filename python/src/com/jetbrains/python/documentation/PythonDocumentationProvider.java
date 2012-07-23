@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -34,7 +36,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.documentation.DocumentationBuilderKit.*;
 
@@ -64,11 +69,32 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         cat.append("class ").append(cls_name).append("\n");
         // It would be nice to have class import info here, but we don't know the ctrl+hovered reference and context
       }
-      return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1)).toString();
+      String summary = "";
+      final PyStringLiteralExpression docStringExpression = func.getDocStringExpression();
+      if (docStringExpression != null) {
+        final StructuredDocString docString = StructuredDocString.parse(docStringExpression.getStringValue());
+        if (docString != null)
+          summary = docString.getSummary();
+      }
+      return $(cat.toString()).add(describeDecorators(func, LSame2, ", ", LSame1)).add(describeFunction(func, LSame2, LSame1))
+        .toString() + "\n" + summary;
     }
     else if (element instanceof PyClass) {
       PyClass cls = (PyClass)element;
-      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString();
+      String summary = "";
+      PyStringLiteralExpression docStringExpression = cls.getDocStringExpression();
+      if (docStringExpression == null) {
+        final PyFunction initOrNew = cls.findInitOrNew(false);
+        if (initOrNew != null)
+          docStringExpression = initOrNew.getDocStringExpression();
+      }
+      if (docStringExpression != null) {
+        final StructuredDocString docString = StructuredDocString.parse(docStringExpression.getStringValue());
+        if (docString != null)
+          summary = docString.getSummary();
+      }
+
+      return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString() + "\n" + summary;
     }
     else if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
       return describeExpression((PyExpression)element, originalElement);
@@ -473,7 +499,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
       if (spaces.length > 1)
-        ws = ws + spaces[spaces.length-1];
+        ws += spaces[spaces.length - 1];
     }
     String docContent = ws + generateDocumentationContentStub(function, ws, true);
     PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
@@ -497,7 +523,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
       if (spaces.length > 1)
-        ws = ws + whitespace.getText().split("\n")[1];
+        ws += whitespace.getText().split("\n")[1];
     }
     return generateDocumentationContentStub(element, ws, checkReturn);
   }
@@ -543,6 +569,86 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       }
     }
     return builder.toString();
+  }
+
+  public static Pair<String, Integer> addParamToDocstring(PyDocStringOwner function, String keyword, String paramName, String prefix) {
+    final PyStringLiteralExpression docstring = function.getDocStringExpression();
+    String text;
+    if (docstring != null)
+      text = docstring.getText();
+    else
+      text = "\"\"\"\"\"\"";
+    String[] lines = LineTokenizer.tokenize(text, true);
+    StringBuilder replacementText = new StringBuilder();
+    int ind = lines.length - 1;
+    if (lines.length == 1) {
+      return createSingleLineReplacement(function, keyword, paramName, prefix);
+    }
+    for (int i = 0; i != lines.length - 1; ++i) {
+      String line = lines[i];
+      if (line.contains(prefix)) {
+        ind = i;
+        break;
+      }
+      replacementText.append(line);
+    }
+    int offset = addParamOrType(replacementText, function, false, keyword, paramName, prefix);
+    for (int i = ind; i != lines.length; ++i) {
+      String line = lines[i];
+      replacementText.append(line);
+    }
+    return new Pair<String, Integer>(replacementText.toString(), offset);
+  }
+
+  private static int addParamOrType(StringBuilder replacementText, PyDocStringOwner function, boolean addWS, String keyword,
+                                     String paramName, String prefix) {
+    PsiWhiteSpace whitespace = null;
+    if (function instanceof PyFunction)
+      whitespace = PsiTreeUtil.getPrevSiblingOfType(((PyFunction)function).getStatementList(), PsiWhiteSpace.class);
+    String ws = "\n";
+    if (whitespace != null) {
+      String[] spaces = whitespace.getText().split("\n");
+      if (spaces.length > 1) {
+        ws += whitespace.getText().split("\n")[1];
+      }
+    }
+    if (replacementText.length() > 0)
+      replacementText.deleteCharAt(replacementText.length() - 1);
+    replacementText.append(ws);
+
+    replacementText.append(prefix);
+    replacementText.append(keyword);
+    replacementText.append(" ");
+    replacementText.append(paramName);
+    replacementText.append(": ");
+    int offset = replacementText.length();
+    if (addWS)
+      replacementText.append(ws);
+    else
+      replacementText.append("\n");
+    return offset;
+  }
+
+  private static Pair<String, Integer> createSingleLineReplacement(PyDocStringOwner function, String keyword, String paramName, String prefix) {
+    String text;
+    final PyStringLiteralExpression docstring = function.getDocStringExpression();
+    if (docstring != null)
+      text = docstring.getText();
+    else
+      text = "\"\"\"\"\"\"";
+    StringBuilder replacementText = new StringBuilder();
+    String closingQuotes = "";
+    if (text.endsWith("'''") || text.endsWith("\"\"\"")) {
+      replacementText.append(text.substring(0, text.length() - 2));
+      closingQuotes = text.substring(text.length() - 3);
+    }
+    else {
+      replacementText.append(text.substring(0, text.length()));
+      closingQuotes = text.substring(text.length() - 1);
+    }
+    final int offset = addParamOrType(replacementText, function, true, keyword, paramName, prefix);
+    replacementText.append(closingQuotes);
+    return new Pair<String, Integer>(replacementText.toString(), offset);
   }
 
   private static class RaiseVisitor extends PyRecursiveElementVisitor {

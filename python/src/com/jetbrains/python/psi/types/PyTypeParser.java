@@ -173,6 +173,20 @@ public class PyTypeParser {
         types.put(whole, t);
         return t;
       }
+
+      final List<PyFromImportStatement> fromImports = ((PyFile)anchorFile).getFromImports();
+      for (PyFromImportStatement fromImportStatement : fromImports) {
+        final PyImportElement[] elements = fromImportStatement.getImportElements();
+        for (PyImportElement element : elements) {
+          final PyReferenceExpression referenceExpression = element.getImportReferenceExpression();
+          if (referenceExpression == null) continue;
+          final PyType referenceType = referenceExpression.getType(TypeEvalContext.fast());
+          if (referenceType instanceof PyClassType) {
+            return referenceType;
+          }
+        }
+      }
+
     }
     if (StringUtil.isJavaIdentifier(type)) {
       final Collection<PyClass> classes = PyClassNameIndex.find(type, anchor.getProject(), true);

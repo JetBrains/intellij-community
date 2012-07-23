@@ -83,8 +83,11 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
   private static List<PsiReference> parseTypeReferences(PsiElement anchor, Substring s, int offset) {
     final List<PsiReference> result = new ArrayList<PsiReference>();
     final PyTypeParser.ParseResult parseResult = PyTypeParser.parse(anchor, s.toString());
-    offset = s.getTextRange().getStartOffset() + offset;
     final Map<TextRange, PyType> types = parseResult.getTypes();
+    if (types.isEmpty()) {
+      result.add(new DocStringTypeReference(anchor, s.getTextRange().shiftRight(offset), s.getTextRange().shiftRight(offset), null));
+    }
+    offset = s.getTextRange().getStartOffset() + offset;
     final Map<PyType, TextRange> fullRanges = parseResult.getFullRanges();
     for (Map.Entry<TextRange, PyType> pair : types.entrySet()) {
       final PyType t = pair.getValue();
