@@ -80,8 +80,8 @@ public class FileAttributesReadingTest {
   public void linkToFile() throws Exception {
     final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
     FileUtil.writeToFile(file, myTestData);
-    assertTrue(file.setWritable(false, false));
     assertTrue(file.setLastModified(file.lastModified() - 5000));
+    assertTrue(file.setWritable(false, false));
     final File link = IoTestUtil.createTempLink(file.getPath(), new File(myTempDirectory, "link").getPath());
 
     final FileAttributes attributes = getAttributes(link);
@@ -98,8 +98,8 @@ public class FileAttributesReadingTest {
   public void doubleLink() throws Exception {
     final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
     FileUtil.writeToFile(file, myTestData);
-    assertTrue(file.setWritable(false, false));
     assertTrue(file.setLastModified(file.lastModified() - 5000));
+    assertTrue(file.setWritable(false, false));
     final File link1 = IoTestUtil.createTempLink(file.getPath(), new File(myTempDirectory, "link1").getPath());
     final File link2 = IoTestUtil.createTempLink(link1.getPath(), new File(myTempDirectory, "link2").getPath());
 
