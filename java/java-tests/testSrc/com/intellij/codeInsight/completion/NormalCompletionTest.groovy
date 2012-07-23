@@ -270,6 +270,20 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assert "B" in myFixture.lookupElementStrings
   }
 
+  public void testAnnoParameterValue() throws Exception {
+    configure()
+    def strings = myFixture.lookupElementStrings
+    assert 'AssertionError' in strings
+    assert !('enum' in strings)
+    assert !('final' in strings)
+    assert !('equals' in strings)
+    assert !('new' in strings)
+    assert !('null' in strings)
+    assert !('public' in strings)
+    assert !('super' in strings)
+    assert !('null' in strings)
+  }
+
   public void testAfterInstanceof() throws Exception {
     configureByFile("AfterInstanceof.java");
     assert "A" in myFixture.lookupElementStrings
