@@ -104,7 +104,7 @@ public abstract class InplaceRefactoring {
   protected String myAdvertisementText;
   private ArrayList<RangeHighlighter> myHighlighters;
   protected String myInitialName;
-  protected final String myOldName;
+  protected String myOldName;
   protected RangeMarker myBeforeRevert = null;
   protected String myInsertedName;
   protected LinkedHashSet<String> myNameSuggestions;
@@ -273,6 +273,14 @@ public abstract class InplaceRefactoring {
         return true;
       }
       else {
+
+        if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {
+          ourRenamersStack.pop();
+          if (!ourRenamersStack.empty()) {
+            myOldName = ourRenamersStack.peek().myOldName;
+          }
+        }
+
         revertState();
         final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
         if (templateState != null) {
