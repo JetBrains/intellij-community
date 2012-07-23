@@ -19,16 +19,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.notification.*;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,6 +36,8 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.UrlConnectionUtil;
@@ -54,6 +52,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -451,10 +450,24 @@ public final class UpdateChecker {
       dialog.setModal(alwaysShowResults);
       dialog.show();
     }
-    else if (updatedPlugins != null || alwaysShowResults) {
+    else if (updatedPlugins != null) {
       NoUpdatesDialog dialog = new NoUpdatesDialog(true, updatedPlugins, enableLink);
       dialog.setShowConfirmation(showConfirmation);
       dialog.show();
+    } else if (alwaysShowResults) {
+      final String title = IdeBundle.message("updates.info.dialog.title");
+      final String message = "You already have the latest version of " + ApplicationInfo.getInstance().getVersionName() + " installed.<br> " +
+                             "To configure automatic update settings, see the <a href=\"updates\">Updates</a> dialog of your IDE settings";
+      NotificationGroup.balloonGroup("update.available.group")
+        .createNotification(title, message, NotificationType.INFORMATION, new NotificationListener() {
+          @Override
+          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+            notification.expire();
+            final UpdateSettingsConfigurable configurable = new UpdateSettingsConfigurable();
+            IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
+            ShowSettingsUtil.getInstance().editConfigurable((JFrame)ideFrame, configurable);
+          }
+        }).notify(null);
     }
   }
 
