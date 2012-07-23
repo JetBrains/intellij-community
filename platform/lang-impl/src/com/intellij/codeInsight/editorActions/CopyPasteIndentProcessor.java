@@ -48,7 +48,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
 
   @Override
   public IndentTransferableData extractTransferableData(Transferable content) {
-    IndentTransferableData indentData = null;
+    IndentTransferableData indentData = new IndentTransferableData(-1);
     try {
       final DataFlavor flavor = IndentTransferableData.getDataFlavorStatic();
       if (flavor != null) {
