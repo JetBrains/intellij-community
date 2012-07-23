@@ -6,6 +6,7 @@ import com.intellij.codeInsight.dataflow.map.DFAMap;
 import com.intellij.codeInsight.dataflow.map.DFAMapEngine;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import com.jetbrains.cython.psi.CythonIncludeStatement;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.PyReachingDefsDfaInstance;
@@ -181,9 +182,8 @@ public class ScopeImpl implements Scope {
         if (node instanceof PsiNamedElement) {
           namedElements.put(node.getName(), (PsiNamedElement)node);
         }
-        // TODO: NameDefiners should be used only for defining lazily evaluated names
-        if (node instanceof NameDefiner && !(node instanceof PsiNamedElement ||
-                                             node instanceof PyParameterList)) {
+        // TODO: Cython-specific code
+        if (node instanceof PyStarImportElement || node instanceof PyImportElement || node instanceof CythonIncludeStatement) {
           nameDefiners.add((NameDefiner)node);
         }
         if (node instanceof ScopeOwner) {

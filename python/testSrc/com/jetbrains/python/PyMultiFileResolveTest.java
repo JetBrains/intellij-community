@@ -318,9 +318,7 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(CythonVariable.class, "foo");
   }
 
-  public void _testCythonCdefClassForwardInclude() {
-    // TODO: Currently we resolve named elements first and then ask name definers, so the result is the forward decl instead of the
-    // includeded class
+  public void testCythonCdefClassForwardInclude() {
     final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "bar");
     final PyExpression value = target.findAssignedValue();
     assertNotNull(value);
@@ -384,6 +382,11 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   // PY-6866
   public void testFunctionAndSubmoduleNamedIdentically() {
     assertResolvesTo(PyFunction.class, "m1");
+  }
+
+  // PY-7026
+  public void testFromImportStarReassignment() {
+    assertResolvesTo(PyFunction.class, "foo");
   }
 
   private void prepareTestDirectory() {
