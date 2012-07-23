@@ -4,11 +4,8 @@ import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.compiler.ValidityState;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
@@ -16,6 +13,7 @@ import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.Resources;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.resourceManagers.FileResourceProcessor;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidCommonUtils;
@@ -74,31 +72,24 @@ public class ResourceNamesValidityState implements ValidityState {
       }
     }
 
-    for (final VirtualFile subdir : manager.getResourceSubdirs(null)) {
-      final String subdirName = subdir.getName();
-      final int index = subdirName.indexOf('-');
-      final String typeName = index >= 0 ? subdirName.substring(0, index) : subdirName;
-      final ResourceType type = ResourceType.getEnum(typeName);
-      final boolean idProvidingResource = type != null && ArrayUtil.find(AndroidCommonUtils.ID_PROVIDING_RESOURCE_TYPES, type) >= 0;
+    manager.processFileResources(null, new FileResourceProcessor() {
+      @Override
+      public boolean process(@NotNull VirtualFile resFile, @NotNull String resName, @NotNull String resFolderType) {
+        final ResourceType type = ResourceType.getEnum(resFolderType);
+        final boolean idProvidingResource = type != null && ArrayUtil.find(AndroidCommonUtils.ID_PROVIDING_RESOURCE_TYPES, type) >= 0;
 
-      FileIndexImplUtil.iterateRecursively(subdir, VirtualFileFilter.ALL, new ContentIterator() {
-        @Override
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (!fileOrDir.isDirectory()) {
-            ResourceFileData data = myResources.get(fileOrDir.getPath());
-            if (data == null) {
-              data = new ResourceFileData();
-              myResources.put(fileOrDir.getPath(), data);
-            }
-
-            if (idProvidingResource) {
-              data.setTimestamp(fileOrDir.getTimeStamp());
-            }
-          }
-          return true;
+        ResourceFileData data = myResources.get(resFile.getPath());
+        if (data == null) {
+          data = new ResourceFileData();
+          myResources.put(resFile.getPath(), data);
         }
-      });
-    }
+
+        if (idProvidingResource) {
+          data.setTimestamp(resFile.getTimeStamp());
+        }
+        return true;
+      }
+    });
   }
 
   private static void addValueResources(VirtualFile file,
