@@ -549,6 +549,10 @@ public class ResolveImportUtil {
         components.set(0, "collections");
         return PyQualifiedName.fromComponents(components);
       }
+      else if (head.equals("posix") || head.equals("nt")) {
+        components.set(0, "os");
+        return PyQualifiedName.fromComponents(components);
+      }
       else if (head.equals("_functools")) {
         components.set(0, "functools");
         return PyQualifiedName.fromComponents(components);

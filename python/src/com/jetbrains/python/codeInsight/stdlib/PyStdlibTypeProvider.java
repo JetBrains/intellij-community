@@ -144,7 +144,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           }
           PyType argType = entry.getKey().getType(context);
           // Special case for the 'mode' argument of the 'open()' builtin
-          if (("__builtin__.open".equals(qname) || "io.open".equals(qname)) && "mode".equals(name)) {
+          if (("__builtin__.open".equals(qname) || "io.open".equals(qname) || "os.fdopen".equals(qname)) && "mode".equals(name)) {
             final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
             final LanguageLevel level = LanguageLevel.forElement(anchor);
             argType = cache.getUnicodeType(level);
