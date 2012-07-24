@@ -180,7 +180,9 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     try {
       final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta);
-      if (shouldApplyEvent && buildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
+      if (shouldApplyEvent && buildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()
+          && artifacts.isEmpty()//todo[nik] currently changes in artifacts source files aren't registered in the delta
+        ) {
         applyFSEvent(null, myInitialFSDelta);
         return;
       }
