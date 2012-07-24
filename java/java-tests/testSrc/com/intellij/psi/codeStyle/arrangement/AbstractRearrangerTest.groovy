@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 /**
  * @author Denis Zhdanov
  * @since 7/20/12 2:54 PM
@@ -47,7 +48,7 @@ abstract class AbstractRearrangerTest extends LightCodeInsightFixtureTestCase {
   protected void doTest(@NotNull String initial,
                         @NotNull String expected,
                         @NotNull List<ArrangementRule> rules,
-                        @NotNull Collection<TextRange> ranges = null)
+                        Collection<TextRange> ranges = null)
   {
     def (String textToUse, List<TextRange> rangesToUse) = parseRanges(initial)
     if (rangesToUse && ranges) {
