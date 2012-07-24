@@ -1398,4 +1398,22 @@ def bar(){}''')
     assertOrderedEquals(myFixture.lookupElementStrings, ['fooo', 'fooo1'])
   }
 
+  public void testPreferApplicableAnnotations() {
+    configure('''
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
+@Z<caret>
+@interface Foo {
+}
+
+@Target(ElementType.ANNOTATION_TYPE)
+@interface ZMetaAnno {}
+
+@Target(ElementType.LOCAL_VARIABLE)
+@interface ZLocalAnno {}''')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems  0, 'ZMetaAnno', 'ZLocalAnno'
+  }
+
 }

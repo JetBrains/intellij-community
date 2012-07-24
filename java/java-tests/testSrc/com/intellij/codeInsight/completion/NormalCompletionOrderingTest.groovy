@@ -342,6 +342,10 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems 0, 'serial', 'superExpressionInIllegalContext'
   }
 
+  public void testPreferApplicableAnnotations() throws Throwable {
+    checkPreferredItems 0, 'ZMetaAnno', 'ZLocalAnno'
+  }
+
   public void testJComponentAddNewWithStats() throws Throwable {
     final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java");
     assertPreferredItems(0, "FooBean3", "JComponent", "Component");
