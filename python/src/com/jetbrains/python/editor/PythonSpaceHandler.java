@@ -1,5 +1,6 @@
 package com.jetbrains.python.editor;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -21,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
 public class PythonSpaceHandler extends TypedHandlerDelegate {
   @Override
   public Result charTyped(char c, Project project, Editor editor, @NotNull PsiFile file) {
-    if (c == ' ') {
+    CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
+    if (c == ' ' && codeInsightSettings.JAVADOC_STUB_ON_ENTER) {
       int offset = editor.getCaretModel().getOffset();
       PsiElement element = file.findElementAt(offset);
       if (element == null && offset > 1)

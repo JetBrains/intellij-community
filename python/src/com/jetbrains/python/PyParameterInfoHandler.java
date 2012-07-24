@@ -70,7 +70,8 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     List<PyExpression> flat_args = PyUtil.flattenedParensAndLists(arglist.getArguments());
     int alleged_cursor_offset = context.getOffset(); // this is already shifted backwards to skip spaces
 
-    if (!arglist.getTextRange().contains(alleged_cursor_offset)) {
+    final TextRange arglistTextRange = arglist.getTextRange();
+    if (!arglistTextRange.contains(alleged_cursor_offset) && arglistTextRange.getLength() != 1) {
       context.removeHint();
       return;
     }
