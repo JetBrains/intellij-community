@@ -1399,21 +1399,19 @@ def bar(){}''')
   }
 
   public void testPreferApplicableAnnotations() {
-    configure('''
+    myFixture.addClass '''
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 
-@Z<caret>
-@interface Foo {
-}
+@Target({ElementType.ANNOTATION_TYPE})
+@interface TMetaAnno {}
 
-@Target(ElementType.ANNOTATION_TYPE)
-@interface ZMetaAnno {}
+@Target({ElementType.LOCAL_VARIABLE})
+@interface TLocalAnno {}'''
 
-@Target(ElementType.LOCAL_VARIABLE)
-@interface ZLocalAnno {}''')
+    configure('@T<caret> @interface Foo {}')
     myFixture.completeBasic()
-    myFixture.assertPreferredCompletionItems  0, 'ZMetaAnno', 'ZLocalAnno'
+    myFixture.assertPreferredCompletionItems  0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
   }
 
 }

@@ -30,6 +30,9 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiClass;
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+
 /**
  * @author peter
  */
@@ -37,15 +40,22 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    final boolean empty = containsOnlyPackages(result.runRemainingContributors(parameters, true));
+    final boolean empty = containsOnlyPackages(result.runRemainingContributors(parameters, true)) ||
+                          suggestMetaAnnotations(parameters);
 
     if (!empty && parameters.getInvocationCount() == 0) {
       result.restartCompletionWhenNothingMatches();
     }
 
     if (empty) {
-      delegate(parameters, result);
+      delegate(parameters, JavaCompletionSorting.addJavaSorting(parameters, result));
     }
+  }
+
+  private static boolean suggestMetaAnnotations(CompletionParameters parameters) {
+    PsiElement position = parameters.getPosition();
+    return psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class, PsiModifierList.class, PsiClass.class).accepts( position) &&
+           psiElement().withSuperParent(4, psiClass().isAnnotationType()).accepts(position);
   }
 
   public static boolean containsOnlyPackages(LinkedHashSet<CompletionResult> results) {
@@ -152,7 +162,7 @@ public class JavaNoVariantsDelegator extends CompletionContributor {
     final ClassByNameMerger merger = new ClassByNameMerger(parameters.getInvocationCount() == 0, result);
 
     JavaClassNameCompletionContributor.addAllClasses(parameters,
-                                                     true, JavaCompletionSorting.addJavaSorting(parameters, result).getPrefixMatcher(), new Consumer<LookupElement>() {
+                                                     true, result.getPrefixMatcher(), new Consumer<LookupElement>() {
       @Override
       public void consume(LookupElement element) {
         JavaPsiClassReferenceElement classElement = element.as(JavaPsiClassReferenceElement.CLASS_CONDITION_KEY);
