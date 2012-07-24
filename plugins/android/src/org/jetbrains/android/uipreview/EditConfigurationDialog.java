@@ -110,6 +110,11 @@ public class EditConfigurationDialog extends DialogWrapper {
   }
 
   @Override
+  protected String getDimensionServiceKey() {
+    return "AndroidEditLayoutDeviceConfigurationDialog";
+  }
+
+  @Override
   public JComponent getPreferredFocusedComponent() {
     if (myEditDeviceForm.getNameField().getText().length() == 0) {
       return myEditDeviceForm.getNameField();

@@ -54,19 +54,11 @@ static inline LONGLONG pairToInt64(DWORD lowPart, DWORD highPart) {
 #define FILE_SHARE_ATTRIBUTES (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
 
 static jobject CreateFileInfo(JNIEnv *env, jstring path, bool append, LPWIN32_FIND_DATA lpData, jclass fileInfoClass) {
-    jobject o = env->AllocObject(fileInfoClass);
-    if (o == NULL) {
-        return NULL;
-    }
+    DWORD attributes = lpData->dwFileAttributes;
+    LONGLONG timestamp = pairToInt64(lpData->ftLastWriteTime.dwLowDateTime, lpData->ftLastWriteTime.dwHighDateTime);
+    LONGLONG length = pairToInt64(lpData->nFileSizeLow, lpData->nFileSizeHigh);
 
-    jstring fileName = env->NewString((jchar*)lpData->cFileName, (jsize)wcslen(lpData->cFileName));
-    if (fileName == NULL) {
-        return NULL;
-    }
-    env->SetObjectField(o, nameID, fileName);
-
-    bool read = false;
-    if (IS_SET(lpData->dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
+    if (IS_SET(attributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
         if (IS_SET(lpData->dwReserved0, IO_REPARSE_TAG_SYMLINK)) {
             size_t nameLen = env->GetStringLength(path) + wcslen(lpData->cFileName) + 2;
             wchar_t *lpName = (wchar_t *)malloc(nameLen * sizeof(wchar_t));
@@ -82,31 +74,42 @@ static jobject CreateFileInfo(JNIEnv *env, jstring path, bool append, LPWIN32_FI
 
                 // read symlink target attributes
                 HANDLE th = CreateFile(lpName, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-                if (th != INVALID_HANDLE_VALUE) {
-                    BY_HANDLE_FILE_INFORMATION targetData;
-                    if (GetFileInformationByHandle(th, &targetData)) {
-                        targetData.dwFileAttributes |= FILE_ATTRIBUTE_REPARSE_POINT;
-                        env->SetIntField(o, attributesID, targetData.dwFileAttributes);
-                        env->SetLongField(o, timestampID, pairToInt64(targetData.ftLastWriteTime.dwLowDateTime, targetData.ftLastWriteTime.dwHighDateTime));
-                        env->SetLongField(o, lengthID, pairToInt64(targetData.nFileSizeLow, targetData.nFileSizeHigh));
-                        read = true;
-                    }
-                    CloseHandle(th);
+                free(lpName);
+                if (th == INVALID_HANDLE_VALUE) {
+                    return NULL;  // invalid link
                 }
 
-                free(lpName);
+                BY_HANDLE_FILE_INFORMATION targetData;
+                BOOL result = GetFileInformationByHandle(th, &targetData);
+                CloseHandle(th);
+                if (result == 0) {
+                    return NULL;  // invalid link
+                }
+
+                attributes = targetData.dwFileAttributes | FILE_ATTRIBUTE_REPARSE_POINT;
+                timestamp = pairToInt64(targetData.ftLastWriteTime.dwLowDateTime, targetData.ftLastWriteTime.dwHighDateTime);
+                length = pairToInt64(targetData.nFileSizeLow, targetData.nFileSizeHigh);
             }
         }
         else {
-            lpData->dwFileAttributes &= (~ FILE_ATTRIBUTE_REPARSE_POINT);  // keep reparse flag only for symlinks
+            attributes &= (~ FILE_ATTRIBUTE_REPARSE_POINT);  // keep reparse flag only for symlinks
         }
     }
 
-    if (!read) {
-        env->SetIntField(o, attributesID, lpData->dwFileAttributes);
-        env->SetLongField(o, timestampID, pairToInt64(lpData->ftLastWriteTime.dwLowDateTime, lpData->ftLastWriteTime.dwHighDateTime));
-        env->SetLongField(o, lengthID, pairToInt64(lpData->nFileSizeLow, lpData->nFileSizeHigh));
+    jobject o = env->AllocObject(fileInfoClass);
+    if (o == NULL) {
+        return NULL;
     }
+
+    jstring fileName = env->NewString((jchar*)lpData->cFileName, (jsize)wcslen(lpData->cFileName));
+    if (fileName == NULL) {
+        return NULL;
+    }
+    env->SetObjectField(o, nameID, fileName);
+
+    env->SetIntField(o, attributesID, attributes);
+    env->SetLongField(o, timestampID, timestamp);
+    env->SetLongField(o, lengthID, length);
 
     return o;
 }

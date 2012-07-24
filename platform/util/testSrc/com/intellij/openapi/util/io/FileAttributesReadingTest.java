@@ -137,9 +137,21 @@ public class FileAttributesReadingTest {
     assertEquals(file.getPath(), target);
   }
 
+  @Test
+  public void missingLink() throws Exception {
+    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", false);
+    final File link = IoTestUtil.createTempLink(file.getPath(), new File(myTempDirectory, "link").getPath());
+
+    final FileAttributes attributes = FileSystemUtil.getAttributes(link);
+    assertNull(attributes);
+
+    final String target = FileSystemUtil.resolveSymLink(link);
+    assertNull(target);
+  }
+
   @NotNull
   private static FileAttributes getAttributes(@NotNull final File file) {
-    final FileAttributes attributes = FileSystemUtil.getAttributes(file.getPath());
+    final FileAttributes attributes = FileSystemUtil.getAttributes(file);
     assertNotNull(attributes);
     System.out.println(attributes);
     return attributes;

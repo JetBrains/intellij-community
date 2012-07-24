@@ -65,7 +65,12 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
 
   @Override
   public int getVersion() {
-    return 1;
+    FileType[] types = myFileTypeManager.getRegisteredFileTypes();
+    int version = 1;
+    for (FileType type : types) {
+      version += type.getName().hashCode();
+    }
+    return version;
   }
 
   @Override

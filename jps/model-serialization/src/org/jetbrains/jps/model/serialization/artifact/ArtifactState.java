@@ -33,7 +33,7 @@ public class ArtifactState {
   @NonNls public static final String NAME_ATTRIBUTE = "name";
   private String myName;
   private String myOutputPath;
-  private String myArtifactType;
+  private String myArtifactType = "plain";
   private boolean myBuildOnMake;
   private Element myRootElement;
   private List<ArtifactPropertiesState> myPropertiesList = new ArrayList<ArtifactPropertiesState>();

@@ -265,6 +265,11 @@ public class CreateResourceFileDialog extends DialogWrapper {
     }
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "AndroidCreateResourceFileDialog";
+  }
+
   @NotNull
   public Module getSelectedModule() {
     return (Module)myModuleCombo.getSelectedItem();

@@ -30,13 +30,7 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
-public class Win32Kernel {
-  public static final int FILE_ATTRIBUTE_READONLY = FileInfo.FILE_ATTRIBUTE_READONLY;
-  public static final int FILE_ATTRIBUTE_HIDDEN = FileInfo.FILE_ATTRIBUTE_HIDDEN;
-  public static final int FILE_ATTRIBUTE_DIRECTORY = FileInfo.FILE_ATTRIBUTE_DIRECTORY;
-  public static final int FILE_ATTRIBUTE_DEVICE = FileInfo.FILE_ATTRIBUTE_DEVICE;
-  public static final int FILE_ATTRIBUTE_REPARSE_POINT = FileInfo.FILE_ATTRIBUTE_REPARSE_POINT;
-
+class Win32Kernel {
   private final IdeaWin32 myKernel = IdeaWin32.getInstance();
   private final Map<String, FileInfo> myCache = new THashMap<String, FileInfo>();
 
@@ -72,13 +66,13 @@ public class Win32Kernel {
 
   public boolean isDirectory(@NotNull String path) throws FileNotFoundException {
     FileInfo data = getInfo(path);
-    return (data.attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+    return (data.attributes & FileInfo.FILE_ATTRIBUTE_DIRECTORY) != 0;
   }
 
   public boolean isWritable(@NotNull String path) throws FileNotFoundException {
     FileInfo fileInfo = getInfo(path);
     myCache.remove(path);
-    return (fileInfo.attributes & FILE_ATTRIBUTE_READONLY) == 0;
+    return (fileInfo.attributes & FileInfo.FILE_ATTRIBUTE_READONLY) == 0;
   }
 
   public long getTimeStamp(@NotNull String path) throws FileNotFoundException {
@@ -120,14 +114,14 @@ public class Win32Kernel {
       result |= FileUtil.BA_EXISTS;
     }
     if ((flags & FileUtil.BA_DIRECTORY) != 0) {
-      result |= (info.attributes & FILE_ATTRIBUTE_DIRECTORY) == 0 ? 0 : FileUtil.BA_DIRECTORY;
+      result |= (info.attributes & FileInfo.FILE_ATTRIBUTE_DIRECTORY) == 0 ? 0 : FileUtil.BA_DIRECTORY;
     }
     if ((flags & FileUtil.BA_REGULAR) != 0) {
-      result |= (info.attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_DEVICE | FILE_ATTRIBUTE_REPARSE_POINT)) != 0
+      result |= (info.attributes & (FileInfo.FILE_ATTRIBUTE_DIRECTORY | FileInfo.FILE_ATTRIBUTE_DEVICE | FileInfo.FILE_ATTRIBUTE_REPARSE_POINT)) != 0
                 ? 0 : FileUtil.BA_REGULAR;
     }
     if ((flags & FileUtil.BA_HIDDEN) != 0) {
-      result |= (info.attributes & FILE_ATTRIBUTE_HIDDEN) == 0 ? 0 : FileUtil.BA_HIDDEN;
+      result |= (info.attributes & FileInfo.FILE_ATTRIBUTE_HIDDEN) == 0 ? 0 : FileUtil.BA_HIDDEN;
     }
     return result;
   }

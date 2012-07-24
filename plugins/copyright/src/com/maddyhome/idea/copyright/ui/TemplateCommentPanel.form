@@ -189,7 +189,7 @@
                 </constraints>
                 <properties>
                   <labelFor value="679a0"/>
-                  <text value="Separator char"/>
+                  <text value="Separator"/>
                 </properties>
               </component>
               <component id="30865" class="javax.swing.JCheckBox" binding="cbBox">

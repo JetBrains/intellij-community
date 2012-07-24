@@ -417,6 +417,11 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
     closeOldSessionAndRun(debugPort);
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "AndroidProcessChooserDialog";
+  }
+
   private void closeOldSessionAndRun(final String debugPort) {
     final String configurationName = getRunConfigurationName(debugPort);
     final Collection<RunContentDescriptor> descriptors =

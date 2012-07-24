@@ -108,6 +108,11 @@ public abstract class CreateResourceDirectoryDialog extends DialogWrapper {
   }
 
   @Override
+  protected String getDimensionServiceKey() {
+    return "AndroidCreateResourceDirectoryDialog";
+  }
+
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myResourceTypeComboBox;
   }

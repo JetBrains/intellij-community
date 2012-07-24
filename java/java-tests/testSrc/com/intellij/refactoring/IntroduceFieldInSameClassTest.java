@@ -118,6 +118,12 @@ public class IntroduceFieldInSameClassTest extends LightCodeInsightTestCase {
     performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
     checkResultByFile("/refactoring/introduceField/afterLocalVarAnnotations.java");
   }
+
+  public void testFromLambdaExpr() throws Exception {
+    configureByFile("/refactoring/introduceField/beforeFromLambdaExpr.java");
+    performRefactoring(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION, false);
+    checkResultByFile("/refactoring/introduceField/afterFromLambdaExpr.java");
+  }
   
   public void testStaticFieldInInnerClass() throws Exception {
     configureByFile("/refactoring/introduceField/beforeStaticFieldInInnerClass.java");

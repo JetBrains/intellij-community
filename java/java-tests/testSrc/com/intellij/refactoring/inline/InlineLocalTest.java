@@ -136,6 +136,10 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false, "Cannot perform refactoring.\n" +
                   "Variable 'x' is accessed for writing.");
   }
+  
+  public void testLambdaExpr() throws Exception {
+    doTest(true);
+  }
 
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {
     try {

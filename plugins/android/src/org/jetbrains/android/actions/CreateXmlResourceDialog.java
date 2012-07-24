@@ -435,6 +435,11 @@ public class CreateXmlResourceDialog extends DialogWrapper {
     }
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "AndroidCreateXmlResourceDialog";
+  }
+
   @NotNull
   public String getResourceName() {
     return myNameField.getText().trim();
