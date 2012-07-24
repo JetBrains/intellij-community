@@ -3,8 +3,8 @@ package org.jetbrains.jps.incremental;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.Project;
-import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -18,15 +18,15 @@ public abstract class CompileScope {
   @NotNull
   private final Project myProject;
   private final JpsProject myJpsProject;
-  private final Set<Artifact> myArtifacts;
+  private final Set<JpsArtifact> myArtifacts;
 
-  protected CompileScope(@NotNull Project project, JpsProject jpsProject, Set<Artifact> artifacts) {
+  protected CompileScope(@NotNull Project project, JpsProject jpsProject, Set<JpsArtifact> artifacts) {
     myProject = project;
     myJpsProject = jpsProject;
     myArtifacts = artifacts;
   }
 
-  public boolean isAffected(Artifact artifact) {
+  public boolean isAffected(JpsArtifact artifact) {
     return myArtifacts.contains(artifact);
   }
 
@@ -45,7 +45,7 @@ public abstract class CompileScope {
     return false;
   }
 
-  public Set<Artifact> getArtifacts() {
+  public Set<JpsArtifact> getArtifacts() {
     return myArtifacts;
   }
 

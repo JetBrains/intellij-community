@@ -35,9 +35,7 @@ public class ByNameArrangementEntryMatcher implements ArrangementEntryMatcher {
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     if (entry instanceof NameAwareArrangementEntry) {
       String name = ((NameAwareArrangementEntry)entry).getName();
-      if (name != null) {
-        return name.matches(myPattern);
-      }
+      return name != null && name.matches(myPattern);
     }
     return false;
   }

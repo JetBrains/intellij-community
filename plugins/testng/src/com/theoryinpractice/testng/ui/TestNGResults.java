@@ -368,8 +368,14 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
       public void run() {
         animator.stopMovie();
         updateStatusLine();
-        if (total > count) {
+        if (total > count || myStatus == MessageHelper.SKIPPED_TEST) {
           myStatusLine.setStatusColor(ColorProgressBar.YELLOW);
+        }
+        else if (myStatus == MessageHelper.FAILED_TEST) {
+          myStatusLine.setStatusColor(ColorProgressBar.RED);
+        }
+        else {
+          myStatusLine.setStatusColor(ColorProgressBar.GREEN);
         }
         rootNode.setInProgress(false);
         if (TestNGConsoleProperties.SELECT_FIRST_DEFECT.value(myProperties)) {

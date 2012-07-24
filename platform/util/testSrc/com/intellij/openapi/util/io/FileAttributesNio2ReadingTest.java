@@ -17,7 +17,6 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 
 import static org.junit.Assert.assertEquals;
@@ -26,6 +25,8 @@ import static org.junit.Assume.assumeTrue;
 public class FileAttributesNio2ReadingTest extends FileAttributesReadingTest {
   @BeforeClass
   public static void setUpClass() throws Exception {
+    assumeTrue(SystemInfo.isJavaVersionAtLeast("1.7"));
+
     System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "true");
     FileSystemUtil.resetMediator();
     assertEquals("NIO2", FileSystemUtil.getMediatorName());
@@ -35,12 +36,5 @@ public class FileAttributesNio2ReadingTest extends FileAttributesReadingTest {
   public static void tearDownClass() throws Exception {
     System.setProperty(FileSystemUtil.FORCE_USE_NIO2_KEY, "");
     FileSystemUtil.resetMediator();
-  }
-
-  @Override
-  @Before
-  public void setUp() throws Exception {
-    assumeTrue(SystemInfo.isJavaVersionAtLeast("1.7"));
-    super.setUp();
   }
 }

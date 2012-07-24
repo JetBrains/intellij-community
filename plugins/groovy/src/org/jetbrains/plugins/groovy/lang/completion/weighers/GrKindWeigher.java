@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.CollectionFactory;
@@ -30,8 +31,10 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionContributor;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrPropertyForCompletion;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -90,7 +93,15 @@ public class GrKindWeigher extends CompletionWeigher {
       if (isLightElement(o)) return NotQualifiedKind.unknown;
       if (o instanceof PsiClass) {
         if (((PsiClass)o).isAnnotationType() && GroovyCompletionContributor.AFTER_AT.accepts(position)) {
-          return NotQualifiedKind.restrictedClass;
+          final GrAnnotation annotation = PsiTreeUtil.getParentOfType(position, GrAnnotation.class);
+          if (annotation != null) {
+            PsiElement annoParent = annotation.getParent();
+            PsiElement owner = annoParent.getParent();
+            String[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(annoParent instanceof PsiModifierList ? owner : annoParent);
+            if (PsiAnnotationImpl.isAnnotationApplicable(false, (PsiClass)o, elementTypeFields, position.getResolveScope())) {
+              return NotQualifiedKind.restrictedClass;
+            }
+          }
         }
         if (GroovyCompletionContributor.IN_CATCH_TYPE.accepts(position) &&
             InheritanceUtil.isInheritor((PsiClass)o, CommonClassNames.JAVA_LANG_THROWABLE)) {

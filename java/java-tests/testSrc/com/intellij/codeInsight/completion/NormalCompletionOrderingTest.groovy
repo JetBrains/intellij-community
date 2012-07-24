@@ -342,6 +342,19 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems 0, 'serial', 'superExpressionInIllegalContext'
   }
 
+  public void testPreferApplicableAnnotations() throws Throwable {
+    myFixture.addClass '''
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
+@Target({ElementType.ANNOTATION_TYPE})
+@interface TMetaAnno {}
+
+@Target({ElementType.LOCAL_VARIABLE})
+@interface TLocalAnno {}'''
+    checkPreferredItems 0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
+  }
+
   public void testJComponentAddNewWithStats() throws Throwable {
     final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java");
     assertPreferredItems(0, "FooBean3", "JComponent", "Component");

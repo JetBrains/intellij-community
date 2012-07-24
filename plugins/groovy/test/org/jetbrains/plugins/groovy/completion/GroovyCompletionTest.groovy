@@ -1398,4 +1398,20 @@ def bar(){}''')
     assertOrderedEquals(myFixture.lookupElementStrings, ['fooo', 'fooo1'])
   }
 
+  public void testPreferApplicableAnnotations() {
+    myFixture.addClass '''
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
+@Target({ElementType.ANNOTATION_TYPE})
+@interface TMetaAnno {}
+
+@Target({ElementType.LOCAL_VARIABLE})
+@interface TLocalAnno {}'''
+
+    configure('@T<caret> @interface Foo {}')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems  0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
+  }
+
 }

@@ -199,23 +199,6 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   private boolean createProjectByAndroidTool(final VirtualFile contentRoot,
                                              final VirtualFile sourceRoot,
                                              final AndroidFacet facet) {
-
-
-    File tempContentRoot = null;
-
-    // todo: support custom non-empty source root
-
-    if (sourceRoot != null &&
-        sourceRoot.getChildren().length == 0 &&
-        (!Comparing.equal(sourceRoot.getParent(), contentRoot) || !SdkConstants.FD_SOURCES.equals(sourceRoot.getName()))) {
-      try {
-        tempContentRoot = FileUtil.createTempDirectory("android_temp_content_root", "tmp");
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-
     final Module module = facet.getModule();
     AndroidPlatform platform = AndroidPlatform.parse(mySdk);
 
@@ -254,7 +237,16 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     commandLine.addParameter(getAntProjectName(module.getName()));
 
     commandLine.addParameters("--path");
-    final String targetDirectoryPath = tempContentRoot != null ? tempContentRoot.getPath() : contentRoot.getPath();
+
+    File tempContentRoot;
+    try {
+      tempContentRoot = FileUtil.createTempDirectory("android_temp_content_root", "tmp");
+    }
+    catch (IOException e) {
+      LOG.error(e);
+      return false;
+    }
+    final String targetDirectoryPath = tempContentRoot.getPath();
     commandLine.addParameter(FileUtil.toSystemDependentName(targetDirectoryPath));
 
     if (myProjectType == ProjectType.APPLICATION || myProjectType == ProjectType.LIBRARY) {
@@ -282,32 +274,12 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       @Override
       public void run() {
         final Project project = module.getProject();
-        AndroidUtils.runExternalTool(commandLine, project);
-
-        if (finalTempContentRoot != null) {
-          final File[] children = finalTempContentRoot.listFiles();
-
-          if (children != null) {
-            for (File child : children) {
-              if (SdkConstants.FD_SOURCES.equals(child.getName())) {
-                continue;
-              }
-              final File to = new File(contentRoot.getPath(), child.getName());
-
-              if (!FileUtil.moveDirWithContent(child, to)) {
-                LOG.error("Cannot move content from " + child.getPath() + " to " + to.getPath());
-              }
-            }
-          }
-
-          final File tempSourceRoot = new File(finalTempContentRoot, SdkConstants.FD_SOURCES);
-          if (tempSourceRoot.exists()) {
-            final File to = new File(sourceRoot.getPath());
-
-            if (!FileUtil.moveDirWithContent(tempSourceRoot, to)) {
-              LOG.error("Cannot move content from " + tempSourceRoot.getPath() + " to " + to.getPath());
-            }
-          }
+        try {
+          AndroidUtils.runExternalTool(commandLine, project);
+          copyGeneratedAndroidProject(finalTempContentRoot, contentRoot, sourceRoot);
+        }
+        finally {
+          FileUtil.delete(finalTempContentRoot);
         }
 
         StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
@@ -387,6 +359,42 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
     return true;
   }
 
+  private static void copyGeneratedAndroidProject(File tempDir, VirtualFile contentRoot, VirtualFile sourceRoot) {
+    final File[] children = tempDir.listFiles();
+    if (children != null) {
+      for (File child : children) {
+        if (SdkConstants.FD_SOURCES.equals(child.getName())) {
+          continue;
+        }
+        final File to = new File(contentRoot.getPath(), child.getName());
+
+        try {
+          if (child.isDirectory()) {
+            FileUtil.copyDir(child, to);
+          }
+          else {
+            FileUtil.copy(child, to);
+          }
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+    }
+
+    final File tempSourceRoot = new File(tempDir, SdkConstants.FD_SOURCES);
+    if (tempSourceRoot.exists()) {
+      final File to = new File(sourceRoot.getPath());
+
+      try {
+        FileUtil.copyDir(tempSourceRoot, to);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+  }
+
   private static void configureManifest(@NotNull AndroidFacet facet, @NotNull IAndroidTarget target) {
     final Manifest manifest = facet.getManifest();
     if (manifest == null) {
@@ -456,7 +464,8 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       AndroidPlatform platform = AndroidPlatform.parse(mySdk);
 
       if (platform == null) {
-        Messages.showErrorDialog(project, "Cannot parse Android SDK: 'default.properties' won't be generated", CommonBundle.getErrorTitle());
+        Messages.showErrorDialog(project, "Cannot parse Android SDK: '" + SdkConstants.FN_PROJECT_PROPERTIES + "' won't be generated",
+                                 CommonBundle.getErrorTitle());
         return;
       }
 
@@ -672,7 +681,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       });
     }
 
-    steps.add(new AndroidModuleWizardStep(this, wizardContext));
+    steps.add(new AndroidModuleWizardStep(this, wizardContext, modulesProvider));
     return steps.toArray(new ModuleWizardStep[steps.size()]);
   }
 

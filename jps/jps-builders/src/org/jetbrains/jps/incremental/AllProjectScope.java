@@ -2,8 +2,8 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Project;
-import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.File;
 import java.util.Set;
@@ -16,7 +16,7 @@ public class AllProjectScope extends CompileScope {
 
   private final boolean myIsForcedCompilation;
 
-  public AllProjectScope(Project project, JpsProject jpsProject, Set<Artifact> artifacts, boolean forcedCompilation) {
+  public AllProjectScope(Project project, JpsProject jpsProject, Set<JpsArtifact> artifacts, boolean forcedCompilation) {
     super(project, jpsProject, artifacts);
     myIsForcedCompilation = forcedCompilation;
   }

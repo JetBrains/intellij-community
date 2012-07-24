@@ -28,6 +28,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
@@ -90,11 +91,11 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   @NonNls private static final String TARGET_SELECTION_MODE_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_SELECTION_MODE_FOR_NEW_MODULE";
   @NonNls private static final String TARGET_AVD_FOR_NEW_MODULE_PROPERTY = "ANDROID_TARGET_AVD_FOR_NEW_MODULE";
 
-  public AndroidModuleWizardStep(@NotNull AndroidModuleBuilder moduleBuilder, WizardContext context) {
+  public AndroidModuleWizardStep(@NotNull AndroidModuleBuilder moduleBuilder, WizardContext context, ModulesProvider modulesProvider) {
     super();
     myApplicationProjectButton.setSelected(true);
 
-    myAppPropertiesEditor = new AndroidAppPropertiesEditor(moduleBuilder.getName());
+    myAppPropertiesEditor = new AndroidAppPropertiesEditor(moduleBuilder.getName(), modulesProvider);
     Project project = context.getProject();
     myTestPropertiesEditor = project != null ? new AndroidTestPropertiesEditor(project) : null;
     myPropertiesPanel.setLayout(new OverlayLayout(myPropertiesPanel));
@@ -201,6 +202,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
         myDoNotCreateConfigurationRadioButton.setSelected(true);
       }
     }
+    updatePropertiesEditor();
   }
 
   @Override
@@ -223,15 +225,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
       if (myTestPropertiesEditor != null) {
         myTestPropertiesEditor.getContentPanel().setVisible(false);
       }
-      boolean app = myApplicationProjectButton.isSelected();
-      myAppPropertiesEditor.getApplicationNameField().setEnabled(app);
-      myAppPropertiesEditor.getHelloAndroidCheckBox().setEnabled(app);
-      if (app) {
-        myAppPropertiesEditor.updateActivityPanel();
-      }
-      else {
-        UIUtil.setEnabled(myAppPropertiesEditor.getActivtiyPanel(), app, true);
-      }
+      myAppPropertiesEditor.update(myApplicationProjectButton.isSelected());
     }
     else {
       myAppPropertiesEditor.getContentPanel().setVisible(false);
@@ -241,8 +235,12 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
   }
 
   public JComponent getComponent() {
-    myAppPropertiesEditor.getApplicationNameField().setText(myModuleBuilder.getName());
+    final String moduleName = myModuleBuilder.getName();
 
+    if (moduleName != null) {
+      myAppPropertiesEditor.getApplicationNameField().setText(moduleName);
+      myAppPropertiesEditor.getPackageNameField().setText(AndroidAppPropertiesEditor.getDefaultPackageNameByModuleName(moduleName));
+    }
     Sdk selectedSdk = mySdkComboBoxWithBrowseButton.getSelectedSdk();
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     
@@ -281,7 +279,7 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
     }
 
     if (myApplicationProjectButton.isSelected() || myLibProjectButton.isSelected()) {
-      myAppPropertiesEditor.validate(myTestProjectButton.isSelected());
+      myAppPropertiesEditor.validate(myLibProjectButton.isSelected());
     }
     else {
       assert myTestPropertiesEditor != null;

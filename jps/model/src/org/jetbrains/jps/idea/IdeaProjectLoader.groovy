@@ -2,7 +2,6 @@ package org.jetbrains.jps.idea
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.jps.*
-import org.jetbrains.jps.artifacts.Artifact
 /**
  * @author max
  */
@@ -84,7 +83,6 @@ public class IdeaProjectLoader {
     loadProjectFileEncodings(root)
     loadWorkspaceConfiguration(new File(iprFile.parentFile, iprFile.name[0..-4]+"iws"))
     loadUiDesignerConfiguration(root)
-    loadArtifacts(getComponent(root, "ArtifactManager"))
     loadRunConfigurations(getComponent(root, "ProjectRunConfigurationManager"))
   }
 
@@ -107,16 +105,6 @@ public class IdeaProjectLoader {
     def uiDesignerXml = new File(dir, "uiDesigner.xml")
     if (uiDesignerXml.exists()) {
       loadUiDesignerConfiguration(xmlParser.parse(uiDesignerXml))
-    }
-
-    def artifactsFolder = new File(dir, "artifacts")
-    if (artifactsFolder.isDirectory()) {
-      artifactsFolder.eachFile {File file ->
-        if (isXmlFile(file)) {
-          def artifactsComponent = xmlParser.parse(file)
-          loadArtifacts(artifactsComponent)
-        }
-      }
     }
 
     def runConfFolder = new File(dir, "runConfigurations")
@@ -293,19 +281,6 @@ public class IdeaProjectLoader {
           project.filePathToCharset[FileUtil.toCanonicalPath(path)] = charset;
         }
       }
-    }
-  }
-
-  def loadArtifacts(Node artifactsComponent) {
-    if (artifactsComponent == null) return;
-    ArtifactLoader artifactLoader = new ArtifactLoader(project, projectMacroExpander, errorReporter)
-    artifactsComponent.artifact.each {Node artifactTag ->
-      def artifactName = artifactTag."@name"
-      def outputPath = projectMacroExpander.expandMacros(artifactTag."output-path"[0]?.text())
-      def root = artifactLoader.loadLayoutElement(artifactTag.root[0], artifactName)
-      def options = artifactLoader.loadOptions(artifactTag, artifactName)
-      def artifact = new Artifact(name: artifactName, rootElement: root, outputPath: outputPath, properties: options);
-      project.artifacts[artifact.name] = artifact;
     }
   }
 

@@ -26,6 +26,16 @@ import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 
 public class ResourceCopyingTest extends MavenImportingTestCase {
+
+  @Override
+  protected void setUpInWriteAction() throws Exception {
+    super.setUpInWriteAction();
+
+    CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.xxx");
+    CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.yyy");
+    CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.zzz");
+  }
+
   public void testBasic() throws Exception {
     createProjectSubFile("src/main/resources/dir/file.properties");
 

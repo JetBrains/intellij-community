@@ -2,6 +2,7 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,10 +13,12 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.artifact.JpsArtifactLoader;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetLoader;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,14 +71,23 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private void loadFromDirectory(File dir) {
     JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
     loadModules(loadRootElement(new File(dir, "modules.xml")), projectSdkType);
-    final File[] libraryFiles = new File(dir, "libraries").listFiles();
-    if (libraryFiles != null) {
-      for (File libraryFile : libraryFiles) {
-        if (isXmlFile(libraryFile)) {
-          loadProjectLibraries(loadRootElement(libraryFile));
-        }
-      }
+    for (File libraryFile : listXmlFiles(new File(dir, "libraries"))) {
+      loadProjectLibraries(loadRootElement(libraryFile));
     }
+    for (File artifactFile : listXmlFiles(new File(dir, "artifacts"))) {
+      loadArtifacts(loadRootElement(artifactFile));
+    }
+  }
+
+  @NotNull
+  private static File[] listXmlFiles(final File dir) {
+    File[] files = dir.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        return isXmlFile(file);
+      }
+    });
+    return files != null ? files : ArrayUtil.EMPTY_FILE_ARRAY;
   }
 
   private void loadFromIpr(File iprFile) {
@@ -83,6 +95,11 @@ public class JpsProjectLoader extends JpsLoaderBase {
     JpsSdkType<?> projectSdkType = loadProjectRoot(root);
     loadModules(root, projectSdkType);
     loadProjectLibraries(findComponent(root, "libraryTable"));
+    loadArtifacts(findComponent(root, "ArtifactManager"));
+  }
+
+  private void loadArtifacts(Element artifactManagerComponent) {
+    JpsArtifactLoader.loadArtifacts(myProject, artifactManagerComponent);
   }
 
   @Nullable

@@ -19,6 +19,7 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,23 @@ import java.util.regex.Pattern;
  * @since 7/10/12 8:06 AM
  */
 public class DocPreviewUtil {
+
+  private static final TIntHashSet ALLOWED_LINK_SEPARATORS = new TIntHashSet();
+  static {
+    ALLOWED_LINK_SEPARATORS.add(',');
+    ALLOWED_LINK_SEPARATORS.add(' ');
+    ALLOWED_LINK_SEPARATORS.add('.');
+    ALLOWED_LINK_SEPARATORS.add(';');
+    ALLOWED_LINK_SEPARATORS.add('&');
+    ALLOWED_LINK_SEPARATORS.add('\t');
+    ALLOWED_LINK_SEPARATORS.add('\n');
+    ALLOWED_LINK_SEPARATORS.add('[');
+    ALLOWED_LINK_SEPARATORS.add(']');
+    ALLOWED_LINK_SEPARATORS.add('(');
+    ALLOWED_LINK_SEPARATORS.add(')');
+    ALLOWED_LINK_SEPARATORS.add('<');
+    ALLOWED_LINK_SEPARATORS.add('>');
+  }
 
   /**
    * We shorten links text from fully qualified name to short names (e.g. from <code>'java.lang.String'</code> to <code>'String'</code>).
@@ -90,13 +108,16 @@ public class DocPreviewUtil {
     Map<String/*qName*/, String/*address*/> links = new HashMap<String, String>();
     process(fullText, new LinksCollector(links));
     
-    // Add short names.
+    // Add derived names.
     Map<String, String> toAdd = new HashMap<String, String>();
     for (Map.Entry<String, String> entry : links.entrySet()) {
-      String key = entry.getKey();
-      int i = key.lastIndexOf('.');
-      if (i > 0 && i < key.length() - 1) {
-        toAdd.put(key.substring(i + 1), entry.getValue());
+      String shortName = parseShortName(entry.getKey());
+      if (shortName != null) {
+        toAdd.put(shortName, entry.getValue());
+      }
+      String longName = parseLongName(entry.getKey(), entry.getValue());
+      if (longName != null) {
+        toAdd.put(longName, entry.getValue());
       }
     }
     links.putAll(toAdd);
@@ -121,6 +142,40 @@ public class DocPreviewUtil {
     return buffer.toString();
   }
 
+  /**
+   * Tries to build a short name form the given name assuming that it is a full name.
+   * <p/>
+   * Example: return {@code 'String'} for a given {@code 'java.lang.String'}.
+   * 
+   * @param name  name to process
+   * @return      short name derived from the given full name if possible; <code>null</code> otherwise
+   */
+  @Nullable
+  private static String parseShortName(@NotNull String name) {
+    int i = name.lastIndexOf('.');
+    return i > 0 && i < name.length() - 1 ? name.substring(i + 1) : null;
+  }
+
+  /**
+   * Tries to build a long name from the given short name and a link.
+   * <p/>
+   * Example: return {@code 'java.lang.String'} for a given pair (name {@code 'String'}; address: {@code 'psi_element://java.lang.String'}.
+   * 
+   * @param shortName   short name to process
+   * @param address     address to process
+   * @return            long name derived from the given arguments (if any); <code>null</code> otherwise
+   */
+  @Nullable
+  private static String parseLongName(@NotNull String shortName, @NotNull String address) {
+    String pureAddress = address;
+    int i = pureAddress.lastIndexOf("//");
+    if (i > 0 && i < pureAddress.length() - 2) {
+      pureAddress = pureAddress.substring(i + 2);
+    }
+    
+    return (pureAddress.equals(shortName) || !pureAddress.endsWith(shortName)) ? null : pureAddress;
+  }
+
   private static void replace(@NotNull StringBuilder text,
                               @NotNull String replaceFrom,
                               @NotNull String replaceTo,
@@ -129,6 +184,15 @@ public class DocPreviewUtil {
     for (int i = text.indexOf(replaceFrom); i >= 0 && i < text.length() - 1; i = text.indexOf(replaceFrom, i + 1)) {
       int end = i + replaceFrom.length();
       if (intersects(readOnlyChanges, i, end)) {
+        continue;
+      }
+      if (end - i > 1 && end < text.length() && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(end))) {
+        // Consider a situation when we have, say, replacement from text 'PsiType' and encounter a 'PsiTypeParameter' in the text.
+        // We don't want to perform the replacement then.
+        continue;
+      }
+      if (end - i > 1 && i > 0 && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(i - 1))) {
+        // Similar situation but targets head match: from = 'TextRange', text = 'getTextRange()'. 
         continue;
       }
       text.replace(i, end, replaceTo);

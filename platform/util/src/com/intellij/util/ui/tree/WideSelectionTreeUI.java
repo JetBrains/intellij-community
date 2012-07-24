@@ -283,15 +283,17 @@ public class WideSelectionTreeUI extends BasicTreeUI {
         }
       }
       else {
-        //Color bg = tree.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
-        //if (!selected) {
-        //  bg = background;
-        //}
+        if (UIUtil.isUnderAquaBasedLookAndFeel()) {
+          Color bg = tree.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
+          if (!selected) {
+            bg = background;
+          }
 
-        //if (/*myAlwaysPaintRowBackground || */selected) {
-        //  rowGraphics.setColor(bg);
-        //  rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
-        //}
+          if (myAlwaysPaintRowBackground || selected) {
+            rowGraphics.setColor(bg);
+            rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
+          }
+        }
       }
 
       if (shouldPaintExpandControl(path, row, isExpanded, hasBeenExpanded, isLeaf)) {
@@ -308,7 +310,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (myAlwaysPaintRowBackground && myWideSelection) {
+    if (myAlwaysPaintRowBackground && myWideSelection && !UIUtil.isUnderAquaBasedLookAndFeel()) {
       paintSelectedRows(g, ((JTree)c));
     }
     if (myWideSelection) {

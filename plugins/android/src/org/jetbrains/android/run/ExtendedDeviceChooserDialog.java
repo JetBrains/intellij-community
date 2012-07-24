@@ -95,6 +95,7 @@ public class ExtendedDeviceChooserDialog extends DialogWrapper {
     };
     myLaunchEmulatorRadioButton.addActionListener(listener);
     myChooserRunningDeviceRadioButton.addActionListener(listener);
+    myAvdCombo.addActionListener(listener);
 
     init();
 

@@ -6,8 +6,6 @@ import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.artifacts.Artifact;
-import org.jetbrains.jps.artifacts.LayoutElement;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
@@ -15,6 +13,8 @@ import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,7 +25,7 @@ import java.util.*;
  */
 public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private final Project myProject;
-  private final Artifact myArtifact;
+  private final JpsArtifact myArtifact;
   private final int myArtifactId;
   private final JpsModel myModel;
   private final ModuleRootsIndex myRootsIndex;
@@ -38,7 +38,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private final File mySrcOutMappingsFile;
   private File myOutSrcMappingsFile;
 
-  public ArtifactSourceFilesState(Artifact artifact, int artifactId, Project project,
+  public ArtifactSourceFilesState(JpsArtifact artifact, int artifactId, Project project,
                                   JpsModel model, ModuleRootsIndex rootsIndex,
                                   ArtifactSourceTimestampStorage timestampStorage,
                                   File mappingsDir) {
@@ -147,7 +147,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   }
 
   private ArtifactInstructionsBuilder computeInstructions() {
-    final LayoutElement rootElement = myArtifact.getRootElement();
+    final JpsCompositePackagingElement rootElement = myArtifact.getRootElement();
     ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(myProject,
                                                                                             myModel, myRootsIndex, new ProjectPaths(myModel.getProject()));
     final ArtifactInstructionsBuilderImpl instructionsBuilder = new ArtifactInstructionsBuilderImpl(myRootsIndex, myProject.getIgnoredFilePatterns());

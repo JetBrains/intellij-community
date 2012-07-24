@@ -18,16 +18,17 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.openapi.util.Condition;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -55,26 +56,60 @@ public class PreferByKindWeigher extends LookupElementWeigher {
   private final CompletionType myCompletionType;
   private final PsiElement myPosition;
   private final Set<PsiField> myNonInitializedFields;
-  @Nullable private final String myRequiredSuper;
+  @NotNull private final Condition<PsiClass> myRequiredSuper;
 
-  public PreferByKindWeigher(CompletionType completionType, PsiElement position) {
+  public PreferByKindWeigher(CompletionType completionType, final PsiElement position) {
     super("local");
     myCompletionType = completionType;
     myPosition = position;
     myNonInitializedFields = JavaCompletionProcessor.getNonInitializedFields(position);
+    myRequiredSuper = createSuitabilityCondition(position);
+  }
 
+  private static Condition<PsiClass> createSuitabilityCondition(final PsiElement position) {
     if (IN_CATCH_TYPE.accepts(position) ||
         IN_MULTI_CATCH_TYPE.accepts(position) ||
         JavaSmartCompletionContributor.AFTER_THROW_NEW.accepts(position) ||
         INSIDE_METHOD_THROWS_CLAUSE.accepts(position)) {
-      myRequiredSuper = CommonClassNames.JAVA_LANG_THROWABLE;
+      return new Condition<PsiClass>() {
+        @Override
+        public boolean value(PsiClass psiClass) {
+          return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_THROWABLE);
+        }
+      };
     }
-    else if (IN_RESOURCE_TYPE.accepts(position)) {
-      myRequiredSuper = CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE;
+
+    if (IN_RESOURCE_TYPE.accepts(position)) {
+      return new Condition<PsiClass>() {
+        @Override
+        public boolean value(PsiClass psiClass) {
+          return InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
+        }
+      };
     }
-    else {
-      myRequiredSuper = null;
+
+    if (psiElement().withParents(PsiJavaCodeReferenceElement.class, PsiAnnotation.class).accepts(position)) {
+      final PsiAnnotation annotation = PsiTreeUtil.getParentOfType(position, PsiAnnotation.class);
+      assert annotation != null;
+      PsiAnnotationOwner owner = annotation.getOwner();
+      if (owner instanceof PsiModifierList || owner instanceof PsiTypeElement ||
+          owner instanceof PsiMethodReceiver || owner instanceof PsiTypeParameter) {
+        PsiElement member = ((PsiElement)owner).getParent();
+        final String[] elementTypeFields = PsiAnnotationImpl
+          .getApplicableElementTypeFields(owner instanceof PsiModifierList ? member : (PsiElement)owner);
+        return new Condition<PsiClass>() {
+          @Override
+          public boolean value(PsiClass psiClass) {
+            if (!psiClass.isAnnotationType()) {
+              return false;
+            }
+            return PsiAnnotationImpl.isAnnotationApplicable(false, psiClass, elementTypeFields, position.getResolveScope());
+          }
+        };
+      }
     }
+    //noinspection unchecked
+    return Condition.FALSE;
   }
 
   enum MyResult {
@@ -156,7 +191,7 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       }
 
       if (object instanceof PsiClass) {
-        if (myRequiredSuper != null && InheritanceUtil.isInheritor((PsiClass)object, myRequiredSuper)) {
+        if (myRequiredSuper.value((PsiClass)object)) {
           return MyResult.suitableClass;
         }
         return MyResult.classNameOrGlobalStatic;

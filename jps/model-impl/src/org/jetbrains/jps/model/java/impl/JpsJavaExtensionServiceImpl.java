@@ -8,6 +8,7 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 import java.util.ArrayList;
@@ -122,5 +123,17 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
       }
     }
     return null;
+  }
+
+  @Override
+  @NotNull
+  public JpsProductionModuleOutputPackagingElement createProductionModuleOutput(@NotNull JpsModuleReference moduleReference) {
+    return new JpsProductionModuleOutputPackagingElementImpl(moduleReference);
+  }
+
+  @Override
+  @NotNull
+  public JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference) {
+    return new JpsTestModuleOutputPackagingElementImpl(moduleReference);
   }
 }

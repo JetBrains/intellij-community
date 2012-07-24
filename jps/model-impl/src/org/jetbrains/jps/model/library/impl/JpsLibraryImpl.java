@@ -1,10 +1,15 @@
 package org.jetbrains.jps.model.library.impl;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.*;
 import org.jetbrains.jps.model.library.*;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -93,5 +98,42 @@ public class JpsLibraryImpl<P extends JpsElementProperties> extends JpsNamedComp
     final JpsElementReference<JpsCompositeElement> parentReference =
       ((JpsReferenceableElement<JpsCompositeElement>)getParent().getParent()).createReference();
     return new JpsLibraryReferenceImpl(getName(), parentReference);
+  }
+
+  @Override
+  public List<File> getFiles(final JpsOrderRootType rootType) {
+    List<File> files = new ArrayList<File>();
+    for (JpsLibraryRoot root : getRoots(rootType)) {
+      final File file = JpsPathUtil.urlToFile(root.getUrl());
+      switch (root.getInclusionOptions()) {
+        case ROOT_ITSELF:
+          files.add(file);
+          break;
+        case ARCHIVES_UNDER_ROOT:
+          collectArchives(file, false, files);
+          break;
+        case ARCHIVES_UNDER_ROOT_RECURSIVELY:
+          collectArchives(file, true, files);
+          break;
+      }
+    }
+    return files;
+  }
+
+  private static void collectArchives(File file, boolean recursively, Collection<File> result) {
+    final File[] children = file.listFiles();
+    if (children != null) {
+      for (File child : children) {
+        final String extension = FileUtilRt.getExtension(child.getName());
+        if (child.isDirectory()) {
+          if (recursively) {
+            collectArchives(child, recursively, result);
+          }
+        }
+        else if (extension.equals("jar") || extension.equals("zip")) {
+          result.add(child);
+        }
+      }
+    }
   }
 }

@@ -17,6 +17,8 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.win32.FileInfo;
+import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.sun.jna.Library;
@@ -65,7 +67,17 @@ public class FileSystemUtil {
     final String quickTestPath = SystemInfo.isWindows ? "C:\\" :  "/";
 
     if (!forceUseNio2) {
-      if (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) {
+      if (SystemInfo.isWindows) {
+        try {
+          final Mediator mediator = new IdeaWin32MediatorImpl();
+          mediator.getAttributes(quickTestPath);
+          return mediator;
+        }
+        catch (Throwable t) {
+          LOG.warn(t);
+        }
+      }
+      else if (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) {
         try {
           final Mediator mediator = new JnaUnixMediatorImpl();
           mediator.getAttributes(quickTestPath);
@@ -326,6 +338,44 @@ public class FileSystemUtil {
       catch (Exception ignore) { }
 
       return null;
+    }
+  }
+
+
+  private static class IdeaWin32MediatorImpl implements Mediator {
+    private static final String PATH_PREFIX = "\\\\?\\";
+    private static final int PREFIX_SIZE = PATH_PREFIX.length();
+
+    private IdeaWin32 myInstance = IdeaWin32.getInstance();
+
+    @Override
+    public FileAttributes getAttributes(@NotNull final String path) throws Exception {
+      final FileInfo fileInfo = myInstance.getInfo(path);
+      if (fileInfo == null) return null;
+
+      final boolean isDirectory = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DIRECTORY);
+      final boolean isSpecial = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DEVICE);
+      final boolean isSymlink = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_REPARSE_POINT);
+      final boolean isHidden = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_HIDDEN);
+      final boolean isWritable = !isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_READONLY);
+      final long timestamp = fileInfo.timestamp / 10000 - 11644473600000l;
+      return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, fileInfo.length, timestamp, isWritable);
+    }
+
+    @Override
+    public String resolveSymLink(@NotNull final String path) throws Exception {
+      final String result = myInstance.resolveSymLink(path);
+      return result != null && result.startsWith(PATH_PREFIX) ? result.substring(PREFIX_SIZE) : result;
+    }
+
+    @Override
+    public void setPermissions(@NotNull final String path, final int permissions) throws Exception {
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "IdeaWin32";
     }
   }
 

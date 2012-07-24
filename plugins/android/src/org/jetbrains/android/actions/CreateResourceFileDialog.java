@@ -34,6 +34,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.uipreview.DeviceConfiguratorPanel;
 import org.jetbrains.android.uipreview.InvalidOptionValueException;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ModuleListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
@@ -250,6 +251,12 @@ public class CreateResourceFileDialog extends DialogWrapper {
     final String subdirName = getSubdirName();
     if (subdirName.length() == 0) {
       Messages.showErrorDialog(myPanel, AndroidBundle.message("directory.not.specified.error"), CommonBundle.getErrorTitle());
+      return;
+    }
+
+    final String errorMessage = AndroidResourceUtil.getInvalidResourceFileNameMessage(fileName);
+    if (errorMessage != null) {
+      Messages.showErrorDialog(myPanel, errorMessage, CommonBundle.getErrorTitle());
       return;
     }
     myValidator = createValidator(subdirName);

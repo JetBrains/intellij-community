@@ -19,13 +19,13 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.*;
 import java.util.Collections;
@@ -182,7 +182,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     final ProjectDescriptor projectDescriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
       final IncProjectBuilder builder = createBuilder(projectDescriptor);
-      doBuild(builder, new AllProjectScope(myProject, myJpsProject, Collections.<Artifact>emptySet(), true), false, false, true);
+      doBuild(builder, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false, false, true);
 
       modify();
 
@@ -206,7 +206,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
       makeBuilder.addMessageHandler(handler);
 
-      makeBuilder.build(new AllProjectScope(myProject, myJpsProject, Collections.<Artifact>emptySet(), false), true, false, false);
+      makeBuilder.build(new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
 
       final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
 
@@ -222,7 +222,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       assertEquals(expected, actual);
 
       if (!handler.myErrors) {
-        createBuilder(projectDescriptor).build(new AllProjectScope(myProject, myJpsProject, Collections.<Artifact>emptySet(), true), false, true, false);
+        createBuilder(projectDescriptor).build(new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false, true, false);
 
         final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();
 

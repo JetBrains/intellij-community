@@ -214,6 +214,10 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testNameValidation() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testResourceReferenceAsValueCompletion1() throws Throwable {
     doTestCompletion();
   }

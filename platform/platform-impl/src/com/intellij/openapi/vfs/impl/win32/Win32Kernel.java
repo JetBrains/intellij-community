@@ -16,6 +16,8 @@
 package com.intellij.openapi.vfs.impl.win32;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.win32.FileInfo;
+import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -29,14 +31,13 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 public class Win32Kernel {
-  public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
-  public static final int FILE_ATTRIBUTE_HIDDEN = 0x0002;
-  public static final int FILE_ATTRIBUTE_DIRECTORY = 0x0010;
-  public static final int FILE_ATTRIBUTE_DEVICE = 0x0040;
-  public static final int FILE_ATTRIBUTE_REPARSE_POINT = 0x0400;
+  public static final int FILE_ATTRIBUTE_READONLY = FileInfo.FILE_ATTRIBUTE_READONLY;
+  public static final int FILE_ATTRIBUTE_HIDDEN = FileInfo.FILE_ATTRIBUTE_HIDDEN;
+  public static final int FILE_ATTRIBUTE_DIRECTORY = FileInfo.FILE_ATTRIBUTE_DIRECTORY;
+  public static final int FILE_ATTRIBUTE_DEVICE = FileInfo.FILE_ATTRIBUTE_DEVICE;
+  public static final int FILE_ATTRIBUTE_REPARSE_POINT = FileInfo.FILE_ATTRIBUTE_REPARSE_POINT;
 
-  private final IdeaWin32 myKernel = new IdeaWin32();
-
+  private final IdeaWin32 myKernel = IdeaWin32.getInstance();
   private final Map<String, FileInfo> myCache = new THashMap<String, FileInfo>();
 
   void clearCache() {

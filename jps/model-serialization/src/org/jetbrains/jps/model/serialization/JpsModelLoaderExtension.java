@@ -6,9 +6,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.artifact.JpsArtifactType;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementLoader;
 import org.jetbrains.jps.model.serialization.facet.JpsModuleExtensionLoader;
 
 import java.util.Collections;
@@ -57,8 +59,17 @@ public abstract class JpsModelLoaderExtension {
     return Collections.emptyList();
   }
 
+  public List<? extends JpsPackagingElementLoader<?>> getPackagingElementLoaders() {
+    return Collections.emptyList();
+  }
+
   @Nullable
   public JpsOrderRootType getSdkRootType(@NotNull String typeId) {
+    return null;
+  }
+
+  @Nullable
+  public JpsArtifactType getArtifactType(@NotNull String typeId) {
     return null;
   }
 }
