@@ -308,6 +308,8 @@ public abstract class InplaceRefactoring {
   protected void beforeTemplateStart() {
     myCaretRangeMarker = myEditor.getDocument()
           .createRangeMarker(new TextRange(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset()));
+    myCaretRangeMarker.setGreedyToLeft(true);
+    myCaretRangeMarker.setGreedyToRight(true);
   }
 
   private void startTemplate(final TemplateBuilderImpl builder) {
@@ -396,7 +398,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected int restoreCaretOffset(int offset) {
-    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getStartOffset() : offset;
+    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getEndOffset() : offset;
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
