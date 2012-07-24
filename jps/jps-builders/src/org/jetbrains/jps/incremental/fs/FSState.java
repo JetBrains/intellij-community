@@ -81,7 +81,7 @@ public class FSState {
                                        final File file,
                                        final RootDescriptor rd,
                                        final @Nullable Timestamps tsStorage) throws IOException {
-    final boolean marked = getDelta(rd.module, rd.isTestRoot).markRecompileIfNotDeleted(rd.root, rd.isTestRoot, file);
+    final boolean marked = getDelta(rd.module, rd.isTestRoot).markRecompileIfNotDeleted(rd.root, file);
     if (marked && tsStorage != null) {
       tsStorage.removeStamp(file);
     }

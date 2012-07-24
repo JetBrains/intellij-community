@@ -98,7 +98,7 @@ final class FilesDelta {
     return added;
   }
 
-  public boolean markRecompileIfNotDeleted(File root, boolean isTestRoot, File file) {
+  public boolean markRecompileIfNotDeleted(File root, File file) {
     final boolean isMarkedDeleted;
     synchronized (myDeletedPaths) {
       isMarkedDeleted = !myDeletedPaths.isEmpty() && myDeletedPaths.contains(FileUtil.toCanonicalPath(file.getPath()));
