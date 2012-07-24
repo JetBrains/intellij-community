@@ -17,6 +17,7 @@ package com.intellij.xml;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.javaee.ExternalResourceManagerEx;
+import com.intellij.javaee.XMLCatalogConfigurable;
 import com.intellij.javaee.XMLCatalogManager;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -73,6 +74,10 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
     finally {
       ExternalResourceManagerEx.getInstanceEx().setCatalogPropertiesFile(null);
     }
+  }
+
+  public void testConfigurable() throws Exception {
+    assertFalse(new XMLCatalogConfigurable().isModified());
   }
 
   private XMLCatalogManager getManager() throws IOException {

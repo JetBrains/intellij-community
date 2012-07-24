@@ -20,7 +20,7 @@ import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -73,7 +73,7 @@ public class XMLCatalogConfigurable extends BaseConfigurable implements Searchab
 
   @Override
   public boolean isModified() {
-    return !Comparing.equal(ExternalResourceManagerEx.getInstanceEx().getCatalogPropertiesFile(), myPropertyFile.getText());
+    return !StringUtil.notNullize(ExternalResourceManagerEx.getInstanceEx().getCatalogPropertiesFile()).equals(myPropertyFile.getText());
   }
 
   @Override
