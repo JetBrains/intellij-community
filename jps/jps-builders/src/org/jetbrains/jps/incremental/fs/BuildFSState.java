@@ -33,7 +33,7 @@ public class BuildFSState extends FSState {
   private static final Key<FilesDelta> LAST_ROUND_DELTA_KEY = Key.create("_last_round_delta_");
 
   // when true, will always determine dirty files by scanning FS and comparing timestamps
-  // alternatively, when false, after first scan will rely on extarnal notifications about changes
+  // alternatively, when false, after first scan will rely on external notifications about changes
   private final boolean myAlwaysScanFS;
 
   public BuildFSState(boolean alwaysScanFS) {
@@ -49,7 +49,7 @@ public class BuildFSState extends FSState {
   public Map<File, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, final String moduleName, boolean forTests) {
     final FilesDelta lastRoundDelta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
     if (lastRoundDelta != null) {
-      return lastRoundDelta.getSourcesToRecompile(forTests);
+      return lastRoundDelta.getSourcesToRecompile();
     }
     return super.getSourcesToRecompile(context, moduleName, forTests);
   }
@@ -59,7 +59,7 @@ public class BuildFSState extends FSState {
     final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null) {
       if (getContextModules(context).contains(rd.module)) {
-        roundDelta.markRecompile(rd.root, rd.isTestRoot, file);
+        roundDelta.markRecompile(rd.root, file);
       }
     }
     return super.markDirty(context, file, rd, tsStorage);
@@ -72,7 +72,7 @@ public class BuildFSState extends FSState {
       final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
       if (roundDelta != null) {
         if (getContextModules(context).contains(rd.module)) {
-          roundDelta.markRecompile(rd.root, rd.isTestRoot, file);
+          roundDelta.markRecompile(rd.root, file);
         }
       }
     }
@@ -138,8 +138,8 @@ public class BuildFSState extends FSState {
    */
   public boolean markAllUpToDate(CompileScope scope, final RootDescriptor rd, final Timestamps stamps, final long compilationStartStamp) throws IOException {
     boolean marked = false;
-    final FilesDelta delta = getDelta(rd.module);
-    final Set<File> files = delta.clearRecompile(rd.root, rd.isTestRoot);
+    final FilesDelta delta = getDelta(rd.module, rd.isTestRoot);
+    final Set<File> files = delta.clearRecompile(rd.root);
     if (files != null) {
       final CompilerExcludes excludes = scope.getProject().getCompilerConfiguration().getExcludes();
       for (File file : files) {
@@ -149,7 +149,7 @@ public class BuildFSState extends FSState {
             if (!rd.isGeneratedSources && stamp > compilationStartStamp) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
-              delta.markRecompile(rd.root, rd.isTestRoot, file);
+              delta.markRecompile(rd.root, file);
               if (Utils.IS_TEST_MODE) {
                 LOG.info("Timestamp after compilation started; marking dirty again: " + file.getPath());
               }
@@ -163,7 +163,7 @@ public class BuildFSState extends FSState {
             if (Utils.IS_TEST_MODE) {
               LOG.info("Not affected by compile scope; marking dirty again: " + file.getPath());
             }
-            delta.markRecompile(rd.root, rd.isTestRoot, file);
+            delta.markRecompile(rd.root, file);
           }
         }
         else {
