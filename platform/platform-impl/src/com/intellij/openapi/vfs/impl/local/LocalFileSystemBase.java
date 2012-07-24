@@ -20,6 +20,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -728,8 +729,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return ((flags & FileUtil.BA_EXISTS) != 0 && exists(file) ? FileUtil.BA_EXISTS : 0) |
            ((flags & FileUtil.BA_DIRECTORY) != 0 && isDirectory(file) ? FileUtil.BA_DIRECTORY : 0) |
            ((flags & FileUtil.BA_REGULAR) != 0 && !isSpecialFile(file) ? FileUtil.BA_REGULAR : 0) |
-           ((flags & FileUtil.BA_HIDDEN) != 0 && convertToIOFile(file).isHidden() ? FileUtil.BA_HIDDEN : 0)
-      ;
+           ((flags & FileUtil.BA_HIDDEN) != 0 && convertToIOFile(file).isHidden() ? FileUtil.BA_HIDDEN : 0);
+  }
+
+  @Override
+  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
+    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(file.getPath()));
   }
 
   @Override
