@@ -145,4 +145,23 @@ Qname'''
     
     assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
   }
+  
+  @Test
+  void substrings() {
+    def header = '''\
+PsiResolveHelperImpl
+public static com.intellij.openapi.util.Pair&lt;com.intellij.psi.PsiType, com.intellij.psi.ConstraintType&gt; getSubstitutionForTypeParameterConstraint (com.intellij.psi.PsiTypeParameter typeParam, com.intellij.psi.PsiType param, com.intellij.psi.PsiType arg, boolean isContraVariantPosition, com.intellij.pom.java.LanguageLevel languageLevel)'''
+    
+    def fullText = '''\
+<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl"><code>com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl</code></a></b></small><PRE>@<a href="psi_element://org.jetbrains.annotations.Nullable"><code>Nullable</code></a>&nbsp;public static&nbsp;<a href="psi_element://com.intellij.openapi.util.Pair"><code>Pair</code></a>&lt;<a href="psi_element://com.intellij.psi.PsiType"><code>PsiType</code></a>, <a href="psi_element://com.intellij.psi.ConstraintType"><code>ConstraintType</code></a>&gt;&nbsp;<b>getSubstitutionForTypeParameterConstraint</b>(<a href="psi_element://com.intellij.psi.PsiTypeParameter"><code>PsiTypeParameter</code></a>&nbsp;typeParam,
+                                                                                  <a href="psi_element://com.intellij.psi.PsiType"><code>PsiType</code></a>&nbsp;param,
+                                                                                  <a href="psi_element://com.intellij.psi.PsiType"><code>PsiType</code></a>&nbsp;arg,
+                                                                                  boolean&nbsp;isContraVariantPosition,
+                                                                                  <a href="psi_element://com.intellij.pom.java.LanguageLevel"><code>LanguageLevel</code></a>&nbsp;languageLevel)</PRE></body></html>'''
+    
+    def expected = '''\
+<a href="psi_element://com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl">PsiResolveHelperImpl</a><br/>public static <a href="psi_element://com.intellij.openapi.util.Pair">Pair</a>&lt;<a href="psi_element://com.intellij.psi.PsiType">PsiType</a>, <a href="psi_element://com.intellij.psi.ConstraintType">ConstraintType</a>&gt; getSubstitutionForTypeParameterConstraint (<a href="psi_element://com.intellij.psi.PsiTypeParameter">PsiTypeParameter</a> typeParam, <a href="psi_element://com.intellij.psi.PsiType">PsiType</a> param, <a href="psi_element://com.intellij.psi.PsiType">PsiType</a> arg, boolean isContraVariantPosition, <a href="psi_element://com.intellij.pom.java.LanguageLevel">LanguageLevel</a> languageLevel)'''
+
+    assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
+  }
 }
