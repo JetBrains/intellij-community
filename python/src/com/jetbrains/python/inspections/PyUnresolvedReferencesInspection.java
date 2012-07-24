@@ -715,9 +715,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       Set<PyImportStatementBase> unusedStatements = new HashSet<PyImportStatementBase>();
       final PyUnresolvedReferencesInspection suppressableInspection = new PyUnresolvedReferencesInspection();
       PyQualifiedName packageQName = null;
+      List<String> dunderAll = null;
+
       for (NameDefiner unusedImport : unusedImports) {
         if (packageQName == null) {
           final PsiFile file = unusedImport.getContainingFile();
+          if (file instanceof PyFile) {
+            dunderAll = ((PyFile)file).getDunderAll();
+          }
           if (file != null && PyUtil.isPackage(file)) {
             packageQName = ResolveImportUtil.findShortestImportableQName(file);
           }
@@ -745,8 +750,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           }
           PsiFileSystemItem importedElement;
           if (unusedImport instanceof PyImportElement) {
-            final PsiElement element = ResolveImportUtil.resolveImportElement((PyImportElement)unusedImport);
+            final PyImportElement importElement = (PyImportElement)unusedImport;
+            final PsiElement element = ResolveImportUtil.resolveImportElement(importElement);
             if (element == null) {
+              continue;
+            }
+            if (dunderAll != null && dunderAll.contains(importElement.getVisibleName())) {
               continue;
             }
             importedElement = element.getContainingFile();
