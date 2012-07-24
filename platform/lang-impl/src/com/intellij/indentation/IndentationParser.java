@@ -3,7 +3,6 @@ package com.intellij.indentation;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -38,8 +37,8 @@ public abstract class IndentationParser implements PsiParser {
     final PsiBuilder.Marker fileMarker = builder.mark();
     final PsiBuilder.Marker documentMarker = builder.mark();
 
-    final Stack<Pair<Integer, PsiBuilder.Marker>> stack = new Stack<Pair<Integer, PsiBuilder.Marker>>();
-    stack.push(Pair.create(0, builder.mark()));
+    final Stack<BlockInfo> stack = new Stack<BlockInfo>();
+    stack.push(new BlockInfo(0, builder.mark()));
 
     PsiBuilder.Marker startLineMarker = null;
     int currentIndent = 0;
@@ -61,7 +60,7 @@ public abstract class IndentationParser implements PsiParser {
           currentIndent = builder.getTokenText().length();
         }
         else {
-          if (!eolSeen && !stack.isEmpty() && currentIndent > 0 && currentIndent < stack.peek().first) {
+          if (!eolSeen && !stack.isEmpty() && currentIndent > 0 && currentIndent < stack.peek().getIndent()) {
             // sometimes we do not have EOL between indents
             eolSeen = true;
           }
@@ -71,18 +70,18 @@ public abstract class IndentationParser implements PsiParser {
               startLineMarker = null;
             }
             // Close indentation blocks
-            while (!stack.isEmpty() && currentIndent < stack.peek().first) {
-              closeBlock(builder, stack.pop().second);
+            while (!stack.isEmpty() && currentIndent < stack.peek().getIndent()) {
+              closeBlock(builder, stack.pop().getMarker());
             }
 
             if (!stack.isEmpty()) {
-              final Pair<Integer, PsiBuilder.Marker> pair = stack.peek();
-              if (currentIndent >= pair.first) {
-                if (currentIndent == pair.first) {
-                  closeBlock(builder, stack.pop().second);
+              final BlockInfo blockInfo = stack.peek();
+              if (currentIndent >= blockInfo.getIndent()) {
+                if (currentIndent == blockInfo.getIndent()) {
+                  closeBlock(builder, stack.pop().getMarker());
                 }
                 passEOLsAndIndents(builder);
-                stack.push(Pair.create(currentIndent, builder.mark()));
+                stack.push(new BlockInfo(currentIndent, builder.mark()));
               }
             }
             eolSeen = false;
@@ -98,7 +97,7 @@ public abstract class IndentationParser implements PsiParser {
       startLineMarker.drop();
     }
     while (!stack.isEmpty()){
-      closeBlock(builder, stack.pop().second);
+      closeBlock(builder, stack.pop().getMarker());
     }
 
     documentMarker.done(myDocumentType);
@@ -119,6 +118,26 @@ public abstract class IndentationParser implements PsiParser {
     while (tokenType == myEolTokenType || tokenType == myIndentTokenType) {
       builder.advanceLexer();
       tokenType = builder.getTokenType();
+    }
+  }
+
+  private static final class BlockInfo {
+    private final int myIndent;
+    @NotNull
+    private final PsiBuilder.Marker myMarker;
+
+    private BlockInfo(final int indent, final @NotNull PsiBuilder.Marker marker) {
+      this.myIndent = indent;
+      this.myMarker = marker;
+    }
+
+    public int getIndent() {
+      return myIndent;
+    }
+
+    @NotNull
+    public PsiBuilder.Marker getMarker() {
+      return myMarker;
     }
   }
 }
