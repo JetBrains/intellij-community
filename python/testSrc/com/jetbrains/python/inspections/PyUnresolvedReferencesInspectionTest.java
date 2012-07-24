@@ -136,6 +136,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doMultiFileTest("a.py");
   }
 
+  // PY-2668
+  public void testUnusedImportsInPackage() {
+    doMultiFileTest("p1/__init__.py");
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
