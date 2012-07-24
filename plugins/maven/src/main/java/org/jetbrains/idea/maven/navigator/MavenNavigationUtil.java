@@ -72,6 +72,8 @@ public class MavenNavigationUtil {
   public static Navigatable createNavigatableForDependency(final Project project, final VirtualFile file, final MavenArtifact artifact) {
     return new NavigatableAdapter() {
       public void navigate(boolean requestFocus) {
+        if (!file.isValid()) return;
+
         final PsiFile pom = PsiManager.getInstance(project).findFile(file);
         if (pom instanceof XmlFile) {
           final XmlTag id = findDependency((XmlFile)pom, artifact.getArtifactId());
