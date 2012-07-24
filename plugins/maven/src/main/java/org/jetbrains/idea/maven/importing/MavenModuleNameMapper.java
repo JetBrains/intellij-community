@@ -102,7 +102,10 @@ public class MavenModuleNameMapper {
       mavenProjectToModuleName.put(each.project, each.getResultName());
     }
 
-    assert new HashSet<String>(mavenProjectToModuleName.values()).size() == mavenProjectToModuleName.size();
+    assert new HashSet<String>(mavenProjectToModuleName.values()).size() == mavenProjectToModuleName.size() : mavenProjectToModuleName
+                                                                                                                .values() +
+                                                                                                              "\n||\n" +
+                                                                                                              mavenProjectToModuleName;
   }
 
   public static class NameItem implements Comparable<NameItem> {
