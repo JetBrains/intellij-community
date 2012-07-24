@@ -24,6 +24,8 @@ import org.intellij.lang.annotations.MagicConstant;
  * @since 12.0
  */
 public class FileInfo {
+  public static final int BROKEN_SYMLINK = -1;
+
   public static final int FILE_ATTRIBUTE_READONLY = 0x0001;
   public static final int FILE_ATTRIBUTE_HIDDEN = 0x0002;
   public static final int FILE_ATTRIBUTE_DIRECTORY = 0x0010;

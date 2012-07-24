@@ -23,6 +23,8 @@ static jfieldID attributesID = NULL;
 static jfieldID timestampID = NULL;
 static jfieldID lengthID = NULL;
 
+#define BROKEN_SYMLINK_ATTR -1
+
 static jclass getFileInfoClass(JNIEnv *env) {
     return env->FindClass("com/intellij/openapi/util/io/win32/FileInfo");
 }
@@ -60,9 +62,12 @@ static jobject CreateFileInfo(JNIEnv *env, jstring path, bool append, LPWIN32_FI
 
     if (IS_SET(attributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
         if (IS_SET(lpData->dwReserved0, IO_REPARSE_TAG_SYMLINK)) {
+            attributes = BROKEN_SYMLINK_ATTR;
+            timestamp = 0;
+            length = 0;
+
             size_t nameLen = env->GetStringLength(path) + wcslen(lpData->cFileName) + 2;
             wchar_t *lpName = (wchar_t *)malloc(nameLen * sizeof(wchar_t));
-
             if (lpName != NULL) {
                 const jchar *dirName = env->GetStringChars(path, 0);
                 wcscpy_s(lpName, nameLen, (LPCWSTR)dirName);
@@ -74,21 +79,16 @@ static jobject CreateFileInfo(JNIEnv *env, jstring path, bool append, LPWIN32_FI
 
                 // read symlink target attributes
                 HANDLE th = CreateFile(lpName, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+                if (th != INVALID_HANDLE_VALUE) {
+                    BY_HANDLE_FILE_INFORMATION targetData;
+                    if (GetFileInformationByHandle(th, &targetData)) {
+                        attributes = targetData.dwFileAttributes | FILE_ATTRIBUTE_REPARSE_POINT;
+                        timestamp = pairToInt64(targetData.ftLastWriteTime.dwLowDateTime, targetData.ftLastWriteTime.dwHighDateTime);
+                        length = pairToInt64(targetData.nFileSizeLow, targetData.nFileSizeHigh);
+                    }
+                    CloseHandle(th);
+                }
                 free(lpName);
-                if (th == INVALID_HANDLE_VALUE) {
-                    return NULL;  // invalid link
-                }
-
-                BY_HANDLE_FILE_INFORMATION targetData;
-                BOOL result = GetFileInformationByHandle(th, &targetData);
-                CloseHandle(th);
-                if (result == 0) {
-                    return NULL;  // invalid link
-                }
-
-                attributes = targetData.dwFileAttributes | FILE_ATTRIBUTE_REPARSE_POINT;
-                timestamp = pairToInt64(targetData.ftLastWriteTime.dwLowDateTime, targetData.ftLastWriteTime.dwHighDateTime);
-                length = pairToInt64(targetData.nFileSizeLow, targetData.nFileSizeHigh);
             }
         }
         else {
