@@ -24,7 +24,6 @@ import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -120,17 +119,15 @@ public class ArtifactSorter {
   }
 
   @NotNull
-  public static Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<JpsArtifact> artifacts, @NotNull Project project, JpsModel model) {
+  public static Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<JpsArtifact> artifacts) {
     Set<JpsArtifact> result = new HashSet<JpsArtifact>();
     for (JpsArtifact artifact : artifacts) {
-      collectIncludedArtifacts(artifact, project, model, new HashSet<JpsArtifact>(), result, true);
+      collectIncludedArtifacts(artifact, new HashSet<JpsArtifact>(), result, true);
     }
     return result;
   }
 
   private static void collectIncludedArtifacts(JpsArtifact artifact,
-                                               final Project project,
-                                               final JpsModel model,
                                                final Set<JpsArtifact> processed,
                                                final Set<JpsArtifact> result,
                                                final boolean withOutputPathOnly) {
@@ -144,7 +141,7 @@ public class ArtifactSorter {
     processIncludedArtifacts(artifact, new Consumer<JpsArtifact>() {
       @Override
       public void consume(JpsArtifact included) {
-        collectIncludedArtifacts(included, project, model, processed, result, withOutputPathOnly);
+        collectIncludedArtifacts(included, processed, result, withOutputPathOnly);
       }
     });
   }

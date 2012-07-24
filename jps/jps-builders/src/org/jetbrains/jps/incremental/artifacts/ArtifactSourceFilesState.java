@@ -148,8 +148,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
 
   private ArtifactInstructionsBuilder computeInstructions() {
     final JpsCompositePackagingElement rootElement = myArtifact.getRootElement();
-    ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(myProject,
-                                                                                            myModel, myRootsIndex, new ProjectPaths(myModel.getProject()));
+    ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(myModel, myRootsIndex, new ProjectPaths(myModel.getProject()));
     final ArtifactInstructionsBuilderImpl instructionsBuilder = new ArtifactInstructionsBuilderImpl(myRootsIndex, myProject.getIgnoredFilePatterns());
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(instructionsBuilder, myArtifact.getOutputPath());
     LayoutElementBuildersRegistry.getInstance().generateInstructions(rootElement, instructionCreator, context);

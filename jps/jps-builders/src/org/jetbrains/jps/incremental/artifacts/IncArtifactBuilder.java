@@ -42,7 +42,7 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
         affected.add(artifact);
       }
     }
-    final Set<JpsArtifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected, context.getProjectDescriptor().project, context.getProjectDescriptor().jpsModel);
+    final Set<JpsArtifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected);
 
     final ArtifactSorter sorter = new ArtifactSorter(context.getProjectDescriptor().jpsModel);
     final Map<JpsArtifact, JpsArtifact> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
