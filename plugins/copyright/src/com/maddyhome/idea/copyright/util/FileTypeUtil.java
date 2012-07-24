@@ -66,12 +66,12 @@ public class FileTypeUtil
         }
 
         boolean allowSeparator = getInstance().allowSeparators(type);
-        char filler = options.getFiller();
+        String filler = options.getFiller();
         if (!allowSeparator)
         {
             if (options.getFiller() == LanguageOptions.DEFAULT_FILLER)
             {
-                filler = '~';
+                filler = "~";
             }
         }
 
@@ -92,7 +92,7 @@ public class FileTypeUtil
         StringBuffer post = new StringBuffer(5);
         if (filler == LanguageOptions.DEFAULT_FILLER)
         {
-            filler = open.charAt(open.length() - 1);
+            filler = open.substring(open.length() - 1);
         }
         int offset = 0;
         if (isBlock)
@@ -116,14 +116,14 @@ public class FileTypeUtil
             }
             if (!allowBlock)
             {
-                close = Character.toString(filler);
+                close = filler;
             }
         }
         else
         {
             if (allowLine)
             {
-                close = Character.toString(filler);
+                close = filler;
             }
             pre.append(open);
             post.append(close);

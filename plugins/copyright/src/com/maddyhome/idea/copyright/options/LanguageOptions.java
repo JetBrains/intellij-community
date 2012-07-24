@@ -26,7 +26,7 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
 
   public static final int MIN_SEPARATOR_LENGTH = 5;
   public static final int MAX_SEPARATOR_LENGTH = 300;
-  public static final char DEFAULT_FILLER = ' ';
+  public static final String DEFAULT_FILLER = " ";
   
   private static final LanguageOptions DEFAULT_SETTINGS_HOLDER = new LanguageOptions();
 
@@ -144,7 +144,7 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
     result = 29 * result + lenBefore;
     result = 29 * result + lenAfter;
     result = 29 * result + (box ? 1 : 0);
-    result = 29 * result + (int)filler;
+    result = 29 * result + filler.hashCode();
     result = 29 * result + fileTypeOverride;
     result = 29 * result + (relativeBefore ? 1 : 0);
     result = 29 * result + (addBlankAfter ? 1 : 0);
@@ -234,11 +234,11 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
     this.box = box;
   }
 
-  public char getFiller() {
+  public String getFiller() {
     return filler;
   }
 
-  public void setFiller(char filler) {
+  public void setFiller(String filler) {
     this.filler = filler;
   }
 
@@ -262,6 +262,6 @@ public class LanguageOptions implements JDOMExternalizable, Cloneable {
   public int lenBefore;
   public int lenAfter;
   public boolean box;
-  public char filler;
+  public String filler;
   public boolean trim;
 }
