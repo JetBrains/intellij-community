@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
@@ -334,10 +335,21 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
           if (shouldScheduleProject(projectWithChanges)) {
             scheduleForNextImport(projectWithChanges);
 
+            MavenImportingSettings importingSettings;
+
+            AccessToken token = ReadAction.start();
+            try {
+              if (myProject.isDisposed()) return;
+              importingSettings = getImportingSettings();
+            }
+            finally {
+              token.finish();
+            }
+
             scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
                                          null,
-                                         getImportingSettings().isDownloadSourcesAutomatically(),
-                                         getImportingSettings().isDownloadDocsAutomatically(),
+                                         importingSettings.isDownloadSourcesAutomatically(),
+                                         importingSettings.isDownloadDocsAutomatically(),
                                          null);
           }
 
