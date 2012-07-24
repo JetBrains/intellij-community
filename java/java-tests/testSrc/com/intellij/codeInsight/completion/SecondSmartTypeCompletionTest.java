@@ -2,6 +2,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -14,6 +15,12 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
 
   public SecondSmartTypeCompletionTest() {
     setType(CompletionType.SMART);
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
   }
 
   @Override

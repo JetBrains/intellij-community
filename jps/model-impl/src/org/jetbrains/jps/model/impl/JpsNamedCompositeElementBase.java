@@ -6,9 +6,7 @@ import org.jetbrains.jps.model.*;
 /**
  * @author nik
  */
-public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedCompositeElementBase<Self, Parent>, Parent extends JpsCompositeElementBase> extends
-                                                                                                                                                    JpsCompositeElementBase<Self>
-  implements JpsNamedElement {
+public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedCompositeElementBase<Self>> extends JpsCompositeElementBase<Self> implements JpsNamedElement {
   private String myName;
 
   protected JpsNamedCompositeElementBase(@NotNull String name) {
@@ -16,7 +14,7 @@ public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedComposit
     myName = name;
   }
 
-  protected JpsNamedCompositeElementBase(JpsNamedCompositeElementBase<Self, Parent> original) {
+  protected JpsNamedCompositeElementBase(JpsNamedCompositeElementBase<Self> original) {
     super(original);
     myName = original.myName;
   }

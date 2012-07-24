@@ -8,12 +8,6 @@
     <properties/>
     <border type="none"/>
     <children>
-      <component id="d4024" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="myActivityField">
-        <constraints>
-          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="7" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
-        </constraints>
-        <properties/>
-      </component>
       <component id="87e92" class="javax.swing.JRadioButton" binding="myLaunchDefaultButton">
         <constraints>
           <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
@@ -24,7 +18,7 @@
       </component>
       <component id="8a8dd" class="javax.swing.JRadioButton" binding="myLaunchCustomButton">
         <constraints>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text value="L&amp;aunch:"/>
@@ -45,6 +39,12 @@
         <properties>
           <text resource-bundle="messages/AndroidBundle" key="android.run.confguration.deploy.and.install.check.box"/>
         </properties>
+      </component>
+      <component id="ec4e0" class="com.intellij.ui.EditorTextFieldWithBrowseButton" binding="myActivityField" custom-create="true">
+        <constraints>
+          <grid row="2" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
       </component>
     </children>
   </grid>

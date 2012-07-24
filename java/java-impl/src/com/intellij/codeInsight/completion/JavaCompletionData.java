@@ -135,6 +135,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     and(JavaSmartCompletionContributor.INSIDE_EXPRESSION,
         not(psiElement().afterLeaf(PsiKeyword.CASE)),
         not(psiElement().afterLeaf(psiElement().withText(".").afterLeaf(PsiKeyword.THIS, PsiKeyword.SUPER))),
+        not(psiElement().inside(PsiAnnotation.class)),
         not(START_SWITCH));
 
   public static final AndFilter CLASS_START = new AndFilter(
@@ -142,7 +143,8 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       END_OF_BLOCK,
       new PatternFilter(psiElement().afterLeaf(
         or(
-          psiElement().withoutText(".").inside(psiElement(PsiModifierList.class)),
+          psiElement().withoutText(".").inside(psiElement(PsiModifierList.class).withParent(not(psiElement(PsiParameter.class)))).andNot(
+            psiElement().inside(PsiAnnotationParameterList.class)),
           psiElement().isNull())))
     ),
     new PatternFilter(not(psiElement().afterLeaf("@"))));
@@ -486,8 +488,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     }
 
     if (EXPR_KEYWORDS.accepts(position)) {
-      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.INSERT_SPACE));
-      result.addElement(createKeyword(position, PsiKeyword.NULL));
+      if (PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) == null) {
+        result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.INSERT_SPACE));
+        result.addElement(createKeyword(position, PsiKeyword.NULL));
+      }
       result.addElement(createKeyword(position, PsiKeyword.TRUE));
       result.addElement(createKeyword(position, PsiKeyword.FALSE));
     }
@@ -522,17 +526,21 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     if (JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) &&
         !BasicExpressionCompletionContributor.AFTER_DOT.accepts(position) &&
         !(position.getParent() instanceof PsiLiteralExpression)) {
-      for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
-        new JavaMembersGetter(info.getDefaultType(), position).addMembers(parameters, parameters.getInvocationCount() > 1, new Consumer<LookupElement>() {
-          @Override
-          public void consume(LookupElement element) {
-            result.addElement(element);
-          }
-        });
-      }
+      addExpectedTypeMembers(parameters, result, position);
       if (SameSignatureCallParametersProvider.IN_CALL_ARGUMENT.accepts(position)) {
         new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
       }
+    }
+  }
+
+  static void addExpectedTypeMembers(CompletionParameters parameters, final CompletionResultSet result, PsiElement position) {
+    for (final ExpectedTypeInfo info : JavaSmartCompletionContributor.getExpectedTypes(parameters)) {
+      new JavaMembersGetter(info.getDefaultType(), position).addMembers(parameters, parameters.getInvocationCount() > 1, new Consumer<LookupElement>() {
+        @Override
+        public void consume(LookupElement element) {
+          result.addElement(element);
+        }
+      });
     }
   }
 

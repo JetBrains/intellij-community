@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
@@ -74,8 +75,8 @@ public class JdkScope extends GlobalSearchScope {
     final VirtualFile r1 = getFileRoot(file1);
     final VirtualFile r2 = getFileRoot(file2);
     for (VirtualFile root : myEntries) {
-      if (r1 == root) return 1;
-      if (r2 == root) return -1;
+      if (Comparing.equal(r1, root)) return 1;
+      if (Comparing.equal(r2, root)) return -1;
     }
     return 0;
   }

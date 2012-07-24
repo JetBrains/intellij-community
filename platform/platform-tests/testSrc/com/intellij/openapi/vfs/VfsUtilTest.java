@@ -24,8 +24,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.vcs.DirectoryData;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -142,6 +145,28 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertEquals("subDir", VfsUtilCore.getRelativePath(vSubDir, vTestRoot, '/'));
     assertEquals("subDir/subSubDir", VfsUtilCore.getRelativePath(vSubSubDir, vTestRoot, '/'));
     assertEquals("", VfsUtilCore.getRelativePath(vTestRoot, vTestRoot, '/'));
+  }
+
+  public void testVisitRecursively() throws Exception {
+    final DirectoryData data = new DirectoryData(myProject.getBaseDir());
+    try {
+      data.clear();
+      data.create();
+
+      final File subDir = new File(data.getBase().getPath(), "DL0N1");
+      final VirtualFile vSubDir = LocalFileSystem.getInstance().findFileByIoFile(subDir);
+      assertNotNull(vSubDir);
+
+      VfsUtil.visitChildrenRecursively(data.getBase(), new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          Assert.assertTrue(! VfsUtil.isAncestor(vSubDir, file, true));
+          return ! vSubDir.equals(file);
+        }
+      });
+    } finally {
+      data.clear();
+    }
   }
 
   public void testAsyncRefresh() throws Throwable {

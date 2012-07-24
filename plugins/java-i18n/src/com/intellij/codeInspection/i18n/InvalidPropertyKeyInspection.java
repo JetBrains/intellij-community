@@ -28,7 +28,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -164,7 +163,10 @@ public class InvalidPropertyKeyInspection extends BaseJavaLocalInspectionTool {
       if (isComputablePropertyExpression(expression)) return;
       Ref<String> resourceBundleName = new Ref<String>();
       if (!JavaI18nUtil.isValidPropertyReference(myManager.getProject(), expression, key, resourceBundleName)) {
-        appendPropertyKeyNotFoundProblem(resourceBundleName.get(), key, expression, myManager, myProblems, onTheFly);
+        String bundleName = resourceBundleName.get();
+        if (bundleName != null) { // can be null if we were unable to resolve literal expression, e.g. when JDK was not set
+          appendPropertyKeyNotFoundProblem(bundleName, key, expression, myManager, myProblems, onTheFly);
+        }
       }
       else if (expression.getParent() instanceof PsiNameValuePair) {
         PsiNameValuePair nvp = (PsiNameValuePair)expression.getParent();

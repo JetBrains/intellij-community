@@ -10,11 +10,23 @@ import java.util.concurrent.Future;
  *         Date: 3/29/12
  */
 public class SharedThreadPool implements Executor {
-  private static final int MAX_BUILDER_THREADS = 4;
   private static final ExecutorService ourService = Executors.newCachedThreadPool();
+
+  private static final int MAX_BUILDER_THREADS;
+  static {
+    int maxThreads = 4;
+    try {
+      maxThreads = Math.max(2, Integer.parseInt(System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, "4")));
+    }
+    catch (NumberFormatException ignored) {
+    }
+    MAX_BUILDER_THREADS = maxThreads;
+  }
   private static final ExecutorService ourBuilderPool = Executors.newFixedThreadPool(Math.min(MAX_BUILDER_THREADS, Math.max(2, Runtime.getRuntime().availableProcessors())));
 
   public static final SharedThreadPool INSTANCE = new SharedThreadPool();
+
+
   private SharedThreadPool() {
   }
 

@@ -21,10 +21,8 @@ import com.intellij.application.options.OptionsApplicabilityFilter;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
-import com.intellij.codeInsight.documentation.QuickDocOnMouseOverManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -41,7 +39,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -49,11 +46,11 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 public class EditorOptionsPanel {
-  private JPanel    myBehaviourPanel;
+  private JPanel myBehaviourPanel;
   private JCheckBox myCbHighlightBraces;
   private static final String STRIP_CHANGED = ApplicationBundle.message("combobox.strip.modified.lines");
 
-  private static final String STRIP_ALL  = ApplicationBundle.message("combobox.strip.all");
+  private static final String STRIP_ALL = ApplicationBundle.message("combobox.strip.all");
   private static final String STRIP_NONE = ApplicationBundle.message("combobox.strip.none");
   private JComboBox myStripTrailingSpacesCombo;
 
@@ -66,34 +63,32 @@ public class EditorOptionsPanel {
   private JCheckBox myCbHighlightScope;
 
   private JTextField myClipboardContentLimitTextField;
-  private JCheckBox  myCbSmoothScrolling;
-  private JCheckBox  myCbVirtualPageAtBottom;
-  private JCheckBox  myCbEnableDnD;
-  private JCheckBox  myCbEnableWheelFontChange;
-  private JCheckBox  myCbHonorCamelHumpsWhenSelectingByClicking;
+  private JCheckBox myCbSmoothScrolling;
+  private JCheckBox myCbVirtualPageAtBottom;
+  private JCheckBox myCbEnableDnD;
+  private JCheckBox myCbEnableWheelFontChange;
+  private JCheckBox myCbHonorCamelHumpsWhenSelectingByClicking;
 
-  private JPanel       myHighlightSettingsPanel;
+  private JPanel myHighlightSettingsPanel;
   private JRadioButton myRbPreferScrolling;
   private JRadioButton myRbPreferMovingCaret;
-  private JCheckBox    myCbRenameLocalVariablesInplace;
-  private JCheckBox    myCbHighlightIdentifierUnderCaret;
-  private JCheckBox    myCbEnsureBlankLineBeforeCheckBox;
-  private JCheckBox    myShowReformatCodeDialogCheckBox;
-  private JCheckBox    myShowOptimizeImportsDialogCheckBox;
-  private JCheckBox    myCbUseSoftWrapsAtEditor;
-  private JCheckBox    myCbUseSoftWrapsAtConsole;
-  private JCheckBox    myCbUseCustomSoftWrapIndent;
-  private JTextField   myCustomSoftWrapIndent;
-  private JCheckBox    myCbShowAllSoftWraps;
-  private JCheckBox    myPreselectCheckBox;
-  private JCheckBox    myCbShowQuickDocOnCheckBox;
-  private JTextField   myQuickDocDelayTextField;
+  private JCheckBox myCbRenameLocalVariablesInplace;
+  private JCheckBox myCbHighlightIdentifierUnderCaret;
+  private JCheckBox myCbEnsureBlankLineBeforeCheckBox;
+  private JCheckBox myShowReformatCodeDialogCheckBox;
+  private JCheckBox myShowOptimizeImportsDialogCheckBox;
+  private JCheckBox myCbUseSoftWrapsAtEditor;
+  private JCheckBox myCbUseSoftWrapsAtConsole;
+  private JCheckBox myCbUseCustomSoftWrapIndent;
+  private JTextField myCustomSoftWrapIndent;
+  private JCheckBox myCbShowAllSoftWraps;
+  private JCheckBox myPreselectCheckBox;
 
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private final MyConfigurable myConfigurable;
 
 
-  public EditorOptionsPanel() {
+  public EditorOptionsPanel(){
     if (SystemInfo.isMac) {
       myCbEnableWheelFontChange.setText(ApplicationBundle.message("checkbox.enable.ctrl.mousewheel.changes.font.size.macos"));
     }
@@ -111,7 +106,6 @@ public class EditorOptionsPanel {
     myCbRenameLocalVariablesInplace.setVisible(OptionsApplicabilityFilter.isApplicable(OptionId.RENAME_IN_PLACE));
 
     myConfigurable = new MyConfigurable();
-    initQuickDocProcessing();
     initSoftWrapsSettingsProcessing();
   }
 
@@ -162,9 +156,6 @@ public class EditorOptionsPanel {
     }
 
     myCbEnsureBlankLineBeforeCheckBox.setSelected(editorSettings.isEnsureNewLineAtEOF());
-    myCbShowQuickDocOnCheckBox.setSelected(editorSettings.isShowQuickDocOnMouseOverElement());
-    myQuickDocDelayTextField.setText(Long.toString(editorSettings.getQuickDocOnMouseOverElementDelayMillis()));
-    myQuickDocDelayTextField.setEnabled(editorSettings.isShowQuickDocOnMouseOverElement());
 
     // Advanced mouse
     myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
@@ -244,17 +235,6 @@ public class EditorOptionsPanel {
 
     editorSettings.setEnsureNewLineAtEOF(myCbEnsureBlankLineBeforeCheckBox.isSelected());
 
-    if (myCbShowQuickDocOnCheckBox.isSelected() ^ editorSettings.isShowQuickDocOnMouseOverElement()) {
-      boolean enabled = myCbShowQuickDocOnCheckBox.isSelected();
-      editorSettings.setShowQuickDocOnMouseOverElement(enabled);
-      ServiceManager.getService(QuickDocOnMouseOverManager.class).setEnabled(enabled);
-    }
-
-    Long quickDocDelay = getQuickDocDelayFromGui();
-    if (quickDocDelay != null) {
-      editorSettings.setQuickDocOnMouseOverElementDelayMillis(quickDocDelay);
-    }
-
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
 
     editorSettings.setWheelFontChangeEnabled(myCbEnableWheelFontChange.isSelected());
@@ -286,23 +266,6 @@ public class EditorOptionsPanel {
 
     myErrorHighlightingPanel.apply();
     restartDaemons();
-  }
-
-  @Nullable
-  private Long getQuickDocDelayFromGui() {
-    String quickDocDelayAsText = myQuickDocDelayTextField.getText();
-    if (StringUtil.isEmptyOrSpaces(quickDocDelayAsText)) {
-      return null;
-    }
-    
-    try {
-      long delay = Long.parseLong(quickDocDelayAsText);
-      return delay > 0 ? delay : null;
-    }
-    catch (NumberFormatException e) {
-      // Ignore incorrect value.
-      return null;
-    }
   }
 
   public static void restartDaemons() {
@@ -378,11 +341,6 @@ public class EditorOptionsPanel {
     // Strip trailing spaces, ensure EOL on EOF on save
     isModified |= !getStripTrailingSpacesValue().equals(editorSettings.getStripTrailingSpaces());
     isModified |= isModified(myCbEnsureBlankLineBeforeCheckBox, editorSettings.isEnsureNewLineAtEOF());
-    isModified |= isModified(myCbShowQuickDocOnCheckBox, editorSettings.isShowQuickDocOnMouseOverElement());
-    Long quickDocDelay = getQuickDocDelayFromGui();
-    if (quickDocDelay != null && !quickDocDelay.equals(Long.valueOf(editorSettings.getQuickDocOnMouseOverElementDelayMillis()))) {
-      return true;
-    }
 
     // advanced mouse
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
@@ -403,9 +361,7 @@ public class EditorOptionsPanel {
     isModified |= myErrorHighlightingPanel.isModified();
     return isModified;
   }
-  
-  
-  
+
   private static boolean isModified(JToggleButton checkBox, boolean value) {
     return checkBox.isSelected() != value;
   }
@@ -448,15 +404,6 @@ public class EditorOptionsPanel {
     return defaultIndent;
   }
 
-  private void initQuickDocProcessing() {
-    myCbShowQuickDocOnCheckBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        myQuickDocDelayTextField.setEnabled(myCbShowQuickDocOnCheckBox.isSelected()); 
-      }
-    });
-  }
-  
   private void initSoftWrapsSettingsProcessing() {
     ItemListener listener = new ItemListener() {
       @Override

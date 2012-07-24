@@ -16,7 +16,7 @@
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
 import com.intellij.openapi.diff.ex.DiffFragment;
-import com.intellij.openapi.diff.impl.highlighting.LineRenderer;
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.*;
@@ -79,32 +79,35 @@ public class ChangeType {
   }
 
   @Nullable
-  private RangeHighlighter addBlock(String text, ChangeSide changeSide, ChangeHighlighterHolder markup, TextDiffType diffType) {
+  private RangeHighlighter addBlock(String text, ChangeSide changeSide, final ChangeHighlighterHolder markup, TextDiffType diffType) {
     EditorColorsScheme colorScheme = markup.getEditor().getColorsScheme();
     Color separatorColor = getSeparatorColor(diffType.getLegendColor(colorScheme));
-    LineSeparatorRenderer separatorRenderer = new LineSeparatorRenderer() {
-      @Override
-      public void drawLine(Graphics g, int x1, int x2, int y) {
-        Graphics2D g2 = (Graphics2D) g;
-        if (myApplied) {
-          UIUtil.drawBoldDottedLine(g2, x1, x2, y, g2.getBackground(), g2.getColor(), false);
-        }
-        else {
-          UIUtil.drawDottedLine(g2, x1, y, x2, y, g2.getBackground(), g2.getColor());
-        }
-      }
-    };
 
     int length = text.length();
     int start = changeSide.getStart();
     int end = start + length;
     RangeHighlighter highlighter = markup.addRangeHighlighter(start, end, LAYER, diffType, HighlighterTargetArea.EXACT_RANGE, myApplied);
 
+    LineSeparatorRenderer lineSeparatorRenderer = new LineSeparatorRenderer() {
+      @Override
+      public void drawLine(Graphics g, int x1, int x2, int y) {
+        Graphics2D g2 = (Graphics2D)g;
+        Color color = myDiffType.getPolygonColor(markup.getEditor());
+        if (color != null) {
+          if (myApplied) {
+            UIUtil.drawBoldDottedLine(g2, x1, x2, y, null, color, false);
+          }
+          else {
+            UIUtil.drawLine(g2, x1, y, x2, y, null, DiffUtil.getFramingColor(color));
+          }
+        }
+      }
+    };
+
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.TOP);
       highlighter.setLineSeparatorColor(separatorColor);
-      highlighter.setLineSeparatorRenderer(separatorRenderer);
-      highlighter.setLineMarkerRenderer(LineRenderer.top());
+      highlighter.setLineSeparatorRenderer(lineSeparatorRenderer);
     }
 
     if (text.charAt(length - 1) == '\n') {
@@ -115,19 +118,28 @@ public class ChangeType {
     if (highlighter != null) {
       highlighter.setLineSeparatorPlacement(SeparatorPlacement.BOTTOM);
       highlighter.setLineSeparatorColor(separatorColor);
-      highlighter.setLineSeparatorRenderer(separatorRenderer);
-      highlighter.setLineMarkerRenderer(LineRenderer.bottom());
+      highlighter.setLineSeparatorRenderer(lineSeparatorRenderer);
     }
     return highlighter;
   }
 
   @Nullable
-  private RangeHighlighter addLine(ChangeHighlighterHolder markup, int line, TextDiffType type, SeparatorPlacement placement) {
+  private RangeHighlighter addLine(final ChangeHighlighterHolder markup, int line, TextDiffType type, SeparatorPlacement placement) {
     RangeHighlighter highlighter = markup.addLineHighlighter(line, LAYER, type, myApplied);
     if (highlighter == null) {
       return null;
     }
     highlighter.setLineSeparatorPlacement(placement);
+    highlighter.setLineSeparatorRenderer(new LineSeparatorRenderer() {
+      @Override
+      public void drawLine(Graphics g, int x1, int x2, int y) {
+        Graphics2D g2 = (Graphics2D)g;
+        Color color = myDiffType.getPolygonColor(markup.getEditor());
+        if (color != null) {
+          DiffUtil.drawDoubleShadowedLine(g2, x1, x2, y, color);
+        }
+      }
+    });
     return highlighter;
   }
 
@@ -154,6 +166,4 @@ public class ChangeType {
     }
     return Color.GRAY;
   }
-
-
 }

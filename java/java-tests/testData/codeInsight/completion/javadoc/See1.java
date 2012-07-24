@@ -1,7 +1,7 @@
 class C{
     
     /**
-     * @see #n<caret>
+     * @see #not<caret>
      */
     private int foo(int a, char b, String c) {}
 }

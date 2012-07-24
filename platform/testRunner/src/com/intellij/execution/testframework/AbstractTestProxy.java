@@ -47,6 +47,8 @@ public abstract class AbstractTestProxy extends CompositePrintable {
 
   public abstract boolean isInterrupted();
 
+  public abstract boolean isIgnored();
+
   public abstract boolean isPassed();
 
   public abstract String getName();

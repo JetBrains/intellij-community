@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,6 +199,7 @@ public class StartupActionScriptManager {
           ZipUtil.extract(mySource, myDestination, myFilenameFilter);
         }
         catch(Exception ex) {
+          ex.printStackTrace();
           JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                         MessageFormat.format("<html>Failed to extract ZIP file {0}<br>to<br>{1}<br>You may need to re-download the plugin you tried to install.",
                                                              mySource.getAbsolutePath(), myDestination.getAbsolutePath()),

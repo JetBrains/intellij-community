@@ -64,7 +64,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public final class PropertyTable extends JBTable implements DataProvider, ComponentSelectionListener {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.propertyTable");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.designer.propertyTable.PropertyTable");
 
   private final AbstractTableModel myModel = new PropertyTableModel();
   private List<RadComponent> myComponents = Collections.emptyList();

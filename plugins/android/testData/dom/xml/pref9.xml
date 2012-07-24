@@ -1,0 +1,10 @@
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <PreferenceCategory
+      android:title="@string/inline_preferences">
+
+    <android.<caret>
+
+  </PreferenceCategory>
+</PreferenceScreen>

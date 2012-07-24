@@ -1,0 +1,9 @@
+<resources>
+  <string name="<error>1a</error>">a</string>
+  <string name="a1">a</string>
+  <item name="<error>**</error>">a</item>
+  <integer name="<error>a b</error>">1</integer>
+  <integer name="a_b">1</integer>
+  <string name="a-b">1</string>
+  <string name="a.b">1</string>
+</resources>

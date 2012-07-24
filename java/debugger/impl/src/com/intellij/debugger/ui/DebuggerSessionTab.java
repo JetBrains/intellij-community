@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui;
 
+import com.intellij.debugger.DebugUIEnvironment;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -30,23 +31,20 @@ import com.intellij.debugger.ui.impl.ThreadsPanel;
 import com.intellij.debugger.ui.impl.VariablesPanel;
 import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
-import com.intellij.execution.*;
-import com.intellij.execution.configurations.RunProfile;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.ExceptionFilters;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.runners.RestartAction;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsoleEx;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -80,14 +78,12 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   private final VariablesPanel myVariablesPanel;
   private final MainWatchPanel myWatchPanel;
 
-  private ProgramRunner myRunner;
   private volatile DebuggerSession myDebuggerSession;
 
   private final MyDebuggerStateManager myStateManager = new MyDebuggerStateManager();
 
   private final FramesPanel myFramesPanel;
-  private ExecutionEnvironment myEnvironment;
-  private RunProfile myConfiguration;
+  private DebugUIEnvironment myEnvironment;
 
   private final ThreadsPanel myThreadsPanel;
   private static final String THREAD_DUMP_CONTENT_PREFIX = "Dump";
@@ -184,7 +180,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     myUi.addContent(threadsContent, 0, PlaceInGrid.left, true);
 
     for (Content each : myUi.getContents()) {
-      updateStatus(each);  
+      updateStatus(each);
     }
 
     myUi.addListener(new ContentManagerAdapter() {
@@ -230,13 +226,15 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
 
     myUi.removeContent(myUi.findContent(DebuggerContentInfo.CONSOLE_CONTENT), true);
 
-    Content console;
+    Content console = null;
     if (myConsole instanceof ExecutionConsoleEx) {
       ((ExecutionConsoleEx)myConsole).buildUi(myUi);
       console = myUi.findContent(DebuggerContentInfo.CONSOLE_CONTENT);
-      LOG.assertTrue(console != null, "Console content was not created");
+      if (console == null) {
+        LOG.debug("Reuse console created with non-debug runner");
+      }
     }
-    else {
+    if (console == null) {
       console = myUi.createContent(DebuggerContentInfo.CONSOLE_CONTENT, myConsole.getComponent(),
                                            XDebuggerBundle.message("debugger.session.tab.console.content.name"),
                                            XDebuggerUIConstants.CONSOLE_TAB_ICON, myConsole.getPreferredFocusableComponent());
@@ -259,15 +257,9 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
     console.setActions(consoleActions, ActionPlaces.DEBUGGER_TOOLBAR, myConsole.getPreferredFocusableComponent());
 
-    initLogConsoles(myConfiguration, myRunContentDescriptor.getProcessHandler(), myConsole);
+    myEnvironment.initLogs(myRunContentDescriptor, getLogManager());
 
     DefaultActionGroup group = new DefaultActionGroup();
-    final Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
-    RestartAction restarAction = new RestartAction(executor,
-                                                   myRunner, myRunContentDescriptor.getProcessHandler(), XDebuggerUIConstants.DEBUG_AGAIN_ICON,
-                                                   myRunContentDescriptor, myEnvironment);
-    group.add(restarAction);
-    restarAction.registerShortcut(myUi.getComponent());
 
     if (executionResult instanceof DefaultExecutionResult) {
       final AnAction[] actions = ((DefaultExecutionResult)executionResult).getRestartActions();
@@ -331,11 +323,10 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     group.addSeparator();
 
     addActionToGroup(group, PinToolwindowTabAction.ACTION_NAME);
-    group.add(new CloseAction(executor, myRunContentDescriptor, getProject()));
-    group.add(new ContextHelpAction(executor.getHelpId()));
+
+    myEnvironment.initActions(myRunContentDescriptor, group);
 
     myUi.getOptions().setLeftToolbar(group, ActionPlaces.DEBUGGER_TOOLBAR);
-
 
     return myRunContentDescriptor;
   }
@@ -384,7 +375,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
   }
 
   public String getSessionName() {
-    return myConfiguration.getName();
+    return myEnvironment.getEnvironment().getSessionName();
   }
 
   public DebuggerStateManager getContextManager() {
@@ -427,15 +418,10 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     }
   }
 
-  public RunContentDescriptor attachToSession(final DebuggerSession session, final ProgramRunner runner, final ExecutionEnvironment env)
-    throws ExecutionException {
+  public RunContentDescriptor attachToSession(final DebuggerSession session, DebugUIEnvironment environment) throws ExecutionException {
     disposeSession();
     myDebuggerSession = session;
-    myRunner = runner;
-    myEnvironment = env;
-    myConfiguration = env.getRunProfile();
-
-    registerFileMatcher(myConfiguration);
+    myEnvironment = environment;
 
     session.getContextManager().addListener(new DebuggerContextListener() {
       public void changeEvent(DebuggerContextImpl newContext, int event) {

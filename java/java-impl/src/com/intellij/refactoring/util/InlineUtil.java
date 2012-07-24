@@ -31,10 +31,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -296,10 +293,11 @@ public class InlineUtil {
   }
 
   public static void substituteTypeParams(PsiElement scope, final PsiSubstitutor substitutor, final PsiElementFactory factory) {
+    final Map<PsiElement, PsiElement> replacement = new HashMap<PsiElement, PsiElement>();
     scope.accept(new JavaRecursiveElementVisitor() {
       @Override public void visitTypeElement(PsiTypeElement typeElement) {
+        super.visitTypeElement(typeElement);
         PsiType type = typeElement.getType();
-
         if (type instanceof PsiClassType) {
           JavaResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
           PsiElement resolved = resolveResult.getElement();
@@ -309,17 +307,20 @@ public class InlineUtil {
               newType = PsiType.getJavaLangObject(resolved.getManager(), resolved.getResolveScope());
             }
             try {
-              typeElement.replace(factory.createTypeElement(newType));
-              return;
+              replacement.put(typeElement, factory.createTypeElement(newType));
             }
             catch (IncorrectOperationException e) {
               LOG.error(e);
             }
           }
         }
-        super.visitTypeElement(typeElement);
       }
     });
+    for (PsiElement element : replacement.keySet()) {
+      if (element.isValid()) {
+        element.replace(replacement.get(element));
+      }
+    }
   }
 
   private static PsiElement replaceDiamondWithInferredTypesIfNeeded(PsiExpression initializer, PsiElement ref) {

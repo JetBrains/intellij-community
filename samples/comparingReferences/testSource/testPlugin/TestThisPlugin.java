@@ -4,17 +4,18 @@ package testPlugin;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ComparingReferencesInspection;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import junit.framework.Assert;
-import com.intellij.openapi.ui.Messages;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
 
 import java.util.List;
 
-public class TestThisPlugin {
+/**
+ * @see JavaCodeInsightFixtureTestCase
+ * @see LightCodeInsightFixtureTestCase
+ */
+public class TestThisPlugin extends UsefulTestCase {
 
     protected CodeInsightTestFixture myFixture;
     // Specify path to your test data directory
@@ -22,12 +23,10 @@ public class TestThisPlugin {
     final String dataPath = "c:\\users\\John.Doe\\idea\\community\\samples\\comparingReferences/testData";
 
 
-    @Before
-
     public void setUp() throws Exception {
 
         final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
-        final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder();
+        final TestFixtureBuilder<IdeaProjectTestFixture> testFixtureBuilder = fixtureFactory.createFixtureBuilder(getName());
         myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(testFixtureBuilder.getFixture());
         myFixture.setTestDataPath(dataPath);
         final JavaModuleFixtureBuilder builder = testFixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
@@ -35,11 +34,8 @@ public class TestThisPlugin {
         builder.addContentRoot(myFixture.getTempDirPath()).addSourceRoot("");
         builder.setMockJdkLevel(JavaModuleFixtureBuilder.MockJdkLevel.jdk15);
         myFixture.setUp();
-
-
     }
 
-    @After
     public void tearDown() throws Exception {
         myFixture.tearDown();
         myFixture = null;
@@ -56,20 +52,16 @@ public class TestThisPlugin {
         Assert.assertNotNull(action);
         myFixture.launchAction(action);
         myFixture.checkResultByFile(testName + ".after.java");
-
     }
 
-    @Test
     // Test the "==" case
     public void test() throws Throwable {
         doTest("before", "Use equals()");
-
     }
-     @Test
+
      // Test the "!=" case
     public void test1() throws Throwable {
         doTest("before1", "Use equals()");
-
     }
 
 }

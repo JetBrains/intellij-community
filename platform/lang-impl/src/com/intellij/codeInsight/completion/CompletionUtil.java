@@ -23,7 +23,6 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.codeInsight.lookup.LookupValueWithPsiElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
@@ -35,7 +34,6 @@ import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.ResolveResult;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashMap;
@@ -221,19 +219,12 @@ public class CompletionUtil {
 
   @Nullable
   public static PsiElement getTargetElement(LookupElement lookupElement) {
+    PsiElement psiElement = lookupElement.getPsiElement();
+    if (psiElement != null) {
+      return getOriginalElement(psiElement);
+    }
+
     Object object = lookupElement.getObject();
-    if (object instanceof ResolveResult) {
-      object = ((ResolveResult)object).getElement();
-    }
-    
-    if (object instanceof PsiElement) {
-      return getOriginalElement((PsiElement)object);
-    }
-
-    if (object instanceof PsiElementNavigationItem) {
-      return ((PsiElementNavigationItem)object).getTargetElement();
-    }
-
     if (object instanceof LookupValueWithPsiElement) {
       final PsiElement element = ((LookupValueWithPsiElement)object).getElement();
       if (element != null) return getOriginalElement(element);

@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * @author Alexey
- */
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
@@ -53,10 +49,69 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 
+/**
+ * @author Alexey
+ */
 public class CopyReferenceAction extends AnAction {
-  public static final DataFlavor ourFlavor = FileCopyPasteUtil.createJvmDataFlavor(MyTransferable.class);
+  public static final DataFlavor ourFlavor;
+  static {
+    try {
+      ourFlavor = FileCopyPasteUtil.createJvmDataFlavor(MyTransferable.class);
+    }
+    catch (Exception e) {
+      // todo[r.sh] delete in IDEA 12
+      final StringBuilder msg = new StringBuilder();
+      final ClassLoader loader = CopyReferenceAction.class.getClassLoader();
+      msg.append("loader=").append(loader);
+      if (loader != null) {
+        final URL url = loader.getResource("com/intellij/ide/actions/CopyReferenceAction.class");
+        msg.append(" url=").append(url);
+        if (url != null) {
+          if ("jar".equals(url.getProtocol())) {
+            String path = url.getFile();
+            msg.append(" path=").append(path);
+            if (path != null && !path.isEmpty()) {
+              if (path.startsWith("file:") && path.length() > 5) path = path.substring(5);
+              if (path.startsWith("//") && path.length() > 2) path = path.substring(2);
+              final String[] parts = path.split("!/");
+              if (parts.length == 2) {
+                try {
+                  final JarFile jar = new JarFile(parts[0]);
+                  try {
+                    msg.append(" jar=").append(jar);
+                    final ZipEntry entry = jar.getEntry(parts[1].replace("CopyReferenceAction.class", "CopyReferenceAction$MyTransferable.class"));
+                    msg.append(" entry=").append(entry);
+                  }
+                  finally {
+                    jar.close();
+                  }
+                }
+                catch (IOException e1) {
+                  msg.append(" io=").append(e1.getMessage());
+                  throw new RuntimeException(msg.toString(), e);
+                }
+              }
+            }
+          }
+          else {
+            final String path = url.getFile();
+            msg.append(" path=").append(path);
+            if (path != null && !path.isEmpty()) {
+              final boolean exists = new File(path.replace("CopyReferenceAction.class", "CopyReferenceAction$MyTransferable.class")).exists();
+              msg.append(" exists=").append(exists);
+            }
+          }
+        }
+      }
+      throw new RuntimeException(msg.toString(), e);
+    }
+  }
 
   public CopyReferenceAction() {
     super();
@@ -67,7 +122,8 @@ public class CopyReferenceAction extends AnAction {
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    boolean enabled = editor != null && (FileDocumentManager.getInstance().getFile(editor.getDocument()) != null || getElementToCopy(editor, dataContext) != null);
+    boolean enabled = (editor != null && FileDocumentManager.getInstance().getFile(editor.getDocument()) != null) ||
+                      getElementToCopy(editor, dataContext) != null;
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       e.getPresentation().setVisible(enabled);
@@ -114,7 +170,7 @@ public class CopyReferenceAction extends AnAction {
   }
 
   @Nullable
-  private static PsiElement getElementToCopy(final Editor editor, final DataContext dataContext) {
+  private static PsiElement getElementToCopy(@Nullable final Editor editor, final DataContext dataContext) {
     PsiElement element = null;
     if (editor != null) {
       PsiReference reference = TargetElementUtilBase.findReference(editor);

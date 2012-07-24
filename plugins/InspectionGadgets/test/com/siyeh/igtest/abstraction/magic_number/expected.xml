@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>MagicNumber.java</file>
+    <line>10</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">&quot;Magic number&quot;</problem_class>
+    <description>Magic number &lt;code&gt;400&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>MagicNumber.java</file>
+    <line>17</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">&quot;Magic number&quot;</problem_class>
+    <description>Magic number &lt;code&gt;400&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>MagicNumber.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">&quot;Magic number&quot;</problem_class>
+    <description>Magic number &lt;code&gt;400&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>MagicNumber.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">&quot;Magic number&quot;</problem_class>
+    <description>Magic number &lt;code&gt;400&lt;/code&gt; #loc</description>
+  </problem>
+</problems>

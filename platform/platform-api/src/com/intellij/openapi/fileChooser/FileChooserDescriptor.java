@@ -112,7 +112,7 @@ public class FileChooserDescriptor implements Cloneable {
    * If true, the user will be able to choose multiple files.
    */
   public final boolean getChooseMultiple() {
-    return myChooseMultiple;
+    return isChooseMultiple();
   }
 
   /**

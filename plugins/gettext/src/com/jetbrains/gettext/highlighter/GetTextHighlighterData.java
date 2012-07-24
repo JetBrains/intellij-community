@@ -1,6 +1,5 @@
 package com.jetbrains.gettext.highlighter;
 
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.SyntaxHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 
@@ -11,7 +10,8 @@ public class GetTextHighlighterData {
 
   public static final String COMMENT_ID = "GET_TEXT_COMMENT";
   public static final TextAttributesKey COMMENT =
-    TextAttributesKey.createTextAttributesKey(COMMENT_ID, SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes().clone());
+    TextAttributesKey
+      .createTextAttributesKey(COMMENT_ID, SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes().clone());
 
   public static final String KEYWORD_ID = "GET_TEXT_KEYWORD";
   public static final TextAttributesKey KEYWORD =
@@ -23,11 +23,12 @@ public class GetTextHighlighterData {
 
   public static final String FLAG_ID = "GET_TEXT_FLAG";
   public static final TextAttributesKey FLAG =
-    TextAttributesKey.createTextAttributesKey(FLAG_ID, SyntaxHighlighterColors.DOC_COMMENT_TAG.getDefaultAttributes().clone());
+    TextAttributesKey
+      .createTextAttributesKey(FLAG_ID, SyntaxHighlighterColors.DOC_COMMENT_TAG.getDefaultAttributes().clone());
 
-  public static final String TRANSLATED_NUMBER_ID = "GET_TEXT_TRANSLATED_NUMBER";
-  public static final TextAttributesKey TRANSLATED_NUMBER =
-    TextAttributesKey.createTextAttributesKey(TRANSLATED_NUMBER_ID, SyntaxHighlighterColors.NUMBER.getDefaultAttributes().clone());
+  public static final String NUMBER_ID = "GET_TEXT_TRANSLATED_NUMBER";
+  public static final TextAttributesKey NUMBER =
+    TextAttributesKey.createTextAttributesKey(NUMBER_ID, SyntaxHighlighterColors.NUMBER.getDefaultAttributes().clone());
 
   public static final String BRACES_ID = "GET_TEXT_BRACES";
   public static final TextAttributesKey BRACES =
@@ -36,7 +37,4 @@ public class GetTextHighlighterData {
   public static final String DOTS_ID = "GET_TEXT_DOTS";
   public static final TextAttributesKey DOTS =
     TextAttributesKey.createTextAttributesKey(DOTS_ID, SyntaxHighlighterColors.DOT.getDefaultAttributes().clone());
-
-  public static final TextAttributesKey BAD_CHARACTER =
-    TextAttributesKey.createTextAttributesKey("TS_BAD_CHARACTER", HighlighterColors.BAD_CHARACTER.getDefaultAttributes());
 }

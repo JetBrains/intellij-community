@@ -57,7 +57,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.io.File;
 import java.util.*;
 
@@ -180,13 +179,6 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
     if (!Comparing.equal(previous, level)) {
       final Project project = module.getProject();
-      SwingUtilities.invokeLater(new Runnable() {
-        public void run() {
-          if (!project.isDisposed()) {
-            CompileServerManager.getInstance().sendReloadRequest(project);
-          }
-        }
-      });
     }
   }
 
@@ -205,16 +197,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       removeWildcardPatterns();
     }
     try {
-      addWildcardResourcePattern("?*.properties");
-      addWildcardResourcePattern("?*.xml");
-      addWildcardResourcePattern("?*.gif");
-      addWildcardResourcePattern("?*.png");
-      addWildcardResourcePattern("?*.jpeg");
-      addWildcardResourcePattern("?*.jpg");
-      addWildcardResourcePattern("?*.html");
-      addWildcardResourcePattern("?*.dtd");
-      addWildcardResourcePattern("?*.tld");
-      addWildcardResourcePattern("?*.ftl");
+      addWildcardResourcePattern("!?*.java");
+      addWildcardResourcePattern("!?*.form");
+      addWildcardResourcePattern("!?*.class");
+      addWildcardResourcePattern("!?*.groovy");
+      addWildcardResourcePattern("!?*.scala");
+      addWildcardResourcePattern("!?*.flex");
+      addWildcardResourcePattern("!?*.kt");
+      addWildcardResourcePattern("!?*.clj");
     }
     catch (MalformedPatternException e) {
       LOG.error(e);

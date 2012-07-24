@@ -25,9 +25,6 @@ import org.jetbrains.annotations.Nullable;
 public class DefaultParameterTypeInferencePolicy extends ParameterTypeInferencePolicy {
   public static final DefaultParameterTypeInferencePolicy INSTANCE = new DefaultParameterTypeInferencePolicy();
   
-  private DefaultParameterTypeInferencePolicy() {
-  }
-
   @Nullable
   @Override
   public Pair<PsiType, ConstraintType> inferTypeConstraintFromCallContext(PsiCallExpression innerMethodCall,

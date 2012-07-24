@@ -153,6 +153,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     if (parameters.length > 0) {
       for (int j = 0; j < arguments.length; j++) {
         PsiExpression argument = arguments[j];
+        if (argument == null) continue;
         if (argument instanceof PsiMethodCallExpression && ourGuard.currentStack().contains(argument)) continue;
 
         final PsiParameter parameter = parameters[Math.min(j, parameters.length - 1)];

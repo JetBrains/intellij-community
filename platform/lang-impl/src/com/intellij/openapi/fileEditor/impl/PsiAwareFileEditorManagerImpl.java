@@ -24,7 +24,9 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorPsiDataProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
@@ -142,7 +144,7 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
     private void doChange(final PsiTreeChangeEvent event) {
       final PsiFile psiFile = event.getFile();
       final VirtualFile currentFile = getCurrentFile();
-      if (currentFile != null && psiFile != null && psiFile.getVirtualFile() == currentFile) {
+      if (currentFile != null && psiFile != null && Comparing.equal(psiFile.getVirtualFile(), currentFile)) {
         updateFileIcon(currentFile);
       }
     }

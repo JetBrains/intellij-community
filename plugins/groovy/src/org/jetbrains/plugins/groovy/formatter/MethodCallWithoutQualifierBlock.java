@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 
 import java.util.ArrayList;
 import java.util.List;

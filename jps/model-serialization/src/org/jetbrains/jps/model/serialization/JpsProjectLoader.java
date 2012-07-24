@@ -2,8 +2,10 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.DummyJpsElementProperties;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsElementProperties;
@@ -11,22 +13,33 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.model.serialization.artifact.JpsArtifactLoader;
+import org.jetbrains.jps.model.serialization.facet.JpsFacetLoader;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author nik
  */
 public class JpsProjectLoader extends JpsLoaderBase {
+  private static final ExecutorService ourThreadPool = Executors.newFixedThreadPool(2 * Runtime.getRuntime().availableProcessors());
   private final JpsProject myProject;
+  private final Map<String, String> myPathVariables;
 
   public JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, File baseDir) {
     super(createMacroExpander(pathVariables, baseDir));
     myProject = project;
+    myPathVariables = pathVariables;
   }
 
   private static JpsMacroExpander createMacroExpander(Map<String, String> pathVariables, File baseDir) {
@@ -56,84 +69,116 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private void loadFromDirectory(File dir) {
-    loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
-    loadModules(loadRootElement(new File(dir, "modules.xml")));
-    final File[] libraryFiles = new File(dir, "libraries").listFiles();
-    if (libraryFiles != null) {
-      for (File libraryFile : libraryFiles) {
-        if (isXmlFile(libraryFile)) {
-          loadProjectLibraries(loadRootElement(libraryFile));
-        }
-      }
+    JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
+    loadModules(loadRootElement(new File(dir, "modules.xml")), projectSdkType);
+    for (File libraryFile : listXmlFiles(new File(dir, "libraries"))) {
+      loadProjectLibraries(loadRootElement(libraryFile));
     }
+    for (File artifactFile : listXmlFiles(new File(dir, "artifacts"))) {
+      loadArtifacts(loadRootElement(artifactFile));
+    }
+  }
+
+  @NotNull
+  private static File[] listXmlFiles(final File dir) {
+    File[] files = dir.listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File file) {
+        return isXmlFile(file);
+      }
+    });
+    return files != null ? files : ArrayUtil.EMPTY_FILE_ARRAY;
   }
 
   private void loadFromIpr(File iprFile) {
     final Element root = loadRootElement(iprFile);
-    loadProjectRoot(root);
-    loadModules(root);
+    JpsSdkType<?> projectSdkType = loadProjectRoot(root);
+    loadModules(root, projectSdkType);
     loadProjectLibraries(findComponent(root, "libraryTable"));
+    loadArtifacts(findComponent(root, "ArtifactManager"));
   }
 
-  private void loadProjectRoot(Element root) {
+  private void loadArtifacts(Element artifactManagerComponent) {
+    JpsArtifactLoader.loadArtifacts(myProject, artifactManagerComponent);
+  }
+
+  @Nullable
+  private JpsSdkType<?> loadProjectRoot(Element root) {
+    JpsSdkType<?> sdkType = null;
     Element rootManagerElement = findComponent(root, "ProjectRootManager");
     if (rootManagerElement != null) {
       String sdkName = rootManagerElement.getAttributeValue("project-jdk-name");
       String sdkTypeId = rootManagerElement.getAttributeValue("project-jdk-type");
       if (sdkName != null && sdkTypeId != null) {
-        JpsSdkType<?> sdkType = JpsModuleLoader.getSdkType(sdkTypeId);
-        myProject.getSdkReferencesTable().setSdkReference(sdkType, JpsElementFactory.getInstance().createSdkReference(sdkName, sdkType));
+        sdkType = JpsSdkTableLoader.getSdkType(sdkTypeId);
+        JpsSdkTableLoader.setSdkReference(myProject.getSdkReferencesTable(), sdkName, sdkType);
+      }
+      for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+        extension.loadProjectRoots(myProject, rootManagerElement);
       }
     }
+    return sdkType;
   }
 
   private void loadProjectLibraries(Element libraryTableElement) {
     JpsLibraryTableLoader.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
-  private void loadModules(Element root) {
+  private void loadModules(Element root, final JpsSdkType<?> projectSdkType) {
     Element componentRoot = findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
+    List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
     for (Element moduleElement : JDOMUtil.getChildren(modules, "module")) {
       final String path = moduleElement.getAttributeValue("filepath");
-      JpsModule module = loadModule(path);
-      myProject.addModule(module);
+      futures.add(ourThreadPool.submit(new Callable<JpsModule>() {
+        @Override
+        public JpsModule call() throws Exception {
+          return loadModule(path, projectSdkType);
+        }
+      }));
+    }
+    try {
+      for (Future<JpsModule> future : futures) {
+        myProject.addModule(future.get());
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 
-  private JpsModule loadModule(String path) {
+  private JpsModule loadModule(String path, JpsSdkType<?> projectSdkType) {
     final File file = new File(path);
     String name = FileUtil.getNameWithoutExtension(file);
-    final Element moduleRoot = loadRootElement(file);
+    final JpsMacroExpander expander = new JpsMacroExpander(myPathVariables);
+    expander.addFileHierarchyReplacements("MODULE_DIR", file.getParentFile());
+    final Element moduleRoot = loadRootElement(file, expander);
     final String typeId = moduleRoot.getAttributeValue("type");
-    final JpsModuleType<?> moduleType = getModuleType(typeId);
-    final JpsModule module = createModule(name, moduleRoot, moduleType);
-    JpsModuleLoader.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"));
+    final JpsModulePropertiesLoader<?> loader = getModulePropertiesLoader(typeId);
+    final JpsModule module = createModule(name, moduleRoot, loader);
+    JpsModuleLoader.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
+    JpsFacetLoader.loadFacets(module, findComponent(moduleRoot, "FacetManager"), FileUtil.toSystemIndependentName(path));
     return module;
   }
 
-  private static <P extends JpsElementProperties> JpsModule createModule(String name, Element moduleRoot, JpsModuleType<P> moduleType) {
-    return JpsElementFactory.getInstance().createModule(name, moduleType, loadModuleProperties(moduleType, moduleRoot));
+  private static <P extends JpsElementProperties> JpsModule createModule(String name, Element moduleRoot, JpsModulePropertiesLoader<P> loader) {
+    return JpsElementFactory.getInstance().createModule(name, loader.getType(), loader.loadProperties(moduleRoot));
   }
 
-  private static <P extends JpsElementProperties> P loadModuleProperties(JpsModuleType<P> type, Element moduleRoot) {
+  private static JpsModulePropertiesLoader<?> getModulePropertiesLoader(@NotNull String typeId) {
     for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
-      P properties = extension.loadModuleProperties(type, moduleRoot);
-      if (properties != null) {
-        return properties;
+      for (JpsModulePropertiesLoader<?> loader : extension.getModulePropertiesLoaders()) {
+        if (loader.getTypeId().equals(typeId)) {
+          return loader;
+        }
       }
     }
-    return (P)DummyJpsElementProperties.INSTANCE;
-  }
-
-  private static JpsModuleType<?> getModuleType(@NotNull String typeId) {
-    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
-      final JpsModuleType<?> type = extension.getModuleType(typeId);
-      if (type != null) {
-        return type;
+    return new JpsModulePropertiesLoader<DummyJpsElementProperties>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE") {
+      @Override
+      public DummyJpsElementProperties loadProperties(@Nullable Element moduleRootElement) {
+        return DummyJpsElementProperties.INSTANCE;
       }
-    }
-    return JpsJavaModuleType.INSTANCE;
+    };
   }
 }

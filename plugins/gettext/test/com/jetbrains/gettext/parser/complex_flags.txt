@@ -1,0 +1,34 @@
+GNU GetText File
+  PsiComment(COMMENT_SYMBOLS)('#')
+  PsiComment(COMMENT_SYMBOLS)(' ')
+  PsiComment(COMMENT)('test')
+  PsiWhiteSpace('\n')
+  PsiComment(COMMENT_SYMBOLS)('#')
+  MSG_BLOCK
+    HEADER
+      PsiElement(EXTR_COMMENT)('. another')
+      PsiWhiteSpace('\n')
+      PsiComment(COMMENT_SYMBOLS)('#')
+      PsiElement(REFERENCE)(': ref')
+      PsiWhiteSpace('\n')
+      PsiComment(COMMENT_SYMBOLS)('#')
+      PsiElement(FLAG_COMMENT)(',')
+      PsiElement(DELIVERY)(' ')
+      PsiElement(FUZZY_FLAG)('fuzzy')
+      PsiElement(DELIVERY)(',')
+      PsiElement(DELIVERY)(' ')
+      PsiElement(FORMAT_FLAG)('c-format')
+      PsiElement(DELIVERY)(',')
+      PsiElement(DELIVERY)(' ')
+      PsiElement(NO_FORMAT_FLAG)('no-objc-format')
+    PsiWhiteSpace('\n')
+    MSG_CONTENT
+      MSGID
+        PsiElement(MSGID)('msgid')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"new string to translate"')
+      PsiWhiteSpace('\n')
+      MSGSTR
+        PsiElement(MSGSTR)('msgstr')
+        PsiWhiteSpace(' ')
+        PsiElement(STRING)('"translated string"')

@@ -76,14 +76,14 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
   }
 
   @Override
-  public V get(Object key) {
+  public V get(@NotNull Object key) {
     MyReference<K,V> ref = myMap.get(key);
     if (ref == null) return null;
     return ref.get();
   }
 
   @Override
-  public V put(K key, V value) {
+  public V put(@NotNull K key, @NotNull V value) {
     processQueue();
     MyReference<K,V> oldRef = myMap.put(key, createRef(key, value));
     return oldRef != null ? oldRef.get() : null;

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
+import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.module;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -8,4 +9,7 @@ import org.jetbrains.annotations.NotNull;
 public interface JpsModuleDependency extends JpsDependencyElement {
   @NotNull
   JpsModuleReference getModuleReference();
+
+  @Nullable
+  JpsModule getModule();
 }

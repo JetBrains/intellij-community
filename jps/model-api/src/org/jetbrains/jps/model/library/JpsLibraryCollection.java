@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.library;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElementProperties;
 import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 
@@ -16,10 +17,13 @@ public interface JpsLibraryCollection {
 
   @NotNull
   <P extends JpsElementProperties>
-  JpsLibrary addLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties);
+  JpsTypedLibrary<P> addLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties);
 
   @NotNull
   List<JpsLibrary> getLibraries();
 
   void addLibrary(@NotNull JpsLibrary library);
+
+  @Nullable
+  JpsLibrary findLibrary(@NotNull String name);
 }

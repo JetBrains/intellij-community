@@ -58,13 +58,13 @@ public class IndexedRelevantResource<K, V extends Comparable> implements Compara
   }
 
   public static <K, V extends Comparable> List<IndexedRelevantResource<K, V>> getAllResources(ID<K, V> indexId,
-                                                                           @NotNull final Module module,
-                                                                           @Nullable NullableFunction<List<IndexedRelevantResource<K, V>>, IndexedRelevantResource<K, V>> chooser) {
+                                                                                              @Nullable final Module module,
+                                                                                              @NotNull Project project,
+                                                                                              @Nullable NullableFunction<List<IndexedRelevantResource<K, V>>, IndexedRelevantResource<K, V>> chooser) {
     ArrayList<IndexedRelevantResource<K, V>> all = new ArrayList<IndexedRelevantResource<K, V>>();
-    Collection<K> allKeys = FileBasedIndex.getInstance().getAllKeys(indexId, module.getProject());
+    Collection<K> allKeys = FileBasedIndex.getInstance().getAllKeys(indexId, project);
     for (K key : allKeys) {
-      List<IndexedRelevantResource<K, V>> resources = getResources(indexId, key, module, module.getProject(),
-                                                                   null);
+      List<IndexedRelevantResource<K, V>> resources = getResources(indexId, key, module, project, null);
       if (!resources.isEmpty()) {
         if (chooser == null) {
           all.add(resources.get(0));

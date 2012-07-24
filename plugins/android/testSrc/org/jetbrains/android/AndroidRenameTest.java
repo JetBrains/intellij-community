@@ -306,6 +306,28 @@ public class AndroidRenameTest extends AndroidTestCase {
     myFixture.checkResultByFile(BASE_PATH + "layout_widget_after.xml");
   }
 
+  public void testRenameWidgetPackage1() throws Throwable {
+    createManifest();
+    myFixture.copyFileToProject(BASE_PATH + "MyWidget.java", "src/p1/p2/MyWidget.java");
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "layout_widget1.xml", "res/layout/layout_widget1.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    checkAndRename("newPackage");
+    myFixture.checkResultByFile(BASE_PATH + "layout_widget1_after.xml");
+  }
+
+  public void testMoveWidgetPackage1() throws Throwable {
+    createManifest();
+    myFixture.copyFileToProject(BASE_PATH + "Dummy.java", "src/p1/newp/Dummy.java");
+    myFixture.copyFileToProject(BASE_PATH + "MyWidget.java", "src/p1/p2/MyWidget.java");
+    myFixture.copyFileToProject(BASE_PATH + "MyPreference.java", "src/p1/p2/MyPreference.java");
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + "layout_widget2.xml", "res/layout/layout_widget2.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    myFixture.copyFileToProject(BASE_PATH + "custom_pref.xml", "res/xml/custom_pref.xml");
+    doMovePackage("p1.p2", "p1.newp");
+    myFixture.checkResultByFile("res/layout/layout_widget2.xml", BASE_PATH + "layout_widget2_after.xml", false);
+    myFixture.checkResultByFile("res/xml/custom_pref.xml", BASE_PATH + "custom_pref_after.xml", false);
+  }
+
   private void doMovePackageTest(String packageName, String newPackageName, String activityPath) throws Exception {
     myFixture.copyDirectoryToProject(BASE_PATH + "empty", "src/p1/p2/p3");
     myFixture.copyFileToProject(BASE_PATH + "MyActivity.java", activityPath);

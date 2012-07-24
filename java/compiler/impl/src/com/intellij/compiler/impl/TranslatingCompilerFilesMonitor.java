@@ -16,7 +16,6 @@
 package com.intellij.compiler.impl;
 
 import com.intellij.ProjectTopics;
-import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerIOUtil;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
@@ -1641,14 +1640,12 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
 
   private static void notifyFilesChanged(Collection<String> paths) {
     if (!paths.isEmpty()) {
-      CompileServerManager.getInstance().notifyFilesChanged(paths);
       BuildManager.getInstance().notifyFilesChanged(paths);
     }
   }
 
   private static void notifyFilesDeleted(Collection<String> paths) {
     if (!paths.isEmpty()) {
-      CompileServerManager.getInstance().notifyFilesDeleted(paths);
       BuildManager.getInstance().notifyFilesDeleted(paths);
     }
   }

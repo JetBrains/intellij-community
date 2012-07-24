@@ -20,13 +20,11 @@ import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.event.DocumentAdapter;
@@ -119,17 +117,22 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
         });
       }
     });
-    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    assert editorFactory != null;
+    editorFactory.addEditorFactoryListener(new EditorFactoryAdapter() {
+
       @Override
       public void editorCreated(@NotNull EditorFactoryEvent event) {
         if (event.getEditor().getDocument() == myNewDocument) {
+          final EditorActionHandler editorEscape = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ESCAPE);
           new AnAction() {
             @Override
             public void update(AnActionEvent e) {
               Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
               e.getPresentation().setEnabled(
                 editor != null && LookupManager.getActiveLookup(editor) == null &&
-                TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null);
+                TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null &&
+                (editorEscape == null || !editorEscape.isEnabled(editor, e.getDataContext())));
             }
 
             @Override
@@ -200,7 +203,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
     boolean unsplit = false;
     if (mySplittedWindow != null && !mySplittedWindow.isDisposed()) {
       final EditorWithProviderComposite[] editors = mySplittedWindow.getEditors();
-      if (editors.length == 1 && editors[0].getFile() == myNewVirtualFile) {
+      if (editors.length == 1 && Comparing.equal(editors[0].getFile(), myNewVirtualFile)) {
         unsplit = true;
       }
     }

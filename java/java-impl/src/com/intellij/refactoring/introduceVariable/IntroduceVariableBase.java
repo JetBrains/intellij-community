@@ -49,6 +49,8 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
+import com.intellij.psi.scope.processor.VariablesProcessor;
+import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -522,21 +524,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return false;
 
-    PsiElement containerParent = tempContainer;
-    PsiElement lastScope = tempContainer;
-    while (true) {
-      if (containerParent instanceof PsiFile) break;
-      if (containerParent instanceof PsiMethod) break;
-      containerParent = containerParent.getParent();
-      if (containerParent instanceof PsiCodeBlock) {
-        lastScope = containerParent;
-      }
-    }
-
-    final ExpressionOccurrenceManager occurenceManager = new ExpressionOccurrenceManager(expr, lastScope,
-                                                                                 NotInSuperCallOccurrenceFilter.INSTANCE);
-    final PsiExpression[] occurrences = occurenceManager.getOccurrences();
-    final PsiElement anchorStatementIfAll = occurenceManager.getAnchorStatementForAll();
+    final ExpressionOccurrenceManager occurrenceManager = createOccurrenceManager(expr, tempContainer);
+    final PsiExpression[] occurrences = occurrenceManager.getOccurrences();
+    final PsiElement anchorStatementIfAll = occurrenceManager.getAnchorStatementForAll();
 
     final LinkedHashMap<OccurrencesChooser.ReplaceChoice, List<PsiExpression>> occurrencesMap = ContainerUtil.newLinkedHashMap();
 
@@ -550,8 +540,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
       !ApplicationManager.getApplication().isUnitTestMode() &&
       !isInJspHolderMethod(expr);
-    final boolean inFinalContext = occurenceManager.isInFinalContext();
-    final InputValidator validator = new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurenceManager);
+    final boolean inFinalContext = occurrenceManager.isInFinalContext();
+    final InputValidator validator = new InputValidator(this, project, anchorStatementIfAll, anchorStatement, occurrenceManager);
     final TypeSelectorManagerImpl typeSelectorManager = new TypeSelectorManagerImpl(project, originalType, expr, occurrences);
     final boolean[] wasSucceed = new boolean[]{true};
     final Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
@@ -611,6 +601,35 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       OccurrencesChooser.<PsiExpression>simpleChooser(editor).showChooser(callback, occurrencesMap);
     }
     return wasSucceed[0];
+  }
+
+  private static ExpressionOccurrenceManager createOccurrenceManager(PsiExpression expr, PsiElement tempContainer) {
+    boolean skipForStatement = true;
+    final PsiForStatement forStatement = PsiTreeUtil.getParentOfType(expr, PsiForStatement.class);
+    if (forStatement != null) {
+      final VariablesProcessor variablesProcessor = new VariablesProcessor(false) {
+        @Override
+        protected boolean check(PsiVariable var, ResolveState state) {
+          return PsiTreeUtil.isAncestor(forStatement.getInitialization(), var, true);
+        }
+      };
+      PsiScopesUtil.treeWalkUp(variablesProcessor, expr, null);
+      skipForStatement = variablesProcessor.size() == 0;
+    }
+
+    PsiElement containerParent = tempContainer;
+    PsiElement lastScope = tempContainer;
+    while (true) {
+      if (containerParent instanceof PsiFile) break;
+      if (containerParent instanceof PsiMethod) break;
+      if (!skipForStatement && containerParent instanceof PsiForStatement) break;
+      containerParent = containerParent.getParent();
+      if (containerParent instanceof PsiCodeBlock) {
+        lastScope = containerParent;
+      }
+    }
+
+    return new ExpressionOccurrenceManager(expr, lastScope, NotInSuperCallOccurrenceFilter.INSTANCE);
   }
 
   private static boolean isInJspHolderMethod(PsiExpression expr) {

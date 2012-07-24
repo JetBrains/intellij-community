@@ -41,12 +41,12 @@ public class TableLayoutSpanOperation extends LayoutSpanOperation {
 
   @Override
   protected String getColumnAttribute(boolean asName) {
-    return asName ? "layout:column" : "android:layout_column";
+    return asName ? "layout:column" : "layout_column";
   }
 
   @Override
   protected String getColumnSpanAttribute(boolean asName) {
-    return asName ? "layout:span" : "android:layout_span";
+    return asName ? "layout:span" : "layout_span";
   }
 
   @Override

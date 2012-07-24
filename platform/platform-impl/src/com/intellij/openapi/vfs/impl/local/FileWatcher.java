@@ -93,7 +93,7 @@ public class FileWatcher {
   private FileWatcher() {
     // to avoid deadlock (PY-1215), initialize ManagingFS reference in main thread, not in FileWatcher thread
     myManagingFS = ManagingFS.getInstance();
-    
+
     final boolean explicitlyDisabled = Boolean.parseBoolean(System.getProperty(PROPERTY_WATCHER_DISABLED));
     try {
       if (!explicitlyDisabled) {
@@ -431,6 +431,8 @@ public class FileWatcher {
               myMapping.clear();
               myMapping.addAll(pairs);
             }
+
+            notifyOnEvent();
           }
           else {
             final String path = readLine();

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -212,7 +213,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       TreeNode child = root.getChildAt(i);
       VirtualFile file = ((FileNode)child).getObject();
       if (VfsUtil.isAncestor(file, toSelect, false)) {
-        if (file == toSelect) {
+        if (Comparing.equal(file, toSelect)) {
           TreeUtil.selectNode(getTree(), child);
           getSelectionModel().clearSelection();
           addSelectedPath(TreeUtil.getPathFromRoot(child));

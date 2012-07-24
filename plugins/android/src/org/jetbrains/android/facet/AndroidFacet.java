@@ -61,10 +61,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -108,7 +105,8 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
   private SystemResourceManager mySystemResourceManager;
   private LocalResourceManager myLocalResourceManager;
 
-  private final Map<String, Map<String, PsiClass>> myClassMaps = new HashMap<String, Map<String, PsiClass>>();
+  private final Map<String, Map<String, SmartPsiElementPointer<PsiClass>>> myClassMaps =
+    new HashMap<String, Map<String, SmartPsiElementPointer<PsiClass>>>();
 
   private final Object myClassMapLock = new Object();
 
@@ -215,6 +213,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     myAvdManager = null;
     myLocalResourceManager = null;
     mySystemResourceManager = null;
+    myClassMaps.clear();
   }
 
   // can be invoked only from dispatch thread!
@@ -483,8 +482,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
             if (isDisposed()) {
               return;
             }
+            final ModuleRootManager rootManager = ModuleRootManager.getInstance(getModule());
 
-            final Sdk newSdk = ModuleRootManager.getInstance(getModule()).getSdk();
+            final Sdk newSdk = rootManager.getSdk();
             if (newSdk != null && newSdk.getSdkType() instanceof AndroidSdkType && !newSdk.equals(myPrevSdk)) {
               androidPlatformChanged();
 
@@ -769,43 +769,83 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
     return (AndroidFacetType)FacetTypeRegistry.getInstance().findFacetType(ID);
   }
 
+  // todo: correctly support classes from external non-platform jars
   @NotNull
   public Map<String, PsiClass> getClassMap(@NotNull String className, @NotNull ClassMapConstructor constructor) {
     synchronized (myClassMapLock) {
-      Map<String, PsiClass> classMap = getInitialClassMap(className, constructor);
-      Map<String, PsiClass> result = new HashMap<String, PsiClass>();
-      for (Iterator<String> it = classMap.keySet().iterator(); it.hasNext();) {
-        String key = it.next();
-        PsiClass value = classMap.get(key);
-        String[] tagNames = constructor.getTagNamesByClass(value);
-        if (ArrayUtil.find(tagNames, key) < 0) {
-          it.remove();
+      Map<String, SmartPsiElementPointer<PsiClass>> classMap = getInitialClassMap(className, constructor, false);
+      final Map<String, PsiClass> result = new HashMap<String, PsiClass>();
+      boolean shouldRebuildInitialMap = false;
+
+      for (final String key : classMap.keySet()) {
+        final SmartPsiElementPointer<PsiClass> pointer = classMap.get(key);
+
+        if (!isUpToDate(pointer, key, constructor)) {
+          shouldRebuildInitialMap = true;
+          break;
         }
-        else {
-          result.put(key, value);
+        final PsiClass aClass = pointer.getElement();
+
+        if (aClass != null) {
+          result.put(key, aClass);
         }
       }
-      Project project = getModule().getProject();
-      fillMap(className, constructor, ProjectScope.getProjectScope(project), result);
+
+      if (shouldRebuildInitialMap) {
+        result.clear();
+        classMap = getInitialClassMap(className, constructor, true);
+
+        for (final String key : classMap.keySet()) {
+          final SmartPsiElementPointer<PsiClass> pointer = classMap.get(key);
+          final PsiClass aClass = pointer.getElement();
+
+          if (aClass != null) {
+            result.put(key, aClass);
+          }
+        }
+      }
+      final Project project = getModule().getProject();
+      fillMap(className, constructor, ProjectScope.getProjectScope(project), result, false);
       return result;
     }
   }
 
+  private static boolean isUpToDate(SmartPsiElementPointer<PsiClass> pointer, String tagName, ClassMapConstructor constructor) {
+    final PsiClass aClass = pointer.getElement();
+    if (aClass == null) {
+      return false;
+    }
+    final String[] tagNames = constructor.getTagNamesByClass(aClass);
+    return ArrayUtil.find(tagNames, tagName) >= 0;
+  }
+
   @NotNull
-  private Map<String, PsiClass> getInitialClassMap(@NotNull String className, @NotNull ClassMapConstructor constructor) {
-    Map<String, PsiClass> viewClassMap = myClassMaps.get(className);
-    if (viewClassMap != null) return viewClassMap;
-    viewClassMap = new HashMap<String, PsiClass>();
-    if (fillMap(className, constructor, getModule().getModuleWithDependenciesAndLibrariesScope(true), viewClassMap)) {
+  private Map<String, SmartPsiElementPointer<PsiClass>> getInitialClassMap(@NotNull String className,
+                                                                           @NotNull ClassMapConstructor constructor,
+                                                                           boolean forceRebuild) {
+    Map<String, SmartPsiElementPointer<PsiClass>> viewClassMap = myClassMaps.get(className);
+    if (viewClassMap != null && !forceRebuild) return viewClassMap;
+    final HashMap<String, PsiClass> map = new HashMap<String, PsiClass>();
+
+    if (fillMap(className, constructor, getModule().getModuleWithDependenciesAndLibrariesScope(true), map, true)) {
+      viewClassMap = new HashMap<String, SmartPsiElementPointer<PsiClass>>(map.size());
+      final SmartPointerManager manager = SmartPointerManager.getInstance(getModule().getProject());
+
+      for (Map.Entry<String, PsiClass> entry : map.entrySet()) {
+        viewClassMap.put(entry.getKey(), manager.createSmartPsiElementPointer(entry.getValue()));
+      }
       myClassMaps.put(className, viewClassMap);
     }
-    return viewClassMap;
+    return viewClassMap != null
+           ? viewClassMap
+           : Collections.<String, SmartPsiElementPointer<PsiClass>>emptyMap();
   }
 
   private boolean fillMap(@NotNull final String className,
                           @NotNull final ClassMapConstructor constructor,
                           GlobalSearchScope scope,
-                          final Map<String, PsiClass> map) {
+                          final Map<String, PsiClass> map,
+                          final boolean libClassesOnly) {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getModule().getProject());
     final PsiClass baseClass = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass>() {
       @Nullable
@@ -821,6 +861,9 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       try {
         ClassInheritorsSearch.search(baseClass, scope, true).forEach(new Processor<PsiClass>() {
           public boolean process(PsiClass c) {
+            if (libClassesOnly && c.getManager().isInProject(c)) {
+              return true;
+            }
             String[] tagNames = constructor.getTagNamesByClass(c);
             for (String tagName : tagNames) {
               map.put(tagName, c);

@@ -19,6 +19,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -32,6 +33,7 @@ import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -44,10 +46,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -147,14 +146,24 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
     if (myReadAccessRanges.isEmpty() && myWriteAccessRanges.isEmpty()) {
       return Collections.emptyList();
     }
+    Set<Pair<Object, TextRange>> existingMarkupTooltips = new HashSet<Pair<Object, TextRange>>();
+    for (RangeHighlighter highlighter : myEditor.getMarkupModel().getAllHighlighters()) {
+      existingMarkupTooltips.add(Pair.create(highlighter.getErrorStripeTooltip(), new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset())));
+    }
+
     List<HighlightInfo> result = new ArrayList<HighlightInfo>(myReadAccessRanges.size() + myWriteAccessRanges.size());
     for (TextRange range: myReadAccessRanges) {
-      ContainerUtil.addIfNotNull(HighlightInfo.createHighlightInfo(ourReadHighlightInfoType, range, null),result);
+      ContainerUtil.addIfNotNull(createHighlightInfo(range, ourReadHighlightInfoType, existingMarkupTooltips), result);
     }
     for (TextRange range: myWriteAccessRanges) {
-      ContainerUtil.addIfNotNull(HighlightInfo.createHighlightInfo(ourWriteHighlightInfoType, range, null),result);
+      ContainerUtil.addIfNotNull(createHighlightInfo(range, ourWriteHighlightInfoType, existingMarkupTooltips), result);
     }
     return result;
+  }
+
+  private HighlightInfo createHighlightInfo(TextRange range, HighlightInfoType type, Set<Pair<Object, TextRange>> existingMarkupTooltips) {
+    String tooltip = HighlightHandlerBase.getLineTextErrorStripeTooltip(myDocument, range.getStartOffset());
+    return HighlightInfo.createHighlightInfo(type, range, null, existingMarkupTooltips.contains(new Pair<Object, TextRange>(tooltip, range)) ? null : tooltip, null);
   }
 
   public static void clearMyHighlights(Document document, Project project) {

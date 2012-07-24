@@ -162,14 +162,17 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       return !strict;
     }
     PsiClass annotationType = (PsiClass)resolved;
-    return isAnnotationApplicable(strict, annotationType, elementTypeFields, annotation.getManager(), annotation.getResolveScope());
+    return isAnnotationApplicable(strict, annotationType, elementTypeFields, annotation.getResolveScope());
   }
 
   public static boolean isAnnotationApplicable(boolean strict,
-                                               PsiClass annotationType,
-                                               String[] elementTypeFields,
-                                               PsiManager manager,
+                                               @NotNull PsiClass annotationType,
+                                               @Nullable String[] elementTypeFields,
                                                GlobalSearchScope resolveScope) {
+    if (elementTypeFields == null) {
+      return !strict;
+    }
+
     PsiAnnotation target = annotationType.getModifierList().findAnnotation(CommonClassNames.TARGET_ANNOTATION_FQ_NAME);
     if (target == null) {
       //todo hack: ambiguity in spec
@@ -183,7 +186,8 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     PsiAnnotationMemberValue value = attributes[0].getValue();
     LOG.assertTrue(elementTypeFields.length > 0);
 
-    PsiClass elementTypeClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.lang.annotation.ElementType", resolveScope);
+    PsiClass elementTypeClass =
+      JavaPsiFacade.getInstance(annotationType.getProject()).findClass("java.lang.annotation.ElementType", resolveScope);
     if (elementTypeClass == null) {
       //todo hack
       return !strict;
@@ -192,17 +196,23 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
 
     for (String fieldName : elementTypeFields) {
       PsiField field = elementTypeClass.findFieldByName(fieldName, false);
-      if (field == null) continue;
+      if (field == null) {
+        continue;
+      }
       if (value instanceof PsiArrayInitializerMemberValue) {
         PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();
         for (PsiAnnotationMemberValue initializer : initializers) {
           if (initializer instanceof PsiReference) {
-            if (((PsiReference)initializer).isReferenceTo(field)) return true;
+            if (((PsiReference)initializer).isReferenceTo(field)) {
+              return true;
+            }
           }
         }
       }
       else if (value instanceof PsiReference) {
-        if (((PsiReference)value).isReferenceTo(field)) return true;
+        if (((PsiReference)value).isReferenceTo(field)) {
+          return true;
+        }
       }
     }
     return false;

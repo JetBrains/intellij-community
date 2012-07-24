@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.dom.resources;
 
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 
 import java.util.List;
@@ -24,6 +25,7 @@ import java.util.List;
  * @author coyote
  */
 public interface DeclareStyleable extends ResourceElement {
+  @Convert(DeclareStyleableNameConverter.class)
   GenericAttributeValue<String> getName();
   List<Attr> getAttrs();
 }

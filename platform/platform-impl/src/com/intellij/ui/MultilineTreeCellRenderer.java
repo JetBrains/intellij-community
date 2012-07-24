@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.MacTreeUI;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -131,7 +131,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Tr
     }
 
     // fill background
-    if (!(myTree.getUI() instanceof MacTreeUI) || !((MacTreeUI)myTree.getUI()).isWideSelection()) {
+    if (!(myTree.getUI() instanceof WideSelectionTreeUI) || !((WideSelectionTreeUI)myTree.getUI()).isWideSelection()) {
       g.setColor(bgColor);
       g.fillRect(borderX, borderY, borderW, borderH);
 

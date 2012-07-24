@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.compiler;
 
-import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -911,7 +910,6 @@ public class ResourceFilteringTest extends MavenImportingTestCase {
   }
 
   public void testDoNotFilterButCopyBigFiles() throws Exception {
-    assertFalse(CompilerConfiguration.getInstance(myProject).isResourceFile("file.xyz"));
     assertEquals(FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"), FileTypes.UNKNOWN);
 
     createProjectSubFile("resources/file.xyz").setBinaryContent(new byte[1024 * 1024 * 20]);

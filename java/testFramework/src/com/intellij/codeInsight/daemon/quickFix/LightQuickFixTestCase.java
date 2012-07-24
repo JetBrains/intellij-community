@@ -31,6 +31,8 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
+import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
+import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ui.UIUtil;
@@ -268,7 +270,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
       @Override
       public void invoke(IntentionAction action) {
-        LightQuickFixTestCase.this.invoke(action);
+        LightQuickFixTestCase.invoke(action);
       }
 
       @Override
@@ -283,22 +285,22 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
 
       @Override
       public void configureFromFileText(String name, String contents) throws IOException {
-        LightQuickFixTestCase.configureFromFileText(name, contents);
+        LightPlatformCodeInsightTestCase.configureFromFileText(name, contents);
       }
 
       @Override
       public PsiFile getFile() {
-        return LightQuickFixTestCase.getFile();
+        return LightPlatformCodeInsightTestCase.getFile();
       }
 
       @Override
       public Project getProject() {
-        return LightQuickFixTestCase.getProject();
+        return LightPlatformTestCase.getProject();
       }
 
       @Override
       public void bringRealEditorBack() {
-        LightQuickFixTestCase.bringRealEditorBack();
+        LightPlatformCodeInsightTestCase.bringRealEditorBack();
       }
     };
   }

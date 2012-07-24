@@ -45,6 +45,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
+import junit.framework.Test
+import junit.framework.TestSuite
 
 /**
  * @author peter
@@ -60,19 +62,23 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type('i')
-    assertSameElements myFixture.lookupElementStrings, "if", "iterable", "int"
+    assertContains("if", "iterable", "int")
 
     type('t')
-    assertOrderedEquals myFixture.lookupElementStrings, "iterable"
+    assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     type('er')
-    assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
+    assertContains("iter", "iterable")
     assertEquals 'iterable', lookup.currentItem.lookupString
     assert lookup.focused
 
     type 'a'
     assert lookup.focused
+  }
+
+  def assertContains(String... items) {
+    assert myFixture.lookupElementStrings.containsAll(items as List)
   }
 
   public void testRecalculateItemsOnBackspace() {
@@ -85,22 +91,22 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type "r"
-    assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
+    assertContains "iter", "iterable"
 
     type '\b'
-    assertOrderedEquals myFixture.lookupElementStrings, "iterable"
+    assertContains "iterable"
 
     type '\b'
-    assertOrderedEquals myFixture.lookupElementStrings, "itaa", "iterable"
+    assertContains "itaa", "iterable"
     type "a"
-    assertOrderedEquals myFixture.lookupElementStrings, "itaa"
+    assertContains "itaa"
     type '\b'
-    assertOrderedEquals myFixture.lookupElementStrings, "itaa", "iterable"
+    assertContains "itaa", "iterable"
     type "e"
-    assertOrderedEquals myFixture.lookupElementStrings, "iterable"
+    assertContains "iterable"
 
     type "r"
-    assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable"
+    assertContains "iter", "iterable"
   }
 
   public void testExplicitSelectionShouldSurvive() {
@@ -113,14 +119,14 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type "e"
-    assertOrderedEquals myFixture.lookupElementStrings, "iterable", "iterable2"
+    assertContains "iterable", "iterable2"
 
     assertEquals 'iterable', lookup.currentItem.lookupString
     edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN }
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
-    assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable", 'iterable2'
+    assertContains "iter", "iterable", 'iterable2'
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
   }
@@ -135,14 +141,14 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type "e"
-    assertOrderedEquals myFixture.lookupElementStrings, "iterable", "iterable2"
+    assertContains "iterable", "iterable2"
 
     assertEquals 'iterable', lookup.currentItem.lookupString
     lookup.currentItem = lookup.items[1]
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
-    assertOrderedEquals myFixture.lookupElementStrings, "iter", "iterable", 'iterable2'
+    assertContains "iter", "iterable", 'iterable2'
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
   }
@@ -177,8 +183,8 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
         }
       }
     """)
-    type 'r'
-    assertNull lookup
+    type 'x'
+    assert !myFixture.lookupElementStrings
   }
 
   public void testExplicitSelectionShouldBeHonoredFocused() {
@@ -195,7 +201,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert lookup.focused
     type 'c'
 
-    assertOrderedEquals myFixture.lookupElementStrings, 'abcd', 'abce'
+    assertContains 'abcd', 'abce'
     assertEquals 'abcd', lookup.currentItem.lookupString
     lookup.currentItem = lookup.items[1]
     assertEquals 'abce', lookup.currentItem.lookupString
@@ -235,7 +241,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     }
     """)
     type 'PJCR'
-    assertOrderedEquals myFixture.lookupElementStrings, 'PsiJavaCodeReferenceElement', 'PsiJavaCodeReferenceElementImpl'
+    assertContains 'PsiJavaCodeReferenceElement', 'PsiJavaCodeReferenceElementImpl'
 
   }
 
@@ -390,7 +396,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     }
     """)
 
-    type 'o'
+    type 'ind'
     assert lookup
     assert !lookup.focused
     assert lookup.items.size() == 2
@@ -447,7 +453,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     """)
     type '.'
     assert lookup
-    type 'a'
+    type 'x'
     assert !lookup
     type '\b'
     assert !lookup
@@ -550,21 +556,28 @@ public interface Test {
     """)
     type('i')
     def offset = myFixture.editor.caretModel.offset
-    assertSameElements myFixture.lookupElementStrings, "if", "iterable", "int"
+    assertContains "if", "iterable", "int"
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     assert myFixture.editor.caretModel.offset == offset + 1
-    assertOrderedEquals myFixture.lookupElementStrings, "iterable"
+    joinAutopopup()
+    joinCompletion()
+    assert !lookup.calculating
+    assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     assert myFixture.editor.caretModel.offset == offset
-    assertSameElements myFixture.lookupElementStrings, "if", "iterable", "int"
+    joinAutopopup()
+    joinCompletion()
+    assert !lookup.calculating
+    assertContains "if", "iterable", "int"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     joinAutopopup()
     joinCompletion()
+    assert !lookup.calculating
     assert lookup.items.size() > 3
 
     for (i in 0.."iter".size()) {
@@ -632,13 +645,13 @@ public interface Test {
 
   public void testTemplatesWithNonImportedClasses() {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
-    myFixture.addClass("package foo.bar; public class LayoutStore {}")
+    myFixture.addClass("package foo.bar; public class ToArray {}")
     try {
       myFixture.configureByText 'a.java', 'class Foo {{ foo(<caret>) }}'
-      type 'lst'
+      type 'toar'
       assert lookup
-      assert 'lst' in myFixture.lookupElementStrings
-      assert 'LayoutStore' in myFixture.lookupElementStrings
+      assert 'toar' in myFixture.lookupElementStrings
+      assert 'ToArray' in myFixture.lookupElementStrings
     }
     finally {
       CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
@@ -657,9 +670,9 @@ class Foo {
 }
 """)
     type 'e'
-    assertOrderedEquals myFixture.lookupElementStrings, "itea", "itera"
+    assertContains "itea", "itera"
     type 'r'
-    assertOrderedEquals myFixture.lookupElementStrings, "iter", "itera"
+    assertContains "iter", "itera"
     type ','
     assert !lookup
     assert myFixture.editor.document.text.contains('itera,')
@@ -769,7 +782,7 @@ class Foo {
   public void testRestartWithVisibleLookup() {
     registerContributor(LongContributor, LoadingOrder.FIRST)
 
-    myFixture.configureByText("a.java", """ class Foo { { int abcdef; a<caret> } } """)
+    myFixture.configureByText("a.java", """ class Foo { { int abcdef, abcdefg; ab<caret> } } """)
     myFixture.completeBasic()
     while (!lookup.shown) {
       Thread.sleep(1)
@@ -777,10 +790,10 @@ class Foo {
     def l = lookup
     edt {
       assert lookup.calculating
-      myFixture.type 'b'
+      myFixture.type 'c'
     }
     joinCommit {
-      myFixture.type 'c'
+      myFixture.type 'd'
     }
     joinAutopopup()
     joinCompletion()
@@ -893,7 +906,7 @@ class Foo {
       assert myFixture.lookupElementStrings == ['l2', 'l1']
       type 'as'
       assert lookup
-      assert myFixture.lookupElementStrings == ['asdf', 'assert']
+      assertContains 'asdf', 'assert'
       type '\n.'
       assert lookup
       assert 'hashCode' in myFixture.lookupElementStrings
@@ -936,7 +949,7 @@ class Foo {
     def foo = cls.methods[0]
     def goo = cls.methods[2]
     type('x')
-    assert myFixture.lookupElementStrings == ['x__foo', 'x__goo']
+    assertContains 'x__foo', 'x__goo'
     edt {
       assert foo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN)
@@ -944,7 +957,7 @@ class Foo {
     }
 
     type('_')
-    assert myFixture.lookupElementStrings == ['x__foo', 'x__goo']
+    assertContains 'x__foo', 'x__goo'
     edt {
       assert goo == TargetElementUtil.instance.findTargetElement(myFixture.editor, TargetElementUtil.LOOKUP_ITEM_ACCEPTED)
       myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP)

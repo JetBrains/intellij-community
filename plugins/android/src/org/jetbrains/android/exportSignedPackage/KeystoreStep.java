@@ -16,100 +16,170 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.wizard.CommitStepException;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.android.compiler.artifact.ApkSigningSettingsForm;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUiUtil;
 import org.jetbrains.android.util.AndroidUtils;
-import org.jetbrains.android.util.SaveFileListener;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.Arrays;
 
 /**
  * @author Eugene.Kudelevsky
  */
-class KeystoreStep extends ExportSignedPackageWizardStep {
-  public static final String DEFAULT_KEYSTORE_LOCATION = "KeystoreLocation";
+class KeystoreStep extends ExportSignedPackageWizardStep implements ApkSigningSettingsForm {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.exportSignedPackage.KeystoreStep");
+
+  private static final String KEY_STORE_PASSWORD_KEY = "KEY_STORE_PASSWORD";
+  private static final String KEY_PASSWORD_KEY = "KEY_PASSWORD";
 
   private JPanel myContentPanel;
-  private JRadioButton myExistingKeystoreButton;
-  private JRadioButton myNewKeystoreButton;
-  private TextFieldWithBrowseButton myKeystoreLocationField;
-  private JPasswordField myKeystorePasswordField;
-  private JPasswordField myConfirmKeystorePasswordField;
-  private JLabel myConfirmKeystorePasswordLabel;
-  private JLabel myKeystoreLocationLabel;
+  private JPasswordField myKeyStorePasswordField;
+  private JPasswordField myKeyPasswordField;
+  private TextFieldWithBrowseButton.NoPathCompletion myKeyAliasField;
+  private JTextField myKeyStorePathField;
+  private JButton myCreateKeyStoreButton;
+  private JButton myLoadKeyStoreButton;
+  private JBCheckBox myRememberPasswordCheckBox;
 
   private final ExportSignedPackageWizard myWizard;
 
   public KeystoreStep(ExportSignedPackageWizard wizard) {
     myWizard = wizard;
-    myKeystoreLocationLabel.setLabelFor(myKeystoreLocationField);
-    final String defaultLocation = PropertiesComponent.getInstance(wizard.getProject()).getValue(DEFAULT_KEYSTORE_LOCATION);
-    final SaveFileListener newKeystoreLocationListener = new SaveFileListener(myContentPanel, myKeystoreLocationField,
-                                                                              AndroidBundle.message(
-                                                                                "android.extract.package.choose.keystore.title")) {
-      @Override
-      protected String getDefaultLocation() {
-        return defaultLocation;
-      }
-    };
-    final ExistingKeystoreLocationListener existingKeystoreLocationListener = new ExistingKeystoreLocationListener();
-    if (defaultLocation != null) {
-      myKeystoreLocationField.setText(defaultLocation);
-      myExistingKeystoreButton.setSelected(true);
-      myKeystoreLocationField.getButton().addActionListener(existingKeystoreLocationListener);
-      myConfirmKeystorePasswordField.setEnabled(false);
-    }
-    else {
-      myNewKeystoreButton.setSelected(true);
-      myKeystoreLocationField.getButton().addActionListener(newKeystoreLocationListener);
-    }
-    ActionListener listener = new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        boolean newKeystore = myNewKeystoreButton.isSelected();
-        myConfirmKeystorePasswordLabel.setEnabled(newKeystore);
-        myConfirmKeystorePasswordField.setEnabled(newKeystore);
-        if (newKeystore) {
-          myKeystoreLocationField.getButton().removeActionListener(existingKeystoreLocationListener);
-          myKeystoreLocationField.getButton().addActionListener(newKeystoreLocationListener);
+    final Project project = wizard.getProject();
+
+    final GenerateSignedApkSettings settings = GenerateSignedApkSettings.getInstance(project);
+    myKeyStorePathField.setText(settings.KEY_STORE_PATH);
+    myKeyAliasField.setText(settings.KEY_ALIAS);
+    myRememberPasswordCheckBox.setSelected(settings.REMEMBER_PASSWORDS);
+
+    if (settings.REMEMBER_PASSWORDS) {
+      final PasswordSafe passwordSafe = PasswordSafe.getInstance();
+      try {
+        String password = passwordSafe.getPassword(project, KeystoreStep.class, KEY_STORE_PASSWORD_KEY);
+        if (password != null) {
+          myKeyStorePasswordField.setText(password);
         }
-        else {
-          myKeystoreLocationField.getButton().removeActionListener(newKeystoreLocationListener);
-          myKeystoreLocationField.getButton().addActionListener(existingKeystoreLocationListener);
+        password = passwordSafe.getPassword(project, KeystoreStep.class, KEY_PASSWORD_KEY);
+        if (password != null) {
+          myKeyPasswordField.setText(password);
         }
       }
-    };
-    myExistingKeystoreButton.addActionListener(listener);
-    myNewKeystoreButton.addActionListener(listener);
+      catch (PasswordSafeException e) {
+        LOG.debug(e);
+        myKeyStorePasswordField.setText("");
+        myKeyPasswordField.setText("");
+      }
+    }
+    AndroidUiUtil.initSigningSettingsForm(project, this);
   }
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  @Nullable
-  private KeyStore checkExistingKeystoreOptionsAndCreateKeystore(File keystoreFile) throws CommitStepException {
-    char[] password = myKeystorePasswordField.getPassword();
+  @Override
+  protected JComponent getPreferredFocusedComponent() {
+    if (myKeyStorePathField.getText().length() == 0) {
+      return myKeyStorePathField;
+    }
+    else if (myKeyStorePasswordField.getPassword().length == 0) {
+      return myKeyStorePasswordField;
+    }
+    else if (myKeyAliasField.getText().length() == 0) {
+      return myKeyAliasField;
+    }
+    else if (myKeyPasswordField.getPassword().length == 0) {
+      return myKeyPasswordField;
+    }
+    return null;
+  }
+
+  @Override
+  public JComponent getComponent() {
+    return myContentPanel;
+  }
+
+  @Override
+  public String getHelpId() {
+    return "reference.android.reference.extract.signed.package.specify.keystore";
+  }
+
+  @Override
+  protected void commitForNext() throws CommitStepException {
+    final String keyStoreLocation = myKeyStorePathField.getText().trim();
+    if (keyStoreLocation.length() == 0) {
+      throw new CommitStepException(AndroidBundle.message("android.export.package.specify.keystore.location.error"));
+    }
+
+    final char[] keyStorePassword = myKeyStorePasswordField.getPassword();
+    if (keyStorePassword.length == 0) {
+      throw new CommitStepException(AndroidBundle.message("android.export.package.specify.key.store.password.error"));
+    }
+
+    final String keyAlias = myKeyAliasField.getText().trim();
+    if (keyAlias.length() == 0) {
+      throw new CommitStepException(AndroidBundle.message("android.export.package.specify.key.alias.error"));
+    }
+
+    final char[] keyPassword = myKeyPasswordField.getPassword();
+    if (keyPassword.length == 0) {
+      throw new CommitStepException(AndroidBundle.message("android.export.package.specify.key.password.error"));
+    }
+
+    final KeyStore keyStore = loadKeyStore(new File(keyStoreLocation));
+    if (keyStore == null) {
+      throw new CommitStepException(AndroidBundle.message("android.export.package.keystore.error.title"));
+    }
+    loadKeyAndSaveToWizard(keyStore, keyAlias, keyPassword);
+
+    final Project project = myWizard.getProject();
+    final GenerateSignedApkSettings settings = GenerateSignedApkSettings.getInstance(project);
+
+    settings.KEY_STORE_PATH = keyStoreLocation;
+    settings.KEY_ALIAS = keyAlias;
+
+    final boolean rememberPasswords = myRememberPasswordCheckBox.isSelected();
+    settings.REMEMBER_PASSWORDS = rememberPasswords;
+    final PasswordSafe passwordSafe = PasswordSafe.getInstance();
+
+    try {
+      if (rememberPasswords) {
+        passwordSafe.storePassword(project, KeystoreStep.class, KEY_STORE_PASSWORD_KEY, new String(keyStorePassword));
+        passwordSafe.storePassword(project, KeystoreStep.class, KEY_PASSWORD_KEY, new String(keyPassword));
+      }
+      else {
+        passwordSafe.removePassword(project, KeystoreStep.class, KEY_STORE_PASSWORD_KEY);
+        passwordSafe.removePassword(project, KeystoreStep.class, KEY_PASSWORD_KEY);
+      }
+    }
+    catch (PasswordSafeException e) {
+      LOG.debug(e);
+      throw new CommitStepException("Cannot store passwords: " + e.getMessage());
+    }
+  }
+
+  private KeyStore loadKeyStore(File keystoreFile) throws CommitStepException {
+    final char[] password = myKeyStorePasswordField.getPassword();
     FileInputStream fis = null;
     AndroidUtils.checkPassword(password);
     if (!keystoreFile.isFile()) {
       throw new CommitStepException(AndroidBundle.message("android.cannot.find.file.error", keystoreFile.getPath()));
     }
-    KeyStore keyStore;
+    final KeyStore keyStore;
     try {
       keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+      //noinspection IOResourceOpenedButNotSafelyClosed
       fis = new FileInputStream(keystoreFile);
       keyStore.load(fis, password);
     }
@@ -129,88 +199,59 @@ class KeystoreStep extends ExportSignedPackageWizardStep {
     return keyStore;
   }
 
-  private void checkNewKeystoreOptions(File keystoreFile) throws CommitStepException {
-    AndroidUtils.checkNewPassword(myKeystorePasswordField, myConfirmKeystorePasswordField);
-
-    if (keystoreFile.exists()) {
-      throw new CommitStepException(AndroidBundle.message(
-        "file.already.exists.error", keystoreFile.getPath()));
+  private void loadKeyAndSaveToWizard(KeyStore keyStore, String alias, char[] keyPassword) throws CommitStepException {
+    KeyStore.PrivateKeyEntry entry;
+    try {
+      assert keyStore != null;
+      entry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(alias, new KeyStore.PasswordProtection(keyPassword));
     }
-
-    File parentFile = keystoreFile.getParentFile();
-    if (parentFile == null || !parentFile.isDirectory()) {
-      String parentDir = keystoreFile.getParent();
-      if (parentDir != null) {
-        throw new CommitStepException(AndroidBundle.message("android.cannot.find.directory.error", parentDir));
-      }
-      else {
-        throw new CommitStepException(AndroidBundle.message("android.cannot.find.parent.directory.error", keystoreFile.getName()));
-      }
+    catch (Exception e) {
+      throw new CommitStepException("Error: " + e.getMessage());
     }
-  }
-
-  public boolean isCreateNewKeystore() {
-    return myNewKeystoreButton.isSelected();
+    if (entry == null) {
+      throw new CommitStepException(AndroidBundle.message("android.extract.package.cannot.find.key.error", alias));
+    }
+    PrivateKey privateKey = entry.getPrivateKey();
+    Certificate certificate = entry.getCertificate();
+    if (privateKey == null || certificate == null) {
+      throw new CommitStepException(AndroidBundle.message("android.extract.package.cannot.find.key.error", alias));
+    }
+    myWizard.setPrivateKey(privateKey);
+    myWizard.setCertificate((X509Certificate)certificate);
   }
 
   @Override
-  protected JComponent getPreferredFocusedComponent() {
-    if (myExistingKeystoreButton.isSelected()) {
-      final String text = myKeystoreLocationField.getText();
-      if (text != null && text.length() > 0) {
-        return myKeystorePasswordField;
-      }
-    }
-    return null;
+  public JButton getLoadKeyStoreButton() {
+    return myLoadKeyStoreButton;
   }
 
   @Override
-  public JComponent getComponent() {
+  public JTextField getKeyStorePathField() {
+    return myKeyStorePathField;
+  }
+
+  @Override
+  public JPanel getPanel() {
     return myContentPanel;
   }
 
   @Override
-  public String getHelpId() {
-    return "reference.android.reference.extract.signed.package.specify.keystore";
+  public JButton getCreateKeyStoreButton() {
+    return myCreateKeyStoreButton;
   }
 
   @Override
-  protected void commitForNext() throws CommitStepException {
-    String keyStoreLocation = myKeystoreLocationField.getText().trim();
-    if (keyStoreLocation.length() == 0) {
-      throw new CommitStepException(AndroidBundle.message("android.export.package.specify.keystore.location.error"));
-    }
-    File file = new File(keyStoreLocation);
-    if (myNewKeystoreButton.isSelected()) {
-      checkNewKeystoreOptions(file);
-    }
-    else {
-      KeyStore keyStore = checkExistingKeystoreOptionsAndCreateKeystore(file);
-      if (keyStore != null) {
-        myWizard.setKeystore(keyStore);
-      }
-      else {
-        throw new CommitStepException(AndroidBundle.message("android.export.package.keystore.error.title"));
-      }
-      PropertiesComponent.getInstance(myWizard.getProject()).setValue(DEFAULT_KEYSTORE_LOCATION, keyStoreLocation);
-    }
-    myWizard.setKeystoreLocation(keyStoreLocation);
-    myWizard.setKeystorePassword(myKeystorePasswordField.getPassword());
+  public JPasswordField getKeyStorePasswordField() {
+    return myKeyStorePasswordField;
   }
 
-  private class ExistingKeystoreLocationListener implements ActionListener {
-    public void actionPerformed(ActionEvent e) {
-      String path = myKeystoreLocationField.getText().trim();
-      if (path == null || path.length() == 0) {
-        String defaultLocation = PropertiesComponent.getInstance(myWizard.getProject()).getValue(DEFAULT_KEYSTORE_LOCATION);
-        path = defaultLocation != null ? defaultLocation : "";
-      }
-      VirtualFile f = LocalFileSystem.getInstance().findFileByPath(path);
-      FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-      VirtualFile file = FileChooser.chooseFile(descriptor, myContentPanel, myWizard.getProject(), f);
-      if (file != null) {
-        myKeystoreLocationField.setText(FileUtil.toSystemDependentName(file.getPath()));
-      }
-    }
+  @Override
+  public TextFieldWithBrowseButton getKeyAliasField() {
+    return myKeyAliasField;
+  }
+
+  @Override
+  public JPasswordField getKeyPasswordField() {
+    return myKeyPasswordField;
   }
 }

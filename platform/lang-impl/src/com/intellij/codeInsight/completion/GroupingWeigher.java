@@ -27,7 +27,7 @@ public class GroupingWeigher extends CompletionWeigher {
   public Integer weigh(@NotNull LookupElement element, @NotNull CompletionLocation location) {
     final PrioritizedLookupElement prioritized = element.as(PrioritizedLookupElement.CLASS_CONDITION_KEY);
     if (prioritized != null) {
-      return -prioritized.getGrouping();
+      return prioritized.getGrouping();
     }
 
     return 0;

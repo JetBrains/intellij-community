@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.morphing;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.*;
 import com.intellij.android.designer.model.grid.GridInfo;
 import com.intellij.android.designer.model.layout.grid.RadGridLayoutComponent;
@@ -57,18 +58,18 @@ public class GridLayout {
       @Override
       protected void convertTag() {
         XmlTag tag = myNewComponent.getTag();
-        ModelParser.deleteAttribute(tag, "android:rowCount");
-        ModelParser.deleteAttribute(tag, "android:columnCount");
+        ModelParser.deleteAttribute(tag, "rowCount");
+        ModelParser.deleteAttribute(tag, "columnCount");
 
         for (RadComponent rowComponent : myNewComponent.getChildren()) {
           for (RadComponent cellComponent : rowComponent.getChildren()) {
             XmlTag cellTag = ((RadViewComponent)cellComponent).getTag();
-            ModelParser.deleteAttribute(cellTag, "android:layout_row");
-            ModelParser.deleteAttribute(cellTag, "android:layout_rowSpan");
+            ModelParser.deleteAttribute(cellTag, "layout_row");
+            ModelParser.deleteAttribute(cellTag, "layout_rowSpan");
 
-            XmlAttribute attribute = cellTag.getAttribute("android:layout_columnSpan");
+            XmlAttribute attribute = cellTag.getAttribute("layout_columnSpan", SdkConstants.NS_RESOURCES);
             if (attribute != null) {
-              attribute.setName("android:layout_span");
+              attribute.setName(attribute.getNamespacePrefix() + ":layout_span");
             }
           }
         }

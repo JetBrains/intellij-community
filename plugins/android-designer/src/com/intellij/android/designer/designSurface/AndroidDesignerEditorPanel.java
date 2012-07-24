@@ -16,6 +16,7 @@
 package com.intellij.android.designer.designSurface;
 
 import com.android.ide.common.rendering.api.RenderSession;
+import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.ide.common.resources.configuration.*;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.actions.ProfileAction;
@@ -31,6 +32,7 @@ import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadVisualComponent;
 import com.intellij.designer.model.WrapInProvider;
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
@@ -41,17 +43,20 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
@@ -61,9 +66,12 @@ import org.jetbrains.android.uipreview.*;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidSdkNotConfiguredException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.List;
 
 /**
@@ -168,18 +176,25 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
     final ModelParser parser = new ModelParser(getProject(), myXmlFile);
 
-    createRenderer(parser.getLayoutXmlText(), new ThrowableRunnable<Throwable>() {
+    createRenderer(parser.getLayoutXmlText(), new MyThrowable(), new ThrowableConsumer<RenderSession, Throwable>() {
       @Override
-      public void run() throws Throwable {
-        RootView rootView = new RootView(mySession.getImage(), 30, 20);
-        parser.updateRootComponent(mySession, rootView);
+      public void consume(RenderSession session) throws Throwable {
+        RootView rootView = new RootView(30, 20, session.getImage());
+        try {
+          parser.updateRootComponent(session, rootView);
+        }
+        catch (Throwable e) {
+          myRootComponent = parser.getRootComponent();
+          throw e;
+        }
         RadViewComponent newRootComponent = parser.getRootComponent();
 
         newRootComponent.setClientProperty(ModelParser.XML_FILE_KEY, myXmlFile);
         newRootComponent.setClientProperty(ModelParser.MODULE_KEY, AndroidDesignerEditorPanel.this);
         newRootComponent.setClientProperty(TreeComponentDecorator.KEY, myTreeDecorator);
 
-        PropertyParser propertyParser = new PropertyParser(getModule(), myProfileAction.getProfileManager().getSelectedTarget());
+        PropertyParser propertyParser =
+          new PropertyParser(getModule(), myProfileAction.getProfileManager().getSelectedTarget());
         newRootComponent.setClientProperty(PropertyParser.KEY, propertyParser);
         propertyParser.loadRecursive(newRootComponent);
 
@@ -200,7 +215,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
   }
 
-  private void createRenderer(final String layoutXmlText, final ThrowableRunnable<Throwable> runnable) {
+  private void createRenderer(final String layoutXmlText,
+                              final MyThrowable throwable,
+                              final ThrowableConsumer<RenderSession, Throwable> runnable) {
     disposeRenderer();
 
     ApplicationManager.getApplication().saveAll();
@@ -268,7 +285,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             throw new RenderingException();
           }
 
-          mySession = result.getSession();
+          final RenderSession session = mySession = result.getSession();
           mySessionAlarm.cancelAllRequests();
 
           ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -277,12 +294,12 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
               try {
                 if (!getProject().isDisposed()) {
                   hideProgress();
-                  runnable.run();
+                  runnable.consume(session);
                 }
               }
               catch (Throwable e) {
                 myPSIChangeListener.clear();
-                showError("Parsing error", e);
+                showError("Parsing error", throwable.wrap(e));
                 myParseTime = false;
               }
             }
@@ -296,7 +313,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             @Override
             public void run() {
               myPSIChangeListener.clear();
-              showError("Render error", e);
+              showError("Render error", throwable.wrap(e));
               myParseTime = false;
             }
           });
@@ -323,13 +340,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         return ModelParser.NO_ROOT_CONTENT;
       }
     });
-    createRenderer(layoutXmlText, new ThrowableRunnable<Throwable>() {
+    createRenderer(layoutXmlText, new MyThrowable(), new ThrowableConsumer<RenderSession, Throwable>() {
       @Override
-      public void run() throws Throwable {
+      public void consume(RenderSession session) throws Throwable {
         RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
         RootView rootView = (RootView)rootComponent.getNativeComponent();
-        rootView.setImage(mySession.getImage());
-        ModelParser.updateRootComponent(rootComponent, mySession, rootView);
+        rootView.setImage(session.getImage());
+        ModelParser.updateRootComponent(rootComponent, session, rootView);
 
         myParseTime = false;
 
@@ -344,12 +361,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   private void removeNativeRoot() {
     if (myRootComponent != null) {
-      myLayeredPane.remove(((RadViewComponent)myRootComponent).getNativeComponent().getParent());
+      Component component = ((RadVisualComponent)myRootComponent).getNativeComponent();
+      if (component != null) {
+        myLayeredPane.remove(component.getParent());
+      }
     }
   }
 
   @Override
   protected void configureError(@NotNull ErrorInfo info) {
+    Throwable renderCreator = null;
+    if (info.myThrowable instanceof MyThrowable) {
+      renderCreator = info.myThrowable;
+      info.myThrowable = ((MyThrowable)info.myThrowable).original;
+    }
+
     if (info.myThrowable instanceof AndroidSdkNotConfiguredException) {
       info.myShowLog = false;
       info.myShowStack = false;
@@ -419,6 +445,22 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       builder.append("<unknown>");
     }
 
+    if (renderCreator != null) {
+      builder.append("\nCreateRendererStack:\n");
+      ByteArrayOutputStream stream = new ByteArrayOutputStream();
+      renderCreator.printStackTrace(new PrintStream(stream));
+      builder.append(stream.toString());
+    }
+
+    if (info.myThrowable instanceof IndexOutOfBoundsException && myRootComponent != null && mySession != null) {
+      builder.append("\n-------- RadTree --------\n");
+      ModelParser.printTree(builder, myRootComponent, 0);
+      builder.append("\n-------- ViewTree(").append(mySession.getRootViews().size()).append(") --------\n");
+      for (ViewInfo viewInfo : mySession.getRootViews()) {
+        ModelParser.printTree(builder, viewInfo, 0);
+      }
+    }
+
     info.myMessage = builder.toString();
   }
 
@@ -454,6 +496,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myPSIChangeListener.dispose();
     super.dispose();
     disposeRenderer();
+  }
+
+  @Override
+  @Nullable
+  protected Module findModule(Project project, VirtualFile file) {
+    Module module = super.findModule(project, file);
+    if (module == null) {
+      module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
+        @Override
+        public Module compute() {
+          return ModuleUtilCore.findModuleForPsiElement(myXmlFile);
+        }
+      });
+    }
+    return module;
   }
 
   @Override
@@ -524,6 +581,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties) {
+    if (!ReadonlyStatusHandler.ensureFilesWritable(getProject(), myFile)) {
+      return false;
+    }
     try {
       myPSIChangeListener.stop();
       operation.run();
@@ -541,6 +601,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   protected void execute(List<EditOperation> operations) {
+    if (!ReadonlyStatusHandler.ensureFilesWritable(getProject(), myFile)) {
+      return;
+    }
     try {
       myPSIChangeListener.stop();
       for (EditOperation operation : operations) {
@@ -566,6 +629,21 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   public void loadInspections(ProgressIndicator progress) {
     if (myRootComponent != null) {
       ErrorAnalyzer.load(getProject(), myXmlFile, myRootComponent, progress);
+    }
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  //
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  private static class MyThrowable extends Throwable {
+    public Throwable original;
+
+    public MyThrowable wrap(Throwable original) {
+      this.original = original;
+      return this;
     }
   }
 }

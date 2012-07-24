@@ -1,4 +1,5 @@
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 abstract class P2 {
     @NotNull
@@ -28,4 +29,25 @@ class FooImpl extends java.awt.Frame implements Foo {
 //    public String getTitle() {
 //        return super.getTitle();    //To change body of overridden methods use File | Settings | File Templates.
 //    }
+}
+
+
+interface I1 {
+  @Nullable
+  Object foo();
+}
+
+interface I2 extends I1 {
+  @NotNull
+  Object foo();
+}
+
+class A implements I1 {
+  @Override
+  public Object foo() {
+    // returns something
+  }
+}
+
+class B extends A implements I2 {
 }

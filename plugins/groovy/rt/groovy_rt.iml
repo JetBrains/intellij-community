@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="jps-model-api" />
   </component>
 </module>
 

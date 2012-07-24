@@ -70,4 +70,8 @@ public class PsiLambdaExpressionType extends PsiType {
   public PsiType[] getSuperTypes() {
     return PsiType.EMPTY_ARRAY;
   }
+
+  public PsiLambdaExpression getExpression() {
+    return myExpression;
+  }
 }

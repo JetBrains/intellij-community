@@ -28,7 +28,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -87,7 +87,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
   @NotNull private final ConcurrentMap<String, List<XmlFile>> myExternalAnnotations = new ConcurrentWeakValueHashMap<String, List<XmlFile>>();
   @NotNull private volatile ThreeState myHasAnyAnnotationsRoots = ThreeState.UNSURE;
-  @NotNull private static final List<XmlFile> NULL = new ArrayList<XmlFile>();
+  @NotNull private static final List<XmlFile> NULL = new ArrayList<XmlFile>(0);
   private final PsiManager myPsiManager;
 
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
@@ -358,6 +358,18 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
         }
       }
     }.execute();
+
+    UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
+      @Override
+      public void undo() throws UnexpectedUndoException {
+        dropCache();
+      }
+
+      @Override
+      public void redo() throws UnexpectedUndoException {
+        dropCache();
+      }
+    });
   }
 
   @Override

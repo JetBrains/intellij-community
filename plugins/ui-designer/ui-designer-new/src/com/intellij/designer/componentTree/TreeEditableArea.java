@@ -125,6 +125,13 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
   }
 
   @Override
+  public void deselect(@NotNull Collection<RadComponent> components) {
+    Collection<RadComponent> selection = getRawSelection();
+    selection.removeAll(components);
+    setRawSelection(selection);
+  }
+
+  @Override
   public void deselectAll() {
     setRawSelection(null);
   }

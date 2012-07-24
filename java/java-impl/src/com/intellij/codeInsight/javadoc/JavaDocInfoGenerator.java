@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -382,7 +382,11 @@ public class JavaDocInfoGenerator {
 
   @Nullable
   private static PsiDocComment getDocComment(final PsiDocCommentOwner docOwner) {
-    PsiDocComment comment = ((PsiDocCommentOwner)docOwner.getNavigationElement()).getDocComment();
+    PsiElement navElement = docOwner.getNavigationElement();
+    if (!(navElement instanceof PsiDocCommentOwner)) {
+      throw new AssertionError("Wrong navElement: " + navElement + "; original = " + docOwner + " of class " + docOwner.getClass());
+    }
+    PsiDocComment comment = ((PsiDocCommentOwner)navElement).getDocComment();
     if (comment == null) { //check for non-normalized fields
       final PsiModifierList modifierList = docOwner.getModifierList();
       if (modifierList != null) {
@@ -851,6 +855,9 @@ public class JavaDocInfoGenerator {
   }
 
   private static boolean isEmptyDescription(PsiDocComment comment) {
+    if (comment == null) {
+      return true;
+    }
     PsiElement[] descriptionElements = comment.getDescriptionElements();
 
     for (PsiElement description : descriptionElements) {

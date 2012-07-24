@@ -130,7 +130,8 @@ public class SeverityEditorDialog extends DialogWrapper {
           if (name == null) return;
           final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
           HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 50),
-                                                                                                     TextAttributesKey
+                                                                                                     com.intellij.openapi.editor.colors
+                                                                                                       .TextAttributesKey
                                                                                                        .createTextAttributesKey(name));
 
           SeverityBasedTextAttributes newSeverityBasedTextAttributes = new SeverityBasedTextAttributes(textAttributes.clone(), info);
@@ -234,7 +235,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       assert colorAndFontOptions != null;
       final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
       LOG.assertTrue(javaPage != null);
-      optionsEditor.select(javaPage).doWhenDone(new Runnable() {
+      optionsEditor.clearSearchAndSelect(javaPage).doWhenDone(new Runnable() {
         @Override
         public void run() {
           final Runnable runnable = javaPage.enableSearch(toConfigure);

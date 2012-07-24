@@ -19,17 +19,21 @@ import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.ClasspathItem;
-import org.jetbrains.jps.ClasspathKind;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.FormsParsing;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
 
 import java.io.*;
 import java.util.*;
@@ -81,7 +85,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
-    final Map<Module, MyModuleData> moduleDataMap = computeModuleDatas(chunk.getModules(), context);
+    final Map<JpsModule, MyModuleData> moduleDataMap = computeModuleDatas(chunk.getModules(), context);
     if (moduleDataMap == null || moduleDataMap.size() == 0) {
       return ExitCode.ABORT;
     }
@@ -97,24 +101,24 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
     }
 
-    final Map<File, Module> idlFilesToCompile = new HashMap<File, Module>();
-    final Map<File, Module> rsFilesToCompile = new HashMap<File, Module>();
+    final Map<File, JpsModule> idlFilesToCompile = new HashMap<File, JpsModule>();
+    final Map<File, JpsModule> rsFilesToCompile = new HashMap<File, JpsModule>();
 
     FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
       @Override
-      public boolean apply(Module module, File file, String sourceRoot) throws IOException {
-        final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
+      public boolean apply(JpsModule module, File file, String sourceRoot) throws IOException {
+        final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
 
-        if (facet == null) {
+        if (extension == null) {
           return true;
         }
         final String ext = FileUtil.getExtension(file.getName());
 
         if (AIDL_EXTENSION.equals(ext)) {
-          idlFilesToCompile.put(file, facet.getModule());
+          idlFilesToCompile.put(file, module);
         }
         else if (RENDERSCRIPT_EXTENSION.equals(ext)) {
-          rsFilesToCompile.put(file, facet.getModule());
+          rsFilesToCompile.put(file, module);
         }
 
         return true;
@@ -122,15 +126,16 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     });
     boolean success = true;
 
+    final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     if (context.isProjectRebuild()) {
-      for (Module module : moduleDataMap.keySet()) {
-        final File generatedSourcesStorage = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      for (JpsModule module : moduleDataMap.keySet()) {
+        final File generatedSourcesStorage = AndroidJpsUtil.getGeneratedSourcesStorage(module, dataManager);
         if (generatedSourcesStorage.exists() &&
             !deleteAndMarkRecursively(generatedSourcesStorage, context, BUILDER_NAME)) {
           success = false;
         }
 
-        final File generatedResourcesStorage = AndroidJpsUtil.getGeneratedResourcesStorage(module);
+        final File generatedResourcesStorage = AndroidJpsUtil.getGeneratedResourcesStorage(module, dataManager);
         if (generatedResourcesStorage.exists() &&
             !deleteAndMarkRecursively(generatedResourcesStorage, context, BUILDER_NAME)) {
           success = false;
@@ -150,7 +155,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       success = false;
     }
 
-    final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
+    final File dataStorageRoot = dataManager.getDataStorageRoot();
 
     final AndroidAptStateStorage aptStorage = new AndroidAptStateStorage(dataStorageRoot);
     try {
@@ -175,8 +180,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return success ? ExitCode.OK : ExitCode.ABORT;
   }
 
-  private static boolean clearAndroidStorages(@NotNull CompileContext context, @NotNull Collection<Module> modules) {
-    for (Module module : modules) {
+  private static boolean clearAndroidStorages(@NotNull CompileContext context, @NotNull Collection<JpsModule> modules) {
+    for (JpsModule module : modules) {
       final File dir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
       if (dir.exists() && !FileUtil.delete(dir)) {
         context.processMessage(
@@ -187,9 +192,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return true;
   }
 
-  private static boolean checkVersions(@NotNull Map<Module, MyModuleData> dataMap, @NotNull CompileContext context) {
-    for (Map.Entry<Module, MyModuleData> entry : dataMap.entrySet()) {
-      final Module module = entry.getKey();
+  private static boolean checkVersions(@NotNull Map<JpsModule, MyModuleData> dataMap, @NotNull CompileContext context) {
+    for (Map.Entry<JpsModule, MyModuleData> entry : dataMap.entrySet()) {
+      final JpsModule module = entry.getKey();
       final AndroidPlatform platform = entry.getValue().getPlatform();
 
       boolean success = true;
@@ -224,40 +229,42 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return true;
   }
 
-  private static void checkAndroidDependencies(@NotNull Map<Module, MyModuleData> moduleDataMap, @NotNull CompileContext context) {
-    for (Map.Entry<Module, MyModuleData> entry : moduleDataMap.entrySet()) {
-      final Module module = entry.getKey();
+  private static void checkAndroidDependencies(@NotNull Map<JpsModule, MyModuleData> moduleDataMap, @NotNull CompileContext context) {
+    for (Map.Entry<JpsModule, MyModuleData> entry : moduleDataMap.entrySet()) {
+      final JpsModule module = entry.getKey();
       final MyModuleData moduleData = entry.getValue();
-      final AndroidFacet facet = moduleData.getFacet();
+      final JpsAndroidModuleExtension extension = moduleData.getAndroidExtension();
 
       final Pair<String, File> manifestMergerProp =
-        AndroidJpsUtil.getProjectPropertyValue(facet, AndroidCommonUtils.ANDROID_MANIFEST_MERGER_PROPERTY);
+        AndroidJpsUtil.getProjectPropertyValue(extension, AndroidCommonUtils.ANDROID_MANIFEST_MERGER_PROPERTY);
       if (manifestMergerProp != null && Boolean.parseBoolean(manifestMergerProp.getFirst())) {
         final String message = "[" + module.getName() + "] Manifest merging is not supported. Please, reconfigure your manifest files";
         final String propFilePath = manifestMergerProp.getSecond().getPath();
         context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.WARNING, message, propFilePath));
       }
 
-      if (facet.isLibrary()) {
+      if (extension.isLibrary()) {
         continue;
       }
 
-      for (ClasspathItem item : module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME, false)) {
-        if (item instanceof Module) {
-          final Module depModule = (Module)item;
-          final AndroidFacet depFacet = AndroidJpsUtil.getFacet(depModule);
+      for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, false)) {
+        if (item instanceof JpsModuleDependency) {
+          final JpsModule depModule = ((JpsModuleDependency)item).getModule();
+          if (depModule != null) {
+            final JpsAndroidModuleExtension depExtension = AndroidJpsUtil.getExtension(depModule);
 
-          if (depFacet != null && !depFacet.isLibrary()) {
-            String message = "Suspicious module dependency " +
-                             module.getName() +
-                             " -> " +
-                             depModule.getName() +
-                             ": Android application module depends on other application module. Possibly, you should ";
-            if (AndroidJpsUtil.isMavenizedModule(depModule)) {
-              message += "change packaging type of module " + depModule.getName() + " to 'apklib' in pom.xml file or ";
+            if (depExtension != null && !depExtension.isLibrary()) {
+              String message = "Suspicious module dependency " +
+                               module.getName() +
+                               " -> " +
+                               depModule.getName() +
+                               ": Android application module depends on other application module. Possibly, you should ";
+              if (AndroidJpsUtil.isMavenizedModule(depModule)) {
+                message += "change packaging type of module " + depModule.getName() + " to 'apklib' in pom.xml file or ";
+              }
+              message += "change dependency scope to 'Provided'.";
+              context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.WARNING, message));
             }
-            message += "change dependency scope to 'Provided'.";
-            context.processMessage(new CompilerMessage(ANDROID_VALIDATOR, BuildMessage.Kind.WARNING, message));
           }
         }
       }
@@ -265,20 +272,20 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean runBuildConfigGeneration(@NotNull CompileContext context,
-                                                  @NotNull Map<Module, MyModuleData> moduleDataMap,
+                                                  @NotNull Map<JpsModule, MyModuleData> moduleDataMap,
                                                   @NotNull AndroidBuildConfigStateStorage storage) {
     boolean success = true;
 
-    for (Map.Entry<Module, MyModuleData> entry : moduleDataMap.entrySet()) {
-      final Module module = entry.getKey();
+    for (Map.Entry<JpsModule, MyModuleData> entry : moduleDataMap.entrySet()) {
+      final JpsModule module = entry.getKey();
       final MyModuleData moduleData = entry.getValue();
-      final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
+      final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
 
-      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module, context.getProjectDescriptor().dataManager);
       final File outputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.BUILD_CONFIG_GENERATED_SOURCE_ROOT_NAME);
 
       try {
-        if (facet == null || isLibraryWithBadCircularDependency(facet)) {
+        if (extension == null || isLibraryWithBadCircularDependency(extension)) {
           if (!clearDirectoryIfNotEmpty(outputDirectory, context, ANDROID_BUILD_CONFIG_GENERATOR)) {
             success = false;
           }
@@ -356,17 +363,17 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean runAidlCompiler(@NotNull final CompileContext context,
-                                         @NotNull Map<File, Module> files,
-                                         @NotNull Map<Module, MyModuleData> moduleDataMap) {
+                                         @NotNull Map<File, JpsModule> files,
+                                         @NotNull Map<JpsModule, MyModuleData> moduleDataMap) {
     if (files.size() > 0) {
       context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.aidl")));
     }
 
     boolean success = true;
 
-    for (Map.Entry<File, Module> entry : files.entrySet()) {
+    for (Map.Entry<File, JpsModule> entry : files.entrySet()) {
       final File file = entry.getKey();
-      final Module module = entry.getValue();
+      final JpsModule module = entry.getValue();
       final String filePath = file.getPath();
 
       final MyModuleData moduleData = moduleDataMap.get(module);
@@ -377,7 +384,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         success = false;
         continue;
       }
-      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module, context.getProjectDescriptor().dataManager);
       final File aidlOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AIDL_GENERATED_SOURCE_ROOT_NAME);
 
       if (!aidlOutputDirectory.exists() && !aidlOutputDirectory.mkdirs()) {
@@ -428,17 +435,17 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean runRenderscriptCompiler(@NotNull final CompileContext context,
-                                                 @NotNull Map<File, Module> files,
-                                                 @NotNull Map<Module, MyModuleData> moduleDataMap) {
+                                                 @NotNull Map<File, JpsModule> files,
+                                                 @NotNull Map<JpsModule, MyModuleData> moduleDataMap) {
     if (files.size() > 0) {
       context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.renderscript")));
     }
 
     boolean success = true;
 
-    for (Map.Entry<File, Module> entry : files.entrySet()) {
+    for (Map.Entry<File, JpsModule> entry : files.entrySet()) {
       final File file = entry.getKey();
-      final Module module = entry.getValue();
+      final JpsModule module = entry.getValue();
 
       final MyModuleData moduleData = moduleDataMap.get(module);
       if (!LOG.assertTrue(moduleData != null)) {
@@ -448,7 +455,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module, dataManager);
       final File rsOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME);
       if (!rsOutputDirectory.exists() && !rsOutputDirectory.mkdirs()) {
         context.processMessage(new CompilerMessage(ANDROID_RENDERSCRIPT_COMPILER, BuildMessage.Kind.ERROR, AndroidJpsBundle
@@ -457,7 +465,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final File generatedResourcesDir = AndroidJpsUtil.getGeneratedResourcesStorage(module);
+      final File generatedResourcesDir = AndroidJpsUtil.getGeneratedResourcesStorage(module, dataManager);
       final File rawDir = new File(generatedResourcesDir, "raw");
 
       if (!rawDir.exists() && !rawDir.mkdirs()) {
@@ -469,7 +477,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
       final AndroidPlatform platform = moduleData.getPlatform();
       final IAndroidTarget target = platform.getTarget();
-      final String sdkLocation = platform.getSdk().getSdkPath();
+      final String sdkLocation = platform.getSdk().getProperties().getHomePath();
       final String filePath = file.getPath();
 
       File tmpOutputDirectory = null;
@@ -496,7 +504,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           }
           final List<String> newFilePaths = Arrays.asList(AndroidJpsUtil.toPaths(newFiles.toArray(new File[newFiles.size()])));
 
-          final SourceToOutputMapping sourceToOutputMap = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), false);
+          final SourceToOutputMapping sourceToOutputMap = dataManager.getSourceToOutputMap(module.getName(), false);
           sourceToOutputMap.update(filePath, newFilePaths);
 
           for (File newFile : newFiles) {
@@ -518,28 +526,28 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   private static boolean runAaptCompiler(@NotNull final CompileContext context,
-                                         @NotNull Map<Module, MyModuleData> moduleDataMap,
+                                         @NotNull Map<JpsModule, MyModuleData> moduleDataMap,
                                          @NotNull AndroidAptStateStorage storage) {
     boolean success = true;
 
-    for (Map.Entry<Module, MyModuleData> entry : moduleDataMap.entrySet()) {
-      final Module module = entry.getKey();
+    for (Map.Entry<JpsModule, MyModuleData> entry : moduleDataMap.entrySet()) {
+      final JpsModule module = entry.getKey();
       final MyModuleData moduleData = entry.getValue();
-      final AndroidFacet facet = moduleData.getFacet();
+      final JpsAndroidModuleExtension extension = moduleData.getAndroidExtension();
 
-      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module);
+      final File generatedSourcesDir = AndroidJpsUtil.getGeneratedSourcesStorage(module, context.getProjectDescriptor().dataManager);
       final File aptOutputDirectory = new File(generatedSourcesDir, AndroidJpsUtil.AAPT_GENERATED_SOURCE_ROOT_NAME);
       final IAndroidTarget target = moduleData.getPlatform().getTarget();
 
       try {
-        if (!needToRunAaptCompilation(facet)) {
+        if (!needToRunAaptCompilation(extension)) {
           if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
             success = false;
           }
           continue;
         }
 
-        final String[] resPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, false, context);
+        final String[] resPaths = AndroidJpsUtil.collectResourceDirsForCompilation(extension, false, context);
         if (resPaths.length == 0) {
           // there is no resources in the module
           if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
@@ -550,17 +558,17 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         final String packageName = moduleData.getPackage();
         final File manifestFile = moduleData.getManifestFileForCompiler();
 
-        if (isLibraryWithBadCircularDependency(facet)) {
+        if (isLibraryWithBadCircularDependency(extension)) {
           if (!clearDirectoryIfNotEmpty(aptOutputDirectory, context, ANDROID_APT_COMPILER)) {
             success = false;
           }
           continue;
         }
-        final Map<Module, String> packageMap = getDepLibPackages(module);
+        final Map<JpsModule, String> packageMap = getDepLibPackages(module);
         packageMap.put(module, packageName);
 
-        final Module circularDepLibWithSamePackage = findCircularDependencyOnLibraryWithSamePackage(facet, packageMap);
-        if (circularDepLibWithSamePackage != null && !facet.isLibrary()) {
+        final JpsModule circularDepLibWithSamePackage = findCircularDependencyOnLibraryWithSamePackage(extension, packageMap);
+        if (circularDepLibWithSamePackage != null && !extension.isLibrary()) {
           final String message = "Generated fields in " +
                                  packageName +
                                  ".R class in module '" +
@@ -570,7 +578,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
                                  "'";
           context.processMessage(new CompilerMessage(ANDROID_APT_COMPILER, BuildMessage.Kind.WARNING, message));
         }
-        final boolean generateNonFinalFields = facet.isLibrary() || circularDepLibWithSamePackage != null;
+        final boolean generateNonFinalFields = extension.isLibrary() || circularDepLibWithSamePackage != null;
 
         final Map<String, ResourceFileData> resources = collectResources(resPaths);
         final List<ResourceEntry> manifestElements = collectManifestElements(manifestFile);
@@ -579,7 +587,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         depLibPackagesSet.remove(packageName);
         final String proguardOutputCfgFilePath;
 
-        if (toLaunchProGuard(context, facet)) {
+        if (toLaunchProGuard(context, extension)) {
           final File outputDirForArtifacts = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
 
           if (AndroidJpsUtil.createDirIfNotExist(outputDirForArtifacts, context, BUILDER_NAME) == null) {
@@ -674,9 +682,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return true;
   }
 
-  private static boolean needToRunAaptCompilation(AndroidFacet facet) {
-    return !facet.isRunProcessResourcesMavenTask() ||
-           !AndroidJpsUtil.isMavenizedModule(facet.getModule());
+  private static boolean needToRunAaptCompilation(JpsAndroidModuleExtension extension) {
+    return !extension.isRunProcessResourcesMavenTask() || !AndroidJpsUtil.isMavenizedModule(extension.getModule());
   }
 
   private static boolean deleteAndMarkRecursively(@NotNull File dir, @NotNull CompileContext context, @NotNull String compilerName)
@@ -737,17 +744,17 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @NotNull
-  private static Map<Module, String> getDepLibPackages(@NotNull Module module) throws IOException {
-    final Map<Module, String> result = new HashMap<Module, String>();
+  private static Map<JpsModule, String> getDepLibPackages(@NotNull JpsModule module) throws IOException {
+    final Map<JpsModule, String> result = new HashMap<JpsModule, String>();
 
-    for (AndroidFacet depFacet : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
-      final File depManifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(depFacet);
+    for (JpsAndroidModuleExtension depExtension : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
+      final File depManifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(depExtension);
 
       if (depManifestFile != null) {
         final String packageName = parsePackageNameFromManifestFile(depManifestFile);
 
         if (packageName != null) {
-          result.put(depFacet.getModule(), packageName);
+          result.put(depExtension.getModule(), packageName);
         }
       }
     }
@@ -912,15 +919,15 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  private static Map<Module, MyModuleData> computeModuleDatas(@NotNull Collection<Module> modules, @NotNull CompileContext context)
+  private static Map<JpsModule, MyModuleData> computeModuleDatas(@NotNull Collection<JpsModule> modules, @NotNull CompileContext context)
     throws IOException {
-    final Map<Module, MyModuleData> moduleDataMap = new HashMap<Module, MyModuleData>();
+    final Map<JpsModule, MyModuleData> moduleDataMap = new HashMap<JpsModule, MyModuleData>();
 
     boolean success = true;
 
-    for (Module module : modules) {
-      final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-      if (facet == null) {
+    for (JpsModule module : modules) {
+      final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+      if (extension == null) {
         continue;
       }
 
@@ -930,7 +937,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         continue;
       }
 
-      final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(facet);
+      final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(extension);
       if (manifestFile == null || !manifestFile.exists()) {
         context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
                                                    AndroidJpsBundle.message("android.jps.errors.manifest.not.found", module.getName())));
@@ -947,14 +954,14 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       }
 
       if (!AndroidCommonUtils.contains2Identifiers(packageName)) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, facet.isLibrary() ? BuildMessage.Kind.WARNING : BuildMessage.Kind.ERROR,
+        context.processMessage(new CompilerMessage(BUILDER_NAME, extension.isLibrary() ? BuildMessage.Kind.WARNING : BuildMessage.Kind.ERROR,
                                                    AndroidJpsBundle
                                                      .message("android.jps.errors.incorrect.package.name", module.getName())));
         success = false;
         continue;
       }
 
-      moduleDataMap.put(module, new MyModuleData(platform, facet, manifestFile, packageName));
+      moduleDataMap.put(module, new MyModuleData(platform, extension, manifestFile, packageName));
     }
 
     return success ? moduleDataMap : null;
@@ -982,19 +989,19 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   // support for lib<->lib and app<->lib circular dependencies
   // see IDEA-79737 for details
-  private static boolean isLibraryWithBadCircularDependency(@NotNull AndroidFacet facet)
+  private static boolean isLibraryWithBadCircularDependency(@NotNull JpsAndroidModuleExtension extension)
     throws IOException {
-    if (!facet.isLibrary()) {
+    if (!extension.isLibrary()) {
       return false;
     }
-    final List<AndroidFacet> dependencies = AndroidJpsUtil.getAllAndroidDependencies(facet.getModule(), false);
+    final List<JpsAndroidModuleExtension> dependencies = AndroidJpsUtil.getAllAndroidDependencies(extension.getModule(), false);
 
-    for (AndroidFacet depFacet : dependencies) {
-      final List<AndroidFacet> depDependencies = AndroidJpsUtil.getAllAndroidDependencies(depFacet.getModule(), true);
+    for (JpsAndroidModuleExtension depExtension : dependencies) {
+      final List<JpsAndroidModuleExtension> depDependencies = AndroidJpsUtil.getAllAndroidDependencies(depExtension.getModule(), true);
 
-      if (depDependencies.contains(facet) &&
-          dependencies.contains(depFacet) &&
-          (depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0 || !depFacet.isLibrary())) {
+      if (depDependencies.contains(extension) &&
+          dependencies.contains(depExtension) &&
+          (depExtension.getModule().getName().compareTo(extension.getModule().getName()) < 0 || !depExtension.isLibrary())) {
         return true;
       }
     }
@@ -1019,26 +1026,26 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
   }
 
-  private static boolean toLaunchProGuard(@NotNull CompileContext context, @NotNull AndroidFacet facet) {
-    return facet.isRunProguard() ||
+  private static boolean toLaunchProGuard(@NotNull CompileContext context, @NotNull JpsAndroidModuleExtension extension) {
+    return extension.isRunProguard() ||
            context.getBuilderParameter(AndroidCommonUtils.PROGUARD_CFG_PATH_OPTION) != null;
   }
 
   @Nullable
-  public static Module findCircularDependencyOnLibraryWithSamePackage(@NotNull AndroidFacet facet,
-                                                                      @NotNull Map<Module, String> packageMap) {
-    final String aPackage = packageMap.get(facet.getModule());
+  public static JpsModule findCircularDependencyOnLibraryWithSamePackage(@NotNull JpsAndroidModuleExtension extension,
+                                                                      @NotNull Map<JpsModule, String> packageMap) {
+    final String aPackage = packageMap.get(extension.getModule());
     if (aPackage == null || aPackage.length() == 0) {
       return null;
     }
 
-    for (AndroidFacet depFacet : AndroidJpsUtil.getAllAndroidDependencies(facet.getModule(), true)) {
-      if (aPackage.equals(packageMap.get(depFacet.getModule()))) {
-        final List<AndroidFacet> depDependencies = AndroidJpsUtil.getAllAndroidDependencies(depFacet.getModule(), false);
+    for (JpsAndroidModuleExtension depExtension : AndroidJpsUtil.getAllAndroidDependencies(extension.getModule(), true)) {
+      if (aPackage.equals(packageMap.get(depExtension.getModule()))) {
+        final List<JpsAndroidModuleExtension> depDependencies = AndroidJpsUtil.getAllAndroidDependencies(depExtension.getModule(), false);
 
-        if (depDependencies.contains(facet)) {
+        if (depDependencies.contains(extension)) {
           // circular dependency on library with the same package
-          return depFacet.getModule();
+          return depExtension.getModule();
         }
       }
     }
@@ -1047,16 +1054,16 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   private static class MyModuleData {
     private final AndroidPlatform myPlatform;
-    private final AndroidFacet myFacet;
+    private final JpsAndroidModuleExtension myAndroidExtension;
     private final File myManifestFileForCompiler;
     private final String myPackage;
 
     private MyModuleData(@NotNull AndroidPlatform platform,
-                         @NotNull AndroidFacet facet,
+                         @NotNull JpsAndroidModuleExtension extension,
                          @NotNull File manifestFileForCompiler,
                          @NotNull String aPackage) {
       myPlatform = platform;
-      myFacet = facet;
+      myAndroidExtension = extension;
       myManifestFileForCompiler = manifestFileForCompiler;
       myPackage = aPackage;
     }
@@ -1067,8 +1074,8 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     }
 
     @NotNull
-    public AndroidFacet getFacet() {
-      return myFacet;
+    public JpsAndroidModuleExtension getAndroidExtension() {
+      return myAndroidExtension;
     }
 
     @NotNull

@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.assignment;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -42,6 +45,17 @@ public class AssignmentToNullInspection extends BaseInspection {
   public String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "assignment.to.null.problem.descriptor");
+  }
+
+  @Override
+  protected LocalQuickFix buildFix(Object... infos) {
+    if (infos[0] instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)infos[0]).resolve();
+      if (resolve instanceof PsiVariable) {
+        return new AddAnnotationFix(AnnotationUtil.NULLABLE, (PsiVariable)resolve);
+      }
+    }
+    return null;
   }
 
   @Override
@@ -82,7 +96,7 @@ public class AssignmentToNullInspection extends BaseInspection {
       if (lhs == null || isReferenceToNullableVariable(lhs)) {
         return;
       }
-      registerError(lhs);
+      registerError(lhs, lhs);
     }
 
     private boolean isReferenceToNullableVariable(

@@ -355,6 +355,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         if (myProgressLabel != null) {
           myProgressLabel.removeAll();
           myProgressLabel.add(progress.create());
+          myProgressLabel.setMinimumSize(new Dimension(0, 0));
         }
       }
     });

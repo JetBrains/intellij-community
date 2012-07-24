@@ -17,7 +17,10 @@ package com.intellij.openapi.diff.impl;
 
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -68,7 +71,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseListener;
-import java.security.InvalidParameterException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -108,7 +110,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   private CanNotCalculateDiffPanel myNotCalculateDiffPanel;
   private final VisibleAreaListener myVisibleAreaListener;
 
-  public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horizontal) {
+  public DiffPanelImpl(final Window owner, Project project, boolean enableToolbar, boolean horizontal, int diffDividerPolygonsOffset) {
     myProject = project;
     myIsHorizontal = horizontal;
     myOptions = new DiffPanelOptions(this);
@@ -127,7 +129,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
     if (horizontal) {
       mySplitter = new DiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent(),
-                                    new DiffDividerPaint(this, FragmentSide.SIDE1), myData);
+                                    new DiffDividerPaint(this, FragmentSide.SIDE1, diffDividerPolygonsOffset), myData);
     }
     else {
       mySplitter = new HorizontalDiffSplitter(myLeftSide.getComponent(), myRightSide.getComponent());
@@ -332,7 +334,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   int[] getFragmentBeginnings(FragmentSide side) {
-    return getLineBlocks().getBegginings(side);
+    return getLineBlocks().getBeginnings(side);
   }
 
   public void dispose() {
@@ -366,6 +368,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return getLineBlocks().getCount() > 0 || myNotCalculateDiffPanel != null;
   }
 
+  @Nullable
   public JComponent getPreferredFocusedComponent() {
     return myCurrentSide.getFocusableComponent();
   }

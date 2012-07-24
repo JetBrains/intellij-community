@@ -15,12 +15,11 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.util.io.win32.FileInfo;
+import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.util.ArrayUtil;
@@ -40,40 +39,8 @@ import static com.intellij.util.BitUtil.isSet;
 public class Win32LocalFileSystem extends LocalFileSystemBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem");
 
-  private static final boolean ourIsAvailable;
-
-  static {
-    boolean available = false;
-    if (SystemInfo.isWindows) {
-      String libName = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
-      try {
-        System.load(PathManager.getHomePath() + "/community/bin/win/" + libName + ".dll");
-        available = true;
-      }
-      catch (Throwable t0) {
-        try {
-          System.load(PathManager.getHomePath() + "/bin/win/" + libName + ".dll");
-          available = true;
-        }
-        catch (Throwable t1) {
-          try {
-            System.loadLibrary(libName);
-            available = true;
-          }
-          catch (Throwable t2) {
-            LOG.warn("Failed to load native filesystem for Windows", t2);
-          }
-        }
-      }
-    }
-    ourIsAvailable = available;
-    if (available) {
-      LOG.info("Native filesystem for Windows is operational");
-    }
-  }
-
   public static boolean isAvailable() {
-    return ourIsAvailable;
+    return IdeaWin32.isAvailable();
   }
 
   private static final ThreadLocal<Win32LocalFileSystem> THREAD_LOCAL = new ThreadLocal<Win32LocalFileSystem>() {
@@ -222,9 +189,10 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
     if (fileInfo == null) return null;
 
     final boolean isDirectory = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_DIRECTORY);
-    final boolean isSymlink = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_REPARSE_POINT);
     final boolean isSpecial = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_DEVICE);
+    final boolean isSymlink = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_REPARSE_POINT);
+    final boolean isHidden = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_HIDDEN);
     final boolean isWritable = !isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_READONLY);
-    return new FileAttributes(isDirectory, isSymlink, isSpecial, fileInfo.length, fileInfo.timestamp, isWritable);
+    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, fileInfo.length, fileInfo.timestamp, isWritable);
   }
 }

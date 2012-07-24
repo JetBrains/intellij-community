@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -137,7 +138,7 @@ public class ExternalDocumentValidator {
               }
 
               final VirtualFile errorFile = myHandler.getFile(e.getPublicId(), e.getSystemId());
-              if (errorFile != file.getVirtualFile() && errorFile != null) {
+              if (!Comparing.equal(errorFile, file.getVirtualFile()) && errorFile != null) {
                 return; // error in attached schema
               }
 
@@ -341,10 +342,11 @@ public class ExternalDocumentValidator {
       if ("ANT".equals(lang.getID())) return;
     }
 
-    final XmlTag rootTag = document != null ? document.getRootTag() : null;
+    final XmlTag rootTag = document.getRootTag();
     if (rootTag == null) return;
 
-    if (XmlUtil.ANT_URI.equals(rootTag.getNamespace())) return;
+    String namespace = rootTag.getNamespace();
+    if (XmlUtil.ANT_URI.equals(namespace)) return;
 
     final Project project = document.getProject();
 

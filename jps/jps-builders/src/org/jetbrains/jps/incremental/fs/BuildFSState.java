@@ -6,13 +6,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.CompilerExcludes;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.FileProcessor;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -98,7 +98,7 @@ public class BuildFSState extends FSState {
 
   public void beforeChunkBuildStart(@NotNull CompileContext context, ModuleChunk chunk) {
     final Set<String> contextModules = new HashSet<String>();
-    for (Module module : chunk.getModules()) {
+    for (JpsModule module : chunk.getModules()) {
       contextModules.add(module.getName());
     }
     setContextModules(context, contextModules);
@@ -109,7 +109,7 @@ public class BuildFSState extends FSState {
     setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, new FilesDelta());
   }
 
-  public boolean processFilesToRecompile(CompileContext context, final Module module, final FileProcessor processor) throws IOException {
+  public boolean processFilesToRecompile(CompileContext context, final JpsModule module, final FileProcessor processor) throws IOException {
     final String moduleName = module.getName();
     final Map<File, Set<File>> data = getSourcesToRecompile(context, moduleName, context.isCompilingTests());
     final CompilerExcludes excludes = context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes();

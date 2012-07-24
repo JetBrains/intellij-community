@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNLogEntry;
@@ -169,7 +168,8 @@ public class SvnFileRevision implements VcsFileRevision {
                                                    @Override
                                                    public byte[] compute() throws VcsException, IOException {
                                                      byte[] bytes = loadContent();
-                                                     return SvnUtil.decode(myCharset, bytes);
+                                                     return bytes;
+                                                     //return SvnUtil.decode(myCharset, bytes);
                                                    }
                                                  });
   }

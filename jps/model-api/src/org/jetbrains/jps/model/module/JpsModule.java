@@ -1,23 +1,21 @@
 package org.jetbrains.jps.model.module;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsLibraryCollection;
-import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.*;
 
 import java.util.List;
 
 /**
  * @author nik
  */
-public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsModule> {
+public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsModule>, JpsCompositeElement {
   @NotNull
   JpsUrlList getContentRootsList();
 
   @NotNull
   JpsUrlList getExcludeRootsList();
-
 
   @NotNull
   List<JpsModuleSourceRoot> getSourceRoots();
@@ -32,10 +30,14 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
 
   void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);
 
-  JpsDependenciesList getDependenciesList();
+  @NotNull
+  <P extends JpsElementProperties>
+  JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<P> type, @NotNull P properties);
 
   @NotNull
-  JpsElementContainer getContainer();
+  List<JpsFacet> getFacets();
+
+  JpsDependenciesList getDependenciesList();
 
   @NotNull
   JpsModuleReference createReference();
@@ -52,5 +54,14 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   @NotNull
   JpsSdkReferencesTable getSdkReferencesTable();
 
+  @Nullable
+  JpsLibraryReference getSdkReference(@NotNull JpsSdkType<?> type);
+
+  @Nullable
+  <P extends JpsSdkProperties>
+  JpsTypedLibrary<P> getSdk(@NotNull JpsSdkType<P> type);
+
   void delete();
+
+  JpsProject getProject();
 }

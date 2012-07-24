@@ -20,8 +20,11 @@ import com.intellij.android.designer.designSurface.layout.RelativeLayoutOperatio
 import com.intellij.android.designer.designSurface.layout.actions.RelativeLayoutResizeOperation;
 import com.intellij.android.designer.designSurface.layout.relative.RelativeDecorator;
 import com.intellij.android.designer.model.PropertyParser;
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.android.designer.model.layout.actions.AllGravityAction;
+import com.intellij.android.designer.propertyTable.AttributeProperty;
+import com.intellij.android.designer.propertyTable.RelativeIdAttributeProperty;
 import com.intellij.android.designer.propertyTable.JavadocParser;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
@@ -68,6 +71,11 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
                                   "layout:alignRight", "right:right",
                                   "layout:toLeftOf", "right:left",
                                   "layout:alignBaseline", "baseline:baseline");
+    List<Property<RadViewComponent>> alignChildren = alignComponent.getChildren(null);
+    int alignSize = alignChildren.size();
+    for (int i = 0; i < alignSize; i++) {
+      alignChildren.set(i, new RelativeIdAttributeProperty((AttributeProperty)alignChildren.get(i)));
+    }
     properties.add(alignComponent);
 
     CompoundProperty alignParent =

@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -35,15 +36,20 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -62,6 +68,8 @@ class AnnotateStackTraceAction extends AnAction {
   private int newestLine = -1;
   private int maxDateLength = 0;
   private final Editor myEditor;
+  private boolean myGutterShowed = false;
+  private HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
 
   AnnotateStackTraceAction(ConsoleViewImpl consoleView) {
     super("Annotate", null, AllIcons.Actions.Annotate);
@@ -87,6 +95,33 @@ class AnnotateStackTraceAction extends AnAction {
       }
 
       private void showGutter() {
+        final EditorGutterAction action = new EditorGutterAction() {
+          @Override
+          public void doAction(int lineNum) {
+            final VcsFileRevision revision = cache.get(lineNum);
+            final List<RangeHighlighter> links = myHyperlinks.findAllHyperlinksOnLine(lineNum);
+            if (!links.isEmpty()) {
+              HyperlinkInfo info = myHyperlinks.getHyperlinks().get(links.get(links.size() - 1));
+
+              if (info instanceof FileHyperlinkInfo) {
+                final VirtualFile file = ((FileHyperlinkInfo)info).getDescriptor().getFile();
+                final Project project = getProject();
+                final AbstractVcs vcs = ProjectLevelVcsManagerEx.getInstanceEx(project).getVcsFor(file);
+                if (vcs != null) {
+                  final VcsRevisionNumber number = revision.getRevisionNumber();
+                  final VcsKey vcsKey = vcs.getKeyInstanceMethod();
+                  ShowAllAffectedGenericAction.showSubmittedFiles(project, number, file, vcsKey);
+                }
+              }
+            }
+          }
+
+          @Override
+          public Cursor getCursor(int lineNum) {
+            return Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
+          }
+        };
+
         myEditor.getGutter().registerTextAnnotation(new ActiveAnnotationGutter() {
           @Override
           public void doAction(int lineNum) {
@@ -143,14 +178,17 @@ class AnnotateStackTraceAction extends AnAction {
 
           @Override
           public void gutterClosed() {
+            myGutterShowed = false;
           }
-        });
+        }, action);
+
+        myGutterShowed = true;
       }
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         Date newestDate = null;
-        HashMap<VirtualFile, List<Integer>> files2lines = new HashMap<VirtualFile, List<Integer>>();
+
         List<VirtualFile> files = new ArrayList<VirtualFile>();
         for (int line = 0; line < myEditor.getDocument().getLineCount(); line++) {
           indicator.checkCanceled();
@@ -205,7 +243,7 @@ class AnnotateStackTraceAction extends AnAction {
                     }
                     ApplicationManager.getApplication().invokeLater(new Runnable() {
                       public void run() {
-                        if (cache.keySet().size() == 1) {
+                        if (!myGutterShowed) {
                           showGutter();
                         } else {
                           ((EditorGutterComponentEx)myEditor.getGutter()).revalidateMarkup();
@@ -217,6 +255,7 @@ class AnnotateStackTraceAction extends AnAction {
               }
             }
             catch (VcsException ignored) {
+              ignored.printStackTrace();
             }
           }
 
@@ -227,6 +266,6 @@ class AnnotateStackTraceAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(cache == null);
+    e.getPresentation().setEnabled(cache == null || !myGutterShowed);
   }
 }

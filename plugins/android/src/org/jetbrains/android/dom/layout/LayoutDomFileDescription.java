@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.layout;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.xml.XmlFile;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class LayoutDomFileDescription extends AndroidResourceDomFileDescription<LayoutViewElement> {
   public LayoutDomFileDescription() {
-    super(LayoutViewElement.class, "view", "layout");
+    super(LayoutViewElement.class, "view", ResourceType.LAYOUT.getName());
   }
 
   public boolean acceptsOtherRootTagNames() {

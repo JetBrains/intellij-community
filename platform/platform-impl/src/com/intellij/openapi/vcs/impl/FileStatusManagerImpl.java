@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,6 @@ import java.util.Map;
  */
 public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent {
   private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
-
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createEmptyCOWList();
   private FileStatusProvider myFileStatusProvider;
@@ -123,7 +123,11 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
         }
       }
     };
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
+
+    final EditorFactory factory = EditorFactory.getInstance();
+    if (factory != null) {
+      factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
+    }
   }
 
   public void disposeComponent() {
@@ -138,9 +142,7 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   public void initComponent() { }
 
   public void addFileStatusListener(@NotNull FileStatusListener listener) {
-    if (listener != null) {
-      myListeners.add(listener);
-    }
+    myListeners.add(listener);
   }
 
   public void addFileStatusListener(final FileStatusListener listener, Disposable parentDisposable) {
@@ -202,6 +204,10 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public FileStatus getStatus(final VirtualFile file) {
+    if (file instanceof LightVirtualFile) {
+      return FileStatus.NOT_CHANGED;  // do not leak light files via cache
+    }
+
     FileStatus status = getCachedStatus(file);
     if (status == null || status == FileStatusNull.INSTANCE) {
       status = calcStatus(file);
@@ -224,5 +230,4 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
       myFileStatusProvider.refreshFileStatusFromDocument(file, doc);
     }
   }
-
 }

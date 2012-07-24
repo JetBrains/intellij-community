@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -67,7 +68,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     if (element instanceof PsiDirectory) {
       final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
       final Project project = element.getProject();
-      if (project.getBaseDir() == virtualFile) return false;
+      if (Comparing.equal(project.getBaseDir(), virtualFile)) return false;
       if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile)) {
         return true;
       }

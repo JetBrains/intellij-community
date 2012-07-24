@@ -45,61 +45,61 @@ public class XPathHighlighter extends SyntaxHighlighterBase {
     }
 
     static final TextAttributesKey XPATH_KEYWORD = TextAttributesKey.createTextAttributesKey(
-            "XPATH.KEYWORD",
-            SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
+      "XPATH.KEYWORD",
+      SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
     );
 
-    static final TextAttributesKey XPATH_STRING = TextAttributesKey.createTextAttributesKey(
-            "XPATH.STRING",
-            SyntaxHighlighterColors.STRING.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_STRING = TextAttributesKey.createTextAttributesKey(
+    "XPATH.STRING",
+    SyntaxHighlighterColors.STRING.getDefaultAttributes()
+  );
 
-    static final TextAttributesKey XPATH_NUMBER = TextAttributesKey.createTextAttributesKey(
-            "XPATH.NUMBER",
-            SyntaxHighlighterColors.NUMBER.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_NUMBER = TextAttributesKey.createTextAttributesKey(
+    "XPATH.NUMBER",
+    SyntaxHighlighterColors.NUMBER.getDefaultAttributes()
+  );
 
-    static final TextAttributesKey XPATH_OPERATION_SIGN = TextAttributesKey.createTextAttributesKey(
-            "XPATH.OPERATION_SIGN",
-            SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_OPERATION_SIGN = TextAttributesKey.createTextAttributesKey(
+    "XPATH.OPERATION_SIGN",
+    SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes()
+  );
 
-    static final TextAttributesKey XPATH_PARENTH = TextAttributesKey.createTextAttributesKey(
-            "XPATH.PARENTH",
-            SyntaxHighlighterColors.PARENTHS.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_PARENTH = TextAttributesKey.createTextAttributesKey(
+    "XPATH.PARENTH",
+    SyntaxHighlighterColors.PARENTHS.getDefaultAttributes()
+  );
 
-    static final TextAttributesKey XPATH_BRACKET = TextAttributesKey.createTextAttributesKey(
-            "XPATH.BRACKET",
-            SyntaxHighlighterColors.BRACKETS.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_BRACKET = TextAttributesKey.createTextAttributesKey(
+    "XPATH.BRACKET",
+    SyntaxHighlighterColors.BRACKETS.getDefaultAttributes()
+  );
 
-    static final TextAttributesKey XPATH_FUNCTION = TextAttributesKey.createTextAttributesKey(
-            "XPATH.FUNCTION",
-            CodeInsightColors.STATIC_METHOD_ATTRIBUTES.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_FUNCTION = TextAttributesKey.createTextAttributesKey(
+    "XPATH.FUNCTION",
+    CodeInsightColors.STATIC_METHOD_ATTRIBUTES.getDefaultAttributes()
+  );
 
-    static final TextAttributesKey XPATH_VARIABLE = TextAttributesKey.createTextAttributesKey(
-            "XPATH.XPATH_VARIABLE",
-            CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_VARIABLE = TextAttributesKey.createTextAttributesKey(
+    "XPATH.XPATH_VARIABLE",
+    CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES.getDefaultAttributes()
+  );
 
-    static final TextAttributesKey XPATH_PREFIX = TextAttributesKey.createTextAttributesKey(
-            "XPATH.XPATH_PREFIX",
-            HighlighterColors.TEXT.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_PREFIX = TextAttributesKey.createTextAttributesKey(
+    "XPATH.XPATH_PREFIX",
+    HighlighterColors.TEXT.getDefaultAttributes()
+  );
 
-    static final TextAttributesKey XPATH_NAME = TextAttributesKey.createTextAttributesKey(
-            "XPATH.XPATH_NAME",
-            HighlighterColors.TEXT.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_NAME = TextAttributesKey.createTextAttributesKey(
+    "XPATH.XPATH_NAME",
+    HighlighterColors.TEXT.getDefaultAttributes()
+  );
 
-    static final TextAttributesKey XPATH_TEXT = TextAttributesKey.createTextAttributesKey(
-            "XPATH.XPATH_TEXT",
-            HighlighterColors.TEXT.getDefaultAttributes()
-    );
+  static final TextAttributesKey XPATH_TEXT = TextAttributesKey.createTextAttributesKey(
+    "XPATH.XPATH_TEXT",
+    HighlighterColors.TEXT.getDefaultAttributes()
+  );
 
-    static {
+  static {
         keys1 = new HashMap();
         keys2 = new HashMap();
 

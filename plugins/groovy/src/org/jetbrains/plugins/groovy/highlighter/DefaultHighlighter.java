@@ -91,52 +91,77 @@ public class DefaultHighlighter {
   static final String INVALID_STRING_ESCAPE_ID = "Invalid string escape";
 
   public static TextAttributesKey LINE_COMMENT = TextAttributesKey.createTextAttributesKey(LINE_COMMENT_ID,
-      SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes());
+                                                                                           SyntaxHighlighterColors.LINE_COMMENT
+                                                                                             .getDefaultAttributes());
 
   public static TextAttributesKey ANNOTATION = TextAttributesKey.createTextAttributesKey(ANNOTATION_ID,
-      HighlightInfoType.ANNOTATION_NAME.getAttributesKey().getDefaultAttributes());
+                                                                                         HighlightInfoType.ANNOTATION_NAME
+                                                                                           .getAttributesKey().getDefaultAttributes());
 
   public static TextAttributesKey LOCAL_VARIABLE = TextAttributesKey.createTextAttributesKey("Groovy var",
-      HighlightInfoType.LOCAL_VARIABLE.getAttributesKey().getDefaultAttributes());
+                                                                                             HighlightInfoType.LOCAL_VARIABLE
+                                                                                               .getAttributesKey().getDefaultAttributes());
   public static TextAttributesKey REASSIGNED_LOCAL_VARIABLE = TextAttributesKey.createTextAttributesKey("Groovy reassigned var",
-      HighlightInfoType.REASSIGNED_LOCAL_VARIABLE.getAttributesKey().getDefaultAttributes());
+                                                                                                        HighlightInfoType
+                                                                                                          .REASSIGNED_LOCAL_VARIABLE
+                                                                                                          .getAttributesKey()
+                                                                                                          .getDefaultAttributes());
   public static TextAttributesKey PARAMETER = TextAttributesKey.createTextAttributesKey("Groovy parameter",
-      HighlightInfoType.PARAMETER.getAttributesKey().getDefaultAttributes());
+                                                                                        HighlightInfoType.PARAMETER
+                                                                                          .getAttributesKey().getDefaultAttributes());
   public static TextAttributesKey REASSIGNED_PARAMETER = TextAttributesKey.createTextAttributesKey("Groovy reassigned parameter",
-      HighlightInfoType.REASSIGNED_PARAMETER.getAttributesKey().getDefaultAttributes());
+                                                                                                   HighlightInfoType
+                                                                                                     .REASSIGNED_PARAMETER
+                                                                                                     .getAttributesKey()
+                                                                                                     .getDefaultAttributes());
 
   public static TextAttributesKey METHOD_DECLARATION = TextAttributesKey.createTextAttributesKey("Groovy method declaration",
-      HighlightInfoType.METHOD_DECLARATION.getAttributesKey().getDefaultAttributes());
+                                                                                                 HighlightInfoType
+                                                                                                   .METHOD_DECLARATION
+                                                                                                   .getAttributesKey()
+                                                                                                   .getDefaultAttributes());
 
   public static TextAttributesKey INSTANCE_FIELD = TextAttributesKey.createTextAttributesKey(INSTANCE_FIELD_ID,
-      HighlightInfoType.INSTANCE_FIELD.getAttributesKey().getDefaultAttributes());
+                                                                                             HighlightInfoType.INSTANCE_FIELD
+                                                                                               .getAttributesKey().getDefaultAttributes());
 
   public static TextAttributesKey METHOD_CALL = TextAttributesKey.createTextAttributesKey(METHOD_CALL_ID,
-      HighlightInfoType.METHOD_CALL.getAttributesKey().getDefaultAttributes());
+                                                                                          HighlightInfoType.METHOD_CALL
+                                                                                            .getAttributesKey().getDefaultAttributes());
 
   public static TextAttributesKey STATIC_FIELD = TextAttributesKey.createTextAttributesKey(STATIC_FIELD_ID,
-      HighlightInfoType.STATIC_FIELD.getAttributesKey().getDefaultAttributes());
+                                                                                           HighlightInfoType.STATIC_FIELD
+                                                                                             .getAttributesKey().getDefaultAttributes());
 
   public static TextAttributesKey STATIC_METHOD_ACCESS = TextAttributesKey.createTextAttributesKey(STATIC_METHOD_ACCESS_ID,
-      HighlightInfoType.STATIC_METHOD.getAttributesKey().getDefaultAttributes());
+                                                                                                   HighlightInfoType
+                                                                                                     .STATIC_METHOD
+                                                                                                     .getAttributesKey()
+                                                                                                     .getDefaultAttributes());
 
   public static TextAttributesKey BLOCK_COMMENT = TextAttributesKey.createTextAttributesKey(BLOCK_COMMENT_ID,
-      SyntaxHighlighterColors.JAVA_BLOCK_COMMENT.getDefaultAttributes());
+                                                                                            SyntaxHighlighterColors.JAVA_BLOCK_COMMENT
+                                                                                              .getDefaultAttributes());
 
   public static TextAttributesKey DOC_COMMENT_CONTENT = TextAttributesKey.createTextAttributesKey(DOC_COMMENT_ID,
-      SyntaxHighlighterColors.DOC_COMMENT.getDefaultAttributes());
+                                                                                                  SyntaxHighlighterColors.DOC_COMMENT
+                                                                                                    .getDefaultAttributes());
 
   public static TextAttributesKey DOC_COMMENT_TAG = TextAttributesKey.createTextAttributesKey(DOC_COMMENT_TAG_ID,
-      SyntaxHighlighterColors.DOC_COMMENT_TAG.getDefaultAttributes());
+                                                                                              SyntaxHighlighterColors.DOC_COMMENT_TAG
+                                                                                                .getDefaultAttributes());
 
   public static TextAttributesKey CLASS_REFERENCE =
-    TextAttributesKey.createTextAttributesKey(CLASS_REFERENCE_ID, HighlighterColors.TEXT.getDefaultAttributes().clone());
+    TextAttributesKey
+      .createTextAttributesKey(CLASS_REFERENCE_ID, HighlighterColors.TEXT.getDefaultAttributes().clone());
 
   public static TextAttributesKey TYPE_PARAMETER =
-    TextAttributesKey.createTextAttributesKey(TYPE_PARAMETER_ID, CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES.getDefaultAttributes().clone());
+    TextAttributesKey.createTextAttributesKey(TYPE_PARAMETER_ID, CodeInsightColors.TYPE_PARAMETER_NAME_ATTRIBUTES.getDefaultAttributes()
+      .clone());
 
   public static final TextAttributes INSTANCE_PROPERTY_REFERENCE_ATTRIBUTES = INSTANCE_FIELD.getDefaultAttributes().clone();
   public static final TextAttributes STATIC_PROPERTY_REFERENCE_ATTRIBUTES = STATIC_FIELD.getDefaultAttributes().clone();
+
   static {
     INSTANCE_PROPERTY_REFERENCE_ATTRIBUTES.setFontType(Font.PLAIN);
     STATIC_PROPERTY_REFERENCE_ATTRIBUTES.setFontType(Font.ITALIC);
@@ -148,49 +173,58 @@ public class DefaultHighlighter {
     TextAttributesKey.createTextAttributesKey(STATIC_PROPERTY_REFERENCE_ID, STATIC_PROPERTY_REFERENCE_ATTRIBUTES);
 
   public static final TextAttributes KEYWORD_ATTRIBUTES = SyntaxHighlighterColors.KEYWORD.getDefaultAttributes().clone();
+
   static{
 
     KEYWORD_ATTRIBUTES.setForegroundColor(new Color(0, 0, 67));
     KEYWORD_ATTRIBUTES.setFontType(Font.BOLD);
   }
 
-  public static TextAttributesKey KEYWORD = TextAttributesKey.createTextAttributesKey("GROOVY_" + KEYWORD_ID.toUpperCase(), KEYWORD_ATTRIBUTES);
+  public static TextAttributesKey KEYWORD = TextAttributesKey
+    .createTextAttributesKey("GROOVY_" + KEYWORD_ID.toUpperCase(), KEYWORD_ATTRIBUTES);
 
   public static TextAttributesKey NUMBER = TextAttributesKey.createTextAttributesKey(NUMBER_ID,
-      SyntaxHighlighterColors.NUMBER.getDefaultAttributes());
+                                                                                     SyntaxHighlighterColors.NUMBER.getDefaultAttributes());
 
   public static TextAttributesKey GSTRING = TextAttributesKey.createTextAttributesKey(GSTRING_ID,
-      SyntaxHighlighterColors.STRING.getDefaultAttributes());
+                                                                                      SyntaxHighlighterColors.STRING.getDefaultAttributes());
 
   public static TextAttributesKey STRING = TextAttributesKey.createTextAttributesKey(STRING_ID,
-      SyntaxHighlighterColors.STRING.getDefaultAttributes());
+                                                                                     SyntaxHighlighterColors.STRING.getDefaultAttributes());
 
   public static TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey(BRACES_ID,
-      SyntaxHighlighterColors.BRACES.getDefaultAttributes());
+                                                                                     SyntaxHighlighterColors.BRACES.getDefaultAttributes());
 
   public static TextAttributesKey BRACKETS = TextAttributesKey.createTextAttributesKey(BRACKETS_ID,
-      SyntaxHighlighterColors.BRACKETS.getDefaultAttributes());
+                                                                                       SyntaxHighlighterColors.BRACKETS
+                                                                                         .getDefaultAttributes());
 
   public static TextAttributesKey PARENTHESES = TextAttributesKey.createTextAttributesKey(PARENTHESES_ID,
-       SyntaxHighlighterColors.PARENTHS.getDefaultAttributes());
+                                                                                          SyntaxHighlighterColors.PARENTHS
+                                                                                            .getDefaultAttributes());
 
   public static TextAttributesKey OPERATION_SIGN = TextAttributesKey.createTextAttributesKey(OPERATION_SIGN_ID,
-      SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes());
+                                                                                             SyntaxHighlighterColors.OPERATION_SIGN
+                                                                                               .getDefaultAttributes());
 
   public static TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey(BAD_CHARACTER_ID,
-      CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES.getDefaultAttributes());
+                                                                                            CodeInsightColors.UNMATCHED_BRACE_ATTRIBUTES
+                                                                                              .getDefaultAttributes());
 
   public static TextAttributesKey WRONG_STRING = TextAttributesKey.createTextAttributesKey(WRONG_STRING_ID,
-      SyntaxHighlighterColors.STRING.getDefaultAttributes());
+                                                                                           SyntaxHighlighterColors.STRING
+                                                                                             .getDefaultAttributes());
 
 
   public static final TextAttributes UNRESOLVED_ACCESS_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
+
   static{
     UNRESOLVED_ACCESS_ATTRIBUTES.setForegroundColor(Color.BLACK);
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectColor(Color.GRAY);
     UNRESOLVED_ACCESS_ATTRIBUTES.setEffectType(EffectType.LINE_UNDERSCORE);
   }
   public static final TextAttributes LITERAL_CONVERSION_ATTRIBUTES = HighlighterColors.TEXT.getDefaultAttributes().clone();
+
   static{
     LITERAL_CONVERSION_ATTRIBUTES.setForegroundColor(Color.BLUE);
     LITERAL_CONVERSION_ATTRIBUTES.setFontType(Font.BOLD);
@@ -203,8 +237,10 @@ public class DefaultHighlighter {
   static {
     MAP_KEY_ATTRIBUTES.setForegroundColor(MAP_KEY_COLOR);
   }
-  public static TextAttributesKey UNRESOLVED_ACCESS = TextAttributesKey.createTextAttributesKey(UNRESOLVED_ACCESS_ID, UNRESOLVED_ACCESS_ATTRIBUTES);
-  public static TextAttributesKey LITERAL_CONVERSION = TextAttributesKey.createTextAttributesKey(LITERAL_CONVERSION_ID, LITERAL_CONVERSION_ATTRIBUTES);
+  public static TextAttributesKey UNRESOLVED_ACCESS = TextAttributesKey
+    .createTextAttributesKey(UNRESOLVED_ACCESS_ID, UNRESOLVED_ACCESS_ATTRIBUTES);
+  public static TextAttributesKey LITERAL_CONVERSION = TextAttributesKey
+    .createTextAttributesKey(LITERAL_CONVERSION_ID, LITERAL_CONVERSION_ATTRIBUTES);
 
   public static TextAttributesKey MAP_KEY = TextAttributesKey.createTextAttributesKey(MAP_KEY_ID, MAP_KEY_ATTRIBUTES);
 

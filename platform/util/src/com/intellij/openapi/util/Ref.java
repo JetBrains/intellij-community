@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,22 +29,27 @@ public class Ref<T> {
     myValue = value;
   }
 
-  public boolean isNull () {
+  public boolean isNull() {
     return myValue == null;
   }
 
-  public T get () {
+  public T get() {
     return myValue;
   }
 
-  public void set (@Nullable T value) {
+  public void set(@Nullable T value) {
     myValue = value;
+  }
+
+  public static <T> Ref<T> create() {
+    return new Ref<T>();
   }
 
   public static <T> Ref<T> create(@Nullable T value) {
     return new Ref<T>(value);
   }
 
+  @Override
   public String toString() {
     return String.valueOf(myValue);
   }

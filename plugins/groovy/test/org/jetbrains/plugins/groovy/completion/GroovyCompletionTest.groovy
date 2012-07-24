@@ -23,8 +23,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.plugins.groovy.GroovyFileType
-import org.jetbrains.plugins.groovy.formatter.GroovyCodeStyleSettings
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 /**
  * @author Maxim.Medvedev
@@ -33,6 +34,12 @@ public class GroovyCompletionTest extends GroovyCompletionTestBase {
   @Override
   protected String getBasePath() {
     return TestUtils.testDataPath + "groovy/completion/";
+  }
+
+  @Override
+  protected void setUp() {
+    super.setUp()
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
   }
 
   @Override
@@ -538,6 +545,10 @@ class A {
  }
 }
 """
+  }
+
+  public void "test finish method call with space in field initializer"() {
+    checkCompletion 'class Foo { boolean b = eq<caret>x }', ' ', 'class Foo { boolean b = equals <caret>x }'
   }
 
   public void testCompletionNamedArgumentWithNewLine2() {
@@ -1385,6 +1396,24 @@ def bar(){}''')
 def bar(){}''')
     myFixture.complete(CompletionType.BASIC)
     assertOrderedEquals(myFixture.lookupElementStrings, ['fooo', 'fooo1'])
+  }
+
+  public void testPreferApplicableAnnotations() {
+    configure('''
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
+@Z<caret>
+@interface Foo {
+}
+
+@Target(ElementType.ANNOTATION_TYPE)
+@interface ZMetaAnno {}
+
+@Target(ElementType.LOCAL_VARIABLE)
+@interface ZLocalAnno {}''')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems  0, 'ZMetaAnno', 'ZLocalAnno'
   }
 
 }

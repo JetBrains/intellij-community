@@ -71,7 +71,7 @@ public class SpellCheckerSettingsPane implements Disposable {
           if (optionsEditor != null) {
             final ErrorsConfigurable errorsConfigurable = optionsEditor.findConfigurable(ErrorsConfigurable.class);
             if (errorsConfigurable != null) {
-              optionsEditor.select(errorsConfigurable).doWhenDone(new Runnable() {
+              optionsEditor.clearSearchAndSelect(errorsConfigurable).doWhenDone(new Runnable() {
                 public void run() {
                   errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME);
                 }

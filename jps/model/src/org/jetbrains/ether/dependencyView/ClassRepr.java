@@ -2,6 +2,8 @@ package org.jetbrains.ether.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import groovyjarjarasm.asm.Opcodes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.RW;
 
 import java.io.*;
@@ -165,6 +167,7 @@ public class ClassRepr extends Proto {
     };
   }
 
+  @NotNull
   public int[] getSupers() {
     final int[] result = new int[myInterfaces.size() + 1];
 
@@ -179,18 +182,18 @@ public class ClassRepr extends Proto {
   }
 
   public void updateClassUsages(final DependencyContext context, final Set<UsageRepr.Usage> s) {
-    mySuperClass.updateClassUsages(context, myName, s);
+    mySuperClass.updateClassUsages(context, name, s);
 
     for (TypeRepr.AbstractType t : myInterfaces) {
-      t.updateClassUsages(context, myName, s);
+      t.updateClassUsages(context, name, s);
     }
 
     for (MethodRepr m : myMethods) {
-      m.updateClassUsages(context, myName, s);
+      m.updateClassUsages(context, name, s);
     }
 
     for (FieldRepr f : myFields) {
-      f.updateClassUsages(context, myName, s);
+      f.updateClassUsages(context, name, s);
     }
   }
 
@@ -264,7 +267,7 @@ public class ClassRepr extends Proto {
   }
 
   public boolean isAnnotation() {
-    return (myAccess & Opcodes.ACC_ANNOTATION) > 0;
+    return (access & Opcodes.ACC_ANNOTATION) > 0;
   }
 
   @Override
@@ -275,28 +278,29 @@ public class ClassRepr extends Proto {
     ClassRepr classRepr = (ClassRepr)o;
 
     if (myFileName != classRepr.myFileName) return false;
-    if (myName != classRepr.myName) return false;
+    if (name != classRepr.name) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return 31 * myFileName + myName;
+    return 31 * myFileName + name;
   }
 
   public UsageRepr.Usage createUsage() {
-    return UsageRepr.createClassUsage(myContext, myName);
+    return UsageRepr.createClassUsage(myContext, name);
   }
 
   public String getPackageName() {
-    return getPackageName(myName);
+    return getPackageName(name);
   }
 
   public String getPackageName(final int s) {
     return getPackageName(myContext.getValue(s));
   }
 
+  @NotNull
   public static String getPackageName(final String raw) {
     final int index = raw.lastIndexOf('/');
 
@@ -307,9 +311,10 @@ public class ClassRepr extends Proto {
     return raw.substring(0, index);
   }
 
+  @Nullable
   public FieldRepr findField(final int name) {
     for (FieldRepr f : myFields) {
-      if (f.myName == name) {
+      if (f.name == name) {
         return f;
       }
     }
@@ -317,6 +322,7 @@ public class ClassRepr extends Proto {
     return null;
   }
 
+  @NotNull
   public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
     final Collection<MethodRepr> result = new LinkedList<MethodRepr>();
 
@@ -390,11 +396,11 @@ public class ClassRepr extends Proto {
     Arrays.sort(fs, new Comparator<FieldRepr>() {
       @Override
       public int compare(final FieldRepr o1, final FieldRepr o2) {
-        if (o1.myName == o2.myName) {
+        if (o1.name == o2.name) {
           return o1.myType.getDescr(context).compareTo(o2.myType.getDescr(context));
         }
 
-        return context.getValue(o1.myName).compareTo(context.getValue(o2.myName));
+        return context.getValue(o1.name).compareTo(context.getValue(o2.name));
       }
     });
     for (final FieldRepr f : fs) {
@@ -407,7 +413,7 @@ public class ClassRepr extends Proto {
     Arrays.sort(ms, new Comparator<MethodRepr>() {
       @Override
       public int compare(final MethodRepr o1, final MethodRepr o2) {
-        if (o1.myName == o2.myName) {
+        if (o1.name == o2.name) {
           final String d1 = o1.myType.getDescr(context);
           final String d2 = o2.myType.getDescr(context);
 
@@ -438,7 +444,7 @@ public class ClassRepr extends Proto {
           return c;
         }
 
-        return context.getValue(o1.myName).compareTo(context.getValue(o2.myName));
+        return context.getValue(o1.name).compareTo(context.getValue(o2.name));
       }
     });
     for (final MethodRepr m : ms) {

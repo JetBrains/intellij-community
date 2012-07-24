@@ -71,6 +71,7 @@ public class FileUtilRt {
       if (base == null) return null;
     }
 
+    //noinspection FileEqualsUsage
     if (base.equals(file)) return ".";
 
     final String filePath = file.getAbsolutePath();
@@ -94,7 +95,7 @@ public class FileUtilRt {
     String filePathToCompare = caseSensitive ? filePath : filePath.toLowerCase();
     if (basePathToCompare.equals(ensureEnds(filePathToCompare, separator))) return ".";
     int len = 0;
-    int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abcde/base" and file="/temp/ab"
+    int lastSeparatorIndex = 0; // need this for cases like this: base="/temp/abc/base" and file="/temp/ab"
     while (len < filePath.length() && len < basePath.length() && filePathToCompare.charAt(len) == basePathToCompare.charAt(len)) {
       if (basePath.charAt(len) == separator) {
         lastSeparatorIndex = len;
@@ -134,49 +135,31 @@ public class FileUtilRt {
     return createTempDirectory(prefix, suffix, true);
   }
 
-  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(prefix, suffix);
-    file.delete();
-    file.mkdir();
-    if (deleteOnExit) {
-      file.deleteOnExit();
-    }
-    return file;
+  public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
+                                         boolean deleteOnExit) throws IOException {
+    final File dir = new File(getTempDirectory());
+    return createTempDirectory(dir, prefix, suffix, deleteOnExit);
   }
 
   @NotNull
-  public static File createTempDirectory(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
-    return createTempDirectory(dir, prefix, suffix,true);
+  public static File createTempDirectory(@NotNull File dir,
+                                         @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return createTempDirectory(dir, prefix, suffix, true);
   }
+
   @NotNull
-  public static File createTempDirectory(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,boolean deleteOnExit) throws IOException {
+  public static File createTempDirectory(@NotNull File dir,
+                                         @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
+                                         boolean deleteOnExit) throws IOException {
     File file = doCreateTempFile(dir, prefix, suffix);
-    file.delete();
-    file.mkdir();
     if (deleteOnExit) {
       file.deleteOnExit();
     }
-    return file;
-  }
-
-  @NotNull
-  public static File createTempFile(@NonNls File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean create) throws IOException {
-    return createTempFile(dir, prefix, suffix, create, true);
-  }
-
-  @NotNull
-  public static File createTempFile(@NonNls final File dir,
-                                    @NotNull @NonNls String prefix,
-                                    @Nullable @NonNls String suffix,
-                                    final boolean create,
-                                    boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(dir, prefix, suffix);
-    file.delete();
-    if (create) {
-      file.createNewFile();
+    if (!file.delete() && file.exists()) {
+      throw new IOException("Cannot delete file: " + file);
     }
-    if (deleteOnExit) {
-      file.deleteOnExit();
+    if (!file.mkdir() && !file.isDirectory()) {
+      throw new IOException("Cannot create directory: " + file);
     }
     return file;
   }
@@ -187,23 +170,39 @@ public class FileUtilRt {
   }
 
   @NotNull
-  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
-    File file = doCreateTempFile(prefix, suffix);
-    file.delete();
-    file.createNewFile();
+  public static File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
+                                    boolean deleteOnExit) throws IOException {
+    final File dir = new File(getTempDirectory());
+    return createTempFile(dir, prefix, suffix, true, deleteOnExit);
+  }
+
+  @NotNull
+  public static File createTempFile(@NonNls File dir,
+                                    @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
+                                    boolean create) throws IOException {
+    return createTempFile(dir, prefix, suffix, create, true);
+  }
+
+  @NotNull
+  public static File createTempFile(@NonNls File dir,
+                                    @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
+                                    boolean create, boolean deleteOnExit) throws IOException {
+    File file = doCreateTempFile(dir, prefix, suffix);
     if (deleteOnExit) {
       file.deleteOnExit();
+    }
+    if (!create) {
+      if (!file.delete() && file.exists()) {
+        throw new IOException("Cannot delete file: " + file);
+      }
     }
     return file;
   }
 
   @NotNull
-  private static File doCreateTempFile(String prefix, String suffix) throws IOException {
-    return doCreateTempFile(new File(getTempDirectory()), prefix, suffix);
-  }
-
-  @NotNull
-  private static File doCreateTempFile(@NotNull File dir, @NotNull String prefix, String suffix) throws IOException {
+  private static File doCreateTempFile(@NotNull File dir,
+                                       @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    //noinspection ResultOfMethodCallIgnored
     dir.mkdirs();
 
     if (prefix.length() < 3) {
@@ -246,8 +245,7 @@ public class FileUtilRt {
         return canonical;
       }
     }
-    catch (IOException ignore) {
-    }
+    catch (IOException ignore) { }
     return file.getAbsolutePath();
   }
 

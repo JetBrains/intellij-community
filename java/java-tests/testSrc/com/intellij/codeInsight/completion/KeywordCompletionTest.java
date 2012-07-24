@@ -68,14 +68,22 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testMethodScope2() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract"); }
   public void testMethodScope3() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract", "throws", "instanceof"); }
   public void testMethodScope4() throws Exception { doTest(6, "final", "try", "for", "while", "return", "throw"); }
-  public void testMethodScope5() throws Exception { doTest(false); }
-  public void testExtraBracketAfterFinally1() throws Exception { doTest(true); }
-  public void testExtraBracketAfterFinally2() throws Exception { doTest(true); }
+  public void testMethodScope5() throws Exception { doTest(true); }
+  public void testExtraBracketAfterFinally1() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
+    selectItem(myItems[1]);
+    checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
+  }
+  public void testExtraBracketAfterFinally2() throws Exception {
+    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
+    selectItem(myItems[1]);
+    checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
+  }
   public void testExtendsInCastTypeParameters() throws Exception { doTest(false); }
   public void testExtendsWithRightContextInClassTypeParameters() throws Exception { doTest(false); }
-  public void testTrueInVariableDeclaration() throws Exception { doTest(false); }
-  public void testNullInIf() throws Exception { doTest(false); }
-  public void testNullInReturn() throws Exception { doTest(false); }
+  public void testTrueInVariableDeclaration() throws Exception { doTest(true); }
+  public void testNullInIf() throws Exception { doTest(true); }
+  public void testNullInReturn() throws Exception { doTest(true); }
   public void testExtendsInMethodParameters() throws Exception { doTest(false); }
   public void testInstanceOf1() throws Exception { doTest(false); }
   public void testInstanceOf2() throws Exception { doTest(false); }
@@ -84,25 +92,27 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testSuper1() throws Exception { doTest(1, "super"); }
   public void testSuper2() throws Exception { doTest(0, "super"); }
   public void testContinue() throws Exception { doTest(false); }
-  public void testThrowsOnSeparateLine() throws Exception { doTest(false); }
+  public void testThrowsOnSeparateLine() throws Exception { doTest(true); }
   public void testDefaultInAnno() throws Exception { doTest(false); }
   public void testDefaultInExtMethod() throws Exception { doTest(false); }
-  public void testNullInMethodCall() throws Exception { doTest(false); }
+  public void testNullInMethodCall() throws Exception { doTest(true); }
   public void testNullInMethodCall2() throws Exception { doTest(false); }
   public void testNewInMethodRefs() throws Exception { doTest(false); }
   public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() throws Exception { doTest(1, "char"); }
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }
+  public void testFinalAfterParameterAnno() throws Exception { doTest(2, "final", "float", "class"); }
 
   public void testTryInExpression() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
-    assertStringItems("toString", "this");
+    assertEquals("toString", myItems[0].getLookupString());
+    assertEquals("this", myItems[1].getLookupString());
   }
 
   private void doTest(boolean select) throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
     if (select) {
-      selectItem(myItems[1]);
+      selectItem(myItems[0]);
     }
     checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
   }

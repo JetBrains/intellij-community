@@ -16,6 +16,7 @@
 package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.android.sdklib.SdkConstants;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
@@ -91,7 +92,7 @@ public class RadViewComponent extends RadVisualComponent {
   }
 
   public String getId() {
-    String idValue = myTag.getAttributeValue("android:id");
+    String idValue = myTag.getAttributeValue("id", SdkConstants.NS_RESOURCES);
     return StringUtil.isEmpty(idValue) ? null : idValue;
   }
 

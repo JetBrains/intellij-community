@@ -15,7 +15,6 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -39,6 +38,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.artifact.ArtifactManagerState;
+import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState;
+import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
 
 import java.util.*;
 
@@ -371,7 +373,6 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     }
     updateWatchedRoots();
     if (hasChanges) {
-      CompileServerManager.getInstance().sendReloadRequest(myProject);
       BuildManager.getInstance().clearState(myProject);
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.designSurface.layout.actions.ResizeOperation;
 import com.intellij.android.designer.designSurface.layout.flow.FlowBaseOperation;
 import com.intellij.android.designer.model.ModelParser;
@@ -171,8 +172,8 @@ public class LinearLayoutOperation extends FlowBaseOperation {
     if (gravity == null) {
       for (RadComponent component : components) {
         XmlTag tag = ((RadViewComponent)component).getTag();
-        ModelParser.deleteAttribute(tag, "android:layout_gravity");
-        tag.setAttribute(horizontal ? "android:layout_height" : "android:layout_width", "fill_parent");
+        ModelParser.deleteAttribute(tag, "layout_gravity");
+        tag.setAttribute(horizontal ? "layout_height" : "layout_width", SdkConstants.NS_RESOURCES, "fill_parent");
       }
     }
     else {
@@ -181,12 +182,12 @@ public class LinearLayoutOperation extends FlowBaseOperation {
       for (RadComponent component : components) {
         XmlTag tag = ((RadViewComponent)component).getTag();
 
-        XmlAttribute attribute = tag.getAttribute(horizontal ? "android:layout_height" : "android:layout_width");
+        XmlAttribute attribute = tag.getAttribute(horizontal ? "layout_height" : "layout_width", SdkConstants.NS_RESOURCES);
         if (attribute != null && ("match_parent".equals(attribute.getValue()) || "fill_parent".equals(attribute.getValue()))) {
           attribute.setValue("wrap_content");
         }
 
-        tag.setAttribute("android:layout_gravity", gravityValue);
+        tag.setAttribute("layout_gravity", SdkConstants.NS_RESOURCES, gravityValue);
       }
     }
   }
@@ -194,7 +195,7 @@ public class LinearLayoutOperation extends FlowBaseOperation {
   @Nullable
   public static Gravity getGravity(boolean horizontal, RadComponent component) {
     XmlTag tag = ((RadViewComponent)component).getTag();
-    String length = tag.getAttributeValue(horizontal ? "android:layout_height" : "android:layout_width");
+    String length = tag.getAttributeValue(horizontal ? "layout_height" : "layout_width", SdkConstants.NS_RESOURCES);
 
     if (!ResizeOperation.isFill(length)) {
       Pair<Gravity, Gravity> gravity = Gravity.getSides(component);

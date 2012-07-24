@@ -319,7 +319,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
     else if (IdeaDarkLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
-      IdeaDarkLaf laf = new IdeaDarkLaf();
+      DurculaLaf laf = new DurculaLaf();
       MetalLookAndFeel.setCurrentTheme(new IdeaDarkMetalTheme());
       try {
         UIManager.setLookAndFeel(laf);

@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,7 +66,7 @@ public class MarkRootAction extends AnAction {
       if (entry != null) {
         final SourceFolder[] sourceFolders = entry.getSourceFolders();
         for (SourceFolder sourceFolder : sourceFolders) {
-          if (sourceFolder.getFile() == vFile) {
+          if (Comparing.equal(sourceFolder.getFile(), vFile)) {
             entry.removeSourceFolder(sourceFolder);
             break;
           }
@@ -126,7 +127,7 @@ public class MarkRootAction extends AnAction {
       if (!fileIndex.isInContent(vFile)) {
         return false;
       }
-      if (fileIndex.getSourceRootForFile(vFile) == vFile) {
+      if (Comparing.equal(fileIndex.getSourceRootForFile(vFile), vFile)) {
         boolean isTestSourceRoot = fileIndex.isInTestSourceContent(vFile);
         if (acceptSourceRoot && !isTestSourceRoot) {
           if (rootType != null) rootType.set(true);

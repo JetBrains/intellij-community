@@ -175,7 +175,7 @@ public class AndroidCompileUtil {
     }
 
     for (Map.Entry<VirtualFile, VirtualFile> entry : presentableFilesMap.entrySet()) {
-      if (file == entry.getValue()) {
+      if (Comparing.equal(file, entry.getValue())) {
         return entry.getKey().getUrl();
       }
     }
@@ -185,7 +185,7 @@ public class AndroidCompileUtil {
   private static void collectChildrenRecursively(@NotNull VirtualFile root,
                                                  @NotNull VirtualFile anchor,
                                                  @NotNull Collection<VirtualFile> result) {
-    if (root == anchor) {
+    if (Comparing.equal(root, anchor)) {
       return;
     }
 
@@ -194,11 +194,11 @@ public class AndroidCompileUtil {
       return;
     }
     for (VirtualFile child : parent.getChildren()) {
-      if (child != anchor) {
+      if (!Comparing.equal(child, anchor)) {
         result.add(child);
       }
     }
-    if (parent != root) {
+    if (!Comparing.equal(parent, root)) {
       collectChildrenRecursively(root, parent, result);
     }
   }
@@ -219,7 +219,7 @@ public class AndroidCompileUtil {
     if (contentEntry != null) {
       ExcludeFolder excludedFolder = null;
       for (ExcludeFolder folder : contentEntry.getExcludeFolders()) {
-        if (folder.getFile() == excludedRoot) {
+        if (Comparing.equal(folder.getFile(), excludedRoot)) {
           excludedFolder = folder;
           break;
         }
@@ -280,7 +280,7 @@ public class AndroidCompileUtil {
       boolean markedAsSource = false;
 
       for (VirtualFile existingRoot : manager.getSourceRoots()) {
-        if (existingRoot == root) {
+        if (Comparing.equal(existingRoot, root)) {
           markedAsSource = true;
         }
       }
@@ -301,7 +301,7 @@ public class AndroidCompileUtil {
       ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(project)).getExcludedEntriesConfiguration();
 
     for (ExcludeEntryDescription description : configuration.getExcludeEntryDescriptions()) {
-      if (description.getVirtualFile() == dir) {
+      if (Comparing.equal(description.getVirtualFile(), dir)) {
         return;
       }
     }
@@ -477,7 +477,7 @@ public class AndroidCompileUtil {
       PsiFile psiFile = c.getContainingFile();
       if (className.equals(FileUtil.getNameWithoutExtension(psiFile.getName()))) {
         VirtualFile virtualFile = psiFile.getVirtualFile();
-        if (virtualFile != null && projectFileIndex.getSourceRootForFile(virtualFile) == sourceRoot) {
+        if (virtualFile != null && Comparing.equal(projectFileIndex.getSourceRootForFile(virtualFile), sourceRoot)) {
           final String path = virtualFile.getPath();
           File f = new File(path);
 

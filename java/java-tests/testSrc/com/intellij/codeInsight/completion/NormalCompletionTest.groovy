@@ -28,11 +28,18 @@ import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.*
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
+  }
+
+  @Override
+  protected void setUp() {
+    super.setUp()
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
   }
 
   public void testSimple() throws Exception {
@@ -156,6 +163,10 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     configure()
     LookupElementPresentation presentation = renderElement(myItems[0])
     assert "add" == presentation.itemText
+    assert "(int index, String element)" == presentation.tailText
+    assert "void" == presentation.typeText
+
+    presentation = renderElement(myItems[1])
     assert "(String o)" == presentation.tailText
     assert "boolean" == presentation.typeText
 
@@ -255,8 +266,22 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testObjectsInThrowsBlock() throws Exception {
     configureByFile("InThrowsCompletion.java");
-    assert "C" in myFixture.lookupElementStrings
-    assert !("B" in myFixture.lookupElementStrings)
+    assert "C" == myFixture.lookupElementStrings[0]
+    assert "B" in myFixture.lookupElementStrings
+  }
+
+  public void testAnnoParameterValue() throws Exception {
+    configure()
+    def strings = myFixture.lookupElementStrings
+    assert 'AssertionError' in strings
+    assert !('enum' in strings)
+    assert !('final' in strings)
+    assert !('equals' in strings)
+    assert !('new' in strings)
+    assert !('null' in strings)
+    assert !('public' in strings)
+    assert !('super' in strings)
+    assert !('null' in strings)
   }
 
   public void testAfterInstanceof() throws Exception {
@@ -982,6 +1007,7 @@ public class ListUtils {
 
   public void testSuggestExpectedTypeMembers() throws Throwable { doTest('\n') }
   public void testSuggestExpectedTypeMembersInCall() throws Throwable { doTest('\n') }
+  public void testSuggestExpectedTypeMembersInAnno() throws Throwable { doTest('\n') }
   public void testExpectedTypesDotSelectsItem() throws Throwable { doTest('.') }
 
   public void testExpectedTypeMembersVersusStaticImports() throws Throwable {
@@ -1016,10 +1042,10 @@ public class ListUtils {
 
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
 
-  public void testOnlyExceptionsInCatch1() throws Exception { doTest() }
-  public void testOnlyExceptionsInCatch2() throws Exception { doTest() }
-  public void testOnlyExceptionsInCatch3() throws Exception { doTest() }
-  public void testOnlyExceptionsInCatch4() throws Exception { doTest() }
+  public void testOnlyExceptionsInCatch1() throws Exception { doTest('\n') }
+  public void testOnlyExceptionsInCatch2() throws Exception { doTest('\n') }
+  public void testOnlyExceptionsInCatch3() throws Exception { doTest('\n') }
+  public void testOnlyExceptionsInCatch4() throws Exception { doTest('\n') }
 
   public void testCommaAfterVariable() throws Throwable { doTest(',') }
 

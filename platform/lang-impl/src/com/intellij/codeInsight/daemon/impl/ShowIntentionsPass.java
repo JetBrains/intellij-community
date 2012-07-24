@@ -198,7 +198,18 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
 
     int offset = hostEditor.getCaretModel().getOffset();
     Project project = hostFile.getProject();
-    
+
+    List<HighlightInfo.IntentionActionDescriptor> fixes = QuickFixAction.getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
+    final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
+    final Document hostDocument = hostEditor.getDocument();
+    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(hostDocument, offset, true);
+    if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
+      intentions.errorFixesToShow.addAll(fixes);
+    }
+    else {
+      intentions.inspectionFixesToShow.addAll(fixes);
+    }
+
     for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
       Pair<PsiFile, Editor> place =
         ShowIntentionActionsHandler.chooseBetweenHostAndInjected(hostFile, hostEditor, new PairProcessor<PsiFile, Editor>() {
@@ -212,20 +223,13 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
         List<IntentionAction> enableDisableIntentionAction = new ArrayList<IntentionAction>();
         enableDisableIntentionAction.add(new IntentionHintComponent.EnableDisableIntentionAction(action));
         enableDisableIntentionAction.add(new IntentionHintComponent.EditIntentionSettingsAction(action));
-        intentions.intentionsToShow.add(new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null));
+        HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null);
+        if (!fixes.contains(descriptor)) {
+          intentions.intentionsToShow.add(descriptor);
+        }
       }
     }
 
-    List<HighlightInfo.IntentionActionDescriptor> actions = QuickFixAction.getAvailableActions(hostEditor, hostFile, passIdToShowIntentionsFor);
-    final DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
-    final Document hostDocument = hostEditor.getDocument();
-    HighlightInfo infoAtCursor = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(hostDocument, offset, true);
-    if (infoAtCursor == null || infoAtCursor.getSeverity() == HighlightSeverity.ERROR) {
-      intentions.errorFixesToShow.addAll(actions);
-    }
-    else {
-      intentions.inspectionFixesToShow.addAll(actions);
-    }
     final int line = hostDocument.getLineNumber(offset);
     DaemonCodeAnalyzerImpl.processHighlights(hostDocument, project, null,
                                              hostDocument.getLineStartOffset(line),

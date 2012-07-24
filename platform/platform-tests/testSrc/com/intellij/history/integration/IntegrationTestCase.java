@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Clock;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -177,7 +178,7 @@ public abstract class IntegrationTestCase extends PlatformTestCase {
         ModuleRootManager rm = ModuleRootManager.getInstance(myModule);
         ModifiableRootModel m = rm.getModifiableModel();
         for (ContentEntry e : m.getContentEntries()) {
-          if (e.getFile() != myRoot) continue;
+          if (!Comparing.equal(e.getFile(), myRoot)) continue;
           e.addExcludeFolder(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(path)));
         }
         m.commit();

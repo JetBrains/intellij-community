@@ -12,4 +12,8 @@ public class JpsJavaSdkType extends JpsSdkType<JpsSdkProperties>  {
   public JpsSdkProperties createCopy(JpsSdkProperties properties) {
     return new JpsSdkProperties(properties);
   }
+
+  public static String getJavaExecutable(JpsSdkProperties properties) {
+    return properties.getHomePath() + "/bin/java";
+  }
 }

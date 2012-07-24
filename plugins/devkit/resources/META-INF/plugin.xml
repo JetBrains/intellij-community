@@ -31,7 +31,7 @@
     <configurationType implementation="org.jetbrains.idea.devkit.run.PluginConfigurationType"/>
     <moduleType id="PLUGIN_MODULE" implementationClass="org.jetbrains.idea.devkit.module.PluginModuleType" classpathProvider="true"/>
     <sdkType implementation="org.jetbrains.idea.devkit.projectRoots.IdeaJdk"/>
-    <compileServer.plugin jar-path="jps/devkit-jps-plugin.jar"/>
+    <compileServer.plugin classpath="jps/devkit-jps-plugin.jar"/>
     <fileTemplateGroup implementation="org.jetbrains.idea.devkit.DevKitFileTemplatesFactory"/>
 
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity"
@@ -128,6 +128,10 @@
       <add-to-group anchor="last" group-id="Internal"/>
     </action>
 
+    <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" text="Show Serialized XML for Class"
+            id="ShowSerializedXml">
+      <add-to-group anchor="last" group-id="Internal"/>
+    </action>
   </actions>
 
 </idea-plugin>

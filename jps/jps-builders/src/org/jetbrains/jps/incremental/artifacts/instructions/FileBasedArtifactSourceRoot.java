@@ -2,7 +2,7 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.PathUtil;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
@@ -62,7 +62,7 @@ public class FileBasedArtifactSourceRoot extends ArtifactSourceRoot {
     String targetPath;
     if (!file.equals(getRootFile())) {
       final String relativePath = FileUtil.getRelativePath(FileUtil.toSystemIndependentName(getRootFile().getPath()), filePath, '/');
-      targetPath = PathUtil.appendToPath(outputPath, relativePath);
+      targetPath = JpsPathUtil.appendToPath(outputPath, relativePath);
     }
     else {
       targetPath = outputPath;

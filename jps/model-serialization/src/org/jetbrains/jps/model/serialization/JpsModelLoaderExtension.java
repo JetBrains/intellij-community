@@ -4,14 +4,14 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
-import org.jetbrains.jps.model.JpsElementProperties;
 import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.artifact.JpsArtifactType;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleType;
+import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementLoader;
+import org.jetbrains.jps.model.serialization.facet.JpsModuleExtensionLoader;
 
 import java.util.Collections;
 import java.util.List;
@@ -24,13 +24,11 @@ public abstract class JpsModelLoaderExtension {
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
   }
 
-  @Nullable
-  public JpsOrderRootType getRootType(@NotNull String typeId) {
-    return null;
+  public void loadProjectRoots(JpsProject project, Element rootManagerElement) {
   }
 
   @Nullable
-  public JpsSdkType<?> getSdkType(@NotNull String typeId) {
+  public JpsOrderRootType getRootType(@NotNull String typeId) {
     return null;
   }
 
@@ -42,33 +40,36 @@ public abstract class JpsModelLoaderExtension {
     return null;
   }
 
-  @Nullable
-  public JpsModuleType<?> getModuleType(@NotNull String typeId) {
-    return null;
-  }
-
-  @Nullable
-  public <P extends JpsElementProperties> P loadModuleProperties(JpsModuleType<P> type, Element moduleRoot) {
-    return null;
-  }
-
-  @Nullable
-  public JpsLibraryType<?> getLibraryType(@NotNull String typeId) {
-    return null;
-  }
-
-  @Nullable
-  public <P extends JpsElementProperties> P loadLibraryProperties(JpsLibraryType<P> type, Element propertiesElement) {
-    return null;
+  @NotNull
+  public List<? extends JpsModulePropertiesLoader<?>> getModulePropertiesLoaders() {
+    return Collections.emptyList();
   }
 
   @NotNull
-  public List<JpsSdkPropertiesLoader<?>> getSdkPropertiesLoaders() {
+  public List<JpsLibraryPropertiesLoader<?>> getLibraryPropertiesLoaders() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  public List<? extends JpsSdkPropertiesLoader<?>> getSdkPropertiesLoaders() {
+    return Collections.emptyList();
+  }
+
+  public List<? extends JpsModuleExtensionLoader<?>> getModuleExtensionLoaders() {
+    return Collections.emptyList();
+  }
+
+  public List<? extends JpsPackagingElementLoader<?>> getPackagingElementLoaders() {
     return Collections.emptyList();
   }
 
   @Nullable
   public JpsOrderRootType getSdkRootType(@NotNull String typeId) {
+    return null;
+  }
+
+  @Nullable
+  public JpsArtifactType getArtifactType(@NotNull String typeId) {
     return null;
   }
 }

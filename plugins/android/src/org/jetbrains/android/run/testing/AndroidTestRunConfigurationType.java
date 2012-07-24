@@ -50,6 +50,11 @@ public class AndroidTestRunConfigurationType implements ConfigurationType {
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new AndroidTestRunConfiguration("", project, this);
     }
+
+    @Override
+    public boolean canConfigurationBeSingleton() {
+      return false;
+    }
   };
 
   public static AndroidTestRunConfigurationType getInstance() {

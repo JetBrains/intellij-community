@@ -50,6 +50,20 @@ public class IntArrayList implements Cloneable {
       System.arraycopy(oldData, 0, myData, 0, mySize);
     }
   }
+  public void fill(int fromIndex, int toIndex, int value) {
+      if (toIndex > mySize) {
+        ensureCapacity(toIndex);
+        mySize = toIndex;
+      }
+      Arrays.fill(myData, fromIndex, toIndex, value);
+  }
+
+  public void add(int[] values) {
+    int length = values.length;
+    ensureCapacity(mySize + length);
+    System.arraycopy(values, 0, myData, mySize, length);
+    mySize += length;
+  }
 
   public int size() {
     return mySize;
@@ -105,9 +119,17 @@ public class IntArrayList implements Cloneable {
 
     return a;
   }
+  public int[] toArray(int startIndex, int length) {
+    int[] result = new int[length];
+    System.arraycopy(myData, startIndex, result, 0, length);
+    return result;
+  }
 
   public int get(int index) {
     checkRange(index);
+    return myData[index];
+  }
+  public int getQuick(int index) {
     return myData[index];
   }
 
@@ -117,6 +139,9 @@ public class IntArrayList implements Cloneable {
     int oldValue = myData[index];
     myData[index] = element;
     return oldValue;
+  }
+  public void setQuick(int index, int element) {
+    myData[index] = element;
   }
 
   public void add(int o) {

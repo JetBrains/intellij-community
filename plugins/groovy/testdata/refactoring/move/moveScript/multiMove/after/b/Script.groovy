@@ -1,7 +1,6 @@
-package b;
+package b
 
-
-import a.A;
+import a.A
 
 def a = new A().foo();
 print a;

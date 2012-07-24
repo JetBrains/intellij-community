@@ -22,7 +22,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -79,22 +78,6 @@ public class InspectionProfileWrapper {
         LOG.error("Inspection " + tool.getDisplayName() + " (" + tool.getClass() + ") already registered");
       }
     }
-  }
-
-  private volatile boolean toolsInstantiated;
-  public void preInstantiateTools(PsiFile psiFile) {
-    if (toolsInstantiated) return;
-    toolsInstantiated = true;
-    InspectionTool[] tools = getInspectionTools(psiFile);
-    for (InspectionTool tool : tools) {
-      if (tool instanceof InspectionToolWrapper) {
-        ((InspectionToolWrapper)tool).getTool();
-      }
-    }
-  }
-
-  public boolean areToolsInstantiated() {
-    return toolsInstantiated;
   }
 
   public String getName() {

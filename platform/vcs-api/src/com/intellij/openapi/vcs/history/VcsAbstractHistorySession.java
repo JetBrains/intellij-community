@@ -106,6 +106,6 @@ public abstract class VcsAbstractHistorySession implements VcsHistorySession {
 
   @Override
   public boolean hasLocalSource() {
-    return false;
+    return true;
   }
 }

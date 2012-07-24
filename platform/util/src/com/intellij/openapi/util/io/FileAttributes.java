@@ -18,12 +18,23 @@ package com.intellij.openapi.util.io;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.intellij.lang.annotations.MagicConstant;
 
+import static com.intellij.util.BitUtil.isSet;
+import static com.intellij.util.BitUtil.notSet;
+
 /**
  * @version 11.1
  * @see FileSystemUtil#getAttributes(String)
  */
 @SuppressWarnings("OctalInteger")
 public final class FileAttributes {
+  public static final int DIRECTORY = 0x0001;
+  public static final int SPECIAL = 0x0002;
+  public static final int SYM_LINK = 0x0010;
+  public static final int HIDDEN = 0x0100;
+
+  @MagicConstant(flags = {DIRECTORY, SPECIAL, SYM_LINK, HIDDEN})
+  public @interface FileType { }
+
   public static final int OWNER_READ = 0400;
   public static final int OWNER_WRITE = 0200;
   public static final int OWNER_EXECUTE = 0100;
@@ -34,50 +45,97 @@ public final class FileAttributes {
   public static final int OTHERS_WRITE = 0002;
   public static final int OTHERS_EXECUTE = 0001;
 
-  @MagicConstant(flags = {
-    OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_WRITE, GROUP_EXECUTE, OTHERS_READ, OTHERS_WRITE, OTHERS_EXECUTE
-  })
+  @MagicConstant(flags = {OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_WRITE, GROUP_EXECUTE, OTHERS_READ, OTHERS_WRITE, OTHERS_EXECUTE})
   public @interface Permissions { }
 
-  public final boolean isFile;
-  public final boolean isDirectory;
-  public final boolean isSymlink;
-  public final boolean isSpecial;
 
-  /** In bytes, 0 for symlinks and special files. */
+  /**
+   * {@linkplain #DIRECTORY} and {@linkplain #SPECIAL} bits are mutually exclusive, none of them set means a regular file.<br/>
+   * {@linkplain #SYM_LINK} bit may be set along with above ones (which then denote a type of a link target).<br/>
+   * {@linkplain #HIDDEN} bit may be only set on Windows.
+   */
+  @FileType
+  public final int type;
+
+  /**
+   * In bytes, 0 for special files.<br/>
+   * For symlinks - length of a link target.
+   */
   public final long length;
 
-  /** In milliseconds (note that actual resolution may be less accurate). */
+  /**
+   * In milliseconds (actual resolution depends on a file system and may be less accurate).<br/>
+   * For symlinks - timestamp of a link target.
+   */
   public final long lastModified;
 
-  /** UNIX permission bits (for Windows only OWNER_WRITE matters and OWNER_READ/EXECUTE are always set), or -1 if not supported. */
+  /**
+   * UNIX permission bits (for Windows only OWNER_WRITE matters and OWNER_READ/EXECUTE are always set), or -1 if not supported.<br/>
+   * For symlinks - permissions of a link target.
+   */
   @Permissions
   public final int permissions;
 
-  // todo: hidden flag (?)
 
   public FileAttributes(final boolean isDirectory,
-                        final boolean isSymlink,
                         final boolean isSpecial,
+                        final boolean isSymlink,
+                        final boolean isHidden,
                         final long length,
                         final long lastModified,
-                        final boolean writable) {
-    this(isDirectory, isSymlink, isSpecial, length, lastModified, OWNER_READ | OWNER_EXECUTE | (writable ? OWNER_WRITE : 0));
+                        final boolean isWritable) {
+    this(type(isDirectory, isSpecial, isSymlink, isHidden), length, lastModified, OWNER_READ | OWNER_EXECUTE | (isWritable ? OWNER_WRITE : 0));
   }
 
   public FileAttributes(final boolean isDirectory,
-                        final boolean isSymlink,
                         final boolean isSpecial,
+                        final boolean isSymlink,
                         final long length,
                         final long lastModified,
                         @Permissions final int permissions) {
-    this.isFile = !isDirectory && !isSymlink && !isSpecial;
-    this.isDirectory = isDirectory;
-    this.isSymlink = isSymlink;
-    this.isSpecial = isSpecial;
-    this.length = isSymlink || isSpecial ? 0 : length;
+    this(type(isDirectory, isSpecial, isSymlink, false), length, lastModified, permissions);
+  }
+
+  private FileAttributes(@FileType final int type,
+                         final long length,
+                         final long lastModified,
+                         @Permissions final int permissions) {
+    if (isSet(type, DIRECTORY) && isSet(type, SPECIAL)) {
+      throw new IllegalArgumentException("DIRECTORY and SPECIAL bits cannot be set simultaneously");
+    }
+
+    this.type = type;
+    this.length = length;
     this.lastModified = lastModified;
     this.permissions = permissions;
+  }
+
+  @FileType
+  private static int type(final boolean isDirectory, final boolean isSpecial, final boolean isSymlink, final boolean isHidden) {
+    @FileType int type = 0;
+    if (isDirectory) type |= DIRECTORY;
+    if (isSpecial) type |= SPECIAL;
+    if (isSymlink) type |= SYM_LINK;
+    if (isHidden) type |= HIDDEN;
+    return type;
+  }
+
+  /** Is {@code true} for files and symlinks to files (see {@linkplain #isRegularFile()}). */
+  public boolean isFile() {
+    return notSet(type, DIRECTORY | SPECIAL);
+  }
+
+  /** Is {@code true} for pure regular files only (see {@linkplain #isFile()}). */
+  public boolean isRegularFile() {
+    return notSet(type, DIRECTORY | SPECIAL | SYM_LINK);
+  }
+
+  public boolean isSymLink() {
+    return isSet(type, SYM_LINK);
+  }
+
+  public boolean isWritable() {
+    return permissions == -1 || isSet(permissions, OWNER_WRITE) || isSet(permissions, GROUP_WRITE) || isSet(permissions, OTHERS_WRITE);
   }
 
   @Override
@@ -87,10 +145,7 @@ public final class FileAttributes {
 
     final FileAttributes that = (FileAttributes)o;
 
-    if (isDirectory != that.isDirectory) return false;
-    if (isFile != that.isFile) return false;
-    if (isSpecial != that.isSpecial) return false;
-    if (isSymlink != that.isSymlink) return false;
+    if (type != that.type) return false;
     if (lastModified != that.lastModified) return false;
     if (permissions != that.permissions) return false;
     if (length != that.length) return false;
@@ -100,10 +155,7 @@ public final class FileAttributes {
 
   @Override
   public int hashCode() {
-    int result = (isFile ? 1 : 0);
-    result = 31 * result + (isDirectory ? 1 : 0);
-    result = 31 * result + (isSymlink ? 1 : 0);
-    result = 31 * result + (isSpecial ? 1 : 0);
+    int result = type;
     result = 31 * result + (int)(length ^ (length >>> 32));
     result = 31 * result + (int)(lastModified ^ (lastModified >>> 32));
     result = 31 * result + permissions;
@@ -115,10 +167,10 @@ public final class FileAttributes {
     final StringBuilder sb = StringBuilderSpinAllocator.alloc();
     try {
       sb.append("[type:");
-      if (isFile) sb.append('f');
-      if (isDirectory) sb.append('d');
-      if (isSymlink) sb.append('l');
-      if (isSpecial) sb.append('!');
+      if (isSet(type, DIRECTORY)) sb.append('d');
+      else if (isSet(type, SPECIAL)) sb.append('!');
+      else sb.append('f');
+      if (isSet(type, SYM_LINK)) sb.append('l');
 
       sb.append(" length:").append(length);
 

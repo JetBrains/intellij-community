@@ -2,10 +2,10 @@ package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl;
 import org.jetbrains.jps.model.library.impl.JpsSdkReferenceImpl;
@@ -20,16 +20,29 @@ import org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl;
  */
 public class JpsElementFactoryImpl extends JpsElementFactory {
   @Override
+  public JpsModel createModel() {
+    return new JpsModelImpl(new JpsEventDispatcherBase() {
+      @Override
+      public void fireElementRenamed(@NotNull JpsNamedElement element, @NotNull String oldName, @NotNull String newName) {
+      }
+
+      @Override
+      public void fireElementChanged(@NotNull JpsElement element) {
+      }
+    });
+  }
+
+  @Override
   public <P extends JpsElementProperties> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties) {
     return new JpsModuleImpl(type, name, properties);
   }
 
 
   @Override
-  public <P extends JpsElementProperties> JpsLibrary createLibrary(@NotNull String name,
+  public <P extends JpsElementProperties> JpsTypedLibrary<P> createLibrary(@NotNull String name,
                                                                    @NotNull JpsLibraryType<P> type,
                                                                    @NotNull P properties) {
-    return new JpsLibraryImpl(name, type, properties);
+    return new JpsLibraryImpl<P>(name, type, properties);
   }
 
   @NotNull

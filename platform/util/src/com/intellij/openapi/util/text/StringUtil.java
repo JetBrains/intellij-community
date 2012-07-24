@@ -1163,6 +1163,17 @@ public class StringUtil extends StringUtilRt {
     return join((Iterable<T>)items, f, separator);
   }
 
+  public static String join(@NotNull Iterable<?> items, @NotNull @NonNls String separator) {
+    StringBuilder result = new StringBuilder();
+    for (Object item : items) {
+      result.append(item).append(separator);
+    }
+    if (result.length() > 0) {
+      result.setLength(result.length() - 1);
+    }
+    return result.toString();
+  }
+  
   @NotNull
   public static <T> String join(@NotNull Iterable<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();
@@ -1942,6 +1953,22 @@ public class StringUtil extends StringUtilRt {
     int i = 0;
     while (i < text.length()) {
       i = text.indexOf(c, i);
+      if (i >= 0) {
+        res++;
+        i++;
+      }
+      else {
+        break;
+      }
+    }
+    return res;
+  }
+
+  public static int getOccurrenceCount(@NotNull String text, final String s) {
+    int res = 0;
+    int i = 0;
+    while (i < text.length()) {
+      i = text.indexOf(s, i);
       if (i >= 0) {
         res++;
         i++;

@@ -92,6 +92,10 @@ public abstract class LookAheadLexer extends LexerBase{
     }
   }
 
+  public IElementType replaceCachedType(int index, IElementType token) {
+    return myTypeCache.set(index, token);
+  }
+
   public int getState() {
     int offset = myTokenStart - myLastOffset;
     return myLastState | (offset << 16);

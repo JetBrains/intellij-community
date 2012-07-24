@@ -43,32 +43,32 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
   }
 
   public static final TextAttributesKey PROPERTY_KEY = TextAttributesKey.createTextAttributesKey(
-                                                "PROPERTIES.KEY",
-                                                SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
-                                              );
+    "PROPERTIES.KEY",
+    SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
+  );
 
   public static final TextAttributesKey PROPERTY_VALUE = TextAttributesKey.createTextAttributesKey(
-                                               "PROPERTIES.VALUE",
-                                               SyntaxHighlighterColors.STRING.getDefaultAttributes()
-                                             );
+    "PROPERTIES.VALUE",
+    SyntaxHighlighterColors.STRING.getDefaultAttributes()
+  );
 
   public static final TextAttributesKey PROPERTY_COMMENT = TextAttributesKey.createTextAttributesKey(
-                                                     "PROPERTIES.LINE_COMMENT",
-                                                     SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
-                                                   );
+    "PROPERTIES.LINE_COMMENT",
+    SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
+  );
 
   public static final TextAttributesKey PROPERTY_KEY_VALUE_SEPARATOR = TextAttributesKey.createTextAttributesKey(
-                                                       "PROPERTIES.KEY_VALUE_SEPARATOR",
-                                                       SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes()
-                                                     );
+    "PROPERTIES.KEY_VALUE_SEPARATOR",
+    SyntaxHighlighterColors.OPERATION_SIGN.getDefaultAttributes()
+  );
   public static final TextAttributesKey PROPERTIES_VALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
-                                                       "PROPERTIES.VALID_STRING_ESCAPE",
-                                                       SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
-                                                     );
+    "PROPERTIES.VALID_STRING_ESCAPE",
+    SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
+  );
   public static final TextAttributesKey PROPERTIES_INVALID_STRING_ESCAPE = TextAttributesKey.createTextAttributesKey(
-                                                       "PROPERTIES.INVALID_STRING_ESCAPE",
-                                                       SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes()
-                                                     );
+    "PROPERTIES.INVALID_STRING_ESCAPE",
+    SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes()
+  );
 
   static {
     keys1 = new THashMap<IElementType, TextAttributesKey>();

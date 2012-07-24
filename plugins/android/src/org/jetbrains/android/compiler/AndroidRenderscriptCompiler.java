@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -254,7 +255,7 @@ public class AndroidRenderscriptCompiler implements SourceGeneratingCompiler {
     }
 
     final VirtualFile parent = sourceFile.getParent();
-    if (parent == sourceRoot) {
+    if (Comparing.equal(parent, sourceRoot)) {
       return genFolder.getPath();
     }
 

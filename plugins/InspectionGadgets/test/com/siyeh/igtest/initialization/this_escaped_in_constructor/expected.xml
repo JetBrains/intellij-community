@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>ThisEscapedInConstructorInspection.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'this' reference escaped in object construction</problem_class>
+    <description>Escape of &lt;code&gt;ThisEscapedInConstructorInspection.this&lt;/code&gt; during object construction #loc</description>
+  </problem>
+
+  <problem>
+    <file>ThisEscapedInConstructorInspection.java</file>
+    <line>7</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'this' reference escaped in object construction</problem_class>
+    <description>Escape of &lt;code&gt;this&lt;/code&gt; during object construction #loc</description>
+  </problem>
+
+  <problem>
+    <file>ThisEscapedInConstructorInspection.java</file>
+    <line>12</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'this' reference escaped in object construction</problem_class>
+    <description>Escape of &lt;code&gt;this&lt;/code&gt; during object construction #loc</description>
+  </problem>
+
+  <problem>
+    <file>ThisEscapedInConstructorInspection.java</file>
+    <line>18</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'this' reference escaped in object construction</problem_class>
+    <description>Escape of &lt;code&gt;this&lt;/code&gt; during object construction #loc</description>
+  </problem>
+
+  <problem>
+    <file>ThisEscapedInConstructorInspection.java</file>
+    <line>19</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'this' reference escaped in object construction</problem_class>
+    <description>Escape of &lt;code&gt;this&lt;/code&gt; during object construction #loc</description>
+  </problem>
+
+  <problem>
+    <file>MethodUsers.java</file>
+    <line>9</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'this' reference escaped in object construction</problem_class>
+    <description>Escape of &lt;code&gt;this&lt;/code&gt; during object construction #loc</description>
+  </problem>
+</problems>

@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -178,7 +179,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       final VirtualFile resourceDir = AndroidRootUtil.getResourceDir(myFacet);
 
-      if (gp == resourceDir &&
+      if (Comparing.equal(gp, resourceDir) &&
           ResourceFolderType.VALUES.getName().equals(AndroidCommonUtils.getResourceTypeByDirName(parent.getName()))) {
         myFacet.getLocalResourceManager().invalidateAttributeDefinitions();
       }
@@ -186,7 +187,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       final List<AndroidAutogeneratorMode> modes = new ArrayList<AndroidAutogeneratorMode>();
 
-      if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) && manifestFile == file) {
+      if (AndroidAptCompiler.isToCompileModule(module, myFacet.getConfiguration()) && Comparing.equal(manifestFile, file)) {
         final Manifest manifest = myFacet.getManifest();
         final String aPackage = manifest != null ? manifest.getPackage().getValue() : null;
 
@@ -200,19 +201,19 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
 
       if (file.getFileType() == AndroidIdlFileType.ourFileType) {
         VirtualFile sourceRoot = findSourceRoot(myModule, file);
-        if (sourceRoot != null && AndroidRootUtil.getAidlGenDir(myFacet) != sourceRoot) {
+        if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getAidlGenDir(myFacet), sourceRoot)) {
           modes.add(AndroidAutogeneratorMode.AIDL);
         }
       }
 
       if (file.getFileType() == AndroidRenderscriptFileType.INSTANCE) {
         final VirtualFile sourceRoot = findSourceRoot(myModule, file);
-        if (sourceRoot != null && AndroidRootUtil.getRenderscriptGenDir(myFacet) != sourceRoot) {
+        if (sourceRoot != null && !Comparing.equal(AndroidRootUtil.getRenderscriptGenDir(myFacet), sourceRoot)) {
           modes.add(AndroidAutogeneratorMode.RENDERSCRIPT);
         }
       }
 
-      if (manifestFile == file) {
+      if (Comparing.equal(manifestFile, file)) {
         modes.add(AndroidAutogeneratorMode.BUILDCONFIG);
       }
       return modes;
@@ -223,8 +224,8 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
       if (update instanceof MyUpdate) {
         VirtualFile hisFile = ((MyUpdate)update).myEvent.getFile();
         VirtualFile file = myEvent.getFile();
-        
-        if (hisFile == file) {
+
+        if (Comparing.equal(hisFile, file)) {
           return true;
         }
         

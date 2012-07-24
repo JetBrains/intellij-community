@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,16 +77,21 @@ abstract class ComponentStoreImpl implements IComponentStore {
 
     if (!isSerializable) return;
 
-    ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
-      public void run() {
-        if (component instanceof PersistentStateComponent) {
-          initPersistentComponent((PersistentStateComponent<?>)component, false);
+    try {
+      ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
+        public void run() {
+          if (component instanceof PersistentStateComponent) {
+            initPersistentComponent((PersistentStateComponent<?>)component, false);
+          }
+          else {
+            initJdomExternalizable((JDOMExternalizable)component);
+          }
         }
-        else {
-          initJdomExternalizable((JDOMExternalizable)component);
-        }
-      }
-    });
+      });
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
   }
 
   public boolean isSaving() {
@@ -160,7 +165,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
   private String initJdomExternalizable(@NotNull JDOMExternalizable component) {
     final String componentName = ComponentManagerImpl.getComponentName(component);
 
-    myComponents.put(componentName, component);
+    doAddComponent(componentName, component);
 
     if (optimizeTestLoading()) return componentName;
 
@@ -186,6 +191,14 @@ abstract class ComponentStoreImpl implements IComponentStore {
     validateUnusedMacros(componentName, true);
 
     return componentName;
+  }
+
+  private void doAddComponent(String componentName, Object component) {
+    Object existing = myComponents.get(componentName);
+    if (existing != null && existing != component) {
+      LOG.error("Conflicting component name '" + componentName + "': " + existing.getClass() + " and " + component.getClass());
+    }
+    myComponents.put(componentName, component);
   }
 
   private void loadJdomDefaults(@NotNull final Object component, final String componentName) {
@@ -250,7 +263,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
       roamingManager.setRoamingType(name, roamingTypeFromComponent);
     }
 
-    myComponents.put(name, component);
+    doAddComponent(name, component);
     if (optimizeTestLoading()) return name;
 
     Class<T> stateClass = getComponentStateClass(component);

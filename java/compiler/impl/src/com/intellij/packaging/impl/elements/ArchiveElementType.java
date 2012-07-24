@@ -18,9 +18,9 @@ package com.intellij.packaging.impl.elements;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.CompositePackagingElementType;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.ui.properties.ArchiveElementPropertiesPanel;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
@@ -53,7 +53,7 @@ class ArchiveElementType extends CompositePackagingElementType<ArchivePackagingE
   public PackagingElementPropertiesPanel createElementPropertiesPanel(@NotNull ArchivePackagingElement element,
                                                                                                @NotNull ArtifactEditorContext context) {
     final String name = element.getArchiveFileName();
-    if (name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar")) {
+    if (ArtifactUtil.isArchiveName(name)) {
       return new ArchiveElementPropertiesPanel(element, context);
     }
     return null;

@@ -1,0 +1,15 @@
+<html>
+<body>
+This inspection reports string concatenations where the left literal does not
+end with whitespace and the right literal does not start with whitespace. For example:
+<pre><code>
+  String sql = "SELECT column" +
+               "FROM table";
+</code></pre>
+<!-- tooltip end -->
+<p>
+Use the checkbox below to have this inspection only report when both the left and right side of the concatenation are string literals.
+<p>
+<small>New in 12, Powered by InspectionGadgets</small>
+</body>
+</html>

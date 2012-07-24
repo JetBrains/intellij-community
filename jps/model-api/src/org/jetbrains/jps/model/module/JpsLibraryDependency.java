@@ -1,6 +1,8 @@
 package org.jetbrains.jps.model.module;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 
 /**
@@ -9,4 +11,7 @@ import org.jetbrains.jps.model.library.JpsLibraryReference;
 public interface JpsLibraryDependency extends JpsDependencyElement {
   @NotNull
   JpsLibraryReference getLibraryReference();
+
+  @Nullable
+  JpsLibrary getLibrary();
 }

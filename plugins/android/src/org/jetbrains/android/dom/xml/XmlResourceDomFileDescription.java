@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.dom.xml;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.xml.XmlFile;
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlResourceDomFileDescription extends AndroidResourceDomFileDescription<XmlResourceElement> {
   public XmlResourceDomFileDescription() {
-    super(XmlResourceElement.class, "PreferenceScreen", "xml");
+    super(XmlResourceElement.class, "PreferenceScreen", ResourceType.XML.getName());
   }
 
   @Override

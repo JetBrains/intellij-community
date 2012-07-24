@@ -478,6 +478,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       actionsManager.createPrevOccurenceAction(myRootPanel),
       actionsManager.createNextOccurenceAction(myRootPanel),
       actionsManager.installAutoscrollToSourceHandler(myProject, myTree, new MyAutoScrollToSourceOptionProvider()),
+      createImportToFavorites(),
       actionsManager.createExportToTextFileAction(myTextFileExporter),
       actionsManager.createHelpAction(HELP_ID)
     };
@@ -487,6 +488,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     AnAction action = ActionManager.getInstance().getAction(SHOW_RECENT_FIND_USAGES_ACTION_ID);
     action.registerCustomShortcutSet(action.getShortcutSet(), getComponent());
     return action;
+  }
+
+  private static AnAction createImportToFavorites() {
+    return ActionManager.getInstance().getAction("UsageView.ImportToFavorites");
   }
 
   private AnAction[] createGroupingActions() {

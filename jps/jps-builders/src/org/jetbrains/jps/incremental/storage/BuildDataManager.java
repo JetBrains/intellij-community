@@ -4,11 +4,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Mappings;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.artifacts.ArtifactsBuildData;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.*;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -18,7 +19,7 @@ import java.util.Map;
  *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 7;
+  private static final int VERSION = 8;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_OUTPUTS_STORAGE = "src-out";
   private static final String SRC_TO_FORM_STORAGE = "src-form";
@@ -178,14 +179,16 @@ public class BuildDataManager implements StorageOwner {
     }
   }
 
-  public void closeSourceToOutputStorages(ModuleChunk chunk, boolean testSources) throws IOException {
+  public void closeSourceToOutputStorages(Collection<ModuleChunk> chunks, boolean testSources) throws IOException {
     final Map<String, SourceToOutputMapping> storageMap = testSources? myTestSourceToOutputs : myProductionSourceToOutputs;
     synchronized (mySourceToOutputLock) {
-      for (Module module : chunk.getModules()) {
-        final String moduleName = module.getName().toLowerCase(Locale.US);
-        final SourceToOutputMapping mapping = storageMap.remove(moduleName);
-        if (mapping != null) {
-          mapping.close();
+      for (ModuleChunk chunk : chunks) {
+        for (JpsModule module : chunk.getModules()) {
+          final String moduleName = module.getName().toLowerCase(Locale.US);
+          final SourceToOutputMapping mapping = storageMap.remove(moduleName);
+          if (mapping != null) {
+            mapping.close();
+          }
         }
       }
     }

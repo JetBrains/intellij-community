@@ -14,10 +14,11 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.compiler;
+package org.jetbrains.plugins.groovy.compiler
 
-
-import com.intellij.compiler.CompileServerManager
+import com.intellij.compiler.CompilerConfiguration
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PsiTestUtil
@@ -27,9 +28,22 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  * @author peter
  */
 public abstract class GppCompilerTest extends GroovyCompilerTestCase {
+  String[] oldPatterns
+
   @Override protected void setUp() {
     super.setUp();
     PsiTestUtil.addLibrary myFixture.module, "gpp", TestUtils.absoluteTestDataPath + "/realGroovypp/", "groovy-all-1.8.2.jar", "groovypp-all-0.9.0_1.8.2.jar"
+    CompilerConfigurationImpl conf = CompilerConfiguration.getInstance(project)
+    oldPatterns = conf.resourceFilePatterns
+    conf.addResourceFilePattern("!*.gpp")
+  }
+
+  @Override
+  protected void tearDown() {
+    CompilerConfigurationImpl conf = CompilerConfiguration.getInstance(project)
+    conf.removeResourceFilePatterns()
+    oldPatterns.each { conf.addResourceFilePattern(it) }
+    super.tearDown()
   }
 
   public void testTraitStubs() throws Throwable {
@@ -138,17 +152,12 @@ class A {
 
     @Override
     protected void tearDown() {
-      File systemRoot = CompileServerManager.getInstance().getCompileServerSystemRoot()
+      File systemRoot = BuildManager.getInstance().getBuildSystemDirectory()
       try {
         super.tearDown()
       }
       finally {
-        File[] files = systemRoot.listFiles()
-        if (files != null) {
-          for (File file : files) {
-            FileUtil.delete(file);
-          }
-        }
+        FileUtil.delete(systemRoot);
       }
     }
   }

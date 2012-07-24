@@ -31,6 +31,12 @@ public class JpsModuleSourceRootImpl extends JpsCompositeElementBase<JpsModuleSo
     return myContainer.getChild(TYPED_DATA_KIND).getProperties(type);
   }
 
+  @NotNull
+  @Override
+  public JpsElementProperties getProperties() {
+    return myContainer.getChild(TYPED_DATA_KIND).getProperties();
+  }
+
   @Override
   public <P extends JpsElementProperties> void setProperties(JpsModuleSourceRootType<P> type, P properties) {
     myContainer.getChild(TYPED_DATA_KIND).setProperties(properties);

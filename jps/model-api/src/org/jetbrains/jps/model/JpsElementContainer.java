@@ -14,6 +14,10 @@ public interface JpsElementContainer {
   T setChild(@NotNull K kind);
 
   @NotNull
+  <T extends JpsElement, K extends JpsElementKind<T>&JpsElementCreator<T>>
+  T getOrSetChild(@NotNull K kind);
+
+  @NotNull
   <T extends JpsElement, P, K extends JpsElementKind<T>&JpsElementParameterizedCreator<T, P>>
   T setChild(@NotNull K kind, @NotNull P param);
 

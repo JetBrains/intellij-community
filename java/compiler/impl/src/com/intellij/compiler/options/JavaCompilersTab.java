@@ -15,18 +15,17 @@
  */
 package com.intellij.compiler.options;
 
-import com.intellij.compiler.CompileServerManager;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -142,7 +141,6 @@ public class JavaCompilersTab implements SearchableConfigurable, Configurable.No
 
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        CompileServerManager.getInstance().sendReloadRequest(myProject);
         BuildManager.getInstance().clearState(myProject);
       }
     });

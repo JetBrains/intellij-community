@@ -40,7 +40,7 @@ public class ResourceRegistrarImpl implements ResourceRegistrar {
     addStdResource(resource, null, fileName, klass);
   }
 
-  public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, Class klass, @Nullable ClassLoader classLoader) {
+  public void addStdResource(@NonNls String resource, @NonNls String version, @NonNls String fileName, @Nullable Class klass, @Nullable ClassLoader classLoader) {
     final Map<String, ExternalResourceManagerImpl.Resource> map = ExternalResourceManagerImpl.getMap(myResources, version, true);
     assert map != null;
     ExternalResourceManagerImpl.Resource res = new ExternalResourceManagerImpl.Resource();

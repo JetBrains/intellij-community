@@ -26,14 +26,18 @@ import com.intellij.xml.DefaultXmlExtension;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidResourceUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class AndroidXmlExtension extends DefaultXmlExtension {
+  @Nullable
   @Override
   public TagNameReference createTagNameReference(ASTNode nameElement, boolean startTagFlag) {
-    return new AndroidClassTagNameReference(nameElement, startTagFlag);
+    return AndroidXmlReferenceProvider.areReferencesProvidedByReferenceProvider(nameElement)
+           ? null
+           : new AndroidClassTagNameReference(nameElement, startTagFlag);
   }
 
   @Override

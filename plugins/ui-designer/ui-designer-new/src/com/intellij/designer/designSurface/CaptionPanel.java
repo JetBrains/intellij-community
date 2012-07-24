@@ -209,6 +209,14 @@ public class CaptionPanel extends JLayeredPane implements DataProvider, DeletePr
   public void update() {
     List<RadComponent> selection = myMainArea.getSelection();
     if (selection.size() != 1) {
+      if (myCaption != null) {
+        myCaption = null;
+        myRootComponent.setLayout(null);
+        myRootChildren = Collections.emptyList();
+        myArea.deselectAll();
+        revalidate();
+        repaint();
+      }
       return;
     }
 

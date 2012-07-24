@@ -289,7 +289,7 @@ public class SvnHistoryProvider
         myException = new VcsException("File " + myFile.getPath() + " is not under Subversion control");
         return;
       }
-      myUrl = myInfo.getURL().toString();
+      myUrl = myInfo.getURL().toDecodedString();
     }
 
     @Override

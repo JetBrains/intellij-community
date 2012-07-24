@@ -176,6 +176,7 @@ public class RenameWrongRefFix implements IntentionAction {
         }
       }
 
+      items.add(LookupElementBuilder.create(myRefExpr.getReferenceName()));
       MyScopeProcessor processor = new MyScopeProcessor(myRefExpr);
       myRefExpr.processVariants(processor);
       PsiElement[] variants = processor.getVariants();

@@ -357,7 +357,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
           if (!manager.isInProject(overriding)) continue;
           if (!methodQuickFixSuggested
               && annotated.isDeclaredNotNull
-              && !nullableManager.isNotNull(overriding, false)) {
+              && !nullableManager.isNotNull(overriding, false) 
+              && (nullableManager.isNullable(overriding, false) || !nullableManager.isNullable(overriding, true))) {
             method.getNameIdentifier(); //load tree
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());
             final String defaultNotNull = nullableManager.getDefaultNotNull();

@@ -236,8 +236,8 @@ public class CreateResourceFileAction extends CreateElementActionBase {
 
     @Override
     protected void doOKAction() {
-      super.doOKAction();
       myAction.myRootElement = getRootElement();
+      super.doOKAction();
     }
   }
 }

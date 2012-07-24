@@ -16,10 +16,7 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.DebuggerInvocationUtil;
-import com.intellij.debugger.DebuggerManagerEx;
-import com.intellij.debugger.PositionManager;
+import com.intellij.debugger.*;
 import com.intellij.debugger.actions.DebuggerActions;
 import com.intellij.debugger.apiAdapters.ConnectionServiceWrapper;
 import com.intellij.debugger.apiAdapters.TransportServiceWrapper;
@@ -46,13 +43,8 @@ import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.CommandLineState;
 import com.intellij.execution.configurations.RemoteConnection;
-import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.filters.ExceptionFilters;
-import com.intellij.execution.filters.Filter;
-import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
@@ -764,7 +756,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   protected void closeProcess(boolean closedByUser) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    
+
     if (myState.compareAndSet(STATE_INITIAL, STATE_DETACHING) || myState.compareAndSet(STATE_ATTACHED, STATE_DETACHING)) {
       try {
         getManagerThread().close();
@@ -925,7 +917,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
       myEvaluationDispatcher.getMulticaster().evaluationStarted(suspendContext);
       beforeMethodInvocation(suspendContext, method);
-      
+
       Object resumeData = null;
       try {
         for (final SuspendContextImpl suspendingContext : suspendingContexts) {
@@ -1633,33 +1625,37 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   @Nullable
   public ExecutionResult attachVirtualMachine(final Executor executor,
-                                                        final ProgramRunner runner,
-                                                        final DebuggerSession session,
-                                                        final RunProfileState state,
-                                                        final RemoteConnection remoteConnection,
-                                                        boolean pollConnection) throws ExecutionException {
+                                              final ProgramRunner runner,
+                                              final DebuggerSession session,
+                                              final RunProfileState state,
+                                              final RemoteConnection remoteConnection,
+                                              boolean pollConnection) throws ExecutionException {
+    return attachVirtualMachine(new DefaultDebugEnvironment(myProject,
+                                                        executor,
+                                                        runner,
+                                                        state.getRunnerSettings().getRunProfile(),
+                                                        state,
+                                                        remoteConnection,
+                                                        pollConnection),
+                                session);
+  }
+
+  @Nullable
+  public ExecutionResult attachVirtualMachine(final DebugEnvironment environment,
+                                              final DebuggerSession session) throws ExecutionException {
     mySession = session;
     myWaitFor.down();
 
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(isInInitialState());
 
-    myConnection = remoteConnection;
+    myConnection = environment.getRemoteConnection();
 
-    createVirtualMachine(state, pollConnection);
+    createVirtualMachine(environment.getSessionName(), environment.isPollConnection());
 
     try {
       synchronized (myProcessListeners) {
-        if (state instanceof CommandLineState) {
-          final TextConsoleBuilder consoleBuilder = ((CommandLineState)state).getConsoleBuilder();
-          if (consoleBuilder != null) {
-            List<Filter> filters = ExceptionFilters.getFilters(session.getSearchScope());
-            for (Filter filter : filters) {
-              consoleBuilder.addFilter(filter);
-            }
-          }
-        }
-        myExecutionResult = state.execute(executor, runner);
+        myExecutionResult = environment.createExecutionResult();
         if (myExecutionResult == null) {
           fail();
           return null;
@@ -1721,7 +1717,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     stop(false);
   }
 
-  private void createVirtualMachine(final RunProfileState state, final boolean pollConnection) {
+  private void createVirtualMachine(final String sessionName, final boolean pollConnection) {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
 
@@ -1763,14 +1759,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
                   // propagate exception only in case we succeded to obtain execution result,
                   // otherwise if the error is induced by the fact that there is nothing to debug, and there is no need to show
                   // this problem to the user
-                  final RunProfile runProfile = state.getRunnerSettings().getRunProfile();
-                  if (runProfile != null) {
-                    SwingUtilities.invokeLater(new Runnable() {
-                      public void run() {
-                        ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, runProfile, e);
-                      }
-                    });
-                  }
+                  SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                      ExecutionUtil.handleExecutionError(myProject, ToolWindowId.DEBUG, sessionName, e);
+                    }
+                  });
                 }
                 break;
               }

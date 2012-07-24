@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -32,7 +33,7 @@ public class VFSForAnnotationListener extends VirtualFileAdapter {
   }
 
   public void propertyChanged(VirtualFilePropertyEvent event) {
-    if (myFile != event.getFile()) return;
+    if (!Comparing.equal(myFile, event.getFile())) return;
     if (! event.isFromRefresh()) return;
 
     if (event.getPropertyName().equals(VirtualFile.PROP_WRITABLE)) {
@@ -43,7 +44,7 @@ public class VFSForAnnotationListener extends VirtualFileAdapter {
   }
 
   public void contentsChanged(VirtualFileEvent event) {
-    if (myFile != event.getFile()) return;
+    if (!Comparing.equal(myFile, event.getFile())) return;
     if (! event.isFromRefresh()) return;
     if (! myFile.isWritable()) {
       fireAnnotationChanged();

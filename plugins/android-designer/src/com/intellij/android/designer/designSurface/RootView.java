@@ -24,26 +24,16 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class RootView extends JComponent {
-  private int myX;
-  private int myY;
-  private BufferedImage myImage;
+public class RootView extends com.intellij.designer.designSurface.RootView {
   private List<EmptyRegion> myEmptyRegions;
 
-  public RootView(BufferedImage image, int x, int y) {
-    myX = x;
-    myY = y;
-    setImage(image);
-  }
-
-  public BufferedImage getImage() {
-    return myImage;
+  public RootView(int x, int y, BufferedImage image) {
+    super(x, y, image);
   }
 
   public void setImage(BufferedImage image) {
-    myImage = image;
+    super.setImage(image);
     myEmptyRegions = new ArrayList<EmptyRegion>();
-    setBounds(myX, myY, image.getWidth(), image.getHeight());
   }
 
   public void addEmptyRegion(int x, int y, int width, int height) {
@@ -61,7 +51,6 @@ public class RootView extends JComponent {
   @Override
   public void paintComponent(Graphics g) {
     super.paintComponent(g);
-    g.drawImage(myImage, 0, 0, null);
 
     for (EmptyRegion r : myEmptyRegions) {
       g.setColor(r.myColor);

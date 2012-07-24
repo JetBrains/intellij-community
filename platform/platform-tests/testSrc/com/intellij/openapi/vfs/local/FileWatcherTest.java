@@ -19,12 +19,13 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -36,13 +37,15 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 public class FileWatcherTest extends PlatformLangTestCase {
-  private static final int NATIVE_PROCESS_DELAY = 750;  // time for events to be caught by native watcher and passed to watcher thread
+  private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
+  private static final int NATIVE_PROCESS_DELAY = 60000;  // time to wait for a native watcher response
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
 
@@ -50,25 +53,27 @@ public class FileWatcherTest extends PlatformLangTestCase {
   private LocalFileSystem myFileSystem;
   private MessageBusConnection myConnection;
   private volatile boolean myAccept = false;
-  private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private Alarm myAlarm;
   private final Runnable myNotifier = new Runnable() {
     @Override
     public void run() {
+      LOG.debug("-- (event, expected=" + myAccept + ")");
       if (!myAccept) return;
-      synchronized (myAlarm) {
-        myAlarm.cancelAllRequests();
-        myAlarm.addRequest(new Runnable() {
-          @Override
-          public void run() {
-            synchronized (myWaiter) {
-              myWaiter.notifyAll();
-            }
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          myAccept = false;
+          LOG.debug("** waiting finished");
+          synchronized (myWaiter) {
+            myWaiter.notifyAll();
           }
-        }, NATIVE_PROCESS_DELAY);
-      }
+        }
+      }, INTER_RESPONSE_DELAY);
     }
   };
   private final Object myWaiter = new Object();
+  private int myTimeout = NATIVE_PROCESS_DELAY;
   private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
 
   @Override
@@ -77,8 +82,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
     super.setUp();
 
-    Disposer.register(getProject(), myAlarm);
-
+    myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, getProject());
     myWatcher = FileWatcher.getInstance();
     assertNotNull(myWatcher);
     assertFalse(myWatcher.isOperational());
@@ -110,6 +114,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     try {
       myConnection.disconnect();
       myWatcher.shutdown();
+      assertFalse(myWatcher.isOperational());
     }
     finally {
       myFileSystem = null;
@@ -126,13 +131,16 @@ public class FileWatcherTest extends PlatformLangTestCase {
     refresh(file);
     final LocalFileSystem.WatchRequest request = watch(file);
     try {
-      FileUtil.writeToFile(file, "new content");
+      myAccept = true;
+      writeToFile(file, "new content");
       assertEvent(VFileContentChangeEvent.class, file.getAbsolutePath());
 
+      myAccept = true;
       FileUtil.delete(file);
       assertEvent(VFileDeleteEvent.class, file.getAbsolutePath());
 
-      FileUtil.writeToFile(file, "re-creation");
+      myAccept = true;
+      writeToFile(file, "re-creation");
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
     }
     finally {
@@ -141,9 +149,25 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
+  private static void writeToFile(File file, String text) throws IOException {
+    //try {
+    //  Thread.sleep(1000);
+    //}
+    //catch (InterruptedException e) {
+    //  LOG.error(e);
+    //}
+    FileUtil.writeToFile(file, text);
+    //try {
+    //  Thread.sleep(1000);
+    //}
+    //catch (InterruptedException e) {
+    //  LOG.error(e);
+    //}
+  }
+
   public void testNonCanonicallyNamedFileRoot() throws Exception {
     if (SystemInfo.isFileSystemCaseSensitive) {
-      System.out.println("Ignored: case-insensitive FS required");
+      System.err.println("Ignored: case-insensitive FS required");
       return;
     }
 
@@ -153,13 +177,16 @@ public class FileWatcherTest extends PlatformLangTestCase {
     final String watchRoot = file.getAbsolutePath().toUpperCase(Locale.US);
     final LocalFileSystem.WatchRequest request = watch(new File(watchRoot));
     try {
-      FileUtil.writeToFile(file, "new content");
+      myAccept = true;
+      writeToFile(file, "new content");
       assertEvent(VFileContentChangeEvent.class, file.getAbsolutePath());
 
+      myAccept = true;
       FileUtil.delete(file);
       assertEvent(VFileDeleteEvent.class, file.getAbsolutePath());
 
-      FileUtil.writeToFile(file, "re-creation");
+      myAccept = true;
+      writeToFile(file, "re-creation");
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
     }
     finally {
@@ -174,20 +201,25 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
     final LocalFileSystem.WatchRequest request = watch(topDir);
     try {
+      myAccept = true;
       final File subDir = FileUtil.createTempDirectory(topDir, "sub.", null);
       assertEvent(VFileCreateEvent.class, subDir.getAbsolutePath());
       refresh(subDir);
 
+      myAccept = true;
       final File file = FileUtil.createTempFile(subDir, "test.", ".txt", true, false);
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
 
-      FileUtil.writeToFile(file, "new content");
+      myAccept = true;
+      writeToFile(file, "new content");
       assertEvent(VFileContentChangeEvent.class, file.getAbsolutePath());
 
+      myAccept = true;
       FileUtil.delete(file);
       assertEvent(VFileDeleteEvent.class, file.getAbsolutePath());
 
-      FileUtil.writeToFile(file, "re-creation");
+      myAccept = true;
+      writeToFile(file, "re-creation");
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
     }
     finally {
@@ -205,11 +237,19 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
     final LocalFileSystem.WatchRequest request = watch(topDir, false);
     try {
-      FileUtil.writeToFile(watchedFile, "new content");
+      myAccept = true;
+      writeToFile(watchedFile, "new content");
       assertEvent(VFileContentChangeEvent.class, watchedFile.getAbsolutePath());
 
-      FileUtil.writeToFile(unwatchedFile, "new content");
-      assertEvent(VFileEvent.class);
+      myAccept = true;
+      try {
+        myTimeout = 10 * INTER_RESPONSE_DELAY;
+        writeToFile(unwatchedFile, "new content");
+        assertEvent(VFileEvent.class);
+      }
+      finally {
+        myTimeout = NATIVE_PROCESS_DELAY;
+      }
     }
     finally {
       unwatch(request);
@@ -230,9 +270,10 @@ public class FileWatcherTest extends PlatformLangTestCase {
     final LocalFileSystem.WatchRequest topRequest = watch(topDir, false);
     final LocalFileSystem.WatchRequest subRequest = watch(sub2Dir);
     try {
-      FileUtil.writeToFile(watchedFile1, "new content");
-      FileUtil.writeToFile(watchedFile2, "new content");
-      FileUtil.writeToFile(unwatchedFile, "new content");
+      myAccept = true;
+      writeToFile(watchedFile1, "new content");
+      writeToFile(watchedFile2, "new content");
+      writeToFile(unwatchedFile, "new content");
       assertEvent(VFileContentChangeEvent.class, watchedFile1.getAbsolutePath(), watchedFile2.getAbsolutePath());
     }
     finally {
@@ -249,11 +290,13 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
     final LocalFileSystem.WatchRequest request = watch(subDir);
     try {
+      myAccept = true;
       assertTrue(subDir.toString(), subDir.mkdir());
       assertEvent(VFileCreateEvent.class, subDir.getAbsolutePath());
       refresh(subDir);
 
-      FileUtil.writeToFile(file, "new content");
+      myAccept = true;
+      writeToFile(file, "new content");
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
     }
     finally {
@@ -264,45 +307,49 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   public void testDirectoryOverlapping() throws Exception {
     final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File file1 = FileUtil.createTempFile(topDir, "file1.", ".txt", true, false);
+    final File fileInTopDir = FileUtil.createTempFile(topDir, "file1.", ".txt", true, false);
     final File subDir = FileUtil.createTempDirectory(topDir, "sub.", null);
-    final File file2 = FileUtil.createTempFile(subDir, "file2.", ".txt", true, false);
+    final File fileInSubDir = FileUtil.createTempFile(subDir, "file2.", ".txt", true, false);
     final File sideDir = FileUtil.createTempDirectory("side.", null);
-    final File file3 = FileUtil.createTempFile(sideDir, "file3.", ".txt", true, false);
+    final File fileInSideDir = FileUtil.createTempFile(sideDir, "file3.", ".txt", true, false);
     refresh(topDir);
     refresh(sideDir);
 
-    final LocalFileSystem.WatchRequest request1 = watch(subDir);
-    final LocalFileSystem.WatchRequest request2 = watch(sideDir);
+    final LocalFileSystem.WatchRequest requestForSubDir = watch(subDir);
+    final LocalFileSystem.WatchRequest requestForSideDir = watch(sideDir);
     try {
-      FileUtil.writeToFile(file1, "new content");
-      FileUtil.writeToFile(file2, "new content");
-      FileUtil.writeToFile(file3, "new content");
-      assertEvent(VFileContentChangeEvent.class, file2.getAbsolutePath(), file3.getAbsolutePath());
+      myAccept = true;
+      writeToFile(fileInTopDir, "new content");
+      writeToFile(fileInSubDir, "new content");
+      writeToFile(fileInSideDir, "new content");
+      assertEvent(VFileContentChangeEvent.class, fileInSubDir.getAbsolutePath(), fileInSideDir.getAbsolutePath());
 
-      final LocalFileSystem.WatchRequest request3 = watch(topDir);
+      final LocalFileSystem.WatchRequest requestForTopDir = watch(topDir);
       try {
-        FileUtil.writeToFile(file1, "newer content");
-        FileUtil.writeToFile(file2, "newer content");
-        FileUtil.writeToFile(file3, "newer content");
-        assertEvent(VFileContentChangeEvent.class, file1.getAbsolutePath(), file2.getAbsolutePath(), file3.getAbsolutePath());
+        myAccept = true;
+        writeToFile(fileInTopDir, "newer content");
+        writeToFile(fileInSubDir, "newer content");
+        writeToFile(fileInSideDir, "newer content");
+        assertEvent(VFileContentChangeEvent.class, fileInTopDir.getAbsolutePath(), fileInSubDir.getAbsolutePath(), fileInSideDir.getAbsolutePath());
       }
       finally {
-        unwatch(request3);
+        unwatch(requestForTopDir);
       }
 
-      FileUtil.writeToFile(file1, "newest content");
-      FileUtil.writeToFile(file2, "newest content");
-      FileUtil.writeToFile(file3, "newest content");
-      assertEvent(VFileContentChangeEvent.class, file2.getAbsolutePath(), file3.getAbsolutePath());
+      myAccept = true;
+      writeToFile(fileInTopDir, "newest content");
+      writeToFile(fileInSubDir, "newest content");
+      writeToFile(fileInSideDir, "newest content");
+      assertEvent(VFileContentChangeEvent.class, fileInSubDir.getAbsolutePath(), fileInSideDir.getAbsolutePath());
 
-      FileUtil.delete(file1);
-      FileUtil.delete(file2);
-      FileUtil.delete(file3);
-      assertEvent(VFileDeleteEvent.class, file1.getAbsolutePath(), file2.getAbsolutePath(), file3.getAbsolutePath());
+      myAccept = true;
+      FileUtil.delete(fileInTopDir);
+      FileUtil.delete(fileInSubDir);
+      FileUtil.delete(fileInSideDir);
+      assertEvent(VFileDeleteEvent.class, fileInTopDir.getAbsolutePath(), fileInSubDir.getAbsolutePath(), fileInSideDir.getAbsolutePath());
     }
     finally {
-      unwatch(request1, request2);
+      unwatch(requestForSubDir, requestForSideDir);
       delete(topDir);
     }
   }
@@ -364,9 +411,9 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 */
 
-  public void _testSubst() throws Exception {
+  public void testSubst() throws Exception {
     if (!SystemInfo.isWindows) {
-      System.out.println("Ignored: Windows required");
+      System.err.println("Ignored: Windows required");
       return;
     }
 
@@ -391,8 +438,11 @@ public class FileWatcherTest extends PlatformLangTestCase {
     final int rv = new GeneralCommandLine("subst", subst + ":", targetDir.getAbsolutePath()).createProcess().waitFor();
     assertEquals(0, rv);
 
-    final String substRoot = (subst + ":\\").toUpperCase(Locale.US);
+    final String substRoot = (subst + ":").toUpperCase(Locale.US);
     VirtualDirectoryImpl.allowRootAccess(substRoot);
+
+    final VirtualFile vfsRoot = myFileSystem.findFileByPath(substRoot);
+    assertNotNull(substRoot, vfsRoot);
 
     try {
       final File substDir = new File(substRoot, subDir.getName());
@@ -402,11 +452,13 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
       final LocalFileSystem.WatchRequest request = watch(substDir);
       try {
-        FileUtil.writeToFile(file, "new content");
+        myAccept = true;
+        writeToFile(file, "new content");
         assertEvent(VFileContentChangeEvent.class, substFile.getAbsolutePath());
 
         final LocalFileSystem.WatchRequest request2 = watch(targetDir);
         try {
+          myAccept = true;
           FileUtil.delete(file);
           assertEvent(VFileDeleteEvent.class, file.getAbsolutePath(), substFile.getAbsolutePath());
         }
@@ -414,7 +466,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
           unwatch(request2);
         }
 
-        FileUtil.writeToFile(file, "re-creation");
+        myAccept = true;
+        writeToFile(file, "re-creation");
         assertEvent(VFileCreateEvent.class, substFile.getAbsolutePath());
       }
       finally {
@@ -424,56 +477,38 @@ public class FileWatcherTest extends PlatformLangTestCase {
     finally {
       delete(targetDir);
       new GeneralCommandLine("subst", subst + ":", "/d").createProcess().waitFor();
+      ((NewVirtualFile)vfsRoot).markDirty();
       myFileSystem.refresh(false);
       VirtualDirectoryImpl.disallowRootAccess(substRoot);
     }
   }
 
 
-  private List<VFileEvent> getEvents() throws InterruptedException {
-    myAccept = true;
-    try {
-      waitForResponse();
-      myFileSystem.refresh(false);
-      final ArrayList<VFileEvent> result = new ArrayList<VFileEvent>(myEvents);
-      myEvents.clear();
-      return result;
-    }
-    finally {
-      myAccept = false;
-    }
-  }
-
-  private void waitForResponse() throws InterruptedException {
-    synchronized (myWaiter) {
-      //noinspection WaitNotInLoop
-      myWaiter.wait(NATIVE_PROCESS_DELAY);
-    }
-  }
-
-  private void clearEvents() {
-    myFileSystem.refresh(false);
-    myEvents.clear();
-  }
-
   @NotNull
-  private LocalFileSystem.WatchRequest watch(final File watchFile) throws InterruptedException {
+  private LocalFileSystem.WatchRequest watch(final File watchFile) {
     return watch(watchFile, true);
   }
 
   @NotNull
-  private LocalFileSystem.WatchRequest watch(final File watchFile, final boolean recursive) throws InterruptedException {
-    final LocalFileSystem.WatchRequest request = myFileSystem.addRootToWatch(watchFile.getAbsolutePath(), recursive);
-    assertNotNull(request);
-    waitForResponse();
-    clearEvents();
-    return request;
+  private LocalFileSystem.WatchRequest watch(final File watchFile, final boolean recursive) {
+    final Ref<LocalFileSystem.WatchRequest> request = Ref.create();
+    getEvents(new Runnable() {
+      @Override
+      public void run() {
+        request.set(myFileSystem.addRootToWatch(watchFile.getAbsolutePath(), recursive));
+      }
+    });
+    assertFalse(request.isNull());
+    return request.get();
   }
 
-  private void unwatch(final LocalFileSystem.WatchRequest... requests) throws InterruptedException {
-    myFileSystem.removeWatchedRoots(Arrays.asList(requests));
-    waitForResponse();
-    clearEvents();
+  private void unwatch(final LocalFileSystem.WatchRequest... requests) {
+    getEvents(new Runnable() {
+      @Override
+      public void run() {
+        myFileSystem.removeWatchedRoots(Arrays.asList(requests));
+      }
+    });
   }
 
   private VirtualFile refresh(final File file) {
@@ -505,8 +540,8 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
-  private void assertEvent(final Class<? extends VFileEvent> type, final String... paths) throws InterruptedException {
-    final List<VFileEvent> events = getEvents();
+  private void assertEvent(final Class<? extends VFileEvent> type, final String... paths) {
+    final List<VFileEvent> events = getEvents(null);
     assertEquals(events.toString(), paths.length, events.size());
 
     final Set<String> pathSet = ContainerUtil.map2Set(paths, new Function<String, String>() {
@@ -524,5 +559,31 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
       assertTrue(eventFile + " not in " + Arrays.toString(paths), pathSet.remove(eventFile.getPath()));
     }
+  }
+
+  private List<VFileEvent> getEvents(@Nullable final Runnable action) {
+    LOG.debug("** waiting...");
+    myAccept = true;
+
+    if (action != null) {
+      action.run();
+    }
+
+    int timeout = myTimeout;
+    synchronized (myWaiter) {
+      try {
+        //noinspection WaitNotInLoop
+        myWaiter.wait(timeout);
+      }
+      catch (InterruptedException e) {
+        LOG.warn(e);
+      }
+    }
+
+    myFileSystem.refresh(false);
+    final ArrayList<VFileEvent> result = new ArrayList<VFileEvent>(myEvents);
+    myEvents.clear();
+    LOG.debug("** events: " + result.size());
+    return result;
   }
 }

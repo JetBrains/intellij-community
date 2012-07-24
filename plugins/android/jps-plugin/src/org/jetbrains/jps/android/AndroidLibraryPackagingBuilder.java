@@ -4,14 +4,15 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.incremental.BuilderCategory;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ModuleLevelBuilder;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,9 +46,9 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
     boolean success = true;
     boolean doneSomething = false;
 
-    for (Module module : chunk.getModules()) {
-      final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-      if (facet == null || !facet.isLibrary()) {
+    for (JpsModule module : chunk.getModules()) {
+      final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+      if (extension == null || !extension.isLibrary()) {
         continue;
       }
 

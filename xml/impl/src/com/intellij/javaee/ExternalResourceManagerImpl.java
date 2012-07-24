@@ -57,6 +57,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls public static final String J2EE_1_2 = "http://java.sun.com/j2ee/dtds/";
   @NonNls public static final String J2EE_NS = "http://java.sun.com/xml/ns/j2ee/";
   @NonNls public static final String JAVAEE_NS = "http://java.sun.com/xml/ns/javaee/";
+  private static final String CATALOG_PROPERTIES_ELEMENT = "CATALOG_PROPERTIES";
 
 
   private final Map<String, Map<String, String>> myResources = new HashMap<String, Map<String, String>>();
@@ -74,6 +75,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   };
 
   private String myDefaultHtmlDoctype = Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
+
+  private String myCatalogPropertiesFile;
+  private XMLCatalogManager myCatalogManager;
+
 
   protected Map<String, Map<String, Resource>> computeStdResources() {
     ResourceRegistrarImpl registrar = new ResourceRegistrarImpl();
@@ -140,6 +145,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     if (result == null) {
       result = getStdResource(url, version);
     }
+//    getCatalogManager().getCatalog().resolveURI()
     if (result == null) {
       result = url;
     }
@@ -349,8 +355,12 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
 
     Element child = element.getChild(HTML_DEFAULT_DOCTYPE_ELEMENT);
-    if (child != null && child.getText() != null) {
+    if (child != null) {
       myDefaultHtmlDoctype = child.getText();
+    }
+    Element catalogElement = element.getChild(CATALOG_PROPERTIES_ELEMENT);
+    if (catalogElement != null) {
+      myCatalogPropertiesFile = catalogElement.getTextTrim();
     }
   }
 
@@ -380,7 +390,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
       e.setText(myDefaultHtmlDoctype);
       element.addContent(e);
     }
-
+    if (myCatalogPropertiesFile != null) {
+      Element properties = new Element(CATALOG_PROPERTIES_ELEMENT);
+      properties.setText(myCatalogPropertiesFile);
+      element.addContent(properties);
+    }
     final ReplacePathToMacroMap macroReplacements = new ReplacePathToMacroMap();
     PathMacrosImpl.getInstanceEx().addMacroReplacements(macroReplacements);
     macroReplacements.substitute(element, SystemInfo.isFileSystemCaseSensitive);
@@ -421,6 +435,25 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @Override
   public void setDefaultHtmlDoctype(@NotNull String defaultHtmlDoctype, @NotNull Project project) {
     getProjectResources(project).setDefaultHtmlDoctype(defaultHtmlDoctype);
+  }
+
+  @Override
+  public String getCatalogPropertiesFile() {
+    return myCatalogPropertiesFile;
+  }
+
+  @Override
+  public void setCatalogPropertiesFile(String filePath) {
+    myCatalogManager = null;
+    myCatalogPropertiesFile = filePath;
+  }
+
+  @Nullable
+  private XMLCatalogManager getCatalogManager() {
+    if (myCatalogManager == null && myCatalogPropertiesFile != null) {
+      myCatalogManager = new XMLCatalogManager(myCatalogPropertiesFile);
+    }
+    return myCatalogManager;
   }
 
   private void setDefaultHtmlDoctype(String defaultHtmlDoctype) {

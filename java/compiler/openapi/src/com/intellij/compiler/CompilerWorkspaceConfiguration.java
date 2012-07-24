@@ -54,9 +54,6 @@ public class CompilerWorkspaceConfiguration implements PersistentStateComponent<
     return USE_COMPILE_SERVER;
   }
 
-  public static boolean useServerlessOutOfProcessBuild() {
-    return true/*!Registry.is("compiler.out-of-process.as-server")*/;
-  }
   public boolean allowAutoMakeWhileRunningApplication() {
     return false;/*ALLOW_AUTOMAKE_WHILE_RUNNING_APPLICATION*/
   }

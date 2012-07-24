@@ -2,8 +2,8 @@
 <body>
 <font face="verdana" size="-1">
 This inspection reports any instances of hardcoded String literals.  Hardcoded string literals are probably errors in
-an internationalized environment.<br>
-  This inspection doesn't report instances of empty strings and strings consisting of only whitespace.
+an internationalized environment. This inspection won't report empty strings and strings consisting of only whitespace.
+<!-- tooltip end -->
 <p>
 The checkboxes below may be used to further specialize whether this inspection should report
 strings in:
@@ -16,12 +16,9 @@ strings in:
   <li>literals with value of legal and existing property key <b><font color="#000080">bundle.getString(<font color="#008000">"authentication.failed"</font>);</font></b></li>
   </ul>
 
-  There is a quickfix provided that transforms
-  Java code string literal
-  into the <b><font color="#000080">java.util.ResourceBundle.getString()</font></b>
+  There is a quickfix provided that transforms a Java code string literal
+  into a <b><font color="#000080">java.util.ResourceBundle.getString()</font></b>
   method call.
-  <br>
-
 </font>
 </body>
 </html>

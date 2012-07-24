@@ -497,6 +497,7 @@ public class HighlightMethodUtil {
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromSuperFix(methodCall));
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateConstructorFromThisFix(methodCall));
     QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreatePropertyFromUsageFix(methodCall));
+    QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, new CreateGetterSetterPropertyFromUsageFix(methodCall));
     CandidateInfo[] methodCandidates = resolveHelper.getReferencedMethodCandidates(methodCall, false);
     CastMethodArgumentFix.REGISTRAR.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange);
@@ -1279,19 +1280,21 @@ public class HighlightMethodUtil {
           String toolTip = createMismatchedArgumentsHtmlTooltip(result, list);
           PsiElement infoElement = list.getTextLength() > 0 ? list : constructorCall;
           HighlightInfo info = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, infoElement, description, toolTip);
-          QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallFix(constructorCall));
-          if (classReference != null) {
-            ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(infoElement));
-            ChangeMethodSignatureFromUsageFix.registerIntentions(results, list, info, null);
-            ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);
-            ConvertDoubleToFloatFix.registerIntentions(results, list, info, null);
-            PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
-            ChangeParameterClassFix.registerQuickFixActions(constructorCall, list, info);
-            QuickFixAction.registerQuickFixAction(info, getFixRange(list), new SurroundWithArrayFix(constructorCall));
+          if (info != null) {
+            QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), new CreateConstructorFromCallFix(constructorCall));
+            if (classReference != null) {
+              ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(infoElement));
+              ChangeMethodSignatureFromUsageFix.registerIntentions(results, list, info, null);
+              ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);
+              ConvertDoubleToFloatFix.registerIntentions(results, list, info, null);
+              PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
+              ChangeParameterClassFix.registerQuickFixActions(constructorCall, list, info);
+              QuickFixAction.registerQuickFixAction(info, getFixRange(list), new SurroundWithArrayFix(constructorCall));
+            }
+            info.navigationShift = +1;
+            holder.add(info);
+            ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);
           }
-          info.navigationShift = +1;
-          holder.add(info);
-          ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);
         }
         else {
           HighlightInfo highlightInfo;

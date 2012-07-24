@@ -97,7 +97,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     final Ref<Boolean> isSuccess = Ref.create(Boolean.TRUE);
     final Set<String> affectedPaths = new HashSet<String>();
     try {
-      if (DumbService.getInstance(myProject).isDumb()) {
+      if (isDumbMode()) {
         // do not wait until dumb mode finishes
         isSuccess.set(Boolean.FALSE);
       }
@@ -174,6 +174,26 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         CmdlineRemoteProto.Message.ControllerMessage.Type.CONSTANT_SEARCH_RESULT).setConstantSearchResult(builder.build()).build()
       ));
     }
+  }
+
+  private boolean isDumbMode() {
+    final DumbService dumbService = DumbService.getInstance(myProject);
+    boolean isDumb = dumbService.isDumb();
+    if (isDumb) {
+      // wait some time
+      for (int idx = 0; idx < 5; idx++) {
+        try {
+          Thread.sleep(10L);
+        }
+        catch (InterruptedException ignored) {
+        }
+        isDumb = dumbService.isDumb();
+        if (!isDumb) {
+          break;
+        }
+      }
+    }
+    return isDumb;
   }
 
   private boolean performChangedConstantSearch(PsiClass aClass, PsiField field, int accessFlags, boolean isAccessibilityChange, Set<String> affectedPaths) {

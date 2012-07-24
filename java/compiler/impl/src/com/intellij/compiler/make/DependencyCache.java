@@ -429,7 +429,7 @@ public class DependencyCache {
           }
           changedRetentionPolicyDependencyProcessor.checkAnnotationRetentionPolicyChanges(qName);
           for (DependencyProcessor additionalProcessor : DependencyProcessor.EXTENSION_POINT_NAME.getExtensions()) {
-            additionalProcessor.processDependencies(context, qName);
+            additionalProcessor.processDependencies(context, qName, searcher);
           }
         }
         else {

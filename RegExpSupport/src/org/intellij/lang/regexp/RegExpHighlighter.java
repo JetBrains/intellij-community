@@ -35,55 +35,55 @@ public class RegExpHighlighter extends SyntaxHighlighterBase {
     private static final Map<IElementType, TextAttributesKey> keys2;
 
     static final TextAttributesKey META = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.META",
-            SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
+      "REGEXP.META",
+      SyntaxHighlighterColors.KEYWORD.getDefaultAttributes()
     );
-    static final TextAttributesKey INVALID_CHARACTER_ESCAPE = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.INVALID_STRING_ESCAPE",
-            SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes()
-    );
-    static final TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.BAD_CHARACTER",
-            HighlighterColors.BAD_CHARACTER.getDefaultAttributes()
-    );
-    static final TextAttributesKey REDUNDANT_ESCAPE = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.REDUNDANT_ESCAPE",
-            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
-    );
-    static final TextAttributesKey PARENTHS = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.PARENTHS",
-            SyntaxHighlighterColors.PARENTHS.getDefaultAttributes()
-    );
-    static final TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.BRACES",
-            SyntaxHighlighterColors.BRACES.getDefaultAttributes()
-    );
-    static final TextAttributesKey BRACKETS = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.BRACKETS",
-            SyntaxHighlighterColors.BRACKETS.getDefaultAttributes()
-    );
-    static final TextAttributesKey COMMA = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.COMMA",
-            SyntaxHighlighterColors.COMMA.getDefaultAttributes()
-    );
-    static final TextAttributesKey ESC_CHARACTER = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.ESC_CHARACTER",
-            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
-    );
-    static final TextAttributesKey CHAR_CLASS = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.CHAR_CLASS",
-            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
-    );
-    static final TextAttributesKey QUOTE_CHARACTER = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.QUOTE_CHARACTER",
-            SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
-    );
-    static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(
-            "REGEXP.COMMENT",
-            SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
-    );
+  static final TextAttributesKey INVALID_CHARACTER_ESCAPE = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.INVALID_STRING_ESCAPE",
+    SyntaxHighlighterColors.INVALID_STRING_ESCAPE.getDefaultAttributes()
+  );
+  static final TextAttributesKey BAD_CHARACTER = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.BAD_CHARACTER",
+    HighlighterColors.BAD_CHARACTER.getDefaultAttributes()
+  );
+  static final TextAttributesKey REDUNDANT_ESCAPE = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.REDUNDANT_ESCAPE",
+    SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
+  );
+  static final TextAttributesKey PARENTHS = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.PARENTHS",
+    SyntaxHighlighterColors.PARENTHS.getDefaultAttributes()
+  );
+  static final TextAttributesKey BRACES = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.BRACES",
+    SyntaxHighlighterColors.BRACES.getDefaultAttributes()
+  );
+  static final TextAttributesKey BRACKETS = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.BRACKETS",
+    SyntaxHighlighterColors.BRACKETS.getDefaultAttributes()
+  );
+  static final TextAttributesKey COMMA = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.COMMA",
+    SyntaxHighlighterColors.COMMA.getDefaultAttributes()
+  );
+  static final TextAttributesKey ESC_CHARACTER = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.ESC_CHARACTER",
+    SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
+  );
+  static final TextAttributesKey CHAR_CLASS = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.CHAR_CLASS",
+    SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
+  );
+  static final TextAttributesKey QUOTE_CHARACTER = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.QUOTE_CHARACTER",
+    SyntaxHighlighterColors.VALID_STRING_ESCAPE.getDefaultAttributes()
+  );
+  static final TextAttributesKey COMMENT = TextAttributesKey.createTextAttributesKey(
+    "REGEXP.COMMENT",
+    SyntaxHighlighterColors.LINE_COMMENT.getDefaultAttributes()
+  );
 
-    private final Project myProject;
+  private final Project myProject;
     private final ParserDefinition myParserDefinition;
 
     public RegExpHighlighter(Project project, ParserDefinition parserDefinition) {

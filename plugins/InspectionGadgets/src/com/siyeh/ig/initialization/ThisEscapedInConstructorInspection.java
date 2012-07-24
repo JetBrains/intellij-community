@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,29 +25,30 @@ import org.jetbrains.annotations.NotNull;
 
 public class ThisEscapedInConstructorInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "ThisEscapedInObjectConstruction";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "this.reference.escaped.in.construction.display.name");
+    return InspectionGadgetsBundle.message("this.reference.escaped.in.construction.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "this.reference.escaped.in.construction.problem.descriptor");
+    return InspectionGadgetsBundle.message("this.reference.escaped.in.construction.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new ThisExposedInConstructorInspectionVisitor();
   }
 
-  private static class ThisExposedInConstructorInspectionVisitor
-    extends BaseInspectionVisitor {
+  private static class ThisExposedInConstructorInspectionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitThisExpression(PsiThisExpression expression) {
@@ -55,10 +56,8 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
       if (!isInInitializer(expression)) {
         return;
       }
-      final PsiJavaCodeReferenceElement qualifier =
-        expression.getQualifier();
-      final PsiClass containingClass =
-        ClassUtils.getContainingClass(expression);
+      final PsiJavaCodeReferenceElement qualifier = expression.getQualifier();
+      final PsiClass containingClass = ClassUtils.getContainingClass(expression);
       if (qualifier != null) {
         final PsiElement element = qualifier.resolve();
         if (!(element instanceof PsiClass)) {
@@ -71,8 +70,7 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
       }
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiAssignmentExpression) {
-        final PsiAssignmentExpression assignmentExpression =
-          (PsiAssignmentExpression)parent;
+        final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
         if (!thisEscapesToField(expression, assignmentExpression)) {
           return;
         }
@@ -81,16 +79,14 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
       else if (parent instanceof PsiExpressionList) {
         final PsiElement grandParent = parent.getParent();
         if (grandParent instanceof PsiNewExpression) {
-          final PsiNewExpression newExpression =
-            (PsiNewExpression)grandParent;
+          final PsiNewExpression newExpression = (PsiNewExpression)grandParent;
           if (!thisEscapesToConstructor(expression, newExpression)) {
             return;
           }
           registerError(expression);
         }
         else if (grandParent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression methodCallExpression =
-            (PsiMethodCallExpression)grandParent;
+          final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
           if (!thisEscapesToMethod(expression, methodCallExpression)) {
             return;
           }
@@ -99,83 +95,47 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
       }
     }
 
-    private static boolean thisEscapesToMethod(
-      PsiThisExpression expression,
-      PsiMethodCallExpression methodCallExpression) {
-      final PsiMethod method =
-        methodCallExpression.resolveMethod();
+    private static boolean thisEscapesToMethod(PsiThisExpression expression, PsiMethodCallExpression methodCallExpression) {
+      final PsiMethod method = methodCallExpression.resolveMethod();
       if (method == null) {
         return false;
       }
-      final PsiClass containingClass =
-        ClassUtils.getContainingClass(expression);
+      final PsiClass containingClass = ClassUtils.getContainingClass(expression);
       if (containingClass == null) {
         return false;
       }
       final PsiClass methodClass = method.getContainingClass();
-      if (!method.hasModifierProperty(PsiModifier.STATIC) &&
-          containingClass.isInheritor(methodClass, true)) {
-        return false;
+      if (method.hasModifierProperty(PsiModifier.STATIC)) {
+        return true;
       }
-
-      // Make sure using this with members of self or superclasses
-      // doesn't trigger
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiReferenceExpression)) {
-        return false;
-      }
-      final PsiReferenceExpression qualifiedExpression =
-        (PsiReferenceExpression)qualifier;
-      final PsiElement referent = qualifiedExpression.resolve();
-      if (referent instanceof PsiField) {
-        final PsiField field = (PsiField)referent;
-        final PsiClass fieldClass = field.getContainingClass();
-
-        if (containingClass.equals(fieldClass) ||
-            containingClass.isInheritor(fieldClass, true)) {
-          return false;
-        }
-      }
-      return true;
+      return methodClass != null && !containingClass.isInheritor(methodClass, true);
     }
 
-    private static boolean thisEscapesToConstructor(
-      PsiThisExpression expression, PsiNewExpression newExpression) {
-      final PsiClass containingClass =
-        ClassUtils.getContainingClass(expression);
-      final PsiJavaCodeReferenceElement referenceElement =
-        newExpression.getClassReference();
+    private static boolean thisEscapesToConstructor(PsiThisExpression expression, PsiNewExpression newExpression) {
+      final PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      final PsiJavaCodeReferenceElement referenceElement = newExpression.getClassReference();
       if (referenceElement == null) {
         return false;
       }
-      final PsiElement element =
-        referenceElement.resolve();
+      final PsiElement element = referenceElement.resolve();
       if (!(element instanceof PsiClass)) {
         return false;
       }
       final PsiClass constructorClass = (PsiClass)element;
-      return !PsiTreeUtil.isAncestor(containingClass,
-                                     constructorClass, false) ||
+      return !PsiTreeUtil.isAncestor(containingClass, constructorClass, false) ||
              constructorClass.hasModifierProperty(PsiModifier.STATIC);
     }
 
-    private static boolean thisEscapesToField(
-      PsiThisExpression expression,
-      PsiAssignmentExpression assignmentExpression) {
+    private static boolean thisEscapesToField(PsiThisExpression expression, PsiAssignmentExpression assignmentExpression) {
       final PsiExpression rhs = assignmentExpression.getRExpression();
       if (!expression.equals(rhs)) {
         return false;
       }
-      final PsiExpression lExpression =
-        assignmentExpression.getLExpression();
+      final PsiExpression lExpression = assignmentExpression.getLExpression();
       if (!(lExpression instanceof PsiReferenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression leftExpression =
-        (PsiReferenceExpression)lExpression;
+      final PsiReferenceExpression leftExpression = (PsiReferenceExpression)lExpression;
       final PsiElement element = leftExpression.resolve();
       if (!(element instanceof PsiField)) {
         return false;
@@ -184,35 +144,27 @@ public class ThisEscapedInConstructorInspection extends BaseInspection {
       if (field.hasModifierProperty(PsiModifier.STATIC)) {
         return true;
       }
-      // Inheritance check
-      final PsiClass assignmentClass =
-        ClassUtils.getContainingClass(assignmentExpression);
+      final PsiClass assignmentClass = ClassUtils.getContainingClass(assignmentExpression);
       final PsiClass fieldClass = field.getContainingClass();
-      return !(assignmentClass == null ||
-               assignmentClass.isInheritor(fieldClass, true) ||
+      return !(assignmentClass == null || fieldClass == null || assignmentClass.isInheritor(fieldClass, true) ||
                PsiTreeUtil.isAncestor(assignmentClass, fieldClass, false));
     }
 
     /**
      * @return true if CallExpression is in a constructor, instance
-     *         initializer, or field initializaer. Otherwise it returns
-     *         false
+     *         initializer, or field initializer. Otherwise false
      */
     private static boolean isInInitializer(PsiElement call) {
-      final PsiMethod method =
-        PsiTreeUtil.getParentOfType(call, PsiMethod.class);
+      final PsiMethod method = PsiTreeUtil.getParentOfType(call, PsiMethod.class, true, PsiClass.class);
       if (method != null) {
         return method.isConstructor();
       }
-      final PsiField field =
-        PsiTreeUtil.getParentOfType(call, PsiField.class);
+      final PsiField field = PsiTreeUtil.getParentOfType(call, PsiField.class, true, PsiClass.class);
       if (field != null) {
         return true;
       }
-      final PsiClassInitializer classInitializer =
-        PsiTreeUtil.getParentOfType(call, PsiClassInitializer.class);
-      return classInitializer != null &&
-             !classInitializer.hasModifierProperty(PsiModifier.STATIC);
+      final PsiClassInitializer classInitializer = PsiTreeUtil.getParentOfType(call, PsiClassInitializer.class, true, PsiClass.class);
+      return classInitializer != null && !classInitializer.hasModifierProperty(PsiModifier.STATIC);
     }
   }
 }

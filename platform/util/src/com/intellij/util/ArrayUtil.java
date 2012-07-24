@@ -145,7 +145,7 @@ public class ArrayUtil extends ArrayUtilRt {
 
   @NotNull
   public static int[] toIntArray(@NotNull List<Integer> list) {
-    int[] ret = new int[list.size()];
+    int[] ret = newIntArray(list.size());
     int i = 0;
     for (Integer e : list) {
       ret[i++] = e.intValue();
@@ -370,7 +370,18 @@ public class ArrayUtil extends ArrayUtilRt {
     if (idx < 0 || idx >= length) {
       throw new IllegalArgumentException("invalid index: " + idx);
     }
-    int[] result = new int[src.length - 1];
+    int[] result = newIntArray(src.length - 1);
+    System.arraycopy(src, 0, result, 0, idx);
+    System.arraycopy(src, idx + 1, result, idx, length - idx - 1);
+    return result;
+  }
+  @NotNull
+  public static short[] remove(@NotNull final short[] src, int idx) {
+    int length = src.length;
+    if (idx < 0 || idx >= length) {
+      throw new IllegalArgumentException("invalid index: " + idx);
+    }
+    short[] result = src.length == 1 ? EMPTY_SHORT_ARRAY : new short[src.length - 1];
     System.arraycopy(src, 0, result, 0, idx);
     System.arraycopy(src, idx + 1, result, idx, length - idx - 1);
     return result;
@@ -644,6 +655,13 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   public static int indexOf(@NotNull int[] ints, int value) {
+    for (int i = 0; i < ints.length; i++) {
+      if (ints[i] == value) return i;
+    }
+
+    return -1;
+  }
+  public static int indexOf(@NotNull short[] ints, short value) {
     for (int i = 0; i < ints.length; i++) {
       if (ints[i] == value) return i;
     }

@@ -109,6 +109,10 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
     }
   }
 
+  protected LogFilesManager getLogManager() {
+    return myManager;
+  }
+
   // TODO[oleg]: talk to nick
   public void setEnvironment(@NotNull final ExecutionEnvironment env) {
     myEnvironment = env;

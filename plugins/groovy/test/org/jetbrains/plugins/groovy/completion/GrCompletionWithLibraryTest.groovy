@@ -26,6 +26,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.util.TestUtils
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 /**
  * @author Maxim.Medvedev
@@ -40,6 +41,12 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
       modifiableModel.commit();
     }
   };
+
+  @Override
+  protected void setUp() {
+    super.setUp()
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+  }
 
   @NotNull
   @Override
@@ -71,8 +78,8 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   public void testEachMethodForRanges() throws Throwable {doBasicTest();}
   public void testEachMethodForEnumRanges() throws Throwable {doBasicTest();}
 
-  public void testPrintlnSpace() { checkCompletion 'print<caret>', ' ', "print <caret>" }
-  public void testHashCodeSpace() { checkCompletion 'if ("".sub<caret>', ' ', 'if ("".subSequence() <caret>' }
+  public void testPrintlnSpace() { checkCompletion 'print<caret>', 'l ', "println <caret>" }
+  public void testHashCodeSpace() { checkCompletion 'if ("".h<caret>', ' ', 'if ("".hashCode() <caret>' }
 
   public void testTwoMethodWithSameName() {
     doVariantableTest "fooo", "fooo"

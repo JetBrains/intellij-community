@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface.layout.actions;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.designSurface.EditOperation;
@@ -69,8 +70,8 @@ public class ResizeOperation implements EditOperation {
     myComponent = (RadViewComponent)component;
 
     Rectangle bounds = myComponent.getBounds(myContext.getArea().getFeedbackLayer());
-    String width = myComponent.getTag().getAttributeValue("android:layout_width");
-    String height = myComponent.getTag().getAttributeValue("android:layout_height");
+    String width = myComponent.getTag().getAttributeValue("layout_width", SdkConstants.NS_RESOURCES);
+    String height = myComponent.getTag().getAttributeValue("layout_height", SdkConstants.NS_RESOURCES);
 
     Pair<Integer, Integer> widthInfo = getDefaultSize(width, bounds.width);
     Pair<Integer, Integer> heightInfo = getDefaultSize(height, bounds.height);
@@ -277,10 +278,12 @@ public class ResizeOperation implements EditOperation {
         int direction = myContext.getResizeDirection();
 
         if ((direction & Position.EAST) != 0) {
-          myComponent.getTag().setAttribute("android:layout_width", getSize(myBounds.width, myWrapSize.width, myFillSize.width));
+          myComponent.getTag()
+            .setAttribute("layout_width", SdkConstants.NS_RESOURCES, getSize(myBounds.width, myWrapSize.width, myFillSize.width));
         }
         if ((direction & Position.SOUTH) != 0) {
-          myComponent.getTag().setAttribute("android:layout_height", getSize(myBounds.height, myWrapSize.height, myFillSize.height));
+          myComponent.getTag()
+            .setAttribute("layout_height", SdkConstants.NS_RESOURCES, getSize(myBounds.height, myWrapSize.height, myFillSize.height));
         }
       }
     });

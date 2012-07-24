@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.drawable;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -30,7 +31,7 @@ public class ShapeDomFileDescription extends AndroidResourceDomFileDescription<S
   @NonNls static final String SHAPE_ROOT_TAG = "shape";
 
   public ShapeDomFileDescription() {
-    super(Shape.class, SHAPE_ROOT_TAG, "drawable");
+    super(Shape.class, SHAPE_ROOT_TAG, ResourceType.DRAWABLE.getName());
   }
 
   @Override

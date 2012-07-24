@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -104,7 +105,7 @@ public class PatchProjectUtil {
     if (included.isEmpty()) return;
     final Set<VirtualFile> parents = new HashSet<VirtualFile>();
     for (VirtualFile file : included) {
-      if (file == contentEntry.getFile()) return;
+      if (Comparing.equal(file, contentEntry.getFile())) return;
       final VirtualFile parent = file.getParent();
       if (parent == null || parents.contains(parent)) continue;
       parents.add(parent);

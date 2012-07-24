@@ -110,10 +110,12 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
         final ArrayList<RangeHighlighter> highlighters = new ArrayList<RangeHighlighter>(matchingExpressions.size() + 1);
         if (matchingExpressions.size() > 0) {
             final SelectionModel selectionModel = editor.getSelectionModel();
-            highlightManager.addRangeHighlight(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(), EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
+          highlightManager.addRangeHighlight(editor, selectionModel.getSelectionStart(), selectionModel.getSelectionEnd(),
+                                             EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
             for (XPathExpression expr : matchingExpressions) {
                 final TextRange range = XsltCodeInsightUtil.getRangeInsideHostingFile(expr);
-                highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
+              highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(),
+                                                 EditorColors.SEARCH_RESULT_ATTRIBUTES.getDefaultAttributes(), false, highlighters);
 
                 final XmlTag tag = PsiTreeUtil.getContextOfType(expr, XmlTag.class, true);
                 assert tag != null;

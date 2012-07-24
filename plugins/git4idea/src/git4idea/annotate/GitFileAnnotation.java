@@ -17,6 +17,7 @@ package git4idea.annotate;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -124,7 +125,7 @@ public class GitFileAnnotation implements FileAnnotation {
       myFileListener = new VirtualFileAdapter() {
         @Override
         public void contentsChanged(final VirtualFileEvent event) {
-          if (myFile != event.getFile()) return;
+          if (!Comparing.equal(myFile, event.getFile())) return;
           if (!event.isFromRefresh()) return;
           final VcsRevisionNumber currentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
           if (currentRevision != null && currentRevision.equals(revision)) return;
@@ -156,7 +157,9 @@ public class GitFileAnnotation implements FileAnnotation {
    * Fire annotation changed event
    */
   private void fireAnnotationChanged() {
-    myListeners.getMulticaster().onAnnotationChanged();
+    if (!myProject.isDisposed()) {
+      myListeners.getMulticaster().onAnnotationChanged();
+    }
   }
 
   /**

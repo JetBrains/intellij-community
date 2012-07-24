@@ -244,6 +244,8 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
 
     int row = 1;
     for (final AnAction action : recentProjectsActions) {
+      if (!(action instanceof ReopenProjectAction)) continue;
+
       final SimpleColoredComponent actionLabel = new SimpleColoredComponent() {
         @Override
         public Dimension getPreferredSize() {
@@ -257,20 +259,20 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
           return getPreferredSize();
         }
       };
+
       actionLabel.append(String.valueOf(row), CAPTION_UNDERLINE_ATTRIBUTES);
       actionLabel.append(". ", new SimpleTextAttributes(0, CAPTION_COLOR));
-      actionLabel.append(action.getTemplatePresentation().getText(), CAPTION_BOLD_UNDERLINE_ATTRIBUTES);
+
+      actionLabel.append(((ReopenProjectAction)action).getProjectName(), CAPTION_BOLD_UNDERLINE_ATTRIBUTES);
       actionLabel.setIconOnTheRight(true);
 
-      if (action instanceof ReopenProjectAction && ((ReopenProjectAction) action).needShowPath()) {
-        String path = ((ReopenProjectAction)action).getProjectPath();
-        File pathFile = new File(path);
-        if (pathFile.isDirectory() && pathFile.getName().equals(((ReopenProjectAction)action).getProjectName())) {
-          path = pathFile.getParent();
-        }
-        path = FileUtil.getLocationRelativeToUserHome(path);
-        actionLabel.append("   " + path, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, Color.GRAY));
+      String path = ((ReopenProjectAction)action).getProjectPath();
+      File pathFile = new File(path);
+      if (pathFile.isDirectory() && pathFile.getName().equals(((ReopenProjectAction)action).getProjectName())) {
+        path = pathFile.getParent();
       }
+      path = FileUtil.getLocationRelativeToUserHome(path);
+      actionLabel.append("   " + path, new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER, Color.GRAY));
 
       actionLabel.setFont(new Font(CAPTION_FONT_NAME, Font.PLAIN, 12));
       actionLabel.setForeground(CAPTION_COLOR);
@@ -943,7 +945,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       if (projectPath == null) return false;
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          ReopenProjectAction action = new ReopenProjectAction(projectPath, projectPath, true);
+          ReopenProjectAction action = new ReopenProjectAction(projectPath, "Any", "Any");
           DataContext dataContext = DataManager.getInstance().getDataContext(myComponent);
           AnActionEvent e = new AnActionEvent(null, dataContext, "", action.getTemplatePresentation(), ActionManager.getInstance(), 0);
           action.actionPerformed(e);

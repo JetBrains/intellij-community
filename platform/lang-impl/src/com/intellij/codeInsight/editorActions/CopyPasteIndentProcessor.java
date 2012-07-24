@@ -1,27 +1,26 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actions.EditorActionUtil;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.text.CharArrayUtil;
 
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author yole
@@ -35,37 +34,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     if (!acceptFileType(file.getFileType())) {
       return null;
     }
-
-    if (startOffsets.length != 1) {
-      return null;
-    }
-    Document document = editor.getDocument();
-    int selStartLine = document.getLineNumber(startOffsets[0]);
-    int selEndLine = document.getLineNumber(endOffsets[0]);
-    //if (selStartLine == selEndLine) {
-    //  return null;
-    //}
-    // check that selection starts at or before the first non-whitespace character on a line
-    for (int offset = startOffsets[0] - 1; offset >= document.getLineStartOffset(selStartLine); offset--) {
-      if (!Character.isWhitespace(document.getCharsSequence().charAt(offset))) {
-        return null;
-      }
-    }
-    int minIndent = Integer.MAX_VALUE;
-    int maxIndent = 0;
-    int tabSize = CodeStyleFacade.getInstance(file.getProject()).getTabSize(file.getFileType());
-    for (int line = selStartLine; line <= selEndLine; line++) {
-      int start = document.getLineStartOffset(line);
-      int end = document.getLineEndOffset(line);
-      int indent = getIndent(document.getCharsSequence(), start, end, tabSize);
-      if (indent >= 0) {
-        minIndent = Math.min(minIndent, indent);
-        maxIndent = Math.max(minIndent, indent);
-      }
-    }
-    int firstNonSpaceChar = CharArrayUtil.shiftForward(document.getCharsSequence(), startOffsets[0], " \t");
-    int firstLineLeadingSpaces = (firstNonSpaceChar <= document.getLineEndOffset(selStartLine)) ? firstNonSpaceChar - startOffsets[0] : 0;
-    return new IndentTransferableData(maxIndent - minIndent, maxIndent, firstLineLeadingSpaces);
+    return new IndentTransferableData(editor.getCaretModel().getOffset());
   }
 
   private static boolean acceptFileType(FileType fileType) {
@@ -77,27 +46,9 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     return false;
   }
 
-  private static int getIndent(CharSequence chars, int start, int end, int tabSize) {
-    int result = 0;
-    boolean nonEmpty = false;
-    for(int i=start; i<end; i++)  {
-      if (chars.charAt(i) == ' ') {
-        result++;
-      }
-      else if (chars.charAt(i) == '\t') {
-        result = ((result / tabSize) + 1) * tabSize;
-      }
-      else {
-        nonEmpty = true;
-        break;
-      }
-    }
-    return nonEmpty ? result : -1;
-  }
-
   @Override
   public IndentTransferableData extractTransferableData(Transferable content) {
-    IndentTransferableData indentData = null;
+    IndentTransferableData indentData = new IndentTransferableData(-1);
     try {
       final DataFlavor flavor = IndentTransferableData.getDataFlavorStatic();
       if (flavor != null) {
@@ -120,12 +71,14 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
   public void processTransferableData(final Project project,
                                       final Editor editor,
                                       final RangeMarker bounds,
-                                      final int caretColumn,
+                                      final int caretOffset,
                                       final Ref<Boolean> indented,
                                       final IndentTransferableData value) {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
       return;
     }
+    if (value.getOffset() == editor.getCaretModel().getOffset()) return;
+
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (psiFile == null || !acceptFileType(psiFile.getFileType())) {
@@ -139,28 +92,41 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
 
         int startLine = document.getLineNumber(bounds.getStartOffset());
         int endLine = document.getLineNumber(bounds.getEndOffset());
-        if (!pastedText.trim().contains("\n") && startLine == endLine) {
-          // don't indent single-line text
+
+        //calculate from indent
+        int fromIndent = StringUtil.findFirst(pastedText, CharFilter.NOT_WHITESPACE_FILTER);
+        if (fromIndent < 0) fromIndent = 0;
+
+        //calculate to indent
+        String initialText = document.getText(TextRange.create(0, bounds.getStartOffset())) +
+                   document.getText(TextRange.create(bounds.getEndOffset(), document.getTextLength()));
+        final DocumentImpl initialDocument = new DocumentImpl(initialText);
+        final int lineNumber = initialDocument.getLineNumber(caretOffset);
+        final int offset = getLineStartSafeOffset(initialDocument, lineNumber);
+        final int caretColumn = caretOffset - offset;
+
+        String toString = initialDocument.getText(TextRange.create(offset, initialDocument.getLineEndOffset(lineNumber)));
+        int toIndent = StringUtil.findFirst(toString, new CharFilter() {
+          @Override
+          public boolean accept(char ch) {
+            return ch != ' ';
+          }
+        });
+        if (toIndent < 0 || toString.startsWith("\n")) {
+          toIndent = caretColumn;
+        }
+
+        // actual difference in indentation level
+        int indent = toIndent - fromIndent;
+
+        // don't indent single-line text
+        if (!StringUtil.startsWithWhitespace(pastedText) && !StringUtil.endsWithLineBreak(pastedText) &&
+             !(StringUtil.splitByLines(pastedText).length > 1))
           return;
-        }
 
-        int startLineStart = document.getLineStartOffset(startLine);
-        // don't indent first line if there's any text before it
-        final String textBeforeFirstLine = document.getText(new TextRange(startLineStart, bounds.getStartOffset()));
-        if (textBeforeFirstLine.trim().length() == 0) {
-          EditorActionUtil.indentLine(project, editor, startLine, -value.getFirstLineLeadingSpaces());
-        }
+        if (pastedText.endsWith("\n")) endLine -= 1;
 
-        final int caretOffset = editor.getCaretModel().getOffset();
-        int realCaretColumn = caretOffset - document.getLineStartOffset(document.getLineNumber(caretOffset));
-
-        final List<String> strings = StringUtil.split(pastedText, "\n");
-        if (realCaretColumn >= value.getIndent() && !strings.isEmpty() &&
-            StringUtil.isEmptyOrSpaces(strings.get(strings.size()-1))) endLine -=1;
-
-        for (int i = startLine+1; i <= endLine; i++) {
-          int indent = value.getFirstLineLeadingSpaces() <= realCaretColumn ||
-                       value.getFirstLineLeadingSpaces() == value.getMaxIndent()? value.getIndent() : -value.getIndent();
+        for (int i = startLine; i <= endLine; i++) {
           EditorActionUtil.indentLine(project, editor, i, indent);
         }
         indented.set(Boolean.TRUE);
@@ -168,4 +134,10 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     });
     //System.out.println("--- after indent ---\n" + document.getText());
   }
+
+  public static int getLineStartSafeOffset(final Document document, int line) {
+    if (line == document.getLineCount()) return document.getTextLength();
+    return document.getLineStartOffset(line);
+  }
+
 }

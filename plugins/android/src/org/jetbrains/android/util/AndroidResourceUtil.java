@@ -363,7 +363,7 @@ public class AndroidResourceUtil {
         final AndroidFacet facet = AndroidFacet.getInstance(attribute);
 
         if (facet != null) {
-          return findResourceFields(facet, "id", id, false);
+          return findResourceFields(facet, ResourceType.ID.getName(), id, false);
         }
       }
     }
@@ -403,7 +403,7 @@ public class AndroidResourceUtil {
         return resources.addBool();
       case ID:
         final Item item = resources.addItem();
-        item.getType().setValue("id");
+        item.getType().setValue(ResourceType.ID.getName());
         return item;
       case ATTR:
         return resources.addAttr();
@@ -457,33 +457,33 @@ public class AndroidResourceUtil {
   public static List<ResourceElement> getValueResourcesFromElement(@NotNull String resourceType, @NotNull Resources resources) {
     final List<ResourceElement> result = new ArrayList<ResourceElement>();
 
-    if (resourceType.equals("string")) {
+    if (resourceType.equals(ResourceType.STRING.getName())) {
       result.addAll(resources.getStrings());
     }
     else if (resourceType.equals(ResourceType.PLURALS.getName())) {
       result.addAll(resources.getPluralss());
     }
-    else if (resourceType.equals("drawable")) {
+    else if (resourceType.equals(ResourceType.DRAWABLE.getName())) {
       result.addAll(resources.getDrawables());
     }
-    else if (resourceType.equals("color")) {
+    else if (resourceType.equals(ResourceType.COLOR.getName())) {
       result.addAll(resources.getColors());
     }
-    else if (resourceType.equals("dimen")) {
+    else if (resourceType.equals(ResourceType.DIMEN.getName())) {
       result.addAll(resources.getDimens());
     }
-    else if (resourceType.equals("style")) {
+    else if (resourceType.equals(ResourceType.STYLE.getName())) {
       result.addAll(resources.getStyles());
     }
-    else if (resourceType.equals("array")) {
+    else if (resourceType.equals(ResourceType.ARRAY.getName())) {
       result.addAll(resources.getStringArrays());
       result.addAll(resources.getIntegerArrays());
       result.addAll(resources.getArrays());
     }
-    else if (resourceType.equals("integer")) {
+    else if (resourceType.equals(ResourceType.INTEGER.getName())) {
       result.addAll(resources.getIntegers());
     }
-    else if (resourceType.equals("bool")) {
+    else if (resourceType.equals(ResourceType.BOOL.getName())) {
       result.addAll(resources.getBools());
     }
     for (Item item : resources.getItems()) {
@@ -794,7 +794,7 @@ public class AndroidResourceUtil {
     if (valuesResourceFile) {
       return AndroidFileTemplateProvider.VALUE_RESOURCE_FILE_TEMPLATE;
     }
-    if ("layout".equals(resourceType)) {
+    if (ResourceType.LAYOUT.getName().equals(resourceType)) {
       return AndroidUtils.TAG_LINEAR_LAYOUT.equals(rootTagName)
              ? AndroidFileTemplateProvider.LAYOUT_RESOURCE_VERTICAL_FILE_TEMPLATE
              : AndroidFileTemplateProvider.LAYOUT_RESOURCE_FILE_TEMPLATE;
@@ -805,5 +805,19 @@ public class AndroidResourceUtil {
   @NotNull
   public static String getFieldNameByResourceName(@NotNull String fieldName) {
     return fieldName.replace('.', '_').replace('-', '_').replace(':', '_');
+  }
+
+  @Nullable
+  public static String getInvalidResourceFileNameMessage(@NotNull String fileName) {
+    for (int i = 0, n = fileName.length(); i < n; i++) {
+      char c = fileName.charAt(i);
+      if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '.')) {
+        return AndroidBundle.message("invalid.file.resource.name.error");
+      }
+    }
+    if (!StringUtil.isJavaIdentifier(getFieldNameByResourceName(fileName))) {
+      return AndroidBundle.message("invalid.file.resource.name.error1");
+    }
+    return null;
   }
 }

@@ -16,7 +16,7 @@ public interface JpsElementCollection<E extends JpsElement> extends JpsElement {
   @NotNull
   E addChild(@NotNull JpsElementCreator<E> creator);
 
-  E addChild(E element);
+  <X extends E> X addChild(X element);
 
   void removeChild(@NotNull E element);
 }

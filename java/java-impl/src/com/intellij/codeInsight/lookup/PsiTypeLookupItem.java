@@ -158,10 +158,6 @@ public class PsiTypeLookupItem extends LookupItem {
 
     PsiTypeLookupItem item = doCreateItem(type, context, dim);
 
-    if (dim > 0) {
-      item.setAttribute(TAIL_TEXT_ATTR, " " + StringUtil.repeat("[]", dim));
-      item.setAttribute(TAIL_TEXT_SMALL_ATTR, "");
-    }
     item.setAttribute(TYPE, original);
     return item;
   }
@@ -187,10 +183,10 @@ public class PsiTypeLookupItem extends LookupItem {
         Set<String> allStrings = new HashSet<String>();
         String lookupString = psiClass.getName();
         allStrings.add(lookupString);
-        if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
+        if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
           // inner class name should be shown qualified if its not accessible by single name
           PsiClass aClass = psiClass.getContainingClass();
-          while (aClass != null) {
+          while (aClass != null && !PsiUtil.isInnerClass(aClass)) {
             lookupString = aClass.getName() + '.' + lookupString;
             allStrings.add(lookupString);
             aClass = aClass.getContainingClass();
@@ -228,10 +224,9 @@ public class PsiTypeLookupItem extends LookupItem {
       presentation.setItemText(((PsiType)object).getCanonicalText());
       presentation.setItemTextBold(getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null || object instanceof PsiPrimitiveType);
 
-      String tailText = (String)getAttribute(LookupItem.TAIL_TEXT_ATTR);
-      if (tailText != null) {
-        presentation.setTailText(tailText, getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null);
-      }
+    }
+    if (myBracketsCount > 0) {
+      presentation.setTailText(StringUtil.repeat("[]", myBracketsCount) + StringUtil.notNullize(presentation.getTailText()), true);
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.model.layout.actions;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.model.RadComponent;
@@ -59,7 +60,7 @@ public class OrientationAction extends AnAction {
           public void run() {
             String value = mySelection ? "horizontal" : "vertical";
             for (RadComponent component : myComponents) {
-              ((RadViewComponent)component).getTag().setAttribute("android:orientation", value);
+              ((RadViewComponent)component).getTag().setAttribute("orientation", SdkConstants.NS_RESOURCES, value);
             }
           }
         });

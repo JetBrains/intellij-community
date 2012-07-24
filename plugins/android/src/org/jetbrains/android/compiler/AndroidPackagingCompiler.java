@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -79,7 +80,7 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     VirtualFile resDir = facet != null ? AndroidRootUtil.getResourceDir(facet) : null;
     ModuleRootManager manager = ModuleRootManager.getInstance(module);
     for (VirtualFile sourceRoot : manager.getSourceRoots(includingTests)) {
-      if (resDir != sourceRoot) {
+      if (!Comparing.equal(resDir, sourceRoot)) {
         result.add(sourceRoot);
       }
     }

@@ -181,7 +181,7 @@ public abstract class EditorComposite implements Disposable {
       public void selectionChanged(final FileEditorManagerEvent event) {
         final VirtualFile oldFile = event.getOldFile();
         final VirtualFile newFile = event.getNewFile();
-        if (oldFile == newFile && getFile() == newFile) {
+        if (Comparing.equal(oldFile, newFile) && Comparing.equal(getFile(), newFile)) {
           final FileEditor oldEditor = event.getOldEditor();
           if (oldEditor != null) oldEditor.deselectNotify();
           final FileEditor newEditor = event.getNewEditor();

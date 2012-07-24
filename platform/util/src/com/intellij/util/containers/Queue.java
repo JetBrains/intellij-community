@@ -121,6 +121,23 @@ public class Queue<T> {
     isWrapped = false;
   }
 
+  public T set(int index, T value) {
+    int arrayIndex;
+    if (isWrapped) {
+      if (myFirst + index >= myArray.length) {
+        arrayIndex = index - myArray.length + myFirst;
+      }
+      else
+        arrayIndex = myFirst + index;
+    }
+    else {
+      arrayIndex = myFirst + index;
+    }
+    final Object old = myArray[arrayIndex];
+    myArray[arrayIndex] = value;
+    return (T)old;
+  }
+
   public boolean process(@NotNull Processor<T> processor) {
     if (isWrapped) {
       for (int i = myFirst; i < myArray.length; i++) {

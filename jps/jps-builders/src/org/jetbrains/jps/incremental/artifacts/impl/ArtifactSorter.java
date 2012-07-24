@@ -17,17 +17,20 @@ package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.Processor;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
-import groovy.lang.Closure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Project;
-import org.jetbrains.jps.artifacts.Artifact;
-import org.jetbrains.jps.artifacts.ArtifactLayoutElement;
-import org.jetbrains.jps.artifacts.ComplexLayoutElement;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 import java.util.*;
 
@@ -35,53 +38,53 @@ import java.util.*;
  * @author nik
  */
 public class ArtifactSorter {
-  private final Project myProject;
-  private Map<String, String> myArtifactToSelfIncludingName;
-  private List<String> mySortedArtifacts;
+  private final JpsModel myModel;
+  private Map<JpsArtifact, JpsArtifact> myArtifactToSelfIncludingName;
+  private List<JpsArtifact> mySortedArtifacts;
 
-  public ArtifactSorter(Project project) {
-    myProject = project;
+  public ArtifactSorter(JpsModel model) {
+    myModel = model;
   }
 
-  public Map<String, String> getArtifactToSelfIncludingNameMap() {
+  public Map<JpsArtifact, JpsArtifact> getArtifactToSelfIncludingNameMap() {
     if (myArtifactToSelfIncludingName == null) {
       myArtifactToSelfIncludingName = computeArtifactToSelfIncludingNameMap();
     }
     return myArtifactToSelfIncludingName;
   }
 
-  public List<String> getArtifactsSortedByInclusion() {
+  public List<JpsArtifact> getArtifactsSortedByInclusion() {
     if (mySortedArtifacts == null) {
       mySortedArtifacts = doGetSortedArtifacts();
     }
     return mySortedArtifacts;
   }
 
-  private List<String> doGetSortedArtifacts() {
-    GraphGenerator<String> graph = createArtifactsGraph();
-    DFSTBuilder<String> builder = new DFSTBuilder<String>(graph);
+  private List<JpsArtifact> doGetSortedArtifacts() {
+    GraphGenerator<JpsArtifact> graph = createArtifactsGraph();
+    DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<JpsArtifact>(graph);
     builder.buildDFST();
-    List<String> names = new ArrayList<String>();
+    List<JpsArtifact> names = new ArrayList<JpsArtifact>();
     names.addAll(graph.getNodes());
     Collections.sort(names, builder.comparator());
     return names;
   }
 
-  private Map<String, String> computeArtifactToSelfIncludingNameMap() {
-    final Map<String, String> result = new HashMap<String, String>();
-    final GraphGenerator<String> graph = createArtifactsGraph();
-    for (String artifactName : graph.getNodes()) {
-      final Iterator<String> in = graph.getIn(artifactName);
+  private Map<JpsArtifact, JpsArtifact> computeArtifactToSelfIncludingNameMap() {
+    final Map<JpsArtifact, JpsArtifact> result = new HashMap<JpsArtifact, JpsArtifact>();
+    final GraphGenerator<JpsArtifact> graph = createArtifactsGraph();
+    for (JpsArtifact artifact : graph.getNodes()) {
+      final Iterator<JpsArtifact> in = graph.getIn(artifact);
       while (in.hasNext()) {
-        String next = in.next();
-        if (next.equals(artifactName)) {
-          result.put(artifactName, artifactName);
+        JpsArtifact next = in.next();
+        if (next.equals(artifact)) {
+          result.put(artifact, artifact);
           break;
         }
       }
     }
 
-    final DFSTBuilder<String> builder = new DFSTBuilder<String>(graph);
+    final DFSTBuilder<JpsArtifact> builder = new DFSTBuilder<JpsArtifact>(graph);
     builder.buildDFST();
     if (builder.isAcyclic() && result.isEmpty()) return Collections.emptyMap();
 
@@ -91,8 +94,8 @@ public class ArtifactSorter {
       public boolean execute(int size) {
         if (size > 1) {
           for (int j = 0; j < size; j++) {
-            final String artifactName = builder.getNodeByTNumber(myTNumber + j);
-            result.put(artifactName, artifactName);
+            final JpsArtifact artifact = builder.getNodeByTNumber(myTNumber + j);
+            result.put(artifact, artifact);
           }
         }
         myTNumber += size;
@@ -101,13 +104,13 @@ public class ArtifactSorter {
     });
 
     for (int i = 0; i < graph.getNodes().size(); i++) {
-      final String artifactName = builder.getNodeByTNumber(i);
-      if (!result.containsKey(artifactName)) {
-        final Iterator<String> in = graph.getIn(artifactName);
+      final JpsArtifact artifact = builder.getNodeByTNumber(i);
+      if (!result.containsKey(artifact)) {
+        final Iterator<JpsArtifact> in = graph.getIn(artifact);
         while (in.hasNext()) {
-          final String name = result.get(in.next());
-          if (name != null) {
-            result.put(artifactName, name);
+          final JpsArtifact next = result.get(in.next());
+          if (next != null) {
+            result.put(artifact, next);
           }
         }
       }
@@ -117,16 +120,20 @@ public class ArtifactSorter {
   }
 
   @NotNull
-  public static Set<Artifact> addIncludedArtifacts(@NotNull Collection<Artifact> artifacts, @NotNull Project project) {
-    Set<Artifact> result = new HashSet<Artifact>();
-    for (Artifact artifact : artifacts) {
-      collectIncludedArtifacts(artifact, project, new HashSet<Artifact>(), result, true);
+  public static Set<JpsArtifact> addIncludedArtifacts(@NotNull Collection<JpsArtifact> artifacts, @NotNull Project project, JpsModel model) {
+    Set<JpsArtifact> result = new HashSet<JpsArtifact>();
+    for (JpsArtifact artifact : artifacts) {
+      collectIncludedArtifacts(artifact, project, model, new HashSet<JpsArtifact>(), result, true);
     }
     return result;
   }
 
-  private static void collectIncludedArtifacts(Artifact artifact, final Project project,
-                                               final Set<Artifact> processed, final Set<Artifact> result, final boolean withOutputPathOnly) {
+  private static void collectIncludedArtifacts(JpsArtifact artifact,
+                                               final Project project,
+                                               final JpsModel model,
+                                               final Set<JpsArtifact> processed,
+                                               final Set<JpsArtifact> result,
+                                               final boolean withOutputPathOnly) {
     if (!processed.add(artifact)) {
       return;
     }
@@ -134,31 +141,27 @@ public class ArtifactSorter {
       result.add(artifact);
     }
 
-    processIncludedArtifacts(artifact, project, new Consumer<Artifact>() {
+    processIncludedArtifacts(artifact, new Consumer<JpsArtifact>() {
       @Override
-      public void consume(Artifact included) {
-        collectIncludedArtifacts(included, project, processed, result, withOutputPathOnly);
+      public void consume(JpsArtifact included) {
+        collectIncludedArtifacts(included, project, model, processed, result, withOutputPathOnly);
       }
     });
   }
 
-  private GraphGenerator<String> createArtifactsGraph() {
-    return GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(myProject)));
+  private GraphGenerator<JpsArtifact> createArtifactsGraph() {
+    return GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(myModel.getProject())));
   }
 
-  private static void processIncludedArtifacts(Artifact artifact,
-                                               final Project project,
-                                               final Consumer<Artifact> consumer) {
-    artifact.getRootElement().process(project, new Closure(consumer) {
+  private static void processIncludedArtifacts(JpsArtifact artifact, final Consumer<JpsArtifact> consumer) {
+    JpsArtifactUtil.processPackagingElements(artifact.getRootElement(), new Processor<JpsPackagingElement>() {
       @Override
-      public Object call(Object arguments) {
-        if (arguments instanceof ArtifactLayoutElement) {
-          final Artifact includedArtifact = ((ArtifactLayoutElement)arguments).findArtifact(project);
-          if (includedArtifact != null) {
-            consumer.consume(includedArtifact);
+      public boolean process(JpsPackagingElement element) {
+        if (element instanceof JpsArtifactOutputPackagingElement) {
+          JpsArtifact included = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
+          if (included != null) {
+            consumer.consume(included);
           }
-        }
-        if (arguments instanceof ComplexLayoutElement) {
           return false;
         }
         return true;
@@ -166,35 +169,30 @@ public class ArtifactSorter {
     });
   }
 
-  private static class ArtifactsGraph implements GraphGenerator.SemiGraph<String> {
-    private final Set<String> myArtifactNames;
-    private final Project myProject;
+  private static class ArtifactsGraph implements GraphGenerator.SemiGraph<JpsArtifact> {
+    private final Set<JpsArtifact> myArtifactNodes;
 
-    public ArtifactsGraph(Project project) {
-      myProject = project;
-      myArtifactNames = new LinkedHashSet<String>(project.getArtifacts().keySet());
+    public ArtifactsGraph(final JpsProject project) {
+      myArtifactNodes = new LinkedHashSet<JpsArtifact>(JpsArtifactService.getInstance().getArtifacts(project));
     }
 
     @Override
-    public Collection<String> getNodes() {
-      return myArtifactNames;
+    public Collection<JpsArtifact> getNodes() {
+      return myArtifactNodes;
     }
 
     @Override
-    public Iterator<String> getIn(String name) {
-      final Set<String> included = new LinkedHashSet<String>();
-      final Artifact artifact = myProject.getArtifacts().get(name);
-      if (artifact != null) {
-        final Consumer<Artifact> consumer = new Consumer<Artifact>() {
-          @Override
-          public void consume(Artifact artifact) {
-            if (myArtifactNames.contains(artifact.getName())) {
-              included.add(artifact.getName());
-            }
+    public Iterator<JpsArtifact> getIn(JpsArtifact artifact) {
+      final Set<JpsArtifact> included = new LinkedHashSet<JpsArtifact>();
+      final Consumer<JpsArtifact> consumer = new Consumer<JpsArtifact>() {
+        @Override
+        public void consume(JpsArtifact artifact) {
+          if (myArtifactNodes.contains(artifact)) {
+            included.add(artifact);
           }
-        };
-        processIncludedArtifacts(artifact, myProject, consumer);
-      }
+        }
+      };
+      processIncludedArtifacts(artifact, consumer);
       return included.iterator();
     }
   }
