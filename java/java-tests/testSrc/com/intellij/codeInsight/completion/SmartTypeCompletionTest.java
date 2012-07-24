@@ -612,6 +612,13 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     assertEquals("[] (java.lang)", LookupElementPresentation.renderElement(myItems[1]).getTailText());
   }
 
+  public void testNewByteArray() {
+    configureByTestName();
+    assertStringItems("byte");
+    assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+
+  }
+
   public void testInsideStringLiteral() throws Throwable { doAntiTest(); }
 
   public void testDefaultAnnoParam() throws Throwable { doTest(); }

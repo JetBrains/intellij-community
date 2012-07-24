@@ -226,7 +226,7 @@ public class PsiTypeLookupItem extends LookupItem {
 
     }
     if (myBracketsCount > 0) {
-      presentation.setTailText(StringUtil.repeat("[]", myBracketsCount) + presentation.getTailText(), true);
+      presentation.setTailText(StringUtil.repeat("[]", myBracketsCount) + StringUtil.notNullize(presentation.getTailText()), true);
     }
   }
 
