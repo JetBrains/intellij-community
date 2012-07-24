@@ -1496,7 +1496,7 @@ public class JavaDocInfoGenerator {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static int generateType(StringBuilder buffer, PsiType type, PsiElement context, boolean generateLink) {
     if (type instanceof PsiPrimitiveType) {
-      String text = type.getCanonicalText();
+      String text = StringUtil.escapeXml(type.getCanonicalText());
       buffer.append(text);
       return text.length();
     }
@@ -1539,7 +1539,7 @@ public class JavaDocInfoGenerator {
       PsiSubstitutor psiSubst = result.getSubstitutor();
 
       if (psiClass == null) {
-        String text = "<font color=red>" + type.getCanonicalText() + "</font>";
+        String text = "<font color=red>" + StringUtil.escapeXml(type.getCanonicalText()) + "</font>";
         buffer.append(text);
         return text.length();
       }
@@ -1547,7 +1547,7 @@ public class JavaDocInfoGenerator {
       String qName = psiClass.getQualifiedName();
 
       if (qName == null || psiClass instanceof PsiTypeParameter) {
-        String text = type.getCanonicalText();
+        String text = StringUtil.escapeXml(type.getCanonicalText());
         buffer.append(text);
         return text.length();
       }
@@ -1596,7 +1596,7 @@ public class JavaDocInfoGenerator {
 
     if (type instanceof PsiDisjunctionType) {
       if (!generateLink) {
-        final String text = type.getCanonicalText();
+        final String text = StringUtil.escapeXml(type.getCanonicalText());
         buffer.append(text);
         return text.length();
       }
