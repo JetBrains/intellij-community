@@ -806,4 +806,18 @@ public class AndroidResourceUtil {
   public static String getFieldNameByResourceName(@NotNull String fieldName) {
     return fieldName.replace('.', '_').replace('-', '_').replace(':', '_');
   }
+
+  @Nullable
+  public static String getInvalidResourceFileNameMessage(@NotNull String fileName) {
+    for (int i = 0, n = fileName.length(); i < n; i++) {
+      char c = fileName.charAt(i);
+      if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_' || c == '.')) {
+        return AndroidBundle.message("invalid.file.resource.name.error");
+      }
+    }
+    if (!StringUtil.isJavaIdentifier(getFieldNameByResourceName(fileName))) {
+      return AndroidBundle.message("invalid.file.resource.name.error1");
+    }
+    return null;
+  }
 }
