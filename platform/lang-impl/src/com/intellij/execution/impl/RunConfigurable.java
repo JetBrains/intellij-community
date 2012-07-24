@@ -96,7 +96,7 @@ class RunConfigurable extends BaseConfigurable {
     this(project, null);
   }
 
-  public RunConfigurable(final Project project, final RunDialogBase runDialog) {
+  public RunConfigurable(final Project project, @Nullable final RunDialogBase runDialog) {
     myProject = project;
     myRunDialog = runDialog;
   }
@@ -183,7 +183,7 @@ class RunConfigurable extends BaseConfigurable {
     final ConfigurationType[] factories = manager.getConfigurationFactories();
     for (ConfigurationType type : factories) {
       final RunnerAndConfigurationSettings[] configurations = manager.getConfigurationSettings(type);
-      if (configurations != null && configurations.length > 0) {
+      if (configurations.length > 0) {
         final DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
         myRoot.add(typeNode);
         for (RunnerAndConfigurationSettings configuration : configurations) {
@@ -640,7 +640,6 @@ class RunConfigurable extends BaseConfigurable {
       manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch(), false);
     }
 
-    RunnerAndConfigurationSettings selected = manager.getSelectedConfiguration();
     for (RunnerAndConfigurationSettings each : toDeleteSettings) {
       manager.removeConfiguration(each);
     }
@@ -1181,7 +1180,7 @@ class RunConfigurable extends BaseConfigurable {
           RunnerAndConfigurationSettings selectedSettings = getSettings(treeNode);
           if (selectedSettings == null)
             return;
-          RunnerAndConfigurationSettings siblingSettings = null;
+          RunnerAndConfigurationSettings siblingSettings;
           if (myDirection < 0) {
             siblingSettings = getSettings(treeNode.getPreviousSibling());
           } else {
