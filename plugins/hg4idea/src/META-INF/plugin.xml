@@ -36,7 +36,7 @@
     <group id="hg4idea.file.menu" popup="true" class="org.zmlx.hg4idea.action.HgMercurialMenu">
       <reference ref="CheckinFiles"/>
       <reference ref="ChangesView.AddUnversioned"/>
-      <reference ref="ChangesView.Rollback"/>
+      <reference ref="ChangesView.Revert"/>
       <separator/>
 
       <reference ref="Compare.SameVersion"/>
