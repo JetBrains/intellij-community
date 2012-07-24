@@ -103,8 +103,9 @@ public class PyResolveUtil {
     scopeCrawlUp(processor, owner, originalOwner, name, roof);
   }
 
-  public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull ScopeOwner scopeOwner, @Nullable PsiElement roof) {
-    scopeCrawlUp(processor, scopeOwner, scopeOwner, null, roof);
+  public static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @NotNull ScopeOwner scopeOwner, @Nullable String name,
+                                  @Nullable PsiElement roof) {
+    scopeCrawlUp(processor, scopeOwner, scopeOwner, name, roof);
   }
 
   private static void scopeCrawlUp(@NotNull PsiScopeProcessor processor, @Nullable ScopeOwner scopeOwner,
@@ -112,25 +113,31 @@ public class PyResolveUtil {
     while (scopeOwner != null) {
       if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
         final Scope scope = ControlFlowCache.getScope(scopeOwner);
+        boolean found = false;
         if (name != null) {
           final PsiElement resolved = scope.getNamedElement(name);
           if (resolved != null) {
             if (!processor.execute(resolved, ResolveState.initial())) {
-              return;
+              found = true;
             }
           }
         }
         else {
           for (PsiNamedElement element : scope.getNamedElements()) {
             if (!processor.execute(element, ResolveState.initial())) {
-              return;
+              found = true;
+              break;
             }
           }
         }
         for (NameDefiner definer : scope.getNameDefiners()) {
           if (!processor.execute(definer, ResolveState.initial())) {
-            return;
+            found = true;
+            break;
           }
+        }
+        if (found) {
+          return;
         }
       }
       if (scopeOwner == roof) {

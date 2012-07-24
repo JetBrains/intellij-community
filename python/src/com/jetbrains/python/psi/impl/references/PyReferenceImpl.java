@@ -221,7 +221,15 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             if (!latest.isEmpty()) {
               return latest;
             }
-            if (!isCythonLevel(myElement)) {
+            if (owner instanceof PyClass) {
+              final ScopeOwner classOwner = ScopeUtil.getScopeOwner(owner);
+              if (classOwner != null) {
+                final ResolveProcessor outerProcessor = new ResolveProcessor(referencedName);
+                PyResolveUtil.scopeCrawlUp(outerProcessor, classOwner, referencedName, roof);
+                uexpr = outerProcessor.getResult();
+              }
+            }
+            else if (!isCythonLevel(myElement)) {
               uexpr = null;
             }
           }
@@ -511,7 +519,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(element);
     final ScopeOwner owner = realContext instanceof ScopeOwner ? (ScopeOwner)realContext : ScopeUtil.getScopeOwner(realContext);
     if (owner != null) {
-      PyResolveUtil.scopeCrawlUp(processor, owner, null);
+      PyResolveUtil.scopeCrawlUp(processor, owner, null, null);
     }
 
     // in a call, include function's arg names
@@ -520,7 +528,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     // include builtin names
     final PyFile builtinsFile = PyBuiltinCache.getInstance(element).getBuiltinsFile();
     if (builtinsFile != null) {
-      PyResolveUtil.scopeCrawlUp(processor, builtinsFile, null);
+      PyResolveUtil.scopeCrawlUp(processor, builtinsFile, null, null);
     }
 
     if (underscores >= 2) {

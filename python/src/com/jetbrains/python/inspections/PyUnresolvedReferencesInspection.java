@@ -508,9 +508,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       registerProblem(point, description, hl_type, null, range, actions.toArray(new LocalQuickFix[actions.size()]));
     }
 
-    private static boolean ignoreUnresolvedMemberForType(PyType qtype, PsiReference reference, String refText) {
-      if (qtype instanceof PyNoneType || qtype instanceof PyTypeReference ||
-          (qtype instanceof PyUnionType && ((PyUnionType)qtype).isWeak())) {
+    private static boolean ignoreUnresolvedMemberForType(@NotNull PyType qtype, PsiReference reference, String refText) {
+      if (qtype instanceof PyNoneType || PyTypeChecker.isUnknown(qtype)) {
         // this almost always means that we don't know the type, so don't show an error in this case
         return true;
       }
@@ -715,7 +714,19 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
       Set<PyImportStatementBase> unusedStatements = new HashSet<PyImportStatementBase>();
       final PyUnresolvedReferencesInspection suppressableInspection = new PyUnresolvedReferencesInspection();
+      PyQualifiedName packageQName = null;
+      List<String> dunderAll = null;
+
       for (NameDefiner unusedImport : unusedImports) {
+        if (packageQName == null) {
+          final PsiFile file = unusedImport.getContainingFile();
+          if (file instanceof PyFile) {
+            dunderAll = ((PyFile)file).getDunderAll();
+          }
+          if (file != null && PyUtil.isPackage(file)) {
+            packageQName = ResolveImportUtil.findShortestImportableQName(file);
+          }
+        }
         PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
         if (importStatement != null && !unusedStatements.contains(importStatement) && !myUsedImports.contains(importStatement)) {
           if (suppressableInspection.isSuppressedFor(importStatement)) {
@@ -737,14 +748,28 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               continue;
             }
           }
+          PsiFileSystemItem importedElement;
           if (unusedImport instanceof PyImportElement) {
-            if (ResolveImportUtil.resolveImportElement((PyImportElement)unusedImport) == null) {
+            final PyImportElement importElement = (PyImportElement)unusedImport;
+            final PsiElement element = ResolveImportUtil.resolveImportElement(importElement);
+            if (element == null) {
               continue;
             }
+            if (dunderAll != null && dunderAll.contains(importElement.getVisibleName())) {
+              continue;
+            }
+            importedElement = element.getContainingFile();
           }
           else {
             assert importStatement instanceof PyFromImportStatement;
-            if (((PyFromImportStatement)importStatement).resolveImportSource() == null) {
+            importedElement = ((PyFromImportStatement)importStatement).resolveImportSource();
+            if (importedElement == null) {
+              continue;
+            }
+          }
+          if (packageQName != null && importedElement instanceof PsiFileSystemItem) {
+            final PyQualifiedName importedQName = ResolveImportUtil.findShortestImportableQName(importedElement);
+            if (importedQName != null && importedQName.matchesPrefix(packageQName)) {
               continue;
             }
           }
