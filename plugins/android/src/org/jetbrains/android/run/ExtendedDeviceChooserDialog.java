@@ -165,6 +165,11 @@ public class ExtendedDeviceChooserDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "AndroidExtendedDeviceChooserDialog";
+  }
+
   protected JComponent createCenterPanel() {
     return myPanel;
   }
