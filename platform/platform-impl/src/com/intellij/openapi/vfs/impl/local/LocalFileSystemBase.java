@@ -52,6 +52,9 @@ import java.util.Locale;
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
 
+  protected static final long DEFAULT_LENGTH = 0;
+  protected static final long DEFAULT_TIMESTAMP = 0;
+
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
   @Override

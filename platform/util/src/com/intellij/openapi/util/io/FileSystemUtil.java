@@ -367,7 +367,7 @@ public class FileSystemUtil {
       final boolean isSymlink = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_REPARSE_POINT);
       final boolean isHidden = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_HIDDEN);
       final boolean isWritable = !isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_READONLY);
-      final long timestamp = fileInfo.timestamp / 10000 - 11644473600000l;
+      final long timestamp = fileInfo.getTimestamp();
       return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, fileInfo.length, timestamp, isWritable);
     }
 

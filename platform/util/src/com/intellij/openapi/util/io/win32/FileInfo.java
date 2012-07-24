@@ -38,6 +38,10 @@ public class FileInfo {
   public long timestamp;
   public long length;
 
+  public long getTimestamp() {
+    return timestamp / 10000 - 11644473600000l;
+  }
+
   public String toString() {
     return name;
   }
