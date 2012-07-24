@@ -565,7 +565,7 @@ public class ResolveImportUtil {
         components.set(0, "datetime");
         return PyQualifiedName.fromComponents(components);
       }
-      else if (head.equals("ntpath") | head.equals("posixpath")) {
+      else if (head.equals("ntpath") || head.equals("posixpath")) {
         final List<String> result = new ArrayList<String>();
         result.add("os");
         components.set(0, "path");
