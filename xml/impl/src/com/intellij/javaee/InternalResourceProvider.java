@@ -46,6 +46,8 @@ public class InternalResourceProvider implements StandardResourceProvider{
     impl.addInternalResource("http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd","xhtml1-frameset.dtd");
     impl.addInternalResource("http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd","xhtml11/xhtml11.dtd");
 
+    impl.addInternalResource("urn:oasis:names:tc:entity:xmlns:xml:catalog", "catalog.xsd");
+
     // Plugins DTDs // stathik
     impl.addInternalResource("http://plugins.intellij.net/plugin.dtd", "plugin.dtd");
     impl.addInternalResource("http://plugins.intellij.net/plugin-repository.dtd", "plugin-repository.dtd");

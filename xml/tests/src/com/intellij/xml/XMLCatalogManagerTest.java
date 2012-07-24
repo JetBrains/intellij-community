@@ -15,6 +15,8 @@
  */
 package com.intellij.xml;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.XMLCatalogManager;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -23,6 +25,7 @@ import org.apache.xml.resolver.CatalogManager;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -54,8 +57,31 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
     assertTrue(resolve, resolve.endsWith("/catalog/xhtml1-strict.dtd"));
   }
 
+  public void testHighlighting() {
+    myFixture.configureByFile("policy.xml");
+    List<HighlightInfo> infos = myFixture.doHighlighting();
+    assertEquals("urn:oasis:names:tc:xacml:1.0:policy", infos.get(0).text);
+  }
+
+  public void testFixedHighlighting() throws Exception {
+    myFixture.configureByFile("policy.xml");
+    try {
+      ExternalResourceManagerEx.getInstanceEx().setCatalogPropertiesFile(getTestDataPath() + "catalog.properties");
+      List<HighlightInfo> infos = myFixture.doHighlighting();
+      assertEquals(infos.toString(), 0, infos.size());
+    }
+    finally {
+      ExternalResourceManagerEx.getInstanceEx().setCatalogPropertiesFile(null);
+    }
+  }
+
   private XMLCatalogManager getManager() throws IOException {
     return new XMLCatalogManager(getTestDataPath() + "catalog.properties");
+  }
+
+  @Override
+  protected boolean isWriteActionRequired() {
+    return false;
   }
 
   @Override
