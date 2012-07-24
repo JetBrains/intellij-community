@@ -15,16 +15,14 @@
  */
 package com.intellij.psi.search;
 
-import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
+import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
@@ -58,8 +56,12 @@ public class FileTypeIndexTest extends LightPlatformCodeInsightFixtureTestCase {
     FileTypeIndex index = new FileTypeIndex(FileTypeManager.getInstance());
     int version = index.getVersion();
 
-    FileTypeManager.getInstance().registerFileType(foo, Collections.<FileNameMatcher>emptyList());
-
-    assertNotSame(version, index.getVersion());
+    try {
+      FileTypeManagerEx.getInstanceEx().registerFileType(foo);
+      assertNotSame(version, index.getVersion());
+    }
+    finally {
+      FileTypeManagerEx.getInstanceEx().unregisterFileType(foo);
+    }
   }
 }
