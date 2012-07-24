@@ -5,6 +5,7 @@ import org.jetbrains.jps.model.JpsElementProperties;
 import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.JpsReferenceableElement;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -31,4 +32,6 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
 
   @NotNull
   JpsElementProperties getProperties();
+
+  List<File> getFiles(final JpsOrderRootType rootType);
 }

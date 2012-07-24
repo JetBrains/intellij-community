@@ -17,7 +17,6 @@ import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.api.*;
-import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.incremental.*;
@@ -29,6 +28,8 @@ import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -596,15 +597,13 @@ final class BuildSession implements Runnable, CanceledStatus {
                                                      Collection<String> artifactNames,
                                                      Collection<String> paths) throws Exception {
     final Timestamps timestamps = pd.timestamps.getStorage();
-    Set<Artifact> artifacts = new HashSet<Artifact>();
+    Set<JpsArtifact> artifacts = new HashSet<JpsArtifact>();
     if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
-      artifacts.addAll(pd.project.getArtifacts().values());
+      artifacts.addAll(JpsArtifactService.getInstance().getArtifacts(pd.jpsProject));
     }
     else {
-      final Map<String, Artifact> artifactMap = pd.project.getArtifacts();
-      for (String name : artifactNames) {
-        final Artifact artifact = artifactMap.get(name);
-        if (artifact != null && !StringUtil.isEmpty(artifact.getOutputPath())) {
+      for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(pd.jpsProject)) {
+        if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
           artifacts.add(artifact);
         }
       }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.packaging.impl.artifacts;
+package org.jetbrains.jps.model.serialization.artifact;
 
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -33,7 +33,7 @@ public class ArtifactState {
   @NonNls public static final String NAME_ATTRIBUTE = "name";
   private String myName;
   private String myOutputPath;
-  private String myArtifactType = PlainArtifactType.ID;
+  private String myArtifactType;
   private boolean myBuildOnMake;
   private Element myRootElement;
   private List<ArtifactPropertiesState> myPropertiesList = new ArrayList<ArtifactPropertiesState>();

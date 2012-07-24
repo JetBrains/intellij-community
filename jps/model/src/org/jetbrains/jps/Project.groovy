@@ -1,5 +1,4 @@
 package org.jetbrains.jps
-import org.jetbrains.jps.artifacts.Artifact
 /**
  * @author max
  */
@@ -7,7 +6,6 @@ class Project {
   String projectName
   int locationHash
 
-  final Map<String, Artifact> artifacts = [:]
   final Map<String, RunConfiguration> runConfigurations = [:]
   final CompilerConfiguration compilerConfiguration = new CompilerConfiguration()
   final UiDesignerConfiguration uiDesignerConfiguration = new UiDesignerConfiguration()

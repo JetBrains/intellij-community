@@ -38,6 +38,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.artifact.ArtifactManagerState;
+import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState;
+import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
 
 import java.util.*;
 

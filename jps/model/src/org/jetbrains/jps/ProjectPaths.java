@@ -10,7 +10,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
 
@@ -25,17 +24,10 @@ public class ProjectPaths {
   private static final String DEFAULT_GENERATED_DIR_NAME = "generated";
   @NotNull
   private final JpsProject myProject;
-  @Nullable
-  private final File myProjectTargetDir;
   //private final Map<JpsJavaClasspathKind, Map<ModuleChunk, List<String>>> myCachedClasspath = new HashMap<JpsJavaClasspathKind, Map<ModuleChunk, List<String>>>();
 
   public ProjectPaths(JpsProject project) {
-    this(project, null);
-  }
-
-  public ProjectPaths(JpsProject project, @Nullable File projectTargetDir) {
     myProject = project;
-    myProjectTargetDir = projectTargetDir;
   }
 
   public Collection<File> getClasspathFiles(JpsModule module, JpsJavaClasspathKind kind) {
@@ -114,39 +106,9 @@ public class ProjectPaths {
     }
   }
 
-  public static void addLibraryFiles(Collection<File> classpath, @Nullable JpsLibrary library) {
+  private static void addLibraryFiles(Set<File> classpath, @Nullable JpsLibrary library) {
     if (library != null) {
-      for (JpsLibraryRoot root : library.getRoots(JpsOrderRootType.COMPILED)) {
-        final File file = JpsPathUtil.urlToFile(root.getUrl());
-        switch (root.getInclusionOptions()) {
-          case ROOT_ITSELF:
-            classpath.add(file);
-            break;
-          case ARCHIVES_UNDER_ROOT:
-            collectArchives(file, false, classpath);
-            break;
-          case ARCHIVES_UNDER_ROOT_RECURSIVELY:
-            collectArchives(file, true, classpath);
-            break;
-        }
-      }
-    }
-  }
-
-  private static void collectArchives(File file, boolean recursively, Collection<File> result) {
-    final File[] children = file.listFiles();
-    if (children != null) {
-      for (File child : children) {
-        final String extension = FileUtil.getExtension(child.getName());
-        if (child.isDirectory()) {
-          if (recursively) {
-            collectArchives(child, recursively, result);
-          }
-        }
-        else if (extension.equals("jar") || extension.equals("zip")) {
-          result.add(child);
-        }
-      }
+      classpath.addAll(library.getFiles(JpsOrderRootType.COMPILED));
     }
   }
 
@@ -259,11 +221,6 @@ public class ProjectPaths {
 
   @Nullable
   public File getModuleOutputDir(JpsModule module, boolean forTests) {
-    if (myProjectTargetDir != null) {
-      final File basePath = new File(myProjectTargetDir, forTests ? "test" : "production");
-      return new File(basePath, module.getName());
-    }
-
     final String url = JpsJavaExtensionService.getInstance().getOutputUrl(module, forTests);
     return url != null ? JpsPathUtil.urlToFile(url) : null;
   }

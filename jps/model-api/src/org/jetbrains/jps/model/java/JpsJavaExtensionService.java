@@ -6,6 +6,7 @@ import org.jetbrains.jps.model.JpsElementKind;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.List;
@@ -14,6 +15,12 @@ import java.util.List;
  * @author nik
  */
 public abstract class JpsJavaExtensionService {
+  @NotNull
+  public abstract JpsProductionModuleOutputPackagingElement createProductionModuleOutput(@NotNull JpsModuleReference moduleReference);
+
+  @NotNull
+  public abstract JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference);
+
   public static JpsJavaExtensionService getInstance() {
     return JpsServiceManager.getInstance().getService(JpsJavaExtensionService.class);
   }

@@ -93,7 +93,7 @@ public class JpsModuleLoader {
     }
   }
 
-  private static JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String level) {
+  public static JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String level) {
     JpsElementFactory elementFactory = JpsElementFactory.getInstance();
     if (level.equals("project")) {
       return elementFactory.createProjectReference();

@@ -1,6 +1,7 @@
 package org.jetbrains.jps;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +60,7 @@ public class JpsPathUtil {
   }
 
   public static File urlToFile(String url) {
-    return new File(FileUtil.toSystemDependentName(urlToPath(url)));
+    return new File(FileUtilRt.toSystemDependentName(urlToPath(url)));
   }
 
   public static String urlToPath(String url) {

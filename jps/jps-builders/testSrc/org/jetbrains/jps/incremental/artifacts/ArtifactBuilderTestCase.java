@@ -21,7 +21,6 @@ import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
-import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.AllProjectScope;
@@ -29,6 +28,9 @@ import org.jetbrains.jps.incremental.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
+import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -58,8 +60,11 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    for (Artifact artifact : myProject.getArtifacts().values()) {
-      FileUtil.delete(new File(FileUtil.toSystemDependentName(artifact.getOutputPath())));
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myJpsProject)) {
+      String outputPath = artifact.getOutputPath();
+      if (outputPath != null) {
+        FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
+      }
     }
     myDescriptor.release();
     myProjectDir = null;
@@ -81,11 +86,20 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     }
   }
   
-  protected Artifact addArtifact(LayoutElementTestUtil.LayoutElementCreator root) {
-    final String name = UniqueNameGenerator.generateUniqueName("a", myProject.getArtifacts().keySet());
+  protected JpsArtifact addArtifact(LayoutElementTestUtil.LayoutElementCreator root) {
+    Set<String> usedNames = getArtifactNames();
+    final String name = UniqueNameGenerator.generateUniqueName("a", usedNames);
     return addArtifact(name, root);
   }
-  
+
+  private Set<String> getArtifactNames() {
+    Set<String> usedNames = new HashSet<String>();
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myJpsProject)) {
+      usedNames.add(artifact.getName());
+    }
+    return usedNames;
+  }
+
   private File getOrCreateProjectDir() {
     if (myProjectDir == null) {
       try {
@@ -98,14 +112,10 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     return myProjectDir;
   }
   
-  protected Artifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root) {
-    assertFalse("Artifact " + name + " already exists", myProject.getArtifacts().containsKey(name));
-    Artifact artifact = new Artifact();
-    artifact.setName(name);
-    artifact.setRootElement(root.buildElement());
-    
+  protected JpsArtifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root) {
+    assertFalse("JpsArtifact " + name + " already exists", getArtifactNames().contains(name));
+    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myJpsProject, name, root.buildElement(), DirectoryArtifactType.INSTANCE);
     artifact.setOutputPath(getAbsolutePath("out/artifacts/" + name));
-    myProject.getArtifacts().put(name, artifact);
     return artifact;
   }
 
@@ -138,15 +148,15 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected void buildAll() {
-    Collection<Artifact> artifacts = myProject.getArtifacts().values();
-    buildArtifacts(artifacts.toArray(new Artifact[artifacts.size()]));
+    Collection<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(myJpsProject);
+    buildArtifacts(artifacts.toArray(new JpsArtifact[artifacts.size()]));
   }
 
-  protected void buildArtifacts(Artifact... artifact) {
+  protected void buildArtifacts(JpsArtifact... artifact) {
     doBuild(false, false, artifact);
   }
 
-  private void doBuild(boolean force, final boolean shouldFail, Artifact... artifacts) {
+  private void doBuild(boolean force, final boolean shouldFail, JpsArtifact... artifacts) {
     if (myDescriptor == null) {
       myDescriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
       myDescriptor.incUsageCounter();
@@ -154,7 +164,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     myArtifactBuilderLogger.clear();
     IncProjectBuilder builder = createBuilder(myDescriptor);
     final CompileScope scope = new AllProjectScope(myDescriptor.project, myDescriptor.jpsProject,
-                                                   new HashSet<Artifact>(Arrays.asList(artifacts)), force);
+                                                   new HashSet<JpsArtifact>(Arrays.asList(artifacts)), force);
     doBuild(builder, scope, shouldFail, !force, false);
   }
 
@@ -164,11 +174,11 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     return FileUtil.toSystemIndependentName(file.getAbsolutePath());
   }
 
-  protected static void assertEmptyOutput(Artifact a1) {
+  protected static void assertEmptyOutput(JpsArtifact a1) {
     assertOutput(a1, fs());
   }
 
-  protected void assertBuildFailed(Artifact a) {
+  protected void assertBuildFailed(JpsArtifact a) {
     doBuild(false, true, a);
   }
 
@@ -208,7 +218,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
     assertSameElements(myArtifactBuilderLogger.myCopiedFilePaths, copiedPaths);
   }
 
-  protected static void assertOutput(Artifact a, TestFileSystemBuilder expected) {
+  protected static void assertOutput(JpsArtifact a, TestFileSystemBuilder expected) {
     expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(a.getOutputPath())));
   }
 
