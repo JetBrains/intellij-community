@@ -47,7 +47,8 @@ public class IoTestUtil {
     assertEquals(commandLine.command().toString(), 0, res);
 
     final File targetFile = new File(target);
-    assertEquals("target=" + target + ", link=" + linkFile, targetFile.exists(), linkFile.exists());
+    final boolean shouldExist = targetFile.exists() || SystemInfo.isWindows && SystemInfo.JAVA_VERSION.startsWith("1.6");
+    assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
     return linkFile;
   }
 }
