@@ -67,4 +67,9 @@ public class PsiTypeVisitor<A> {
   public A visitDiamondType(PsiDiamondType diamondType) {
     return visitType(diamondType);
   }
+  
+  @Nullable
+  public A visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
+    return visitType(LambdaUtil.getFunctionInterfaceType(lambdaExpressionType.getExpression()));
+  }
 }
