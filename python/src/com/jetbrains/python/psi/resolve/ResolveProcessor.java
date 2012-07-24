@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil.getScopeOwner;
+
 public class ResolveProcessor implements PsiScopeProcessor {
   @NotNull private final String myName;
   private PsiElement myResult = null;
@@ -147,13 +149,10 @@ public class ResolveProcessor implements PsiScopeProcessor {
   }
 
   private boolean setResult(PsiElement result, @Nullable PsiElement definer) {
-    if (myResult == null || getScope(myResult) == getScope(result) || (definer != null && getScope(myResult) == getScope(definer))) {
+    if (myResult == null || getScopeOwner(myResult) == getScopeOwner(result) ||
+        (definer != null && getScopeOwner(myResult) == getScopeOwner(definer))) {
       myResult = result;
     }
     return false;
-  }
-
-  private static PsiElement getScope(PsiElement result) {
-    return PsiTreeUtil.getParentOfType(result, PyFunction.class, PyClass.class, PyFile.class);
   }
 }

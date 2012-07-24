@@ -110,8 +110,10 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           }
         }
         if (owner instanceof PyFile) {
-          // Ignore builtins and variables that are not named elements, i. e. are defined by name definers
-          if (isBuiltin || scope.getNamedElement(name) == null) {
+          if (isBuiltin) {
+            return;
+          }
+          if (resolved != null && !PyUtil.inSameFile(node, resolved)) {
             return;
           }
           registerProblem(node, PyBundle.message("INSP.unbound.name.not.defined", name));

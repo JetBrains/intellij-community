@@ -3,6 +3,8 @@ package com.jetbrains.python.codeInsight.dataflow.scope;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -52,6 +54,19 @@ public class ScopeUtil {
 
   @Nullable
   public static ScopeOwner getScopeOwner(PsiElement element) {
+    if (element instanceof StubBasedPsiElement) {
+      final StubElement stub = ((StubBasedPsiElement)element).getStub();
+      if (stub != null) {
+        StubElement parentStub = stub.getParentStub();
+        while (parentStub != null) {
+          final PsiElement parent = parentStub.getPsi();
+          if (parent instanceof ScopeOwner) {
+            return (ScopeOwner)parent;
+          }
+          parentStub = parentStub.getParentStub();
+        }
+      }
+    }
     return PsiTreeUtil.getParentOfType(element, ScopeOwner.class);
   }
 
