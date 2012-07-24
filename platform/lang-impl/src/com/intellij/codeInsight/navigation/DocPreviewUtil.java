@@ -191,6 +191,10 @@ public class DocPreviewUtil {
         // We don't want to perform the replacement then.
         continue;
       }
+      if (end - i > 1 && i > 0 && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(i - 1))) {
+        // Similar situation but targets head match: from = 'TextRange', text = 'getTextRange()'. 
+        continue;
+      }
       text.replace(i, end, replaceTo);
       int diff = replaceTo.length() - replaceFrom.length();
       for (int j = 0; j < readOnlyChanges.size(); j++) {
