@@ -145,7 +145,10 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     if (result == null) {
       result = getStdResource(url, version);
     }
-//    getCatalogManager().getCatalog().resolveURI()
+    XMLCatalogManager manager = getCatalogManager();
+    if (manager != null) {
+      result = manager.resolve(url);
+    }
     if (result == null) {
       result = url;
     }
@@ -446,6 +449,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   public void setCatalogPropertiesFile(String filePath) {
     myCatalogManager = null;
     myCatalogPropertiesFile = filePath;
+    myModificationCount++;
   }
 
   @Nullable
