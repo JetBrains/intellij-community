@@ -82,7 +82,15 @@ public class HintUtil {
       updatedTextConsumer.set(new Consumer<String>() {
         @Override
         public void consume(String s) {
+          Dimension size = label.myPane.getPreferredSize();
           label.myPane.setText(s);
+          
+          // Force preferred size recalculation.
+          label.myPane.setPreferredSize(null);
+          if (label.myPane.getPreferredSize() == null && size != null) {
+            // Fallback to the old preferred size if it's not recalculated.
+            label.myPane.setPreferredSize(size);
+          }
         }
       });
     }

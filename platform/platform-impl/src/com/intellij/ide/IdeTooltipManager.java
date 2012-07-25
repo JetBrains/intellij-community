@@ -566,6 +566,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         }
         return s;
       }
+
+      @Override
+      public void setPreferredSize(Dimension preferredSize) {
+        super.setPreferredSize(preferredSize);
+        prefSize.set(preferredSize);
+      }
     };
 
     final HTMLEditorKit.HTMLFactory factory = new HTMLEditorKit.HTMLFactory() {

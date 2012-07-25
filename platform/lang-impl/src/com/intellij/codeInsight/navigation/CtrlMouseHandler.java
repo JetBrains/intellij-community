@@ -96,18 +96,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   public static final DataKey<Pair<PsiElement /* documentation anchor */, PsiElement /* element under mouse */>>
     ELEMENT_UNDER_MOUSE_INFO_KEY = DataKey.create("ElementUnderMouseInfo");
 
-  private static final AnAction[] ourTooltipActions = {
-    new ShowQuickDocFromTooltipAction(), new ShowQuickDocAtPinnedWindowFromTooltipAction()
-  };
+  private static final AnAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
 
   private final TextAttributes  ourReferenceAttributes;
   private       HighlightersSet myHighlighter;
   @JdkConstants.InputEventMask private int             myStoredModifiers = 0;
   private                              TooltipProvider myTooltipProvider = null;
-  private final FileEditorManager    myFileEditorManager;
-  private final DocumentationManager myDocumentationManager;
-  private final IdeTooltipManager    myTooltipManager;
-  @Nullable private Point myPrevMouseLocation;
+  private final     FileEditorManager    myFileEditorManager;
+  private final     DocumentationManager myDocumentationManager;
+  private final     IdeTooltipManager    myTooltipManager;
+  @Nullable private Point                myPrevMouseLocation;
 
   private enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
@@ -643,7 +641,53 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            newTextConsumer.consume(updatedText); 
+            
+            // There is a possible case that quick doc control bounds are changed, e.g. it contained text
+            // like 'public final class String implements java.io.Serializable, Comparable<String>, CharSequence' and
+            // new text replaces fully-qualified class names by hyperlinks with short name.
+            // That's why we might need to update the control size. We assume that the hint component is located at the
+            // layered pane, so, the algorithm is to find an ancestor layered pane and apply new size for the target component.
+            
+            JComponent tipComponent = null;
+            Dimension oldSize = null;
+            IdeTooltip tooltip = myTooltipManager.getCurrentTooltip();
+            if (tooltip != null) {
+              tipComponent = tooltip.getTipComponent();
+              if (tipComponent != null) {
+                oldSize = tipComponent.getPreferredSize();
+              }
+            }
+            newTextConsumer.consume(updatedText);
+            int widthChange = 0;
+            int heightChange = 0;
+            if (oldSize != null) {
+              Dimension newSize = tipComponent.getPreferredSize();
+              if (!oldSize.equals(newSize)) {
+                widthChange = newSize.width - oldSize.width;
+                heightChange = newSize.height - oldSize.height;
+              }
+            }
+
+            if (widthChange == 0 && heightChange == 0) {
+              return;
+            }
+
+            Container topLevelLayeredPaneChild = null;
+            boolean adjustBounds = false;
+            for (Container current = tipComponent.getParent(); current != null; current = current.getParent()) {
+              if (current instanceof JLayeredPane) {
+                adjustBounds = true;
+                break;
+              }
+              else {
+                topLevelLayeredPaneChild = current;
+              }
+            }
+            
+            if (adjustBounds && topLevelLayeredPaneChild != null) {
+              Rectangle bounds = topLevelLayeredPaneChild.getBounds();
+              topLevelLayeredPaneChild.setBounds(bounds.x, bounds.y, bounds.width + widthChange, bounds.height + heightChange);
+            }
           }
         });
       }
@@ -856,10 +900,15 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   private class QuickDocInfoPane extends JLayeredPane implements DataProvider {
-
+    
+    private static final int BUTTON_HGAP = 5;
+    
     @NotNull private final List<JComponent> myButtons = new ArrayList<JComponent>();
     @NotNull private final Pair<PsiElement, PsiElement> myElementUnderMouseInfo;
     @NotNull private final JComponent                   myBaseDocControl;
+    
+    private final int myMinWidth;
+    private final int myMinHeight;
 
     QuickDocInfoPane(@NotNull PsiElement documentationAnchor, @NotNull PsiElement elementUnderMouse, @NotNull JComponent baseDocControl) {
       myElementUnderMouseInfo = Pair.create(documentationAnchor, elementUnderMouse);
@@ -879,12 +928,20 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       setBackground(baseDocControl.getBackground());
 
       add(baseDocControl, Integer.valueOf(0));
+      int minWidth = 0;
+      int minHeight = 0;
       for (JComponent button : myButtons) {
         button.setBorder(null);
         button.setBackground(baseDocControl.getBackground());
         add(button, Integer.valueOf(1));
         button.setVisible(false);
+        Dimension preferredSize = button.getPreferredSize();
+        minWidth += preferredSize.width;
+        minHeight = Math.max(minHeight, preferredSize.height);
       }
+      int margin = 2;
+      myMinWidth = minWidth + margin * 2 + (myButtons.size() - 1) * BUTTON_HGAP;
+      myMinHeight = minHeight + margin * 2;
     }
 
     @Override
@@ -893,17 +950,39 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     @Override
+    public Dimension getPreferredSize() {
+      return expandIfNecessary(myBaseDocControl.getPreferredSize());
+    }
+
+    @Override
+    public Dimension getMinimumSize() {
+      return expandIfNecessary(myBaseDocControl.getMinimumSize());
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return expandIfNecessary(myBaseDocControl.getMaximumSize());
+    }
+
+    @NotNull
+    private Dimension expandIfNecessary(@NotNull Dimension base) {
+      if (base.width >= myMinWidth && base.height >= myMinHeight) {
+        return base;
+      }
+      return new Dimension(Math.max(myMinWidth, base.width), Math.max(myMinHeight, base.height));
+    }
+    
+    @Override
     public void doLayout() {
       Rectangle bounds = getBounds();
       myBaseDocControl.setBounds(bounds);
 
-      final int buttonsHGap = 5;
       int x = bounds.width;
       for (JComponent button : myButtons) {
         Dimension buttonSize = button.getPreferredSize();
         x -= buttonSize.width;
         button.setBounds(x, 0, buttonSize.width, buttonSize.height);
-        x -= buttonsHGap;
+        x -= BUTTON_HGAP;
       }
     }
 
