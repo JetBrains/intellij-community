@@ -1,7 +1,8 @@
 package com.intellij.diagnostic.errordialog;
 
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Base64Converter;
@@ -25,6 +26,13 @@ public class Attachment {
     myPath = path;
     myDisplayText = content;
     myBytes = getBytes(content);
+  }
+
+  public Attachment(Document document) {
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+    myPath = file != null ? file.getPath() : "unknown.txt";
+    myDisplayText = document.getText();
+    myBytes = getBytes(myDisplayText);
   }
 
   public Attachment(@NotNull VirtualFile file) {

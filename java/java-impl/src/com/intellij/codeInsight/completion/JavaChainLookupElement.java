@@ -19,12 +19,16 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.TypedLookupItem;
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
@@ -37,6 +41,7 @@ import java.util.Set;
  * @author peter
  */
 public class JavaChainLookupElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaChainLookupElement");
   public static final ClassConditionKey<JavaChainLookupElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaChainLookupElement.class);
   private final LookupElement myQualifier;
 
@@ -112,7 +117,14 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
     }
 
     final char atTail = document.getCharsSequence().charAt(context.getTailOffset() - 1);
-    assert atTail == ';' : atTail;
+    if (atTail != ';') {
+      LOG.error(LogMessageEx.createEvent("Unexpected character",
+                                         "atTail=" + atTail + "\n" +
+                                         "offset=" + context.getTailOffset() + "\n" +
+                                         DebugUtil.currentStackTrace(),
+                                         new Attachment(context.getDocument())));
+
+    }
     document.replaceString(context.getTailOffset() - 1, context.getTailOffset(), ".");
 
     CompletionUtil.emulateInsertion(getDelegate(), context.getTailOffset(), context);

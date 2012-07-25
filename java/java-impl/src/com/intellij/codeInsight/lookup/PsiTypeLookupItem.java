@@ -244,7 +244,7 @@ public class PsiTypeLookupItem extends LookupItem {
                                          "offset=" + newTail + "\n" +
                                          "document=" + context.getDocument() + "\n" +
                                          DebugUtil.currentStackTrace(),
-                                         new Attachment(context.getFile().getViewProvider().getVirtualFile())));
+                                         new Attachment(context.getDocument())));
 
     }
     context.setTailOffset(newTail);
