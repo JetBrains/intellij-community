@@ -42,6 +42,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.PatchNameChecker;
+import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,6 +53,7 @@ import com.intellij.util.continuation.*;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.FilesProgress;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -188,7 +190,8 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
       ProgressManager.checkCanceled();
 
       if (rollback) {
-        new RollbackWorker(myProject, false).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
+        final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
+        new RollbackWorker(myProject, operationName).doRollback(changes, true, null, VcsBundle.message("shelve.changes.action"));
       }
     }
     finally {

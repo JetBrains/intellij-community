@@ -22,11 +22,11 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -82,7 +82,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
-    final RollbackWorker worker = new RollbackWorker(myProject, true);
+    final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false, null, null);
 
     final CharSequence text = LoadTextUtil.loadText(subTree.myS1File);
@@ -110,7 +110,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
-    final RollbackWorker worker = new RollbackWorker(myProject, true);
+    final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false, null, null);
 
     assertVF(subTree.mySourceDir, "s1.txt");
@@ -135,7 +135,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
-    final RollbackWorker worker = new RollbackWorker(myProject, true);
+    final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false, null, null);
 
     assertVF(subTree.mySourceDir, "s1.txt");
@@ -164,7 +164,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
-    final RollbackWorker worker = new RollbackWorker(myProject, true);
+    final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false, null, null);
 
     subTree.mySourceDir = assertVF(subTree.myRootDir, "source");
@@ -197,7 +197,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
-    final RollbackWorker worker = new RollbackWorker(myProject, true);
+    final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false, null, null);
 
     subTree.mySourceDir = assertVF(subTree.myRootDir, "source");
@@ -224,7 +224,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
-    final RollbackWorker worker = new RollbackWorker(myProject, true);
+    final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false, null, null);
 
     assertVF(subTree.myRootDir, "source");
@@ -262,7 +262,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
-    final RollbackWorker worker = new RollbackWorker(myProject, true);
+    final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false, null, null);
 
     assertVF(subTree.myRootDir, "source");

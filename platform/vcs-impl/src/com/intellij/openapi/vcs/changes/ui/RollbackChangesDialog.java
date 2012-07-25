@@ -44,6 +44,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
   private Runnable myListChangeListener;
+  private String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
     rollbackChanges(project, changes, true);
@@ -100,22 +101,13 @@ public class RollbackChangesDialog extends DialogWrapper {
     };
     myBrowser = new MultipleChangeListBrowser(project, changeLists, changes, null, true, true, myListChangeListener, myListChangeListener);
 
-    Set<AbstractVcs> affectedVcs = new HashSet<AbstractVcs>();
-    for (Change c : changes) {
-      final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
-      if (vcs != null) {
-        // vcs may be null if we have turned off VCS integration and are in process of refreshing
-        affectedVcs.add(vcs);
-      }
-    }
+    myOperationName = operationNameByChanges(project, changes);
+    setOKButtonText(myOperationName);
 
-    String operationName = RollbackUtil.getRollbackOperationName(affectedVcs);
-    setOKButtonText(operationName);
-
-    operationName = UIUtil.removeMnemonic(operationName);
-    setTitle(VcsBundle.message("changes.action.rollback.custom.title", operationName));
+    myOperationName = UIUtil.removeMnemonic(myOperationName);
+    setTitle(VcsBundle.message("changes.action.rollback.custom.title", myOperationName));
     setCancelButtonText(CommonBundle.getCloseButtonText());
-    myBrowser.setToggleActionTitle("Include in " + operationName.toLowerCase());
+    myBrowser.setToggleActionTitle("Include in " + myOperationName.toLowerCase());
 
     for (Change c : changes) {
       if (c.getType() == Change.Type.NEW) {
@@ -128,6 +120,19 @@ public class RollbackChangesDialog extends DialogWrapper {
     myListChangeListener.run();
   }
 
+  public static String operationNameByChanges(Project project, Collection<Change> changes) {
+    Set<AbstractVcs> affectedVcs = new HashSet<AbstractVcs>();
+    for (Change c : changes) {
+      final AbstractVcs vcs = ChangesUtil.getVcsForChange(c, project);
+      if (vcs != null) {
+        // vcs may be null if we have turned off VCS integration and are in process of refreshing
+        affectedVcs.add(vcs);
+      }
+    }
+
+    return RollbackUtil.getRollbackOperationName(affectedVcs);
+  }
+
   @Override
   protected void dispose() {
     super.dispose();
@@ -137,7 +142,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    new RollbackWorker(myProject, myRefreshSynchronously).doRollback(myBrowser.getChangesIncludedInAllLists(),
+    new RollbackWorker(myProject, myOperationName).doRollback(myBrowser.getChangesIncludedInAllLists(),
                                                                      myDeleteLocallyAddedFiles != null && myDeleteLocallyAddedFiles.isSelected(),
                                                                      myAfterVcsRefreshInAwt, null);
   }
