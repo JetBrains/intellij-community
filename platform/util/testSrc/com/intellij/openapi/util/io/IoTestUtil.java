@@ -26,18 +26,16 @@ import java.io.InputStreamReader;
 import java.net.URL;
 
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 public class IoTestUtil {
   private IoTestUtil() { }
 
   // todo[r.sh] use NIO2 API after migration to JDK 7
   public static File createTempLink(@NotNull final String target, @NotNull final String link) throws InterruptedException, IOException {
-    final boolean isAbsolute = SystemInfo.isUnix && StringUtil.startsWithChar(link, '/') ||
-                               SystemInfo.isWindows && link.matches("^[c-zC-Z]:[/\\\\].*$");
-    final File linkFile = isAbsolute ? new File(link) : new File(FileUtil.getTempDirectory(), link);
-    assertTrue(link, !linkFile.exists() || linkFile.delete());
-    final File parentDir = linkFile.getParentFile();
-    assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
+    assertTrue(SystemInfo.isWindows || SystemInfo.isUnix);
+
+    final File linkFile = getFullLinkPath(link);
 
     final ProcessBuilder command;
     if (SystemInfo.isWindows) {
@@ -57,6 +55,25 @@ public class IoTestUtil {
     return linkFile;
   }
 
+  public static File createHardLink(@NotNull final String target, @NotNull final String link) throws InterruptedException, IOException {
+    assertTrue(SystemInfo.isWindows || SystemInfo.isUnix);
+
+    final File linkFile = getFullLinkPath(link);
+
+    final ProcessBuilder command;
+    if (SystemInfo.isWindows) {
+      command = new ProcessBuilder("fsutil", "hardlink", "create", linkFile.getPath(), target);
+    }
+    else {
+      command = new ProcessBuilder("ln", target, linkFile.getPath());
+    }
+    final int res = runCommand(command);
+    assertEquals(command.command().toString(), 0, res);
+
+    assertTrue("target=" + target + ", link=" + linkFile, linkFile.exists());
+    return linkFile;
+  }
+
   public static File createJunction(@NotNull final String target, @NotNull final String junction) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows);
 
@@ -65,18 +82,24 @@ public class IoTestUtil {
 
     final String exePath = getJunctionExePath();
 
-    final boolean isAbsolute = junction.matches("^[c-zC-Z]:[/\\\\].*$");
-    final File junctionFile = isAbsolute ? new File(junction) : new File(FileUtil.getTempDirectory(), junction);
-    assertTrue(junction, !junctionFile.exists() || junctionFile.delete());
-    final File parentDir = junctionFile.getParentFile();
-    assertTrue("junction=" + junction + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
+    final File junctionFile = getFullLinkPath(junction);
 
     final ProcessBuilder command = new ProcessBuilder(exePath, junctionFile.getAbsolutePath(), target);
     final int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
 
-    assertTrue(junctionFile.getPath(), junctionFile.isDirectory());
+    assertTrue("target=" + target + ", link=" + junctionFile, junctionFile.isDirectory());
     return junctionFile;
+  }
+
+  private static File getFullLinkPath(final String link) {
+    final boolean isAbsolute = SystemInfo.isUnix && StringUtil.startsWithChar(link, '/') ||
+                               SystemInfo.isWindows && link.matches("^[c-zC-Z]:[/\\\\].*$");
+    final File linkFile = isAbsolute ? new File(link) : new File(FileUtil.getTempDirectory(), link);
+    assertTrue(link, !linkFile.exists() || linkFile.delete());
+    final File parentDir = linkFile.getParentFile();
+    assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
+    return linkFile;
   }
 
   private static String getJunctionExePath() throws IOException, InterruptedException {

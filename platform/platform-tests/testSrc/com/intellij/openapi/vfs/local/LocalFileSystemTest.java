@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.vfs.local;
 
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -293,25 +293,19 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testHardLinks() throws Exception {
-    if (!SystemInfo.isWindows && !SystemInfo.isUnix) return;
+    if (!SystemInfo.isWindows && !SystemInfo.isUnix) {
+      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
+      return;
+    }
 
     final boolean safeWrite = GeneralSettings.getInstance().isUseSafeWrite();
-    final File dir = FileUtil.createTempDirectory("hardlinks", "",false);
+    final File dir = FileUtil.createTempDirectory("hardlinks.", ".dir", false);
     try {
       GeneralSettings.getInstance().setUseSafeWrite(false);
 
       final File targetFile = new File(dir, "targetFile");
       assertTrue(targetFile.createNewFile());
-      final File hardLinkFile = new File(dir, "hardLinkFile");
-
-      if (SystemInfo.isWindows) {
-        assertEquals("target=" + targetFile + " link=" + hardLinkFile,
-                     0, ExecUtil.execAndGetResult("fsutil", "hardlink", "create", hardLinkFile.getPath(), targetFile.getPath()));
-      }
-      else if (SystemInfo.isUnix) {
-        assertEquals("target=" + targetFile + " link=" + hardLinkFile,
-                     0, ExecUtil.execAndGetResult("ln", targetFile.getPath(), hardLinkFile.getPath()));
-      }
+      final File hardLinkFile = IoTestUtil.createHardLink(targetFile.getAbsolutePath(), "hardLinkFile");
 
       final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
