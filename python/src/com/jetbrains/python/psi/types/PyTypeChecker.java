@@ -382,7 +382,10 @@ public class PyTypeChecker {
     if (callSite == null) {
       return null;
     }
-    final PsiElement parent = callSite.getParent();
+    PsiElement parent = callSite.getParent();
+    while (parent instanceof PyParenthesizedExpression) {
+      parent = ((PyParenthesizedExpression)parent).getContainedExpression();
+    }
     if (parent instanceof PyCallExpression) {
       return analyzeCall((PyCallExpression)parent, context);
     }
