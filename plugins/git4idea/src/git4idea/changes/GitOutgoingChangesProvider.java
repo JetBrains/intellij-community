@@ -96,6 +96,7 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     try {
       base = searcher.getLocal().getMergeBase(myProject, vcsRoot, searcher.getRemote());
     } catch (VcsException e) {
+      LOG.info(e);
       return new ArrayList<Change>(localChanges);
     }
     if (base == null) {
