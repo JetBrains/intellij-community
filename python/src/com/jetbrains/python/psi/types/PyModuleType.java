@@ -186,7 +186,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       @Override
       public void handleEvent(Event event, @Nullable Object associated) {
       }
-    }, owner, null);
+    }, owner, null, null);
     return visibleImports;
   }
 

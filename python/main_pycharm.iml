@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="jira-connector" />
     <orderEntry type="module" module-name="uml" />
     <orderEntry type="module" module-name="python-uml" />
+    <orderEntry type="module" module-name="localization" />
   </component>
 </module>
 
