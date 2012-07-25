@@ -487,6 +487,6 @@ public class NameUtilTest extends UsefulTestCase {
           }
         }
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().attempts(20).assertTiming();
   }
 }
