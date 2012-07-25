@@ -603,4 +603,9 @@ public class LayoutDeviceConfigurationsDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     return myContentPanel;
   }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "AndroidLayoutDeviceConfigurationsDialog";
+  }
 }

@@ -19,6 +19,10 @@ package com.intellij.util;
  * @since 27.03.2012
  */
 public class BitUtil {
+  public static boolean isSet(final byte value, final byte flag) {
+    return (value & flag) == flag;
+  }
+
   public static boolean isSet(final int value, final int flag) {
     return (value & flag) == flag;
   }

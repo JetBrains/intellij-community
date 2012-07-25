@@ -117,7 +117,8 @@ public class LambdaUtil {
       final int parameterIndex = ((PsiParameterList)paramParent).getParameterIndex(param);
       if (parameterIndex > -1) {
         final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(param, PsiLambdaExpression.class);
-        final PsiClassType.ClassResolveResult resolveResult = getFunctionInterfaceType(lambdaExpression);
+        final PsiType type = getFunctionInterfaceType(lambdaExpression);
+        final PsiClassType.ClassResolveResult resolveResult = type instanceof PsiClassType ? ((PsiClassType)type).resolveGenerics() : null;
         if (resolveResult != null) {
           final MethodSignature methodSignature = getFunction(resolveResult.getElement());
           if (methodSignature != null) {
@@ -140,7 +141,7 @@ public class LambdaUtil {
   }
 
   @Nullable
-  public static PsiClassType.ClassResolveResult getFunctionInterfaceType(@Nullable PsiLambdaExpression lambdaExpression) {
+  public static PsiType getFunctionInterfaceType(@Nullable PsiLambdaExpression lambdaExpression) {
     if (lambdaExpression != null) {
       final PsiElement parent = lambdaExpression.getParent();
       PsiType type = null;
@@ -177,10 +178,7 @@ public class LambdaUtil {
           type = method.getReturnType();
         }
       }
-
-      if (type instanceof PsiClassType) {
-        return ((PsiClassType)type).resolveGenerics();
-      }
+      return type;
     }
     return null;
   }

@@ -15,9 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,19 +23,16 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
 import static com.intellij.util.BitUtil.isSet;
+import static com.intellij.util.BitUtil.notSet;
 
 /**
  * @author Dmitry Avdeev
  */
 public class Win32LocalFileSystem extends LocalFileSystemBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem");
-
   public static boolean isAvailable() {
     return IdeaWin32.isAvailable();
   }
@@ -51,14 +45,13 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   };
 
   public static Win32LocalFileSystem getWin32Instance() {
-    if (!isAvailable()) throw new RuntimeException("DLL is not loaded");
+    if (!isAvailable()) throw new RuntimeException("Native filesystem for Windows is not loaded");
     Win32LocalFileSystem fileSystem = THREAD_LOCAL.get();
-    fileSystem.myKernel.clearCache();
+    fileSystem.myFsCache.clearCache();
     return fileSystem;
   }
 
-  private final Win32Kernel myKernel = new Win32Kernel();
-  public static boolean checkMe = false;
+  private final Win32FsCache myFsCache = new Win32FsCache();
 
   private Win32LocalFileSystem() { }
 
@@ -69,90 +62,37 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    try {
-      String[] strings = myKernel.list(file.getPath());
-      if (checkMe && !Arrays.asList(strings).equals(Arrays.asList(super.list(file)))) {
-        LOG.error(file.getPath());
-      }
-      return strings;
-    }
-    catch (Exception e) {
-      if (checkMe) {
-        assert false;
-      }
-      return super.list(file);
-    }
+    return myFsCache.list(file.getPath());
   }
 
   @Override
   public boolean exists(@NotNull VirtualFile fileOrDirectory) {
     if (fileOrDirectory.getParent() == null) return true;
-    try {
-      myKernel.exists(fileOrDirectory.getPath());
-      if (checkMe && !super.exists(fileOrDirectory)) {
-        LOG.error(fileOrDirectory.getPath());
-      }
-      return true;
-    }
-    catch (FileNotFoundException e) {
-      return super.exists(fileOrDirectory);
-    }
+    return myFsCache.getInfo(fileOrDirectory) != null;
   }
 
   @Override
   public boolean isDirectory(@NotNull VirtualFile file) {
-    try {
-      boolean b = myKernel.isDirectory(file.getPath());
-      if (checkMe && b != super.isDirectory(file)) {
-        LOG.error(file.getPath());
-      }
-      return b;
-    }
-    catch (FileNotFoundException e) {
-      return super.isDirectory(file);
-    }
+    final FileInfo fileInfo = myFsCache.getInfo(file);
+    return fileInfo != null && isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DIRECTORY);
   }
 
   @Override
   public boolean isWritable(@NotNull VirtualFile file) {
-    try {
-      boolean b = myKernel.isWritable(file.getPath());
-      if (checkMe && b != super.isWritable(file)) {
-        LOG.error(file.getPath());
-      }
-      return b;
-    }
-    catch (FileNotFoundException e) {
-      return super.isWritable(file);
-    }
+    final FileInfo fileInfo = myFsCache.getInfo(file);
+    return fileInfo != null && notSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_READONLY);
   }
 
   @Override
   public long getTimeStamp(@NotNull VirtualFile file) {
-    try {
-      long timeStamp = myKernel.getTimeStamp(file.getPath());
-      if (checkMe && timeStamp != super.getTimeStamp(file)) {
-        LOG.error(file.getPath());
-      }
-      return timeStamp;
-    }
-    catch (FileNotFoundException e) {
-      return super.getTimeStamp(file);
-    }
+    final FileInfo fileInfo = myFsCache.getInfo(file);
+    return fileInfo != null ? fileInfo.getTimestamp() : DEFAULT_TIMESTAMP;
   }
 
   @Override
   public long getLength(@NotNull VirtualFile file) {
-    try {
-      long length = myKernel.getLength(file.getPath());
-      if (checkMe && length != super.getLength(file)) {
-        LOG.error(file.getPath());
-      }
-      return length;
-    }
-    catch (FileNotFoundException e) {
-      return super.getLength(file);
-    }
+    final FileInfo fileInfo = myFsCache.getInfo(file);
+    return fileInfo != null ? fileInfo.length : DEFAULT_LENGTH;
   }
 
   @NotNull
@@ -175,24 +115,6 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
 
   @Override
   public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
-    try {
-      return myKernel.getBooleanAttributes(file.getPath(), flags);
-    }
-    catch (FileNotFoundException e) {
-      return super.getBooleanAttributes(file, flags);
-    }
-  }
-
-  @Override
-  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    final FileInfo fileInfo = myKernel.doGetInfo(FileUtil.toSystemDependentName(file.getPath()));
-    if (fileInfo == null) return null;
-
-    final boolean isDirectory = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_DIRECTORY);
-    final boolean isSpecial = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_DEVICE);
-    final boolean isSymlink = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_REPARSE_POINT);
-    final boolean isHidden = isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_HIDDEN);
-    final boolean isWritable = !isSet(fileInfo.attributes, Win32Kernel.FILE_ATTRIBUTE_READONLY);
-    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, fileInfo.length, fileInfo.timestamp, isWritable);
+    return myFsCache.getBooleanAttributes(file, flags);
   }
 }

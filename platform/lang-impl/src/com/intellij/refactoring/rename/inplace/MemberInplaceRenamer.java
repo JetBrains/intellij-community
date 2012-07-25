@@ -181,9 +181,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     try {
       final PsiNamedElement variable = getVariable();
       if (variable != null && !newName.equals(myOldName)) {
-        final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(variable.getLanguage());
-        LOG.assertTrue(namesValidator != null);
-        if (namesValidator.isIdentifier(newName, myProject)) {
+        if (isIdentifier(newName, variable.getLanguage())) {
           final PsiElement substituted = getSubstituted();
           if (substituted == null) {
             return;

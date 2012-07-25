@@ -343,7 +343,16 @@ public class NormalCompletionOrderingTest extends CompletionSortingTestCase {
   }
 
   public void testPreferApplicableAnnotations() throws Throwable {
-    checkPreferredItems 0, 'ZMetaAnno', 'ZLocalAnno'
+    myFixture.addClass '''
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
+@Target({ElementType.ANNOTATION_TYPE})
+@interface TMetaAnno {}
+
+@Target({ElementType.LOCAL_VARIABLE})
+@interface TLocalAnno {}'''
+    checkPreferredItems 0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
   }
 
   public void testJComponentAddNewWithStats() throws Throwable {

@@ -147,7 +147,7 @@ Qname'''
   }
   
   @Test
-  void substrings() {
+  void tailSubstrings() {
     def header = '''\
 PsiResolveHelperImpl
 public static com.intellij.openapi.util.Pair&lt;com.intellij.psi.PsiType, com.intellij.psi.ConstraintType&gt; getSubstitutionForTypeParameterConstraint (com.intellij.psi.PsiTypeParameter typeParam, com.intellij.psi.PsiType param, com.intellij.psi.PsiType arg, boolean isContraVariantPosition, com.intellij.pom.java.LanguageLevel languageLevel)'''
@@ -162,6 +162,24 @@ public static com.intellij.openapi.util.Pair&lt;com.intellij.psi.PsiType, com.in
     def expected = '''\
 <a href="psi_element://com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl">PsiResolveHelperImpl</a><br/>public static <a href="psi_element://com.intellij.openapi.util.Pair">Pair</a>&lt;<a href="psi_element://com.intellij.psi.PsiType">PsiType</a>, <a href="psi_element://com.intellij.psi.ConstraintType">ConstraintType</a>&gt; getSubstitutionForTypeParameterConstraint (<a href="psi_element://com.intellij.psi.PsiTypeParameter">PsiTypeParameter</a> typeParam, <a href="psi_element://com.intellij.psi.PsiType">PsiType</a> param, <a href="psi_element://com.intellij.psi.PsiType">PsiType</a> arg, boolean isContraVariantPosition, <a href="psi_element://com.intellij.pom.java.LanguageLevel">LanguageLevel</a> languageLevel)'''
 
+    assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
+  }
+  
+  @Test
+  void headSubstrings() {
+    def header = '''\
+ASTNode
+com.intellij.openapi.util.TextRange getTextRange ()'''
+    
+    def fullText = '''\
+<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://com.intellij.lang.ASTNode"><code>com.intellij.lang.ASTNode</code></a></b></small><PRE><a href="psi_element://com.intellij.openapi.util.TextRange"><code>TextRange</code></a>&nbsp;<b>getTextRange</b>()</PRE>
+     Returns the text range (a combination of starting offset in the document and length) for this node.
+    
+     <DD><DL><DT><b>Returns:</b><DD>the text range.</DD></DL></DD></body></html>'''
+    
+    def expected = '''\
+<a href="psi_element://com.intellij.lang.ASTNode">ASTNode</a><br/><a href="psi_element://com.intellij.openapi.util.TextRange">TextRange</a> getTextRange ()'''
+    
     assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
   }
 }

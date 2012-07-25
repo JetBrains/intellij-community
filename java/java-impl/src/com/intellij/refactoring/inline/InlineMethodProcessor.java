@@ -196,10 +196,12 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       if (value != null && !(value instanceof PsiCallExpression)) {
         for (UsageInfo info : usagesIn) {
           PsiReference reference = info.getReference();
-          InlineUtil.TailCallType type = InlineUtil.getTailCallType(reference);
-          if (type == InlineUtil.TailCallType.Simple) {
-            conflicts.putValue(statement, "Inlined result won't be a valid statement");
-            break;
+          if (reference != null) {
+            InlineUtil.TailCallType type = InlineUtil.getTailCallType(reference);
+            if (type == InlineUtil.TailCallType.Simple) {
+              conflicts.putValue(statement, "Inlined result won't be a valid statement");
+              break;
+            }
           }
         }
       }

@@ -1,27 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="com.intellij.debugger.impl.GenericDebuggerParametersRunnerConfigurable">
-  <grid id="a1cd4" binding="myPanel" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+  <grid id="a1cd4" binding="myPanel" layout-manager="GridLayoutManager" row-count="3" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="53" y="171" width="441" height="78"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+      <xy x="53" y="171" width="441" height="92"/>
     </constraints>
     <properties/>
     <border type="none"/>
     <children>
-      <grid id="86bed" binding="myShMemPanel" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="86bed" binding="myShMemPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="29" width="275" height="22"/>
-          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
           <component id="9f41f" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="3" width="138" height="16"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.shmem.address"/>
@@ -29,8 +26,7 @@
           </component>
           <component id="af504" class="javax.swing.JTextField" binding="myAddressField">
             <constraints>
-              <xy x="148" y="0" width="127" height="22"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1">
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -40,19 +36,17 @@
           </component>
         </children>
       </grid>
-      <grid id="c2b5" binding="myPortPanel" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="c2b5" binding="myPortPanel" layout-manager="GridLayoutManager" row-count="1" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="56" width="275" height="22"/>
-          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
           <component id="6e48a" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="3" width="29" height="16"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.port"/>
@@ -60,8 +54,7 @@
           </component>
           <component id="5ffe7" class="javax.swing.JTextField" binding="myPortField">
             <constraints>
-              <xy x="39" y="0" width="236" height="22"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1">
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
@@ -73,26 +66,23 @@
       </grid>
       <component id="aad8d" class="javax.swing.JButton" binding="myDebuggerSettings">
         <constraints>
-          <xy x="285" y="40" width="156" height="26"/>
-          <grid row="1" column="1" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1"/>
+          <grid row="1" column="1" row-span="2" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties>
           <text resource-bundle="messages/DebuggerBundle" key="button.debugger.settings"/>
         </properties>
       </component>
-      <grid id="b10c7" binding="myTransportPanel" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+      <grid id="b10c7" binding="myTransportPanel" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
         <margin top="0" left="0" bottom="0" right="0"/>
         <constraints>
-          <xy x="0" y="0" width="441" height="24"/>
-          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3"/>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
         <properties/>
         <border type="none"/>
         <children>
           <component id="63d09" class="javax.swing.JLabel">
             <constraints>
-              <xy x="0" y="4" width="62" height="16"/>
-              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0"/>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.transport"/>
@@ -100,8 +90,7 @@
           </component>
           <component id="f3bb4" class="javax.swing.JRadioButton" binding="mySocketTransport">
             <constraints>
-              <xy x="72" y="0" width="64" height="24"/>
-              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <selected value="true"/>
@@ -110,8 +99,7 @@
           </component>
           <component id="3bb61" class="javax.swing.JRadioButton" binding="myShmemTransport">
             <constraints>
-              <xy x="146" y="0" width="116" height="24"/>
-              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0"/>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
               <text resource-bundle="messages/DebuggerBundle" key="label.generic.debugger.parameters.patcher.configurable.shmem"/>
@@ -119,8 +107,7 @@
           </component>
           <hspacer id="b3e0f">
             <constraints>
-              <xy x="262" y="6" width="179" height="11"/>
-              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1"/>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="1" hsize-policy="6" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
             </constraints>
           </hspacer>
         </children>

@@ -252,11 +252,16 @@ class ApkStep extends ExportSignedPackageWizardStep {
       public void run() {
         String title = AndroidBundle.message("android.export.package.wizard.title");
         final Project project = myWizard.getProject();
+        final File apkFile = new File(apkPath);
+
+        final VirtualFile vApkFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(apkFile);
+        if (vApkFile != null) {
+          vApkFile.refresh(true, false);
+        }
 
         if (!runZipAlign) {
           Messages.showWarningDialog(project, AndroidBundle.message("cannot.find.zip.align"), title);
         }
-        final File apkFile = new File(apkPath);
 
         if (ShowFilePathAction.isSupported()) {
           if (Messages.showOkCancelDialog(project, AndroidBundle.message("android.export.package.success.message", apkFile.getName()),

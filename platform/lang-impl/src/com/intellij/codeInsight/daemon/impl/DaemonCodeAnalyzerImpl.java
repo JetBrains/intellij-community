@@ -198,7 +198,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     assert !myDisposed;
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
-    assert !application.isWriteAccessAllowed();
+    assert !application.isWriteAccessAllowed() : "Write access is required";
 
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();

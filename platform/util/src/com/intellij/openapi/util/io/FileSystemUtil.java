@@ -242,7 +242,15 @@ public class FileSystemUtil {
         Map attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myNoFollowLinkOptions);
         final Boolean isSymbolicLink = (Boolean)attributes.get("isSymbolicLink");
         if (isSymbolicLink) {
-          attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myLinkOptions);
+          try {
+            attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myLinkOptions);
+          }
+          catch (InvocationTargetException e) {
+            final Throwable cause = e.getCause();
+            if (cause != null && "java.nio.file.NoSuchFileException".equals(cause.getClass().getName())) {
+              return FileAttributes.BROKEN_SYMLINK;
+            }
+          }
         }
 
         final boolean isDirectory = (Boolean)attributes.get("isDirectory");
@@ -352,13 +360,14 @@ public class FileSystemUtil {
     public FileAttributes getAttributes(@NotNull final String path) throws Exception {
       final FileInfo fileInfo = myInstance.getInfo(path);
       if (fileInfo == null) return null;
+      if (fileInfo.attributes == FileInfo.BROKEN_SYMLINK) return FileAttributes.BROKEN_SYMLINK;
 
       final boolean isDirectory = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DIRECTORY);
       final boolean isSpecial = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DEVICE);
       final boolean isSymlink = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_REPARSE_POINT);
       final boolean isHidden = isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_HIDDEN);
       final boolean isWritable = !isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_READONLY);
-      final long timestamp = fileInfo.timestamp / 10000 - 11644473600000l;
+      final long timestamp = fileInfo.getTimestamp();
       return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, fileInfo.length, timestamp, isWritable);
     }
 
@@ -433,7 +442,9 @@ public class FileSystemUtil {
       if (isSymlink) {
         mySharedMem.clear();
         res = SystemInfo.isLinux ? myLibC.__xstat64(0, path, mySharedMem) : myLibC.stat(path, mySharedMem);
-        if (res != 0) return null;
+        if (res != 0) {
+          return FileAttributes.BROKEN_SYMLINK;
+        }
         mode = (SystemInfo.isLinux ? mySharedMem.getInt(myModeOffset) : mySharedMem.getShort(myModeOffset)) & LibC.S_MASK;
       }
 

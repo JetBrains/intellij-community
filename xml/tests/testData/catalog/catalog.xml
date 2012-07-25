@@ -6,4 +6,6 @@
     uri="xhtml1-strict.dtd"/>
   <system systemId="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
             uri="xhtml1-strict.dtd"/>
+  <system systemId="urn:oasis:names:tc:xacml:1.0:policy"
+            uri="catalog/cs-xacml-schema-policy-01.xsd"/>
 </catalog>

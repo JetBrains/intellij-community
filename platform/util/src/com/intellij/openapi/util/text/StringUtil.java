@@ -2272,6 +2272,9 @@ public class StringUtil extends StringUtilRt {
     return buffer.toString();
   }
 
+  public static boolean charsEqual(char a, char b, boolean ignoreCase) {
+    return ignoreCase ? charsEqualIgnoreCase(a, b) : a == b;
+  }
   public static boolean charsEqualIgnoreCase(char a, char b) {
     return StringUtilRt.charsEqualIgnoreCase(a, b);
   }
