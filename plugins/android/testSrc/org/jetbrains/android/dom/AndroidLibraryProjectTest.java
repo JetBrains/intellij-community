@@ -240,13 +240,13 @@ public class AndroidLibraryProjectTest extends UsefulTestCase {
     myFixture.copyFileToProject(BASE_PATH + "FindUsagesClass1.java", "app/src/p1/p2/lib/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "FindUsagesClass1.java", "lib/src/p1/p2/lib/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "FindUsagesStyles.xml", "app/res/values/styles.xml");
-    myFixture.copyFileToProject(BASE_PATH + "FindUsagesStyles2.xml", "lib/res/values/styles2.xml");
+    //myFixture.copyFileToProject(BASE_PATH + "FindUsagesStyles2.xml", "lib/res/values/styles2.xml");
     myFixture.copyFileToProject(BASE_PATH + "picture1.png", "lib/res/drawable/picture1.png");
     myFixture.copyFileToProject("R.java", "app/src/p1/p2/R.java");
     myFixture.copyFileToProject(BASE_PATH + "LibR.java", "app/src/p1/p2/lib/R.java");
     myFixture.copyFileToProject(BASE_PATH + "LibR.java", "lib/src/p1/p2/lib/R.java");
     Collection<UsageInfo> references = findCodeUsages(getTestName(false) + "." + extension, dir);
-    assertEquals(buildFileList(references), 6, references.size());
+    assertEquals(buildFileList(references), 5, references.size());
   }
 
   private List<UsageInfo> findCodeUsages(String path, String dir) throws Throwable {
