@@ -136,11 +136,10 @@ public class CopyReferenceAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    assert editor != null;
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     PsiElement element = getElementToCopy(editor, dataContext);
 
-    if (!doCopy(element, project, editor)) {
+    if (!doCopy(element, project, editor) && editor != null) {
       Document document = editor.getDocument();
       VirtualFile file = FileDocumentManager.getInstance().getFile(document);
       if (file != null) {
@@ -154,7 +153,7 @@ public class CopyReferenceAction extends AnAction {
     HighlightManager highlightManager = HighlightManager.getInstance(project);
     EditorColorsManager manager = EditorColorsManager.getInstance();
     TextAttributes attributes = manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-    if (element != null) {
+    if (element != null && editor != null) {
       PsiElement nameIdentifier = HighlightUsagesHandler.getNameIdentifier(element);
       if (nameIdentifier != null) {
         highlightManager.addOccurrenceHighlights(editor, new PsiElement[]{nameIdentifier}, attributes, true, null);
