@@ -36,8 +36,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.File;
 
 public class MasterDetailPopupBuilder {
@@ -59,6 +58,8 @@ public class MasterDetailPopupBuilder {
   private boolean myAddDetailViewToEast = true;
   private Dimension myMinSize;
   private boolean myCancelOnWindowDeactivation = true;
+  private Runnable myDoneRunnable;
+  private boolean myCancelOnClickOutside;
 
 
   public String getDimensionServiceKey() {
@@ -183,18 +184,45 @@ public class MasterDetailPopupBuilder {
       toolBar.setOpaque(false);
     }
 
+
     final PopupChooserBuilder builder = createInnerBuilder().
       setMovable(true).
       setResizable(true).
       setAutoselectOnMouseMove(false).
       setSettingButton(toolBar).
       setSouthComponent(footerPanel).
-      setCancelOnWindowDeactivation(myCancelOnWindowDeactivation);
+      setCancelOnWindowDeactivation(myCancelOnWindowDeactivation).
+      setCancelOnClickOutside(myCancelOnClickOutside);
 
 
     if (myAddDetailViewToEast) {
       builder.
         setEastComponent((JComponent)myDetailView);
+    }
+
+    if (myDoneRunnable != null) {
+
+      final JButton done = new JButton("Done");
+                  done.setMnemonic('o');
+                  done.addActionListener(new ActionListener() {
+                    @Override
+                    public void actionPerformed(ActionEvent event) {
+                      myDoneRunnable.run();
+                    }
+                  });
+
+
+      builder.setCommandButton(new ActiveComponent() {
+        @Override
+        public void setActive(boolean active) {
+          //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public JComponent getComponent() {
+          return done;
+        }
+      });
     }
 
     String title = myDelegate.getTitle();
@@ -231,6 +259,16 @@ public class MasterDetailPopupBuilder {
         myDetailView.clearEditor();
       }
     });
+
+    if (myDoneRunnable != null) {
+      new AnAction("Done") {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          myDoneRunnable.run();
+        }
+      }.registerCustomShortcutSet(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK, myPopup.getContent());
+    }
+
     return myPopup;
   }
 
@@ -255,7 +293,6 @@ public class MasterDetailPopupBuilder {
     Object[] values = new Object[0];
     if (myChooserComponent instanceof JList) {
       values = ((JList)myChooserComponent).getSelectedValues();
-
     }
     else if (myChooserComponent instanceof JTree) {
       values = myDelegate.getSelectedItemsInTree();
@@ -289,6 +326,14 @@ public class MasterDetailPopupBuilder {
   public MasterDetailPopupBuilder setCancelOnWindowDeactivation(boolean cancelOnWindowDeactivation) {
     myCancelOnWindowDeactivation = cancelOnWindowDeactivation;
     return this;
+  }
+
+  public void setDoneRunnable(Runnable doneRunnable) {
+    myDoneRunnable = doneRunnable;
+  }
+
+  public void setCancelOnClickOutside(boolean cancelOnClickOutside) {
+    myCancelOnClickOutside = cancelOnClickOutside;
   }
 
   public static boolean allowedToRemoveItems(Object[] values) {
@@ -389,7 +434,7 @@ public class MasterDetailPopupBuilder {
         }
       }
     });
-    new AnAction(){
+    new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         ItemWrapper[] items = getSelectedItems();
@@ -398,7 +443,6 @@ public class MasterDetailPopupBuilder {
         }
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), list);
-
   }
 
   public MasterDetailPopupBuilder setDelegate(Delegate delegate) {

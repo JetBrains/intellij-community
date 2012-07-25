@@ -20,10 +20,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.InplaceButton;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
@@ -72,7 +69,7 @@ public class PopupChooserBuilder {
   ArrayList<JBPopupListener> myListeners = new ArrayList<JBPopupListener>();
   private String myAd;
   private Dimension myMinSize;
-  private InplaceButton myCommandButton;
+  private ActiveComponent myCommandButton;
   private final List<Pair<ActionListener,KeyStroke>> myKeyboardActions = new ArrayList<Pair<ActionListener, KeyStroke>>();
   private Component mySettingsButtons;
   private boolean myAutoselectOnMouseMove = true;
@@ -83,6 +80,14 @@ public class PopupChooserBuilder {
   private boolean myModalContext;
   private boolean myCloseOnEnter = true;
   private boolean myCancelOnWindowDeactivation = true;
+
+  public PopupChooserBuilder setCancelOnClickOutside(boolean cancelOnClickOutside) {
+    myCancelOnClickOutside = cancelOnClickOutside;
+    return this;
+  }
+
+  private boolean myCancelOnClickOutside = true;
+
 
 
   public JScrollPane getScrollPane() {
@@ -162,7 +167,7 @@ public class PopupChooserBuilder {
     return this;
   }
 
-  public PopupChooserBuilder setCommandButton(@NotNull InplaceButton commandButton) {
+  public PopupChooserBuilder setCommandButton(@NotNull ActiveComponent commandButton) {
     myCommandButton = commandButton;
     return this;
   }
@@ -292,7 +297,8 @@ public class PopupChooserBuilder {
       .setLocateWithinScreenBounds(true)
       .setCancelOnOtherWindowOpen(true)
       .setModalContext(myModalContext)
-      .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation);
+      .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation)
+      .setCancelOnClickOutside(myCancelOnClickOutside);
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);

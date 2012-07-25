@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.InplaceButton;
+import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
@@ -78,7 +78,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myShowShadow = true;
   private boolean myFocusable = true;
   private boolean myHeaderAlwaysFocusable;
-  private InplaceButton myCommandButton;
+  private ActiveComponent myCommandButton;
   private List<Pair<ActionListener, KeyStroke>> myKeyboardActions = Collections.emptyList();
   private Component mySettingsButtons;
   private boolean myMayBeParent;
@@ -171,7 +171,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
     return this;
   }
   @NotNull
-  public ComponentPopupBuilder setCommandButton(@NotNull InplaceButton button) {
+  public ComponentPopupBuilder setCommandButton(@NotNull ActiveComponent button) {
     myCommandButton = button;
     return this;
   }

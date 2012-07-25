@@ -176,7 +176,7 @@ public class AbstractPopup implements JBPopup {
                      final boolean cancelOnClickOutside,
                      @Nullable final Set<JBPopupListener> listeners,
                      final boolean useDimServiceForXYLocation,
-                     InplaceButton commandButton,
+                     ActiveComponent commandButton,
                      @Nullable final IconButton cancelButton,
                      @Nullable final MouseChecker cancelOnMouseOutCallback,
                      final boolean cancelOnWindow,

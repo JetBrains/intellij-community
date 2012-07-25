@@ -17,7 +17,6 @@ package com.intellij.ui.popup.util;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -167,7 +166,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       validate();
       getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
-      getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+      getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
       clearHightlighting();
       if (lineAttributes != null) {
@@ -204,7 +203,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     if (panel != null) {
       if (myDetailScrollPanel == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
-        myDetailPanelWrapper.setBorder(BorderFactory.createEmptyBorder(5, 30, 5, 30));
+        myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 30, 5, 30));
         myDetailPanelWrapper.add(panel);
 
         myDetailScrollPanel =
@@ -212,7 +211,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
         myDetailScrollPanel.setPreferredSize(myDetailPanelWrapper.getPreferredSize());
         myDetailScrollPanel.setBorder(null);
 
-        add(wrapWithDoneButtonIfNeeded(myDetailScrollPanel), BorderLayout.SOUTH);
+        add(myDetailScrollPanel, BorderLayout.NORTH);
       } else {
         myDetailPanelWrapper.removeAll();
         myDetailPanelWrapper.add(panel);
