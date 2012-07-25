@@ -75,8 +75,9 @@ public class CoreJavaFileManager implements JavaFileManager {
     final VirtualFile file = dir.getVirtualFile();
     for (VirtualFile root : myClasspath) {
       if (VfsUtilCore.isAncestor(root, file, false)) {
-        final String relativePath = FileUtil.getRelativePath(root.getPath(), file.getPath(), '.');
-        return new PsiPackageImpl(myPsiManager, relativePath);
+        String relativePath = FileUtil.getRelativePath(root.getPath(), file.getPath(), '/');
+        if (relativePath == null) continue;
+        return new PsiPackageImpl(myPsiManager, relativePath.replace('/', '.'));
       }
     }
     return null;
