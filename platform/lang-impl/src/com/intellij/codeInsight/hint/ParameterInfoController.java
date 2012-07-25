@@ -18,6 +18,7 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -229,8 +230,8 @@ public class ParameterInfoController {
     myLookupListener = new PropertyChangeListener() {
       public void propertyChange(PropertyChangeEvent evt) {
         if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())){
-          final Lookup lookup = (Lookup)evt.getNewValue();
-          if (lookup != null){
+          final LookupImpl lookup = (LookupImpl)evt.getNewValue();
+          if (lookup != null && lookup.isShown()){
             adjustPositionForLookup(lookup);
           }
         }
