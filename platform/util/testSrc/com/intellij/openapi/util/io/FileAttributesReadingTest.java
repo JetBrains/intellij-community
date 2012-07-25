@@ -50,6 +50,16 @@ public class FileAttributesReadingTest {
   }
 
   @Test
+  public void missingFile() throws Exception {
+    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", false);
+
+    final FileAttributes attributes = FileSystemUtil.getAttributes(file);
+    assertNull(attributes);
+    final String target = FileSystemUtil.resolveSymLink(file);
+    assertNull(target);
+  }
+
+  @Test
   public void regularFile() throws Exception {
     final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
     FileUtil.writeToFile(file, myTestData);
