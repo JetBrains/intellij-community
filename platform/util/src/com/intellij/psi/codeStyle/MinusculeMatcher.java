@@ -19,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayCharSequence;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.Matcher;
 import org.jetbrains.annotations.Nullable;
 
@@ -177,6 +178,7 @@ public class MinusculeMatcher implements Matcher {
 
   @Nullable
   private FList<TextRange> skipChars(String name, int patternIndex, int nameIndex, boolean maySkipNextChar) {
+    boolean veryStart = patternIndex == 0;
     while ('*' == myPattern[patternIndex]) {
       patternIndex++;
       if (patternIndex == myPattern.length) {
@@ -194,11 +196,24 @@ public class MinusculeMatcher implements Matcher {
         break;
       }
       if (next == 0 && myOptions != NameUtil.MatchingCaseSensitivity.NONE && name.charAt(next) != nextChar) {
-        return null;
+        fromIndex = next + 1;
+        continue;
       }
       if (upper && next > 0 && !Character.isUpperCase(name.charAt(next))) {
         fromIndex = next + 1;
         continue;
+      }
+
+      if (veryStart && next > 0 && !NameUtil.isWordStart(name, next) && !NameUtil.isWordSeparator(nextChar)) {
+        if (next == name.length() - 1) {
+          return null;
+        }
+        if (patternIndex == myPattern.length - 1 ||
+            Character.isLetter(myPattern[patternIndex + 1]) && (myPattern[patternIndex + 1] != name.charAt(next + 1) ||
+                                                                NameUtil.isWordStart(name, next + 1))) {
+          fromIndex = next + 1;
+          continue;
+        }
       }
 
       FList<TextRange> ranges = matchName(name, patternIndex, next);
@@ -279,8 +294,11 @@ public class MinusculeMatcher implements Matcher {
       return 0;
     }
 
+    int skipCount = CharArrayUtil.shiftForward(myPattern, 0, " *");
     int commonStart = 0;
-    while (commonStart < name.length() && commonStart < myPattern.length && name.charAt(commonStart) == myPattern[commonStart]) {
+    while (commonStart < name.length() &&
+           commonStart + skipCount < myPattern.length &&
+           name.charAt(commonStart) == myPattern[commonStart + skipCount]) {
       commonStart++;
     }
 
@@ -288,7 +306,7 @@ public class MinusculeMatcher implements Matcher {
     boolean prefixMatching = isStartMatch(name, startIndex);
     boolean middleWordStart = !prefixMatching && NameUtil.isWordStart(name, first.getStartOffset());
 
-    return -fragmentCount + matchingCase * 10 + commonStart - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
+    return -fragmentCount + matchingCase * 2 + commonStart * 3 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
   }
 
   public boolean isStartMatch(String name) {
@@ -323,5 +341,13 @@ public class MinusculeMatcher implements Matcher {
     }
 
     return matchName(name, 0, 0);
+  }
+
+  @Override
+  public String toString() {
+    return "MinusculeMatcher{" +
+           "myPattern=" + new String(myPattern) +
+           ", myOptions=" + myOptions +
+           '}';
   }
 }

@@ -25,7 +25,7 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
     myContainer.setChild(ANNOTATIONS_ROOTS_KIND);
   }
 
-  public JpsJavaModuleExtensionImpl(JpsJavaModuleExtensionImpl original) {
+  private JpsJavaModuleExtensionImpl(JpsJavaModuleExtensionImpl original) {
     super(original);
     myOutputUrl = original.myOutputUrl;
     myTestOutputUrl = original.myTestOutputUrl;
@@ -89,6 +89,8 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
 
   public void applyChanges(@NotNull JpsJavaModuleExtensionImpl modified) {
     setLanguageLevel(modified.myLanguageLevel);
+    setInheritOutput(modified.myInheritOutput);
+    setExcludeOutput(modified.myExcludeOutput);
     setOutputUrl(modified.myOutputUrl);
     setTestOutputUrl(modified.myTestOutputUrl);
   }

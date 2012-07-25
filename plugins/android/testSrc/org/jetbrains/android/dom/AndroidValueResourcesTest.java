@@ -20,10 +20,12 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -84,6 +86,44 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   public void testAttrFormatCompletion() throws Throwable {
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     toTestCompletion("attrs1.xml", "attrs1_after.xml");
+  }
+
+  public void testDeclareStyleableNameCompletion() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    doTestCompletionVariants("attrs2.xml", "LabelView");
+  }
+
+  public void testDeclareStyleableNameHighlighting() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    doTestHighlighting("attrs3.xml");
+  }
+
+  public void testDeclareStyleableNameNavigation1() throws Exception {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    final VirtualFile file = copyFileToProject("attrs4.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+
+    PsiElement[] targets =
+      GotoDeclarationAction.findAllTargetElements(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
+    assertNotNull(targets);
+    assertEquals(1, targets.length);
+    PsiElement targetElement = targets[0];
+    assertInstanceOf(targetElement, PsiClass.class);
+    assertEquals("android.widget.TextView", ((PsiClass)targetElement).getQualifiedName());
+  }
+
+  public void testDeclareStyleableNameNavigation2() throws Exception {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    final VirtualFile file = copyFileToProject("attrs5.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+
+    PsiElement[] targets =
+      GotoDeclarationAction.findAllTargetElements(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
+    assertNotNull(targets);
+    assertEquals(1, targets.length);
+    PsiElement targetElement = targets[0];
+    assertInstanceOf(targetElement, PsiClass.class);
+    assertEquals("p1.p2.LabelView", ((PsiClass)targetElement).getQualifiedName());
   }
 
   public void testResourceTypeCompletion() throws Throwable {
@@ -171,6 +211,10 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   }
 
   public void testResourceReferenceAsValueHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testNameValidation() throws Throwable {
     doTestHighlighting();
   }
 

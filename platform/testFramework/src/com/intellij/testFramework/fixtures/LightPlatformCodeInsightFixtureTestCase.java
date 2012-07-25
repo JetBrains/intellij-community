@@ -26,6 +26,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NonNls;
@@ -77,15 +78,20 @@ public abstract class LightPlatformCodeInsightFixtureTestCase extends UsefulTest
     return null;
   }
 
-  /**
-   * Return absolute path to the test data.
-   *
-   * @return absolute path to the test data.
-   */
-  @NonNls
-  protected String getTestDataPath() {
-    return PathManager.getHomePath().replace(File.separatorChar, '/') + getBasePath();
-  }
+   /**
+    * Return absolute path to the test data. Not intended to be overridden.
+    *
+    * @return absolute path to the test data.
+    */
+   @NonNls
+   protected String getTestDataPath() {
+     String path = isCommunity() ? PlatformTestUtil.getCommunityPath() : PathManager.getHomePath();
+     return path.replace(File.separatorChar, '/') + getBasePath();
+   }
+
+   protected boolean isCommunity() {
+     return false;
+   }
 
   @Override
   protected void runTest() throws Throwable {

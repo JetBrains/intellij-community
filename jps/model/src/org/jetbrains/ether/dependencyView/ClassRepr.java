@@ -2,6 +2,8 @@ package org.jetbrains.ether.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
 import groovyjarjarasm.asm.Opcodes;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.RW;
 
 import java.io.*;
@@ -165,6 +167,7 @@ public class ClassRepr extends Proto {
     };
   }
 
+  @NotNull
   public int[] getSupers() {
     final int[] result = new int[myInterfaces.size() + 1];
 
@@ -297,6 +300,7 @@ public class ClassRepr extends Proto {
     return getPackageName(myContext.getValue(s));
   }
 
+  @NotNull
   public static String getPackageName(final String raw) {
     final int index = raw.lastIndexOf('/');
 
@@ -307,6 +311,7 @@ public class ClassRepr extends Proto {
     return raw.substring(0, index);
   }
 
+  @Nullable
   public FieldRepr findField(final int name) {
     for (FieldRepr f : myFields) {
       if (f.name == name) {
@@ -317,6 +322,7 @@ public class ClassRepr extends Proto {
     return null;
   }
 
+  @NotNull
   public Collection<MethodRepr> findMethods(final MethodRepr.Predicate p) {
     final Collection<MethodRepr> result = new LinkedList<MethodRepr>();
 

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.IgnoredFilePatterns;
-import org.jetbrains.jps.PathUtil;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -89,7 +89,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     public boolean accept(@NotNull String fullFilePath, BuildDataManager dataManager) throws IOException {
       if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath, dataManager)) return false;
 
-      if (myIgnoredFilePatterns.isIgnored(PathUtil.getFileName(fullFilePath))) {
+      if (myIgnoredFilePatterns.isIgnored(JpsPathUtil.getFileName(fullFilePath))) {
         return false;
       }
 

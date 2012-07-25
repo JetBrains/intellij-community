@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -28,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -37,11 +41,14 @@ import java.util.Set;
  * @author Rustam Vishnyakov
  */
 public class CommonCodeStyleSettings {
-
-  private Language myLanguage;
+  
+  @NotNull private static final String ARRANGEMENT_ELEMENT_NAME = "arrangementRules";
+  
+  @NotNull private final List<ArrangementRule> myArrangementRules = new ArrayList<ArrangementRule>();
+  private Language          myLanguage;
   private CodeStyleSettings myRootSettings;
-  private IndentOptions myIndentOptions;
-  private FileType myFileType;
+  private IndentOptions     myIndentOptions;
+  private FileType          myFileType;
 
   private final static String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -113,6 +120,16 @@ public class CommonCodeStyleSettings {
     return myIndentOptions;
   }
 
+  @NotNull
+  public List<ArrangementRule> getArrangementRules() {
+    return myArrangementRules;
+  }
+
+  public void setArrangementRules(@NotNull List<ArrangementRule> rules) {
+    myArrangementRules.clear();
+    myArrangementRules.addAll(rules);
+  }
+
   public CommonCodeStyleSettings clone(CodeStyleSettings rootSettings) {
     assert rootSettings != null;
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
@@ -161,10 +178,7 @@ public class CommonCodeStyleSettings {
   private static void copyFieldValue(final Object from, Object to, final Field field)
     throws IllegalAccessException {
     Class<?> fieldType = field.getType();
-    if (fieldType.isPrimitive()) {
-      field.set(to, field.get(from));
-    }
-    else if (fieldType.equals(String.class)) {
+    if (fieldType.isPrimitive() || fieldType.equals(String.class)) {
       field.set(to, field.get(from));
     }
     else {
@@ -193,6 +207,10 @@ public class CommonCodeStyleSettings {
         myIndentOptions.deserialize(indentOptionsElement);
       }
     }
+    Element arrangementRulesContainer = element.getChild(ARRANGEMENT_ELEMENT_NAME);
+    if (arrangementRulesContainer != null) {
+      myArrangementRules.addAll(ArrangementUtil.readExternal(arrangementRulesContainer, myLanguage));
+    }
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
@@ -208,6 +226,14 @@ public class CommonCodeStyleSettings {
       myIndentOptions.serialize(indentOptionsElement, defaultIndentOptions);
       if (indentOptionsElement.getChildren().size() > 0) {
         element.addContent(indentOptionsElement);
+      }
+    }
+
+    if (!myArrangementRules.isEmpty()) {
+      Element container = new Element(ARRANGEMENT_ELEMENT_NAME);
+      ArrangementUtil.writeExternal(container, myArrangementRules, myLanguage);
+      if (!container.getChildren().isEmpty()) {
+        element.addContent(container);
       }
     }
   }

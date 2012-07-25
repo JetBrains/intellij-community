@@ -17,17 +17,15 @@ package git4idea.test
 
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.history.VcsHistoryCache
 import com.intellij.openapi.vcs.impl.ContentRevisionCache
 import com.intellij.openapi.vcs.impl.VcsDescriptor
 import com.intellij.openapi.vcs.impl.VcsEnvironmentsProxyCreator
 import com.intellij.openapi.vcs.update.UpdatedFiles
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PairProcessor
 import com.intellij.util.Processor
 import git4idea.PlatformFacade
-import com.intellij.openapi.vcs.*
-
 /**
  * 
  * @author Kirill Likhodedov
@@ -249,7 +247,7 @@ public class GitMockVcsManager extends ProjectLevelVcsManager {
   }
 
   @Override
-  void iterateVcsRoot(VirtualFile root, Processor<FilePath> iterator, PairProcessor<VirtualFile, VirtualFile[]> directoryFilter) {
+  void iterateVcsRoot(VirtualFile root, Processor<FilePath> iterator, com.intellij.openapi.vcs.VirtualFileFilter directoryFilter) {
     throw new UnsupportedOperationException()
   }
 

@@ -10,7 +10,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="jps-model-api" />
-    <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="library" exported="" name="JDOM" level="project" />
     <orderEntry type="module" module-name="jps-model-impl" scope="TEST" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
   </component>

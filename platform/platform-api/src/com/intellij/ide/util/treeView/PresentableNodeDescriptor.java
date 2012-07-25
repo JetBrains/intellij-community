@@ -167,7 +167,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   }
 
   public Color getHighlightColor() {
-    return UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground().brighter() : Gray._245;
+    return UIUtil.isUnderDarcula() ? UIUtil.getPanelBackground().brighter() : UIUtil.getTreeBackground().brighter();
   }
 
   public static class ColoredFragment {

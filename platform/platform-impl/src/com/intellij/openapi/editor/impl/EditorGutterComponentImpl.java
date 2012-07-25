@@ -93,6 +93,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private String myLastGutterToolTip = null;
   private int myLastPreferredHeight = -1;
   private Convertor<Integer, Integer> myLineNumberConvertor;
+  private boolean myShowDefaultGutterPopup = true;
 
   @SuppressWarnings("unchecked")
   public EditorGutterComponentImpl(EditorImpl editor) {
@@ -186,7 +187,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       }
 
       UISettings.setupAntialiasing(g);
-      paintLineNumbers(g, clip);
+      paintLineNumbersBackground(g, clip);
       paintAnnotations(g, clip);
 
       Object hint = g2.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
@@ -198,6 +199,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         paintFoldingBackground(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintLineMarkers(g, clip, firstVisibleOffset, lastVisibleOffset);
         paintFoldingTree(g, clip, firstVisibleOffset, lastVisibleOffset);
+        paintLineNumbers(g, clip);
       }
       finally {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, hint);
@@ -323,10 +325,15 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private void paintLineNumbers(Graphics g, Rectangle clip) {
     if (isLineNumbersShown()) {
-      paintBackground(g, clip, getLineNumberAreaOffset(), getLineNumberAreaWidth());
       int x = getLineNumberAreaOffset() + getLineNumberAreaWidth() - 2;
       UIUtil.drawVDottedLine((Graphics2D)g, x, clip.y, clip.y + clip.height, null, getOutlineColor(false));
       doPaintLineNumbers(g, clip);
+    }
+  }
+
+  private void paintLineNumbersBackground(Graphics g, Rectangle clip) {
+    if (isLineNumbersShown()) {
+      paintBackground(g, clip, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     }
   }
 
@@ -554,6 +561,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     });
 
     myLineMarkerAreaWidth = myIconsAreaWidth + FREE_PAINTERS_AREA_WIDTH +
+                            // if folding outline is shown, there will be enough place for change markers, otherwise add place for it.
                             (isFoldingOutlineShown() ? 0 : getFoldingAnchorWidth() / 2);
   }
 
@@ -1345,6 +1353,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     myLineNumberConvertor = lineNumberConvertor;
   }
 
+  @Override
+  public void setShowDefaultGutterPopup(boolean show) {
+    myShowDefaultGutterPopup = show;
+  }
+
   private void invokePopup(MouseEvent e) {
     final ActionManager actionManager = ActionManager.getInstance();
     if (myEditor.getMouseEventArea(e) == EditorMouseEventArea.ANNOTATIONS_AREA) {
@@ -1383,9 +1396,11 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
         }
       }
       else {
-        ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
-        ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-        popupMenu.getComponent().show(this, e.getX(), e.getY());
+        if (myShowDefaultGutterPopup) {
+          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_GUTTER);
+          ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+          popupMenu.getComponent().show(this, e.getX(), e.getY());
+        }
         e.consume();
       }
     }

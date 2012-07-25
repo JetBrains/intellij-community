@@ -314,7 +314,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
       highlightManager.addRangeHighlight(editor, range.getStartOffset(), range.getEndOffset(), attributes, false, highlighters);
     }
     for (RangeHighlighter highlighter : highlighters) {
-      setLineTextErrorStripeTooltip(highlighter);
+      highlighter.setErrorStripeTooltip(getLineTextErrorStripeTooltip(editor.getDocument(), highlighter.getStartOffset()));
     }
   }
 

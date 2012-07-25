@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDirectory;
@@ -78,7 +79,7 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
   @NotNull
   @Override
   protected PsiElement[] invokeDialog(Project project, PsiDirectory directory) {
-    MyInputValidator validator = new MyInputValidator(project, directory);
+    MyInputValidator validator = new MyValidator(project, directory);
     Messages.showInputDialog(project, AndroidBundle.message("new.file.dialog.text"),
                              AndroidBundle.message("new.typed.resource.dialog.title", myResourcePresentableName),
                              Messages.getQuestionIcon(), "", validator);
@@ -202,5 +203,21 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
       default:
     }
     throw new IllegalArgumentException("Incorrect resource folder type");
+  }
+
+  private class MyValidator extends MyInputValidator implements InputValidatorEx {
+    public MyValidator(Project project, PsiDirectory directory) {
+      super(project, directory);
+    }
+
+    @Override
+    public boolean checkInput(String inputString) {
+      return getErrorText(inputString) == null;
+    }
+
+    @Override
+    public String getErrorText(String inputString) {
+      return AndroidResourceUtil.getInvalidResourceFileNameMessage(inputString);
+    }
   }
 }

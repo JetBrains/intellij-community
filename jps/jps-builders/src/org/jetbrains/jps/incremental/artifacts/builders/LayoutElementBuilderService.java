@@ -1,13 +1,13 @@
 package org.jetbrains.jps.incremental.artifacts.builders;
 
-import org.jetbrains.jps.artifacts.LayoutElement;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
 /**
  * @author nik
  */
-public abstract class LayoutElementBuilderService<E extends LayoutElement> {
+public abstract class LayoutElementBuilderService<E extends JpsPackagingElement> {
   private final Class<E> myElementClass;
 
   protected LayoutElementBuilderService(Class<E> elementClass) {

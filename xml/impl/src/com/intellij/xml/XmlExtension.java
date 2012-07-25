@@ -32,7 +32,10 @@ import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.impl.source.xml.TagNameReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -78,6 +81,7 @@ public abstract class XmlExtension {
   @NotNull
   public abstract Set<String> guessUnboundNamespaces(@NotNull PsiElement element, final XmlFile file);
 
+  @Nullable
   public TagNameReference createTagNameReference(final ASTNode nameElement, final boolean startTagFlag) {
     return new TagNameReference(nameElement, startTagFlag);
   }

@@ -6,7 +6,6 @@ import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
@@ -18,6 +17,8 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,32 +36,27 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
 
   @Override
   public void build(CompileContext context) throws ProjectBuildException {
-    Set<Artifact> affected = new HashSet<Artifact>();
-    for (Artifact artifact : context.getProjectDescriptor().project.getArtifacts().values()) {
+    Set<JpsArtifact> affected = new HashSet<JpsArtifact>();
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(context.getProjectDescriptor().jpsProject)) {
       if (context.getScope().isAffected(artifact)) {
         affected.add(artifact);
       }
     }
-    final Set<Artifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected, context.getProjectDescriptor().project);
-    Map<String, Artifact> artifactsMap = new HashMap<String, Artifact>();
-    for (Artifact artifact : toBuild) {
-      artifactsMap.put(artifact.getName(), artifact);
-    }
+    final Set<JpsArtifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected, context.getProjectDescriptor().project, context.getProjectDescriptor().jpsModel);
 
-    final ArtifactSorter sorter = new ArtifactSorter(context.getProjectDescriptor().project);
-    final Map<String, String> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
-    for (String artifactName : sorter.getArtifactsSortedByInclusion()) {
+    final ArtifactSorter sorter = new ArtifactSorter(context.getProjectDescriptor().jpsModel);
+    final Map<JpsArtifact, JpsArtifact> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
+    for (JpsArtifact artifact : sorter.getArtifactsSortedByInclusion()) {
       context.checkCanceled();
-      final Artifact artifact = artifactsMap.get(artifactName);
-      if (artifact != null) {
-        final String selfIncluding = selfIncludingNameMap.get(artifactName);
+      if (toBuild.contains(artifact)) {
+        final JpsArtifact selfIncluding = selfIncludingNameMap.get(artifact);
         if (selfIncluding != null) {
-          String name = selfIncluding.equals(artifact.getName()) ? "it" : "'" + selfIncluding + "' artifact";
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifactName + "' artifact: " + name + " includes itself in the output layout"));
+          String name = selfIncluding.equals(artifact) ? "it" : "'" + selfIncluding.getName() + "' artifact";
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: " + name + " includes itself in the output layout"));
           break;
         }
         if (StringUtil.isEmpty(artifact.getOutputPath())) {
-          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifactName + "' artifact: output path is not specified"));
+          context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Cannot build '" + artifact.getName() + "' artifact: output path is not specified"));
           break;
         }
         buildArtifact(artifact, context);
@@ -68,10 +64,10 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
     }
   }
 
-  private static void buildArtifact(Artifact artifact, final CompileContext context) throws ProjectBuildException {
+  private static void buildArtifact(JpsArtifact artifact, final CompileContext context) throws ProjectBuildException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     try {
-      final ArtifactSourceFilesState state = pd.dataManager.getArtifactsBuildData().getOrCreateState(artifact, pd.project, pd.rootsIndex);
+      final ArtifactSourceFilesState state = pd.dataManager.getArtifactsBuildData().getOrCreateState(artifact, pd.project, pd.jpsModel, pd.rootsIndex);
       state.initState(pd.dataManager);
       final Set<String> deletedFiles = state.getDeletedFiles();
       final Map<String,IntArrayList> changedFiles = state.getChangedFiles();

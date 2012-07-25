@@ -2,9 +2,11 @@ package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -99,6 +101,111 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     toTestCompletion("ctn.xml", "ctn_after.xml");
   }
 
+  @SuppressWarnings("ConstantConditions")
+  public void testCustomTagCompletion0() throws Throwable {
+    final VirtualFile labelViewJava = copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+
+    VirtualFile lf1 = myFixture.copyFileToProject(testFolder + '/' + "ctn0.xml", "res/layout/layout1.xml");
+    myFixture.configureFromExistingVirtualFile(lf1);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> variants = myFixture.getLookupElementStrings();
+    assertTrue(variants.contains("p1.p2.LabelView"));
+
+    final PsiFile psiLabelViewFile = PsiManager.getInstance(getProject()).findFile(labelViewJava);
+    assertInstanceOf(psiLabelViewFile, PsiJavaFile.class);
+    final PsiClass labelViewClass = ((PsiJavaFile)psiLabelViewFile).getClasses()[0];
+    assertNotNull(labelViewClass);
+    myFixture.renameElement(labelViewClass, "LabelView1");
+
+    VirtualFile lf2 = myFixture.copyFileToProject(testFolder + '/' + "ctn0.xml", "res/layout/layout2.xml");
+    myFixture.configureFromExistingVirtualFile(lf2);
+    myFixture.complete(CompletionType.BASIC);
+    variants = myFixture.getLookupElementStrings();
+    assertFalse(variants.contains("p1.p2.LabelView"));
+    assertTrue(variants.contains("p1.p2.LabelView1"));
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          labelViewJava.delete(null);
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    });
+
+    VirtualFile lf3 = myFixture.copyFileToProject(testFolder + '/' + "ctn0.xml", "res/layout/layout3.xml");
+    myFixture.configureFromExistingVirtualFile(lf3);
+    myFixture.complete(CompletionType.BASIC);
+    variants = myFixture.getLookupElementStrings();
+    assertFalse(variants.contains("p1.p2.LabelView"));
+    assertFalse(variants.contains("p1.p2.LabelView1"));
+  }
+
+  public void testCustomTagCompletion1() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    copyFileToProject("LabelView1.java", "src/p1/p2/LabelView1.java");
+    copyFileToProject("IncorrectView.java", "src/p1/p2/IncorrectView.java");
+    doTestCompletionVariants("ctn1.xml", "p2.LabelView", "p2.LabelView1");
+  }
+
+  public void testCustomTagCompletion2() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    VirtualFile file = copyFileToProject("ctn2.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type("p1\n");
+    myFixture.checkResultByFile(testFolder + '/' + "ctn2_after.xml");
+  }
+
+  public void testCustomTagCompletion3() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    toTestCompletion("ctn3.xml", "ctn3_after.xml");
+  }
+
+  public void testCustomTagCompletion4() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    doTestCompletionVariants("ctn4.xml", "LabelView");
+  }
+
+  public void testCustomTagCompletion5() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    VirtualFile file = copyFileToProject("ctn5.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type("p1\n");
+    myFixture.checkResultByFile(testFolder + '/' + "ctn5_after.xml");
+  }
+
+  public void testCustomTagCompletion6() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    toTestCompletion("ctn6.xml", "ctn6_after.xml");
+  }
+
+  public void testCustomTagCompletion7() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    toTestCompletion("ctn7.xml", "ctn6_after.xml");
+  }
+
+  public void testCustomTagCompletion8() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    copyFileToProject("LabelView1.java", "src/p1/p2/LabelView1.java");
+    doTestCompletionVariants("ctn8.xml", "LabelView");
+  }
+
+  public void testCustomTagCompletion9() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    toTestCompletion("ctn9.xml", "ctn9_after.xml");
+  }
+
+  public void testCustomTagCompletion10() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    copyFileToProject("LabelView1.java", "src/p1/p2/LabelView1.java");
+    doTestCompletionVariants("ctn10.xml", "LabelView");
+  }
+
   public void testCustomAttributeNameCompletion() throws Throwable {
     copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
     doTestCompletionVariants("can.xml", "text", "textColor", "textSize");
@@ -106,6 +213,11 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
   public void testCustomAttributeValueCompletion() throws Throwable {
     doTestCompletionVariants("cav.xml", "@color/color0", "@color/color1", "@color/color2");
+  }
+
+  public void testIdea64993() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    doTestHighlighting();
   }
 
   public void testTagNameCompletion1() throws Throwable {
@@ -178,12 +290,51 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     toTestCompletion("tn5.xml", "tn5_after.xml");
   }
 
+  public void testTagNameCompletion6() throws Throwable {
+    VirtualFile file = copyFileToProject("tn6.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertFalse(lookupElementStrings.contains("android.widget.Button"));
+  }
+
+  public void testTagNameCompletion7() throws Throwable {
+    toTestCompletion("tn7.xml", "tn7_after.xml");
+  }
+
+  public void testTagNameCompletion8() throws Throwable {
+    VirtualFile file = copyFileToProject("tn8.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertTrue(lookupElementStrings.contains("widget.Button"));
+  }
+
+  public void testTagNameCompletion9() throws Throwable {
+    toTestCompletion("tn9.xml", "tn9_after.xml");
+  }
+
+  public void testTagNameCompletion10() throws Throwable {
+    VirtualFile file = copyFileToProject("tn10.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertFalse(lookupElementStrings.contains("android.widget.Button"));
+  }
+
+  public void testTagNameCompletion11() throws Throwable {
+    toTestCompletion("tn11.xml", "tn11_after.xml");
+  }
+
   public void testIdCompletion1() throws Throwable {
     doTestCompletionVariants("idcompl1.xml", "@android:", "@+id/", "@id/idd1", "@id/idd2");
   }
 
   public void testIdCompletion2() throws Throwable {
-    doTestCompletionVariants("idcompl2.xml", "@android:id/text", "@android:id/text1", "@android:id/text2");
+    doTestCompletionVariants("idcompl2.xml", "@android:id/text1", "@android:id/text2");
   }
 
   public void testIdHighlighting() throws Throwable {
@@ -302,7 +453,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     myFixture.configureFromExistingVirtualFile(file);
     PsiFile psiFile = myFixture.getFile();
     String text = psiFile.getText();
-    int rootOffset = text.indexOf("android.widget.ScrollView");
+    int rootOffset = text.indexOf("ScrollView");
     PsiReference rootReference = psiFile.findReferenceAt(rootOffset);
     assertNotNull(rootReference);
     PsiElement rootViewClass = rootReference.resolve();
@@ -446,6 +597,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doCreateFileResourceFromUsage(virtualFile);
     myFixture.type("selector");
     myFixture.checkResultByFile("res/drawable/unknown.xml", testFolder + '/' + getTestName(true) + "_drawable_after.xml", true);
+  }
+
+  public void testPrivateAndPublicResources() throws Throwable {
+    doTestHighlighting();
   }
 
   private void doCreateFileResourceFromUsage(VirtualFile virtualFile) {

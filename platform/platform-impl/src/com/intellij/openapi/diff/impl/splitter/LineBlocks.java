@@ -22,20 +22,18 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.Change;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeList;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
-import com.intellij.util.containers.IntArrayList;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class LineBlocks {
-  public static final LineBlocks EMPTY = new LineBlocks(SimpleIntervalProvider.EMPTY, new TextDiffType[0]);
+  public static final LineBlocks EMPTY = new LineBlocks(Collections.<Diff>emptyList());
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.splitter.LineBlocks");
-  private final IntervalsProvider myIntervalsProvider;
-  private final TextDiffType[] myTypes;
+  private final List<Diff> myDiffs;
 
-  private LineBlocks(IntervalsProvider intervalsProvider, TextDiffType[] types) {
-    myIntervalsProvider = intervalsProvider;
-    myTypes = types;
+  private LineBlocks(List<Diff> diffs) {
+    myDiffs = diffs;
   }
 
   public Interval getVisibleIndices(Trapezium visibleArea) {
@@ -56,23 +54,40 @@ public class LineBlocks {
   }
 
   public TextDiffType getType(int index) {
-    return myTypes[index];
+    return myDiffs.get(index).getDiffType();
   }
 
   public int getCount() {
-    return getBegginings(FragmentSide.SIDE1).length;
+    return getBeginnings(FragmentSide.SIDE1).length;
   }
 
-  public int[] getBegginings(FragmentSide side) {
-    IntArrayList result = new IntArrayList(getIntervals(side).length);
+  /**
+   * Get beginnings of all the changes from the specified side.
+   * @param side Side of the changes.
+   */
+  public int[] getBeginnings(FragmentSide side) {
+    return getBeginnings(side, false);
+  }
+
+  /**
+   * Get beginnings of the changes from the specified side.
+   * @param side          Side of the changes.
+   * @param unappliedOnly If true - only unapplied changes will be considered, if false - all changes (both applied and not applied).
+   */
+  public int[] getBeginnings(FragmentSide side, boolean unappliedOnly) {
+    List<Integer> result = new ArrayList<Integer>(myDiffs.size());
     int previousBeginning = Integer.MIN_VALUE;
-    Interval[] sideIntervals = getIntervals(side);
-    for (Interval sideInterval : sideIntervals) {
-      int start = sideInterval.getStart();
-      if (start != previousBeginning) result.add(start);
-      previousBeginning = start;
+
+    for (Diff diff : myDiffs) {
+      if (!unappliedOnly || !diff.getDiffType().isApplied()) {
+        Interval interval = diff.getInterval(side);
+        int start = interval.getStart();
+        if (start != previousBeginning) result.add(start);
+        previousBeginning = start;
+      }
     }
-    return result.toArray();
+
+    return ArrayUtil.toIntArray(result);
   }
 
   static int getMaxStartedIndex(Interval[] intervals, int start) {
@@ -99,7 +114,19 @@ public class LineBlocks {
   }
 
   public Interval[] getIntervals(FragmentSide side) {
-    return myIntervalsProvider.getIntervals(side);
+    Interval[] intervals = new Interval[myDiffs.size()];
+    for (int i = 0; i < intervals.length; i++) {
+      intervals[i] = myDiffs.get(i).getInterval(side);
+    }
+    return intervals;
+  }
+
+  public TextDiffType[] getTypes() {
+    TextDiffType[] types = new TextDiffType[myDiffs.size()];
+    for (int i = 0; i < types.length; i++) {
+      types[i] = myDiffs.get(i).getDiffType();
+    }
+    return types;
   }
 
   private int transform(int location, Interval[] domain, Interval[] range) {
@@ -147,20 +174,13 @@ public class LineBlocks {
 
   static LineBlocks createLineBlocks(LineBlock[] blocks) {
     Arrays.sort(blocks, LineBlock.COMPARATOR);
-    Interval[] intervals1 = new Interval[blocks.length];
-    Interval[] intervals2 = new Interval[blocks.length];
-    TextDiffType[] types = new TextDiffType[blocks.length];
-    for (int i = 0; i < blocks.length; i++) {
-      LineBlock block = blocks[i];
-      intervals1[i] = new Interval(block.getStartingLine1(), block.getModifiedLines1());
-      intervals2[i] = new Interval(block.getStartingLine2(), block.getModifiedLines2());
-      types[i] = TextDiffType.create(block.getType());
+    List<Diff> diffs = new ArrayList<Diff>(blocks.length);
+    for (LineBlock block : blocks) {
+      Interval interval1 = new Interval(block.getStartingLine1(), block.getModifiedLines1());
+      Interval interval2 = new Interval(block.getStartingLine2(), block.getModifiedLines2());
+      diffs.add(new Diff(interval1, interval2, TextDiffType.create(block.getType())));
     }
-    return create(intervals1, intervals2, types);
-  }
-
-  private static LineBlocks create(Interval[] intervals1, Interval[] intervals2, TextDiffType[] types) {
-    return new LineBlocks(new SimpleIntervalProvider(intervals1, intervals2), types);
+    return new LineBlocks(diffs);
   }
 
   @NotNull
@@ -168,44 +188,41 @@ public class LineBlocks {
     // changes may come mixed, need to sort them to get correct intervals
     Collections.sort(changes, ChangeList.CHANGE_ORDER);
 
-    ArrayList<Interval> intervals1 = new ArrayList<Interval>();
-    ArrayList<Interval> intervals2 = new ArrayList<Interval>();
-    ArrayList<TextDiffType> types = new ArrayList<TextDiffType>();
+    List<Diff> diffs = new ArrayList<Diff>(changes.size());
     for (Change change : changes) {
       if (!change.isValid()) { continue; }
       int start1 = change.getChangeSide(FragmentSide.SIDE1).getStartLine();
       int end1 = change.getChangeSide(FragmentSide.SIDE1).getEndLine();
-      intervals1.add(Interval.fromTo(start1, end1));
+      Interval interval1 = Interval.fromTo(start1, end1);
 
       int start2 = change.getChangeSide(FragmentSide.SIDE2).getStartLine();
       int end2 = change.getChangeSide(FragmentSide.SIDE2).getEndLine();
-      intervals2.add(Interval.fromTo(start2, end2));
+      Interval interval2 = Interval.fromTo(start2, end2);
 
-      types.add(change.getType().getTypeKey());
+      diffs.add(new Diff(interval1, interval2, change.getType().getTypeKey()));
     }
-    return create(intervals1.toArray(new Interval[intervals1.size()]),
-                  intervals2.toArray(new Interval[intervals2.size()]), types.toArray(new TextDiffType[types.size()]));
+    return new LineBlocks(diffs);
   }
 
-  public TextDiffType[] getTypes() {
-    return myTypes;
-  }
+  private static class Diff {
 
-  public interface IntervalsProvider {
-    Interval[] getIntervals(FragmentSide side);
-  }
-  
-  public static class SimpleIntervalProvider implements IntervalsProvider {
-    private final Interval[][] myIntervals = new Interval[2][];
-    public static final IntervalsProvider EMPTY = new SimpleIntervalProvider(new Interval[0], new Interval[0]);
+    @NotNull private final Interval myIntervalForSide1;
+    @NotNull private final Interval myIntervalForSide2;
+    @NotNull private final TextDiffType myDiffType;
 
-    public SimpleIntervalProvider(Interval[] intervals1, Interval[] intervals2) {
-      myIntervals[0] = intervals1;
-      myIntervals[1] = intervals2;
+    private Diff(@NotNull Interval intervalForSide1, @NotNull Interval intervalForSide2, @NotNull TextDiffType type) {
+      myIntervalForSide1 = intervalForSide1;
+      myIntervalForSide2 = intervalForSide2;
+      myDiffType = type;
     }
 
-    public Interval[] getIntervals(FragmentSide side) {
-      return myIntervals[side.getIndex()];
+    @NotNull
+    public TextDiffType getDiffType() {
+      return myDiffType;
+    }
+
+    public Interval getInterval(FragmentSide side) {
+      return side == FragmentSide.SIDE1 ? myIntervalForSide1 : myIntervalForSide2;
     }
   }
 }

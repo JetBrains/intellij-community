@@ -30,7 +30,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.PathUtil;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLogger;
@@ -213,7 +213,7 @@ public class JarsBuilder {
         if (!JarFile.MANIFEST_NAME.startsWith(rootPath)) {
           continue;
         }
-        final String manifestPath = PathUtil.trimForwardSlashes(JarFile.MANIFEST_NAME.substring(rootPath.length()));
+        final String manifestPath = JpsPathUtil.trimForwardSlashes(JarFile.MANIFEST_NAME.substring(rootPath.length()));
         final ArtifactSourceRoot root = (ArtifactSourceRoot)pair.getSecond();
         if (root instanceof FileBasedArtifactSourceRoot) {
           final File manifestFile = new File(root.getRootFile(), manifestPath);
@@ -269,7 +269,7 @@ public class JarsBuilder {
     root.processEntries(new JarBasedArtifactSourceRoot.EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
-        String pathInJar = addParentDirectories(jarOutputStream, writtenPaths, PathUtil.appendToPath(relativeOutputPath, relativePath));
+        String pathInJar = addParentDirectories(jarOutputStream, writtenPaths, JpsPathUtil.appendToPath(relativeOutputPath, relativePath));
 
         if (inputStream == null) {
           addDirectoryEntry(jarOutputStream, pathInJar + "/", writtenPaths);

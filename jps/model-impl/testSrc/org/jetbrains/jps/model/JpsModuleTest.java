@@ -56,8 +56,8 @@ public class JpsModuleTest extends JpsModelTestCase {
 
     final List<? extends JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
     assertEquals(2, dependencies.size());
-    assertSame(library, assertInstanceOf(dependencies.get(0), JpsLibraryDependency.class).getLibraryReference().resolve());
-    assertSame(dep, assertInstanceOf(dependencies.get(1), JpsModuleDependency.class).getModuleReference().resolve());
+    assertSame(library, assertInstanceOf(dependencies.get(0), JpsLibraryDependency.class).getLibrary());
+    assertSame(dep, assertInstanceOf(dependencies.get(1), JpsModuleDependency.class).getModule());
   }
 
   public void testChangeElementInModifiableModel() {

@@ -15,7 +15,6 @@
  */
 package org.intellij.lang.xpath;
 
-import org.intellij.lang.xpath.context.ContextProvider;
 import org.intellij.lang.xpath.psi.XPath2SequenceType;
 import org.intellij.lang.xpath.psi.XPathBinaryExpression;
 import org.intellij.lang.xpath.psi.XPathExpression;
@@ -32,7 +31,7 @@ public class XPath2ExpressionTest extends TestBase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
   }
 
   public void testIntegerPlusInteger() throws Throwable {

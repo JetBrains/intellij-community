@@ -266,13 +266,21 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
 
       boolean negated = memState.canBeNaN(dfaLeft) || memState.canBeNaN(dfaRight);
-      DfaRelationValue dfaRelation = factory.getRelationFactory().create(dfaLeft, dfaRight, opSign, negated);
+      DfaRelationValue.Factory relationFactory = factory.getRelationFactory();
+      DfaRelationValue dfaRelation = relationFactory.create(dfaLeft, dfaRight, opSign, negated);
       if (dfaRelation != null) {
         myCanBeNullInInstanceof.add(instruction);
         ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
 
         final DfaMemoryState trueCopy = memState.createCopy();
         if (trueCopy.applyCondition(dfaRelation)) {
+          if (dfaLeft instanceof DfaVariableValue && dfaRight instanceof DfaVariableValue) {
+            if (trueCopy.isNotNull((DfaVariableValue)dfaLeft)) {
+              trueCopy.applyCondition(relationFactory.create(dfaRight, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
+            } else if (trueCopy.isNotNull((DfaVariableValue)dfaRight)) {
+              trueCopy.applyCondition(relationFactory.create(dfaLeft, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
+            }
+          }
           trueCopy.push(factory.getConstFactory().getTrue());
           instruction.setTrueReachable();
           states.add(new DfaInstructionState(next, trueCopy));

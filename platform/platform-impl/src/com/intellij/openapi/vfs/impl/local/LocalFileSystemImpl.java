@@ -20,8 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -532,11 +530,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
     else {
       heavyRefresh.run();
     }
-  }
-
-  @Override
-  public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(file.getPath()));
   }
 
   @NonNls

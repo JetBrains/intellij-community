@@ -17,6 +17,8 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AddEditRemovePanel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
@@ -35,18 +37,19 @@ public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String
   }
 
   protected Pair<String, String> addItem() {
-    return doAddOrEdit(new Pair<String, String>("", ""));
+    return doAddOrEdit(null);
   }
 
   protected boolean removeItem(Pair<String, String> o) {
     return true;
   }
 
-  protected Pair<String, String> editItem(Pair<String, String> o) {
+  protected Pair<String, String> editItem(@NotNull Pair<String, String> o) {
     return doAddOrEdit(o);
   }
 
-  private Pair<String, String> doAddOrEdit(Pair<String, String> o) {
+  @Nullable
+  private Pair<String, String> doAddOrEdit(@Nullable Pair<String, String> o) {
     EditMavenPropertyDialog d = new EditMavenPropertyDialog(o, myAvailableProperties);
     d.show();
     if (!d.isOK()) return null;

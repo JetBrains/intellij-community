@@ -28,7 +28,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointGroupingByTypeRule;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.AbstractBreakpointPanel;
@@ -171,7 +171,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
     }
   }
 
-  private class AddXBreakpointAction extends AnAction {
+  private static class AddXBreakpointAction extends AnAction {
 
     private final XBreakpointType<?, ?> myType;
 

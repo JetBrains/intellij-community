@@ -45,6 +45,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
+import junit.framework.Test
+import junit.framework.TestSuite
 
 /**
  * @author peter
@@ -558,17 +560,24 @@ public interface Test {
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     assert myFixture.editor.caretModel.offset == offset + 1
+    joinAutopopup()
+    joinCompletion()
+    assert !lookup.calculating
     assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     assert myFixture.editor.caretModel.offset == offset
+    joinAutopopup()
+    joinCompletion()
+    assert !lookup.calculating
     assertContains "if", "iterable", "int"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     joinAutopopup()
     joinCompletion()
+    assert !lookup.calculating
     assert lookup.items.size() > 3
 
     for (i in 0.."iter".size()) {
@@ -773,7 +782,7 @@ class Foo {
   public void testRestartWithVisibleLookup() {
     registerContributor(LongContributor, LoadingOrder.FIRST)
 
-    myFixture.configureByText("a.java", """ class Foo { { int abcdef; a<caret> } } """)
+    myFixture.configureByText("a.java", """ class Foo { { int abcdef, abcdefg; ab<caret> } } """)
     myFixture.completeBasic()
     while (!lookup.shown) {
       Thread.sleep(1)
@@ -781,10 +790,10 @@ class Foo {
     def l = lookup
     edt {
       assert lookup.calculating
-      myFixture.type 'b'
+      myFixture.type 'c'
     }
     joinCommit {
-      myFixture.type 'c'
+      myFixture.type 'd'
     }
     joinAutopopup()
     joinCompletion()

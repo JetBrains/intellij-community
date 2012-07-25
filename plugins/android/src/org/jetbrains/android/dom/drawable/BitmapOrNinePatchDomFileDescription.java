@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.drawable;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -30,7 +31,7 @@ public class BitmapOrNinePatchDomFileDescription extends AndroidResourceDomFileD
   static final String[] ROOT_TAG_NAMES = new String[] {"bitmap", "nine-patch"};
 
   public BitmapOrNinePatchDomFileDescription() {
-    super(BitmapOrNinePatchElement.class, ROOT_TAG_NAMES[0], "drawable");
+    super(BitmapOrNinePatchElement.class, ROOT_TAG_NAMES[0], ResourceType.DRAWABLE.getName());
   }
 
   @Override

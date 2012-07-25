@@ -1,0 +1,7 @@
+<!DOCTYPE a [
+<!ELEMENT a (#PCDATA)>
+<!ENTITY help SYSTEM "file:Z.xml">
+]>
+<a>
+  &help;<caret>
+</a>

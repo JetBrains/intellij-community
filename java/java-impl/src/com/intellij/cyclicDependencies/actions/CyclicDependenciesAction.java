@@ -21,7 +21,8 @@ import com.intellij.analysis.JavaAnalysisScope;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
@@ -49,7 +50,8 @@ public class CyclicDependenciesAction extends AnAction{
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(
-      getInspectionScope(event.getDataContext()) != null || event.getData(LangDataKeys.PSI_FILE) != null);
+      getInspectionScope(event.getDataContext()) != null || 
+      event.getData(PlatformDataKeys.PROJECT) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -57,15 +59,11 @@ public class CyclicDependenciesAction extends AnAction{
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (project != null) {
-      PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
-      if (psiFile != null && !(psiFile instanceof PsiJavaFile)) {
-        return;
-      }
       AnalysisScope scope = getInspectionScope(dataContext);
       if (scope == null || scope.getScopeType() != AnalysisScope.MODULES){
         ProjectModuleOrPackageDialog dlg = null;
         if (module != null) {
-          dlg = new ProjectModuleOrPackageDialog(ModuleUtil.getModuleNameInReadAction(module), scope);
+          dlg = new ProjectModuleOrPackageDialog(ModuleManager.getInstance(project).getModules().length == 1 ? null : ModuleUtilCore.getModuleNameInReadAction(module), scope);
           dlg.show();
           if (!dlg.isOK()) return;
         }
@@ -104,12 +102,12 @@ public class CyclicDependenciesAction extends AnAction{
     //Possible scopes: package, project, module.
     Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
     if (projectContext != null) {
-      return new AnalysisScope(projectContext);
+      return null;
     }
 
     Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     if (moduleContext != null) {
-      return new AnalysisScope(moduleContext);
+      return null;
     }
 
     Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
@@ -128,12 +126,9 @@ public class CyclicDependenciesAction extends AnAction{
       PsiDirectory[] dirs = pack.getDirectories(GlobalSearchScope.projectScope(pack.getProject()));
       if (dirs.length == 0) return null;
       return new JavaAnalysisScope(pack, LangDataKeys.MODULE.getData(dataContext));
-    } else if (psiTarget != null){
-      return null;
     }
 
-
-    return getProjectScope(dataContext);
+    return null;
   }
 
   @Nullable
@@ -173,7 +168,6 @@ public class CyclicDependenciesAction extends AnAction{
       init();
       setTitle(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.title", myTitle));
       setHorizontalStretch(1.75f);
-      myModuleButton.setSelected(true);
     }
 
     public boolean isIncludeTestSources() {
@@ -190,10 +184,18 @@ public class CyclicDependenciesAction extends AnAction{
         myModuleButton.setText(AnalysisScopeBundle.message("cyclic.dependencies.scope.dialog.module.button", myAnalysisVerb, myModuleName));
         group.add(myModuleButton);
       }
+      myModuleButton.setVisible(myModuleName != null);
       mySelectedScopeButton.setVisible(mySelectedScope != null);
       if (mySelectedScope != null) {
         mySelectedScopeButton.setText(mySelectedScope.getShortenName());
         group.add(mySelectedScopeButton);
+      }
+      if (mySelectedScope != null) {
+        mySelectedScopeButton.setSelected(true);
+      } else if (myModuleName != null) {
+        myModuleButton.setSelected(true);
+      } else {
+        myProjectButton.setSelected(true);
       }
       return myWholePanel;
     }

@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.util.ui.update.ComparableObjectCheck;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +98,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     Icon oldClosedIcon = myClosedIcon;
     List<ColoredFragment> oldFragments = new ArrayList<ColoredFragment>(presentation.getColoredText());
 
-    myColor = Color.black;
+    myColor = UIUtil.getTreeTextForeground();
     updateFileStatus();
 
     doUpdate();

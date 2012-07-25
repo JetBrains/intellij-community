@@ -547,6 +547,10 @@ class A {
 """
   }
 
+  public void "test finish method call with space in field initializer"() {
+    checkCompletion 'class Foo { boolean b = eq<caret>x }', ' ', 'class Foo { boolean b = equals <caret>x }'
+  }
+
   public void testCompletionNamedArgumentWithNewLine2() {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, """
 class A {
@@ -1392,6 +1396,22 @@ def bar(){}''')
 def bar(){}''')
     myFixture.complete(CompletionType.BASIC)
     assertOrderedEquals(myFixture.lookupElementStrings, ['fooo', 'fooo1'])
+  }
+
+  public void testPreferApplicableAnnotations() {
+    myFixture.addClass '''
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
+@Target({ElementType.ANNOTATION_TYPE})
+@interface TMetaAnno {}
+
+@Target({ElementType.LOCAL_VARIABLE})
+@interface TLocalAnno {}'''
+
+    configure('@T<caret> @interface Foo {}')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems  0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
   }
 
 }

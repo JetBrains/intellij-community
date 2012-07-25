@@ -37,7 +37,7 @@ public class HighlightInfoComposite extends HighlightInfo {
   @NonNls private static final String BODY_HEADER = "<body>";
   @NonNls private static final String HTML_FOOTER = "</html>";
   @NonNls private static final String BODY_FOOTER = "</body>";
-  @NonNls private static final String LINE_BREAK = "\n<hr size=1 noshade>";
+  @NonNls private static final String LINE_BREAK = "<hr size=1 noshade>";
 
   public HighlightInfoComposite(@NotNull List<HighlightInfo> infos) {
     super(infos.get(0).type, infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos), createCompositeTooltip(infos));

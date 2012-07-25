@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
+import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.ProjectLevelBuilder;
@@ -23,6 +24,7 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.TimestampStorage;
 import org.jetbrains.jps.incremental.storage.TimestampValidityState;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -49,13 +51,13 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
   @Override
   public void build(CompileContext context) throws ProjectBuildException {
-    if (!AndroidJpsUtil.containsAndroidFacet(context.getProjectDescriptor().project) || AndroidJpsUtil.isLightBuild(context)) {
+    if (!AndroidJpsUtil.containsAndroidFacet(context.getProjectDescriptor().jpsProject) || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
-    final Collection<Module> modules = context.getProjectDescriptor().project.getModules().values();
-    final Map<Module, AndroidFileSetState> resourcesStates = new HashMap<Module, AndroidFileSetState>();
-    final Map<Module, AndroidFileSetState> assetsStates = new HashMap<Module, AndroidFileSetState>();
-    final Map<Module, File> manifestFiles = new HashMap<Module, File>();
+    final Collection<JpsModule> modules = context.getProjectDescriptor().jpsProject.getModules();
+    final Map<JpsModule, AndroidFileSetState> resourcesStates = new HashMap<JpsModule, AndroidFileSetState>();
+    final Map<JpsModule, AndroidFileSetState> assetsStates = new HashMap<JpsModule, AndroidFileSetState>();
+    final Map<JpsModule, File> manifestFiles = new HashMap<JpsModule, File>();
 
     try {
       fillStates(modules, resourcesStates, assetsStates, manifestFiles);
@@ -81,27 +83,27 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   @SuppressWarnings("unchecked")
-  private static void fillStates(@NotNull Collection<Module> modules,
-                                 @NotNull Map<Module, AndroidFileSetState> resourcesStates,
-                                 @NotNull Map<Module, AndroidFileSetState> assetsStates,
-                                 @NotNull Map<Module, File> manifestFiles) throws IOException {
-    for (Module module : modules) {
-      final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
+  private static void fillStates(@NotNull Collection<JpsModule> modules,
+                                 @NotNull Map<JpsModule, AndroidFileSetState> resourcesStates,
+                                 @NotNull Map<JpsModule, AndroidFileSetState> assetsStates,
+                                 @NotNull Map<JpsModule, File> manifestFiles) throws IOException {
+    for (JpsModule module : modules) {
+      final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
 
-      if (facet != null) {
-        final File resourceDir = facet.getResourceDir();
+      if (extension != null) {
+        final File resourceDir = extension.getResourceDir();
         final List<String> resourceDirs = resourceDir != null
                                           ? Arrays.asList(resourceDir.getPath())
                                           : Collections.<String>emptyList();
         resourcesStates.put(module, new AndroidFileSetState(resourceDirs, Condition.TRUE, true));
 
-        final File assetsDir = facet.getAssetsDir();
+        final File assetsDir = extension.getAssetsDir();
         final List<String> assetDirs = assetsDir != null
                                        ? Arrays.asList(assetsDir.getPath())
                                        : Collections.<String>emptyList();
         assetsStates.put(module, new AndroidFileSetState(assetDirs, Condition.TRUE, true));
 
-        final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(facet);
+        final File manifestFile = AndroidJpsUtil.getManifestFileForCompilationPath(extension);
         if (manifestFile != null) {
           manifestFiles.put(module, manifestFile);
         }
@@ -110,14 +112,14 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   private static boolean doCaching(@NotNull CompileContext context,
-                                   @NotNull Collection<Module> modules,
-                                   @NotNull Map<Module, AndroidFileSetState> module2state) throws IOException {
+                                   @NotNull Collection<JpsModule> modules,
+                                   @NotNull Map<JpsModule, AndroidFileSetState> module2state) throws IOException {
     boolean success = true;
     final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
     final AndroidFileSetStorage storage = new AndroidFileSetStorage(dataStorageRoot, "resource_caching");
 
     try {
-      for (Module module : modules) {
+      for (JpsModule module : modules) {
         final AndroidFileSetState state = module2state.get(module);
 
         try {
@@ -137,7 +139,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   private static boolean runPngCaching(@NotNull CompileContext context,
-                                       @NotNull Module module,
+                                       @NotNull JpsModule module,
                                        @NotNull AndroidFileSetStorage storage,
                                        @Nullable AndroidFileSetState state) throws IOException {
     if (context.isMake()) {
@@ -147,15 +149,15 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       }
     }
 
-    final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-    if (facet == null) {
+    final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+    if (extension == null) {
       return true;
     }
 
     context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.INFO,
                                                AndroidJpsBundle.message("android.jps.progress.res.caching", module.getName())));
 
-    final File resourceDir = AndroidJpsUtil.getResourceDirForCompilationPath(facet);
+    final File resourceDir = AndroidJpsUtil.getResourceDirForCompilationPath(extension);
     if (resourceDir == null) {
       return true;
     }
@@ -196,10 +198,10 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   private static boolean doResourcePackaging(@NotNull CompileContext context,
-                                             @NotNull Collection<Module> modules,
-                                             @NotNull Map<Module, AndroidFileSetState> resourcesStates,
-                                             @NotNull Map<Module, AndroidFileSetState> assetsStates,
-                                             @NotNull Map<Module, File> manifestFiles) throws IOException {
+                                             @NotNull Collection<JpsModule> modules,
+                                             @NotNull Map<JpsModule, AndroidFileSetState> resourcesStates,
+                                             @NotNull Map<JpsModule, AndroidFileSetState> assetsStates,
+                                             @NotNull Map<JpsModule, File> manifestFiles) throws IOException {
     boolean success = true;
 
     final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
@@ -218,11 +220,11 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       final String manifestStorageName = releaseBuild ? "manifest_packaging_release" : "manifest_packaging_dev";
       manifestStorage = new TimestampStorage(AndroidJpsUtil.getStorageFile(dataStorageRoot, manifestStorageName));
 
-      final Set<Module> modulesToUpdateState = new HashSet<Module>();
+      final Set<JpsModule> modulesToUpdateState = new HashSet<JpsModule>();
 
-      for (Module module : modules) {
-        final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-        if (facet == null) {
+      for (JpsModule module : modules) {
+        final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+        if (extension == null) {
           continue;
         }
 
@@ -236,13 +238,13 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
         boolean updateState = true;
 
-        if (!facet.isLibrary() &&
+        if (!extension.isLibrary() &&
             !(context.isMake() &&
               checkUpToDate(module, resourcesStates, resourcesStorage) &&
               checkUpToDate(module, assetsStates, assetsStorage) &&
               manifestFile.lastModified() == manifestStorage.getStamp(manifestFile))) {
 
-          updateState = packageResources(facet, manifestFile, context);
+          updateState = packageResources(extension, manifestFile, context);
 
           if (!updateState) {
             success = false;
@@ -253,7 +255,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
         }
       }
 
-      for (Module module : modules) {
+      for (JpsModule module : modules) {
         final boolean updateState = modulesToUpdateState.contains(module);
         resourcesStorage.update(module.getName(), updateState ? resourcesStates.get(module) : null);
         assetsStorage.update(module.getName(), updateState ? assetsStates.get(module) : null);
@@ -280,7 +282,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     return success;
   }
 
-  private static boolean doPackaging(@NotNull CompileContext context, @NotNull Collection<Module> modules) throws IOException {
+  private static boolean doPackaging(@NotNull CompileContext context, @NotNull Collection<JpsModule> modules) throws IOException {
     final boolean release = AndroidJpsUtil.isReleaseBuild(context);
     final File dataStorageRoot = context.getProjectDescriptor().dataManager.getDataStorageRoot();
 
@@ -295,7 +297,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       final String apkBuilderStateStorageName = "apk_builder_config" + (release ? "_release" : "_dev");
       apkBuilderConfigStateStorage = new AndroidApkBuilderConfigStateStorage(dataStorageRoot, apkBuilderStateStorageName);
 
-      for (Module module : modules) {
+      for (JpsModule module : modules) {
         try {
           if (!doPackagingForModule(context, module, apkFileSetStorage, apkBuilderConfigStateStorage, release)) {
             success = false;
@@ -321,12 +323,12 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   private static boolean doPackagingForModule(@NotNull CompileContext context,
-                                              @NotNull Module module,
+                                              @NotNull JpsModule module,
                                               @NotNull AndroidFileSetStorage apkFileSetStorage,
                                               @NotNull AndroidApkBuilderConfigStateStorage apkBuilderConfigStateStorage,
                                               boolean release) throws IOException {
-    final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-    if (facet == null || facet.isLibrary()) {
+    final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+    if (extension == null || extension.isLibrary()) {
       return true;
     }
 
@@ -352,15 +354,15 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
     final File classesDexFile = new File(intArtifactsDir.getPath(), AndroidCommonUtils.CLASSES_FILE_NAME);
 
-    final String sdkPath = platform.getSdk().getSdkPath();
-    final String outputPath = AndroidJpsUtil.getApkPath(facet, moduleOutputDir);
+    final String sdkPath = platform.getSdk().getProperties().getHomePath();
+    final String outputPath = AndroidJpsUtil.getApkPath(extension, moduleOutputDir);
     if (outputPath == null) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
         .message("android.jps.errors.cannot.compute.output.apk", module.getName())));
       return false;
     }
-    final String customKeyStorePath = FileUtil.toSystemDependentName(facet.getCustomDebugKeyStorePath());
-    final String[] nativeLibDirs = collectNativeLibsFolders(facet);
+    final String customKeyStorePath = FileUtil.toSystemDependentName(extension.getCustomDebugKeyStorePath());
+    final String[] nativeLibDirs = collectNativeLibsFolders(extension);
 
     final String resPackagePath = release ? resPackage.getPath() + RELEASE_SUFFIX : resPackage.getPath();
 
@@ -371,7 +373,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     final String classesDexFilePath = classesDexFile.getPath();
     final String[] externalJars = ArrayUtil.toStringArray(externalJarsSet);
 
-    final List<AndroidNativeLibData> additionalNativeLibs = facet.getAdditionalNativeLibs();
+    final List<AndroidNativeLibData> additionalNativeLibs = extension.getAdditionalNativeLibs();
 
     final AndroidFileSetState currentFileSetState =
       buildCurrentApkBuilderState(context.getProjectDescriptor().project, resPackagePath, classesDexFilePath, nativeLibDirs, sourceRoots,
@@ -433,16 +435,16 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   @NotNull
-  private static String[] collectNativeLibsFolders(@NotNull AndroidFacet facet) throws IOException {
+  private static String[] collectNativeLibsFolders(@NotNull JpsAndroidModuleExtension extension) throws IOException {
     final List<String> result = new ArrayList<String>();
-    final File libsDir = facet.getNativeLibsDir();
+    final File libsDir = extension.getNativeLibsDir();
 
     if (libsDir != null) {
       result.add(libsDir.getPath());
     }
 
-    for (AndroidFacet depFacet : AndroidJpsUtil.getAllAndroidDependencies(facet.getModule(), true)) {
-      final File depLibsDir = depFacet.getNativeLibsDir();
+    for (JpsAndroidModuleExtension depExtension : AndroidJpsUtil.getAllAndroidDependencies(extension.getModule(), true)) {
+      final File depLibsDir = depExtension.getNativeLibsDir();
       if (depLibsDir != null) {
         result.add(depLibsDir.getPath());
       }
@@ -450,8 +452,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     return ArrayUtil.toStringArray(result);
   }
 
-  private static boolean checkUpToDate(@NotNull Module module,
-                                       @NotNull Map<Module, AndroidFileSetState> module2state,
+  private static boolean checkUpToDate(@NotNull JpsModule module,
+                                       @NotNull Map<JpsModule, AndroidFileSetState> module2state,
                                        @NotNull AndroidFileSetStorage storage) throws IOException {
     final AndroidFileSetState moduleState = module2state.get(module);
     final AndroidFileSetState savedState = storage.getState(module.getName());
@@ -459,8 +461,8 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       return false;
     }
 
-    for (AndroidFacet libFacet : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
-      final Module libModule = libFacet.getModule();
+    for (JpsAndroidModuleExtension libExtension : AndroidJpsUtil.getAllAndroidDependencies(module, true)) {
+      final JpsModule libModule = libExtension.getModule();
       final AndroidFileSetState currentLibState = module2state.get(libModule);
       final AndroidFileSetState savedLibState = storage.getState(libModule.getName());
 
@@ -471,14 +473,14 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     return true;
   }
 
-  private static boolean packageResources(@NotNull AndroidFacet facet, @NotNull File manifestFile, @NotNull CompileContext context) {
-    final Module module = facet.getModule();
+  private static boolean packageResources(@NotNull JpsAndroidModuleExtension extension, @NotNull File manifestFile, @NotNull CompileContext context) {
+    final JpsModule module = extension.getModule();
 
     try {
       context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.packaging.resources", module.getName())));
 
       final ArrayList<String> assetsDirPaths = new ArrayList<String>();
-      collectAssetDirs(facet, assetsDirPaths);
+      collectAssetDirs(extension, assetsDirPaths);
 
       File outputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
       outputDir = AndroidJpsUtil.createDirIfNotExist(outputDir, context, BUILDER_NAME);
@@ -493,7 +495,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
       final IAndroidTarget target = platform.getTarget();
 
       final String outputFilePath = getPackagedResourcesFile(module, outputDir).getPath();
-      final String[] resourceDirPaths = AndroidJpsUtil.collectResourceDirsForCompilation(facet, true, context);
+      final String[] resourceDirPaths = AndroidJpsUtil.collectResourceDirsForCompilation(extension, true, context);
 
       return doPackageResources(context, manifestFile, target, resourceDirPaths, ArrayUtil.toStringArray(assetsDirPaths), outputFilePath,
                                 AndroidJpsUtil.isReleaseBuild(context), module.getName());
@@ -524,7 +526,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
                           !releasePackage, 0, new FileFilter() {
           @Override
           public boolean accept(File pathname) {
-            return !ignoredFilePatterns.isIgnored(PathUtil.getFileName(pathname.getPath()));
+            return !ignoredFilePatterns.isIgnored(JpsPathUtil.getFileName(pathname.getPath()));
           }
         });
 
@@ -537,15 +539,15 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
     }
   }
 
-  private static void collectAssetDirs(@NotNull AndroidFacet facet, @NotNull List<String> result) throws IOException {
-    final File assetsDir = facet.getAssetsDir();
+  private static void collectAssetDirs(@NotNull JpsAndroidModuleExtension extension, @NotNull List<String> result) throws IOException {
+    final File assetsDir = extension.getAssetsDir();
     
     if (assetsDir != null) {
       result.add(assetsDir.getPath());
     }
 
-    for (AndroidFacet depFacet : AndroidJpsUtil.getAllAndroidDependencies(facet.getModule(), true)) {
-      final File depAssetsDir = depFacet.getAssetsDir();
+    for (JpsAndroidModuleExtension depExtension : AndroidJpsUtil.getAllAndroidDependencies(extension.getModule(), true)) {
+      final File depAssetsDir = depExtension.getAssetsDir();
 
       if (depAssetsDir != null) {
         result.add(depAssetsDir.getPath());
@@ -554,7 +556,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
   }
 
   @NotNull
-  private static File getPackagedResourcesFile(@NotNull Module module, @NotNull File outputDir) {
+  private static File getPackagedResourcesFile(@NotNull JpsModule module, @NotNull File outputDir) {
     return new File(outputDir.getPath(), module.getName() + ".apk.res");
   }
 

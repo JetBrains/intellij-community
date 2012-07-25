@@ -444,18 +444,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                        final InspectionManagerEx inspectionManager,
                                                                        final InspectionTool... tools) {
 
-    InspectionToolRegistrar registrar = new InspectionToolRegistrar(null) {
-      @Override
-      public List<InspectionToolWrapper> createTools() {
-        return ContainerUtil.map(tools, new Function<InspectionTool, InspectionToolWrapper>() {
-          @Override
-          public InspectionToolWrapper fun(InspectionTool tool) {
-            return tool instanceof InspectionToolWrapper ? (InspectionToolWrapper)tool : wrapTool(tool);
-          }
-        });
-      }
-    };
-    final InspectionProfileImpl profile = new InspectionProfileImpl("test", registrar, InspectionProfileManager.getInstance());
+    final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", tools);
     GlobalInspectionContextImpl globalContext = new GlobalInspectionContextImpl(project, inspectionManager.getContentManager()) {
       @Override
       protected List<ToolsImpl> getUsedTools() {
@@ -563,7 +552,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertInitialized();
     configureByFiles(filesBefore);
     complete(CompletionType.BASIC);
-    checkResultByFile(fileAfter);
+    try {
+      checkResultByFile(fileAfter);
+    }
+    catch (RuntimeException e) {
+      System.out.println("LookupElementStrings = " + getLookupElementStrings());
+      throw e;
+    }
   }
 
   protected void assertInitialized() {

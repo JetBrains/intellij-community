@@ -261,8 +261,8 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     }
   }
 
-  public Set<CompletionElement> getResults(){
-    return new THashSet<CompletionElement>(myResults);
+  public Iterable<CompletionElement> getResults(){
+    return myResults;
   }
 
   public void clear() {

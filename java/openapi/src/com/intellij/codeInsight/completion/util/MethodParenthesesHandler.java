@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion.util;
 
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 
 /**
@@ -39,16 +40,16 @@ public class MethodParenthesesHandler extends ParenthesesInsertHandler<LookupEle
   public static boolean hasParams(LookupElement item, LookupElement[] allItems, final boolean overloadsMatter, final PsiMethod method) {
     boolean hasParams = method.getParameterList().getParametersCount() > 0;
     if (overloadsMatter){
-      hasParams |= hasOverloads(item, allItems, method);
+      hasParams |= hasOverloads(allItems, method);
     }
     return hasParams;
   }
 
-  private static boolean hasOverloads(LookupElement item, LookupElement[] allItems, final PsiMethod method) {
+  private static boolean hasOverloads(LookupElement[] allItems, final PsiMethod method) {
     String name = method.getName();
-    for (LookupElement item1 : allItems) {
-      final Object o = item1.getObject();
-      if (item.getObject() != o && o instanceof PsiMethod && ((PsiMethod)o).getName().equals(name)) {
+    for (LookupElement another : allItems) {
+      final PsiElement element = another.getPsiElement();
+      if (method != element && element instanceof PsiMethod && ((PsiMethod)element).getName().equals(name)) {
         return true;
       }
     }

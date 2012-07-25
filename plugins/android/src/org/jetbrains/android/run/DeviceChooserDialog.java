@@ -61,6 +61,11 @@ public class DeviceChooserDialog extends DialogWrapper {
     super.doOKAction();
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "AndroidDeviceChooserDialog";
+  }
+
   protected JComponent createCenterPanel() {
     return myDeviceChooser.getPanel();
   }

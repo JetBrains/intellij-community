@@ -16,7 +16,6 @@
 
 package com.intellij.ide.projectView.impl;
 
-import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -28,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
+import com.intellij.ui.JBTreeWithHintProvider;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +41,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class ProjectViewTree extends DnDAwareTree {
+public abstract class ProjectViewTree extends JBTreeWithHintProvider {
   private final Project myProject;
 
   protected ProjectViewTree(Project project, TreeModel model) {

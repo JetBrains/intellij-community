@@ -85,9 +85,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNullInIf() throws Exception { doTest(true); }
   public void testNullInReturn() throws Exception { doTest(true); }
   public void testExtendsInMethodParameters() throws Exception { doTest(false); }
-  public void testInstanceOf1() throws Exception { doTest(true); }
+  public void testInstanceOf1() throws Exception { doTest(false); }
   public void testInstanceOf2() throws Exception { doTest(false); }
-  public void testInstanceOf3() throws Exception { doTest(true); }
+  public void testInstanceOf3() throws Exception { doTest(false); }
   public void testCatchFinally() throws Exception { doTest(2, "catch", "finally"); }
   public void testSuper1() throws Exception { doTest(1, "super"); }
   public void testSuper2() throws Exception { doTest(0, "super"); }
@@ -101,6 +101,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() throws Exception { doTest(1, "char"); }
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }
+  public void testFinalAfterParameterAnno() throws Exception { doTest(2, "final", "float", "class"); }
 
   public void testTryInExpression() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");

@@ -32,10 +32,8 @@ import org.jetbrains.asm4.Opcodes;
 
 import java.io.*;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
+import java.net.URL;
+import java.util.*;
 
 public class Javac2 extends Javac {
     private ArrayList myFormFiles;
@@ -247,7 +245,7 @@ public class Javac2 extends Javac {
             log("compiling form " + formFile.getAbsolutePath(), Project.MSG_VERBOSE);
             final LwRootContainer rootContainer;
             try {
-                rootContainer = Utils.getRootContainer(formFile.toURL(), new CompiledClassPropertiesProvider(finder.getLoader()));
+                rootContainer = Utils.getRootContainer(formFile.toURI().toURL(), new CompiledClassPropertiesProvider(finder.getLoader()));
             }
             catch (AlienFormFileException e) {
                 // ignore non-IDEA forms
@@ -359,7 +357,7 @@ public class Javac2 extends Javac {
         log("classpath=" + classPath, Project.MSG_VERBOSE);
 
         try {
-            return InstrumentationUtil.createInstrumentationClassFinder(classPath);
+            return createInstrumentationClassFinder(classPath);
         }
         catch (MalformedURLException e) {
             fireError(e.getMessage());
@@ -488,7 +486,17 @@ public class Javac2 extends Javac {
         }
     }
 
-    private class AntNestedFormLoader implements NestedFormLoader {
+  private static InstrumentationClassFinder createInstrumentationClassFinder(final String classPath) throws MalformedURLException {
+    final ArrayList urls = new ArrayList();
+    for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
+      final String s = tokenizer.nextToken();
+      urls.add(new File(s).toURI().toURL());
+    }
+    final URL[] urlsArr = (URL[])urls.toArray(new URL[urls.size()]);
+    return new InstrumentationClassFinder(urlsArr);
+  }
+
+  private class AntNestedFormLoader implements NestedFormLoader {
         private final ClassLoader myLoader;
         private final List myNestedFormPathList;
         private final HashMap myFormCache = new HashMap();

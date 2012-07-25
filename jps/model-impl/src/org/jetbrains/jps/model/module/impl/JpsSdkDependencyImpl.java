@@ -2,7 +2,6 @@ package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsSdkType;
@@ -46,15 +45,7 @@ public class JpsSdkDependencyImpl extends JpsDependencyElementBase<JpsSdkDepende
   @Nullable
   public JpsLibraryReference getSdkReference() {
     JpsModuleImpl module = getDependenciesList().getParent();
-    JpsLibraryReference sdkReference = module.getSdkReferencesTable().getSdkReference(mySdkType);
-    if (sdkReference != null) {
-      return sdkReference;
-    }
-    JpsProject project = module.getProject();
-    if (project != null) {
-      return project.getSdkReferencesTable().getSdkReference(mySdkType);
-    }
-    return null;
+    return module.getSdkReference(mySdkType);
   }
 
   @Override

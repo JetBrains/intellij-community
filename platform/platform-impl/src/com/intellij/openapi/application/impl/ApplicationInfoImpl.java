@@ -30,7 +30,9 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.*;
@@ -50,6 +52,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myCompanyUrl = "http://www.jetbrains.com/";
   private Color myLogoTextColor = new Color(0, 35, 135);  // idea blue
   private Color myProgressColor = null;
+  private Icon myProgressTailIcon = null;
+
   private int myProgressY = 350;
   private String myAboutLogoUrl = null;
   @NonNls private String myIconUrl = "/icon.png";
@@ -98,6 +102,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
   @NonNls private static final String ATTRIBUTE_PROGRESS_Y = "progressY";
+  @NonNls private static final String ATTRIBUTE_PROGRESS_TAIL_ICON = "progressTailIcon";
   @NonNls private static final String ELEMENT_ABOUT = "about";
   @NonNls private static final String ELEMENT_ICON = "icon";
   @NonNls private static final String ATTRIBUTE_SIZE32 = "size32";
@@ -209,6 +214,11 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public int getProgressY() {
     return myProgressY;
+  }
+
+  @Nullable
+  public Icon getProgressTailIcon() {
+    return myProgressTailIcon;
   }
 
   public String getAboutLogoUrl() {
@@ -399,6 +409,12 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       if (v != null) {
         myProgressColor = parseColor(v);
       }
+
+      v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_TAIL_ICON);
+      if (v != null) {
+        myProgressTailIcon = IconLoader.getIcon(v);
+      }
+
       v = logoElement.getAttributeValue(ATTRIBUTE_PROGRESS_Y);
       if (v != null) {
         myProgressY = Integer.parseInt(v);

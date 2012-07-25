@@ -111,6 +111,21 @@ public class UIUtil {
                                 MacUIUtil.getInvertedTextCursor(): Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
   }
 
+  /**
+   * Draws two horizontal lines, the first at {@code topY}, the second at {@code bottomY}.
+   * The purpose of this method (and the ground of the name) is to draw two lines framing a horizontal filled rectangle.
+   * @param g       Graphics context to draw with.
+   * @param startX  x-start point.
+   * @param endX    x-end point.
+   * @param topY    y-coordinate of the first line.
+   * @param bottomY y-coordinate of the second line.
+   * @param color   color of the lines.
+   */
+  public static void drawFramingLines(@NotNull Graphics2D g, int startX, int endX, int topY, int bottomY, @NotNull Color color) {
+    drawLine(g, startX, topY, endX, topY, null, color);
+    drawLine(g, startX, bottomY, endX, bottomY, null, color);
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
   public enum ComponentStyle {REGULAR, SMALL, MINI}
   public enum FontColor {NORMAL, BRIGHTER}
@@ -287,6 +302,24 @@ public class UIUtil {
 
   public static void drawLine(Graphics g, int x1, int y1, int x2, int y2) {
     g.drawLine(x1, y1, x2, y2);
+  }
+
+  public static void drawLine(Graphics2D g, int x1, int y1, int x2, int y2, @Nullable Color bgColor, @Nullable Color fgColor) {
+    Color oldFg = g.getColor();
+    Color oldBg = g.getBackground();
+    if (fgColor != null) {
+      g.setColor(fgColor);
+    }
+    if (bgColor != null) {
+      g.setBackground(bgColor);
+    }
+    drawLine(g, x1, y1, x2, y2);
+    if (fgColor != null) {
+      g.setColor(oldFg);
+    }
+    if (bgColor != null) {
+      g.setBackground(oldBg);
+    }
   }
 
   @NotNull
@@ -609,6 +642,10 @@ public class UIUtil {
 
   public static Color getPanelBackground() {
     return UIManager.getColor("Panel.background");
+  }
+
+  public static Color getTreeBackground() {
+    return UIManager.getColor("Tree.background");
   }
 
   public static Color getTreeForeground() {

@@ -243,7 +243,7 @@
     <action id="NextTab">
       <keyboard-shortcut first-keystroke="control PAGE_DOWN" />
     </action>
-    <action id="OpenProject">
+    <action id="OpenFile">
       <keyboard-shortcut first-keystroke="shift control O" />
     </action>
     <action id="OptimizeImports">

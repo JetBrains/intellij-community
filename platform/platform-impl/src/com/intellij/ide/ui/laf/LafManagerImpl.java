@@ -36,6 +36,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacPopupMenuUI;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -45,6 +46,7 @@ import sun.security.action.GetPropertyAction;
 
 import javax.swing.*;
 import javax.swing.event.EventListenerList;
+import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
@@ -255,7 +257,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       LOG.assertTrue(laf != null);
       return laf;
     }
-    if ("Rubymine".equals(lowercaseProductName) || "Pycharm".equals(lowercaseProductName)) {
+    if (PlatformUtils.isRubyMine() || PlatformUtils.isPyCharm()) {
       final String desktop = AccessController.doPrivileged(new GetPropertyAction("sun.desktop"));
       if ("gnome".equals(desktop)) {
         UIManager.LookAndFeelInfo laf=findLaf(systemLafClassName);
@@ -319,7 +321,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       }
     }
     else if (IdeaDarkLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
-      IdeaDarkLaf laf = new IdeaDarkLaf();
+      DurculaLaf laf = new DurculaLaf();
       MetalLookAndFeel.setCurrentTheme(new IdeaDarkMetalTheme());
       try {
         UIManager.setLookAndFeel(laf);
@@ -432,8 +434,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     fixPopupWeight();
 
     fixGtkPopupStyle();
-
     final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
+    fixTreeWideSelection(uiDefaults);
     if (UIUtil.isUnderAquaLookAndFeel()) {
       // update ui for popup menu to get round corners
       uiDefaults.put("PopupMenuUI", MacPopupMenuUI.class.getCanonicalName());
@@ -464,6 +466,30 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     fireLookAndFeelChanged();
     
     fixSeparatorColor(uiDefaults);
+  }
+
+  private static void fixTreeWideSelection(UIDefaults uiDefaults) {
+    if (UIUtil.isUnderAlloyIDEALookAndFeel()) {
+      final Color bg = new ColorUIResource(56, 117, 215);
+      uiDefaults.put("Tree.selectionBackground", bg);
+      uiDefaults.put("MenuItem.selectionBackground", bg);
+      uiDefaults.put("Menu.selectionBackground", bg);
+      uiDefaults.put("List.selectionBackground", bg);
+      uiDefaults.put("ComboBox.selectionBackground", bg);
+      uiDefaults.put("Table.selectionBackground", bg);
+      uiDefaults.put("TextArea.selectionBackground", bg);
+      uiDefaults.put("EditorPane.selectionBackground", bg);
+      uiDefaults.put("TextPane.selectionBackground", bg);
+      uiDefaults.put("info", bg);
+      uiDefaults.put("FormattedTextField.selectionBackground", bg);
+      uiDefaults.put("textHighlight", bg);
+      uiDefaults.put("PasswordField.selectionBackground", bg);
+      uiDefaults.put("TextField.selectionBackground", bg);
+      uiDefaults.put("RadioButtonMenuItem.selectionBackground", bg);
+      uiDefaults.put("CheckBoxMenuItem.selectionBackground", bg);
+    } if (UIUtil.isUnderMetalLookAndFeel()) {
+      uiDefaults.put("Tree.hash", new ColorUIResource(117, 117, 117));
+    }
   }
 
   private static void fixSeparatorColor(UIDefaults uiDefaults) {

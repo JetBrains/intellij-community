@@ -41,6 +41,7 @@ public abstract class CompletionService {
   public static final Key<CompletionWeigher> RELEVANCE_KEY = Key.create("completion");
   /**
    * A "weigher" extension key (see {@link Weigher}) to sort the whole lookup descending.
+   * @deprecated use "completion" relevance key instead
    */
   public static final Key<CompletionWeigher> SORTING_KEY = Key.create("completionSorting");
 

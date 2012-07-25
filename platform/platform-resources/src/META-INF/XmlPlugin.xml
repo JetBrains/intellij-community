@@ -372,10 +372,16 @@
       <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.analysis.AddSchemaPrefixIntention</className>
     </intentionAction>
+
     <intentionAction>
       <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction</className>
     </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAction</className>
+    </intentionAction>
+
     <intentionAction>
       <category>XML</category>
       <className>com.intellij.codeInsight.daemon.impl.analysis.ConvertSchemaPrefixToDefaultIntention</className>

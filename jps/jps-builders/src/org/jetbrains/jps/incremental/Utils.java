@@ -4,8 +4,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -123,11 +123,11 @@ public class Utils {
     return new File(toURI(path, false));
   }
 
-  public static boolean intersects(Set<Module> set1, Set<Module> set2) {
+  public static boolean intersects(Set<JpsModule> set1, Set<JpsModule> set2) {
     if (set1.size() < set2.size()) {
-      return new HashSet<Module>(set1).removeAll(set2);
+      return new HashSet<JpsModule>(set1).removeAll(set2);
     }
-    return new HashSet<Module>(set2).removeAll(set1);
+    return new HashSet<JpsModule>(set2).removeAll(set1);
   }
 
   public static boolean hasRemovedSources(CompileContext context) {

@@ -174,6 +174,11 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   }
 
   @Override
+  public Rectangle getThumbBounds() {
+    return super.getThumbBounds();
+  }
+
+  @Override
   protected void uninstallListeners() {
     super.uninstallListeners();
     scrollbar.removeAdjustmentListener(myAdjustmentListener);

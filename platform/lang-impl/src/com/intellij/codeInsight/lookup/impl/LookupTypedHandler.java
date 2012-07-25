@@ -43,6 +43,7 @@ import com.intellij.openapi.editor.ex.ScrollingModelEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -230,6 +231,9 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
   }
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
+    if (!Registry.is("ide.completion.allow.finishing.by.chars")) {
+      return CharFilter.Result.ADD_TO_PREFIX;
+    }
     final CharFilter.Result filtersDecision = getFiltersDecision(charTyped, lookup);
 
     final LookupElement currentItem = lookup.getCurrentItem();
@@ -249,7 +253,9 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       }
     }
 
-    if (filtersDecision != null) return filtersDecision;
+    if (filtersDecision != null) {
+      return filtersDecision;
+    }
     throw new AssertionError("Typed char not handler by char filter: c=" + charTyped +
                              "; prefix=" + currentItem +
                              "; filters=" + Arrays.toString(getFilters()));

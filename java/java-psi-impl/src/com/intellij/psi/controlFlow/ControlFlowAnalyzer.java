@@ -1446,6 +1446,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(expression);
   }
 
+  @Override
+  public void visitLambdaExpression(PsiLambdaExpression expression) {
+    startElement(expression);
+    finishElement(expression);
+  }
+
   @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
     startElement(expression);
 

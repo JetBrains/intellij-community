@@ -27,13 +27,13 @@ class C {
   }
 
   void test() {
-    Simplest simplest = <weak_warning descr="Lambda expressions type check is not yet implemented">() -> { }</weak_warning>;
-    use(<weak_warning descr="Lambda expressions type check is not yet implemented">() -> { }</weak_warning>);
+    Simplest simplest = () -> { };
+    use(() -> { });
 
-    IntParser intParser = <weak_warning descr="Lambda expressions type check is not yet implemented">(String s) -> Integer.parseInt(s)</weak_warning>;
+    IntParser intParser = (String s) -> Integer.parseInt(s);
   }
 
   Runnable foo() {
-    return <weak_warning descr="Lambda expressions type check is not yet implemented">() -> { System.out.println("foo"); }</weak_warning>;
+    return () -> { System.out.println("foo"); };
   }
 }

@@ -4,11 +4,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ClassMap;
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.artifacts.*;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.idea.OwnServiceLoader;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.*;
+import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement;
+import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement;
 
 import java.io.File;
 import java.util.List;
@@ -44,94 +47,90 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  public void generateInstructions(LayoutElement layoutElement, ArtifactCompilerInstructionCreator instructionCreator,
+  public void generateInstructions(JpsPackagingElement layoutElement, ArtifactCompilerInstructionCreator instructionCreator,
                                    ArtifactInstructionsBuilderContext builderContext) {
     final LayoutElementBuilderService builder = myBuilders.get(layoutElement.getClass());
-    if (builder == null) {
+    if (builder != null) {
+      //noinspection unchecked
+      builder.generateInstructions(layoutElement, instructionCreator, builderContext);
+    }
+    else {
       LOG.error("Builder not found for artifact output layout element of class " + layoutElement.getClass());
     }
-    builder.generateInstructions(layoutElement, instructionCreator, builderContext);
   }
 
-  private void generateChildrenInstructions(CompositeLayoutElement element, ArtifactCompilerInstructionCreator instructionCreator,
+  private void generateChildrenInstructions(JpsCompositePackagingElement element, ArtifactCompilerInstructionCreator instructionCreator,
                                             ArtifactInstructionsBuilderContext builderContext) {
     generateInstructions(element.getChildren(), instructionCreator, builderContext);
   }
 
-  private void generateSubstitutionInstructions(ComplexLayoutElement element,
+  private void generateSubstitutionInstructions(JpsComplexPackagingElement element,
                                                 ArtifactCompilerInstructionCreator instructionCreator,
                                                 ArtifactInstructionsBuilderContext builderContext) {
-    final List<LayoutElement> substitution = element.getSubstitution(builderContext.getProject());
+    final List<JpsPackagingElement> substitution = element.getSubstitution();
     if (substitution != null) {
       generateInstructions(substitution, instructionCreator, builderContext);
     }
   }
 
-  private void generateInstructions(final List<LayoutElement> elements, ArtifactCompilerInstructionCreator instructionCreator,
+  private void generateInstructions(final List<JpsPackagingElement> elements, ArtifactCompilerInstructionCreator instructionCreator,
                                     ArtifactInstructionsBuilderContext builderContext) {
-    for (LayoutElement child : elements) {
+    for (JpsPackagingElement child : elements) {
       generateInstructions(child, instructionCreator, builderContext);
     }
   }
 
-  private static void generateModuleOutputInstructions(String moduleName,
-                                                       boolean tests,
-                                                       ArtifactCompilerInstructionCreator creator,
-                                                       ArtifactInstructionsBuilderContext context) {
-    final Module module = context.getProject().getModules().get(moduleName);
-    if (module != null) {
-      final File outputDir = context.getProjectPaths().getModuleOutputDir(module, tests);
-      if (outputDir != null) {
-        creator.addDirectoryCopyInstructions(outputDir);
-      }
+  private static void generateModuleOutputInstructions(String outputUrl, ArtifactCompilerInstructionCreator creator) {
+    if (outputUrl != null) {
+      creator.addDirectoryCopyInstructions(JpsPathUtil.urlToFile(outputUrl));
     }
   }
 
-  private class RootElementBuilder extends LayoutElementBuilderService<RootElement> {
+  private class RootElementBuilder extends LayoutElementBuilderService<JpsArtifactRootElement> {
     public RootElementBuilder() {
-      super(RootElement.class);
+      super(JpsArtifactRootElement.class);
     }
 
     @Override
-    public void generateInstructions(RootElement element, ArtifactCompilerInstructionCreator instructionCreator, ArtifactInstructionsBuilderContext builderContext) {
+    public void generateInstructions(JpsArtifactRootElement element, ArtifactCompilerInstructionCreator instructionCreator, ArtifactInstructionsBuilderContext builderContext) {
       generateChildrenInstructions(element, instructionCreator, builderContext);
     }
   }
 
-  private class DirectoryElementBuilder extends LayoutElementBuilderService<DirectoryElement> {
+  private class DirectoryElementBuilder extends LayoutElementBuilderService<JpsDirectoryPackagingElement> {
     public DirectoryElementBuilder() {
-      super(DirectoryElement.class);
+      super(JpsDirectoryPackagingElement.class);
     }
 
     @Override
-    public void generateInstructions(DirectoryElement element,
+    public void generateInstructions(JpsDirectoryPackagingElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
-      generateChildrenInstructions(element, instructionCreator.subFolder(element.getName()), builderContext);
+      generateChildrenInstructions(element, instructionCreator.subFolder(element.getDirectoryName()), builderContext);
     }
   }
 
-  private class ArchiveElementBuilder extends LayoutElementBuilderService<ArchiveElement> {
+  private class ArchiveElementBuilder extends LayoutElementBuilderService<JpsArchivePackagingElement> {
     public ArchiveElementBuilder() {
-      super(ArchiveElement.class);
+      super(JpsArchivePackagingElement.class);
     }
 
     @Override
-    public void generateInstructions(ArchiveElement element, ArtifactCompilerInstructionCreator instructionCreator,
+    public void generateInstructions(JpsArchivePackagingElement element, ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
-      generateChildrenInstructions(element, instructionCreator.archive(element.getName()), builderContext);
+      generateChildrenInstructions(element, instructionCreator.archive(element.getArchiveName()), builderContext);
     }
   }
 
-  private static class DirectoryCopyElementBuilder extends LayoutElementBuilderService<DirectoryCopyElement> {
+  private static class DirectoryCopyElementBuilder extends LayoutElementBuilderService<JpsDirectoryCopyPackagingElement> {
     public DirectoryCopyElementBuilder() {
-      super(DirectoryCopyElement.class);
+      super(JpsDirectoryCopyPackagingElement.class);
     }
 
     @Override
-    public void generateInstructions(DirectoryCopyElement element, ArtifactCompilerInstructionCreator instructionCreator,
+    public void generateInstructions(JpsDirectoryCopyPackagingElement element, ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
-      final String dirPath = element.getDirPath();
+      final String dirPath = element.getDirectoryPath();
       if (dirPath != null) {
         final File directory = new File(FileUtil.toSystemDependentName(dirPath));
         if (directory.isDirectory()) {
@@ -141,35 +140,35 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class FileCopyElementBuilder extends LayoutElementBuilderService<FileCopyElement> {
+  private static class FileCopyElementBuilder extends LayoutElementBuilderService<JpsFileCopyPackagingElement> {
     public FileCopyElementBuilder() {
-      super(FileCopyElement.class);
+      super(JpsFileCopyPackagingElement.class);
     }
 
     @Override
-    public void generateInstructions(FileCopyElement element, ArtifactCompilerInstructionCreator instructionCreator,
+    public void generateInstructions(JpsFileCopyPackagingElement element, ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
       final String filePath = element.getFilePath();
       if (filePath != null) {
         final File file = new File(FileUtil.toSystemDependentName(filePath));
         if (file.isFile()) {
-          final String fileName = element.getOutputFileName();
+          final String fileName = element.getRenamedOutputFileName();
           instructionCreator.addFileCopyInstruction(file, fileName != null ? fileName : file.getName());
         }
       }
     }
   }
 
-  private static class ExtractedDirectoryElementBuilder extends LayoutElementBuilderService<ExtractedDirectoryElement> {
+  private static class ExtractedDirectoryElementBuilder extends LayoutElementBuilderService<JpsExtractedDirectoryPackagingElement> {
     public ExtractedDirectoryElementBuilder() {
-      super(ExtractedDirectoryElement.class);
+      super(JpsExtractedDirectoryPackagingElement.class);
     }
 
     @Override
-    public void generateInstructions(ExtractedDirectoryElement element,
+    public void generateInstructions(JpsExtractedDirectoryPackagingElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
-      final String jarPath = element.getJarPath();
+      final String jarPath = element.getFilePath();
       final String pathInJar = element.getPathInJar();
       File jarFile = new File(FileUtil.toSystemDependentName(jarPath));
       if (jarFile.isFile()) {
@@ -178,55 +177,55 @@ public class LayoutElementBuildersRegistry {
     }
   }
 
-  private static class ModuleOutputElementBuilder extends LayoutElementBuilderService<ModuleOutputElement> {
+  private static class ModuleOutputElementBuilder extends LayoutElementBuilderService<JpsProductionModuleOutputPackagingElement> {
     public ModuleOutputElementBuilder() {
-      super(ModuleOutputElement.class);
+      super(JpsProductionModuleOutputPackagingElement.class);
     }
 
     @Override
-    public void generateInstructions(ModuleOutputElement element,
+    public void generateInstructions(JpsProductionModuleOutputPackagingElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
-      generateModuleOutputInstructions(element.getModuleName(), false, instructionCreator, builderContext);
+      generateModuleOutputInstructions(element.getOutputUrl(), instructionCreator);
     }
   }
 
-  private static class ModuleTestOutputElementBuilder extends LayoutElementBuilderService<ModuleTestOutputElement> {
+  private static class ModuleTestOutputElementBuilder extends LayoutElementBuilderService<JpsTestModuleOutputPackagingElement> {
     public ModuleTestOutputElementBuilder() {
-      super(ModuleTestOutputElement.class);
+      super(JpsTestModuleOutputPackagingElement.class);
     }
 
     @Override
-    public void generateInstructions(ModuleTestOutputElement element,
+    public void generateInstructions(JpsTestModuleOutputPackagingElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
-      generateModuleOutputInstructions(element.getModuleName(), true, instructionCreator, builderContext);
+      generateModuleOutputInstructions(element.getOutputUrl(), instructionCreator);
     }
   }
 
-  private class ComplexElementBuilder extends LayoutElementBuilderService<ComplexLayoutElement> {
+  private class ComplexElementBuilder extends LayoutElementBuilderService<JpsComplexPackagingElement> {
     public ComplexElementBuilder() {
-      super(ComplexLayoutElement.class);
+      super(JpsComplexPackagingElement.class);
     }
 
     @Override
-    public void generateInstructions(ComplexLayoutElement element,
+    public void generateInstructions(JpsComplexPackagingElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
       generateSubstitutionInstructions(element, instructionCreator, builderContext);
     }
   }
 
-  private class ArtifactOutputElementBuilder extends LayoutElementBuilderService<ArtifactLayoutElement> {
+  private class ArtifactOutputElementBuilder extends LayoutElementBuilderService<JpsArtifactOutputPackagingElement> {
     public ArtifactOutputElementBuilder() {
-      super(ArtifactLayoutElement.class);
+      super(JpsArtifactOutputPackagingElement.class);
     }
 
     @Override
-    public void generateInstructions(ArtifactLayoutElement element,
+    public void generateInstructions(JpsArtifactOutputPackagingElement element,
                                      ArtifactCompilerInstructionCreator instructionCreator,
                                      ArtifactInstructionsBuilderContext builderContext) {
-      final Artifact artifact = element.findArtifact(builderContext.getProject());
+      final JpsArtifact artifact = element.getArtifactReference().resolve();
       if (artifact == null) return;
 
       final String outputPath = artifact.getOutputPath();
@@ -235,10 +234,10 @@ public class LayoutElementBuildersRegistry {
         return;
       }
 
-      final LayoutElement rootElement = artifact.getRootElement();
+      final JpsPackagingElement rootElement = artifact.getRootElement();
       final File outputDir = new File(FileUtil.toSystemDependentName(outputPath));
-      if (rootElement instanceof ArchiveElement) {
-        final String fileName = ((ArchiveElement)rootElement).getName();
+      if (rootElement instanceof JpsArchivePackagingElement) {
+        final String fileName = ((JpsArchivePackagingElement)rootElement).getArchiveName();
         instructionCreator.addFileCopyInstruction(new File(outputDir, fileName), fileName);
       }
       else {

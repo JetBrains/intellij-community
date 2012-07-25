@@ -15,8 +15,6 @@
  */
 package org.intellij.lang.xpath;
 
-import org.intellij.lang.xpath.context.ContextProvider;
-
 public class XPath2TypeTest extends XPath2HighlightingTestBase {
 
   public void testQNameToQName() throws Throwable {
@@ -116,12 +114,12 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
   }
 
   public void testDatePlusDuration() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDatePlusDate() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 
@@ -142,37 +140,37 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
   }
 
   public void testDateMinusDuration() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDateMinusDuration2() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDurationMinusDate() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testNumericDivDuration() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testNumericIDivDuration() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDurationDivNumeric() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 
   public void testDurationIDivNumeric() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 
@@ -185,7 +183,7 @@ public class XPath2TypeTest extends XPath2HighlightingTestBase {
   }
 
   public void testRedundantTypeConversion() throws Throwable {
-    ContextProvider.DefaultProvider.NULL_NAMESPACE_CONTEXT = TestNamespaceContext.INSTANCE;
+    TestNamespaceContext.install(getTestRootDisposable());
     doXPathHighlighting();
   }
 

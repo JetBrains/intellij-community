@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -192,28 +191,28 @@ public class VirtualFilePointerContainerImpl extends TraceableDisposable impleme
       List<VirtualFile> cachedFiles = new ArrayList<VirtualFile>(vf.length);
       List<String> cachedUrls = new ArrayList<String>(vf.length);
       List<VirtualFile> cachedDirectories = new ArrayList<VirtualFile>(vf.length / 3);
-
+      boolean allFilesAreDirs = true;
       for (VirtualFilePointer v : vf) {
-        Pair<VirtualFile, String> pair = Pair.create(v.getFile(), v.getUrl());
-        if (pair == null) continue;
-        VirtualFile file = pair.first;
-        String url = pair.second;
-        if (url == null) url = file.getUrl();
+        VirtualFile file = v.getFile();
+        String url = v.getUrl();
         cachedUrls.add(url);
         if (file != null) {
           cachedFiles.add(file);
           if (file.isDirectory()) {
             cachedDirectories.add(file);
           }
+          else {
+            allFilesAreDirs = false;
+          }
         }
       }
       VirtualFile[] directories = VfsUtilCore.toVirtualFileArray(cachedDirectories);
       myCachedDirectories = directories;
-      VirtualFile[] filesArray;
-      myCachedFiles = filesArray = VfsUtilCore.toVirtualFileArray(cachedFiles);
+      VirtualFile[] files;
+      myCachedFiles = files = allFilesAreDirs ? directories : VfsUtilCore.toVirtualFileArray(cachedFiles);
       String[] urlsArray;
       myCachedUrls = urlsArray = ArrayUtil.toStringArray(cachedUrls);
-      result = Trinity.create(urlsArray, filesArray, directories);
+      result = Trinity.create(urlsArray, files, directories);
     }
     myTimeStampOfCachedThings = myVirtualFilePointerManager.getModificationCount();
     return result;

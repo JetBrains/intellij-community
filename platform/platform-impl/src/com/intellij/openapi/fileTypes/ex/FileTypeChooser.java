@@ -139,8 +139,10 @@ public class FileTypeChooser extends DialogWrapper {
    * @return Known file type or null. Never returns {@link com.intellij.openapi.fileTypes.FileTypes#UNKNOWN}.
    */
   @Nullable
-  public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project) {
-    ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().findFile(file); // autodetect text file if needed
+  public static FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @Nullable Project project) {
+    if (project != null) {
+      ((PsiManagerEx)PsiManager.getInstance(project)).getFileManager().findFile(file); // autodetect text file if needed
+    }
     FileType type = file.getFileType();
     if (type == FileTypes.UNKNOWN) {
         type = getKnownFileTypeOrAssociate(file.getName());

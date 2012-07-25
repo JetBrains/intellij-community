@@ -28,11 +28,13 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.Weigher;
 import com.intellij.psi.WeighingComparable;
 import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +43,7 @@ import java.util.Comparator;
 public class PsiProximityComparator implements Comparator<Object> {
   public static final Key<ProximityStatistician> STATISTICS_KEY = Key.create("proximity");
   public static final Key<ProximityWeigher> WEIGHER_KEY = Key.create("proximity");
+  private static final Weigher<PsiElement, ProximityLocation>[] PROXIMITY_WEIGHERS = ContainerUtil.toArray(WeighingService.getWeighers(WEIGHER_KEY), new Weigher[0]);
   private final PsiElement myContext;
   private final FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>> myProximities = new FactoryMap<PsiElement, WeighingComparable<PsiElement, ProximityLocation>>() {
     @Override
@@ -109,7 +112,8 @@ public class PsiProximityComparator implements Comparator<Object> {
 
     if (contextModule == null) return null;
 
-    return WeighingService.weigh(WEIGHER_KEY, elementComputable, new ProximityLocation(context, contextModule, processingContext));
+    return new WeighingComparable<PsiElement,ProximityLocation>(elementComputable,
+                                                                new ProximityLocation(context, contextModule, processingContext),
+                                                                PROXIMITY_WEIGHERS);
   }
-
 }

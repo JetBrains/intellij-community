@@ -19,13 +19,25 @@
  */
 package com.intellij.psi.impl.source.tree;
 
+import com.intellij.lang.ForeignLeafType;
+import com.intellij.lang.TokenWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class ForeignLeafPsiElement extends LeafPsiElement {
-  public ForeignLeafPsiElement(IElementType type, CharSequence text) {
-    super(type, text);
+  private ForeignLeafType myForeignType;
+
+  public ForeignLeafPsiElement(ForeignLeafType type, CharSequence text) {
+    super(dereferenceElementType(type.getDelegate()), text);
+    myForeignType = type;
+  }
+
+  private static IElementType dereferenceElementType(IElementType type) {
+    while ( type instanceof TokenWrapper)
+      type = (( TokenWrapper ) type ).getDelegate();
+
+    return type;
   }
 
   @Override
@@ -61,6 +73,10 @@ public class ForeignLeafPsiElement extends LeafPsiElement {
   @Override
   public int getStartOffset() {
     return 0;
+  }
+
+  public ForeignLeafType getForeignType() {
+    return myForeignType;
   }
 
   @Override

@@ -76,7 +76,9 @@ public class NameUtil {
         index++;
       }
       String word = name.substring(wordStart, index);
-      array.add(word);
+      if (!StringUtil.isEmptyOrSpaces(word)) {
+        array.add(word);
+      }
     }
     return ArrayUtil.toStringArray(array);
   }

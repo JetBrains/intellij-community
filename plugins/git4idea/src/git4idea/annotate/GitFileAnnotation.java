@@ -157,7 +157,9 @@ public class GitFileAnnotation implements FileAnnotation {
    * Fire annotation changed event
    */
   private void fireAnnotationChanged() {
-    myListeners.getMulticaster().onAnnotationChanged();
+    if (!myProject.isDisposed()) {
+      myListeners.getMulticaster().onAnnotationChanged();
+    }
   }
 
   /**

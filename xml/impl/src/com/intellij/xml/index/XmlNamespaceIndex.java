@@ -16,8 +16,11 @@
 package com.intellij.xml.index;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -30,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
 import java.io.DataOutput;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
@@ -51,13 +55,10 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
     return resources;
   }
 
-  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(@NotNull final Module module) {
-    return getAllResources(module, null);
-  }
-
-  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(@NotNull final Module module,
+  public static List<IndexedRelevantResource<String, XsdNamespaceBuilder>> getAllResources(@Nullable final Module module,
+                                                                                           @NotNull Project project,
                                                                                            @Nullable NullableFunction<List<IndexedRelevantResource<String, XsdNamespaceBuilder>>, IndexedRelevantResource<String, XsdNamespaceBuilder>> chooser) {
-    return IndexedRelevantResource.getAllResources(NAME, module, chooser);
+    return IndexedRelevantResource.getAllResources(NAME, module, project, chooser);
   }
   
   private static final ID<String,XsdNamespaceBuilder> NAME = ID.create("XmlNamespaces");
@@ -149,5 +150,27 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
           return i == 0 ? o1.compareTo(o2) : i;
         }
       });
+  }
+
+  @Nullable
+  public static XmlFile guessSchema(String namespace,
+                                    @Nullable final String tagName,
+                                    @Nullable final String version,
+                                    @NotNull PsiFile file) {
+
+    IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
+      guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file));
+    return resource == null ? null : (XmlFile)file.getManager().findFile(resource.getFile());
+  }
+
+  @Nullable
+  public static XmlFile guessDtd(String dtdUri, @NotNull PsiFile baseFile) {
+
+    if (!dtdUri.endsWith(".dtd")) return null;
+
+    String dtdFileName = new File(dtdUri).getName();
+    List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
+      list = getResourcesByNamespace(dtdFileName, baseFile.getProject(), ModuleUtilCore.findModuleForPsiElement(baseFile));
+    return list.isEmpty() ? null : (XmlFile)baseFile.getManager().findFile(list.get(0).getFile());
   }
 }

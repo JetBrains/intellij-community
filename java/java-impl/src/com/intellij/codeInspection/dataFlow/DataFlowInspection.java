@@ -34,7 +34,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.DataManager;
-import com.intellij.lang.ASTFactory;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -42,7 +41,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
@@ -69,11 +67,6 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
 
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
-  }
-
-  void test(@NotNull List l) {
-    final List list = null;
-    test(list);
   }
 
   @NotNull

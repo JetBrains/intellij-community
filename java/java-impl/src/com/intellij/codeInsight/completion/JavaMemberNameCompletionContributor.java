@@ -111,7 +111,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     suggestedNameInfo = codeStyleManager.suggestUniqueVariableName(suggestedNameInfo, var, false);
     final String[] suggestedNames = suggestedNameInfo.names;
     addLookupItems(set, suggestedNameInfo, matcher, project, suggestedNames);
-    if (set.isEmpty()) {
+    if (!hasStartMatches(set, matcher)) {
       if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) && matcher.prefixMatches("object")) {
         set.add(LookupElementBuilder.create("object"));
       }
@@ -120,7 +120,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    if (set.isEmpty() && includeOverlapped) {
+    if (!hasStartMatches(set, matcher) && includeOverlapped) {
       addLookupItems(set, null, matcher, project, getOverlappedNameVersions(matcher.getPrefix(), suggestedNames, ""));
     }
     PsiElement parent = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
@@ -135,6 +135,23 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       SuggestedNameInfo initializerSuggestions = IntroduceVariableBase.getSuggestedName(type, initializer);
       addLookupItems(set, initializerSuggestions, matcher, project, initializerSuggestions.names);
     }
+  }
+
+  private static boolean hasStartMatches(PrefixMatcher matcher, Set<String> set) {
+    for (String s : set) {
+      if (matcher.isStartMatch(s)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  private static boolean hasStartMatches(Set<LookupElement> set, PrefixMatcher matcher) {
+    for (LookupElement lookupElement : set) {
+      if (hasStartMatches(matcher, lookupElement.getAllLookupStrings())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static void addSuggestionsInspiredByFieldNames(Set<LookupElement> set,
@@ -246,7 +263,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
     final String[] suggestedNames = suggestedNameInfo.names;
     addLookupItems(set, suggestedNameInfo, matcher, project, suggestedNames);
 
-    if (set.isEmpty() && includeOverlapped) {
+    if (!hasStartMatches(set, matcher) && includeOverlapped) {
       // use suggested names as suffixes
       final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(variableKind);
       if(variableKind != VariableKind.STATIC_FINAL_FIELD){
@@ -295,7 +312,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
     }
 
-    if (result.isEmpty() && PsiType.VOID != varType && includeOverlapped) {
+    if (!hasStartMatches(matcher, result) && PsiType.VOID != varType && includeOverlapped) {
       // use suggested names as suffixes
       final String requiredSuffix = codeStyleManager.getSuffixByVariableKind(varKind);
       final String prefix = matcher.getPrefix();

@@ -1,5 +1,6 @@
 package org.jetbrains.android.sdk;
 
+import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -108,7 +109,7 @@ public class AndroidTargetData {
                     public void visitXmlTag(XmlTag tag) {
                       super.visitXmlTag(tag);
                       
-                      if ("style".equals(tag.getName())) {
+                      if (ResourceType.STYLE.getName().equals(tag.getName())) {
                         final String styleName = tag.getAttributeValue("name");
 
                         if (styleName != null && (styleName.equals("Theme") || styleName.startsWith("Theme."))) {

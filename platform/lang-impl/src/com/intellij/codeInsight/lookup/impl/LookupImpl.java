@@ -472,6 +472,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       updateListHeight(listModel);
 
       myList.setSelectedIndex(toSelect);
+      if (onExplicitAction && myShown) {
+        myList.ensureIndexIsVisible(toSelect);
+      }
       return !oldModel.equals(items);
     }
 
@@ -1301,8 +1304,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       public void run() {
         if (!myDisposed) {
           myAdComponent.addAdvertisement(text);
-          requestResize();
-          refreshUi(false, false);
+          if (myShown) {
+            requestResize();
+            refreshUi(false, false);
+          }
         }
       }
     });

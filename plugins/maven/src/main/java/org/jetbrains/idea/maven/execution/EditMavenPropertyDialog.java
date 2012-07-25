@@ -33,9 +33,9 @@ public class EditMavenPropertyDialog extends DialogWrapper {
   private JTextField myValueField;
   private final Map<String, String> myAvailableProperties;
 
-  public EditMavenPropertyDialog(Pair<String, String> value, Map<String, String> availableProperties) {
+  public EditMavenPropertyDialog(@Nullable Pair<String, String> value, Map<String, String> availableProperties) {
     super(false);
-    setTitle("Edit Maven Property");
+    setTitle(value == null ? "Add Maven Property" : "Edit Maven Property");
 
     myAvailableProperties = availableProperties;
 
@@ -43,7 +43,10 @@ public class EditMavenPropertyDialog extends DialogWrapper {
     installPropertySelectionListener();
     fillAvailableProperties();
 
-    setValue(value);
+    if (value != null) {
+      myNameBox.getEditor().setItem(value.getFirst());
+      myValueField.setText(value.getSecond());
+    }
 
     init();
   }
@@ -87,11 +90,6 @@ public class EditMavenPropertyDialog extends DialogWrapper {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameBox;
-  }
-
-  private void setValue(Pair<String, String> value) {
-    myNameBox.getEditor().setItem(value.getFirst());
-    myValueField.setText(value.getSecond());
   }
 
   public Pair<String, String> getValue() {

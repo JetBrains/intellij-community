@@ -16,21 +16,22 @@
 
 package com.intellij.util.containers;
 
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Enumeration;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /** similar to java.util.ConcurrentHashMap except:
  keys are ints 
  conserved as much memory as possible by
    -- using only one Segment
    -- eliminating unnecessary fields
-   -- using one of 256 ReentrantLock for Segment staticly preallocated in StripedReentrantLocks
+   -- using one of 256 ReentrantLock for Segment statically pre-allocated in {@link StripedReentrantLocks}
  added hashing strategy argument
  made not Serializable
  */
-public class StripedLockIntObjectConcurrentHashMap<V> {
+public class StripedLockIntObjectConcurrentHashMap<V> implements ConcurrentIntObjectMap<V> {
   /* ---------------- Constants -------------- */
 
   /**
@@ -145,6 +146,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
    * @throws NullPointerException if the key or value is
    *                              <tt>null</tt>.
    */
+  @Override
   public V put(int key, @NotNull V value) {
     return put(key, value, false);
   }
@@ -185,19 +187,22 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
    * @throws NullPointerException if the key is
    *                              <tt>null</tt>.
    */
+  @Override
   public V remove(int key) {
-    return remove(key, null);
+    return doRemove(key, null);
   }
 
+  @Override
+  public boolean remove(int key, @NotNull V value) {
+    return doRemove(key, value) != null;
+  }
 
-
-
-
-
-
-
-
-
+  @NotNull
+  @Override
+  public V cacheOrGet(int key, @NotNull V value) {
+    V prev = putIfAbsent(key, value);
+    return prev == null ? value : prev;
+  }
 
   /**
    * Returns an enumeration of the values in this table.
@@ -212,13 +217,11 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
   /* ---------------- Iterator Support -------------- */
 
   private class HashIterator {
-    private int nextTableIndex;
-    private IntHashEntry[] currentTable;
+    private int nextTableIndex = table.length - 1;
     private IntHashEntry<V> nextEntry;
     private IntHashEntry<V> lastReturned;
 
     private HashIterator() {
-      nextTableIndex = -1;
       advance();
     }
 
@@ -232,19 +235,8 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
       }
 
       while (nextTableIndex >= 0) {
-        if ((nextEntry = (IntHashEntry<V>)currentTable[nextTableIndex--]) != null) {
+        if ((nextEntry = (IntHashEntry<V>)table[nextTableIndex--]) != null) {
           return;
-        }
-      }
-
-      StripedLockIntObjectConcurrentHashMap seg = StripedLockIntObjectConcurrentHashMap.this;
-      if (seg.count != 0) {
-        currentTable = seg.table;
-        for (int j = currentTable.length - 1; j >= 0; --j) {
-          if ((nextEntry = (IntHashEntry<V>)currentTable[j]) != null) {
-            nextTableIndex = j - 1;
-            return;
-          }
         }
       }
     }
@@ -289,15 +281,33 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
   }
 
 
-  public Collection<IntEntry<V>> entries() {
-    HashIterator iterator = new HashIterator();
-    Set<IntEntry<V>> result = new THashSet<IntEntry<V>>();
-    while (iterator.hasNext()) {
-      IntHashEntry<V> ie = iterator.nextEntry;
-      SimpleEntry<V> entry = new SimpleEntry<V>(ie.key, ie.value);
-      result.add(entry);
-    }
-    return result;
+  @Override
+  @NotNull
+  public Iterable<IntEntry<V>> entries() {
+    return new Iterable<IntEntry<V>>() {
+      @Override
+      public Iterator<IntEntry<V>> iterator() {
+        final HashIterator hashIterator = new HashIterator();
+        return new Iterator<IntEntry<V>>() {
+          @Override
+          public boolean hasNext() {
+            return hashIterator.hasNext();
+          }
+
+          @Override
+          public IntEntry<V> next() {
+            IntHashEntry<V> ie = hashIterator.nextEntry;
+            hashIterator.nextEntry();
+            return new SimpleEntry<V>(ie.key, ie.value);
+          }
+
+          @Override
+          public void remove() {
+            hashIterator.remove();
+          }
+        };
+      }
+    };
   }
 
   /**
@@ -461,6 +471,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
 
   /* Specialized implementations of map methods */
 
+  @Override
   public V get(int key) {
     if (count != 0) { // read-volatile
       IntHashEntry<V> e = getFirst(key);
@@ -478,6 +489,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
     return null;
   }
 
+  @Override
   public boolean containsKey(int key) {
     if (count != 0) { // read-volatile
       IntHashEntry<V> e = getFirst(key);
@@ -491,6 +503,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
     return false;
   }
 
+  @Override
   public boolean replace(int key, @NotNull V oldValue, @NotNull V newValue) {
     lock();
     try {
@@ -614,7 +627,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
   /**
    * Remove; match on key only if value null, else match both.
    */
-  protected V remove(int key, Object value) {
+  protected V doRemove(int key, V value) {
     lock();
     try {
       int c = count - 1;
@@ -650,6 +663,7 @@ public class StripedLockIntObjectConcurrentHashMap<V> {
     }
   }
 
+  @Override
   public void clear() {
     if (count != 0) {
       lock();

@@ -17,7 +17,11 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.openapi.vfs.VirtualFile;
+
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -61,6 +65,39 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
 
   public void testPreferenceAttributeValueCompletion() throws Throwable {
     doTestCompletionVariants("pref5.xml", "@string/welcome", "@string/welcome1");
+  }
+
+  public void testPreferenceCompletion6() throws Throwable {
+    VirtualFile file = copyFileToProject("pref6.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertTrue(lookupElementStrings.contains("PreferenceScreen"));
+    assertFalse(lookupElementStrings.contains("android.preference.PreferenceScreen"));
+  }
+
+  public void testPreferenceCompletion7() throws Throwable {
+    toTestCompletion("pref7.xml", "pref7_after.xml");
+  }
+
+  public void testPreferenceCompletion8() throws Throwable {
+    VirtualFile file = copyFileToProject("pref8.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertTrue(lookupElementStrings.contains("CheckBoxPreference"));
+    assertFalse(lookupElementStrings.contains("android.preference.CheckBoxPreference"));
+  }
+
+  public void testPreferenceCompletion9() throws Throwable {
+    VirtualFile file = copyFileToProject("pref9.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertTrue(lookupElementStrings.contains("preference.CheckBoxPreference"));
   }
 
   public void testSearchableRoot() throws Throwable {
@@ -131,6 +168,16 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
   public void testPreferenceHeaders() throws Throwable {
     copyFileToProject("MyFragmentActivity.java", "src/p1/p2/MyFragmentActivity.java");
     doTestHighlighting();
+  }
+
+  public void testCustomPreference1() throws Throwable {
+    copyFileToProject("MyPreference.java", "src/p1/p2/MyPreference.java");
+    toTestCompletion("customPref1.xml", "customPref1_after.xml");
+  }
+
+  public void testCustomPreference2() throws Throwable {
+    copyFileToProject("MyPreference.java", "src/p1/p2/MyPreference.java");
+    toTestCompletion("customPref2.xml", "customPref2_after.xml");
   }
 
   public void testPreferenceHeaders1() throws Throwable {

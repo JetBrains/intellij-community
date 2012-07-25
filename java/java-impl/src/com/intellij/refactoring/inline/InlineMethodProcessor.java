@@ -190,6 +190,23 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    final PsiReturnStatement[] returnStatements = RefactoringUtil.findReturnStatements(myMethod);
+    for (PsiReturnStatement statement : returnStatements) {
+      PsiExpression value = statement.getReturnValue();
+      if (value != null && !(value instanceof PsiCallExpression)) {
+        for (UsageInfo info : usagesIn) {
+          PsiReference reference = info.getReference();
+          if (reference != null) {
+            InlineUtil.TailCallType type = InlineUtil.getTailCallType(reference);
+            if (type == InlineUtil.TailCallType.Simple) {
+              conflicts.putValue(statement, "Inlined result won't be a valid statement");
+              break;
+            }
+          }
+        }
+      }
+    }
+
     addInaccessibleMemberConflicts(myMethod, usagesIn, new ReferencedElementsCollector(), conflicts);
 
     addInaccessibleSuperCallsConflicts(usagesIn, conflicts);
@@ -730,7 +747,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (returnValue == null) continue;
         PsiStatement statement;
         if (tailCallType == InlineUtil.TailCallType.Simple) {
-          if (returnValue instanceof PsiCallExpression) {
+          if (returnValue instanceof PsiExpression) {
             PsiExpressionStatement exprStatement = (PsiExpressionStatement) myFactory.createStatementFromText("a;", null);
             exprStatement.getExpression().replace(returnValue);
             returnStatement.getParent().addBefore(exprStatement, returnStatement);

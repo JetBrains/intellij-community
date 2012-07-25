@@ -95,6 +95,7 @@ public class ExtendedDeviceChooserDialog extends DialogWrapper {
     };
     myLaunchEmulatorRadioButton.addActionListener(listener);
     myChooserRunningDeviceRadioButton.addActionListener(listener);
+    myAvdCombo.getComboBox().addActionListener(listener);
 
     init();
 
@@ -162,6 +163,11 @@ public class ExtendedDeviceChooserDialog extends DialogWrapper {
     }
 
     super.doOKAction();
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "AndroidExtendedDeviceChooserDialog";
   }
 
   protected JComponent createCenterPanel() {

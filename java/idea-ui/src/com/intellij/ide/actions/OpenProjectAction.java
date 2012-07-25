@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -71,5 +72,11 @@ public class OpenProjectAction extends AnAction implements DumbAware {
         }
       }
     });
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setVisible(ActionPlaces.WELCOME_SCREEN.equals(e.getPlace()));
   }
 }

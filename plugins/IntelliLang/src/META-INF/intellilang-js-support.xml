@@ -6,5 +6,7 @@
     <languageSupport implementation="com.intellij.plugins.intelliLang.inject.JSLanguageInjectionSupport"/>
     <injectionConfig config="resources/jsInjections.xml"/>
   </extensions>
-
+  <extensions defaultExtensionNs="com.intellij">
+    <patterns.patternClass className="com.intellij.lang.javascript.patterns.JSPatterns" alias="js"/>
+  </extensions>
 </idea-plugin>

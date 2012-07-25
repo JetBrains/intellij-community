@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.resources;
 
+import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.Required;
@@ -25,5 +26,6 @@ import org.jetbrains.android.dom.AndroidDomElement;
  */
 public interface ResourceElement extends GenericDomValue<String>, AndroidDomElement {
   @Required
+  @Convert(ResourceNameConverter.class)
   GenericAttributeValue<String> getName();
 }

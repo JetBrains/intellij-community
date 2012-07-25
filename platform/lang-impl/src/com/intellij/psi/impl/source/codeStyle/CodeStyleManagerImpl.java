@@ -234,7 +234,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
     
     if (visualColumnToRestore < 0) {
-      editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       return;
     }
     CaretModel caretModel = editor.getCaretModel();

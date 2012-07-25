@@ -45,7 +45,7 @@ public class JpsLibraryOrderEntry extends JpsExportableOrderEntry<JpsLibraryDepe
 
   @Override
   public Library getLibrary() {
-    final JpsLibrary library = myDependencyElement.getLibraryReference().resolve();
+    final JpsLibrary library = myDependencyElement.getLibrary();
     if (library != null) return null;
     return JpsModelManager.getInstance(myRootModel.getProject()).getLibraryManager().getLibrary(library);
   }

@@ -39,6 +39,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+
 /**
  * @author peter
  */
@@ -116,8 +118,10 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     final PsiClass psiClass = PsiUtil.resolveClassInType(type);
     if (psiClass == null || psiClass.getName() == null) return null;
 
+    PsiElement position = parameters.getPosition();
     if ((parameters.getInvocationCount() < 2 || psiClass instanceof PsiCompiledElement) &&
-        HighlightClassUtil.checkCreateInnerClassFromStaticContext(parameters.getPosition(), null, psiClass) != null) {
+        HighlightClassUtil.checkCreateInnerClassFromStaticContext(position, null, psiClass) != null &&
+        !psiElement().afterLeaf(psiElement().withText(PsiKeyword.NEW).afterLeaf(".")).accepts(position)) {
       return null;
     }
 
@@ -143,7 +147,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         }
       }
     }
-    final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, parameters.getPosition());
+    final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, position);
     JavaCompletionUtil.setShowFQN(item);
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {

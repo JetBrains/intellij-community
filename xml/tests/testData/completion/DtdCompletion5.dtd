@@ -1,0 +1,4 @@
+<!ATTLIST tag2 id2 ID #IMPLIED
+  session         %Bo<caret> 
+>
+<!ENTITY % Boolean "(true|false|yes|no)">

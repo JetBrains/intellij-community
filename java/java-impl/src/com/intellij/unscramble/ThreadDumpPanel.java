@@ -98,6 +98,8 @@ public class ThreadDumpPanel extends JPanel {
     splitter.setSecondComponent(consoleView.getComponent());
 
     add(splitter, BorderLayout.CENTER);
+
+    new ListSpeedSearch(myThreadList).setComparator(new SpeedSearchComparator(false, true));
   }
 
   private static Icon getThreadStateIcon(final ThreadState threadState) {

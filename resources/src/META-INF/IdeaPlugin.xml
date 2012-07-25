@@ -378,7 +378,6 @@
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
 
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
-    <daemon.highlightInfoFilter implementation="com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightInfoFilter"/>
 
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.module.WebModuleConfigurationEditorProvider"/>
@@ -622,6 +621,10 @@
       <category>Declaration</category>
     </intentionAction>
     <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.PushConditionInCallAction</className>
+      <category>Declaration</category>
+    </intentionAction>
+    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction</className>
       <category>Declaration</category>
     </intentionAction>
@@ -761,7 +764,8 @@
     <lang.formatter language="JAVA" implementationClass="com.intellij.lang.java.JavaFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="JAVA"
                                        implementationClass="com.intellij.psi.formatter.JavadocWhiteSpaceFormattingStrategy"/>
-
+    <lang.rearranger language="JAVA" implementationClass="com.intellij.psi.codeStyle.arrangement.JavaRearranger"/>
+    
     <lang.documentationProvider language="JAVA" implementationClass="com.intellij.lang.java.JavaDocumentationProvider"/>
     <documentationProvider implementation="com.intellij.lang.java.FileDocumentationProvider" order="last"/>
 
@@ -896,9 +900,6 @@
     <statistician key="proximity" implementationClass="com.intellij.codeInsight.completion.JavaProximityStatistician"/>
     <statistician key="completion" implementationClass="com.intellij.codeInsight.completion.JavaCompletionStatistician"/>
 
-    <weigher key="completionSorting" implementationClass="com.intellij.codeInsight.completion.PreferLessParametersWeigher" id="lessParams"
-             order="after sLookupString, before sProximity"/>
-
     <completion.skip implementation="com.intellij.codeInsight.completion.AbstractExpectedTypeSkipper" id="skipAbstract"/>
 
 
@@ -968,6 +969,8 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.TypeOfVariableMacro"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.GroovyScriptMacro"/>
+
+    <bundledColorSchemesProvider implementation="com.intellij.codeStyle.IdeaColorSchemesProvider"/>
 
     <copyPastePreProcessor implementation="com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="com.intellij.codeInsight.editorActions.JavaCopyPasteReferenceProcessor"/>

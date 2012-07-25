@@ -21,6 +21,7 @@ import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by IntelliJ IDEA.
@@ -71,12 +72,12 @@ public class Mappings {
   private IntIntTransientMultiMaplet myRemovedSuperClasses;
   private IntIntTransientMultiMaplet myAddedSuperClasses;
 
+  @Nullable
   private Collection<String> myRemovedFiles;
 
   private Mappings(final Mappings base) throws IOException {
     myLock = base.myLock;
     myIsDelta = true;
-    myPostPasses = new LinkedList<PostPass>();
     myChangedClasses = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myChangedFiles = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
     myDeletedClasses = new HashSet<ClassRepr>(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
@@ -93,7 +94,6 @@ public class Mappings {
   public Mappings(final File rootDir, final boolean transientDelta) throws IOException {
     myLock = new Object();
     myIsDelta = false;
-    myPostPasses = new LinkedList<PostPass>();
     myChangedClasses = null;
     myChangedFiles = null;
     myDeletedClasses = null;
@@ -189,48 +189,7 @@ public class Mappings {
     return myAddedSuperClasses;
   }
 
-  private static class Option<X> {
-    static final Option<Boolean> TRUE = new Option<Boolean>(Boolean.TRUE);
-    static final Option<Boolean> FALSE = new Option<Boolean>(Boolean.FALSE);
-    static final Option<Boolean> UNKNOWN = new Option<Boolean>();
-
-    private final X myValue;
-
-    Option(final X value) {
-      this.myValue = value;
-    }
-
-    Option() {
-      myValue = null;
-    }
-
-    public boolean isDefined() {
-      return myValue != null;
-    }
-
-    public X value() {
-      return myValue;
-    }
-  }
-
-  private abstract class PostPass {
-    boolean myPerformed = false;
-
-    abstract void perform();
-
-    void run() {
-      if (!myPerformed) {
-        myPerformed = true;
-        perform();
-      }
-    }
-  }
-
-  private final List<PostPass> myPostPasses;
-
-  private void addPostPass(final PostPass p) {
-    myPostPasses.add(p);
-  }
+  private final LinkedBlockingQueue<Runnable> myPostPasses = new LinkedBlockingQueue<Runnable>();
 
   private void runPostPasses() {
     final Set<ClassRepr> deleted = myDeletedClasses;
@@ -239,9 +198,8 @@ public class Mappings {
         myChangedClasses.remove(repr.name);
       }
     }
-
-    for (final PostPass p : myPostPasses) {
-      p.run();
+    for (Runnable pass = myPostPasses.poll(); pass != null; pass = myPostPasses.poll()) {
+      pass.run();
     }
   }
 
@@ -249,18 +207,19 @@ public class Mappings {
   private static final MethodRepr MOCK_METHOD = null;
 
   private class Util {
-    final Mappings myDelta;
+    @Nullable
+    private final Mappings myMappings;
 
     private Util() {
-      myDelta = null;
+      myMappings = null;
     }
 
-    private Util(Mappings delta) {
-      this.myDelta = delta;
+    private Util(@NotNull Mappings mappings) {
+      myMappings = mappings;
     }
 
     void appendDependents(final ClassRepr c, final TIntHashSet result) {
-      final TIntHashSet depClasses = myDelta.myClassToClassDependency.get(c.name);
+      final TIntHashSet depClasses = myClassToClassDependency.get(c.name);
 
       if (depClasses != null) {
         addAll(result, depClasses);
@@ -269,7 +228,6 @@ public class Mappings {
 
     void propagateMemberAccessRec(final TIntHashSet acc, final boolean isField, final boolean root, final int name, final int reflcass) {
       final ClassRepr repr = reprByName(reflcass);
-
       if (repr != null) {
         if (!root) {
           final Collection members = isField ? repr.getFields() : repr.getMethods();
@@ -301,9 +259,7 @@ public class Mappings {
 
     TIntHashSet propagateMemberAccess(final boolean isField, final int name, final int className) {
       final TIntHashSet acc = new TIntHashSet(DEFAULT_SET_CAPACITY, DEFAULT_SET_LOAD_FACTOR);
-
       propagateMemberAccessRec(acc, isField, true, name, className);
-
       return acc;
     }
 
@@ -324,8 +280,8 @@ public class Mappings {
           }
 
           for (int i = 0; i < than.myArgumentTypes.length; i++) {
-            final Option<Boolean> subtypeOf = isSubtypeOf(than.myArgumentTypes[i], m.myArgumentTypes[i]);
-            if (subtypeOf.isDefined() && !subtypeOf.value()) {
+            final Boolean subtypeOf = isSubtypeOf(than.myArgumentTypes[i], m.myArgumentTypes[i]);
+            if (subtypeOf != null && !subtypeOf) {
               return false;
             }
           }
@@ -335,134 +291,124 @@ public class Mappings {
       };
     }
 
-    Collection<Pair<MethodRepr, ClassRepr>> findOverridingMethods(final MethodRepr m, final ClassRepr c, final boolean bySpecificity) {
-      final Set<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
-      final MethodRepr.Predicate predicate = bySpecificity ? lessSpecific(m) : MethodRepr.equalByJavaRules(m);
+    private void addOverridingMethods(final MethodRepr m, final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container) {
+      final TIntHashSet subClasses = myClassToSubclasses.get(fromClass.name);
+      if (subClasses == null) {
+        return;
+      }
+      subClasses.forEach(new TIntProcedure() {
+        @Override
+        public boolean execute(int subClassName) {
+          final ClassRepr r = reprByName(subClassName);
 
-      new Object() {
-        public void run(final ClassRepr c) {
-          final TIntHashSet subClasses = myClassToSubclasses.get(c.name);
-
-          if (subClasses != null) {
-            subClasses.forEach(new TIntProcedure() {
-              @Override
-              public boolean execute(int subClassName) {
-                final ClassRepr r = reprByName(subClassName);
-
-                if (r != null) {
-                  boolean cont = true;
-
-                  final Collection<MethodRepr> methods = r.findMethods(predicate);
-
-                  for (MethodRepr mm : methods) {
-                    if (isVisibleIn(c, m, r)) {
-                      result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
-                      cont = false;
-                    }
-                  }
-
-                  if (cont) {
-                    run(r);
-                  }
-                }
-                return true;
-              }
-            });
-          }
-        }
-      }.run(c);
-
-      return result;
-    }
-
-    Collection<Pair<MethodRepr, ClassRepr>> findOverriddenMethods(final MethodRepr m, final ClassRepr c) {
-      return findOverridenMethods(m, c, false);
-    }
-
-    Collection<Pair<MethodRepr, ClassRepr>> findOverridenMethods(final MethodRepr m, final ClassRepr c, final boolean bySpecificity) {
-      final Set<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
-      final MethodRepr.Predicate predicate = bySpecificity ? lessSpecific(m) : MethodRepr.equalByJavaRules(m);
-
-      new Object() {
-        public void run(final ClassRepr c) {
-          final int[] supers = c.getSupers();
-
-          for (int succName : supers) {
-            final ClassRepr r = reprByName(succName);
-
-            if (r != null) {
-              boolean cont = true;
-
-              final Collection<MethodRepr> methods = r.findMethods(predicate);
-
-              for (MethodRepr mm : methods) {
-                if (isVisibleIn(r, mm, c)) {
-                  result.add(new Pair<MethodRepr, ClassRepr>(mm, r));
-                  cont = false;
-                }
-              }
-
-              if (cont) {
-                run(r);
+          if (r != null) {
+            boolean cont = true;
+            final Collection<MethodRepr> methods = r.findMethods(predicate);
+            for (MethodRepr mm : methods) {
+              if (isVisibleIn(fromClass, m, r)) {
+                container.add(new Pair<MethodRepr, ClassRepr>(mm, r));
+                cont = false;
               }
             }
-            else {
-              result.add(new Pair<MethodRepr, ClassRepr>(MOCK_METHOD, MOCK_CLASS));
+            if (cont) {
+              addOverridingMethods(m, r, predicate, container);
             }
           }
+          return true;
         }
-      }.run(c);
+      });
+    }
 
+    private Collection<Pair<MethodRepr, ClassRepr>> findAllMethodsBySpecificity(final MethodRepr m, final ClassRepr c) {
+      final MethodRepr.Predicate predicate = lessSpecific(m);
+      final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
+      addOverridenMethods(c, predicate, result);
+      addOverridingMethods(m, c, predicate, result);
       return result;
     }
 
-    Collection<Pair<MethodRepr, ClassRepr>> findAllMethodsBySpecificity(final MethodRepr m, final ClassRepr c) {
-      final Collection<Pair<MethodRepr, ClassRepr>> result = findOverridenMethods(m, c, true);
-
-      result.addAll(findOverridingMethods(m, c, true));
-
+    private Collection<Pair<MethodRepr, ClassRepr>> findOverriddenMethods(final MethodRepr m, final ClassRepr c) {
+      final Collection<Pair<MethodRepr, ClassRepr>> result = new HashSet<Pair<MethodRepr, ClassRepr>>();
+      addOverridenMethods(c, MethodRepr.equalByJavaRules(m), result);
       return result;
     }
 
-    Collection<Pair<FieldRepr, ClassRepr>> findOverriddenFields(final FieldRepr f, final ClassRepr c) {
-      final Set<Pair<FieldRepr, ClassRepr>> result = new HashSet<Pair<FieldRepr, ClassRepr>>();
-
-      new Object() {
-        public void run(final ClassRepr c) {
-          final int[] supers = c.getSupers();
-
-          for (int succName : supers) {
-            final ClassRepr r = reprByName(succName);
-
-            if (r != null) {
-              boolean cont = true;
-
-              if (r.getFields().contains(f)) {
-                final FieldRepr ff = r.findField(f.name);
-
-                if (ff != null) {
-                  if (isVisibleIn(r, ff, c)) {
-                    result.add(new Pair<FieldRepr, ClassRepr>(ff, r));
-                    cont = false;
-                  }
-                }
-              }
-
-              if (cont) {
-                run(r);
-              }
-            }
+    private boolean hasOverriddenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate) {
+      for (int superName : fromClass.getSupers()) {
+        final ClassRepr superClass = reprByName(superName);
+        if (superClass == null) {
+          return true; // assumption
+        }
+        for (MethodRepr mm : superClass.findMethods(predicate)) {
+          if (isVisibleIn(superClass, mm, fromClass)) {
+            return true;
           }
         }
-      }.run(c);
+        if (hasOverriddenMethods(superClass, predicate)) {
+          return true;
+        }
+      }
+      return false;
+    }
 
-      return result;
+    private void addOverridenMethods(final ClassRepr fromClass, final MethodRepr.Predicate predicate, final Collection<Pair<MethodRepr, ClassRepr>> container) {
+      for (int superName : fromClass.getSupers()) {
+        final ClassRepr superClass = reprByName(superName);
+        if (superClass != null) {
+          boolean cont = true;
+          final Collection<MethodRepr> methods = superClass.findMethods(predicate);
+          for (MethodRepr mm : methods) {
+            if (isVisibleIn(superClass, mm, fromClass)) {
+              container.add(new Pair<MethodRepr, ClassRepr>(mm, superClass));
+              cont = false;
+            }
+          }
+          if (cont) {
+            addOverridenMethods(superClass, predicate, container);
+          }
+        }
+        else {
+          container.add(new Pair<MethodRepr, ClassRepr>(MOCK_METHOD, MOCK_CLASS));
+        }
+      }
+    }
+
+    private void addOverriddenFields(final FieldRepr f, final ClassRepr fromClass, final Collection<Pair<FieldRepr, ClassRepr>> container) {
+      for (int supername : fromClass.getSupers()) {
+        final ClassRepr superClass = reprByName(supername);
+        if (superClass != null) {
+          final FieldRepr ff = superClass.findField(f.name);
+          if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
+            container.add(new Pair<FieldRepr, ClassRepr>(ff, superClass));
+          }
+          else{
+            addOverriddenFields(f, superClass, container);
+          }
+        }
+      }
+    }
+
+    private boolean hasOverriddenFields(final FieldRepr f, final ClassRepr fromClass) {
+      for (int supername : fromClass.getSupers()) {
+        final ClassRepr superClass = reprByName(supername);
+        if (superClass != null) {
+          final FieldRepr ff = superClass.findField(f.name);
+          if (ff != null && isVisibleIn(superClass, ff, fromClass)) {
+            return true;
+          }
+          final boolean found = hasOverriddenFields(f, superClass);
+          if (found) {
+            return true;
+          }
+        }
+      }
+      return false;
     }
 
     @Nullable
     ClassRepr reprByName(final int name) {
-      if (myDelta != null) {
-        final ClassRepr r = myDelta.getReprByName(name);
+      if (myMappings != null) {
+        final ClassRepr r = myMappings.getReprByName(name);
 
         if (r != null) {
           return r;
@@ -472,32 +418,34 @@ public class Mappings {
       return getReprByName(name);
     }
 
-    Option<Boolean> isInheritorOf(final int who, final int whom) {
+    @Nullable
+    private Boolean isInheritorOf(final int who, final int whom) {
       if (who == whom) {
-        return Option.TRUE;
+        return Boolean.TRUE;
       }
 
       final ClassRepr repr = reprByName(who);
 
       if (repr != null) {
         for (int s : repr.getSupers()) {
-          final Option<Boolean> inheritorOf = isInheritorOf(s, whom);
-          if (inheritorOf.isDefined() && inheritorOf.value()) {
+          final Boolean inheritorOf = isInheritorOf(s, whom);
+          if (inheritorOf != null && inheritorOf) {
             return inheritorOf;
           }
         }
       }
 
-      return Option.UNKNOWN;
+      return null;
     }
 
-    Option<Boolean> isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
+    @Nullable
+    private Boolean isSubtypeOf(final TypeRepr.AbstractType who, final TypeRepr.AbstractType whom) {
       if (who.equals(whom)) {
-        return Option.TRUE;
+        return Boolean.TRUE;
       }
 
       if (who instanceof TypeRepr.PrimitiveType || whom instanceof TypeRepr.PrimitiveType) {
-        return Option.FALSE;
+        return Boolean.FALSE;
       }
 
       if (who instanceof TypeRepr.ArrayType) {
@@ -508,56 +456,42 @@ public class Mappings {
         final String descr = whom.getDescr(myContext);
 
         if (descr.equals("Ljava/lang/Cloneable") || descr.equals("Ljava/lang/Object") || descr.equals("Ljava/io/Serializable")) {
-          return Option.TRUE;
+          return Boolean.TRUE;
         }
 
-        return Option.FALSE;
+        return Boolean.FALSE;
       }
 
       if (whom instanceof TypeRepr.ClassType) {
         return isInheritorOf(((TypeRepr.ClassType)who).myClassName, ((TypeRepr.ClassType)whom).myClassName);
       }
 
-      return Option.FALSE;
+      return Boolean.FALSE;
     }
 
-    boolean methodVisible(final int className, final MethodRepr m) {
+    private boolean isMethodVisible(final int className, final MethodRepr m) {
       final ClassRepr r = reprByName(className);
-
       if (r != null) {
         if (r.findMethods(MethodRepr.equalByJavaRules(m)).size() > 0) {
           return true;
         }
-
-        return findOverriddenMethods(m, r).size() > 0;
+        return hasOverriddenMethods(r, MethodRepr.equalByJavaRules(m));
       }
-
       return false;
     }
 
-    boolean fieldVisible(final int className, final FieldRepr field) {
+    private boolean isFieldVisible(final int className, final FieldRepr field) {
       final ClassRepr r = reprByName(className);
-
-      if (r != null) {
-        if (r.getFields().contains(field)) {
-          return true;
-        }
-
-        return findOverriddenFields(field, r).size() > 0;
+      if (r == null || r.getFields().contains(field)) {
+        return true;
       }
-
-      return true;
+      return hasOverriddenFields(field, r);
     }
 
-    void affectSubclasses(final int className,
-                          final Collection<File> affectedFiles,
-                          final Collection<UsageRepr.Usage> affectedUsages,
-                          final TIntHashSet dependants,
-                          final boolean usages) {
+    private void affectSubclasses(final int className, final Collection<File> affectedFiles, final Collection<UsageRepr.Usage> affectedUsages, final TIntHashSet dependants, final boolean usages) {
       debug("Affecting subclasses of class: ", className);
 
       final int fileName = myClassToSourceFile.get(className);
-
       if (fileName <= 0) {
         debug("No source file detected for class ", className);
         debug("End of affectSubclasses");
@@ -570,7 +504,6 @@ public class Mappings {
         debug("Class usages affection requested");
 
         final ClassRepr classRepr = reprByName(className);
-
         if (classRepr != null) {
           debug("Added class usage for ", classRepr.name);
           affectedUsages.add(classRepr.createUsage());
@@ -578,15 +511,12 @@ public class Mappings {
       }
 
       final TIntHashSet depClasses = myClassToClassDependency.get(className);
-
       if (depClasses != null) {
         addAll(dependants, depClasses);
       }
-
       affectedFiles.add(new File(myContext.getValue(fileName)));
 
       final TIntHashSet directSubclasses = myClassToSubclasses.get(className);
-
       if (directSubclasses != null) {
         directSubclasses.forEach(new TIntProcedure() {
           @Override
@@ -598,22 +528,16 @@ public class Mappings {
       }
     }
 
-    void affectFieldUsages(final FieldRepr field,
-                           final TIntHashSet classes,
-                           final UsageRepr.Usage rootUsage,
-                           final Set<UsageRepr.Usage> affectedUsages,
-                           final TIntHashSet dependents) {
+    private void affectFieldUsages(final FieldRepr field, final TIntHashSet classes, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
 
       classes.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int p) {
           final TIntHashSet deps = myClassToClassDependency.get(p);
-
           if (deps != null) {
             addAll(dependents, deps);
           }
-
           debug("Affect field usage referenced of class ", p);
           affectedUsages.add(rootUsage instanceof UsageRepr.FieldAssignUsage ? field.createAssignUsage(myContext, p) : field.createUsage(myContext, p));
           return true;
@@ -621,19 +545,13 @@ public class Mappings {
       });
     }
 
-    void affectMethodUsages(final MethodRepr method,
-                            final TIntHashSet subclasses,
-                            final UsageRepr.Usage rootUsage,
-                            final Set<UsageRepr.Usage> affectedUsages,
-                            final TIntHashSet dependents) {
+    private void affectMethodUsages(final MethodRepr method, final TIntHashSet subclasses, final UsageRepr.Usage rootUsage, final Set<UsageRepr.Usage> affectedUsages, final TIntHashSet dependents) {
       affectedUsages.add(rootUsage);
-
       if (subclasses != null) {
         subclasses.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int p) {
             final TIntHashSet deps = myClassToClassDependency.get(p);
-
             if (deps != null) {
               addAll(dependents, deps);
             }
@@ -646,29 +564,6 @@ public class Mappings {
             return true;
           }
         });
-      }
-    }
-
-    void affectAll(final int className, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
-      final int sourceFile = myClassToSourceFile.get(className);
-      if (sourceFile > 0) {
-        final TIntHashSet dependants = myClassToClassDependency.get(className);
-        if (dependants != null) {
-          dependants.forEach(new TIntProcedure() {
-            @Override
-            public boolean execute(int depClass) {
-              final int depFile = myClassToSourceFile.get(depClass);
-              if (depFile > 0 && depFile != sourceFile) {
-                final File theFile = new File(myContext.getValue(depFile));
-
-                if (filter == null || filter.accept(theFile)) {
-                  affectedFiles.add(theFile);
-                }
-              }
-              return true;
-            }
-          });
-        }
       }
     }
 
@@ -699,8 +594,8 @@ public class Mappings {
 
       @Override
       public boolean checkResidence(final int residence) {
-        final Option<Boolean> inheritorOf = isInheritorOf(residence, rootClass);
-        return !inheritorOf.isDefined() || !inheritorOf.value() || super.checkResidence(residence);
+        final Boolean inheritorOf = isInheritorOf(residence, rootClass);
+        return inheritorOf == null || !inheritorOf || super.checkResidence(residence);
       }
     }
 
@@ -729,6 +624,28 @@ public class Mappings {
       @Override
       public boolean checkResidence(final int residence) {
         return x.checkResidence(residence) && y.checkResidence(residence);
+      }
+    }
+  }
+
+  private void affectAll(final int className, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
+    final int sourceFile = myClassToSourceFile.get(className);
+    if (sourceFile > 0) {
+      final TIntHashSet dependants = myClassToClassDependency.get(className);
+      if (dependants != null) {
+        dependants.forEach(new TIntProcedure() {
+          @Override
+          public boolean execute(int depClass) {
+            final int depFile = myClassToSourceFile.get(depClass);
+            if (depFile > 0 && depFile != sourceFile) {
+              final File theFile = new File(myContext.getValue(depFile));
+              if (filter == null || filter.accept(theFile)) {
+                affectedFiles.add(theFile);
+              }
+            }
+            return true;
+          }
+        });
       }
     }
   }
@@ -767,12 +684,9 @@ public class Mappings {
     return acc;
   }
 
-  private boolean incrementalDecision(final int owner,
-                                      final Proto member,
-                                      final Collection<File> affectedFiles,
-                                      @Nullable final DependentFilesFilter filter) {
+  private boolean incrementalDecision(final int owner, final Proto member, final Collection<File> affectedFiles, @Nullable final DependentFilesFilter filter) {
     final boolean isField = member instanceof FieldRepr;
-    final Util self = new Util(this);
+    final Util self = new Util();
 
     // Public branch --- hopeless
     if ((member.access & Opcodes.ACC_PUBLIC) > 0) {
@@ -852,7 +766,7 @@ public class Mappings {
   }
 
   private class Differential {
-    final int DESPERATE_MASK = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
+    private static final int DESPERATE_MASK = Opcodes.ACC_STATIC | Opcodes.ACC_FINAL;
 
     final Mappings myDelta;
     final Collection<File> myFilesToCompile;
@@ -863,11 +777,10 @@ public class Mappings {
     @Nullable final Callbacks.ConstantAffectionResolver myConstantSearch;
     final DelayedWorks myDelayedWorks;
 
-    final Util myUpdated;
-    final Util mySelf;
-    final Util myOriginal;
+    final Util myFuture;
+    final Util myPresent;
 
-    final boolean myEasyMode;
+    final boolean myEasyMode; // true means: no need to search for affected files, only preprocess data for integrate
 
     private class DelayedWorks {
       class Triple {
@@ -907,7 +820,7 @@ public class Mappings {
         myQueue.add(new Triple(ownerClass, changedField, future));
       }
 
-      boolean doWork(final Collection<File> affectedFiles) {
+      boolean doWork(@NotNull final Collection<File> affectedFiles) {
         if (!myQueue.isEmpty()) {
           debug("Starting delayed works.");
 
@@ -972,9 +885,8 @@ public class Mappings {
 
       myDelayedWorks = null;
 
-      myUpdated = null;
-      mySelf = null;
-      myOriginal = null;
+      myFuture = null;
+      myPresent = null;
 
       myEasyMode = true;
 
@@ -993,10 +905,8 @@ public class Mappings {
 
       myDelayedWorks = null;
 
-      myUpdated = new Util(myDelta);
-      mySelf = new Util(Mappings.this);
-      myOriginal = new Util();
-
+      myFuture = new Util(delta);
+      myPresent = new Util();
       myEasyMode = true;
     }
 
@@ -1018,9 +928,8 @@ public class Mappings {
 
       myDelayedWorks = new DelayedWorks();
 
-      myUpdated = new Util(myDelta);
-      mySelf = new Util(Mappings.this);
-      myOriginal = new Util();
+      myFuture = new Util(delta);
+      myPresent = new Util();
 
       myEasyMode = false;
     }
@@ -1028,16 +937,18 @@ public class Mappings {
     private void processDisappearedClasses() {
       myDelta.compensateRemovedContent(myFilesToCompile);
 
-      final Collection<String> removed = myDelta.getRemovedFiles();
+      if (!myEasyMode) {
+        final Collection<String> removed = myDelta.myRemovedFiles;
 
-      if (removed != null) {
-        for (final String file : removed) {
-          final Collection<ClassRepr> classes = mySourceFileToClasses.get(myContext.get(file));
+        if (removed != null) {
+          for (final String file : removed) {
+            final Collection<ClassRepr> classes = mySourceFileToClasses.get(myContext.get(file));
 
-          if (classes != null) {
-            for (ClassRepr c : classes) {
-              debug("Affecting usages of removed class ", c.name);
-              myUpdated.affectAll(c.name, myAffectedFiles, myFilter);
+            if (classes != null) {
+              for (ClassRepr c : classes) {
+                debug("Affecting usages of removed class ", c.name);
+                affectAll(c.name, myAffectedFiles, myFilter);
+              }
             }
           }
         }
@@ -1058,7 +969,7 @@ public class Mappings {
             (it.access & Opcodes.ACC_ABSTRACT) > 0 ||
             (m.access & Opcodes.ACC_ABSTRACT) > 0) {
           debug("Class is abstract, or is interface, or added method in abstract => affecting all subclasses");
-          myUpdated.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false);
+          myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false);
         }
 
         TIntHashSet propagated = null;
@@ -1069,32 +980,32 @@ public class Mappings {
           }
           final ClassRepr oldIt = oldItRef.get();
 
-          if (oldIt != null && mySelf.findOverriddenMethods(m, oldIt).size() > 0) {
+          if (oldIt != null && myPresent.hasOverriddenMethods(oldIt, MethodRepr.equalByJavaRules(m))) {
 
           }
           else {
             if (m.myArgumentTypes.length > 0) {
-              propagated = myUpdated.propagateMethodAccess(m.name, it.name);
+              propagated = myFuture.propagateMethodAccess(m.name, it.name);
               debug("Conservative case on overriding methods, affecting method usages");
-              myUpdated.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              myFuture.affectMethodUsages(m, propagated, m.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
           }
         }
 
         if ((m.access & Opcodes.ACC_PRIVATE) == 0) {
-          final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myUpdated.findAllMethodsBySpecificity(m, it);
+          final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myFuture.findAllMethodsBySpecificity(m, it);
           final MethodRepr.Predicate overrides = MethodRepr.equalByJavaRules(m);
 
           if (propagated == null) {
-            propagated = myUpdated.propagateMethodAccess(m.name, it.name);
+            propagated = myFuture.propagateMethodAccess(m.name, it.name);
           }
 
-          final Collection<MethodRepr> lessSpecific = it.findMethods(myUpdated.lessSpecific(m));
+          final Collection<MethodRepr> lessSpecific = it.findMethods(myFuture.lessSpecific(m));
 
           for (final MethodRepr mm : lessSpecific) {
             if (!mm.equals(m)) {
               debug("Found less specific method, affecting method usages");
-              myUpdated.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              myFuture.affectMethodUsages(mm, propagated, mm.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
           }
 
@@ -1106,8 +1017,8 @@ public class Mappings {
             if (methodClass == MOCK_CLASS) {
               continue;
             }
-            final Option<Boolean> inheritorOf = mySelf.isInheritorOf(methodClass.name, it.name);
-            final boolean isInheritor = inheritorOf.isDefined() && inheritorOf.value();
+            final Boolean inheritorOf = myPresent.isInheritorOf(methodClass.name, it.name);
+            final boolean isInheritor = inheritorOf != null && inheritorOf;
 
             debug("Method: ", method.name);
             debug("Class : ", methodClass.name);
@@ -1125,7 +1036,7 @@ public class Mappings {
             else {
               debug("Current method does not override that found");
 
-              final TIntHashSet yetPropagated = mySelf.propagateMethodAccess(method.name, it.name);
+              final TIntHashSet yetPropagated = myPresent.propagateMethodAccess(method.name, it.name);
 
               if (isInheritor) {
                 final TIntHashSet deps = myClassToClassDependency.get(methodClass.name);
@@ -1134,11 +1045,13 @@ public class Mappings {
                   addAll(state.myDependants, deps);
                 }
 
-                myUpdated.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, methodClass.name), state.myAffectedUsages, state.myDependants);
+                myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, methodClass.name), state.myAffectedUsages,
+                                             state.myDependants);
               }
 
               debug("Affecting method usages for that found");
-              myUpdated.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              myFuture.affectMethodUsages(method, yetPropagated, method.createUsage(myContext, it.name), state.myAffectedUsages,
+                                           state.myDependants);
             }
           }
 
@@ -1148,12 +1061,12 @@ public class Mappings {
             subClasses.forEach(new TIntProcedure() {
               @Override
               public boolean execute(int subClass) {
-                final ClassRepr r = myUpdated.reprByName(subClass);
+                final ClassRepr r = myFuture.reprByName(subClass);
                 if (r != null) {
                   final int sourceFileName = myClassToSourceFile.get(subClass);
                   if (sourceFileName > 0) {
                     final int outerClass = r.getOuterClassName();
-                    if (myUpdated.methodVisible(outerClass, m)) {
+                    if (myFuture.isMethodVisible(outerClass, m)) {
                       affectedFiles.add(sourceFileName);
                       debug("Affecting file due to local overriding: ", sourceFileName);
                     }
@@ -1181,12 +1094,12 @@ public class Mappings {
       for (final MethodRepr m : diff.methods().removed()) {
         debug("Method ", m.name);
 
-        final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = myUpdated.findOverriddenMethods(m, it);
-        final TIntHashSet propagated = myUpdated.propagateMethodAccess(m.name, it.name);
+        final Collection<Pair<MethodRepr, ClassRepr>> overridenMethods = myFuture.findOverriddenMethods(m, it);
+        final TIntHashSet propagated = myFuture.propagateMethodAccess(m.name, it.name);
 
         if (overridenMethods.size() == 0) {
           debug("No overridden methods found, affecting method usages");
-          myUpdated.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+          myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
         }
         else {
           boolean clear = true;
@@ -1203,13 +1116,15 @@ public class Mappings {
 
           if (!clear) {
             debug("No clearly overridden methods found, affecting method usages");
-            myUpdated.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+            myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
           }
         }
 
-        final Collection<Pair<MethodRepr, ClassRepr>> overriding = myUpdated.findOverridingMethods(m, it, false);
+        final Collection<Pair<MethodRepr, ClassRepr>> overridingMethods = new HashSet<Pair<MethodRepr, ClassRepr>>();
 
-        for (final Pair<MethodRepr, ClassRepr> p : overriding) {
+        myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods);
+
+        for (final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
           final int fName = myClassToSourceFile.get(p.second.name);
           affectedFiles.add(fName);
           debug("Affecting file by overriding: ", fName);
@@ -1220,10 +1135,10 @@ public class Mappings {
             @Override
             public boolean execute(int p) {
               if (p != it.name) {
-                final ClassRepr s = myUpdated.reprByName(p);
+                final ClassRepr s = myFuture.reprByName(p);
 
                 if (s != null) {
-                  final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = myUpdated.findOverriddenMethods(m, s);
+                  final Collection<Pair<MethodRepr, ClassRepr>> overridenInS = myFuture.findOverriddenMethods(m, s);
 
                   overridenInS.addAll(overridenMethods);
 
@@ -1297,7 +1212,7 @@ public class Mappings {
           }
         }
         else if (d.base() != Difference.NONE || throwsChanged) {
-          final TIntHashSet propagated = myUpdated.propagateMethodAccess(m.name, it.name);
+          final TIntHashSet propagated = myFuture.propagateMethodAccess(m.name, it.name);
 
           boolean affected = false;
           boolean constrained = false;
@@ -1306,10 +1221,10 @@ public class Mappings {
 
           if (d.packageLocalOn()) {
             debug("Method became package-local, affecting method usages outside the package");
-            myUpdated.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+            myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
 
             for (final UsageRepr.Usage usage : usages) {
-              state.myUsageConstraints.put(usage, myUpdated.new InheritanceConstraint(it.name));
+              state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
             }
 
             state.myAffectedUsages.addAll(usages);
@@ -1320,7 +1235,24 @@ public class Mappings {
           if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0 || throwsChanged) {
             if (!affected) {
               debug("Return type, throws list or signature changed --- affecting method usages");
-              myUpdated.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+              myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+
+              final List<Pair<MethodRepr, ClassRepr>> overridingMethods = new LinkedList<Pair<MethodRepr, ClassRepr>>();
+
+              myFuture.addOverridingMethods(m, it, MethodRepr.equalByJavaRules(m), overridingMethods);
+
+              for(final Pair<MethodRepr, ClassRepr> p : overridingMethods) {
+                final ClassRepr aClass = p.getSecond();
+
+                if (aClass != MOCK_CLASS) {
+                  final int fileName = myClassToSourceFile.get(aClass.name);
+
+                  if (fileName > 0) {
+                    myAffectedFiles.add(new File(myContext.getValue(fileName)));
+                  }
+                }
+              }
+
               state.myAffectedUsages.addAll(usages);
             }
           }
@@ -1330,13 +1262,13 @@ public class Mappings {
                 (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
               if (!affected) {
                 debug("Added static or private specifier or removed static specifier --- affecting method usages");
-                myUpdated.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+                myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
               }
 
               if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
                 debug("Added static specifier --- affecting subclasses");
-                myUpdated.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false);
+                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false);
               }
             }
             else {
@@ -1344,19 +1276,19 @@ public class Mappings {
                   (d.addedModifiers() & Opcodes.ACC_PUBLIC) > 0 ||
                   (d.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0) {
                 debug("Added final, public or abstract specifier --- affecting subclasses");
-                myUpdated.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false);
+                myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false);
               }
 
               if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
                 if (!constrained) {
                   debug("Added public or package-local method became protected --- affect method usages with protected constraint");
                   if (!affected) {
-                    myUpdated.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
+                    myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
                     state.myAffectedUsages.addAll(usages);
                   }
 
                   for (final UsageRepr.Usage usage : usages) {
-                    state.myUsageConstraints.put(usage, myUpdated.new InheritanceConstraint(it.name));
+                    state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
                   }
                 }
               }
@@ -1383,7 +1315,7 @@ public class Mappings {
           subClasses.forEach(new TIntProcedure() {
             @Override
             public boolean execute(int subClass) {
-              final ClassRepr r = myUpdated.reprByName(subClass);
+              final ClassRepr r = myFuture.reprByName(subClass);
               if (r != null) {
                 final int sourceFileName = myClassToSourceFile.get(subClass);
                 if (sourceFileName > 0) {
@@ -1393,7 +1325,7 @@ public class Mappings {
                   }
                   else {
                     final int outerClass = r.getOuterClassName();
-                    if (!isEmpty(outerClass) && myUpdated.fieldVisible(outerClass, f)) {
+                    if (!isEmpty(outerClass) && myFuture.isFieldVisible(outerClass, f)) {
                       debug("Affecting inner subclass (introduced field can potentially hide surrounding class fields): ", sourceFileName);
                       myAffectedFiles.add(new File(myContext.getValue(sourceFileName)));
                     }
@@ -1402,8 +1334,8 @@ public class Mappings {
               }
 
               debug("Affecting field usages referenced from subclass ", subClass);
-              final TIntHashSet propagated = myUpdated.propagateFieldAccess(f.name, subClass);
-              myUpdated.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
+              final TIntHashSet propagated = myFuture.propagateFieldAccess(f.name, subClass);
+              myFuture.affectFieldUsages(f, propagated, f.createUsage(myContext, subClass), state.myAffectedUsages, state.myDependants);
 
               final TIntHashSet deps = myClassToClassDependency.get(subClass);
 
@@ -1415,9 +1347,10 @@ public class Mappings {
           });
         }
 
-        final Collection<Pair<FieldRepr, ClassRepr>> overridden = myUpdated.findOverriddenFields(f, classRepr);
+        final Collection<Pair<FieldRepr, ClassRepr>> overriddenFields = new HashSet<Pair<FieldRepr, ClassRepr>>();
+        myFuture.addOverriddenFields(f, classRepr, overriddenFields);
 
-        for (final Pair<FieldRepr, ClassRepr> p : overridden) {
+        for (final Pair<FieldRepr, ClassRepr> p : overriddenFields) {
           final FieldRepr ff = p.first;
           final ClassRepr cc = p.second;
 
@@ -1427,11 +1360,11 @@ public class Mappings {
           final boolean ffPLocal = Difference.isPackageLocal(ff.access);
 
           if (!ffPrivate) {
-            final TIntHashSet propagated = myOriginal.propagateFieldAccess(ff.name, cc.name);
+            final TIntHashSet propagated = myPresent.propagateFieldAccess(ff.name, cc.name);
             final Set<UsageRepr.Usage> localUsages = new HashSet<UsageRepr.Usage>();
 
             debug("Affecting usages of overridden field in class ", cc.name);
-            myUpdated.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), localUsages, state.myDependants);
+            myFuture.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), localUsages, state.myDependants);
 
             if (fPrivate || (fPublic && (ffPublic || ffPLocal)) || (fProtected && ffProtected) || (fPLocal && ffPLocal)) {
 
@@ -1440,16 +1373,16 @@ public class Mappings {
               Util.UsageConstraint constaint;
 
               if ((ffProtected && fPublic) || (fProtected && ffPublic) || (ffPLocal && fProtected)) {
-                constaint = myUpdated.new NegationConstraint(myUpdated.new InheritanceConstraint(cc.name));
+                constaint = myFuture.new NegationConstraint(myFuture.new InheritanceConstraint(cc.name));
               }
               else if (ffPublic && ffPLocal) {
-                constaint = myUpdated.new NegationConstraint(myUpdated.new PackageConstraint(cc.getPackageName()));
+                constaint = myFuture.new NegationConstraint(myFuture.new PackageConstraint(cc.getPackageName()));
               }
               else {
                 constaint =
-                  myUpdated.new IntersectionConstraint(myUpdated.new NegationConstraint(myUpdated.new InheritanceConstraint(cc.name)),
-                                                       myUpdated.new NegationConstraint(
-                                                         myUpdated.new PackageConstraint(cc.getPackageName())));
+                  myFuture.new IntersectionConstraint(myFuture.new NegationConstraint(myFuture.new InheritanceConstraint(cc.name)),
+                                                       myFuture.new NegationConstraint(
+                                                         myFuture.new PackageConstraint(cc.getPackageName())));
               }
 
               for (final UsageRepr.Usage usage : localUsages) {
@@ -1485,8 +1418,8 @@ public class Mappings {
           }
         }
 
-        final TIntHashSet propagated = myUpdated.propagateFieldAccess(f.name, it.name);
-        myUpdated.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+        final TIntHashSet propagated = myFuture.propagateFieldAccess(f.name, it.name);
+        myFuture.affectFieldUsages(f, propagated, f.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
       }
       debug("End of removed fields processing");
 
@@ -1523,11 +1456,11 @@ public class Mappings {
         }
 
         if (d.base() != Difference.NONE) {
-          final TIntHashSet propagated = myUpdated.propagateFieldAccess(field.name, it.name);
+          final TIntHashSet propagated = myFuture.propagateFieldAccess(field.name, it.name);
 
           if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
             debug("Type or signature changed --- affecting field usages");
-            myUpdated
+            myFuture
               .affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
           }
           else if ((d.base() & Difference.ACCESS) > 0) {
@@ -1536,7 +1469,7 @@ public class Mappings {
                 (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0 ||
                 (d.addedModifiers() & Opcodes.ACC_VOLATILE) > 0) {
               debug("Added/removed static modifier or added private/volatile modifier --- affecting field usages");
-              myUpdated
+              myFuture
                 .affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
             else {
@@ -1545,7 +1478,7 @@ public class Mappings {
 
               if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
                 debug("Added final modifier --- affecting field assign usages");
-                myUpdated.affectFieldUsages(field, propagated, field.createAssignUsage(myContext, it.name), usages, state.myDependants);
+                myFuture.affectFieldUsages(field, propagated, field.createAssignUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
                 affected = true;
               }
@@ -1553,16 +1486,16 @@ public class Mappings {
               if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
                 debug("Removed public modifier, affecting field usages with appropriate constraint");
                 if (!affected) {
-                  myUpdated.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
+                  myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
                   state.myAffectedUsages.addAll(usages);
                 }
 
                 for (final UsageRepr.Usage usage : usages) {
                   if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0) {
-                    state.myUsageConstraints.put(usage, myUpdated.new InheritanceConstraint(it.name));
+                    state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
                   }
                   else {
-                    state.myUsageConstraints.put(usage, myUpdated.new PackageConstraint(it.getPackageName()));
+                    state.myUsageConstraints.put(usage, myFuture.new PackageConstraint(it.getPackageName()));
                   }
                 }
               }
@@ -1612,10 +1545,10 @@ public class Mappings {
         }
 
         if (myEasyMode) {
-          return false;
+          continue;
         }
 
-        mySelf.appendDependents(it, state.myDependants);
+        myPresent.appendDependents(it, state.myDependants);
 
         if (superClassChanged || interfacesChanged || signatureChanged) {
           debug("Superclass changed: ", superClassChanged);
@@ -1628,7 +1561,7 @@ public class Mappings {
           debug("Extends changed: ", extendsChanged);
           debug("Interfaces removed: ", interfacesRemoved);
 
-          myUpdated.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants,
+          myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants,
                                      extendsChanged || interfacesRemoved || signatureChanged);
         }
 
@@ -1650,7 +1583,7 @@ public class Mappings {
           final UsageRepr.Usage usage = it.createUsage();
 
           state.myAffectedUsages.add(usage);
-          state.myUsageConstraints.put(usage, myUpdated.new InheritanceConstraint(it.name));
+          state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
         }
 
         if (diff.packageLocalOn()) {
@@ -1658,7 +1591,7 @@ public class Mappings {
           final UsageRepr.Usage usage = it.createUsage();
 
           state.myAffectedUsages.add(usage);
-          state.myUsageConstraints.put(usage, myUpdated.new PackageConstraint(it.getPackageName()));
+          state.myUsageConstraints.put(usage, myFuture.new PackageConstraint(it.getPackageName()));
         }
 
         if ((addedModifiers & Opcodes.ACC_FINAL) > 0 || (addedModifiers & Opcodes.ACC_PRIVATE) > 0) {
@@ -1726,7 +1659,7 @@ public class Mappings {
       }
       debug("End of changed classes processing");
 
-      return true;
+      return !myEasyMode;
     }
 
     private void processRemovedClases(final DiffState state) {
@@ -1741,7 +1674,7 @@ public class Mappings {
         }
 
         if (!myEasyMode) {
-          mySelf.appendDependents(c, state.myDependants);
+          myPresent.appendDependents(c, state.myDependants);
           debug("Adding usages of class ", c.name);
           state.myAffectedUsages.add(c.createUsage());
         }
@@ -1887,9 +1820,11 @@ public class Mappings {
           final Set<ClassRepr> pastClasses = (Set<ClassRepr>)mySourceFileToClasses.get(fileName);
           final DiffState state = new DiffState(Difference.make(pastClasses, classes));
 
-          if (!processChangedClasses(state) && !myEasyMode) {
-            // turning non-incremental
-            return false;
+          if (!processChangedClasses(state)) {
+            if (!myEasyMode) {
+              // turning non-incremental
+              return false;
+            }
           }
 
           processRemovedClases(state);
@@ -1902,20 +1837,17 @@ public class Mappings {
 
         debug("End of Differentiate.");
 
-        if (!myEasyMode) {
-          final Collection<String> removed = myDelta.getRemovedFiles();
-
-          if (removed != null) {
-            for (final String r : removed) {
-              myAffectedFiles.remove(new File(r));
-            }
-          }
-
-          return myDelayedWorks.doWork(myAffectedFiles);
-        }
-        else {
+        if (myEasyMode) {
           return false;
         }
+
+        final Collection<String> removed = myDelta.myRemovedFiles;
+        if (removed != null) {
+          for (final String r : removed) {
+            myAffectedFiles.remove(new File(r));
+          }
+        }
+        return myDelayedWorks.doWork(myAffectedFiles);
       }
     }
   }
@@ -1981,7 +1913,7 @@ public class Mappings {
       try {
         assert (delta.isDifferentiated());
 
-        final Collection<String> removed = delta.getRemovedFiles();
+        final Collection<String> removed = delta.myRemovedFiles;
 
         delta.runPostPasses();
 
@@ -2169,21 +2101,21 @@ public class Mappings {
         }
 
         if (!allImports.isEmpty()) {
-          addPostPass(new PostPass() {
-            public void perform() {
-              final int rootClassName = myContext.get(className.replace(".", "/"));
-              final int fileName = myClassToSourceFile.get(rootClassName);
-              final ClassRepr repr = fileName > 0? getReprByName(rootClassName) : null;
+          myPostPasses.offer(new Runnable() {
+                  public void run() {
+                    final int rootClassName = myContext.get(className.replace(".", "/"));
+                    final int fileName = myClassToSourceFile.get(rootClassName);
+                    final ClassRepr repr = fileName > 0? getReprByName(rootClassName) : null;
 
-              for (final String i : allImports) {
-                final int iname = myContext.get(i.replace(".", "/"));
-                myClassToClassDependency.put(iname, rootClassName);
-                if (repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
-                  mySourceFileToClasses.put(fileName, repr);
-                }
-              }
-            }
-          });
+                    for (final String i : allImports) {
+                      final int iname = myContext.get(i.replace(".", "/"));
+                      myClassToClassDependency.put(iname, rootClassName);
+                      if (repr != null && repr.addUsage(UsageRepr.createClassUsage(myContext, iname))) {
+                        mySourceFileToClasses.put(fileName, repr);
+                      }
+                    }
+                  }
+                });
         }
       }
     };
@@ -2312,10 +2244,6 @@ public class Mappings {
 
   private TIntHashSet getChangedFiles() {
     return myChangedFiles;
-  }
-
-  private Collection<String> getRemovedFiles() {
-    return myRemovedFiles;
   }
 
   private static void debug(final String s) {

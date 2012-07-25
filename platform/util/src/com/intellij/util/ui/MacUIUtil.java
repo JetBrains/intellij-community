@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.util.ui.tree.MacTreeUI;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -251,8 +251,8 @@ public class MacUIUtil {
 
   public static void doNotFillBackground(@NotNull final JTree tree, @NotNull final DefaultTreeCellRenderer renderer) {
     TreeUI ui = tree.getUI();
-    if (ui instanceof MacTreeUI) {
-      if (((MacTreeUI)ui).isWideSelection()) {
+    if (ui instanceof WideSelectionTreeUI) {
+      if (((WideSelectionTreeUI)ui).isWideSelection()) {
         renderer.setOpaque(false);
         try {
           final Field fillBackground = DefaultTreeCellRenderer.class.getDeclaredField("fillBackground");

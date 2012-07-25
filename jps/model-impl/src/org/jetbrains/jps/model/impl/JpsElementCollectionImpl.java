@@ -51,7 +51,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   }
 
   @Override
-  public E addChild(E element) {
+  public <X extends E> X addChild(X element) {
     myElements.add(element);
     setParent(element, this);
     final JpsEventDispatcher eventDispatcher = getEventDispatcher();

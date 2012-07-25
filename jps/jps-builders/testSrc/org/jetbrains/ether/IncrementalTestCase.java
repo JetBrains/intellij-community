@@ -19,32 +19,22 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import junit.framework.TestCase;
-import org.jetbrains.jps.Project;
-import org.jetbrains.jps.Sdk;
-import org.jetbrains.jps.api.CanceledStatus;
-import org.jetbrains.jps.artifacts.Artifact;
-import org.jetbrains.jps.cmdline.ClasspathBootstrap;
+import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
-import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.*;
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  * @author db
  * @since 26.07.11
  */
-public abstract class IncrementalTestCase extends TestCase {
+public abstract class IncrementalTestCase extends JpsBuildTestCase {
   private final String groupName;
   private final String tempDir = FileUtil.toSystemDependentName(new File(System.getProperty("java.io.tmpdir")).getCanonicalPath());
 
@@ -53,7 +43,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected IncrementalTestCase(final String name) throws Exception {
-    super(name);
+    setName(name);
     groupName = name;
   }
 
@@ -84,14 +74,6 @@ public abstract class IncrementalTestCase extends TestCase {
     finally {
       delete(new File(workDir));
     }
-  }
-
-  private String getProjectName() {
-    final String name = getName();
-
-    assert (name.startsWith("test"));
-
-    return Character.toLowerCase(name.charAt("test".length())) + name.substring("test".length() + 1);
   }
 
   private String getDir(final String prefix) {
@@ -191,31 +173,16 @@ public abstract class IncrementalTestCase extends TestCase {
 
   public void doTest() throws Exception {
     final String projectPath = getWorkDir() + File.separator + ".idea";
-    final Project project = new Project();
 
-    final Sdk jdk = project.createSdk("JavaSDK", "IDEA jdk", "1.6", System.getProperty("java.home"), null);
-    final List<String> paths = new LinkedList<String>();
+    initJdk("IDEA jdk");
 
-    paths.add(FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
+    loadProject(projectPath);
 
-    jdk.setClasspath(paths);
-
-    IdeaProjectLoader.loadFromPath(project, projectPath, "");
-
-    final File dataStorageRoot = Utils.getDataStorageRoot(project);
-    final TestJavaBuilderLogger javaBuilderLogger =
-      new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
-    final ProjectDescriptor projectDescriptor =
-      new ProjectDescriptor(project, new BuildFSState(true), new ProjectTimestamps(dataStorageRoot),
-                            new BuildDataManager(dataStorageRoot, true),
-                            new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
+    final TestJavaBuilderLogger javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
+    final ProjectDescriptor projectDescriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
-      new IncProjectBuilder(
-        projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(),
-        CanceledStatus.NULL,
-        null).build(
-        new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true, false
-      );
+      final IncProjectBuilder builder = createBuilder(projectDescriptor);
+      doBuild(builder, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false, false, true);
 
       modify();
 
@@ -223,10 +190,7 @@ public abstract class IncrementalTestCase extends TestCase {
         Thread.sleep(1000L);
       }
 
-      final IncProjectBuilder makeBuilder = new IncProjectBuilder(
-        projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(),
-        CanceledStatus.NULL,
-        null);
+      final IncProjectBuilder makeBuilder = createBuilder(projectDescriptor);
 
       class MH implements MessageHandler {
         boolean myErrors = false;
@@ -242,7 +206,7 @@ public abstract class IncrementalTestCase extends TestCase {
 
       makeBuilder.addMessageHandler(handler);
 
-      makeBuilder.build(new AllProjectScope(project, Collections.<Artifact>emptySet(), false), true, false, false);
+      makeBuilder.build(new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
 
       final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
 
@@ -258,12 +222,7 @@ public abstract class IncrementalTestCase extends TestCase {
       assertEquals(expected, actual);
 
       if (!handler.myErrors) {
-        new IncProjectBuilder(
-          projectDescriptor, BuilderRegistry.getInstance(),
-          Collections.<String, String>emptyMap(), CanceledStatus.NULL,
-          null).build(
-          new AllProjectScope(project, Collections.<Artifact>emptySet(), true), false, true, false
-        );
+        createBuilder(projectDescriptor).build(new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false, true, false);
 
         final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Bas Leijdekkers
+ * Copyright 2008-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,15 +36,12 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     if (!(element instanceof PsiPolyadicExpression)) {
       return;
     }
-    PsiPolyadicExpression concatenationExpression =
-      (PsiPolyadicExpression)element;
-    final IElementType tokenType =
-      concatenationExpression.getOperationTokenType();
+    PsiPolyadicExpression concatenationExpression = (PsiPolyadicExpression)element;
+    final IElementType tokenType = concatenationExpression.getOperationTokenType();
     if (tokenType != JavaTokenType.PLUS) {
       return;
     }
@@ -58,16 +55,20 @@ public class CopyConcatenatedStringToClipboardIntention extends Intention {
     CopyPasteManager.getInstance().setContents(contents);
   }
 
-  private static void buildConcatenationText(PsiPolyadicExpression expression,
-                                             StringBuilder out) {
-    for (PsiExpression operand : expression.getOperands()) {
-      final Object value =
-        ExpressionUtils.computeConstantExpression(operand);
-      if (value == null) {
-        out.append('?');
+  private static void buildConcatenationText(PsiPolyadicExpression polyadicExpression, StringBuilder out) {
+    for (PsiElement element : polyadicExpression.getChildren()) {
+      if (element instanceof PsiExpression) {
+        final PsiExpression expression = (PsiExpression)element;
+        final Object value = ExpressionUtils.computeConstantExpression(expression);
+        if (value == null) {
+          out.append('?');
+        }
+        else {
+          out.append(value.toString());
+        }
       }
-      else {
-        out.append(value.toString());
+      else if (element instanceof PsiWhiteSpace && element.getText().contains("\n") && out.charAt(out.length() - 1) != '\n') {
+        out.append('\n');
       }
     }
   }

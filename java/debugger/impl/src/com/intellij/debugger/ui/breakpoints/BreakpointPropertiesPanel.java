@@ -49,7 +49,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.xdebugger.breakpoints.ui.BreakpointItem;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -570,7 +570,7 @@ public abstract class BreakpointPropertiesPanel {
     PsiElement context = breakpoint.getEvaluationElement();
     myPassCountCheckbox.setSelected(breakpoint.COUNT_FILTER_ENABLED);
 
-    myConditionCheckbox.setSelected(breakpoint.CONDITION_ENABLED);
+    myConditionCheckbox.setSelected(breakpoint.CONDITION_ENABLED || breakpoint.getCondition() == null || breakpoint.getCondition().isEmpty());
 
     myConditionCombo.setEnabled(myBreakpoint.CONDITION_ENABLED);
 

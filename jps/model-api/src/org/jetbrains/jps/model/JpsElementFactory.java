@@ -1,10 +1,10 @@
 package org.jetbrains.jps.model;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -22,7 +22,7 @@ public abstract class JpsElementFactory {
 
   public abstract <P extends JpsElementProperties> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties);
 
-  public abstract <P extends JpsElementProperties> JpsLibrary createLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties);
+  public abstract <P extends JpsElementProperties> JpsTypedLibrary<P> createLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties);
 
   @NotNull
   public abstract JpsModuleReference createModuleReference(@NotNull String moduleName);

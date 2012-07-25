@@ -1,0 +1,1 @@
+interface Foo { void run(); }

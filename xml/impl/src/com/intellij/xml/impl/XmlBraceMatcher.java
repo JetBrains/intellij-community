@@ -101,10 +101,10 @@ public class XmlBraceMatcher implements XmlAwareBraceMatcher {
       }
     }
 
-    if (
-        tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
+    if (tokenType == XmlTokenType.XML_EMPTY_ELEMENT_END ||
         tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER ||
-        tokenType == XmlTokenType.XML_CDATA_END) {
+        tokenType == XmlTokenType.XML_CDATA_END)
+    {
       return true;
     }
     else if (tokenType == XmlTokenType.XML_TAG_END) {

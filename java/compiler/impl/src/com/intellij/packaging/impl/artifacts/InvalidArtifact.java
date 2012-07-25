@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.packaging.elements.PackagingElementFactory;
+import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
 
 /**
  * @author nik

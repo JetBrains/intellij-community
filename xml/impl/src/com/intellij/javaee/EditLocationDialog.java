@@ -141,37 +141,4 @@ public class EditLocationDialog extends DialogWrapper {
     myTfPath.setText(origin.myLocation);
     myTfShared = origin.myShared;
   }
-
-  public static class NameLocationPair implements Comparable {
-    String myName;
-    String myLocation;
-    boolean myShared;
-
-    public NameLocationPair(String name, String location, boolean shared) {
-      myName = name;
-      myLocation = location;
-      myShared = shared;
-    }
-
-    public int compareTo(Object o) {
-      return myName.compareTo(((NameLocationPair)o).myName);
-    }
-
-    public boolean equals(Object obj) {
-      if (! (obj instanceof NameLocationPair)) return false;
-      return compareTo(obj) == 0;
-    }
-
-    public int hashCode() {
-      return myName.hashCode();
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public String getLocation(){
-      return myLocation;
-    }
-  }
 }

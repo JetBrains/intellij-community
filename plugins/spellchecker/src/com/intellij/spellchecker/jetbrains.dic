@@ -15,6 +15,7 @@ auth
 authid
 autoboxing
 autocommit
+autodetect
 autoextend
 autoincrement
 autorelease
@@ -61,6 +62,7 @@ cmdline
 codebase
 codesign
 commandline
+conf
 config
 configs
 configurator
@@ -71,6 +73,7 @@ controlfile
 covariant
 cron
 ctrl
+customizer
 datafile
 datafiles
 datetime

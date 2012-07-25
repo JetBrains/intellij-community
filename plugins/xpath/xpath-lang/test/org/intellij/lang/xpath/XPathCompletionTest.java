@@ -15,14 +15,7 @@
  */
 package org.intellij.lang.xpath;
 
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
-
 public class XPathCompletionTest extends TestBase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
-  }
 
   public void testAxis() throws Throwable {
         doXPathCompletion("ancestor", "ancestor-or-self", "attribute");
@@ -33,7 +26,7 @@ public class XPathCompletionTest extends TestBase {
     }
 
     public void testPartialAxis() throws Throwable {
-        doXPathCompletion();
+        doXPathCompletion("ancestor", "ancestor-or-self");
     }
 
     public void testFunctions() throws Throwable {
@@ -50,11 +43,17 @@ public class XPathCompletionTest extends TestBase {
 
     private void doXPathCompletion() throws Throwable {
         final String name = getTestFileName();
-        myFixture.testCompletion(name + ".xpath", name + "_after.xpath");
+        myFixture.configureByFile(name + ".xpath");
+        if (myFixture.completeBasic() != null) {
+          myFixture.type('\n');
+        }
+        myFixture.checkResultByFile(name + "_after.xpath");
     }
 
-    private void doXPathCompletion(String... expectedVariants) throws Throwable {
-        myFixture.testCompletionVariants(getTestFileName() + ".xpath", expectedVariants);
+    private void doXPathCompletion(String... expectedVariants) {
+        myFixture.configureByFile(getTestFileName() + ".xpath");
+        myFixture.completeBasic();
+        myFixture.assertPreferredCompletionItems(0, expectedVariants);
     }
 
     @Override

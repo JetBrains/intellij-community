@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,9 +83,14 @@ public abstract class LookupArranger {
       List<LookupElement> items = matchingItems(lookup);
       addPrefixItems(lookup, result, true, items);
       addPrefixItems(lookup, result, false, items);
+      for (LookupElement item : items) {
+        if (CompletionServiceImpl.isStartMatch(item, lookup)) {
+          result.add(item);
+        }
+      }
       result.addAll(items);
       ArrayList<LookupElement> list = new ArrayList<LookupElement>(result);
-      int selected = list.indexOf(lookup.getCurrentItem());
+      int selected = onExplicitAction ? 0 : list.indexOf(lookup.getCurrentItem());
       return new Pair<List<LookupElement>, Integer>(list, selected >= 0 ? selected : 0);
     }
 

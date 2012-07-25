@@ -64,12 +64,12 @@ public class AndroidDomUtil {
   private static final FragmentClassConverter FRAGMENT_CLASS_CONVERTER = new FragmentClassConverter();
 
   static {
-    addSpecialResourceType("string", "label", "description", "title");
-    addSpecialResourceType("drawable", "icon");
-    addSpecialResourceType("style", "theme");
-    addSpecialResourceType("anim", "animation");
-    addSpecialResourceType("id", "id", "layout_toRightOf", "layout_toLeftOf", "layout_above", "layout_below", "layout_alignBaseLine",
-                           "layout_alignLeft", "layout_alignTop", "layout_alignRight", "layout_alignBottom");
+    addSpecialResourceType(ResourceType.STRING.getName(), "label", "description", "title");
+    addSpecialResourceType(ResourceType.DRAWABLE.getName(), "icon");
+    addSpecialResourceType(ResourceType.STYLE.getName(), "theme");
+    addSpecialResourceType(ResourceType.ANIM.getName(), "animation");
+    addSpecialResourceType(ResourceType.ID.getName(), "id", "layout_toRightOf", "layout_toLeftOf", "layout_above", "layout_below",
+                           "layout_alignBaseLine", "layout_alignLeft", "layout_alignTop", "layout_alignRight", "layout_alignBottom");
   }
 
   private AndroidDomUtil() {
@@ -79,15 +79,15 @@ public class AndroidDomUtil {
   public static String getResourceType(@NotNull AttributeFormat format) {
     switch (format) {
       case Color:
-        return "color";
+        return ResourceType.COLOR.getName();
       case Dimension:
-        return "dimen";
+        return ResourceType.DIMEN.getName();
       case String:
-        return "string";
+        return ResourceType.STRING.getName();
       case Integer:
-        return "integer";
+        return ResourceType.INTEGER.getName();
       case Boolean:
-        return "bool";
+        return ResourceType.BOOL.getName();
       default:
         return null;
     }
@@ -126,7 +126,9 @@ public class AndroidDomUtil {
       resourceTypes.add(specialResourceType);
     }
     if (containsReference) {
-      if (resourceTypes.contains("color")) resourceTypes.add("drawable");
+      if (resourceTypes.contains(ResourceType.COLOR.getName())) {
+        resourceTypes.add(ResourceType.DRAWABLE.getName());
+      }
       if (resourceTypes.size() == 0) {
         resourceTypes.addAll(AndroidResourceUtil.getNames(AndroidResourceUtil.REFERRABLE_RESOURCE_TYPES));
       }

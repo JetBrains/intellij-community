@@ -35,4 +35,8 @@ public abstract class PrefixMatcher {
   }
 
   @NotNull public abstract PrefixMatcher cloneWithPrefix(@NotNull String prefix);
+
+  public int matchingDegree(String string) {
+    return 0;
+  }
 }

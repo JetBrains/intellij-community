@@ -7,6 +7,7 @@ import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
 import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
 
 import java.util.List;
 
@@ -29,9 +30,9 @@ public class JpsLibraryCollectionImpl implements JpsLibraryCollection {
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties> JpsLibrary addLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type,
-                                                                @NotNull P properties) {
-    return myCollection.addChild(new JpsLibraryImpl(name, type, properties));
+  public <P extends JpsElementProperties> JpsTypedLibrary<P> addLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type,
+                                                                        @NotNull P properties) {
+    return myCollection.addChild(new JpsLibraryImpl<P>(name, type, properties));
   }
 
   @NotNull
@@ -43,5 +44,15 @@ public class JpsLibraryCollectionImpl implements JpsLibraryCollection {
   @Override
   public void addLibrary(@NotNull JpsLibrary library) {
     myCollection.addChild(library);
+  }
+
+  @Override
+  public JpsLibrary findLibrary(@NotNull String name) {
+    for (JpsLibrary library : getLibraries()) {
+      if (name.equals(library.getName())) {
+        return library;
+      }
+    }
+    return null;
   }
 }

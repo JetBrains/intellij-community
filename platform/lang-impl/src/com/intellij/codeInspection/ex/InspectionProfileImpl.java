@@ -40,6 +40,8 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.SeverityProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -57,6 +59,13 @@ import java.util.*;
 public class InspectionProfileImpl extends ProfileEx implements ModifiableModel, InspectionProfile, ExternalizableScheme {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.InspectionProfileImpl");
   @NonNls private static final String VALID_VERSION = "1.0";
+  private static final Function<InspectionProfileEntry,InspectionToolWrapper> WRAPPER_FUNCTION =
+    new Function<InspectionProfileEntry, InspectionToolWrapper>() {
+      @Override
+      public InspectionToolWrapper fun(InspectionProfileEntry tool) {
+        return InspectionToolRegistrar.wrapTool(tool);
+      }
+    };
 
   private Map<String, ToolsImpl> myTools = new THashMap<String, ToolsImpl>();
 
@@ -107,19 +116,28 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     copyFrom(inspectionProfile);
   }
 
-  public InspectionProfileImpl(final String inspectionProfile,
+  public InspectionProfileImpl(final String profileName,
                                final InspectionToolRegistrar registrar,
                                final ProfileManager profileManager) {
-    super(inspectionProfile);
+    super(profileName);
     myRegistrar = registrar;
     myBaseProfile = getDefaultProfile();
     setProfileManager(profileManager);
   }
 
-  public InspectionProfileImpl(@NonNls String name) {
-    super(name);
+  public InspectionProfileImpl(@NonNls String profileName) {
+    super(profileName);
     myRegistrar = InspectionToolRegistrar.getInstance();
     setProfileManager(InspectionProfileManager.getInstance());
+  }
+
+  public static InspectionProfileImpl createSimple(String name, final InspectionProfileEntry... tools) {
+    return new InspectionProfileImpl(name, new InspectionToolRegistrar(null) {
+      @Override
+      public List<InspectionToolWrapper> createTools() {
+        return ContainerUtil.map(tools, WRAPPER_FUNCTION);
+      }
+    }, InspectionProfileManager.getInstance());
   }
 
   @Override
@@ -460,7 +478,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
     final List<InspectionToolWrapper> tools;
     try {
-      tools = myRegistrar.createTools();
+      tools = createTools();
     }
     catch (ProcessCanceledException e) {
       return false;
@@ -493,7 +511,14 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
       myTools.put(tool.getShortName(), toolsList);
     }
+    if (mySource != null) {
+      copyToolsConfigurations(mySource, project);
+    }
     return true;
+  }
+
+  protected List<InspectionToolWrapper> createTools() {
+    return myRegistrar.createTools();
   }
 
   private HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key) {

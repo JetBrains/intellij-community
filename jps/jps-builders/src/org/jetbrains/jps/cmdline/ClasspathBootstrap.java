@@ -32,6 +32,9 @@ import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.ClassWriter;
 import org.jetbrains.jps.MacroExpander;
 import org.jetbrains.jps.javac.JavacServer;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.impl.JpsModelImpl;
+import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import javax.tools.*;
 import java.io.File;
@@ -94,6 +97,9 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(ClassWriter.class));  // asm
     cp.add(getResourcePath(ClassVisitor.class));  // asm-commons
     cp.add(getResourcePath(MacroExpander.class));  // jps-model
+    cp.add(getResourcePath(JpsModel.class));  // jps-project-model
+    cp.add(getResourcePath(JpsModelImpl.class));  // jps-project-model
+    cp.add(getResourcePath(JpsProjectLoader.class));  // jps-model-serialization
     cp.add(getResourcePath(AlienFormFileException.class));  // forms-compiler
     cp.add(getResourcePath(GroovyException.class));  // groovy
     cp.add(getResourcePath(GridConstraints.class));  // forms-rt

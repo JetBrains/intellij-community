@@ -6,7 +6,6 @@ import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.codeInsight.template.SmartCompletionContextType;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -602,8 +601,22 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testNewVararg() throws Throwable {
     configureByTestName();
     assertStringItems("Foo", "Foo");
-    assertEquals(0, myItems[0].as(PsiTypeLookupItem.class).getBracketsCount());
-    assertEquals(1, myItems[1].as(PsiTypeLookupItem.class).getBracketsCount());
+    assertEquals("{...} (default package)", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+    assertEquals("[] (default package)", LookupElementPresentation.renderElement(myItems[1]).getTailText());
+  }
+
+  public void testNewVararg2() throws Throwable {
+    configureByTestName();
+    assertStringItems("String", "String");
+    assertEquals(" (java.lang)", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+    assertEquals("[] (java.lang)", LookupElementPresentation.renderElement(myItems[1]).getTailText());
+  }
+
+  public void testNewByteArray() {
+    configureByTestName();
+    assertStringItems("byte");
+    assertEquals("[]", LookupElementPresentation.renderElement(myItems[0]).getTailText());
+
   }
 
   public void testInsideStringLiteral() throws Throwable { doAntiTest(); }
@@ -1109,6 +1122,10 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testQualifiedAfterNew() throws Exception {
     myFixture.addClass("package foo; public interface Foo<T> {}");
     myFixture.addClass("package bar; public class Bar implements foo.Foo {}");
+    doTest();
+  }
+  public void testAfterQualifiedNew() throws Exception {
+    myFixture.addClass("class Aa { public class B { } }");
     doTest();
   }
 

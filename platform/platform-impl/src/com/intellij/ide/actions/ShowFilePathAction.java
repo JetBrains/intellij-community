@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
@@ -52,6 +53,8 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ShowFilePathAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.actions.ShowFilePathAction");
@@ -61,7 +64,9 @@ public class ShowFilePathAction extends AnAction {
     @Override
     protected Boolean compute() {
       final String version = ExecUtil.execAndReadLine("nautilus", "--version");
-      return version != null && version.startsWith("GNOME nautilus 3");
+      if (version == null) return false;
+      final Matcher m = Pattern.compile("GNOME nautilus ([0-9.]+)").matcher(version);
+      return m.find() && StringUtil.compareVersionNumbers(m.group(1), "3") >= 0;
     }
   };
 

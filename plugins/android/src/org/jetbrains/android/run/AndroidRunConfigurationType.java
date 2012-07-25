@@ -34,6 +34,11 @@ public class AndroidRunConfigurationType implements ConfigurationType {
     public RunConfiguration createTemplateConfiguration(Project project) {
       return new AndroidRunConfiguration("", project, this);
     }
+
+    @Override
+    public boolean canConfigurationBeSingleton() {
+      return false;
+    }
   };
 
   public static AndroidRunConfigurationType getInstance() {

@@ -52,6 +52,10 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
   private final String myDisplayName;
   private final boolean myApplied;
 
+  public boolean isApplied() {
+    return myApplied;
+  }
+
   public static TextDiffType create(@Nullable final TextDiffTypeEnum type) {
     if (TextDiffTypeEnum.INSERT.equals(type)) {
       return INSERT;
@@ -101,25 +105,33 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
     return myAttributesKey;
   }
 
+  @Nullable
   public TextAttributes getTextAttributes(EditorColorsScheme scheme) {
     TextAttributes originalAttrs = scheme.getAttributes(myAttributesKey);
-    if (!myApplied) {
-      return originalAttrs;
+    if (originalAttrs == null) {
+      return null;
     }
-    else {
-      TextAttributes overridingAttributes = new TextAttributes();
+    TextAttributes overridingAttributes = new TextAttributes();
+    if (myApplied) {
       overridingAttributes.setBackgroundColor(scheme.getDefaultBackground());
-      return TextAttributes.merge(originalAttrs, overridingAttributes);
     }
+    return TextAttributes.merge(originalAttrs, overridingAttributes);
   }
 
   @Nullable
   public Color getPolygonColor(Editor editor) {
-    return getLegendColor(editor.getColorsScheme());
+    if (isApplied()) {
+      return getLegendColor(editor.getColorsScheme());
+    }
+    else {
+      TextAttributes attributes = getTextAttributes(editor.getColorsScheme());
+      return attributes == null ? null : attributes.getBackgroundColor();
+    }
   }
 
-  public TextAttributes getTextAttributes(Editor editor1) {
-    return getTextAttributes(editor1.getColorsScheme());
+  @Nullable
+  public TextAttributes getTextAttributes(Editor editor) {
+    return getTextAttributes(editor.getColorsScheme());
   }
 
   @Nullable
@@ -135,4 +147,5 @@ public class TextDiffType implements DiffStatusBar.LegendTypeDescriptor {
   public TextDiffTypeEnum getType() {
     return myType;
   }
+
 }

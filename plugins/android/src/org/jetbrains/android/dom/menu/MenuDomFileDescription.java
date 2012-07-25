@@ -16,6 +16,7 @@
 
 package org.jetbrains.android.dom.menu;
 
+import com.android.resources.ResourceType;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
 
 /**
@@ -27,6 +28,6 @@ import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
  */
 public class MenuDomFileDescription extends AndroidResourceDomFileDescription<Menu> {
   public MenuDomFileDescription() {
-    super(Menu.class, "menu", "menu");
+    super(Menu.class, "menu", ResourceType.MENU.getName());
   }
 }

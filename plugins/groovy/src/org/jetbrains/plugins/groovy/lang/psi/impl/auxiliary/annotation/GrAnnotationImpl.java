@@ -179,7 +179,7 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     GrCodeReferenceElement nameRef = annotation.getClassReference();
     PsiElement resolved = nameRef.resolve();
     if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-      return PsiAnnotationImpl.isAnnotationApplicable(strict, (PsiClass)resolved, elementTypeFields, annotation.getManager(),annotation.getResolveScope());
+      return PsiAnnotationImpl.isAnnotationApplicable(strict, (PsiClass)resolved, elementTypeFields, annotation.getResolveScope());
     }
     return !strict;
   }

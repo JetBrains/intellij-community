@@ -251,7 +251,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
 
     String filler = txtFiller.getText();
     if (filler.length() > 0) {
-      res.setFiller(filler.charAt(0));
+      res.setFiller(filler);
     }
     else {
       res.setFiller(LanguageOptions.DEFAULT_FILLER);
@@ -399,7 +399,7 @@ public class TemplateCommentPanel implements SearchableConfigurable {
     cbSeparatorBefore.setSelected(options.isSeparateBefore());
     txtLengthBefore.setText(String.valueOf(options.getLenBefore()));
     txtLengthAfter.setText(String.valueOf(options.getLenAfter()));
-    txtFiller.setText(options.getFiller() == LanguageOptions.DEFAULT_FILLER ? "" : Character.toString(options.getFiller()));
+    txtFiller.setText(options.getFiller() == LanguageOptions.DEFAULT_FILLER ? "" : options.getFiller());
     cbBox.setSelected(options.isBox());
 
     final int fileTypeOverride = options.getFileTypeOverride();

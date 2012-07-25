@@ -24,14 +24,20 @@ import org.jetbrains.annotations.Nullable;
 public abstract class LookupElementWeigher {
   private final String myId;
   private final boolean myNegated;
+  private final boolean myPrefixDependent;
 
-  protected LookupElementWeigher(String id, boolean negated) {
+  protected LookupElementWeigher(String id, boolean negated, boolean dependsOnPrefix) {
     myId = id;
     myNegated = negated;
+    myPrefixDependent = dependsOnPrefix;
   }
 
   protected LookupElementWeigher(String id) {
-    this(id, false);
+    this(id, false, false);
+  }
+
+  public boolean isPrefixDependent() {
+    return myPrefixDependent;
   }
 
   public boolean isNegated() {

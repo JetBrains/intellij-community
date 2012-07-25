@@ -377,11 +377,16 @@ public class FileManagerImpl implements FileManager {
     return myVFileToPsiDirMap.get(vFile);
   }
 
-  void cacheViewProvider(VirtualFile vFile, FileViewProvider viewProvider) {
-    myVFileToViewProviderMap.put(vFile, viewProvider);
+  void cacheViewProvider(@NotNull VirtualFile vFile, FileViewProvider viewProvider) {
+    if (viewProvider == null) {
+      removeCachedViewProvider(vFile);
+    }
+    else {
+      myVFileToViewProviderMap.put(vFile, viewProvider);
+    }
   }
 
-  void removeCachedViewProvider(VirtualFile vFile) {
+  void removeCachedViewProvider(@NotNull VirtualFile vFile) {
     myVFileToViewProviderMap.remove(vFile);
   }
 

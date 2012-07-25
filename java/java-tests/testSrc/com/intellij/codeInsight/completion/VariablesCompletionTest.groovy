@@ -1,20 +1,11 @@
-package com.intellij.codeInsight.completion;
-
-
+package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public static final String FILE_PREFIX = "/codeInsight/completion/variables/";
-
-  @Override
-  protected void setUp() {
-    super.setUp()
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
-  }
 
   @Override
   protected String getBasePath() {
@@ -39,7 +30,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testLocals1() throws Exception {
-    doTest("TestSource1.java", "TestResult1.java");
+    doSelectTest("TestSource1.java", "TestResult1.java");
   }
 
   public void testInterfaceMethod() throws Exception {
@@ -49,24 +40,24 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testLocals2() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + "TestSource2.java");
-    assert myFixture.lookupElementStrings == ['abc', 'aaa']
+    myFixture.assertPreferredCompletionItems 0, 'abc', 'aaa'
     checkResultByFile(FILE_PREFIX + "locals/" + "TestResult2.java");
   }
 
   public void testLocals3() throws Exception {
-    doTest("TestSource3.java", "TestResult3.java");
+    doSelectTest("TestSource3.java", "TestResult3.java");
   }
 
   public void testLocals4() throws Exception {
-    doTest("TestSource4.java", "TestResult4.java");
+    doSelectTest("TestSource4.java", "TestResult4.java");
   }
 
   public void testLocals5() throws Exception {
-    doTest("TestSource5.java", "TestResult5.java");
+    doSelectTest("TestSource5.java", "TestResult5.java");
   }
 
   public void testLocals6() throws Exception {
-    doTest("TestSource6.java", "TestResult6.java");
+    doSelectTest("TestSource6.java", "TestResult6.java");
   }
 
   public void testLocals7() throws Exception {
@@ -95,6 +86,12 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile(FILE_PREFIX + "locals/" + after);
   }
 
+  private void doSelectTest(String before, String after) throws Exception {
+    configureByFile(FILE_PREFIX + "locals/" + before);
+    myFixture.type('\n')
+    checkResultByFile(FILE_PREFIX + "locals/" + after);
+  }
+
   public void testLocals8() throws Exception {
     doTest("TestSource8.java", "TestResult8.java");
   }
@@ -108,9 +105,12 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
     CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
     String oldPrefix = settings.FIELD_NAME_PREFIX;
     settings.FIELD_NAME_PREFIX = "my";
-    configureByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion1.java");
-    settings.FIELD_NAME_PREFIX = oldPrefix;
-    checkResultByFile(FILE_PREFIX + "locals/" + "FieldNameCompletion1-result.java");
+    try {
+      doSelectTest("FieldNameCompletion1.java", "FieldNameCompletion1-result.java");
+    }
+    finally {
+      settings.FIELD_NAME_PREFIX = oldPrefix;
+    }
   }
 
   public void testFieldNameCompletion2() throws Exception {
@@ -133,13 +133,11 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testLocals9() throws Exception {
-    doTest("TestSource9.java", "TestResult9.java");
+    doSelectTest("TestSource9.java", "TestResult9.java");
   }
 
   public void testFieldOutOfAnonymous() throws Exception {
-    configureByFile(FILE_PREFIX + "locals/" + "TestFieldOutOfAnonymous.java");
-    complete();
-    checkResultByFile(FILE_PREFIX + "locals/" + "TestFieldOutOfAnonymousResult.java");
+    doTest("TestFieldOutOfAnonymous.java", "TestFieldOutOfAnonymousResult.java");
   }
 
   public void testUnresolvedMethodName() throws Exception {
@@ -171,7 +169,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testDuplicateSuggestionsFromUsage() {
     configure();
-    assertStringItems("preferencePolicy", "policy");
+    assertStringItems("preferencePolicy", "policy", "aPreferencePolicy");
   }
 
   public void configure() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.List;
 
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
 
@@ -70,6 +73,17 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
+    if (SystemInfo.isWindows) {
+      newName = newName.replace('\\', '/');
+    }
+    if (newName.contains("/")) {
+      final List<String> subDirs = StringUtil.split(newName, "/");
+      newName = subDirs.remove(subDirs.size() - 1);
+      for (String dir : subDirs) {
+        final PsiDirectory sub = directory.findSubdirectory(dir);
+        directory = sub == null ? directory.createSubdirectory(dir) : sub;
+      }
+    }
     return new PsiElement[]{directory.createFile(getFileName(newName))};
   }
 

@@ -285,7 +285,7 @@ public class LocalResourceManager extends ResourceManager {
   @NotNull
   public List<PsiElement> findResourcesByFieldName(@NotNull String resClassName, @NotNull String fieldName) {
     List<PsiElement> targets = new ArrayList<PsiElement>();
-    if (resClassName.equals("id")) {
+    if (resClassName.equals(ResourceType.ID.getName())) {
       targets.addAll(findIdDeclarations(fieldName));
     }
     for (PsiFile file : findResourceFiles(resClassName, fieldName, false)) {
@@ -294,12 +294,12 @@ public class LocalResourceManager extends ResourceManager {
     for (ResourceElement element : findValueResources(resClassName, fieldName, false)) {
       targets.add(element.getName().getXmlAttributeValue());
     }
-    if (resClassName.equals("attr")) {
+    if (resClassName.equals(ResourceType.ATTR.getName())) {
       for (Attr attr : findAttrs(fieldName)) {
         targets.add(attr.getName().getXmlAttributeValue());
       }
     }
-    else if (resClassName.equals("styleable")) {
+    else if (resClassName.equals(ResourceType.STYLEABLE.getName())) {
       for (DeclareStyleable styleable : findStyleables(fieldName)) {
         targets.add(styleable.getName().getXmlAttributeValue());
       }

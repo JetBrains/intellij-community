@@ -29,14 +29,20 @@ import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidCompilerMessageKind;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsSdkProperties;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +61,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
   @Override
   public void build(CompileContext context) throws ProjectBuildException {
-    if (!AndroidJpsUtil.containsAndroidFacet(context.getProjectDescriptor().project) || AndroidJpsUtil.isLightBuild(context)) {
+    if (!AndroidJpsUtil.containsAndroidFacet(context.getProjectDescriptor().jpsProject) || AndroidJpsUtil.isLightBuild(context)) {
       return;
     }
 
@@ -98,9 +104,9 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
                                     @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
     boolean success = true;
 
-    for (Module module : context.getProjectDescriptor().project.getModules().values()) {
-      final AndroidFacet facet = AndroidJpsUtil.getFacet(module);
-      if (facet == null || facet.getLibrary()) {
+    for (JpsModule module : context.getProjectDescriptor().jpsProject.getModules()) {
+      final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+      if (extension == null || extension.isLibrary()) {
         continue;
       }
 
@@ -133,8 +139,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
         final String includeSystemProguardCfgOption = context.getBuilderParameter(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_OPTION);
         includeSystemProguardCfg = Boolean.parseBoolean(includeSystemProguardCfgOption);
       }
-      else if (facet.isRunProguard()) {
-        final File proguardCfgFile = facet.getProguardConfigFile();
+      else if (extension.isRunProguard()) {
+        final File proguardCfgFile = extension.getProguardConfigFile();
         if (proguardCfgFile == null) {
           context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR,
                                                      AndroidJpsBundle.message("android.jps.errors.cannot.find.proguard.cfg", module.getName())));
@@ -143,7 +149,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
         }
 
         proguardCfgPath = proguardCfgFile != null ? proguardCfgFile.getPath() : null;
-        includeSystemProguardCfg = facet.isIncludeSystemProguardCfgFile();
+        includeSystemProguardCfg = extension.isIncludeSystemProguardCfgFile();
       }
 
       final Set<String> fileSet;
@@ -157,7 +163,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
           final String outputJarPath =
             FileUtil.toSystemDependentName(dexOutputDir.getPath() + '/' + AndroidCommonUtils.PROGUARD_OUTPUT_JAR_NAME);
 
-          if (!runProguardIfNecessary(facet, classesDir, platform, externalLibraries, context, outputJarPath,
+          if (!runProguardIfNecessary(extension, classesDir, platform, externalLibraries, context, outputJarPath,
                                       proguardCfgFilePaths, includeSystemProguardCfg, proguardStateStorage)) {
             success = false;
             continue;
@@ -203,7 +209,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
             }
           });
 
-          if (facet.isPackTestCode()) {
+          if (extension.isPackTestCode()) {
             final File testsClassDir = projectPaths.getModuleOutputDir(module, true);
 
             if (testsClassDir != null && testsClassDir.isDirectory()) {
@@ -244,7 +250,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
         context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.dex", module.getName())));
 
-        if (!runDex(platform, dexOutputDir.getPath(), files, context, module.getName())) {
+        if (!runDex(platform, dexOutputDir.getPath(), files, context, module)) {
           success = false;
           dexStateStorage.update(module.getName(), null);
         }
@@ -297,7 +303,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
                                 @NotNull String outputDir,
                                 @NotNull String[] compileTargets,
                                 @NotNull CompileContext context,
-                                @NotNull String moduleName) throws IOException {
+                                @NotNull JpsModule module) throws IOException {
     @SuppressWarnings("deprecation")
     final String dxJarPath = FileUtil.toSystemDependentName(platform.getTarget().getPath(IAndroidTarget.DX_JAR));
 
@@ -326,11 +332,20 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
                                                  AndroidJpsBundle.message("android.jps.cannot.delete.file", outFilePath)));
     }
 
+    final JpsTypedLibrary<JpsAndroidSdkProperties> sdk = platform.getSdk();
+    final String jdkName = sdk.getProperties().getJdkName();
+    final JpsLibrary javaSdk = context.getProjectDescriptor().jpsModel.getGlobal().getLibraryCollection().findLibrary(jdkName);
+    if (javaSdk == null || !javaSdk.getType().equals(JpsJavaSdkType.INSTANCE)) {
+      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.errors.java.sdk.not.specified", jdkName)));
+      return false;
+    }
+
     // todo: pass additional vm params and max heap size from settings
 
-    final List<String> commandLine = ExternalProcessUtil
-      .buildJavaCommandLine(platform.getSdk().getJavaExecutable(), AndroidDxRunner.class.getName(), Collections.<String>emptyList(), classPath,
-                            Arrays.asList("-Xmx1024M"), programParamList);
+    final List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable((JpsSdkProperties)javaSdk.getProperties()),
+                                                                               AndroidDxRunner.class.getName(),
+                                                                               Collections.<String>emptyList(), classPath,
+                                                                               Arrays.asList("-Xmx1024M"), programParamList);
 
     LOG.info(AndroidCommonUtils.command2string(commandLine));
 
@@ -343,12 +358,12 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     AndroidCommonUtils.handleDexCompilationResult(process, outFilePath, messages);
 
-    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, moduleName);
+    AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
 
     return messages.get(AndroidCompilerMessageKind.ERROR).size() == 0;
   }
 
-  private static boolean runProguardIfNecessary(@NotNull AndroidFacet facet,
+  private static boolean runProguardIfNecessary(@NotNull JpsAndroidModuleExtension extension,
                                                 @NotNull File classesDir,
                                                 @NotNull AndroidPlatform platform,
                                                 @NotNull Set<String> externalJars,
@@ -357,7 +372,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
                                                 @NotNull String[] proguardCfgPaths,
                                                 boolean includeSystemProguardCfg,
                                                 @NotNull AndroidFileSetStorage proguardStateStorage) throws IOException {
-    final Module module = facet.getModule();
+    final JpsModule module = extension.getModule();
     final File[] proguardCfgFiles = new File[proguardCfgPaths.length];
 
     for (int i = 0; i < proguardCfgFiles.length; i++) {
@@ -370,7 +385,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
       }
     }
 
-    final File mainContentRoot = AndroidJpsUtil.getMainContentRoot(facet);
+    final File mainContentRoot = AndroidJpsUtil.getMainContentRoot(extension);
     if (mainContentRoot == null) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle
         .message("android.jps.errors.main.content.root.not.found", module.getName())));
@@ -443,7 +458,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.proguard", module.getName())));
 
     final Map<AndroidCompilerMessageKind, List<String>> messages =
-      AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getSdkToolsRevision(), platform.getSdk().getSdkPath(),
+      AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getSdkToolsRevision(), platform.getSdk().getProperties().getHomePath(),
                                         proguardCfgPaths, includeSystemProguardCfg, inputJarOsPath, externalJarOsPaths,
                                         outputJarPath, logsDirOsPath);
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());
