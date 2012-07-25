@@ -157,7 +157,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
       if (orderEntries.size() > 0) {
         final OrderEntry orderEntry = orderEntries.get(0);
-        buffer.append("[").append(orderEntry.getPresentableName()).append("] ");
+        buffer.append("[").append(StringUtil.escapeXml(orderEntry.getPresentableName())).append("] ");
       }
     }
     else {
