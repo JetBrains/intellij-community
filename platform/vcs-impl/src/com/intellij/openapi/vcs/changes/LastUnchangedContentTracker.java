@@ -133,6 +133,10 @@ public class LastUnchangedContentTracker {
 
     @Nullable
   private static Integer getSavedContentId(VirtualFile file) {
+    if (!file.isValid()) {
+      return null;
+    }
+
     Integer oldContentId = null;
     try {
       final DataInputStream stream = ACQUIRED_CONTENT_ATTR.readAttribute(file);
