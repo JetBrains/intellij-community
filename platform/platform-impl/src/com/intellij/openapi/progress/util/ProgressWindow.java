@@ -18,6 +18,7 @@ package com.intellij.openapi.progress.util;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -149,16 +150,16 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
   }
 
   protected void prepareShowDialog() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    // We know at least about one use-case that requires special treatment here: many short (in terms of time) progress tasks are
+    // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
+    // for each of them. Solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
+    // if the task is already finished when the time comes.
+    Timer timer = UIUtil.createNamedTimer("Progress window timer",myDelayInMillis, new ActionListener() {
       @Override
-      public void run() {
-        // We know at least about one use-case that requires special treatment here: many short (in terms of time) progress tasks are
-        // executed in a small amount of time. Problem: UI blinks and looks ugly if we show progress dialog that disappears shortly
-        // for each of them. Solution is to postpone the tasks of showing progress dialog. Hence, it will not be shown at all
-        // if the task is already finished when the time comes.
-        Timer timer = UIUtil.createNamedTimer("Progress window timer",myDelayInMillis, new ActionListener() {
+      public void actionPerformed(ActionEvent e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
-          public void actionPerformed(ActionEvent e) {
+          public void run() {
             if (isRunning()) {
               if (myDialog != null) {
                 final DialogWrapper popup = myDialog.myPopup;
@@ -179,11 +180,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
               Disposer.dispose(ProgressWindow.this);
             }
           }
-        });
-        timer.setRepeats(false);
-        timer.start();
+        }, getModalityState());
       }
     });
+    timer.setRepeats(false);
+    timer.start();
   }
 
   public void startBlocking() {
@@ -351,10 +352,6 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
   public String getTitle() {
     return myTitle;
-  }
-
-  protected static int getPercentage(double fraction) {
-    return (int)(fraction * 99 + 0.5);
   }
 
   protected class MyDialog implements Disposable {
