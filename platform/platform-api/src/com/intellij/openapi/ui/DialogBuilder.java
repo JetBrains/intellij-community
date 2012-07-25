@@ -31,6 +31,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
+/**
+ * The DialogBuilder is a simpler alternative to {@link DialogWrapper}.
+ * There is no need to create a subclass (which is needed in the DialogWrapper), which can be nice for simple dialogs.
+ */
 public class DialogBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
 
