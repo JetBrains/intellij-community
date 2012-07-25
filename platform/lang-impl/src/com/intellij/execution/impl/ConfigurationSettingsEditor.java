@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.Convertor;
@@ -145,7 +146,9 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     if (wrappedRunEditor != null && wrappedConfigEditor != null) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(wrappedConfigEditor.getComponent(), BorderLayout.CENTER);
-      panel.add(wrappedRunEditor.getComponent(), BorderLayout.SOUTH);
+      JComponent wrappedRunEditorComponent = wrappedRunEditor.getComponent();
+      wrappedRunEditorComponent.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 0, 0));
+      panel.add(wrappedRunEditorComponent, BorderLayout.SOUTH);
       return panel;
     }
 

@@ -49,18 +49,17 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   private MyValidatableComponent myComponent;
   private final String myDisplayName;
   private final String myHelpTopic;
-  private final Icon myIcon;
   private final boolean myBrokenConfiguration;
+  private boolean myStoreProjectConfiguration;
 
 
   private SingleConfigurationConfigurable(RunnerAndConfigurationSettings settings, @Nullable Executor executor) {
     super(new ConfigurationSettingsEditorWrapper(settings), settings);
     myExecutor = executor;
 
-    final Config configuration = (Config)getSettings().getConfiguration();
+    final Config configuration = getConfiguration();
     myDisplayName = getSettings().getName();
     myHelpTopic = "reference.dialogs.rundebug." + configuration.getType().getId();
-    myIcon = configuration.getType().getIcon();
 
     myBrokenConfiguration = configuration instanceof UnknownRunConfiguration;
 
@@ -87,6 +86,9 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   public void apply() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getSettings();
+    RunConfiguration runConfiguration = settings.getConfiguration();
+    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
+    runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
     settings.setName(getNameText());
     super.apply();
     RunManagerImpl.getInstanceImpl(getConfiguration().getProject()).fireRunConfigurationChanged(settings);
@@ -94,20 +96,24 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
 
   public void reset() {
     RunnerAndConfigurationSettings configuration = getSettings();
-    if (configuration != null) {
-      setNameText(configuration.getName());
-    }
+    setNameText(configuration.getName());
     super.reset();
+    if (myComponent == null) {
+      myComponent = new MyValidatableComponent();
+    }
+    myComponent.doReset(configuration);
   }
 
   public final JComponent createComponent() {
-    if (myComponent == null) {
-      myComponent = new MyValidatableComponent();
-      myComponent.myNameText.setEnabled(!myBrokenConfiguration);
-    }
+    myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     return myComponent.getWholePanel();
   }
 
+  public boolean isStoreProjectConfiguration() {
+    return myStoreProjectConfiguration;
+  }
+
+  @Nullable
   private ValidationResult getValidationResult() {
     if (!myValidationResultValid) {
       myLastValidationResult = null;
@@ -212,6 +218,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     private JLabel myWarningLabel;
     private JButton myFixButton;
     private JSeparator mySeparator;
+    private JCheckBox myCbStoreProjectConfiguration;
+
     private Runnable myQuickFix = null;
 
     public MyValidatableComponent() {
@@ -247,6 +255,21 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       settingAnchor();
     }
 
+    private void doReset(RunnerAndConfigurationSettings settings) {
+      final RunConfiguration runConfiguration = settings.getConfiguration();
+      final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
+      myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
+      myCbStoreProjectConfiguration.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
+      myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
+      myCbStoreProjectConfiguration.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
+        }
+      });
+
+      myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
+    }
+
     private void settingAnchor() {
     }
 
@@ -258,6 +281,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       return getEditor().getComponent();
     }
 
+    @Nullable
     public ValidationResult getValidationResult() {
       return SingleConfigurationConfigurable.this.getValidationResult();
     }
