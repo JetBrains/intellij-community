@@ -32,8 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,13 +43,10 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   implements BeforeRunStepsPanel.StepsBeforeRunListener {
   public static DataKey<ConfigurationSettingsEditorWrapper> CONFIGURATION_EDITOR_KEY = DataKey.create("ConfigurationSettingsEditor");
   private JPanel myComponentPlace;
-  private JCheckBox myCbStoreProjectConfiguration;
   private JPanel myWholePanel;
 
   private JPanel myBeforeLaunchContainer;
   private BeforeRunStepsPanel myBeforeRunStepsPanel;
-
-  private boolean myStoreProjectConfiguration;
 
   private final ConfigurationSettingsEditor myEditor;
 
@@ -65,21 +60,9 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   private void doReset(RunnerAndConfigurationSettings settings) {
     final RunConfiguration runConfiguration = settings.getConfiguration();
-    final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
-
     myBeforeRunStepsPanel.doReset(settings);
     myBeforeLaunchContainer.setVisible(!(runConfiguration instanceof UnknownRunConfiguration));
 
-    myStoreProjectConfiguration = runManager.isConfigurationShared(settings);
-    myCbStoreProjectConfiguration.setEnabled(!(runConfiguration instanceof UnknownRunConfiguration));
-    myCbStoreProjectConfiguration.setSelected(myStoreProjectConfiguration);
-    myCbStoreProjectConfiguration.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        myStoreProjectConfiguration = myCbStoreProjectConfiguration.isSelected();
-      }
-    });
-
-    myCbStoreProjectConfiguration.setVisible(!settings.isTemplate());
   }
 
   @NotNull
@@ -113,7 +96,6 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final RunConfiguration runConfiguration = settings.getConfiguration();
     final RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(runConfiguration.getProject());
     runManager.setBeforeRunTasks(runConfiguration, myBeforeRunStepsPanel.getTasks(true), false);
-    runManager.shareConfiguration(runConfiguration, myStoreProjectConfiguration);
     RunnerAndConfigurationSettings runManagerSettings = runManager.getSettings(runConfiguration);
     if (runManagerSettings != null) {
       runManagerSettings.setEditBeforeRun(myBeforeRunStepsPanel.needEditBeforeRun());
@@ -126,10 +108,6 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
 
   public List<BeforeRunTask> getStepsBeforeLaunch() {
     return Collections.unmodifiableList(myBeforeRunStepsPanel.getTasks(true));
-  }
-
-  public boolean isStoreProjectConfiguration() {
-    return myStoreProjectConfiguration;
   }
 
   @Override

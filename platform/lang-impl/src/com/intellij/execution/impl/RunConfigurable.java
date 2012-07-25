@@ -1227,7 +1227,7 @@ class RunConfigurable extends BaseConfigurable {
       myConfigurable = configurable;
       mySettings = (RunnerAndConfigurationSettings)myConfigurable.getSettings();
       final ConfigurationSettingsEditorWrapper editorWrapper = (ConfigurationSettingsEditorWrapper)myConfigurable.getEditor();
-      myShared = editorWrapper.isStoreProjectConfiguration();
+      myShared = configurable.isStoreProjectConfiguration();
       myStepsBeforeLaunch = editorWrapper.getStepsBeforeLaunch();
     }
 
