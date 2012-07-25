@@ -89,7 +89,11 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testOneUnderscore() {
-    doTest();
+    final String testName = "completion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    myFixture.type('\n');
+    myFixture.checkResultByFile(testName + ".after.py");
   }
 
   public void testKwParamsInCodeUsage() { //PY-1002
