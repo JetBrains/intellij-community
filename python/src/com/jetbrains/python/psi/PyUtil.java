@@ -890,6 +890,21 @@ public class PyUtil {
     return false;
   }
 
+  public static boolean isDescendantOf(@Nullable PyClass clazz, @NotNull String name) {
+    if (clazz == null) {
+      return false;
+    }
+    if (name.equals(clazz.getQualifiedName())) {
+      return true;
+    }
+    for (PyClassRef ancestor : clazz.iterateAncestors()) {
+      if (name.equals(ancestor.getQualifiedName())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static boolean isBaseException(String name) {
     return name != null && (name.contains("BaseException") || name.startsWith("exceptions."));
   }
