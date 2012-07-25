@@ -112,4 +112,9 @@ public class HgHistoryProvider implements VcsHistoryProvider {
   public boolean supportsHistoryForDirectories() {
     return true;
   }
+
+  @Override
+  public DiffFromHistoryHandler getHistoryDiffHandler() {
+    return null;
+  }
 }

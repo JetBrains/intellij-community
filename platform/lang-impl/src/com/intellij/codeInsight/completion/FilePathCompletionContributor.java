@@ -100,19 +100,6 @@ public class FilePathCompletionContributor extends CompletionContributor {
           final FileReferenceSet set = first.getFileReferenceSet();
           String prefix = set.getPathString()
             .substring(0, parameters.getOffset() - set.getElement().getTextRange().getStartOffset() - set.getStartInElement());
-          final String textBeforePosition = e.getContainingFile().getText().substring(0, parameters.getOffset());
-          if (!textBeforePosition.endsWith(prefix)) {
-            final int len = textBeforePosition.length();
-            final String fragment = len > 100 ? textBeforePosition.substring(len - 100) : textBeforePosition;
-            throw new AssertionError("prefix should be some actual file string just before caret: " +
-                                     prefix +
-                                     "\n text=" +
-                                     fragment +
-                                     ";\npathString=" +
-                                     set.getPathString() +
-                                     ";\nelementText=" +
-                                     e.getParent().getText());
-          }
 
           List<String> pathPrefixParts = null;
           int lastSlashIndex;

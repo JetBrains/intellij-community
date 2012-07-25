@@ -92,6 +92,9 @@ public interface Git {
                         @NotNull GitLineHandlerListener... listeners);
 
   @NotNull
+  GitCommandResult show(@NotNull GitRepository repository, @NotNull String revision);
+
+  @NotNull
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,
                               @NotNull GitLineHandlerListener... listeners);
 

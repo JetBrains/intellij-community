@@ -252,6 +252,11 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
     return false;
   }
 
+  @Override
+  public DiffFromHistoryHandler getHistoryDiffHandler() {
+    return null;
+  }
+
   private static class MyHistoryAsTreeProvider implements HistoryAsTreeProvider {
     private static final MyHistoryAsTreeProvider ourInstance = new MyHistoryAsTreeProvider();
 

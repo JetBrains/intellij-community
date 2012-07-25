@@ -80,7 +80,11 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testNoObjectMethodsAsFirstPart() throws Throwable { doTest(); }
-  public void testGetClassLoader() throws Throwable { doTest(); }
+  public void testGetClassLoader() throws Throwable {
+    configure();
+    selectItem(myItems[0]);
+    checkResult();
+  }
   public void testNewStaticProblem() throws Throwable { doTest(); }
 
   public void testChainingPerformance() throws Throwable {

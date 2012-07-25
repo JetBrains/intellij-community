@@ -454,6 +454,9 @@ public class FindUsagesManager implements JDOMExternalizable {
                           final FindUsagesOptions findUsagesOptions) {
 
     List<? extends PsiElement> elements = descriptor.getAllElements();
+    if (elements.isEmpty()) {
+      throw new AssertionError(handler + " " + findUsagesOptions);
+    }
     final UsageTarget[] targets = convertToUsageTargets(elements);
     myAnotherManager.searchAndShowUsages(targets, new Factory<UsageSearcher>() {
       @Override

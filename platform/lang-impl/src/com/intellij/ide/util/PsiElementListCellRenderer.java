@@ -91,6 +91,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       Color bgColor = UIUtil.getListBackground();
       Color color = list.getForeground();
+      setPaintFocusBorder(hasFocus && UIUtil.isToUseDottedCellBorder() && myFocusBorderEnabled);
       if (value instanceof PsiElement) {
         T element = (T)value;
         String name = getElementText(element);
@@ -126,6 +127,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         assert name != null : "Null name for PSI element " + element;
         SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor, selected);
+        if (!element.isValid()) {
+          append(" Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
+          return;
+        }
         setIcon(PsiElementListCellRenderer.this.getIcon(element));
 
         String containerText = getContainerText(element, name + (myModuleName != null ? myModuleName + "        " : ""));
@@ -137,7 +142,6 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         setIcon(IconUtil.getEmptyIcon(false));
         append(value == null ? "" : value.toString(), new SimpleTextAttributes(Font.PLAIN, list.getForeground()));
       }
-      setPaintFocusBorder(hasFocus && UIUtil.isToUseDottedCellBorder() && myFocusBorderEnabled);
       setBackground(selected ? UIUtil.getListSelectionBackground() : bgColor);
     }
 

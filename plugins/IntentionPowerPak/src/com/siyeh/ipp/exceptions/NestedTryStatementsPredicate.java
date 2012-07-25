@@ -35,7 +35,7 @@ class NestedTryStatementsPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiElement parent = element.getParent();
-    if (!isSimpleTry(parent, false)) {
+    if (!isSimpleTry(parent)) {
       return false;
     }
     final PsiTryStatement tryStatement = (PsiTryStatement)parent;
@@ -48,24 +48,14 @@ class NestedTryStatementsPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiStatement statement = statements[0];
-    return isSimpleTry(statement, true);
+    return isSimpleTry(statement);
   }
 
-  private static boolean isSimpleTry(PsiElement element, boolean withResources) {
+  private static boolean isSimpleTry(PsiElement element) {
     if (!(element instanceof PsiTryStatement)) {
       return false;
     }
     final PsiTryStatement tryStatement = (PsiTryStatement)element;
-    if (withResources) {
-      final PsiResourceList resourceList = tryStatement.getResourceList();
-      if (resourceList == null) {
-        return false;
-      }
-      final PsiCatchSection[] sections = tryStatement.getCatchSections();
-      if (sections.length != 0) {
-        return false;
-      }
-    }
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
       return false;

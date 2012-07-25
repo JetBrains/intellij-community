@@ -570,7 +570,7 @@ public class CodeCompletionHandlerBase {
     final Project project = hostFile.getProject();
 
     if (!synchronous) {
-      if (!CompletionServiceImpl.assertPhase(CompletionPhase.CommittingDocuments.class)) {
+      if (!CompletionServiceImpl.assertPhase(CompletionPhase.CommittingDocuments.class, CompletionPhase.NoCompletion.getClass())) {
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
         Disposer.dispose(translator);
         return;

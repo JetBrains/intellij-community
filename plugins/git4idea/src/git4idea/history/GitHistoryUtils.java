@@ -321,7 +321,8 @@ public class GitHistoryUtils {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile finalRoot = (root == null ? GitUtil.getGitRoot(path) : root);
-    final GitLogParser logParser = new GitLogParser(project, GitLogParser.NameStatus.NAME, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
+    final GitLogParser logParser = new GitLogParser(project, GitLogParser.NameStatus.NAME,
+                                                    HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                                     SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
 
     final AtomicReference<String> firstCommit = new AtomicReference<String>("HEAD");
@@ -358,8 +359,9 @@ public class GitHistoryUtils {
 
           final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
           final Pair<String, String> committerPair = record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
-          consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null, new Date(record.getAuthorTimeStamp() * 1000),
-                                               false));
+          Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
+          consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null,
+                                               new Date(record.getAuthorTimeStamp() * 1000), false, parents));
         } catch (VcsException e) {
           exceptionConsumer.consume(e);
         }

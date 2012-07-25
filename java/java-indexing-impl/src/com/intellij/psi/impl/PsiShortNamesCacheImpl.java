@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl;
 
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaFieldNameIndex;
@@ -42,7 +42,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
-class PsiShortNamesCacheImpl extends PsiShortNamesCache {
+public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
   private final PsiManagerEx myManager;
 
   public PsiShortNamesCacheImpl(PsiManagerEx manager) {
@@ -225,7 +225,7 @@ class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     });
 
     for (T member : members) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
 
       if (!scope.contains(member.getContainingFile().getVirtualFile())) continue;
       if (!set.add(member)) continue;

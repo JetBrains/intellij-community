@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.Iterator;
 
+import static com.intellij.psi.codeStyle.NameUtil.MatchingCaseSensitivity.*;
+
 /**
 * @author peter
 */
@@ -35,7 +37,7 @@ public class MinusculeMatcher implements Matcher {
 
   public MinusculeMatcher(String pattern, NameUtil.MatchingCaseSensitivity options) {
     myOptions = options;
-    myPattern = StringUtil.trimEnd(pattern, "* ").replaceAll(":", "\\*:").toCharArray();
+    myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
   }
 
   @Nullable
@@ -74,7 +76,7 @@ public class MinusculeMatcher implements Matcher {
       return null;
     }
 
-    if (myOptions == NameUtil.MatchingCaseSensitivity.ALL && name.charAt(nameIndex) != myPattern[patternIndex]) {
+    if (myOptions == ALL && name.charAt(nameIndex) != myPattern[patternIndex]) {
       return null;
     }
 
@@ -89,14 +91,14 @@ public class MinusculeMatcher implements Matcher {
       }
       char p = myPattern[patternIndex + i];
       char w = name.charAt(i + nameIndex);
-      if (lastUpper == i - 1 && NameUtil.isWordStart(p) && myOptions != NameUtil.MatchingCaseSensitivity.ALL) {
+      if (lastUpper == i - 1 && NameUtil.isWordStart(p) && myOptions != ALL) {
         if (p == w) {
           lastUpper = i;
         }
         p = StringUtil.toLowerCase(p);
       }
 
-      if (myOptions != NameUtil.MatchingCaseSensitivity.ALL) {
+      if (myOptions != ALL) {
         w = StringUtil.toLowerCase(w);
       }
       if (w != p) {
@@ -122,8 +124,10 @@ public class MinusculeMatcher implements Matcher {
   @Nullable
   private FList<TextRange> matchAfterFragment(String name, int patternIndex, int nameIndex, int nextStart, int lastUpper, int matchLen) {
     boolean star = patternIndex + matchLen < myPattern.length && myPattern[patternIndex + matchLen] == '*';
-    if (lastUpper >= 0) {
-      FList<TextRange> ranges = matchName(name, patternIndex + lastUpper + 1, star && matchLen == lastUpper ? nameIndex + lastUpper : nextStart);
+    if (lastUpper >= 1) {
+      int nextNameIndex = star && matchLen == lastUpper ? nameIndex + lastUpper : nextStart;
+      int nextPatternIndex = patternIndex + lastUpper + 1;
+      FList<TextRange> ranges = star ? matchName(name, nextPatternIndex, nextNameIndex) : skipWords(name, nextPatternIndex, nextNameIndex);
       if (ranges != null) {
         return prependRange(ranges, nameIndex, lastUpper + 1);
       }
@@ -131,7 +135,7 @@ public class MinusculeMatcher implements Matcher {
 
     int trial = matchLen;
     while (trial > 0) {
-      FList<TextRange> ranges = matchName(name, patternIndex + trial, nextStart);
+      FList<TextRange> ranges = skipWords(name, patternIndex + trial, nextStart);
       if (ranges != null) {
         return prependRange(ranges, nameIndex, trial);
       }
@@ -230,11 +234,17 @@ public class MinusculeMatcher implements Matcher {
 
   @Nullable
   private FList<TextRange> skipWords(String name, int patternIndex, int nameIndex) {
-    while (' ' == myPattern[patternIndex]) {
+    while (patternIndex < myPattern.length && ' ' == myPattern[patternIndex]) {
       patternIndex++;
-      if (patternIndex == myPattern.length) {
-        return null;
-      }
+    }
+    if (patternIndex == myPattern.length) {
+      return FList.emptyList();
+    }
+    if (nameIndex == name.length()) {
+      return null;
+    }
+    if (myPattern[patternIndex] == '*') {
+      return skipChars(name, patternIndex, nameIndex, true);
     }
 
     if (nameIndex == 0 || NameUtil.isWordStart(name, nameIndex)) {
@@ -244,7 +254,7 @@ public class MinusculeMatcher implements Matcher {
       }
     }
 
-    boolean separatorInPattern = NameUtil.isWordSeparator(myPattern[patternIndex]);
+    boolean separatorInPattern = !Character.isLetterOrDigit(myPattern[patternIndex]);
     int fromIndex = nameIndex;
     while (fromIndex < name.length()) {
       int next = separatorInPattern ? name.indexOf(myPattern[patternIndex], fromIndex) : NameUtil.nextWord(name, fromIndex);
@@ -273,10 +283,14 @@ public class MinusculeMatcher implements Matcher {
     CharArrayCharSequence seq = new CharArrayCharSequence(myPattern);
     int p = -1;
     TextRange first = null;
+
+    int integral = 0;
     for (TextRange range : iterable) {
       if (first == null) {
         first = range;
       }
+      int len = range.getLength();
+      integral += range.getStartOffset() * len + len * (len - 1) / 2;
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
         char c = name.charAt(i);
         p = StringUtil.indexOf(seq, c, p + 1, myPattern.length, false);
@@ -294,6 +308,7 @@ public class MinusculeMatcher implements Matcher {
       return 0;
     }
 
+
     int skipCount = CharArrayUtil.shiftForward(myPattern, 0, " *");
     int commonStart = 0;
     while (commonStart < name.length() &&
@@ -306,7 +321,7 @@ public class MinusculeMatcher implements Matcher {
     boolean prefixMatching = isStartMatch(name, startIndex);
     boolean middleWordStart = !prefixMatching && NameUtil.isWordStart(name, first.getStartOffset());
 
-    return -fragmentCount + matchingCase * 2 + commonStart * 3 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
+    return -fragmentCount + matchingCase * 20 + commonStart * 30 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100 - integral;
   }
 
   public boolean isStartMatch(String name) {
@@ -340,7 +355,122 @@ public class MinusculeMatcher implements Matcher {
       return myPattern.length == 0 ? Collections.<TextRange>emptyList() : null;
     }
 
+    if (true) {
+      return matchWildcards(name, 0, 0);
+    }
+
     return matchName(name, 0, 0);
+  }
+
+  @Nullable
+  private FList<TextRange> matchWildcards(String name, int patternIndex, int nameIndex) {
+    while (isWildcard(patternIndex)) {
+      patternIndex++;
+    }
+    boolean space = isPatternChar(patternIndex - 1, ' ');
+    if (patternIndex == myPattern.length) {
+      if (space && nameIndex != name.length() && (patternIndex < 2 || !NameUtil.isWordStart(myPattern[patternIndex - 2]))) {
+        return null;
+      }
+      return FList.emptyList();
+    }
+
+    char p = myPattern[patternIndex];
+    if (isWildcard(patternIndex - 1)) {
+      {
+        FList<TextRange> ranges = matchFragment(name, patternIndex, nameIndex);
+        if (ranges != null) {
+          return ranges;
+        }
+      }
+      while (true) {
+        nameIndex = space ? indexOfWordStart(name, p, nameIndex) : StringUtil.indexOfIgnoreCase(name, p, nameIndex + 1);
+        if (nameIndex < 0) return null;
+        if (!Character.isUpperCase(p) || NameUtil.isWordStart(name, nameIndex)) {
+          FList<TextRange> ranges = matchFragment(name, patternIndex, nameIndex);
+          if (ranges != null) {
+            return ranges;
+          }
+        }
+      }
+    }
+    return matchFragment(name, patternIndex, nameIndex);
+  }
+
+  @Nullable
+  private FList<TextRange> matchFragment(String name, int patternIndex, int nameIndex) {
+    if (!isFirstCharMatching(name, nameIndex, myPattern[patternIndex])) {
+      return null;
+    }
+
+    int minFragment = isPatternChar(patternIndex - 1, '*') && Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex) ? 2 : 1;
+    int i = 1;
+    while (nameIndex + i < name.length() &&
+           patternIndex + i < myPattern.length &&
+           StringUtil.charsEqual(myPattern[patternIndex + i], name.charAt(nameIndex + i), myOptions != ALL)) {
+      if (Character.isUpperCase(myPattern[patternIndex + i])) {
+        if (i < minFragment) {
+          return null;
+        }
+        if (myPattern[patternIndex + i] != name.charAt(nameIndex + i)) {
+          int nextWordStart = indexOfWordStart(name, myPattern[patternIndex + i], nameIndex + i);
+          if (nextWordStart >= 0) {
+            FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart);
+            if (ranges != null) {
+              return prependRange(ranges, nameIndex, i);
+            }
+          }
+        }
+      }
+      i++;
+    }
+
+    if (patternIndex + i >= myPattern.length) {
+      return i >= minFragment ? FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i)) : null;
+    }
+    while (i >= minFragment) {
+      int nextWordStart = isWildcard(patternIndex + i) ? nameIndex + i : indexOfWordStart(name, myPattern[patternIndex + i], nameIndex + i);
+      if (nextWordStart >= 0) {
+        FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart);
+        if (ranges != null) {
+          return prependRange(ranges, nameIndex, i);
+        }
+      }
+      i--;
+    }
+    return null;
+  }
+
+  private boolean isFirstCharMatching(String name, int nameIndex, char p) {
+    return nameIndex < name.length() && StringUtil.charsEqual(p, name.charAt(nameIndex),
+                                                              myOptions == FIRST_LETTER && nameIndex > 0 || myOptions == NONE);
+  }
+
+  private boolean isWildcard(int patternIndex) {
+    return isPatternChar(patternIndex, ' ') || isPatternChar(patternIndex, '*');
+  }
+  private boolean isPatternChar(int patternIndex, char c) {
+    if (patternIndex < 0 || patternIndex >= myPattern.length) return false;
+    return myPattern[patternIndex] == c;
+  }
+
+  private static int indexOfWordStart(String name, char p, int startFrom) {
+    if (p == '.' || NameUtil.isWordSeparator(p)) {
+      return StringUtil.indexOfIgnoreCase(name, p, startFrom + 1);
+    }
+    if (startFrom >= name.length()) {
+      return -1;
+    }
+    int nextWordStart = startFrom;
+    while (true) {
+      nextWordStart = NameUtil.nextWord(name, nextWordStart);
+      if (nextWordStart >= name.length()) {
+        return -1;
+      }
+      if (StringUtil.charsEqualIgnoreCase(p, name.charAt(nextWordStart))) {
+        return nextWordStart;
+      }
+    }
   }
 
   @Override

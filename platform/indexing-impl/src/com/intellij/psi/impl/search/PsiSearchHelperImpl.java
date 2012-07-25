@@ -230,6 +230,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                   for (PsiElement psiRoot : psiRoots) {
                     if (progress != null) progress.checkCanceled();
                     if (!processed.add(psiRoot)) continue;
+                    if (!psiRoot.isValid()) continue;
                     assert psiRoot != null : "One of the roots of file " +
                                              file +
                                              " is null. All roots: " +

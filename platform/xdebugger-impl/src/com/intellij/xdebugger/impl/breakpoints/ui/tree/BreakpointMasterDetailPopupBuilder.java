@@ -118,6 +118,7 @@ public class BreakpointMasterDetailPopupBuilder {
     myPopupBuilder = new MasterDetailPopupBuilder(myProject);
     if (!myPlainView) {
       myPopupBuilder.setDimensionServiceKey(getClass().getName());
+      myPopupBuilder.setCancelOnClickOutside(false);
     }
     myPopupBuilder.setCancelOnWindowDeactivation(false);
 
@@ -212,16 +213,17 @@ public class BreakpointMasterDetailPopupBuilder {
       myPopupBuilder.setMinSize(new Dimension(-1, 700));
     }
 
-    myPopup = myPopupBuilder.setCloseOnEnter(false).createMasterDetailPopup();
-
-    if (view != null) {
-      view.setDoneRunnable(new Runnable() {
+    if (!myPlainView) {
+      myPopupBuilder.setDoneRunnable(new Runnable() {
         @Override
         public void run() {
           myPopup.cancel();
         }
-      }, myPopup.getContent());
+      });
     }
+
+
+    myPopup = myPopupBuilder.setCloseOnEnter(false).createMasterDetailPopup();
 
     myTreeController.setDelegate(new BreakpointItemsTreeController.BreakpointItemsTreeDelegate() {
       @Override

@@ -112,9 +112,7 @@ public final class FileAttributes {
   }
 
   private static Type type(final boolean isDirectory, final boolean isSpecial) {
-    return isSpecial ? Type.SPECIAL :
-           isDirectory ? Type.DIRECTORY :
-           Type.FILE;
+    return isDirectory ? Type.DIRECTORY : isSpecial ? Type.SPECIAL : Type.FILE;
   }
 
   @Flags
@@ -127,6 +125,10 @@ public final class FileAttributes {
 
   public boolean isSymLink() {
     return isSet(flags, SYM_LINK);
+  }
+
+  public boolean isHidden() {
+    return isSet(flags, HIDDEN);
   }
 
   public boolean isWritable() {

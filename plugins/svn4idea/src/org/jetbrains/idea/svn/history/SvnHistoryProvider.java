@@ -70,6 +70,11 @@ public class SvnHistoryProvider
     return true;
   }
 
+  @Override
+  public DiffFromHistoryHandler getHistoryDiffHandler() {
+    return null;
+  }
+
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
     final ColumnInfo[] columns;
     final Consumer<VcsFileRevision> listener;

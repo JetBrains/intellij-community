@@ -49,6 +49,7 @@ public abstract class PsiImportStatementBaseImpl extends JavaStubPsiElement<PsiI
 
   @Override
   public PsiJavaCodeReferenceElement getImportReference() {
+    assert isValid();
     final PsiImportStatementStub stub = getStub();
     if (stub != null) {
       return stub.getReference();
