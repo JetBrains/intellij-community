@@ -107,7 +107,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   @Nullable
   public static ElementFilter getReferenceFilter(PsiElement position) {
     // Completion after extends in interface, type parameter and implements in class
-    final PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class);
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(position, PsiClass.class, false, PsiCodeBlock.class, PsiMethod.class, PsiExpressionList.class, PsiVariable.class, PsiAnnotation.class);
     if (containingClass != null && psiElement().afterLeaf(PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS, ",", "&").accepts(position)) {
       return new AndFilter(ElementClassFilter.CLASS, new NotFilter(new AssignableFromContextFilter()));
     }

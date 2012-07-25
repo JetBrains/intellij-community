@@ -1293,6 +1293,8 @@ public class ListUtils {
 
   public void testPackageInMemberType() { doTest() }
 
+  public void testConstantInAnno() { doTest() }
+
   public void testClassNameDot() { doTest('.') }
 
   public void testClassNameDotBeforeCall() {
