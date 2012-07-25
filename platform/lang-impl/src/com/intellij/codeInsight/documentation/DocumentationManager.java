@@ -96,7 +96,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   @NonNls public static final String DOC_ELEMENT_PROTOCOL = "doc_element://";
 
   private final ActionManagerEx myActionManagerEx;
-  private boolean myCloseOnSneeze;
 
   private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
 
@@ -162,22 +161,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (hint == null) {
       return;
     }
-    myCloseOnSneeze = false;
     hint.cancel();
     Component toFocus = myPreviouslyFocused;
     hint.cancel();
     if (toFocus != null) {
       IdeFocusManager.getInstance(myProject).requestFocus(toFocus, true);
     }
-  }
-
-  /**
-   * @return    <code>true</code> if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
-   *            the user presses a key);
-   *            <code>false</code> otherwise
-   */
-  public boolean isCloseOnSneeze() {
-    return myCloseOnSneeze;
   }
 
   public boolean hasActiveDockedDocWindow() {
@@ -187,32 +176,19 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public void setAllowContentUpdateFromContext(boolean allow) {
     myAutoUpdateDocumentation = allow;
   }
-  
-  /**
-   * Asks to show quick doc for the target element.
-   * 
-   * @param editor         editor with an element for which quick do should be shown
-   * @param element        target element which documentation should be shown
-   * @param original       element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
-   *                       A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
-   *                       declaration but <code>'element'</code> argument is a {@code Runnable} descriptor
-   * @param closeCallback  callback to be notified on target hint close (if any)
-   * @param closeOnSneeze  flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
-   *                       two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
-   *                       on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
-   *                       at the first situation but don't want to do that at the second
-   * @param allowReuse     defines whether currently requested documentation should reuse existing doc control (if any)
-   */
-  public void showJavaDocInfo(@NotNull Editor editor,
-                              @NotNull final PsiElement element,
-                              @NotNull final PsiElement original,
-                              @Nullable Runnable closeCallback,
-                              boolean closeOnSneeze,
-                              boolean allowReuse)
-  {
-    myEditor = editor;
-    myCloseOnSneeze = closeOnSneeze;
-    showJavaDocInfo(element, original, allowReuse, closeCallback);
+
+  public void showJavaDocInfoAtToolWindow(@NotNull PsiElement element, @NotNull PsiElement original) {
+    if (myToolWindow == null) {
+      createToolWindow(element, original);
+      return;
+    }
+    final Content content = myToolWindow.getContentManager().getSelectedContent();
+    if (content == null) {
+      restorePopupBehavior();
+      createToolWindow(element, original);
+      return;
+    }
+    fetchDocInfo(getDefaultCollector(element, original), (DocumentationComponent)content.getComponent(), true);
   }
   
   public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
@@ -412,7 +388,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setModalContext(false)
       .setCancelCallback(new Computable<Boolean>() {
         public Boolean compute() {
-          myCloseOnSneeze = false;
           if (closeCallback != null) {
             closeCallback.run();
           }
@@ -430,9 +405,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setKeyEventHandler(new BooleanFunction<KeyEvent>() {
         @Override
         public boolean fun(KeyEvent event) {
-          if (myCloseOnSneeze) {
-            closeDocHint();
-          }
           return false;
         }
       })
@@ -465,7 +437,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myDocInfoHintRef = new WeakReference<JBPopup>(hint);
     myPreviouslyFocused = WindowManagerEx.getInstanceEx().getFocusedComponent(project);
 
-    if (fromQuickSearch()) {
+    if (fromQuickSearch() && myPreviouslyFocused != null) {
       ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
     }
   }
@@ -513,7 +485,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       assertSameProject(element);
 
       if (element == null) {
-        final PsiReference ref = util.findReference(editor, offset);
+        final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
 
         if (ref != null) {
           element = util.adjustReference(ref);
@@ -576,7 +548,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         );
         if (myParameterInfoController != null) {
           final String doc = ApplicationManager.getApplication().runReadAction(
-              new Computable<String>() {
+              new NullableComputable<String>() {
                 public String compute() {
                   return generateParameterInfoDocumentation(provider);
                 }
@@ -613,6 +585,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         );
       }
 
+      @Nullable
       private String generateParameterInfoDocumentation(DocumentationProvider provider) {
         final Object[] objects = myParameterInfoController.getSelectedElements();
 
@@ -832,6 +805,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   void navigateByLink(final DocumentationComponent component, final String url) {
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     final PsiElement psiElement = component.getElement();
+    if (psiElement == null) {
+      return;
+    }
     final PsiManager manager = PsiManager.getInstance(getProject(psiElement));
     if (url.startsWith("open")) {
       final PsiFile containingFile = psiElement.getContainingFile();
@@ -880,24 +856,23 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
 
       if (!processed) {
-        final String docUrl = url;
 
         fetchDocInfo
           (new DocumentationCollector() {
             public String getDocumentation() throws Exception {
-              if (docUrl.startsWith(DOC_ELEMENT_PROTOCOL)) {
+              if (url.startsWith(DOC_ELEMENT_PROTOCOL)) {
                 final List<String> urls = ApplicationManager.getApplication().runReadAction(
-                  new Computable<List<String>>() {
+                  new NullableComputable<List<String>>() {
                     public List<String> compute() {
                       final DocumentationProvider provider = getProviderFromElement(psiElement);
                       return provider.getUrlFor(psiElement, getOriginalElement(psiElement));
                     }
                   }
                 );
-                BrowserUtil.launchBrowser(urls != null && !urls.isEmpty() ? urls.get(0) : docUrl);
+                BrowserUtil.launchBrowser(urls != null && !urls.isEmpty() ? urls.get(0) : url);
               }
               else {
-                BrowserUtil.launchBrowser(docUrl);
+                BrowserUtil.launchBrowser(url);
               }
               return "";
             }

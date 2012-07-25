@@ -92,6 +92,6 @@ public class ShowQuickDocAtPinnedWindowFromTooltipAction extends AnAction {
 
     myInfo = null;
     DocumentationManager docManager = DocumentationManager.getInstance(project);
-    docManager.createToolWindow(info.first, info.second);
+    docManager.showJavaDocInfoAtToolWindow(info.first, info.second);
   }
 }
