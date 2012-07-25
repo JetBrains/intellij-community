@@ -42,7 +42,8 @@ setProperty("pluginFilter", [
             "coffeescript",
             "python-remote-interpreter",
             "diagram-api", "uml",
-            "python-uml", "localization"
+            "python-uml", "localization",
+            "rest"
             ])
 
 private List<String> pycharmPlatformApiModules() {
@@ -354,6 +355,13 @@ private layoutFull(Map args, String target, Set usedJars) {
         dir("lib") {
           jar("localization.jar") {
             module("localization")
+          }
+        }
+      }
+      dir("rest") {
+        dir("lib") {
+          jar("rest.jar") {
+            module("rest")
           }
         }
       }

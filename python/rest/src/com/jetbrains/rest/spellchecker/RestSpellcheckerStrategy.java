@@ -1,6 +1,5 @@
-package com.jetbrains.python.spellchecker;
+package com.jetbrains.rest.spellchecker;
 
-import com.intellij.lang.Language;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;

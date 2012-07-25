@@ -652,29 +652,14 @@
 
     <!-- ReST files -->
 
-    <fileTypeFactory implementation="com.jetbrains.rest.RestFileTypeFactory"/>
-    <lang.syntaxHighlighterFactory key="ReST"
-                                   implementationClass="com.jetbrains.rest.RestHighlighterFactory"/>
-    <lang.parserDefinition language="ReST" implementationClass="com.jetbrains.rest.parsing.RestParserDefinition"/>
-    <colorSettingsPage implementation="com.jetbrains.rest.RestColorsPage"/>
-
-    <projectService serviceInterface="com.jetbrains.rest.ReSTService"
-                    serviceImplementation="com.jetbrains.rest.ReSTService"/>
-    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.completion.DirectiveCompletionContributor"/>
-    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.completion.OptionCompletionContributor"/>
-    <completion.contributor language="ReST" implementationClass="com.jetbrains.rest.completion.ReferenceCompletionContributor"/>
-    <gotoDeclarationHandler implementation="com.jetbrains.rest.RestGotoProvider" order="FIRST"/>
     <lang.fileViewProviderFactory language="ReST"
                                   implementationClass="com.jetbrains.rest.RestFileProviderFactory"/>
-    <lang.psiStructureViewFactory language="ReST"
-                                  implementationClass="com.jetbrains.rest.structureView.RestStructureViewFactory"/>
-    <annotator language="ReST" implementationClass="com.jetbrains.rest.validation.RestAnnotatingVisitor"/>
+    <editorHighlighterProvider filetype="ReST" implementationClass="com.jetbrains.rest.RestEditorHighlighterProvider"/>
 
     <localInspection language="ReST" shortName="RestRoleInspection" bundle="com.jetbrains.rest.RestBundle" key="INSP.role.not.defined"
                      groupKey="INSP.GROUP.rest" enabledByDefault="false" level="WARNING"
                      implementationClass="com.jetbrains.rest.inspections.RestRoleInspection"/>
 
-    <lang.substitutor language="TEXT" implementationClass="com.jetbrains.rest.RestLanguageSubstitutor"/>
     <configurationType implementation="com.jetbrains.rest.run.RestRunConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.rest.run.docutils.DocutilsConfigurationProducer"/>
     <configurationProducer implementation="com.jetbrains.rest.run.sphinx.SphinxConfigurationProducer"/>
@@ -965,7 +950,6 @@
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
-    <support language="ReST" implementationClass="com.jetbrains.python.spellchecker.RestSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>
   </extensions>
 
