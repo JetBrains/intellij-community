@@ -240,7 +240,7 @@ public class FileSystemUtil {
         final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
 
         Map attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myNoFollowLinkOptions);
-        final Boolean isSymbolicLink = (Boolean)attributes.get("isSymbolicLink");
+        final boolean isSymbolicLink = (Boolean)attributes.get("isSymbolicLink");
         if (isSymbolicLink) {
           try {
             attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myLinkOptions);

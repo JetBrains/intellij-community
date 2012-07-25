@@ -167,6 +167,27 @@ public class FileAttributesReadingTest {
     assertNull(target);
   }
 
+  @Test
+  public void junction() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+
+    final File target = FileUtil.createTempDirectory(myTempDirectory, "temp.", ".dir");
+    final File path = FileUtil.createTempFile(myTempDirectory, "junction.", ".dir", false);
+    final File junction = IoTestUtil.createJunction(target.getPath(), path.getAbsolutePath());
+
+    FileAttributes attributes = getAttributes(junction);
+    assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
+    assertEquals(0, attributes.flags);
+    assertTrue(attributes.isWritable());
+
+    FileUtil.delete(target);
+
+    attributes = getAttributes(junction);
+    assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
+    assertEquals(0, attributes.flags);
+    assertTrue(attributes.isWritable());
+  }
+
   @NotNull
   private static FileAttributes getAttributes(@NotNull final File file) {
     final FileAttributes attributes = FileSystemUtil.getAttributes(file);
