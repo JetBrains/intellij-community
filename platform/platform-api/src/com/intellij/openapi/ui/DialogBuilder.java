@@ -68,7 +68,8 @@ public class DialogBuilder implements Disposable {
   }
 
   private MyDialogWrapper showImpl(boolean isModal) {
-    LOG.assertTrue(myTitle != null && myTitle.trim().length() != 0, String.valueOf(myTitle));
+    LOG.assertTrue(myTitle != null && myTitle.trim().length() != 0,
+                   String.format("Dialog title shouldn't be empty or null: [%s]", myTitle));
     myDialogWrapper.setTitle(myTitle);
     myDialogWrapper.init();
     myDialogWrapper.setModal(isModal);
