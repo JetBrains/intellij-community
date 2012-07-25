@@ -124,6 +124,12 @@ public class PyTypeChecker {
         return true;
       }
     }
+    if (actual instanceof PyFunctionType && expected instanceof PyClassType) {
+      final PyClass superClass = ((PyClassType)expected).getPyClass();
+      if (superClass != null && PyNames.CALLABLE.equals(superClass.getName())) {
+        return true;
+      }
+    }
     final String superName = expected.getName();
     final String subName = actual.getName();
     // TODO: No inheritance check for builtin numerics at this moment
