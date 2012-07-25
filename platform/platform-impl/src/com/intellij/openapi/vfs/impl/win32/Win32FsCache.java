@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs.impl.win32;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
@@ -32,7 +31,7 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 class Win32FsCache {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32FsCache");
+  //private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32FsCache");
 
   private final IdeaWin32 myKernel = IdeaWin32.getInstance();
   private final Map<String, FileInfo> myCache = new THashMap<String, FileInfo>();
@@ -43,13 +42,13 @@ class Win32FsCache {
 
   @NotNull
   String[] list(@NotNull String absolutePath) {
-    FileInfo[] fileInfos = myKernel.listChildren(absolutePath.replace('/', '\\') + "\\*.*");
-    if (fileInfos == null) {
+    FileInfo[] fileInfo = myKernel.listChildren(absolutePath.replace('/', '\\'));
+    if (fileInfo == null) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    ArrayList<String> names = new ArrayList<String>(fileInfos.length);
-    for (FileInfo info : fileInfos) {
+    ArrayList<String> names = new ArrayList<String>(fileInfo.length);
+    for (FileInfo info : fileInfo) {
       if (info.name.equals(".")) {
         myCache.put(absolutePath, info);
         continue;

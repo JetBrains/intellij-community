@@ -19,6 +19,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Do not use this class directly.
@@ -28,6 +29,11 @@ import org.jetbrains.annotations.NotNull;
  */
 public class IdeaWin32 {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.win32.Win32LocalFileSystem");
+
+  private static final String PATH_PREFIX = "\\\\?\\";
+  private static final int PREFIX_SIZE = PATH_PREFIX.length();
+  private static final String PATH_SUFFIX =  "\\*.*";
+  private static final int MAX_PATH = 260;
 
   private static final IdeaWin32 ourInstance;
 
@@ -87,9 +93,29 @@ public class IdeaWin32 {
 
   private static native void initIDs();
 
-  public native FileInfo getInfo(String path);
+  @Nullable
+  public FileInfo getInfo(@NotNull final String path) {
+    return getInfo0(unc(path));
+  }
 
-  public native String resolveSymLink(String path);
+  @Nullable
+  public String resolveSymLink(@NotNull final String path) {
+    final String result = resolveSymLink0(unc(path));
+    return result != null && result.startsWith(PATH_PREFIX) ? result.substring(PREFIX_SIZE) : result;
+  }
 
-  public native FileInfo[] listChildren(String path);
+  @Nullable
+  public FileInfo[] listChildren(@NotNull final String path) {
+    return listChildren0(unc(path) + PATH_SUFFIX);
+  }
+
+  private static String unc(final String path) {
+    return path.length() < MAX_PATH ? path : PATH_PREFIX + path;
+  }
+
+  private native FileInfo getInfo0(String path);
+
+  private native String resolveSymLink0(String path);
+
+  private native FileInfo[] listChildren0(String path);
 }

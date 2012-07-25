@@ -351,9 +351,6 @@ public class FileSystemUtil {
 
 
   private static class IdeaWin32MediatorImpl implements Mediator {
-    private static final String PATH_PREFIX = "\\\\?\\";
-    private static final int PREFIX_SIZE = PATH_PREFIX.length();
-
     private IdeaWin32 myInstance = IdeaWin32.getInstance();
 
     @Override
@@ -373,8 +370,7 @@ public class FileSystemUtil {
 
     @Override
     public String resolveSymLink(@NotNull final String path) throws Exception {
-      final String result = myInstance.resolveSymLink(path);
-      return result != null && result.startsWith(PATH_PREFIX) ? result.substring(PREFIX_SIZE) : result;
+      return myInstance.resolveSymLink(path);
     }
 
     @Override

@@ -128,7 +128,7 @@ JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs
 }
 
 
-JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getInfo(JNIEnv *env, jobject method, jstring path) {
+JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getInfo0(JNIEnv *env, jobject method, jstring path) {
     WIN32_FIND_DATA data;
     HANDLE h = FindFileInner(env, path, &data);
 
@@ -165,7 +165,7 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
 }
 
 
-JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_resolveSymLink(JNIEnv *env, jobject method, jstring path) {
+JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_resolveSymLink0(JNIEnv *env, jobject method, jstring path) {
     WIN32_FIND_DATA data;
     HANDLE h = FindFileInner(env, path, &data);
     if (h == INVALID_HANDLE_VALUE) {
@@ -209,7 +209,7 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
 }
 
 
-JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_listChildren(JNIEnv *env, jobject method, jstring path) {
+JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_listChildren0(JNIEnv *env, jobject method, jstring path) {
     WIN32_FIND_DATA data;
     HANDLE h = FindFileInner(env, path, &data);
     if (h == INVALID_HANDLE_VALUE) {

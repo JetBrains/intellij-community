@@ -16,6 +16,9 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.win32.FileInfo;
+import com.intellij.openapi.util.io.win32.IdeaWin32;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -199,6 +202,41 @@ public class FileAttributesReadingTest {
     assertEquals(FileAttributes.HIDDEN, attributes.flags);
     assertEquals(file.length(), attributes.length);
     assertTimestampEquals(file.lastModified(), attributes.lastModified);
+  }
+
+  @Test
+  public void extraLongName() throws Exception {
+    final String prefix = StringUtil.repeatSymbol('a', 128) + ".";
+    final File dir = FileUtil.createTempDirectory(
+      FileUtil.createTempDirectory(
+        FileUtil.createTempDirectory(
+          FileUtil.createTempDirectory(
+            FileUtil.createTempDirectory(
+              FileUtil.createTempDirectory(
+                myTempDirectory, prefix, ".dir"),
+              prefix, ".dir"),
+            prefix, ".dir"),
+          prefix, ".dir"),
+        prefix, ".dir"),
+      prefix, ".dir");
+    final File file = FileUtil.createTempFile(dir, prefix, ".txt", true);
+    assertTrue(file.exists());
+    FileUtil.writeToFile(file, myTestData);
+
+    final FileAttributes attributes = getAttributes(file);
+    assertEquals(FileAttributes.Type.FILE, attributes.type);
+    assertEquals(0, attributes.flags);
+    assertEquals(myTestData.length, attributes.length);
+    assertTimestampEquals(file.lastModified(), attributes.lastModified);
+    assertTrue(attributes.isWritable());
+
+    if (SystemInfo.isWindows) {
+      final String[] list1 = dir.list();
+      assertNotNull(list1);
+      final FileInfo[] list2 = IdeaWin32.getInstance().listChildren(dir.getPath());
+      assertNotNull(list2);
+      assertEquals(list1.length + 2, list2.length);
+    }
   }
 
   @NotNull
