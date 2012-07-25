@@ -666,7 +666,7 @@ public class ShelveChangesManager implements ProjectComponent, JDOMExternalizabl
 
   // todo problem: control usage
   public static List<TextFilePatch> loadPatches(Project project, final String patchPath, CommitContext commitContext) throws IOException, PatchSyntaxException {
-    char[] text = FileUtil.loadFileText(new File(patchPath));
+    char[] text = FileUtil.loadFileText(new File(patchPath), CharsetToolkit.UTF8);
     PatchReader reader = new PatchReader(new CharArrayCharSequence(text));
     final List<TextFilePatch> textFilePatches = reader.readAllPatches();
     final TransparentlyFailedValue<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo = reader.getAdditionalInfo(
