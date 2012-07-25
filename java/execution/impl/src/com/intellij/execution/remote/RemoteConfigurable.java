@@ -128,20 +128,20 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     myAddressField.addFocusListener(fieldFocusListener);
     myPortField.addFocusListener(fieldFocusListener);
 
-    myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent());
+    myModuleSelector = new ConfigurationModuleSelector(project, myModule.getComponent(), "<whole project>");
   }
 
   public void applyEditorTo(@NotNull final RemoteConfiguration configuration) throws ConfigurationException {
     configuration.HOST = (myHostField.isEditable() ? myHostField.getText() : myHostName).trim();
-    if ("".equals(configuration.HOST)) {
+    if (configuration.HOST != null && configuration.HOST.isEmpty()) {
       configuration.HOST = null;
     }
     configuration.PORT = myPortField.getText().trim();
-    if ("".equals(configuration.PORT)) {
+    if (configuration.PORT != null && configuration.PORT.isEmpty()) {
       configuration.PORT = null;
     }
     configuration.SHMEM_ADDRESS = myAddressField.getText().trim();
-    if ("".equals(configuration.SHMEM_ADDRESS)) {
+    if (configuration.SHMEM_ADDRESS != null && configuration.SHMEM_ADDRESS.isEmpty()) {
       configuration.SHMEM_ADDRESS = null;
     }
     configuration.USE_SOCKET_TRANSPORT = myRbSocket.isSelected();
