@@ -188,6 +188,19 @@ public class FileAttributesReadingTest {
     assertTrue(attributes.isWritable());
   }
 
+  @Test
+  public void wellHiddenFile() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    final File file = new File("C:\\Documents and Settings\\desktop.ini");
+    assumeTrue(file.exists());
+
+    final FileAttributes attributes = getAttributes(file);
+    assertEquals(FileAttributes.Type.FILE, attributes.type);
+    assertEquals(FileAttributes.HIDDEN, attributes.flags);
+    assertEquals(file.length(), attributes.length);
+    assertTimestampEquals(file.lastModified(), attributes.lastModified);
+  }
+
   @NotNull
   private static FileAttributes getAttributes(@NotNull final File file) {
     final FileAttributes attributes = FileSystemUtil.getAttributes(file);

@@ -19,8 +19,12 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.SafeWriteRequestor;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -323,28 +327,35 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     }
   }
 
-  public void testWindowsVirtualDirectory() throws Exception {
-    if (!SystemInfo.isWindows) return;
-    File file = new File("c:\\Documents and Settings\\desktop.ini");
+  public void testWindowsHiddenDirectory() throws Exception {
+    if (!SystemInfo.isWindows) {
+      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
+      return;
+    }
+
+    File file = new File("C:\\Documents and Settings\\desktop.ini");
+    if (!file.exists()) {
+      System.err.println(getName() + " skipped: missing " + file);
+      return;
+    }
+
     String parent = FileUtil.toSystemIndependentName(file.getParent());
     VirtualDirectoryImpl.allowRootAccess(parent);
-    VirtualFile virtualFile;
     try {
-      virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      assertNotNull(virtualFile);
+
+      NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
+      fs = PersistentFS.replaceWithNativeFS(fs);
+
+      assertTrue(fs.exists(virtualFile));
+      final FileAttributes attributes = fs.getAttributes(virtualFile);
+      assertNotNull(attributes);
+      assertEquals(FileAttributes.Type.FILE, attributes.type);
+      assertEquals(FileAttributes.HIDDEN, attributes.flags);
     }
     finally {
       VirtualDirectoryImpl.disallowRootAccess(parent);
     }
-    if (virtualFile == null) {
-      System.out.println("NO LUCK: " + file);
-      return;
-    }
-
-    NewVirtualFileSystem system = (NewVirtualFileSystem)virtualFile.getFileSystem();
-    system = PersistentFS.replaceWithNativeFS(system);
-
-    assertTrue(system.exists(virtualFile));
-    int childAttributes = system.getBooleanAttributes(virtualFile, -1);
-    assertTrue((childAttributes & FileUtil.BA_EXISTS) != 0);
   }
 }
