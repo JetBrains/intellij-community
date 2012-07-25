@@ -283,10 +283,14 @@ public class MinusculeMatcher implements Matcher {
     CharArrayCharSequence seq = new CharArrayCharSequence(myPattern);
     int p = -1;
     TextRange first = null;
+
+    int integral = 0;
     for (TextRange range : iterable) {
       if (first == null) {
         first = range;
       }
+      int len = range.getLength();
+      integral += range.getStartOffset() * len + len * (len - 1) / 2;
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
         char c = name.charAt(i);
         p = StringUtil.indexOf(seq, c, p + 1, myPattern.length, false);
@@ -304,6 +308,7 @@ public class MinusculeMatcher implements Matcher {
       return 0;
     }
 
+
     int skipCount = CharArrayUtil.shiftForward(myPattern, 0, " *");
     int commonStart = 0;
     while (commonStart < name.length() &&
@@ -316,7 +321,7 @@ public class MinusculeMatcher implements Matcher {
     boolean prefixMatching = isStartMatch(name, startIndex);
     boolean middleWordStart = !prefixMatching && NameUtil.isWordStart(name, first.getStartOffset());
 
-    return -fragmentCount + matchingCase * 2 + commonStart * 3 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100;
+    return -fragmentCount + matchingCase * 20 + commonStart * 30 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100 - integral;
   }
 
   public boolean isStartMatch(String name) {

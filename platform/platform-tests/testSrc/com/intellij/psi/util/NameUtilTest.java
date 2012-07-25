@@ -416,6 +416,10 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("cL", "class", "classLoader");
   }
 
+  public void testPreferAdjacentWords() {
+    assertPreference("*psfi", "PsiJavaFileBaseImpl", "PsiFileImpl", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
   public void testPreferStartMatchToMiddleMatch() {
     assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
