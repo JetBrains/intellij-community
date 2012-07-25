@@ -10,6 +10,7 @@ public class MergeNestedTryStatementsIntentionTest extends IPPTestCase {
 
   public void testSimple() { doTest(); }
   public void testWithoutAndWithResources() { doTest(); }
+  public void testOldStyle() { doTest(); }
 
   @Override
   protected String getIntentionName() {
