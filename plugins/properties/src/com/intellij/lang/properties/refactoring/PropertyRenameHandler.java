@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,14 @@ public class PropertyRenameHandler extends PsiElementRenameHandler {
     if (reference instanceof PropertyReferenceBase) {
       final ResolveResult[] resolveResults = ((PropertyReferenceBase)reference).multiResolve(false);
       return resolveResults.length > 0 ? resolveResults[0].getElement() : null;
+    } else if (reference instanceof PsiMultiReference) {
+      final PsiReference[] references = ((PsiMultiReference)reference).getReferences();
+      for (PsiReference psiReference : references) {
+        if (psiReference instanceof PropertyReferenceBase) {
+          final ResolveResult[] resolveResults = ((PropertyReferenceBase)psiReference).multiResolve(false);
+          if (resolveResults.length > 0) return resolveResults[0].getElement();
+        }
+      }
     }
     return null;
   }
