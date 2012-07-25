@@ -136,6 +136,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       rtype = getReturnTypeByQName(overloadedQName, anchor);
       if (rtype != null) {
         boolean matched = true;
+        boolean notNullParameterMatch = false;
         for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
           final PyNamedParameter p = entry.getValue();
           final String name = p.getName();
@@ -157,11 +158,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             }
           }
           final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
-          if (!PyTypeChecker.match(paramType, argType, context)) {
+          if (PyTypeChecker.match(paramType, argType, context)) {
+            if (argType != null && paramType != null) {
+              notNullParameterMatch = true;
+            }
+          }
+          else {
             matched = false;
           }
         }
-        if (matched) {
+        if (matched && notNullParameterMatch) {
           return rtype;
         }
       }
