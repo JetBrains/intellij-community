@@ -85,9 +85,14 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
     ResourceValue value = myValue.getValue();
     assert value != null;
     String resType = value.getResourceType();
+
     if (resType != null && newElementName != null) {
-      myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType,
-                                                 AndroidCommonUtils.getResourceName(resType, newElementName)));
+      // todo: do not allow new value resource name to contain dot, because it is impossible to check if it file or value otherwise
+
+      final String newResName = newElementName.contains(".") // it is file
+                                ? AndroidCommonUtils.getResourceName(resType, newElementName)
+                                : newElementName;
+      myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType, newResName));
     }
     return myValue.getXmlTag();
   }
