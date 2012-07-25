@@ -20,7 +20,6 @@ import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
@@ -181,15 +180,10 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
     if (!processMostProbableInheritors(parameters, expectedClassTypes, consumer)) return;
 
     //long
-    final Condition<String> shortNameCondition = new Condition<String>() {
-      public boolean value(String s) {
-        return matcher.prefixMatches(s);
-      }
-    };
     for (final PsiClassType type : expectedClassTypes) {
       final PsiClass psiClass = type.resolve();
       if (psiClass != null && !psiClass.hasModifierProperty(PsiModifier.FINAL)) {
-        CodeInsightUtil.processSubTypes(type, parameters.getPosition(), false, shortNameCondition, consumer);
+        CodeInsightUtil.processSubTypes(type, parameters.getPosition(), false, matcher, consumer);
       }
     }
   }

@@ -15,7 +15,9 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.completion.AllClassesGetter;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.lang.Language;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
@@ -257,13 +259,18 @@ public class CodeInsightUtil {
   public static void processSubTypes(PsiType psiType,
                                      final PsiElement context,
                                      boolean getRawSubtypes,
-                                     @NotNull Condition<String> shortNameCondition,
+                                     @NotNull final PrefixMatcher matcher,
                                      Consumer<PsiType> consumer) {
     int arrayDim = psiType.getArrayDimensions();
 
     psiType = psiType.getDeepComponentType();
     if (!(psiType instanceof PsiClassType)) return;
 
+    final Condition<String> shortNameCondition = new Condition<String>() {
+      public boolean value(String s) {
+        return matcher.prefixMatches(s);
+      }
+    };
 
     final PsiClassType baseType = (PsiClassType)psiType;
     final PsiClassType.ClassResolveResult baseResult =
@@ -281,15 +288,30 @@ public class CodeInsightUtil {
         return context.getResolveScope();
       }
     });
-    final Query<PsiClass> baseQuery = ClassInheritorsSearch.search(
-      new ClassInheritorsSearch.SearchParameters(baseClass, scope, true, false, false, shortNameCondition));
-    final Query<PsiClass> query = new FilteredQuery<PsiClass>(baseQuery, new Condition<PsiClass>() {
-      public boolean value(final PsiClass psiClass) {
-        return !(psiClass instanceof PsiTypeParameter);
-      }
-    });
 
-    query.forEach(createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, consumer, baseClass, baseSubstitutor));
+    final Processor<PsiClass> inheritorsProcessor =
+      createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, consumer, baseClass, baseSubstitutor);
+    if (matcher.getPrefix().length() > 2) {
+      AllClassesGetter.processJavaClasses(matcher, context.getProject(), scope, new Processor<PsiClass>() {
+        @Override
+        public boolean process(PsiClass psiClass) {
+          if (psiClass.isInheritor(baseClass, true)) {
+            return inheritorsProcessor.process(psiClass);
+          }
+          return true;
+        }
+      });
+    } else {
+      final Query<PsiClass> baseQuery = ClassInheritorsSearch.search(
+        new ClassInheritorsSearch.SearchParameters(baseClass, scope, true, false, false, shortNameCondition));
+      final Query<PsiClass> query = new FilteredQuery<PsiClass>(baseQuery, new Condition<PsiClass>() {
+        public boolean value(final PsiClass psiClass) {
+          return !(psiClass instanceof PsiTypeParameter);
+        }
+      });
+      query.forEach(inheritorsProcessor);
+    }
+
   }
 
   public static Processor<PsiClass> createInheritorsProcessor(final PsiElement context, final PsiClassType baseType,

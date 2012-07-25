@@ -20,12 +20,10 @@ import com.intellij.codeInsight.completion.JavaSmartCompletionParameters;
 import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -56,18 +54,12 @@ public class ClassLiteralGetter {
       PsiFile file = position.getContainingFile();
       addClassLiteralLookupElement(classParameter, result, file);
       if (addInheritors) {
-        addInheritorClassLiterals(file, new Condition<String>() {
-          @Override
-          public boolean value(String s) {
-            return matcher.prefixMatches(s);
-          }
-        }, classParameter, result, matcher);
+        addInheritorClassLiterals(file, classParameter, result, matcher);
       }
     }
   }
 
   private static void addInheritorClassLiterals(final PsiFile context,
-                                                Condition<String> shortNameCondition,
                                                 final PsiType classParameter,
                                                 final Consumer<LookupElement> result, PrefixMatcher matcher) {
     final String canonicalText = classParameter.getCanonicalText();
@@ -75,7 +67,7 @@ public class ClassLiteralGetter {
       return;
     }
 
-    CodeInsightUtil.processSubTypes(classParameter, context, true, shortNameCondition, new Consumer<PsiType>() {
+    CodeInsightUtil.processSubTypes(classParameter, context, true, matcher, new Consumer<PsiType>() {
       @Override
       public void consume(PsiType type) {
         addClassLiteralLookupElement(type, result, context);
