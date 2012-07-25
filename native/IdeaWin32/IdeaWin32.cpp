@@ -17,6 +17,8 @@
 #include "IdeaWin32.h"
 #include <windows.h>
 
+typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr) (HANDLE, LPCWSTR, DWORD, DWORD dwFlags);
+static GetFinalPathNameByHandlePtr __GetFinalPathNameByHandle = NULL;
 
 static jfieldID nameID = NULL;
 static jfieldID attributesID = NULL;
@@ -66,6 +68,7 @@ static jobject CreateFileInfo(JNIEnv *env, jstring path, bool append, LPWIN32_FI
             timestamp = 0;
             length = 0;
 
+            // todo: optimize to avoid extra copying
             size_t nameLen = env->GetStringLength(path) + wcslen(lpData->cFileName) + 2;
             wchar_t *lpName = (wchar_t *)malloc(nameLen * sizeof(wchar_t));
             if (lpName != NULL) {
@@ -116,6 +119,9 @@ static jobject CreateFileInfo(JNIEnv *env, jstring path, bool append, LPWIN32_FI
 
 
 JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs(JNIEnv *env, jclass cls) {
+    __GetFinalPathNameByHandle =
+        (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetFinalPathNameByHandleW");
+
     jclass fileInfoClass = getFileInfoClass(env);
     if (fileInfoClass == NULL) {
         return;
@@ -166,6 +172,10 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
 
 
 JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_resolveSymLink0(JNIEnv *env, jobject method, jstring path) {
+    if (__GetFinalPathNameByHandle == NULL) {
+        return NULL;  // XP
+    }
+
     WIN32_FIND_DATA data;
     HANDLE h = FindFileInner(env, path, &data);
     if (h == INVALID_HANDLE_VALUE) {
@@ -187,7 +197,7 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
     jstring result = NULL;
 
     TCHAR name[MAX_PATH];
-    DWORD len = GetFinalPathNameByHandle(th, name, MAX_PATH, 0);
+    DWORD len = __GetFinalPathNameByHandle(th, name, MAX_PATH, 0);
     if (len > 0) {
         if (len < MAX_PATH) {
             result = env->NewString((jchar *)name, len);
@@ -195,7 +205,7 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
         else {
             TCHAR *name = (TCHAR *)malloc(sizeof(TCHAR) * (len + 1));
             if (name != NULL) {
-                len = GetFinalPathNameByHandle(th, name, len, 0);
+                len = __GetFinalPathNameByHandle(th, name, len, 0);
                 if (len > 0) {
                     result = env->NewString((jchar *)name, len);
                 }
