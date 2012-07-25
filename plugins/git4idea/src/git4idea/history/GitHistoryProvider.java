@@ -47,49 +47,26 @@ import java.util.List;
  */
 public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHistorySessionFactory<Boolean, VcsAbstractHistorySession>,
                                            VcsBaseRevisionAdviser {
-  /**
-   * logger instance
-   */
   private static final Logger log = Logger.getInstance(GitHistoryProvider.class.getName());
-  /**
-   * the current project instance
-   */
-  private final Project myProject;
 
-  /**
-   * A constructor
-   *
-   * @param project a context project
-   */
+  @NotNull private final Project myProject;
+
   public GitHistoryProvider(@NotNull Project project) {
-    this.myProject = project;
+    myProject = project;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
     return VcsDependentHistoryComponents.createOnlyColumns(new ColumnInfo[0]);
   }
 
-  /**
-   * {@inheritDoc}
-   * @param refresher
-   */
   public AnAction[] getAdditionalActions(Runnable refresher) {
     return new AnAction[]{new GitShowAllSubmittedFilesAction(), new GitCopyHistoryRevisionNumberAction()};
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public boolean isDateOmittable() {
     return false;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Nullable
   public String getHelpId() {
     return null;
@@ -113,9 +90,6 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     return createSession(filePath, revisions, currentRevision);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Nullable
   public VcsHistorySession createSessionFor(final FilePath filePath) throws VcsException {
     List<VcsFileRevision> revisions = null;
@@ -205,5 +179,10 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
    */
   public boolean supportsHistoryForDirectories() {
     return true;
+  }
+
+  @Override
+  public DiffFromHistoryHandler getHistoryDiffHandler() {
+    return new GitDiffFromHistoryHandler(myProject);
   }
 }

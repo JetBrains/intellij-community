@@ -56,4 +56,12 @@ public interface VcsHistoryProvider extends VcsProviderMarker {
   void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException;
 
   boolean supportsHistoryForDirectories();
+
+  /**
+   * The returned {@link DiffFromHistoryHandler} will be called, when user calls "Show Diff" from the file history panel.
+   * If {@code null} is returned, the standard handler will be used, which is suitable for most cases.
+   */
+  @Nullable
+  DiffFromHistoryHandler getHistoryDiffHandler();
+
 }

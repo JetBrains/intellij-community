@@ -161,6 +161,12 @@ class MockGit implements Git {
 
   @NotNull
   @Override
+  GitCommandResult show(@NotNull GitRepository repository, @NotNull String revision) {
+    throw new UnsupportedOperationException()
+  }
+
+  @NotNull
+  @Override
   GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit, @NotNull GitLineHandlerListener... listeners) {
     GitCommandResult result = callExecutor(CHERRY_PICK)
     if (result != null) {

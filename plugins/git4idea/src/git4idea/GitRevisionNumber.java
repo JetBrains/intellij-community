@@ -106,13 +106,7 @@ public class GitRevisionNumber implements ShortVcsRevisionNumber {
    */
   @NotNull
   public String getShortRev() {
-    if (myRevisionHash.length() == 0) return "";
-    if (myRevisionHash.length() == 40) return myRevisionHash.substring(0, 8);
-    if (myRevisionHash.length() > 40)  // revision string encoded with date too
-    {
-      return myRevisionHash.substring(myRevisionHash.indexOf("[") + 1, 8);
-    }
-    return myRevisionHash;
+    return GitUtil.getShortHash(myRevisionHash);
   }
 
   /**
