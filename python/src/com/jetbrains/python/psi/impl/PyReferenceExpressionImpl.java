@@ -231,18 +231,6 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
             if (classType.isDefinition()) {
               return Ref.<PyType>create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
             }
-            // DEBUG:
-            /*
-            final Maybe<Callable> accessor = property.getByDirection(AccessDirection.of(this));
-            if (!accessor.isDefined()) {
-              return Ref.create(null);
-            }
-            PsiElement resolved = this.getReference().resolve(); // to a correct accessor
-            if (resolved instanceof Callable) {
-              PyType type = ((Callable)resolved).getReturnType(context, this);
-              return Ref.create(type);
-            }
-            */
             final Maybe<Callable> accessor = property.getByDirection(AccessDirection.of(this));
             final Callable callable = accessor.valueOrNull();
             final PyType type = (callable != null) ? callable.getReturnType(context, this) : null;
