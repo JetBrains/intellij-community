@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="relaxng" scope="RUNTIME" />
     <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="localization" scope="TEST" />
+    <orderEntry type="module" module-name="rest" scope="TEST" />
   </component>
 </module>
 
