@@ -284,6 +284,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   public void testEntityRefCompletion2() throws Exception {
     configureByFiles("28.xml", "28.ent");
     complete();
+    type('\n');
     checkResultByFile("28_after.xml");
   }
 

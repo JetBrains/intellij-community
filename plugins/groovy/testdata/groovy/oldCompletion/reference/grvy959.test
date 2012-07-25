@@ -4,5 +4,6 @@ public String fooooo(){}
 
 MyClass.fo<caret>
 -----
+findIndexOf
 forName
 forName

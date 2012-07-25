@@ -1,3 +1,5 @@
 -Camel.java
  -Camel
-  [getSomeHead():void]
+  [doSomethingWithMyHead():void]
+  getSomeArtHeader():void
+  getSomeHead():void

@@ -17,6 +17,7 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -72,7 +73,11 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   }
 
   public void testStyles2() throws Throwable {
-    toTestCompletion("styles2.xml", "styles2_after.xml");
+    VirtualFile file = copyFileToProject("styles2.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResultByFile(testFolder + '/' + "styles2_after.xml");
   }
 
   public void testStyles3() throws Throwable {
@@ -155,7 +160,11 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   }
 
   public void testStylesAttrNameWithoutPrefix() throws Throwable {
-    doTestCompletion();
+    VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResultByFile(testFolder + '/' + getTestName(true) + "_after.xml");
   }
 
   public void testMoreTypes() throws Throwable {

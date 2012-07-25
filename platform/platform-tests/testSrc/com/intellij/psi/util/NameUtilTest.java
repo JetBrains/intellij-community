@@ -51,6 +51,11 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("AACl", "AAClass");
     assertMatches("ZZZ", "ZZZZZZZZZZ");
   }
+
+  public void testSkipWords() {
+    assertMatches("nt", "NameUtilTest");
+    assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
+  }
   
   public void testSimpleCasesWithFirstLowercased() throws Exception {
     assertMatches("N", "nameUtilTest");
@@ -79,9 +84,9 @@ public class NameUtilTest extends UsefulTestCase {
   
   public void testXMLCompletion() throws Exception {
     assertDoesntMatch("N_T", "NameUtilTest");
-    assertDoesntMatch("ORGS_ACC", "ORGS_POSITION_ACCOUNTABILITY");
-    assertDoesntMatch("ORGS-ACC", "ORGS-POSITION_ACCOUNTABILITY");
-    assertDoesntMatch("ORGS.ACC", "ORGS.POSITION_ACCOUNTABILITY");
+    assertMatches("ORGS_ACC", "ORGS_POSITION_ACCOUNTABILITY");
+    assertMatches("ORGS-ACC", "ORGS-POSITION_ACCOUNTABILITY");
+    assertMatches("ORGS.ACC", "ORGS.POSITION_ACCOUNTABILITY");
   }
 
   public void testStarFalsePositive() throws Exception {
@@ -112,7 +117,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("ARS.j", "activity_report_summary.xml");
     assertDoesntMatch("ARS.j", "activity_report_summary_justsometingwrong.xml");
 
-    assertDoesntMatch("foo.goo", "foo.bar.goo");
+    assertMatches("foo.goo", "foo.bar.goo");
   }
 
   public void testSpaceForAnyWordsInBetween() {
@@ -168,8 +173,8 @@ public class NameUtilTest extends UsefulTestCase {
   public void testSkipDot() {
     assertMatches("ja", "jquery.autocomplete.js");
     assertMatches("ja.js", "jquery.autocomplete.js");
-    assertDoesntMatch("jajs", "jquery.autocomplete.js");
-    assertDoesntMatch("j.ajs", "jquery.autocomplete.js");
+    assertMatches("jajs", "jquery.autocomplete.js");
+    assertMatches("j.ajs", "jquery.autocomplete.js");
   }
 
   public void testNoExtension() {
@@ -192,11 +197,11 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("*inspection*.pro", "InspectionsInProgress.png");
   }
 
-  public void testIgnoreLeadingUnderscore() throws Exception {
-    assertMatches("form", "_form.html.erb");
+  public void testLeadingUnderscore() throws Exception {
+    assertDoesntMatch("form", "_form.html.erb");
     assertMatches("_form", "_form.html.erb");
     assertMatches("_form", "__form");
-    assertFalse(NameUtil.buildMatcher("_form", 1, true, true, false).matches("__form"));
+    assertTrue(firstLetterMatcher("_form").matches("__form"));
   }
 
   public void testLowerCaseWords() throws Exception {
@@ -208,6 +213,8 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testObjectiveCCases() throws Exception {
+    assertMatches("h*:", "h:aaa");
+    assertMatches("h:", "h:aaa");
     assertMatches("text:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("abc", "aaa:bbb:ccc");
     assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
@@ -293,7 +300,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("foo", "fxoo");
     assertMatches("foo", "fOo");
     assertMatches("foo", "fxOo");
-    assertDoesntMatch("foo", "fXOo");
+    assertMatches("foo", "fXOo");
     assertMatches("fOo", "foo");
     assertMatches("fOo", "FaOaOaXXXX");
     assertMatches("ncdfoe", "NoClassDefFoundException");
@@ -338,7 +345,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("a@b", "a@bc");
 
     assertMatches("a/text", "a/Text");
-    assertDoesntMatch("a/text", "a/bbbText");
+    assertMatches("a/text", "a/bbbText");
   }
 
   public void testMinusculeFirstLetter() {
@@ -459,7 +466,7 @@ public class NameUtilTest extends UsefulTestCase {
     for (String s : CollectionFactory.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
       matching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
-    for (String s : CollectionFactory.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "ta")) {
+    for (String s : CollectionFactory.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tag")) {
       nonMatching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 

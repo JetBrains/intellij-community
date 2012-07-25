@@ -76,7 +76,12 @@ class GrCompletionWithLibraryTest extends GroovyCompletionTestBase {
   public void testInjectMethodForMap() throws Throwable {doBasicTest();}
   public void testClosureDefaultParameterInEachMethod() throws Throwable {doBasicTest();}
   public void testEachMethodForRanges() throws Throwable {doBasicTest();}
-  public void testEachMethodForEnumRanges() throws Throwable {doBasicTest();}
+  public void testEachMethodForEnumRanges() throws Throwable {
+    myFixture.configureByFile(getTestName(false) + ".groovy")
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
+  }
 
   public void testPrintlnSpace() { checkCompletion 'print<caret>', 'l ', "println <caret>" }
   public void testHashCodeSpace() { checkCompletion 'if ("".h<caret>', ' ', 'if ("".hashCode() <caret>' }
