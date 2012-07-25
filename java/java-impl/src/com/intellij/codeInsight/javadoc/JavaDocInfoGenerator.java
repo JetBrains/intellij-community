@@ -55,8 +55,6 @@ public class JavaDocInfoGenerator {
 
   private static final @NonNls Pattern ourNotDot = Pattern.compile("[^.]");
   private static final @NonNls Pattern ourWhitespaces = Pattern.compile("[ \\n\\r\\t]+");
-  private static final @NonNls Matcher ourNotDotMatcher = ourNotDot.matcher("");
-  private static final @NonNls Matcher ourWhitespacesMatcher = ourWhitespaces.matcher("");
 
   private final Project myProject;
   private final PsiElement myElement;
@@ -864,7 +862,7 @@ public class JavaDocInfoGenerator {
       String text = description.getText();
 
       if (text != null) {
-        if (ourWhitespacesMatcher.reset(text).replaceAll("").length() != 0) {
+        if (ourWhitespaces.matcher(text).replaceAll("").length() != 0) {
           return false;
         }
       }
@@ -943,13 +941,16 @@ public class JavaDocInfoGenerator {
       LOG.error("Class or member expected but found " + myElement.getClass().getName());
     }
 
+    if (aClass == null) {
+      return "";
+    }
+    
     String qName = aClass.getQualifiedName();
-
     if (qName == null) {
       return "";
     }
 
-    return "../" + ourNotDotMatcher.reset(qName).replaceAll("").replaceAll(".", "../");
+    return "../" + ourNotDot.matcher(qName).replaceAll("").replaceAll(".", "../");
   }
 
   private void generateValue(StringBuilder buffer,
