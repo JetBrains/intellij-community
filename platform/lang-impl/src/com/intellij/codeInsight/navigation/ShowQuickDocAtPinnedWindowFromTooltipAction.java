@@ -45,7 +45,7 @@ public class ShowQuickDocAtPinnedWindowFromTooltipAction extends AnAction {
   @Nullable private WeakReference<Pair<PsiElement, PsiElement>> myInfo;
 
   public ShowQuickDocAtPinnedWindowFromTooltipAction() {
-    String className = getClass().getName();
+    String className = getClass().getSimpleName();
     String actionId = className.substring(0, className.lastIndexOf("Action"));
     getTemplatePresentation().setText(ActionsBundle.actionText(actionId));
     getTemplatePresentation().setDescription(ActionsBundle.actionDescription(actionId));
