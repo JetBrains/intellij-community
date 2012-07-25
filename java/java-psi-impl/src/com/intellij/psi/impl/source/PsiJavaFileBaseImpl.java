@@ -70,9 +70,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   @Override
   @SuppressWarnings({"CloneDoesntDeclareCloneNotSupportedException"})
   protected PsiJavaFileBaseImpl clone() {
-    PsiJavaFileBaseImpl clone = (PsiJavaFileBaseImpl)super.clone();
+    PsiFileImpl clone = super.clone();
+    if (!(clone instanceof PsiJavaFileBaseImpl)) {
+      throw new AssertionError("Java file cloned as text: " + getTextLength() + "; " + getViewProvider());
+    }
     clone.clearCaches();
-    return clone;
+    return (PsiJavaFileBaseImpl)clone;
   }
 
   @Override
