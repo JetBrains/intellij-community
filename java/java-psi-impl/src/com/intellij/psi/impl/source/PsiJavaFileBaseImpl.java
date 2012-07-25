@@ -269,6 +269,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
                                      @NotNull final ResolveState state,
                                      PsiElement lastParent,
                                      @NotNull PsiElement place) {
+    assert isValid();
+
     if (processor instanceof ClassResolverProcessor && isPhysical() &&
         (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue())) {
       final ClassResolverProcessor hint = (ClassResolverProcessor)processor;
