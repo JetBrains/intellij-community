@@ -39,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
+import static com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType.CallExpression;
+
 /**
  * @author yole
  */
@@ -599,6 +601,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
             if (getter != NONE || setter != NONE || deleter != NONE) {
               final PropertyImpl property = new PropertyImpl(targetStub.getName(), getter, setter, deleter, doc, targetStub.getPsi());
               if (propertyProcessor == null || propertyProcessor.process(property)) return property;
+            }
+          }
+          final PyQualifiedName initializer = targetStub.getInitializer();
+          if (targetStub.getInitializerType() == CallExpression && initializer != null && PyNames.PROPERTY.equals(initializer.toString())) {
+            final PropertyImpl property = new PropertyImpl(targetStub.getName(), UNKNOWN_CALL, UNKNOWN_CALL, UNKNOWN_CALL,
+                                                           null, targetStub.getPsi());
+            if (propertyProcessor == null || propertyProcessor.process(property)) {
+              return property;
             }
           }
         }
