@@ -50,6 +50,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("NaUtTe", "NameUtilTest");
     assertMatches("AACl", "AAClass");
     assertMatches("ZZZ", "ZZZZZZZZZZ");
+    assertMatches("", "");
   }
 
   public void testSkipWords() {

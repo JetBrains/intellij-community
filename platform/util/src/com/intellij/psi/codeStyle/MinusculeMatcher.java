@@ -133,6 +133,9 @@ public class MinusculeMatcher implements Matcher {
       return null;
     }
     if (!isWildcard(patternIndex)) {
+      if (patternIndex == myPattern.length) {
+        return FList.emptyList();
+      }
       return matchFragment(name, patternIndex, nameIndex);
     }
 
