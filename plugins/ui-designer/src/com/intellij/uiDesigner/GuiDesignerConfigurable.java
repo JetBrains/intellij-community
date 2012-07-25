@@ -16,7 +16,6 @@
 package com.intellij.uiDesigner;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.icons.AllIcons;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;

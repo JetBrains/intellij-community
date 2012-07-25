@@ -258,6 +258,7 @@ public class CoreApplicationEnvironment {
     });
   }
 
+
   public static <T> void registerExtensionPoint(final ExtensionsArea area, final ExtensionPointName<T> extensionPointName,
                                                    final Class<? extends T> aClass) {
     final String name = extensionPointName.getName();
