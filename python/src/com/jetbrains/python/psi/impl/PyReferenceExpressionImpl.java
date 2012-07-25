@@ -19,7 +19,9 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.completion.PydevConsoleReference;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.references.*;
+import com.jetbrains.python.psi.impl.references.PyImportReference;
+import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
+import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
@@ -218,24 +220,39 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
   @Nullable
   public Ref<PyType> getTypeOfProperty(@NotNull TypeEvalContext context) {
-    PyExpression qualifier = getQualifier();
+    final PyExpression qualifier = getQualifier();
     final String name = getName();
     if (name != null && qualifier != null) {
-      PyType qualifierType = context.getType(qualifier);
-      if (qualifierType instanceof PyClassType) {
-        final PyClassType classType = (PyClassType)qualifierType;
-        PyClass pyClass = classType.getPyClass();
-        if (pyClass != null) {
-          Property property = pyClass.findProperty(name);
-          if (property != null) {
-            if (classType.isDefinition()) {
-              return Ref.<PyType>create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
-            }
-            final Maybe<PyFunction> accessor = property.getByDirection(AccessDirection.of(this));
-            final PyFunction function = accessor.valueOrNull();
-            final PyType type = (function != null) ? function.getReturnType(context, this) : null;
-            return Ref.create(type);
+      final PyType qualifierType = context.getType(qualifier);
+      return getTypeOfProperty(qualifierType, name, context);
+    }
+    return null;
+  }
+
+  @Nullable
+  private Ref<PyType> getTypeOfProperty(@Nullable PyType qualifierType, @NotNull String name, @NotNull TypeEvalContext context) {
+    if (qualifierType instanceof PyClassType) {
+      final PyClassType classType = (PyClassType)qualifierType;
+      PyClass pyClass = classType.getPyClass();
+      if (pyClass != null) {
+        Property property = pyClass.findProperty(name);
+        if (property != null) {
+          if (classType.isDefinition()) {
+            return Ref.<PyType>create(PyBuiltinCache.getInstance(pyClass).getObjectType(PyNames.PROPERTY));
           }
+          final Maybe<PyFunction> accessor = property.getByDirection(AccessDirection.of(this));
+          final PyFunction function = accessor.valueOrNull();
+          final PyType type = (function != null) ? function.getReturnType(context, this) : null;
+          return Ref.create(type);
+        }
+      }
+    }
+    else if (qualifierType instanceof PyUnionType) {
+      final PyUnionType unionType = (PyUnionType)qualifierType;
+      for (PyType type : unionType.getMembers()) {
+        final Ref<PyType> result = getTypeOfProperty(type, name, context);
+        if (result != null) {
+          return result;
         }
       }
     }
