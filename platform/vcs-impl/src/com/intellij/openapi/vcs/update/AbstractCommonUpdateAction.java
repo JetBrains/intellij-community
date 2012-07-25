@@ -388,9 +388,6 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           ProgressManager.progress(VcsBundle.message("progress.text.synchronizing.files"));
           doVfsRefresh();
         } finally {
-          if (myProject.isOpen() && (! myProject.isDisposed())) { // not sure
-            myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
-          }
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
           myProject.getMessageBus().syncPublisher(UpdatedFilesListener.UPDATED_FILES).
             consume(UpdatedFilesReverseSide.getPathsFromUpdatedFiles(myUpdatedFiles));
@@ -480,9 +477,12 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       final boolean continueChainFinal = continueChain;
 
       final boolean someSessionWasCancelled = wasCanceled || someSessionWasCanceled(myUpdateSessions);
+      // here text conflicts might be interactively resolved
       for (final UpdateSession updateSession : myUpdateSessions) {
         updateSession.onRefreshFilesCompleted();
       }
+      // only after conflicts are resolved, put a label
+      myAfter = LocalHistory.getInstance().putSystemLabel(myProject, "After update");
 
       if (myActionInfo.canChangeFileStatus()) {
         final List<VirtualFile> files = new ArrayList<VirtualFile>();

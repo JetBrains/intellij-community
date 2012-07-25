@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.merge;
 import com.intellij.CommonBundle;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.ActionButtonPresentation;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.DiffRequestFactory;
@@ -221,22 +222,27 @@ public class MultipleFileMergeDialog extends DialogWrapper {
       final Ref<Exception> ex = new Ref<Exception>();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          try {
-            if (!(myProvider instanceof MergeProvider2) || myMergeSession.canMerge(file)) {
-              MergeData data = myProvider.loadRevisions(file);
-              if (isCurrent) {
-                file.setBinaryContent(data.CURRENT);
+          CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            @Override
+            public void run() {
+              try {
+                if (!(myProvider instanceof MergeProvider2) || myMergeSession.canMerge(file)) {
+                  MergeData data = myProvider.loadRevisions(file);
+                  if (isCurrent) {
+                    file.setBinaryContent(data.CURRENT);
+                  }
+                  else {
+                    file.setBinaryContent(data.LAST);
+                    checkMarkModifiedProject(file);
+                  }
+                }
+                markFileProcessed(file, isCurrent ? MergeSession.Resolution.AcceptedYours : MergeSession.Resolution.AcceptedTheirs);
               }
-              else {
-                file.setBinaryContent(data.LAST);
-                checkMarkModifiedProject(file);
+              catch (Exception e) {
+                ex.set(e);
               }
             }
-            markFileProcessed(file, isCurrent ? MergeSession.Resolution.AcceptedYours : MergeSession.Resolution.AcceptedTheirs);
-          }
-          catch (Exception e) {
-            ex.set(e);
-          }
+          }, "Accept " + (isCurrent ? "Yours" : "Theirs"), null);
         }
       });
       if (!ex.isNull()) {

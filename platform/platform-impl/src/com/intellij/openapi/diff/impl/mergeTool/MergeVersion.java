@@ -90,7 +90,12 @@ public interface MergeVersion {
     public void applyText(final String text, final Project project) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         public void run() {
-          doApplyText(text, project);
+          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+            @Override
+            public void run() {
+              doApplyText(text, project);
+            }
+          }, "Merge changes", null);
         }
       });
     }
