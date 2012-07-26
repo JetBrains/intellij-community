@@ -384,11 +384,6 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       // todo add to fastTrack
       processUsagesInText(element, processor, (GlobalSearchScope)options.searchScope);
     }
-
-    final CustomJavaFindUsagesHandlerProvider[] customJavaFindUsagesHandlerProviders = Extensions.getExtensions(CustomJavaFindUsagesHandlerProvider.EP_NAME);
-    for (CustomJavaFindUsagesHandlerProvider provider : customJavaFindUsagesHandlerProviders) {
-      provider.getHandler().processElementUsages(element, processor, options);
-    }
   }
 
   private static void addAliasingUsages(PomTarget pomTarget, final Processor<UsageInfo> processor, final FindUsagesOptions options) {
