@@ -43,8 +43,6 @@ public class DiffOptionsForm implements SearchableConfigurable, Configurable.NoS
   private TextFieldWithBrowseButton myMergeTool;
   private JCheckBox myEnableMerge;
   private JTextField myMergeParameters;
-  private JLabel myMergeParamInfo;
-  private JPanel myMergePanel;
 
   private final ToolPath[] myTools = new ToolPath[3];
 
