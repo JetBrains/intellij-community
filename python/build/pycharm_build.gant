@@ -43,8 +43,9 @@ setProperty("pluginFilter", [
             "python-remote-interpreter",
             "diagram-api", "uml",
             "python-uml", "localization",
-            "rest"
-            ])
+            "python-localization",
+            "rest", "python-rest"
+])
 
 private List<String> pycharmPlatformApiModules() {
   return [platformUltimateApiModules, "graph-openapi"].flatten()
@@ -358,10 +359,25 @@ private layoutFull(Map args, String target, Set usedJars) {
           }
         }
       }
+      dir("python-localization") {
+        dir("lib") {
+          jar("python-localization.jar") {
+            module("python-localization")
+          }
+        }
+      }
+
       dir("rest") {
         dir("lib") {
           jar("rest.jar") {
             module("rest")
+          }
+        }
+      }
+      dir("python-rest") {
+        dir("lib") {
+          jar("python-rest.jar") {
+            module("python-rest")
           }
         }
       }
