@@ -66,13 +66,20 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     final VirtualFile file = getAffectedFile(event);
 
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      return;
-    }
     GitRepository repository = manager.getRepositoryForFile(file);
     assert repository != null;
 
-    final String head = repository.getCurrentRevision();
+    GitBranch currentBranch = repository.getCurrentBranch();
+    final String head;
+    if (currentBranch == null) {
+      String currentRevision = repository.getCurrentRevision();
+      LOG.assertTrue(currentRevision != null,
+                     "Current revision is null for " + repository + ". Compare with branch shouldn't be available for fresh repository");
+      head = GitUtil.getShortHash(currentRevision);
+    }
+    else {
+      head = currentBranch.getName();
+    }
     final List<String> branchNames = getBranchNamesExceptCurrent(repository);
 
     // prepare and invoke popup
@@ -132,11 +139,6 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     }
 
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(true);
-      return;
-    }
 
     GitRepository repository = manager.getRepositoryForFile(vFiles[0]);
     if (repository == null || repository.isFresh() || noBranchesToCompare(repository)) {
