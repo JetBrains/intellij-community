@@ -78,7 +78,7 @@ class ListToolbarDecorator extends ToolbarDecorator {
 
   @Override
   protected void updateButtons() {
-    final CommonActionsPanel p = getPanel();
+    final CommonActionsPanel p = getActionsPanel();
     if (p != null) {
       if (myList.isEnabled()) {
         final int index = myList.getSelectedIndex();
