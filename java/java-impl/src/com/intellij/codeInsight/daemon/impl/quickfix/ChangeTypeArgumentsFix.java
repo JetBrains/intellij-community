@@ -63,7 +63,8 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
     return "Change type arguments to <" + StringUtil.join(myPsiClass.getTypeParameters(), new Function<PsiTypeParameter, String>() {
       @Override
       public String fun(PsiTypeParameter typeParameter) {
-        return substitutor.substitute(typeParameter).getPresentableText();
+        final PsiType substituted = substitutor.substitute(typeParameter);
+        return substituted != null ? substituted.getPresentableText() : CommonClassNames.JAVA_LANG_OBJECT;
       }
     }, ", ") + ">";
   }
@@ -93,6 +94,9 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
               if (!myExpressions[i].isValid()) return false;
               final PsiType actualType = myExpressions[i].getType();
               if (expectedType == null || actualType == null || !TypeConversionUtil.isAssignable(expectedType, actualType)) return false;
+            }
+            for (PsiTypeParameter parameter : typeParameters) {
+              if (substitutor.substitute(parameter) == null) return false;
             }
             return true;
           }
