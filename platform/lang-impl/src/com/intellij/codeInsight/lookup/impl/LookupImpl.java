@@ -940,6 +940,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         @Override
         public void run() {
           assert !myDisposed;
+          if (((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) return;
           myElementHint = new LookupHint();
           myLayeredPane.add(myElementHint, 20, 0);
           myLayeredPane.layoutHint();
