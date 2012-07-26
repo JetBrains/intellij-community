@@ -17,10 +17,10 @@ package com.intellij.ui.treeStructure;
 
 import com.intellij.Patches;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -96,8 +96,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setUI(final TreeUI ui) {
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
-      if (!(ui instanceof WideSelectionTreeUI) && (UIUtil.isUnderAquaBasedLookAndFeel() || SystemInfo.isWindows) && isMacWideSelection()) { //todo[kb] fix on ubunty
-        actualUI = new WideSelectionTreeUI(isMacWideSelection(), !SystemInfo.isMac);
+      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
+        actualUI = new WideSelectionTreeUI(isWideSelection(), !SystemInfo.isMac);
       }
     }
     super.setUI(actualUI);
@@ -126,7 +126,17 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return false;
   }
 
+  /**
+   * Will be removed in version 13
+   *
+   * @deprecated use isWideSelection
+   * @see #isWideSelection()
+   */
   protected boolean isMacWideSelection() {
+    return isWideSelection();
+  }
+
+  protected boolean isWideSelection() {
     return true;
   }
 
