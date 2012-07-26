@@ -18,6 +18,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 
@@ -76,14 +78,20 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
 
   public static FilePath safeCastToFilePath(Object o) {
     if (o instanceof FilePath) return (FilePath)o;
+    if (o instanceof Change) {
+      return ChangesUtil.getAfterPath((Change)o);
+    }
     return null;
   }
 
   public static String getRelativePath(FilePath parent, FilePath child) {
-    if (parent == null || ! child.getPath().startsWith(parent.getPath())) return child.getPath().replace('/', File.separatorChar);
-    final String parentPath = parent.getPath();
-    final int beginOffset = (parentPath.length() == 1 && '/' == parentPath.charAt(0)) ? 0 : 1; // IDEADEV-35767
-    return child.getPath().substring(parent.getPath().length() + beginOffset).replace('/', File.separatorChar); 
+    final String systemDependentChild = child.getPath().replace('/', File.separatorChar);
+    final String systemDependentParent = parent == null ? null : parent.getPath().replace('/', File.separatorChar);
+    if (systemDependentParent == null || ! systemDependentChild.startsWith(systemDependentParent)) {
+      return systemDependentChild;
+    }
+    final int beginOffset = (systemDependentParent.length() == 1 && '/' == systemDependentParent.charAt(0)) ? 0 : 1; // IDEADEV-35767
+    return systemDependentChild.substring(systemDependentParent.length() + beginOffset).replace('/', File.separatorChar);
   }
 
   public int getSortWeight() {
