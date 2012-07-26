@@ -65,8 +65,9 @@ public class StaticGenericInfoBuilder {
     myClass = aClass;
 
     final Set<JavaMethod> methods = new THashSet<JavaMethod>();
+    InvocationCache invocationCache = DomApplicationComponent.getInstance().getInvocationCache(myClass);
     for (final Method method : ReflectionCache.getMethods(myClass)) {
-      methods.add(JavaMethod.getMethod(myClass, method));
+      methods.add(invocationCache.getInternedMethod(method));
     }
     for (final JavaMethod method : methods) {
       if (DomImplUtil.isGetter(method) && method.getAnnotation(NameValue.class) != null) {
@@ -80,11 +81,10 @@ public class StaticGenericInfoBuilder {
       if (implClass != null) {
         for (Method method : ReflectionCache.getMethods(implClass)) {
           final int modifiers = method.getModifiers();
-          if (!Modifier.isAbstract(modifiers) && !Modifier.isVolatile(modifiers)) {
-            final JavaMethodSignature signature = new JavaMethodSignature(method);
-            if (signature.findMethod(myClass) != null) {
-              methods.remove(JavaMethod.getMethod(myClass, signature));
-            }
+          if (!Modifier.isAbstract(modifiers) &&
+              !Modifier.isVolatile(modifiers) &&
+              new JavaMethodSignature(method).findMethod(myClass) != null) {
+            methods.remove(invocationCache.getInternedMethod(method));
           }
         }
       }

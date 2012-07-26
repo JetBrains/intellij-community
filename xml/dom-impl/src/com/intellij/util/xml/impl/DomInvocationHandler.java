@@ -604,7 +604,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     invocation = myInvocationCache.getInvocation(method);
     if (invocation != null) return invocation;
 
-    JavaMethod javaMethod = JavaMethod.getMethod(getRawType(), method);
+    JavaMethod javaMethod = myInvocationCache.getInternedMethod(method);
     invocation = myGenericInfo.createInvocation(javaMethod);
     if (invocation != null) {
       myInvocationCache.putInvocation(method, invocation);

@@ -24,6 +24,12 @@ public class InvocationCache {
       return ourCoreInvocations.get(new JavaMethodSignature(key));
     }
   };
+  private final Map<Method, JavaMethod> myJavaMethods = new ConcurrentFactoryMap<Method, JavaMethod>() {
+    @Override
+    protected JavaMethod create(Method key) {
+      return JavaMethod.getMethod(myType, key);
+    }
+  };
   private final Map<JavaMethod, Boolean> myGetters = new ConcurrentFactoryMap<JavaMethod, Boolean>() {
     @Override
     protected Boolean create(JavaMethod key) {
@@ -165,6 +171,10 @@ public class InvocationCache {
   @Nullable
   public Invocation getInvocation(Method method) {
     return myInvocations.get(method);
+  }
+
+  public JavaMethod getInternedMethod(Method method) {
+    return myJavaMethods.get(method);
   }
 
   public void putInvocation(Method method, Invocation invocation) {
