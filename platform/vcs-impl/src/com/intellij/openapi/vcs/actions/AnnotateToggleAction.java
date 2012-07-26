@@ -203,7 +203,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
     if (vcs.getCommittedChangesProvider() != null) {
       additionalActions.add(new ShowDiffFromAnnotation(getUpToDateLineNumber, fileAnnotation, vcs, file));
     }
-    additionalActions.add(new CopyRevisionNumberAction(fileAnnotation));
+    additionalActions.add(new CopyRevisionNumberAction(getUpToDateLineNumber, fileAnnotation));
     final AnnotationPresentation presentation =
       new AnnotationPresentation(highlighting, switcher, editorGutter, gutters,
                                  additionalActions.toArray(new AnAction[additionalActions.size()]));

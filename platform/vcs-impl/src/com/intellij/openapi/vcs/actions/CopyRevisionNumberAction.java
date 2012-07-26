@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.localVcs.UpToDateLineNumberProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineNumberListener;
 import com.intellij.openapi.vcs.history.TextTransferrable;
@@ -27,17 +28,21 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
  * @author Konstantin Bulenkov
  */
 public class CopyRevisionNumberAction extends AnAction implements LineNumberListener {
+  private final UpToDateLineNumberProvider myGetUpToDateLineNumber;
   private final FileAnnotation myAnnotation;
   private int myLineNumber = -1;
 
-  public CopyRevisionNumberAction(FileAnnotation annotation) {
+  public CopyRevisionNumberAction(UpToDateLineNumberProvider getUpToDateLineNumber, FileAnnotation annotation) {
     super("Copy revision number");
+    myGetUpToDateLineNumber = getUpToDateLineNumber;
     myAnnotation = annotation;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(myLineNumber);
+    if (myLineNumber < 0) return;
+    final int corrected = myGetUpToDateLineNumber.getLineNumber(myLineNumber);
+    final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(corrected);
     if (revisionNumber != null) {
       final String revision = revisionNumber.asString();
       CopyPasteManager.getInstance().setContents(new TextTransferrable(revision, revision));
@@ -46,7 +51,9 @@ public class CopyRevisionNumberAction extends AnAction implements LineNumberList
 
   @Override
   public void update(AnActionEvent e) {
-    final boolean enabled = myLineNumber != -1 && myAnnotation.getLineRevisionNumber(myLineNumber) != null;
+    int corrected = myLineNumber;
+    final boolean enabled = myLineNumber >= 0 && (corrected = myGetUpToDateLineNumber.getLineNumber(myLineNumber)) >= 0 &&
+                            myAnnotation.getLineRevisionNumber(corrected) != null;
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);
   }
