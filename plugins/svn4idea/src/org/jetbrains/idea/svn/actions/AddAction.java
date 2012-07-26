@@ -27,25 +27,15 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ui.VcsBackgroundTask;
-import com.intellij.util.ui.VcsBackgroundTaskWithLocalHistory;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.SvnCheckinEnvironment;
-import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.wc.ISVNEventHandler;
-import org.tmatesoft.svn.core.wc.SVNEvent;
-import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 
 public class AddAction extends BasicAction {
   static final Logger log = Logger.getInstance("org.jetbrains.idea.svn.action.AddAction");
@@ -82,10 +72,10 @@ public class AddAction extends BasicAction {
           try {
 
             SVNWCClient wcClient = activeVcs.createWCClient();
-            wcClient.setEventHandler(new AddEventListener(project));
 
             Collection<SVNException> exceptions =
               SvnCheckinEnvironment.scheduleUnversionedFilesForAddition(wcClient, Arrays.asList(items), true);
+            markDirty(project, items);
             if (!exceptions.isEmpty()) {
               final Collection<String> messages = new ArrayList<String>(exceptions.size());
               for (SVNException exception : exceptions) {
@@ -101,6 +91,20 @@ public class AddAction extends BasicAction {
     ProgressManager.getInstance().run(task);
   }
 
+  private void markDirty(Project project, VirtualFile[] items) {
+    final List<VirtualFile> vDirs = new ArrayList<VirtualFile>();
+    final List<VirtualFile> vFiles = new ArrayList<VirtualFile>();
+
+    for (VirtualFile file : items) {
+      if (file.isDirectory()) {
+        vDirs.add(file);
+      } else {
+        vFiles.add(file);
+      }
+    }
+    VcsDirtyScopeManager.getInstance(project).filesDirty(vFiles, vDirs);
+  }
+
   @Override
   protected boolean witeLocalHistory() {
     return false;
@@ -114,26 +118,5 @@ public class AddAction extends BasicAction {
   protected void perform(Project project, SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
     addFiles(project, activeVcs, new VirtualFile[] {file});
-  }
-
-  private static class AddEventListener implements ISVNEventHandler {
-    private final Project myProject;
-
-    public AddEventListener(Project project) {
-      myProject = project;
-    }
-
-    public void handleEvent(SVNEvent event, double progress) {
-      if (event.getAction() == SVNEventAction.ADD && event.getFile() != null) {
-        VirtualFile vfile = VirtualFileManager.getInstance()
-          .findFileByUrl("file://" + event.getFile().getAbsolutePath().replace(File.separatorChar, '/'));
-        if (vfile != null) {
-          VcsDirtyScopeManager.getInstance(myProject).fileDirty(vfile);
-        }
-      }
-    }
-
-    public void checkCancelled() throws SVNCancelException {
-    }
   }
 }
