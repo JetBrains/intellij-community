@@ -214,7 +214,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
-    showJavaDocInfo(editor, file, requestFocus, false);
+    showJavaDocInfo(editor, file, requestFocus, true);
   }
 
   private void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus, final boolean autoupdate) {
