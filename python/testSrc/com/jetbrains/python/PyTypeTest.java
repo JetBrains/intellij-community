@@ -385,6 +385,40 @@ public class PyTypeTest extends PyTestCase {
     assertNull(actual);
   }
 
+  // PY-7058
+  public void testReturnTypeOfTypeForInstance() {
+    PyExpression expr = parseExpr("class C(object):\n" +
+                                  "    pass\n" +
+                                  "\n" +
+                                  "x = C()\n" +
+                                  "expr = type(x)\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType type = expr.getType(context);
+    assertInstanceOf(type, PyClassType.class);
+    assertTrue("Got instance type instead of class type", ((PyClassType)type).isDefinition());
+  }
+
+  // PY-7058
+  public void testReturnTypeOfTypeForClass() {
+    PyExpression expr = parseExpr("class C(object):\n" +
+                                  "    pass\n" +
+                                  "\n" +
+                                  "expr = type(C)\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType type = expr.getType(context);
+    assertInstanceOf(type, PyClassType.class);
+    assertEquals(type.getName(), "type");
+  }
+
+  // PY-7058
+  public void testReturnTypeOfTypeForUnknown() {
+    PyExpression expr = parseExpr("def f(x):\n" +
+                                  "    expr = type(x)\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType type = expr.getType(context);
+    assertNull(type);
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);

@@ -110,6 +110,25 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             return superCallType.value();
           }
         }
+        if ("type".equals(callee.getText())) {
+          final PyExpression[] args = getArguments();
+          if (args.length == 1) {
+            final PyExpression arg = args[0];
+            final PyType argType = arg.getType(context);
+            if (argType instanceof PyClassType) {
+              final PyClassType classType = (PyClassType)argType;
+              if (!classType.isDefinition()) {
+                final PyClass cls = classType.getPyClass();
+                if (cls != null) {
+                  return cls.getType(context);
+                }
+              }
+            }
+            else {
+              return null;
+            }
+          }
+        }
         // normal cases
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
         ResolveResult[] targets = ((PyReferenceExpression)callee).getReference(resolveContext).multiResolve(false);
