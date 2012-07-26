@@ -60,6 +60,10 @@ public abstract class SoftWrapAwareDocumentParsingListenerAdapter implements Sof
   }
 
   @Override
+  public void recalculationEnds() {
+  }
+
+  @Override
   public void reset() {
   }
 }

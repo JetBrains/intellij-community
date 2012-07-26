@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,6 +121,16 @@ interface SoftWrapAwareDocumentParsingListener {
    */
   void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event, boolean normal);
 
+  /**
+   * Notifies current listener that all dirty regions for the current editor have been recalculated.
+   * <p/>
+   * It differs from {@link #onRecalculationEnd(IncrementalCacheUpdateEvent, boolean)} because there is a possible case that there
+   * is more than one 'dirty' region which is necessary to recalculate.
+   * {@link #onRecalculationEnd(IncrementalCacheUpdateEvent, boolean)} will be called after every region recalculation then
+   * and current method will be called one time when all recalculations have been performed.
+   */
+  void recalculationEnds();
+  
   /**
    * Callback for asking to drop all cached information (if any).
    */

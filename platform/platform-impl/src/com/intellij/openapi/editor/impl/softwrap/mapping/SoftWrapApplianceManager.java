@@ -202,6 +202,9 @@ public class SoftWrapApplianceManager implements SoftWrapFoldingListener, Docume
       myEventBeingProcessed = null;
     }
     updateLastTopLeftCornerOffset();
+    for (SoftWrapAwareDocumentParsingListener listener : myListeners) {
+      listener.recalculationEnds();
+    }
     return true;
   }
 

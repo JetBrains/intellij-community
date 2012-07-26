@@ -405,6 +405,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollBarOrientation = VERTICAL_SCROLLBAR_RIGHT;
 
     mySoftWrapModel.addSoftWrapChangeListener(new SoftWrapChangeListenerAdapter() {
+
+      @Override
+      public void recalculationEnds() {
+        if (myCaretModel.isUpToDate()) {
+          myCaretModel.moveToOffset(myCaretModel.getOffset());
+          myScrollingModel.scrollToCaret(ScrollType.RELATIVE);
+        }
+      }
+
       @Override
       public void softWrapAdded(@NotNull SoftWrap softWrap) {
         mySoftWrapsChanged = true;
