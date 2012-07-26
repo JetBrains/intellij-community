@@ -124,6 +124,12 @@ public class PyTypeChecker {
         return true;
       }
     }
+    if (actual instanceof PyFunctionType && expected instanceof PyClassType) {
+      final PyClass superClass = ((PyClassType)expected).getPyClass();
+      if (superClass != null && PyNames.CALLABLE.equals(superClass.getName())) {
+        return true;
+      }
+    }
     final String superName = expected.getName();
     final String subName = actual.getName();
     // TODO: No inheritance check for builtin numerics at this moment
@@ -376,7 +382,10 @@ public class PyTypeChecker {
     if (callSite == null) {
       return null;
     }
-    final PsiElement parent = callSite.getParent();
+    PsiElement parent = callSite.getParent();
+    while (parent instanceof PyParenthesizedExpression) {
+      parent = ((PyParenthesizedExpression)parent).getContainedExpression();
+    }
     if (parent instanceof PyCallExpression) {
       return analyzeCall((PyCallExpression)parent, context);
     }
