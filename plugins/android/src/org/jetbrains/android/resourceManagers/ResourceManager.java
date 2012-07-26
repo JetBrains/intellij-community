@@ -281,13 +281,14 @@ public abstract class ResourceManager {
     }
 
     final FileBasedIndex index = FileBasedIndex.getInstance();
-    final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType);
+    final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerKey(resourceType);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myModule.getProject());
 
     final Map<VirtualFile, Set<ResourceEntry>> file2resourceSet = new HashMap<VirtualFile, Set<ResourceEntry>>();
     for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
       for (ResourceEntry entry : entrySet) {
-        final Collection<VirtualFile> files = index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, entry, scope);
+        final Collection<VirtualFile> files =
+          index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, AndroidValueResourcesIndex.createKey(entry), scope);
 
         for (VirtualFile file : files) {
           Set<ResourceEntry> resourcesInFile = file2resourceSet.get(file);
@@ -438,7 +439,7 @@ public abstract class ResourceManager {
 
     final Collection<VirtualFile> files = FileBasedIndex.getInstance()
       .getContainingFiles(AndroidValueResourcesIndex.INDEX_ID,
-                          AndroidValueResourcesIndex.createTypeNameMarkerEntry(resourceType, resourceName),
+                          AndroidValueResourcesIndex.createTypeNameMarkerKey(resourceType, resourceName),
                           GlobalSearchScope.allScope(myModule.getProject()));
 
     if (files.size() == 0) {

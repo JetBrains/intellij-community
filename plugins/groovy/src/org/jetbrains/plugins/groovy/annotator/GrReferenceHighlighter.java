@@ -23,14 +23,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiRecursiveElementWalkingVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,13 +47,14 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     myInfos = new ArrayList<HighlightInfo>();
-    myFile.accept(new GroovyRecursiveElementVisitor() {
+    myFile.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-        super.visitReferenceExpression(referenceExpression);
-        visit(referenceExpression);
+      public void visitElement(PsiElement element) {
+        super.visitElement(element);
+        if (element instanceof GrReferenceElement) {
+          visit((GrReferenceElement)element);
+        }
       }
-
       private void visit(GrReferenceElement element) {
         final PsiElement resolved = element.resolve();
         final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(resolved);
@@ -64,18 +62,6 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
           final PsiElement refNameElement = GrHighlightUtil.getElementToHighlight(element);
           myInfos.add(HighlightInfo.createHighlightInfo(HighlightInfoType.INFORMATION, refNameElement, null, attribute));
         }
-      }
-
-      @Override
-      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
-        super.visitCodeReferenceElement(refElement);
-        visit(refElement);
-      }
-
-      @Override
-      public void visitAnnotation(GrAnnotation annotation) {
-        super.visitAnnotation(annotation);
-        visit(annotation.getClassReference());
       }
     });
   }

@@ -29,9 +29,11 @@ import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -40,7 +42,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.editor.GroovyImportHelper.*;
+import static org.jetbrains.plugins.groovy.lang.editor.GroovyImportHelper.isImplicitlyImported;
+import static org.jetbrains.plugins.groovy.lang.editor.GroovyImportHelper.processImports;
 
 /**
  * @author ven
@@ -72,16 +75,14 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                                   @Nullable final Map<String, String> annotations) {
     if (!(file instanceof GroovyFile)) return;
 
-    ((GroovyFile)file).accept(new GroovyRecursiveElementVisitor() {
-      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
-        visitRefElement(refElement);
-        super.visitCodeReferenceElement(refElement);
-      }
-
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-        visitRefElement(referenceExpression);
-        super.visitReferenceExpression(referenceExpression);
-      }
+    ((GroovyFile)file).accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          super.visitElement(element);
+          if (element instanceof GrReferenceElement) {
+            visitRefElement((GrReferenceElement)element);
+          }
+        }
 
       private void visitRefElement(GrReferenceElement refElement) {
         final GroovyResolveResult[] resolveResults = refElement.multiResolve(false);

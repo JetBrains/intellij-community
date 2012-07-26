@@ -160,8 +160,10 @@ public class TestsUIUtil {
         int failedCount = failed.size();
         final List<AbstractTestProxy> notStarted = Filter.NOT_PASSED.select(allTests);
         notStarted.removeAll(failed);
+        final List ignored = Filter.IGNORED.select(allTests);
+        notStarted.removeAll(ignored);
         int notStartedCount = notStarted.size();
-        int passedCount = allTests.size() - failedCount - notStartedCount;
+        int passedCount = allTests.size() - failedCount - notStartedCount - ignored.size();
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
           myText = passedCount + " passed, " + failedCount + " failed" + (notStartedCount > 0 ? ", " + notStartedCount + " not started" : "");

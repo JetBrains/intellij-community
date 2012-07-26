@@ -35,8 +35,8 @@ import java.util.Comparator;
 import java.util.List;
 
 public class ConfigurationModuleSelector {
-  private static final String NO_MODULE = "<no module>";
 
+  private final String myNoModule;
   private final Project myProject;
   private final JComboBox myModulesList;
   private final SortedComboBoxModel<Object> myModules = new SortedComboBoxModel<Object>(new Comparator<Object>() {
@@ -49,6 +49,11 @@ public class ConfigurationModuleSelector {
   });
 
   public ConfigurationModuleSelector(final Project project, final JComboBox modulesList) {
+    this(project, modulesList, "<no module>");
+  }
+
+  public ConfigurationModuleSelector(final Project project, final JComboBox modulesList, String noModule) {
+    myNoModule = noModule;
     myProject = project;
     myModulesList = modulesList;
     new ComboboxSpeedSearch(modulesList){
@@ -56,7 +61,7 @@ public class ConfigurationModuleSelector {
         if (element instanceof Module){
           return ((Module)element).getName();
         } else if (element == null) {
-          return NO_MODULE;
+          return myNoModule;
         }
         return super.getElementText(element);
       }
@@ -71,7 +76,7 @@ public class ConfigurationModuleSelector {
           setText(module.getName());
         }
         else if (value == null) {
-          setText(NO_MODULE);
+          setText(myNoModule);
         }
       }
     });

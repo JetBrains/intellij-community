@@ -125,8 +125,10 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
       }
     }
     String name = AndroidResourceUtil.getResourceNameByReferenceText(newName);
-    for (PsiField resField : AndroidResourceUtil.findIdFields(value)) {
-      allRenames.put(resField, name);
+    if (name != null) {
+      for (PsiField resField : AndroidResourceUtil.findIdFields(value)) {
+        allRenames.put(resField, AndroidResourceUtil.getFieldNameByResourceName(name));
+      }
     }
   }
 
@@ -186,7 +188,7 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     }
     PsiField[] resFields = AndroidResourceUtil.findResourceFieldsForValueResource(tag, false);
     for (PsiField resField : resFields) {
-      allRenames.put(resField, newName);
+      allRenames.put(resField, AndroidResourceUtil.getFieldNameByResourceName(newName));
     }
   }
 
@@ -226,7 +228,7 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     PsiField[] resFields = AndroidResourceUtil.findResourceFieldsForFileResource(file, false);
     for (PsiField resField : resFields) {
       String newFieldName = AndroidCommonUtils.getResourceName(type, newName);
-      allRenames.put(resField, newFieldName);
+      allRenames.put(resField, AndroidResourceUtil.getFieldNameByResourceName(newFieldName));
     }
   }
 

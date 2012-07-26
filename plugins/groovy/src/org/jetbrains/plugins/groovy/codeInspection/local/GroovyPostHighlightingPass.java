@@ -56,7 +56,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -109,7 +108,6 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     };
 
     final List<HighlightInfo> unusedDeclarations = new ArrayList<HighlightInfo>();
-    final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(PsiUtil.getValidImportStatements(myFile));
 
     final Map<GrParameter, Boolean> usedParams = new HashMap<GrParameter, Boolean>();
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -156,13 +154,11 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
           }
         }
 
-        for (GrImportStatement used : GroovyImportOptimizer.findUsedImports(myFile)) {
-          unusedImports.remove(used);
-        }
-
         super.visitElement(element);
       }
     });
+    final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(PsiUtil.getValidImportStatements(myFile));
+    unusedImports.removeAll(GroovyImportOptimizer.findUsedImports(myFile));
     myUnusedImports = unusedImports;
 
     if (deadCodeEnabled) {

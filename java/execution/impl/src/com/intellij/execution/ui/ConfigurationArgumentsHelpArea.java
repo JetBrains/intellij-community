@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.PlatformIcons;
 
@@ -37,6 +38,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
   public ConfigurationArgumentsHelpArea() {
     super(new BorderLayout());
     add(myPanel);
+    setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
 
     final DefaultActionGroup group = new DefaultActionGroup();
     group.add(new MyCopyAction());
@@ -64,7 +66,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
   public void setToolbarVisible() {
     myToolbarPanel.setVisible(true);
   }
-  
+
   private static ActionPopupMenu createPopupMenu(DefaultActionGroup group) {
     return ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
   }

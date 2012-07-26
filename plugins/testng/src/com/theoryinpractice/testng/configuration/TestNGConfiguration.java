@@ -317,7 +317,7 @@ public class TestNGConfiguration extends ModuleBasedConfiguration<JavaRunConfigu
     }
     else if (data.TEST_OBJECT.equals(TestType.PACKAGE.getType())) {
       PsiPackage psiPackage = JavaPsiFacade.getInstance(project).findPackage(data.getPackageName());
-      if (psiPackage == null) throw new RuntimeConfigurationException("Package '" + data.getMainClassName() + "' not found");
+      if (psiPackage == null) throw new RuntimeConfigurationException("Package '" + data.getPackageName() + "' not found");
     }
     else if (data.TEST_OBJECT.equals(TestType.SUITE.getType())) {
       try {

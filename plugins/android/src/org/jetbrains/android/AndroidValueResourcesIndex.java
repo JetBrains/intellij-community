@@ -56,9 +56,9 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
 
           @Override
           protected void process(@NotNull ResourceEntry entry) {
-            result.put(entry, Collections.<ResourceEntry>emptySet());
-            addEntryToMap(entry, createTypeMarkerEntry(entry.getType()), result);
-            addEntryToMap(entry, createTypeNameMarkerEntry(entry.getType(), entry.getName()), result);
+            result.put(createKey(entry), Collections.<ResourceEntry>emptySet());
+            addEntryToMap(entry, createTypeMarkerKey(entry.getType()), result);
+            addEntryToMap(entry, createTypeNameMarkerKey(entry.getType(), entry.getName()), result);
           }
         });
 
@@ -76,12 +76,39 @@ public class AndroidValueResourcesIndex extends FileBasedIndexExtension<Resource
     set.add(entry);
   }
 
-  public static ResourceEntry createTypeMarkerEntry(String type) {
-    return new ResourceEntry(type, "TYPE_MARKER_RESOURCE", "TYPE_MARKER_CONTEXT");
+  @NotNull
+  public static ResourceEntry createTypeMarkerKey(String type) {
+    return createTypeNameMarkerKey(type, "TYPE_MARKER_RESOURCE");
   }
 
-  public static ResourceEntry createTypeNameMarkerEntry(String type, String name) {
-    return new ResourceEntry(type, name, "TYPE_MARKER_CONTEXT");
+  @NotNull
+  public static ResourceEntry createTypeNameMarkerKey(String type, String name) {
+    return createKey(type, name, "TYPE_MARKER_CONTEXT");
+  }
+
+  @NotNull
+  public static ResourceEntry createKey(ResourceEntry entry) {
+    return createKey(entry.getType(), entry.getName(), entry.getContext());
+  }
+
+  @NotNull
+  public static ResourceEntry createKey(String type, String name, String context) {
+    return new ResourceEntry(type, normalizeDelimiters(name), context);
+  }
+
+  private static String normalizeDelimiters(String s) {
+    final StringBuilder result = new StringBuilder();
+
+    for (int i = 0, n = s.length(); i < n; i++) {
+      final char c = s.charAt(i);
+      if (Character.isLetterOrDigit(c)) {
+        result.append(c);
+      }
+      else {
+        result.append('_');
+      }
+    }
+    return result.toString();
   }
 
   private final KeyDescriptor<ResourceEntry> myKeyDescriptor = new KeyDescriptor<ResourceEntry>() {

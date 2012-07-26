@@ -73,6 +73,11 @@ public class AndroidResourcesLineMarkerTest extends AndroidTestCase {
     doJavaFileNavigationTest(1, true, XmlAttributeValue.class);
   }
 
+  public void testJavaFileNavigation12() throws Exception {
+    myFixture.copyFileToProject(BASE_PATH + "dist_delims.xml", "res/values/strings12.xml");
+    doJavaFileNavigationTest(1, true, XmlAttributeValue.class);
+  }
+
   private void doJavaFileNavigationTest(int expectedTargets,
                                         boolean expectedEnabled,
                                         @Nullable Class<? extends PsiElement> targetElementClass)

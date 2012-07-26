@@ -17,6 +17,8 @@
 #include "IdeaWin32.h"
 #include <windows.h>
 
+typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr) (HANDLE, LPCWSTR, DWORD, DWORD dwFlags);
+static GetFinalPathNameByHandlePtr __GetFinalPathNameByHandle = NULL;
 
 static jfieldID nameID = NULL;
 static jfieldID attributesID = NULL;
@@ -66,30 +68,38 @@ static jobject CreateFileInfo(JNIEnv *env, jstring path, bool append, LPWIN32_FI
             timestamp = 0;
             length = 0;
 
-            size_t nameLen = env->GetStringLength(path) + wcslen(lpData->cFileName) + 2;
-            wchar_t *lpName = (wchar_t *)malloc(nameLen * sizeof(wchar_t));
-            if (lpName != NULL) {
-                const jchar *dirName = env->GetStringChars(path, 0);
-                wcscpy_s(lpName, nameLen, (LPCWSTR)dirName);
-                env->ReleaseStringChars(path, dirName);
-                if (append) {
-                    wcscat_s(lpName, nameLen, L"\\");
-                    wcscat_s(lpName, nameLen, lpData->cFileName);
-                }
+            const jchar *dirName = env->GetStringChars(path, 0);
+            wchar_t *fullPath = (wchar_t *)dirName;
 
+            if (append) {
+                size_t nameLen = env->GetStringLength(path) + wcslen(lpData->cFileName) + 2;
+                fullPath = (wchar_t *)malloc(nameLen * sizeof(wchar_t));
+                if (fullPath != NULL) {
+                    wcscpy_s(fullPath, nameLen, (LPCWSTR)dirName);
+                    wcscat_s(fullPath, nameLen, L"\\");
+                    wcscat_s(fullPath, nameLen, lpData->cFileName);
+                }
+            }
+
+            if (fullPath != NULL) {
                 // read symlink target attributes
-                HANDLE th = CreateFile(lpName, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-                if (th != INVALID_HANDLE_VALUE) {
+                HANDLE h = CreateFile(fullPath, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+                if (h != INVALID_HANDLE_VALUE) {
                     BY_HANDLE_FILE_INFORMATION targetData;
-                    if (GetFileInformationByHandle(th, &targetData)) {
+                    if (GetFileInformationByHandle(h, &targetData)) {
                         attributes = targetData.dwFileAttributes | FILE_ATTRIBUTE_REPARSE_POINT;
                         timestamp = pairToInt64(targetData.ftLastWriteTime.dwLowDateTime, targetData.ftLastWriteTime.dwHighDateTime);
                         length = pairToInt64(targetData.nFileSizeLow, targetData.nFileSizeHigh);
                     }
-                    CloseHandle(th);
+                    CloseHandle(h);
                 }
-                free(lpName);
+
+                if (append) {
+                    free(fullPath);
+                }
             }
+
+            env->ReleaseStringChars(path, dirName);
         }
         else {
             attributes &= (~ FILE_ATTRIBUTE_REPARSE_POINT);  // keep reparse flag only for symlinks
@@ -116,6 +126,9 @@ static jobject CreateFileInfo(JNIEnv *env, jstring path, bool append, LPWIN32_FI
 
 
 JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs(JNIEnv *env, jclass cls) {
+    __GetFinalPathNameByHandle =
+        (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandle(L"kernel32.dll"), "GetFinalPathNameByHandleW");
+
     jclass fileInfoClass = getFileInfoClass(env);
     if (fileInfoClass == NULL) {
         return;
@@ -166,6 +179,10 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
 
 
 JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_resolveSymLink0(JNIEnv *env, jobject method, jstring path) {
+    if (__GetFinalPathNameByHandle == NULL) {
+        return NULL;  // XP
+    }
+
     WIN32_FIND_DATA data;
     HANDLE h = FindFileInner(env, path, &data);
     if (h == INVALID_HANDLE_VALUE) {
@@ -187,7 +204,7 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
     jstring result = NULL;
 
     TCHAR name[MAX_PATH];
-    DWORD len = GetFinalPathNameByHandle(th, name, MAX_PATH, 0);
+    DWORD len = __GetFinalPathNameByHandle(th, name, MAX_PATH, 0);
     if (len > 0) {
         if (len < MAX_PATH) {
             result = env->NewString((jchar *)name, len);
@@ -195,7 +212,7 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
         else {
             TCHAR *name = (TCHAR *)malloc(sizeof(TCHAR) * (len + 1));
             if (name != NULL) {
-                len = GetFinalPathNameByHandle(th, name, len, 0);
+                len = __GetFinalPathNameByHandle(th, name, len, 0);
                 if (len > 0) {
                     result = env->NewString((jchar *)name, len);
                 }

@@ -46,11 +46,13 @@ public class IdeaWin32 {
         available = true;
       }
       catch (Throwable t0) {
+        LOG.debug(t0);
         try {
           System.load(PathManager.getHomePath() + "/bin/win/" + libName + ".dll");
           available = true;
         }
         catch (Throwable t1) {
+          LOG.debug(t1);
           try {
             System.loadLibrary(libName);
             available = true;
