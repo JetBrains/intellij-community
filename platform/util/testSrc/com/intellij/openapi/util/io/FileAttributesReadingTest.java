@@ -101,6 +101,8 @@ public class FileAttributesReadingTest {
 
   @Test
   public void linkToFile() throws Exception {
+    assumeTrue(SystemInfo.areSymLinksSupported);
+
     final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
     FileUtil.writeToFile(file, myTestData);
     assertTrue(file.setLastModified(file.lastModified() - 5000));
@@ -120,6 +122,8 @@ public class FileAttributesReadingTest {
 
   @Test
   public void doubleLink() throws Exception {
+    assumeTrue(SystemInfo.areSymLinksSupported);
+
     final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
     FileUtil.writeToFile(file, myTestData);
     assertTrue(file.setLastModified(file.lastModified() - 5000));
@@ -140,6 +144,8 @@ public class FileAttributesReadingTest {
 
   @Test
   public void linkToDirectory() throws Exception {
+    assumeTrue(SystemInfo.areSymLinksSupported);
+
     final File file = FileUtil.createTempDirectory(myTempDirectory, "test.", ".tmp");
     if (SystemInfo.isUnix) assertTrue(file.setWritable(false, false));
     assertTrue(file.setLastModified(file.lastModified() - 5000));
@@ -158,6 +164,8 @@ public class FileAttributesReadingTest {
 
   @Test
   public void missingLink() throws Exception {
+    assumeTrue(SystemInfo.areSymLinksSupported);
+
     final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", false);
     final File link = IoTestUtil.createTempLink(file.getPath(), new File(myTempDirectory, "link").getPath());
 
