@@ -22,7 +22,6 @@ import com.intellij.tasks.actions.SwitchTaskCombo;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.TestActionEvent;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 
 /**
@@ -30,10 +29,6 @@ import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
  *         Date: 3/23/12
  */
 public class TaskUiTest extends CodeInsightFixtureTestCase {
-
-  public TaskUiTest() {
-    PlatformTestCase.initPlatformPrefix(UsefulTestCase.IDEA_MARKER_CLASS, "PlatformLangXml");
-  }
 
   public void testTaskComboVisible() throws Exception {
 
@@ -76,4 +71,8 @@ public class TaskUiTest extends CodeInsightFixtureTestCase {
     return event.getPresentation();
   }
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  public TaskUiTest() {
+    PlatformTestCase.initPlatformLangPrefix();
+  }
 }
