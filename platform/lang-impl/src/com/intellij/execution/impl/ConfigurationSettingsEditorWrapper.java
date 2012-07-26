@@ -62,7 +62,6 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     final RunConfiguration runConfiguration = settings.getConfiguration();
     myBeforeRunStepsPanel.doReset(settings);
     myBeforeLaunchContainer.setVisible(!(runConfiguration instanceof UnknownRunConfiguration));
-
   }
 
   @NotNull

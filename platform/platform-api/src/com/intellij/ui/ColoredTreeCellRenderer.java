@@ -64,9 +64,11 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (UIUtil.isFullRowSelectionLAF()) {
         setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
-    else if (/*UIUtil.isUnderAquaBasedLookAndFeel() && */tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
+    else if (tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
       setPaintFocusBorder(false);
-      //setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+      if (selected) {
+        setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
+      }
     }
     else {
       if (selected) {

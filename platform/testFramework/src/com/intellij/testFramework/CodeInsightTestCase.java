@@ -4,13 +4,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * User: Andrey.Vokin
  * Date: 7/23/12
  */
-public class CodeInsightTestCase extends UsefulTestCase {
+public class CodeInsightTestCase extends LightPlatformCodeInsightFixtureTestCase {
   @NonNls protected static final String CARET_STR = "<caret>";
 
   protected CodeInsightTestFixture myFixture;

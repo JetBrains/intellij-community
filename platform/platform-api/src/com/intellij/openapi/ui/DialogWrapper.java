@@ -75,6 +75,10 @@ public abstract class DialogWrapper {
    */
   public static final int CANCEL_EXIT_CODE = 1;
   /**
+   * The default exit code for "Close" action. Equal to cancel.
+   */
+  public static final int CLOSE_EXIT_CODE = CANCEL_EXIT_CODE;
+  /**
    * If you use your custom exit codes you have have to start them with
    * this constant.
    */

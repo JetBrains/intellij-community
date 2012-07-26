@@ -182,12 +182,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       createToolWindow(element, original);
       return;
     }
+
     final Content content = myToolWindow.getContentManager().getSelectedContent();
-    if (content == null) {
+    if (content == null || !myToolWindow.isVisible()) {
       restorePopupBehavior();
       createToolWindow(element, original);
       return;
     }
+
     fetchDocInfo(getDefaultCollector(element, original), (DocumentationComponent)content.getComponent(), true);
   }
   
@@ -212,7 +214,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
-    showJavaDocInfo(editor, file, requestFocus, false);
+    showJavaDocInfo(editor, file, requestFocus, true);
   }
 
   private void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus, final boolean autoupdate) {
