@@ -251,7 +251,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           updateWarning();
         }
       });
-
+      myCbStoreProjectConfiguration.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          setModified(true);
+        }
+      });
       settingAnchor();
     }
 
