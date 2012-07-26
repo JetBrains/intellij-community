@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.completion
-
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
@@ -45,9 +44,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
-import junit.framework.Test
-import junit.framework.TestSuite
-
 /**
  * @author peter
  */
@@ -144,7 +140,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertContains "iterable", "iterable2"
 
     assertEquals 'iterable', lookup.currentItem.lookupString
-    lookup.currentItem = lookup.items[1]
+    edt { lookup.currentItem = lookup.items[1] }
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
@@ -203,7 +199,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
     assertContains 'abcd', 'abce'
     assertEquals 'abcd', lookup.currentItem.lookupString
-    lookup.currentItem = lookup.items[1]
+    edt { lookup.currentItem = lookup.items[1] }
     assertEquals 'abce', lookup.currentItem.lookupString
 
     type '\t'
