@@ -157,25 +157,17 @@ public class ModuleRootsIndex {
   }
 
   @NotNull
-  public RootDescriptor associateRoot(@NotNull CompileContext context, File root, JpsModule module, boolean isTestRoot, final boolean isForGeneratedSources, final boolean isTemp) {
-    Map<File, RootDescriptor> rootToDescriptorMap;
-    Map<JpsModule, List<RootDescriptor>> moduleToRootMap;
-    if (isTemp) {
-      rootToDescriptorMap = ROOT_DESCRIPTOR_MAP.get(context);
-      if (rootToDescriptorMap == null) {
-        rootToDescriptorMap = new HashMap<File, RootDescriptor>();
-        ROOT_DESCRIPTOR_MAP.set(context, rootToDescriptorMap);
-      }
-
-      moduleToRootMap = MODULE_ROOT_MAP.get(context);
-      if (moduleToRootMap == null) {
-        moduleToRootMap = new HashMap<JpsModule, List<RootDescriptor>>();
-        MODULE_ROOT_MAP.set(context, moduleToRootMap);
-      }
+  public RootDescriptor associateRoot(@NotNull CompileContext context, File root, JpsModule module, boolean isTestRoot) {
+    Map<File, RootDescriptor> rootToDescriptorMap = ROOT_DESCRIPTOR_MAP.get(context);
+    if (rootToDescriptorMap == null) {
+      rootToDescriptorMap = new HashMap<File, RootDescriptor>();
+      ROOT_DESCRIPTOR_MAP.set(context, rootToDescriptorMap);
     }
-    else {
-      rootToDescriptorMap = myRootToDescriptorMap;
-      moduleToRootMap = myModuleToRootsMap;
+
+    Map<JpsModule, List<RootDescriptor>> moduleToRootMap = MODULE_ROOT_MAP.get(context);
+    if (moduleToRootMap == null) {
+      moduleToRootMap = new HashMap<JpsModule, List<RootDescriptor>>();
+      MODULE_ROOT_MAP.set(context, moduleToRootMap);
     }
 
     final RootDescriptor d = rootToDescriptorMap.get(root);
@@ -188,7 +180,7 @@ public class ModuleRootsIndex {
       moduleRoots = new ArrayList<RootDescriptor>();
       moduleToRootMap.put(module, moduleRoots);
     }
-    final RootDescriptor descriptor = new RootDescriptor(module.getName(), root, isTestRoot, isForGeneratedSources, isTemp);
+    final RootDescriptor descriptor = new RootDescriptor(module.getName(), root, isTestRoot, true, true);
     rootToDescriptorMap.put(root, descriptor);
     moduleRoots.add(descriptor);
     return descriptor;

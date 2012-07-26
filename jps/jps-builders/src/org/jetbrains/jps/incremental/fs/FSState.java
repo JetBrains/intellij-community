@@ -57,13 +57,6 @@ public class FSState {
     myTestDeltas.clear();
   }
 
-  public void init(String moduleName, final Collection<String> deleteProduction, final Collection<String> deletedTests, final Map<File, Set<File>> recompileProduction, final Map<File, Set<File>> recompileTests) {
-    getDelta(moduleName, true).init(deletedTests,  recompileTests);
-    getDelta(moduleName, false).init(deleteProduction, recompileProduction);
-    myInitialTestsScanPerformed.add(moduleName);
-    myInitialProductionScanPerformed.add(moduleName);
-  }
-
   public final void clearRecompile(final RootDescriptor rd) {
     getDelta(rd.module, rd.isTestRoot).clearRecompile(rd.root);
   }

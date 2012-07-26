@@ -79,13 +79,6 @@ final class FilesDelta {
     });
   }
 
-  public void init(Collection<String> deleted, Map<File, Set<File>> recompile) {
-    myDeletedPaths.clear();
-    myDeletedPaths.addAll(deleted);
-    myFilesToRecompile.clear();
-    myFilesToRecompile.putAll(recompile);
-  }
-
   public boolean markRecompile(File root, File file) {
     final boolean added = _addToRecompiled(root, file);
     if (added) {
