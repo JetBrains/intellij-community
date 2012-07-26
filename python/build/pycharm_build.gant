@@ -43,7 +43,8 @@ setProperty("pluginFilter", [
             "python-remote-interpreter",
             "diagram-api", "uml",
             "python-uml", "localization",
-            "python-localization", "rest"
+            "python-localization",
+            "rest", "python-rest"
 ])
 
 private List<String> pycharmPlatformApiModules() {
@@ -370,6 +371,13 @@ private layoutFull(Map args, String target, Set usedJars) {
         dir("lib") {
           jar("rest.jar") {
             module("rest")
+          }
+        }
+      }
+      dir("python-rest") {
+        dir("lib") {
+          jar("python-rest.jar") {
+            module("python-rest")
           }
         }
       }

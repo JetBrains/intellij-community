@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
@@ -31,11 +30,9 @@ import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
-import com.jetbrains.rest.run.RestRunConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.List;
 
@@ -58,7 +55,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
     return DefaultDebugExecutor.EXECUTOR_ID.equals(executorId) &&
            profile instanceof AbstractPythonRunConfiguration &&
-           !(profile instanceof RestRunConfiguration);
+           ((AbstractPythonRunConfiguration)profile).canRunWithCoverage();
   }
 
   protected RunContentDescriptor doExecute(final Project project, Executor executor, RunProfileState profileState,

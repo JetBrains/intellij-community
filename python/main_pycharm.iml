@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="localization" />
     <orderEntry type="module" module-name="rest" />
     <orderEntry type="module" module-name="python-localization" />
+    <orderEntry type="module" module-name="python-rest" />
   </component>
 </module>
 

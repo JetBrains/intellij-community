@@ -346,4 +346,8 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     final Module module = getModule();
     return module != null ? ModuleType.get(module) instanceof PythonModuleTypeBase : true;
   }
+
+  public boolean canRunWithCoverage() {
+    return true;
+  }
 }

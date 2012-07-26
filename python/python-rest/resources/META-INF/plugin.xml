@@ -1,0 +1,16 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>Python ReStructureText Integration</name>
+  <id>org.jetbrains.plugins.python-rest</id>
+  <version>VERSION</version>
+  <vendor logo="/general/ijLogo.png">JetBrains</vendor>
+
+  <depends>com.intellij.modules.ultimate</depends>
+  <depends>com.intellij.modules.python</depends>
+  <depends>org.jetbrains.plugins.rest</depends>
+
+  <xi:include href="/META-INF/python-rest.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
+</idea-plugin>
