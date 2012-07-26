@@ -69,7 +69,7 @@ public class DecorationLayer extends JComponent {
   @Override
   public void paint(Graphics g) {
     try {
-      if (myArea.getRootComponent() != null) {
+      if (myArea.getRootComponent() != null && myDesigner.doPaint) {
         Graphics2D g2d = (Graphics2D)g;
         paintStaticDecorators(g2d);
         if (myShowSelection) {
