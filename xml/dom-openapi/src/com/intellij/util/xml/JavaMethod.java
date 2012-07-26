@@ -17,7 +17,7 @@ package com.intellij.util.xml;
 
 import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -29,11 +29,12 @@ import java.util.List;
  */
 public final class JavaMethod implements AnnotatedElement{
   public static final JavaMethod[] EMPTY_ARRAY = new JavaMethod[0];
+  private static final Object NONE = new Object();
 
   private final JavaMethodSignature mySignature;
   private final Class myDeclaringClass;
   private final Method myMethod;
-  private volatile SmartFMap<Class, Annotation> myAnnotationsMap = SmartFMap.emptyMap();
+  private volatile SmartFMap<Class, Object> myAnnotationsMap = SmartFMap.emptyMap();
 
   private JavaMethod(final Class declaringClass, final JavaMethodSignature signature) {
     mySignature = signature;
@@ -92,22 +93,22 @@ public final class JavaMethod implements AnnotatedElement{
   }
 
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    //noinspection unchecked
-    T annotation = (T)myAnnotationsMap.get(annotationClass);
+    Object annotation = myAnnotationsMap.get(annotationClass);
     if (annotation == null) {
       myAnnotationsMap = myAnnotationsMap.plus(annotationClass, annotation = findAnnotation(annotationClass));
     }
-    return annotation;
+    //noinspection unchecked
+    return annotation == NONE ? null : (T)annotation;
   }
 
-  @Nullable private <T extends Annotation> T findAnnotation(Class<T> annotationClass) {
+  @NotNull private Object findAnnotation(Class<? extends Annotation> annotationClass) {
     for (Method method : mySignature.getAllMethods(myDeclaringClass)) {
-      final T annotation = method.getAnnotation(annotationClass);
+      final Annotation annotation = method.getAnnotation(annotationClass);
       if (annotation != null) {
         return annotation;
       }
     }
-    return null;
+    return NONE;
   }
 
   @Override
