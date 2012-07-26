@@ -64,7 +64,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Kirill Likhodedov
  */
-class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
+public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
   
   private static final Logger LOG = Logger.getInstance(GitDiffFromHistoryHandler.class);
 
@@ -72,7 +72,7 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
   @NotNull private final Git myGit;
   @NotNull private final GitRepositoryManager myRepositoryManager;
 
-  GitDiffFromHistoryHandler(@NotNull Project project) {
+  public GitDiffFromHistoryHandler(@NotNull Project project) {
     myProject = project;
     myGit = ServiceManager.getService(project, Git.class);
     myRepositoryManager = GitUtil.getRepositoryManager(project);
