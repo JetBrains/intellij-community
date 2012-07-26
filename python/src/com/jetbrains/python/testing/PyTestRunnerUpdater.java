@@ -64,12 +64,13 @@ public class PyTestRunnerUpdater implements StartupActivity {
           }
         }
 
-        if (!TestRunnerService.getInstance(project).getProjectConfiguration().isEmpty())
-          return;
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
+            if (!TestRunnerService.getInstance(project).getProjectConfiguration().isEmpty())
+              return;
+
             String testRunner = "";
             //check setup.py
             final Module[] modules = ModuleManager.getInstance(project).getModules();
