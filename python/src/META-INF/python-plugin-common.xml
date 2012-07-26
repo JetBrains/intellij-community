@@ -489,9 +489,6 @@
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
 
-    <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.LocaleLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.annotator.LocaleLineMarkerProvider"/>
-    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.django.annotator.LocaleLineMarkerProvider"/>
 
     <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.DjangoBlockInheritorsLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoBlockInheritorsLineMarkerProvider"/>
@@ -583,10 +580,6 @@
     <lang.braceMatcher language="DjangoTemplate"
                        implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateBraceMatcher"/>
 
-    <intentionAction>
-      <className>com.jetbrains.django.ref.WrapTransTagIntention</className>
-      <category>Django</category>
-    </intentionAction>
 
     <webBrowserUrlProvider implementation="com.jetbrains.django.lang.template.DjangoWebBrowserUrlProvider"/>
 
