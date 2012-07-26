@@ -182,12 +182,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       createToolWindow(element, original);
       return;
     }
+
     final Content content = myToolWindow.getContentManager().getSelectedContent();
-    if (content == null) {
+    if (content == null || !myToolWindow.isVisible()) {
       restorePopupBehavior();
       createToolWindow(element, original);
       return;
     }
+
     fetchDocInfo(getDefaultCollector(element, original), (DocumentationComponent)content.getComponent(), true);
   }
   
