@@ -257,4 +257,32 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       VirtualDirectoryImpl.disallowRootAccess(parent);
     }
   }
+
+  public void testRefreshSeesLatestDirectoryContents() throws Exception {
+    File testDir = FileUtil.createTempDirectory("RefreshChildrenTest." + getName(), null);
+    byte[] bytes = "".getBytes();
+    FileUtil.writeToFile(new File(testDir, "Foo.java"), bytes);
+
+    LocalFileSystem local = LocalFileSystem.getInstance();
+    VirtualFile virtualDir = local.findFileByIoFile(testDir);
+    assert virtualDir != null : virtualDir;
+    virtualDir.getChildren();
+    virtualDir.refresh(false, true);
+    checkChildCount(virtualDir, 1);
+
+    FileUtil.writeToFile(new File(testDir, "Bar.java"), bytes);
+    virtualDir.refresh(false, true);
+    checkChildCount(virtualDir, 2);
+  }
+
+  private static void checkChildCount(VirtualFile virtualDir, int expectedCount) {
+    VirtualFile[] children = virtualDir.getChildren();
+    if (children.length != expectedCount) {
+      System.err.println("children:");
+      for (VirtualFile child : children) {
+        System.err.println(child.getPath());
+      }
+    }
+    assertEquals(expectedCount, children.length);
+  }
 }
