@@ -383,7 +383,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
   }
 
   private void applyInformationToEditor(FileEditor[] editors, final VirtualFile file) {
-    final PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+    final PsiFile psiFile = doInReadActionIfProjectOpen(new Computable<PsiFile>() {
       @Nullable
       @Override
       public PsiFile compute() {
