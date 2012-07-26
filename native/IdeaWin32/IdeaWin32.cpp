@@ -142,15 +142,24 @@ JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs
 
 
 JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getInfo0(JNIEnv *env, jobject method, jstring path) {
-    WIN32_FIND_DATA data;
-    HANDLE h = FindFileInner(env, path, &data);
+    bool isDrive = false;
+    if (env->GetStringLength(path) == 2) {
+        const jchar* str = env->GetStringChars(path, NULL);
+        isDrive = (str[1] == ':');
+        env->ReleaseStringChars(path, str);
+    }
 
-    if (h == INVALID_HANDLE_VALUE) {
-        if (GetLastError() != ERROR_ACCESS_DENIED) {
+    WIN32_FIND_DATA data;
+    HANDLE h = INVALID_HANDLE_VALUE;
+
+    if (!isDrive) {
+        h = FindFileInner(env, path, &data);
+        if (h == INVALID_HANDLE_VALUE && GetLastError() != ERROR_ACCESS_DENIED) {
             return NULL;
         }
+    }
 
-        // there is a chance that directory listing is denied but direct file access will succeed
+    if (h == INVALID_HANDLE_VALUE) {
         WIN32_FILE_ATTRIBUTE_DATA attrData;
         const jchar* str = env->GetStringChars(path, 0);
         BOOL res = GetFileAttributesEx((LPCWSTR)str, GetFileExInfoStandard, &attrData);

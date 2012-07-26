@@ -97,22 +97,33 @@ public class IdeaWin32 {
 
   @Nullable
   public FileInfo getInfo(@NotNull final String path) {
-    return getInfo0(unc(path));
+    return getInfo0(path(path));
   }
 
   @Nullable
   public String resolveSymLink(@NotNull final String path) {
-    final String result = resolveSymLink0(unc(path));
+    final String result = resolveSymLink0(path(path));
     return result != null && result.startsWith(PATH_PREFIX) ? result.substring(PREFIX_SIZE) : result;
   }
 
   @Nullable
   public FileInfo[] listChildren(@NotNull final String path) {
-    return listChildren0(unc(path) + PATH_SUFFIX);
+    return listChildren0(path(path) + PATH_SUFFIX);
   }
 
-  private static String unc(final String path) {
-    return path.length() < MAX_PATH ? path : PATH_PREFIX + path;
+  private static String path(final String path) {
+    final int length = path.length();
+    if (length > 0 && path.charAt(length - 1) == '\\' || length >= MAX_PATH) {
+      final StringBuilder sb = new StringBuilder(path);
+      while (sb.length() > 0 && sb.charAt(sb.length() - 1) == '\\') {
+        sb.deleteCharAt(sb.length() - 1);
+      }
+      if (sb.length() >= MAX_PATH) {
+        sb.insert(0, PATH_PREFIX);
+      }
+      return sb.toString();
+    }
+    return path;
   }
 
   private native FileInfo getInfo0(String path);

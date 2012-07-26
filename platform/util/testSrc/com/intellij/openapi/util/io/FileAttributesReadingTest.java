@@ -26,6 +26,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Arrays;
 
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
@@ -67,12 +68,7 @@ public class FileAttributesReadingTest {
     final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
     FileUtil.writeToFile(file, myTestData);
 
-    final FileAttributes attributes = getAttributes(file);
-    assertEquals(FileAttributes.Type.FILE, attributes.type);
-    assertEquals(0, attributes.flags);
-    assertEquals(myTestData.length, attributes.length);
-    assertTimestampEquals(file.lastModified(), attributes.lastModified);
-    assertTrue(attributes.isWritable());
+    assertFileAttributes(file);
   }
 
   @Test
@@ -83,8 +79,34 @@ public class FileAttributesReadingTest {
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
     assertEquals(0, attributes.flags);
     assertEquals(file.length(), attributes.length);
-    assertTimestampEquals(file.lastModified(), attributes.lastModified);
+    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertTrue(attributes.isWritable());
+    if (SystemInfo.isWindows) {
+      assertDirectoriesEqual(file);
+    }
+  }
+
+  @Test
+  public void root() throws Exception {
+    final File file = new File(SystemInfo.isWindows ? "C:\\" : "/");
+
+    final FileAttributes attributes = getAttributes(file);
+    assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
+    if (SystemInfo.isWindows) {
+      assertDirectoriesEqual(file);
+    }
+  }
+
+  @Test
+  public void badNames() throws Exception {
+    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
+    FileUtil.writeToFile(file, myTestData);
+
+    assertFileAttributes(new File(file.getPath() + StringUtil.repeat(File.separator, 3)));
+    assertFileAttributes(new File(file.getPath().replace(File.separator, StringUtil.repeat(File.separator, 3))));
+    assertFileAttributes(new File(file.getPath().replace(File.separator, File.separator + "." + File.separator)));
+    assertFileAttributes(new File(myTempDirectory,
+                                  File.separator + ".." + File.separator + myTempDirectory.getName() + File.separator + file.getName()));
   }
 
   @Test
@@ -113,7 +135,7 @@ public class FileAttributesReadingTest {
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(FileAttributes.SYM_LINK, attributes.flags);
     assertEquals(myTestData.length, attributes.length);
-    assertTimestampEquals(file.lastModified(), attributes.lastModified);
+    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertFalse(attributes.isWritable());
 
     final String target = FileSystemUtil.resolveSymLink(link);
@@ -135,7 +157,7 @@ public class FileAttributesReadingTest {
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(FileAttributes.SYM_LINK, attributes.flags);
     assertEquals(myTestData.length, attributes.length);
-    assertTimestampEquals(file.lastModified(), attributes.lastModified);
+    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertFalse(attributes.isWritable());
 
     final String target = FileSystemUtil.resolveSymLink(link2);
@@ -155,7 +177,7 @@ public class FileAttributesReadingTest {
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
     assertEquals(FileAttributes.SYM_LINK, attributes.flags);
     assertEquals(file.length(), attributes.length);
-    assertTimestampEquals(file.lastModified(), attributes.lastModified);
+    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     if (SystemInfo.isUnix) assertFalse(attributes.isWritable());
 
     final String target = FileSystemUtil.resolveSymLink(link);
@@ -209,7 +231,7 @@ public class FileAttributesReadingTest {
     assertEquals(FileAttributes.Type.FILE, attributes.type);
     assertEquals(FileAttributes.HIDDEN, attributes.flags);
     assertEquals(file.length(), attributes.length);
-    assertTimestampEquals(file.lastModified(), attributes.lastModified);
+    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
   }
 
   @Test
@@ -231,19 +253,25 @@ public class FileAttributesReadingTest {
     assertTrue(file.exists());
     FileUtil.writeToFile(file, myTestData);
 
-    final FileAttributes attributes = getAttributes(file);
-    assertEquals(FileAttributes.Type.FILE, attributes.type);
-    assertEquals(0, attributes.flags);
-    assertEquals(myTestData.length, attributes.length);
-    assertTimestampEquals(file.lastModified(), attributes.lastModified);
-    assertTrue(attributes.isWritable());
-
+    assertFileAttributes(file);
     if (SystemInfo.isWindows) {
-      final String[] list1 = dir.list();
-      assertNotNull(list1);
-      final FileInfo[] list2 = IdeaWin32.getInstance().listChildren(dir.getPath());
-      assertNotNull(list2);
-      assertEquals(list1.length + 2, list2.length);
+      assertDirectoriesEqual(dir);
+    }
+  }
+
+  @Test
+  public void subst() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+
+    FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);  // just to populate a directory
+    final File substRoot = IoTestUtil.createSubst(myTempDirectory.getPath());
+    try {
+      final FileAttributes attributes = getAttributes(substRoot);
+      assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
+      assertDirectoriesEqual(substRoot);
+    }
+    finally {
+      IoTestUtil.deleteSubst(substRoot.getPath());
     }
   }
 
@@ -255,10 +283,29 @@ public class FileAttributesReadingTest {
     return attributes;
   }
 
-  private static void assertTimestampEquals(final long expected, final long actual) {
+  private static void assertFileAttributes(@NotNull final File file) {
+    final FileAttributes attributes = getAttributes(file);
+    assertEquals(FileAttributes.Type.FILE, attributes.type);
+    assertEquals(0, attributes.flags);
+    assertEquals(file.length(), attributes.length);
+    assertTimestampsEqual(file.lastModified(), attributes.lastModified);
+    assertTrue(attributes.isWritable());
+  }
+
+  private static void assertTimestampsEqual(final long expected, final long actual) {
     final long roundedExpected = (expected / 1000) * 1000;
     final long roundedActual = (actual / 1000) * 1000;
     assertEquals("expected: " + expected + ", actual: " + actual,
                  roundedExpected, roundedActual);
+  }
+
+  private static void assertDirectoriesEqual(@NotNull final File dir) {
+    final String[] list1 = dir.list();
+    assertNotNull(list1);
+    final FileInfo[] list2 = IdeaWin32.getInstance().listChildren(dir.getPath());
+    assertNotNull(list2);
+    if (list1.length + 2 != list2.length) {
+      assertEquals(Arrays.toString(list1), Arrays.toString(list2));
+    }
   }
 }
