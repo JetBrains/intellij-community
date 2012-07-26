@@ -136,6 +136,14 @@ public class ReplacePathToMacroMap extends PathMacroMap {
             i = endOfOccurence;
             continue;
           }
+          if (occurrenceOfPath > 0) {
+            char prev = text.charAt(occurrenceOfPath - 1);
+            if (Character.isLetterOrDigit(prev) || prev == '_') {
+              newText.append(text.substring(i, endOfOccurence));
+              i = endOfOccurence;
+              continue;
+            }
+          }
         }
         if (occurrenceOfPath < 0) {
           if (newText.length() == 0) {

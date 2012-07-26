@@ -213,6 +213,16 @@ public class PathMacroManagerTest {
   }
 
   @Test
+  public void testProjectUnderUserHome_ReplaceRecursively() {
+    setUpMocks("/home/user/foo");
+
+    ReplacePathToMacroMap map = new ProjectPathMacroManager(myPathMacros, myProject).getReplacePathMap();
+    String src = "-Dfoo=/home/user/foo/bar/home -Dbar=\"/home/user\"";
+    String dst = "-Dfoo=$PROJECT_DIR$/bar/home -Dbar=\"$PROJECT_DIR$/..\"";
+    assertEquals(dst, map.substituteRecursively(src, true));
+  }
+
+  @Test
   public void testProjectUnderUserHome() throws Exception {
     setUpMocks(USER_HOME + "/IdeaProjects/foo");
 
