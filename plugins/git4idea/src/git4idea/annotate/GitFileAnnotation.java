@@ -390,6 +390,7 @@ public class GitFileAnnotation implements FileAnnotation {
 
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
+      checkAndFire();
     }
 
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
