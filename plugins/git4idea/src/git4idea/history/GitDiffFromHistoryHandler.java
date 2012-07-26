@@ -32,10 +32,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.openapi.vcs.history.CurrentRevision;
-import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
-import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
+import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
@@ -163,10 +160,10 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     DialogBuilder dialogBuilder = new DialogBuilder(myProject);
     String title;
     if (hash2 != null) {
-      title = String.format("%s diff in %s..%s", path.getName(), GitUtil.getShortHash(hash1), GitUtil.getShortHash(hash2));
+      title = String.format("Difference between %s and %s in %s", GitUtil.getShortHash(hash1), GitUtil.getShortHash(hash2), path.getName());
     }
     else {
-      title = String.format("%s diff from %s", path.getName(), GitUtil.getShortHash(hash1));
+      title = String.format("Difference between %s and local version in %s", GitUtil.getShortHash(hash1), path.getName());
     }
     dialogBuilder.setTitle(title);
     dialogBuilder.setActionDescriptors(new DialogBuilder.ActionDescriptor[] { new DialogBuilder.CloseDialogAction()});
