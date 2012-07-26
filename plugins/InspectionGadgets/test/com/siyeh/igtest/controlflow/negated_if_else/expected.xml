@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>NegatedIfElse.java</file>
+    <line>11</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'if' statement with negated condition</problem_class>
+    <description>&lt;code&gt;if&lt;/code&gt; statement with negated condition #loc</description>
+  </problem>
+</problems>
