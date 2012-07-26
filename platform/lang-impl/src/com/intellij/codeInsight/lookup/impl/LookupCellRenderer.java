@@ -109,6 +109,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     UIUtil.removeQuaquaVisualMarginsIn(myPanel);
   }
 
+  private boolean myIsSelected = false;
   public Component getListCellRendererComponent(
       final JList list,
       Object value,
@@ -121,6 +122,7 @@ public class LookupCellRenderer implements ListCellRenderer {
       isSelected = false;
     }
 
+    myIsSelected = isSelected;
     final LookupElement item = (LookupElement)value;
     final boolean dark = UIUtil.isUnderDarcula();
     final Color foreground = getForegroundColor(isSelected);
@@ -209,13 +211,13 @@ public class LookupCellRenderer implements ListCellRenderer {
     myTailComponent.append(trimLabelText(tailText, allowedWidth, myNormalMetrics), attributes);
   }
 
-  private static String trimLabelText(@Nullable String text, int maxWidth, FontMetrics metrics) {
+  private String trimLabelText(@Nullable String text, int maxWidth, FontMetrics metrics) {
     if (text == null || StringUtil.isEmpty(text)) {
       return "";
     }
 
     final int strWidth = RealLookupElementPresentation.getStringWidth(text, metrics);
-    if (strWidth <= maxWidth) {
+    if (strWidth <= maxWidth || myIsSelected) {
       return text;
     }
 
