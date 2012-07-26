@@ -805,6 +805,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
+  public SvnEntriesFileListener getEntriesFileListener() {
+    return myEntriesFileListener;
+  }
+
   @Override
   public DiffProvider getDiffProvider() {
     if (mySvnDiffProvider == null) {

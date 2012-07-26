@@ -55,6 +55,7 @@ public class SvnFileAnnotation extends BaseSvnFileAnnotation {
   public SvnFileAnnotation(SvnVcs vcs, VirtualFile file, String contents, VcsRevisionNumber baseRevision) {
     super(vcs, contents, baseRevision);
     myFile = file;
+    myVcs.addEntriesListener(myListener);
   }
 
   public void dispose() {
