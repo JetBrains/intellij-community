@@ -23,7 +23,7 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.rest.ReSTService;
+import com.jetbrains.python.ReSTService;
 import com.jetbrains.rest.RestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,4 +1,4 @@
-package com.jetbrains.rest;
+package com.jetbrains.python;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;

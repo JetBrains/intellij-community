@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.packaging.*;
@@ -26,7 +27,6 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.testing.VFSTestFrameworkListener;
-import com.jetbrains.rest.ReSTService;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
