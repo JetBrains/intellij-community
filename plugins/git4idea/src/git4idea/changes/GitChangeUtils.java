@@ -419,7 +419,7 @@ public class GitChangeUtils {
     String range = firstRevision == null ? nextRevision : firstRevision + ".." + nextRevision;
     String output = getDiffOutput(project, root, range, dirtyPaths);
     GitRevisionNumber thisRevision = firstRevision == null ? null : loadRevision(project, root, firstRevision);
-    parseChanges(project, root, thisRevision, loadRevision(project, root, nextRevision), output, changes, Collections.<String>emptySet());
+    parseChanges(project, root, loadRevision(project, root, nextRevision), thisRevision, output, changes, Collections.<String>emptySet());
     return changes;
   }
 
