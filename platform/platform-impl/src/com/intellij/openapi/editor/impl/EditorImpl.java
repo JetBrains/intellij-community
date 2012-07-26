@@ -1753,15 +1753,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public void startDumb() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     final JComponent component = getContentComponent();
-    final JComponent viewPort = (JComponent)component.getParent();
-    final Rectangle rect = viewPort.getVisibleRect();
-    BufferedImage image = new BufferedImage(rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
+    final Rectangle rect = ((JViewport)component.getParent()).getViewRect();
+    BufferedImage image = UIUtil.createImage(rect.width, rect.height, BufferedImage.TYPE_INT_RGB);
     final Graphics2D graphics = image.createGraphics();
     UISettings.setupAntialiasing(graphics);
     graphics.translate(-rect.x, -rect.y);
     graphics.setClip(rect.x, rect.y, rect.width, rect.height);
     paint(graphics);
-    graphics.translate(rect.x, rect.y);
     graphics.dispose();
     putUserData(BUFFER, image);
   }
@@ -1776,7 +1774,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (Registry.is("editor.dumb.mode.available")) {
       final BufferedImage buffer = getUserData(BUFFER);
       if (buffer != null) {
-        g.setClip(clip.x, clip.y, buffer.getWidth(), buffer.getHeight());
         final Rectangle rect = getContentComponent().getVisibleRect();
         g.drawImage(buffer, null, rect.x, rect.y);
         return;
