@@ -292,7 +292,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final XmlElement xmlElement = parentStrategy.getXmlElement();
     if (xmlElement != null) {
       final SemService semService = SemService.getSemService(myManager.getProject());
-      final DomInvocationHandler actual = semService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, xmlElement);
+      final DomInvocationHandler actual = myManager.getDomHandler(xmlElement);
       if (!equals(actual)) {
         return "element changed: " + this.toStringEx() + "!=" + (actual == null ? null : actual.toStringEx());
       }
