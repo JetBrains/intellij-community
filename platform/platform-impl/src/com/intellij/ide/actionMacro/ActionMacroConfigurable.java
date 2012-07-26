@@ -18,6 +18,7 @@ package com.intellij.ide.actionMacro;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 
@@ -57,6 +58,7 @@ public class ActionMacroConfigurable implements Configurable {
   }
 
   public void disposeUIResources() {
+    Disposer.dispose(myPanel);
     myPanel = null;
   }
 }
