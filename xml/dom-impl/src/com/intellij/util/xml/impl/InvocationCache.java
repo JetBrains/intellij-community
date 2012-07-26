@@ -105,11 +105,10 @@ public class InvocationCache {
         return attribute != null ? attribute.getValueElement() : null;
       }
     });
-    final JavaMethod getValue = JavaMethod.getMethod(GenericValue.class, new JavaMethodSignature("getValue"));
     ourCoreInvocations.put(new JavaMethodSignature("getConverter"), new Invocation() {
       public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
         try {
-          return handler.getScalarConverter(getValue);
+          return handler.getScalarConverter();
         }
         catch (Throwable e) {
           final Throwable cause = e.getCause();

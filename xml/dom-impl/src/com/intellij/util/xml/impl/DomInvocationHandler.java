@@ -21,8 +21,6 @@ import com.intellij.semantic.SemElement;
 import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.*;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.*;
@@ -49,8 +47,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
   public static final Method ACCEPT_CHILDREN_METHOD = ReflectionUtil.getMethod(DomElement.class, "acceptChildren", DomElementVisitor.class);
+  private static final JavaMethod ourGetValue = JavaMethod.getMethod(GenericValue.class, new JavaMethodSignature("getValue"));
 
-  private final Type myAbstractType;
   private final Type myType;
   private final DomManagerImpl myManager;
   private final EvaluatedXmlName myTagName;
@@ -61,45 +59,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final DomElement myProxy;
   private DomGenericInfoEx myGenericInfo;
   private final InvocationCache myInvocationCache;
-  private final FactoryMap<JavaMethod, Converter> myScalarConverters = new FactoryMap<JavaMethod, Converter>() {
-    protected Converter create(final JavaMethod method) {
-      final Type returnType = method.getGenericReturnType();
-      final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
-      final Class parameter = ReflectionUtil.substituteGenericType(type, myType);
-      LOG.assertTrue(parameter != null, type + " " + myType);
-      Converter converter = getConverter(new AnnotatedElement() {
-        @Override
-        public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-          return myInvocationCache.getMethodAnnotation(method, annotationClass);
-        }
-      }, parameter);
-      if (converter == null && type instanceof TypeVariable) {
-        converter = getConverter(DomInvocationHandler.this, DomUtil.getGenericValueParameter(myType));
-      }
-      if (converter == null) {
-        converter =  myManager.getConverterManager().getConverterByClass(parameter);
-      }
-      if (converter == null) {
-        throw new AssertionError("No converter specified: String<->" + parameter.getName() + "; method=" + method + "; place=" + myChildDescription);
-      }
-      return converter;
-    }
-  };
-  private final FactoryMap<Method, Invocation> myAccessorInvocations = new ConcurrentFactoryMap<Method, Invocation>() {
-    @Override
-    protected Invocation create(Method signature) {
-      final JavaMethod method = JavaMethod.getMethod(getRawType(), signature);
-
-      if (myInvocationCache.isTagValueGetter(method)) {
-        return new GetInvocation(getScalarConverter(method));
-      }
-
-      if (myInvocationCache.isTagValueSetter(method)) {
-        return new SetInvocation(getScalarConverter(method));
-      }
-      return null;
-    }
-  };
+  private volatile Converter myScalarConverter = null;
+  private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
 
   protected DomInvocationHandler(Type type, DomParentStrategy parentStrategy,
                                  final EvaluatedXmlName tagName,
@@ -110,7 +71,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     myParentStrategy = parentStrategy;
     myTagName = tagName;
     myChildDescription = childDescription;
-    myAbstractType = type;
     myLastModCount = manager.getPsiModificationCount();
 
     myType = narrowType(type);
@@ -151,10 +111,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @NotNull
   public final Type getDomElementType() {
     return myType;
-  }
-
-  final Type getAbstractType() {
-    return myAbstractType;
   }
 
   @Nullable
@@ -441,12 +397,36 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   @NotNull
-  protected final Converter getScalarConverter(final JavaMethod method) {
-    final Converter converter;
-    synchronized (myScalarConverters) {
-      converter = myScalarConverters.get(method);
+  protected final Converter getScalarConverter() {
+    Converter converter = myScalarConverter;
+    if (converter == null) {
+      converter = myScalarConverter = createConverter(ourGetValue);
     }
-    assert converter != null;
+    return converter;
+  }
+
+  @NotNull
+  private Converter createConverter(final JavaMethod method) {
+    Converter converter;
+    final Type returnType = method.getGenericReturnType();
+    final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
+    final Class parameter = ReflectionUtil.substituteGenericType(type, myType);
+    LOG.assertTrue(parameter != null, type + " " + myType);
+    converter = getConverter(new AnnotatedElement() {
+      @Override
+      public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+        return myInvocationCache.getMethodAnnotation(method, annotationClass);
+      }
+    }, parameter);
+    if (converter == null && type instanceof TypeVariable) {
+      converter = getConverter(DomInvocationHandler.this, DomUtil.getGenericValueParameter(myType));
+    }
+    if (converter == null) {
+      converter =  myManager.getConverterManager().getConverterByClass(parameter);
+    }
+    if (converter == null) {
+      throw new AssertionError("No converter specified: String<->" + parameter.getName() + "; method=" + method + "; place=" + myChildDescription);
+    }
     return converter;
   }
 
@@ -546,7 +526,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   private static <T extends DomElement> T _getParentOfType(Class<T> requiredClass, DomElement element) {
-    while (element != null && !(requiredClass.isInstance(element))) {
+    while (element != null && !requiredClass.isInstance(element)) {
       element = element.getParent();
     }
     return (T)element;
@@ -609,24 +589,39 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @Nullable
   public final Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     try {
-      return doInvoke(method, args);
+      return findInvocation(method).invoke(this, args);
     }
     catch (InvocationTargetException ex) {
       throw ex.getTargetException();
     }
   }
 
-  @Nullable
-  private Object doInvoke(final Method method, final Object... args) throws Throwable {
-    Invocation invocation = myInvocationCache.getInvocation(method);
-    if (invocation == null) {
-      invocation = myAccessorInvocations.get(method);
-      if (invocation == null) {
-        invocation = myGenericInfo.createInvocation(JavaMethod.getMethod(getRawType(), method));
-        myInvocationCache.putInvocation(method, invocation);
-      }
+  @NotNull
+  private Invocation findInvocation(Method method) {
+    Invocation invocation = myAccessorInvocations.get(method);
+    if (invocation != null) return invocation;
+
+    invocation = myInvocationCache.getInvocation(method);
+    if (invocation != null) return invocation;
+
+    JavaMethod javaMethod = JavaMethod.getMethod(getRawType(), method);
+    invocation = myGenericInfo.createInvocation(javaMethod);
+    if (invocation != null) {
+      myInvocationCache.putInvocation(method, invocation);
+      return invocation;
     }
-    return invocation.invoke(this, args);
+
+    if (myInvocationCache.isTagValueGetter(javaMethod)) {
+      invocation = new GetInvocation(createConverter(javaMethod));
+    }
+    else if (myInvocationCache.isTagValueSetter(javaMethod)) {
+      invocation = new SetInvocation(createConverter(javaMethod));
+    }
+    else {
+      throw new RuntimeException("No implementation for method " + method.toString() + " in class " + myType);
+    }
+    myAccessorInvocations = myAccessorInvocations.plus(method, invocation);
+    return invocation;
   }
 
   private static void setTagValue(final XmlTag tag, final String value) {

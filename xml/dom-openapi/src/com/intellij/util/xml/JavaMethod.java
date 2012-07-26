@@ -15,9 +15,9 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -33,17 +33,7 @@ public final class JavaMethod implements AnnotatedElement{
   private final JavaMethodSignature mySignature;
   private final Class myDeclaringClass;
   private final Method myMethod;
-  private final FactoryMap<Class, Annotation> myAnnotationsMap = new ConcurrentFactoryMap<Class, Annotation>() {
-    protected Annotation create(Class annotationClass) {
-      for (Method method : mySignature.getAllMethods(myDeclaringClass)) {
-        final Annotation annotation = method.getAnnotation(annotationClass);
-        if (annotation != null) {
-          return annotation;
-        }
-      }
-      return null;
-    }
-  };
+  private volatile SmartFMap<Class, Annotation> myAnnotationsMap = SmartFMap.emptyMap();
 
   private JavaMethod(final Class declaringClass, final JavaMethodSignature signature) {
     mySignature = signature;
@@ -102,7 +92,22 @@ public final class JavaMethod implements AnnotatedElement{
   }
 
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return (T)myAnnotationsMap.get(annotationClass);
+    //noinspection unchecked
+    T annotation = (T)myAnnotationsMap.get(annotationClass);
+    if (annotation == null) {
+      myAnnotationsMap = myAnnotationsMap.plus(annotationClass, annotation = findAnnotation(annotationClass));
+    }
+    return annotation;
+  }
+
+  @Nullable private <T extends Annotation> T findAnnotation(Class<T> annotationClass) {
+    for (Method method : mySignature.getAllMethods(myDeclaringClass)) {
+      final T annotation = method.getAnnotation(annotationClass);
+      if (annotation != null) {
+        return annotation;
+      }
+    }
+    return null;
   }
 
   @Override
