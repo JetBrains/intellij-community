@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleLibraryOrderEntryImpl;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -149,15 +148,9 @@ public class PyBuiltinCache {
   public PyBuiltinCache() {
   }
 
-
-  public static final Key<String> MARKER_KEY = new Key<String>("python.builtins.skeleton.file");
-
   public PyBuiltinCache(@Nullable final PyFile builtins, @Nullable PyFile exceptions) {
     myBuiltinsFile = builtins;
     myExceptionsFile = exceptions;
-    if (myBuiltinsFile != null) {
-      myBuiltinsFile.putUserData(MARKER_KEY, ""); // mark this file as builtins
-    }
   }
 
   @Nullable

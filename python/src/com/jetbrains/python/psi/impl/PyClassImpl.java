@@ -39,8 +39,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-import static com.jetbrains.python.psi.stubs.PyTargetExpressionStub.InitializerType.CallExpression;
-
 /**
  * @author yole
  */
@@ -603,14 +601,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
               if (propertyProcessor == null || propertyProcessor.process(property)) return property;
             }
           }
-          final PyQualifiedName initializer = targetStub.getInitializer();
-          if (targetStub.getInitializerType() == CallExpression && initializer != null && PyNames.PROPERTY.equals(initializer.toString())) {
-            final PropertyImpl property = new PropertyImpl(targetStub.getName(), UNKNOWN_CALL, UNKNOWN_CALL, UNKNOWN_CALL,
-                                                           null, targetStub.getPsi());
-            if (propertyProcessor == null || propertyProcessor.process(property)) {
-              return property;
-            }
-          }
         }
       }
     }
@@ -740,21 +730,24 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       throw new IllegalArgumentException("Unknown direction " + PyUtil.nvl(direction));
     }
 
-    @Nullable
+    @NotNull
     @Override
-    protected Callable translate(@NotNull PyExpression expr) {
-      if (PyNames.NONE.equals(expr.getName())) return null; // short-circuit a common case
+    protected Maybe<Callable> translate(@Nullable PyExpression expr) {
+      if (expr == null) {
+        return NONE;
+      }
+      if (PyNames.NONE.equals(expr.getName())) return NONE; // short-circuit a common case
       if (expr instanceof Callable) {
-        return (Callable)expr;
+        return new Maybe<Callable>((Callable)expr);
       }
       final PsiReference ref = expr.getReference();
       if (ref != null) {
         PsiElement something = ref.resolve();
         if (something instanceof Callable) {
-          return (Callable)something;
+          return new Maybe<Callable>((Callable)something);
         }
       }
-      return null;
+      return NONE;
     }
 
     public String toString() {

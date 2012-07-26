@@ -22,10 +22,14 @@ import java.io.IOException;
  */
 public class PropertyStubStorage extends PropertyBunch<String> implements CustomTargetExpressionStub {
 
-  @Nullable
+  @NotNull
   @Override
-  protected String translate(@NotNull PyExpression ref) {
-    return ref.getName();
+  protected Maybe<String> translate(@Nullable PyExpression ref) {
+    if (ref != null) {
+      final String name = ref.getName();
+      return name != null ? new Maybe<String>(name) : unknown;
+    }
+    return none;
   }
 
   private static final String IMPOSSIBLE_NAME = "#";

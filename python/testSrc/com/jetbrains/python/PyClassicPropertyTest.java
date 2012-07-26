@@ -73,7 +73,7 @@ public class PyClassicPropertyTest extends PyTestCase {
     assertEquals("v3", site.getText());
 
     accessor = p.getGetter();
-    assertTrue(accessor.isDefined());
+    assertFalse(accessor.isDefined());
 
     accessor = p.getSetter();
     assertTrue(accessor.isDefined());

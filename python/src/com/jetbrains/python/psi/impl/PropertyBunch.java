@@ -49,8 +49,8 @@ public abstract class PropertyBunch<MType> {
    * @param ref a reference as an argument in property() call
    * @return value we want to store (resolved callable, name, etc)
    */
-  @Nullable
-  protected abstract MType translate(@NotNull PyExpression ref);
+  @NotNull
+  protected abstract Maybe<MType> translate(@Nullable PyExpression ref);
 
   @Nullable
   public static PyCallExpression findPropertyCallSite(@Nullable PyExpression source) {
@@ -60,18 +60,23 @@ public abstract class PropertyBunch<MType> {
       if (callee instanceof PyReferenceExpression) {
         PyReferenceExpression ref = (PyReferenceExpression)callee;
         if (ref.getQualifier() != null) return null;
-        boolean is_inside_builtins = false;
-        PsiFile psifile = source.getContainingFile();
-        is_inside_builtins = psifile != null && psifile.getUserData(PyBuiltinCache.MARKER_KEY) != null;
-        if (PyNames.PROPERTY.equals(callee.getName()) && (is_inside_builtins || !resolvesLocally(ref))) {
-          // we assume that a non-local name 'property' is a built-in name.
-          // ref.resolve() is not used because we run in stub building phase where resolve() is frowned upon.
-          // NOTE: this logic fails if (quite unusually) name 'property' is directly imported from builtins.
-          return call;
+        if (PyNames.PROPERTY.equals(callee.getName())) {
+          PsiFile file = source.getContainingFile();
+          if (isBuiltinFile(file) || !resolvesLocally(ref)) {
+            // we assume that a non-local name 'property' is a built-in name.
+            // ref.resolve() is not used because we run in stub building phase where resolve() is frowned upon.
+            // NOTE: this logic fails if (quite unusually) name 'property' is directly imported from builtins.
+            return call;
+          }
         }
       }
     }
     return null;
+  }
+
+  private static boolean isBuiltinFile(PsiFile file) {
+    final String name = file.getName();
+    return PyBuiltinCache.BUILTIN_FILE.equals(name) || PyBuiltinCache.BUILTIN_FILE_3K.equals(name);
   }
 
   /**
@@ -129,17 +134,13 @@ public abstract class PropertyBunch<MType> {
             }
           }
         }
-        target.myGetter = translateIfSet(target, accessors [0]);
-        target.mySetter = translateIfSet(target, accessors [1]);
-        target.myDeleter = translateIfSet(target, accessors [2]);
+        target.myGetter = target.translate(accessors[0]);
+        target.mySetter = target.translate(accessors[1]);
+        target.myDeleter = target.translate(accessors[2]);
         target.myDoc = doc;
         return true;
       }
     }
     return false;
-  }
-
-  private static <MType> Maybe<MType> translateIfSet(PropertyBunch<MType> target, PyExpression accessor) {
-    return new Maybe<MType>(accessor == null ? null : target.translate(accessor));
   }
 }
