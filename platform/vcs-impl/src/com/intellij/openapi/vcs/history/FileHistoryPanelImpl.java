@@ -946,9 +946,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     @Override
     public boolean isEnabled() {
-      if (!super.isEnabled()) return false;
-      if (!myHistorySession.isContentAvailable(getFirstSelectedRevision())) return false;
-      return true;
+      return super.isEnabled() && myHistorySession.isContentAvailable(getFirstSelectedRevision()) && !myFilePath.isDirectory();
     }
 
     protected void executeAction(AnActionEvent e) {
