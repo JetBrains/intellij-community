@@ -143,8 +143,7 @@ public class LocalResourceManager extends ResourceManager {
 
       for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
         for (ResourceEntry entry : entrySet) {
-          final Collection<VirtualFile> files =
-            index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, AndroidValueResourcesIndex.createKey(entry), scope);
+          final Collection<VirtualFile> files = index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, entry, scope);
 
           for (VirtualFile file : files) {
             Set<String> resourcesInFile = file2Types.get(file);
