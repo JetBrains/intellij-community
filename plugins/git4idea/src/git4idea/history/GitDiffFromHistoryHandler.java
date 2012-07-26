@@ -32,6 +32,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
+import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
@@ -49,6 +50,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -101,6 +103,10 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     if (!filePath.isDirectory()) {
       VcsHistoryUtil.showDifferencesInBackground(myProject, filePath, revision1, revision2, autoSort);
     }
+    else if (revision2 instanceof CurrentRevision) {
+      GitFileRevision left = (GitFileRevision)revision1;
+      showDiffForDirectory(filePath, left.getHash(), null);
+    }
     else {
       GitFileRevision left = (GitFileRevision)revision1;
       GitFileRevision right = (GitFileRevision)revision2;
@@ -109,16 +115,16 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
         left = (GitFileRevision)pair.first;
         right = (GitFileRevision)pair.second;
       }
-      showDiffForDirectory(filePath, left, right);
+      showDiffForDirectory(filePath, left.getHash(), right.getHash());
     }
   }
 
-  private void showDiffForDirectory(@NotNull final FilePath path, @NotNull final GitFileRevision revision1, @NotNull final GitFileRevision revision2) {
+  private void showDiffForDirectory(@NotNull final FilePath path, @NotNull final String hash1, @Nullable final String hash2) {
     GitRepository repository = getRepository(path);
-    calculateDiffInBackground(repository, revision1.getHash(), revision2.getHash(), new Consumer<List<Change>>() {
+    calculateDiffInBackground(repository, hash1, hash2, new Consumer<List<Change>>() {
       @Override
       public void consume(List<Change> changes) {
-        showDirDiffDialog(path, revision1, revision2, changes);
+        showDirDiffDialog(path, hash1, hash2, changes);
       }
     });
   }
@@ -132,14 +138,14 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     return repository;
   }
 
-  private void calculateDiffInBackground(@NotNull final GitRepository repository, final String hash1, final String hash2,
+  private void calculateDiffInBackground(@NotNull final GitRepository repository, final String hash1, @Nullable final String hash2,
                                          final Consumer<List<Change>> successHandler) {
     new Task.Backgroundable(myProject, "Comparing revisions...") {
       private List<Change> myChanges;
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          myChanges = new ArrayList<Change>(GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), hash1, hash2, null));
+          myChanges = new ArrayList<Change>(GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), hash1, hash2));
         }
         catch (VcsException e) {
           showError(e, "Error during requesting diff for directory");
@@ -153,10 +159,16 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     }.queue();
   }
 
-  private void showDirDiffDialog(@NotNull FilePath path, GitFileRevision revision1, GitFileRevision revision2, @NotNull List<Change> diff) {
+  private void showDirDiffDialog(@NotNull FilePath path, @NotNull String hash1, @Nullable String hash2, @NotNull List<Change> diff) {
     DialogBuilder dialogBuilder = new DialogBuilder(myProject);
-    dialogBuilder.setTitle(String.format("%s diff in %s..%s", path.getName(), GitUtil.getShortHash(revision1.getHash()),
-                                                                                 GitUtil.getShortHash(revision2.getHash())));
+    String title;
+    if (hash2 != null) {
+      title = String.format("%s diff in %s..%s", path.getName(), GitUtil.getShortHash(hash1), GitUtil.getShortHash(hash2));
+    }
+    else {
+      title = String.format("%s diff from %s", path.getName(), GitUtil.getShortHash(hash1));
+    }
+    dialogBuilder.setTitle(title);
     dialogBuilder.setActionDescriptors(new DialogBuilder.ActionDescriptor[] { new DialogBuilder.CloseDialogAction()});
     final ChangesBrowser changesBrowser = new ChangesBrowser(myProject, null, diff, null, false, true,
                                                              null, ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);

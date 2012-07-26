@@ -905,11 +905,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       if (selection.size() != 1) return;
       if (ChangeListManager.getInstance(myVcs.getProject()).isFreezedWithNotification(null)) return;
       final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
-      if (currentRevisionNumber != null) {
-        VcsHistoryUtil.showDifferencesInBackground(myVcs.getProject(), myFilePath,
-                                                   getFirstSelectedRevision(),
-                                                   new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber),
-                                                   true);
+      VcsFileRevision selectedRevision = getFirstSelectedRevision();
+      if (currentRevisionNumber != null && selectedRevision != null) {
+        myDiffHandler.showDiff(myFilePath, selectedRevision, new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
       }
     }
 
