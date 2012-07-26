@@ -23,6 +23,7 @@ import com.intellij.ui.HintHint;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.Html;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,7 @@ public class HintUtil {
                                                   @Nullable MouseListener mouseListener,
                                                   @Nullable Ref<Consumer<String>> updatedTextConsumer)
   {
-    HintHint hintHint = new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
+    HintHint hintHint = getInformationHint();
 
     final HintLabel label = new HintLabel();
     label.setText(text, hintHint);
@@ -86,16 +87,18 @@ public class HintUtil {
           label.myPane.setText(s);
           
           // Force preferred size recalculation.
+          label.setPreferredSize(null);
           label.myPane.setPreferredSize(null);
-          if (label.myPane.getPreferredSize() == null && size != null) {
-            // Fallback to the old preferred size if it's not recalculated.
-            label.myPane.setPreferredSize(size);
-          }
         }
       });
     }
 
     return label;
+  }
+
+  @NotNull
+  public static HintHint getInformationHint() {
+    return new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
   }
 
   public static CompoundBorder createHintBorder() {
@@ -172,6 +175,20 @@ public class HintUtil {
       label.setBorder(border);
     }
     return label;
+  }
+  
+  @NotNull
+  public static String prepareHintText(@NotNull String text, @NotNull HintHint hintHint) {
+    return prepareHintText(new Html(text), hintHint);
+  }
+  
+  public static String prepareHintText(@NotNull Html text, @NotNull HintHint hintHint) {
+    String htmlBody = UIUtil.getHtmlBody(text);
+    return String.format(
+      "<html><head>%s</head><body>%s</body></html>",
+      UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()),
+      htmlBody
+    );
   }
 
   private static class HintLabel extends JPanel {

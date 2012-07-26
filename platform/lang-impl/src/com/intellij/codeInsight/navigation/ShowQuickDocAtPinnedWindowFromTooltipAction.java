@@ -17,32 +17,18 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeTooltip;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.lang.ref.WeakReference;
 
 /**
  * @author Denis Zhdanov
  * @since 7/13/12 11:43 AM
  */
-public class ShowQuickDocAtPinnedWindowFromTooltipAction extends AnAction {
-
-  @NotNull private final IdeTooltipManager myTooltipManager = IdeTooltipManager.getInstance();
-  @NotNull private final DataManager       myDataManager    = DataManager.getInstance();
-
-  @Nullable private WeakReference<Pair<PsiElement, PsiElement>> myInfo;
+public class ShowQuickDocAtPinnedWindowFromTooltipAction extends AbstractDocumentationTooltipAction {
 
   public ShowQuickDocAtPinnedWindowFromTooltipAction() {
     String className = getClass().getSimpleName();
@@ -53,45 +39,14 @@ public class ShowQuickDocAtPinnedWindowFromTooltipAction extends AnAction {
   }
 
   @Override
-  public void update(AnActionEvent e) {
-
-    // We can't use data context from the given event because it's built from the focused component and IDE tooltip doesn't have focus.
-    IdeTooltip tooltip = myTooltipManager.getCurrentTooltip();
-    if (tooltip == null) {
-      return;
-    }
-
-    JComponent component = tooltip.getTipComponent();
-    if (component == null) {
-      return;
-    }
-
-    Pair<PsiElement, PsiElement> info = CtrlMouseHandler.ELEMENT_UNDER_MOUSE_INFO_KEY.getData(myDataManager.getDataContext(component));
-    if (info != null) {
-      // Target info is retrieved during AnAction.update() processing because IDE tooltip is closed on action activation,
-      // i.e. IdeTooltipManager.getCurrentComponent() returns null during AnAction.actionPerformed() execution.
-      myInfo = new WeakReference<Pair<PsiElement, PsiElement>>(info);
-    }
-  }
-  
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    WeakReference<Pair<PsiElement, PsiElement>> infoRef = myInfo;
-    if (infoRef == null) {
-      return;
-    }
-    Pair<PsiElement, PsiElement> info = infoRef.get();
-    if (info == null) {
-      return;
-    }
-
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+  protected void doActionPerformed(@NotNull DataContext context, @NotNull PsiElement docAnchor, @NotNull PsiElement originalElement) {
+    Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) {
       return;
     }
 
-    myInfo = null;
     DocumentationManager docManager = DocumentationManager.getInstance(project);
-    docManager.showJavaDocInfoAtToolWindow(info.first, info.second);
+    docManager.setAllowContentUpdateFromContext(false);
+    docManager.showJavaDocInfoAtToolWindow(docAnchor, originalElement); 
   }
 }

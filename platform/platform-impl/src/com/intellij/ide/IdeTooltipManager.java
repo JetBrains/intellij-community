@@ -513,13 +513,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
     final Ref<Dimension> prefSize = new Ref<Dimension>(null);
-    String htmlBody = UIUtil.getHtmlBody(html);
-    @NonNls String text = "<html><head>" +
-                  UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(),
-                                               hintHint.getUlImg()) +
-                  "</head><body>" +
-                  htmlBody +
-                  "</body></html>";
+    @NonNls String text = HintUtil.prepareHintText(html, hintHint);
 
     final boolean[] prefSizeWasComputed = {false};
     final JEditorPane pane = new JEditorPane() {
@@ -624,17 +618,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
 
     return pane;
-  }
-
-  public static String formatHtml(@NonNls String text, HintHint hintHint) {
-    String htmlBody = UIUtil.getHtmlBody(text);
-    text = "<html><head>" +
-           UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(),
-                                        hintHint.getUlImg()) +
-           "</head><body>" +
-           htmlBody +
-           "</body></html>";
-    return text;
   }
 
   public static void setColors(JComponent pane) {

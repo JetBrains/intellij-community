@@ -47,7 +47,8 @@ import java.awt.*;
  */
 public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   protected ToolWindow myToolWindow = null;
-  protected boolean myAutoUpdateDocumentation = PropertiesComponent.getInstance().isTrueValue(getAutoUpdateEnabledProperty());
+  protected boolean myDefaultAutoUpdateDocumentation = PropertiesComponent.getInstance().isTrueValue(getAutoUpdateEnabledProperty());
+  protected boolean myAutoUpdateDocumentation = myDefaultAutoUpdateDocumentation;
   protected Runnable myAutoUpdateRequest;
   @NotNull protected final Project myProject;
 
@@ -105,7 +106,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     new UiNotifyConnector(component, new Activatable() {
       public void showNotify() {
-        restartAutoUpdate(myAutoUpdateDocumentation);
+        restartAutoUpdate(myDefaultAutoUpdateDocumentation);
       }
 
       public void hideNotify() {
@@ -145,12 +146,12 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
   
-  private void restartAutoUpdate(final boolean state) {
+  protected void restartAutoUpdate(final boolean state) {
     if (state && myToolWindow != null) {
       if (myAutoUpdateRequest == null) {
         myAutoUpdateRequest = new Runnable() {
           public void run() {
-            if (!myAutoUpdateDocumentation || myProject.isDisposed()) return;
+            if (myProject.isDisposed()) return;
 
             AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
             DataContext dataContext = asyncResult.getResult();
