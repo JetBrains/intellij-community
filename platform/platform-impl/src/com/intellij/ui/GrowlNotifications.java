@@ -27,7 +27,7 @@ import java.util.TreeSet;
 /**
  * @author mike
  */
-class GrowlNotifications {
+class GrowlNotifications implements MacNotifications {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.GrowlNotifications");
 
   private static GrowlNotifications ourNotifications;

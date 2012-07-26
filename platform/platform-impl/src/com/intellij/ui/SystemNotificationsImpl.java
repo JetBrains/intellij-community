@@ -21,6 +21,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -41,11 +42,11 @@ public class SystemNotificationsImpl extends SystemNotifications implements Pers
   private boolean myGrowlDisabled = false;
 
   public void notify(@NotNull String notificationName, @NotNull String title, @NotNull String text) {
-    if (!isGrowlEnabled() || ApplicationManager.getApplication().isActive()) return;
+    if (!areNotificationsEnabled() || ApplicationManager.getApplication().isActive()) return;
 
-    final GrowlNotifications nofications;
+    final MacNotifications notifications;
     try {
-      nofications = GrowlNotifications.getNotifications();
+      notifications = getMacNotifications();
     }
     catch (Throwable e) {
       myGrowlDisabled = true;
@@ -53,11 +54,17 @@ public class SystemNotificationsImpl extends SystemNotifications implements Pers
     }
 
     myState.NOTIFICATIONS.add(notificationName);
-    nofications.notify(myState.NOTIFICATIONS, notificationName, title, text);
+    notifications.notify(myState.NOTIFICATIONS, notificationName, title, text);
   }
 
-  private boolean isGrowlEnabled() {
+  private static MacNotifications getMacNotifications() {
+    return SystemInfo.isMacOSMountainLion && Registry.is("ide.mac.mountain.lion.notifications.enabled") ?
+                      MountainLionNotifications.getNotifications() : GrowlNotifications.getNotifications();
+  }
+
+  private boolean areNotificationsEnabled() {
     if (myGrowlDisabled || !SystemInfo.isMac) return false;
+    if (SystemInfo.isMacOSMountainLion && Registry.is("ide.mac.mountain.lion.notifications.enabled")) return true;
 
     if ("true".equalsIgnoreCase(System.getProperty("growl.disable"))) {
       myGrowlDisabled = true;
