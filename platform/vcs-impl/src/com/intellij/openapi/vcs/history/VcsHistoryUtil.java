@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -213,9 +214,10 @@ public class VcsHistoryUtil {
       public void run(@NotNull ProgressIndicator indicator) {
         VcsFileRevision left = revision1;
         VcsFileRevision right = revision2;
-        if (findOlderNewer && compare(revision1, revision2) > 0) {
-          left = revision2;
-          right = revision1;
+        if (findOlderNewer) {
+          Pair<VcsFileRevision, VcsFileRevision> pair = sortRevisions(revision1, revision2);
+          left = pair.first;
+          right = pair.second;
         }
 
         try {
@@ -242,6 +244,21 @@ public class VcsHistoryUtil {
         }
       }
     }.queue();
+  }
+
+  /**
+   * Compares the given revisions and returns a pair of them, where the first one is older, and second is newer.
+   */
+  @NotNull
+  public static Pair<VcsFileRevision, VcsFileRevision> sortRevisions(@NotNull VcsFileRevision revision1,
+                                                                     @NotNull VcsFileRevision revision2) {
+    VcsFileRevision left = revision1;
+    VcsFileRevision right = revision2;
+    if (compare(revision1, revision2) > 0) {
+      left = revision2;
+      right = revision1;
+    }
+    return Pair.create(left, right);
   }
 
 }
