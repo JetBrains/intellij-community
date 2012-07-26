@@ -136,6 +136,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       rtype = getReturnTypeByQName(overloadedQName, anchor);
       if (rtype != null) {
         boolean matched = true;
+        boolean notNullParameterMatch = false;
         for (Map.Entry<PyExpression, PyNamedParameter> entry : arguments.entrySet()) {
           final PyNamedParameter p = entry.getValue();
           final String name = p.getName();
@@ -144,7 +145,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           }
           PyType argType = entry.getKey().getType(context);
           // Special case for the 'mode' argument of the 'open()' builtin
-          if (("__builtin__.open".equals(qname) || "io.open".equals(qname)) && "mode".equals(name)) {
+          if (("__builtin__.open".equals(qname) || "io.open".equals(qname) || "os.fdopen".equals(qname)) && "mode".equals(name)) {
             final PyBuiltinCache cache = PyBuiltinCache.getInstance(anchor);
             final LanguageLevel level = LanguageLevel.forElement(anchor);
             argType = cache.getUnicodeType(level);
@@ -157,11 +158,16 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
             }
           }
           final PyType paramType = getParameterTypeByQName(overloadedQName, name, anchor);
-          if (!PyTypeChecker.match(paramType, argType, context)) {
+          if (PyTypeChecker.match(paramType, argType, context)) {
+            if (argType != null && paramType != null) {
+              notNullParameterMatch = true;
+            }
+          }
+          else {
             matched = false;
           }
         }
-        if (matched) {
+        if (matched && notNullParameterMatch) {
           return rtype;
         }
       }

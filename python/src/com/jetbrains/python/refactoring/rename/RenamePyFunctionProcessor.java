@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
+import com.jetbrains.python.psi.Callable;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -101,10 +102,10 @@ public class RenamePyFunctionProcessor extends RenamePyElementProcessor {
     }
   }
 
-  private static void addRename(Map<PsiElement, String> renames, String newName, Maybe<PyFunction> accessor) {
-    final PyFunction function = accessor.valueOrNull();
-    if (function != null) {
-      renames.put(function, newName);
+  private static void addRename(Map<PsiElement, String> renames, String newName, Maybe<Callable> accessor) {
+    final Callable callable = accessor.valueOrNull();
+    if (callable instanceof PyFunction) {
+      renames.put(callable, newName);
     }
   }
 }

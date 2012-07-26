@@ -371,6 +371,20 @@ public class PyTypeTest extends PyTestCase {
            "expr = h()\n");
   }
 
+  public void testPropertyOfUnionType() {
+    PyExpression expr = parseExpr("def f():\n" +
+                                  "    '''\n" +
+                                  "    :rtype: int or slice\n" +
+                                  "    '''\n" +
+                                  "    raise NotImplementedError\n" +
+                                  "\n" +
+                                  "x = f()\n" +
+                                  "expr = x.start\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType actual = expr.getType(context);
+    assertNull(actual);
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
