@@ -218,6 +218,10 @@ public class DialogBuilder implements Disposable {
   public static class CloseDialogAction extends DialogActionDescriptor {
     private final int myExitCode;
 
+    public CloseDialogAction() {
+      this(CommonBundle.getCloseButtonText(), -1, DialogWrapper.CLOSE_EXIT_CODE);
+    }
+
     public CloseDialogAction(String name, int mnemonicChar, int exitCode) {
       super(name, mnemonicChar);
       myExitCode = exitCode;
