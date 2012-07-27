@@ -29,6 +29,7 @@ import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.dom.wrappers.FileResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
+import org.jetbrains.android.dom.wrappers.ResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.resourceManagers.ValueResourceInfo;
@@ -104,6 +105,29 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
   }
 
   @NotNull
+  public PsiElement[] computeTargetElements() {
+    final ResolveResult[] resolveResults = multiResolve(false);
+    final List<PsiElement> results = new ArrayList<PsiElement>();
+
+    for (ResolveResult result : resolveResults) {
+      PsiElement element = result.getElement();
+
+      if (element instanceof LazyValueResourceElementWrapper) {
+        element = ((LazyValueResourceElementWrapper)element).computeElement();
+      }
+
+      if (element instanceof ResourceElementWrapper) {
+        element = ((ResourceElementWrapper)element).getWrappee();
+      }
+
+      if (element != null) {
+        results.add(element);
+      }
+    }
+    return results.toArray(new PsiElement[results.size()]);
+  }
+
+  @NotNull
   @Override
   public ResolveResult[] multiResolve(boolean incompleteCode) {
     return ResolveCache.getInstance(myElement.getProject())
@@ -132,9 +156,6 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
     }
 
     for (PsiElement target : elements) {
-      /*final PsiElement e = target instanceof NavigationItem && target instanceof XmlAttributeValue
-                           ? new ValueResourceElementWrapper((XmlAttributeValue)target)
-                           : target;*/
       result.add(new PsiElementResolveResult(target));
     }
     return result.toArray(new ResolveResult[result.size()]);
