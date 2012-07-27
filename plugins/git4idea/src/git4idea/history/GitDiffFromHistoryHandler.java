@@ -32,7 +32,10 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.openapi.vcs.history.*;
+import com.intellij.openapi.vcs.history.CurrentRevision;
+import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
+import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
@@ -52,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -118,7 +122,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
   private void showDiffForDirectory(@NotNull final FilePath path, @NotNull final String hash1, @Nullable final String hash2) {
     GitRepository repository = getRepository(path);
-    calculateDiffInBackground(repository, hash1, hash2, new Consumer<List<Change>>() {
+    calculateDiffInBackground(repository, path, hash1, hash2, new Consumer<List<Change>>() {
       @Override
       public void consume(List<Change> changes) {
         showDirDiffDialog(path, hash1, hash2, changes);
@@ -135,14 +139,16 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     return repository;
   }
 
-  private void calculateDiffInBackground(@NotNull final GitRepository repository, final String hash1, @Nullable final String hash2,
+  private void calculateDiffInBackground(@NotNull final GitRepository repository, @NotNull final FilePath path,
+                                         @NotNull final String hash1, @Nullable final String hash2,
                                          final Consumer<List<Change>> successHandler) {
     new Task.Backgroundable(myProject, "Comparing revisions...") {
       private List<Change> myChanges;
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          myChanges = new ArrayList<Change>(GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), hash1, hash2));
+          myChanges = new ArrayList<Change>(GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), hash1, hash2,
+                                                                   Collections.singletonList(path)));
         }
         catch (VcsException e) {
           showError(e, "Error during requesting diff for directory");
