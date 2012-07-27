@@ -16,7 +16,6 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +27,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ConcurrentWeakValueHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -119,62 +120,81 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return map;
   }
 
-  private Map<String, PsiAnnotation> doCollect(@NotNull PsiModifierListOwner listOwner) {
-    final List<PsiFile> files = findExternalAnnotationsFiles(listOwner);
-    if (files == null) {
-      return Collections.emptyMap();
+  protected Map<PsiFile, MultiMap<String, AnnotationData>> annotationsFileToData = new HashMap<PsiFile, MultiMap<String, AnnotationData>>();
+  protected Map<PsiFile, Long> annotationsFileToModificationStamp = new HashMap<PsiFile, Long>();
+  @NotNull
+  private MultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
+    if (annotationsFileToData.containsKey(file) && file.getModificationStamp() == annotationsFileToModificationStamp.get(file)) {
+      return annotationsFileToData.get(file);
     }
-    final Map<String, PsiAnnotation> result = new HashMap<String, PsiAnnotation>();
-    for (PsiFile file : files) {
-      if (!file.isValid()) continue;
-      final Document document;
+    else {
+      MultiMap<String, AnnotationData> data = new MultiMap<String, AnnotationData>();
+      annotationsFileToData.put(file, data);
+      annotationsFileToModificationStamp.put(file, file.getModificationStamp());
+
+      Document document;
       try {
         VirtualFile virtualFile = file.getVirtualFile();
-        if (virtualFile == null) continue;
+        if (virtualFile == null) return data;
         document = JDOMUtil.loadDocument(escapeAttributes(StreamUtil.readText(virtualFile.getInputStream())));
       }
       catch (IOException e) {
         LOG.error(e);
-        continue;
+        return data;
       }
       catch (JDOMException e) {
         LOG.error(e);
-        continue;
+        return data;
       }
-      if (document == null) continue;
-      final Element rootElement = document.getRootElement();
-      if (rootElement == null) continue;
-      final String externalName = getExternalName(listOwner, false);
-      final String oldExternalName = getNormalizedExternalName(listOwner);
+      Element rootElement = document.getRootElement();
+      if (rootElement == null) return data;
+
       //noinspection unchecked
-      for (final Element element : (List<Element>) rootElement.getChildren()) {
-        final String className = element.getAttributeValue("name");
-        if (!Comparing.strEqual(className, externalName) && !Comparing.strEqual(className, oldExternalName)) {
-          continue;
-        }
+      for (Element element : (List<Element>) rootElement.getChildren()) {
+        String ownerName = element.getAttributeValue("name");
+        if (ownerName == null) continue;
         //noinspection unchecked
         for (Element annotationElement : (List<Element>) element.getChildren()) {
-          final String annotationFQN = annotationElement.getAttributeValue("name");
-          final StringBuilder buf = new StringBuilder();
+          String annotationFQN = annotationElement.getAttributeValue("name");
+          StringBuilder buf = new StringBuilder();
           //noinspection unchecked
           for (Element annotationParameter : (List<Element>) annotationElement.getChildren()) {
             buf.append(",");
-            final String nameValue = annotationParameter.getAttributeValue("name");
+            String nameValue = annotationParameter.getAttributeValue("name");
             if (nameValue != null) {
               buf.append(nameValue).append("=");
             }
             buf.append(annotationParameter.getAttributeValue("val"));
           }
-          final String annotationText =
-            "@" + annotationFQN + (buf.length() > 0 ? "(" + StringUtil.trimStart(buf.toString(), ",") + ")" : "");
-          try {
-            result.put(annotationFQN,
-                       JavaPsiFacade.getInstance(myPsiManager.getProject()).getElementFactory().createAnnotationFromText(
-                         annotationText, null));
-          }
-          catch (IncorrectOperationException e) {
-            LOG.error(e);
-          }
+          String annotationText = "@" + annotationFQN + (buf.length() > 0 ? "(" + StringUtil.trimStart(buf.toString(), ",") + ")" : "");
+          data.putValue(ownerName, new AnnotationData(annotationFQN, annotationText));
+        }
+      }
+
+      return data;
+    }
+  }
+
+  private Map<String, PsiAnnotation> doCollect(@NotNull PsiModifierListOwner listOwner) {
+    final List<PsiFile> files = findExternalAnnotationsFiles(listOwner);
+    if (files == null) {
+      return Collections.emptyMap();
+    }
+    Map<String, PsiAnnotation> result = new HashMap<String, PsiAnnotation>();
+    String externalName = getExternalName(listOwner, false);
+    String oldExternalName = getNormalizedExternalName(listOwner);
+
+    for (PsiFile file : files) {
+      if (!file.isValid()) continue;
+      MultiMap<String, AnnotationData> fileData = getDataFromFile(file);
+      for (AnnotationData annotationData : ContainerUtil.concat(fileData.get(externalName), fileData.get(oldExternalName))) {
+        try {
+          result.put(annotationData.annotationClassFqName,
+                     JavaPsiFacade.getInstance(myPsiManager.getProject()).getElementFactory().createAnnotationFromText(
+                       annotationData.annotationText, null));
+        }
+        catch (IncorrectOperationException e) {
+          LOG.error(e);
         }
       }
     }
@@ -250,5 +270,15 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       }
     }
     return buf.toString();
+  }
+
+  private static class AnnotationData {
+    public String annotationClassFqName;
+    public String annotationText;
+
+    private AnnotationData(String annotationClassFqName, String annotationText) {
+      this.annotationClassFqName = annotationClassFqName;
+      this.annotationText = annotationText;
+    }
   }
 }
