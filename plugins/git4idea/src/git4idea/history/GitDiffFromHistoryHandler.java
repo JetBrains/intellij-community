@@ -108,6 +108,10 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
       GitFileRevision left = (GitFileRevision)revision1;
       showDiffForDirectory(filePath, left.getHash(), null);
     }
+    else if (revision1.equals(VcsFileRevision.NULL)) {
+      GitFileRevision right = (GitFileRevision)revision2;
+      showDiffForDirectory(filePath, null, right.getHash());
+    }
     else {
       GitFileRevision left = (GitFileRevision)revision1;
       GitFileRevision right = (GitFileRevision)revision2;
@@ -120,7 +124,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     }
   }
 
-  private void showDiffForDirectory(@NotNull final FilePath path, @NotNull final String hash1, @Nullable final String hash2) {
+  private void showDiffForDirectory(@NotNull final FilePath path, @Nullable final String hash1, @Nullable final String hash2) {
     GitRepository repository = getRepository(path);
     calculateDiffInBackground(repository, path, hash1, hash2, new Consumer<List<Change>>() {
       @Override
@@ -139,16 +143,26 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     return repository;
   }
 
+  // hash1 == null => hash2 is the initial commit
+  // hash2 == null => comparing hash1 with local
   private void calculateDiffInBackground(@NotNull final GitRepository repository, @NotNull final FilePath path,
-                                         @NotNull final String hash1, @Nullable final String hash2,
+                                         @Nullable  final String hash1, @Nullable final String hash2,
                                          final Consumer<List<Change>> successHandler) {
     new Task.Backgroundable(myProject, "Comparing revisions...") {
       private List<Change> myChanges;
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          myChanges = new ArrayList<Change>(GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), hash1, hash2,
-                                                                   Collections.singletonList(path)));
+          if (hash1 != null) {
+            // diff
+            myChanges = new ArrayList<Change>(GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), hash1, hash2,
+                                                                     Collections.singletonList(path)));
+          }
+          else {
+            // show the initial commit
+            myChanges = new ArrayList<Change>(GitChangeUtils.getRevisionChanges(repository.getProject(), repository.getRoot(), hash2, false,
+                                                                                true).getChanges());
+          }
         }
         catch (VcsException e) {
           showError(e, "Error during requesting diff for directory");
@@ -162,13 +176,19 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     }.queue();
   }
 
-  private void showDirDiffDialog(@NotNull FilePath path, @NotNull String hash1, @Nullable String hash2, @NotNull List<Change> diff) {
+  private void showDirDiffDialog(@NotNull FilePath path, @Nullable String hash1, @Nullable String hash2, @NotNull List<Change> diff) {
     DialogBuilder dialogBuilder = new DialogBuilder(myProject);
     String title;
     if (hash2 != null) {
-      title = String.format("Difference between %s and %s in %s", GitUtil.getShortHash(hash1), GitUtil.getShortHash(hash2), path.getName());
+      if (hash1 != null) {
+        title = String.format("Difference between %s and %s in %s", GitUtil.getShortHash(hash1), GitUtil.getShortHash(hash2), path.getName());
+      }
+      else {
+        title = String.format("Initial commit %s in %s", GitUtil.getShortHash(hash2), path.getName());
+      }
     }
     else {
+      LOG.assertTrue(hash1 != null, "hash1 and hash2 can't both be null. Path: " + path);
       title = String.format("Difference between %s and local version in %s", GitUtil.getShortHash(hash1), path.getName());
     }
     dialogBuilder.setTitle(title);
