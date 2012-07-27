@@ -46,7 +46,7 @@ public class ChangesBrowserManyUnversionedFilesNode extends ChangesBrowserNode {
     renderer.append(userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     final String s = " (" + (myDirsSize > 0 ? myDirsSize + " directories and " : "") + (myUnversionedSize - myDirsSize) + " files) ";
     renderer.append(s, SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);
-    renderer.append(" Click to browse", SimpleTextAttributes.LINK_ATTRIBUTES, myShower);
+    renderer.append("Click to browse", SimpleTextAttributes.LINK_ATTRIBUTES, myShower);
   }
 
   private static class MyUnversionedShower implements Runnable {
