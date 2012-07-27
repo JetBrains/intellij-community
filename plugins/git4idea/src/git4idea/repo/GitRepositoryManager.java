@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,12 @@ public interface GitRepositoryManager {
    */
   @Nullable
   GitRepository getRepositoryForFile(@NotNull VirtualFile file);
+
+  /**
+   * Returns the {@link GitRepository} which the given file belongs to, or {@code null} if the file is not under any Git repository.
+   */
+  @Nullable
+  GitRepository getRepositoryForFile(@NotNull FilePath file);
 
   /**
    * @return all repositories tracked by the manager.

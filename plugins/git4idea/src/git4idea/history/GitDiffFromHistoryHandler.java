@@ -37,7 +37,6 @@ import com.intellij.openapi.vcs.history.DiffFromHistoryHandler;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -136,10 +135,8 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
   @NotNull
   private GitRepository getRepository(@NotNull FilePath path) {
-    VirtualFile file = path.getVirtualFile();
-    LOG.assertTrue(file != null, "VirtualFile can't be null for " + path); // we clicked on a file and asked its history => VF must exist.
-    GitRepository repository = myRepositoryManager.getRepositoryForFile(file);
-    LOG.assertTrue(repository != null, "Repository is null for " + file);
+    GitRepository repository = myRepositoryManager.getRepositoryForFile(path);
+    LOG.assertTrue(repository != null, "Repository is null for " + path);
     return repository;
   }
 

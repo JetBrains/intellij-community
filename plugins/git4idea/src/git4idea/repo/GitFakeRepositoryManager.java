@@ -15,6 +15,7 @@
  */
 package git4idea.repo;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,11 @@ public class GitFakeRepositoryManager implements GitRepositoryManager {
   @Nullable
   @Override
   public GitRepository getRepositoryForFile(@NotNull VirtualFile file) {
+    return null;
+  }
+
+  @Override
+  public GitRepository getRepositoryForFile(@NotNull FilePath file) {
     return null;
   }
 
