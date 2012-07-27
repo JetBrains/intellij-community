@@ -16,6 +16,7 @@
 package com.intellij.execution.runners;
 
 import com.intellij.execution.console.LanguageConsoleImpl;
+import com.intellij.execution.process.BaseOSProcessHandler;
 import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 /**
  * @author traff
@@ -91,14 +93,14 @@ public class ConsoleExecuteActionHandler {
   }
 
   public void sendText(String line) {
-    //final Charset charset = myProcessHandler.getCharset();
+    final Charset charset = myProcessHandler instanceof BaseOSProcessHandler ?
+                            ((BaseOSProcessHandler)myProcessHandler).getCharset() : null;
     final ProcessHandler handler = getProcessHandler();
     assert handler != null : "process handler is null";
     final OutputStream outputStream = handler.getProcessInput();
     assert outputStream != null : "output stream is null";
     try {
-      //byte[] bytes = (line + "\n").getBytes(charset.name());
-      byte[] bytes = line.getBytes();
+      byte[] bytes = charset != null ? (line + "\n").getBytes(charset) : line.getBytes();
       outputStream.write(bytes);
       outputStream.flush();
     }
