@@ -26,9 +26,12 @@ import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.SpeedSearchComparator;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -203,6 +206,17 @@ public class RepositoryBrowserComponent extends JPanel implements Disposable, Da
       ScrollPaneFactory.createScrollPane(myRepositoryTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
     add(scrollPane, BorderLayout.CENTER);
     myRepositoryTree.setCellRenderer(new SvnRepositoryTreeCellRenderer());
+    TreeSpeedSearch search = new TreeSpeedSearch(myRepositoryTree, new Convertor<TreePath, String>() {
+      @Override
+      public String convert(TreePath o) {
+        Object component = o.getLastPathComponent();
+        if (component instanceof RepositoryTreeNode) {
+          return ((RepositoryTreeNode)component).getURL().toDecodedString();
+        }
+        return null;
+      }
+    });
+    search.setComparator(new SpeedSearchComparator(false, true));
 
     EditSourceOnDoubleClickHandler.install(myRepositoryTree);
   }
