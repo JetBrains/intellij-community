@@ -1,17 +1,16 @@
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.LinkedMultiMap;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.IgnoredFilePatterns;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -19,15 +18,16 @@ import java.util.Map;
  */
 public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuilder {
   private final Map<String, JarInfo> myJarByPath;
-  private final MultiMap<ArtifactSourceRoot, DestinationInfo> myInstructions;
+  private final List<Pair<ArtifactSourceRoot, DestinationInfo>> myInstructions;
   private final ModuleRootsIndex myRootsIndex;
   private final IgnoredFilePatterns myIgnoredFilePatterns;
+  private int myRootIndex;
 
   public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, IgnoredFilePatterns patterns) {
     myRootsIndex = rootsIndex;
     myIgnoredFilePatterns = patterns;
     myJarByPath = new HashMap<String, JarInfo>();
-    myInstructions = new LinkedMultiMap<ArtifactSourceRoot, DestinationInfo>();
+    myInstructions = new ArrayList<Pair<ArtifactSourceRoot, DestinationInfo>>();
   }
 
   public IgnoredFilePatterns getIgnoredFilePatterns() {
@@ -40,7 +40,7 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
       return false;
     }
 
-    myInstructions.putValue(root, destinationInfo);
+    myInstructions.add(Pair.create(root, destinationInfo));
     return true;
   }
 
@@ -57,31 +57,22 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
   }
 
   @Override
-  @Nullable
-  public JarInfo getJarInfo(String outputPath) {
-    return myJarByPath.get(outputPath);
-  }
-
-  @Override
-  public int getRootIndex(@NotNull ArtifactSourceRoot root) {
-    int i = 0;
-    for (Map.Entry<ArtifactSourceRoot, Collection<DestinationInfo>> entry : myInstructions.entrySet()) {
-      if (entry.getKey().equals(root)) {
-        return i;
-      }
-      i++;
-    }
-    return -1;
-  }
-
-  @Override
   public void processRoots(ArtifactRootProcessor processor) throws IOException {
-    int i = 0;
-    for (Map.Entry<ArtifactSourceRoot, Collection<DestinationInfo>> entry : myInstructions.entrySet()) {
-      if (!processor.process(entry.getKey(), i, entry.getValue())) {
+    for (Pair<ArtifactSourceRoot, DestinationInfo> pair : myInstructions) {
+      if (!processor.process(pair.getFirst(), pair.getSecond())) {
         break;
       }
-      i++;
     }
+  }
+
+  public FileBasedArtifactSourceRoot createFileBasedRoot(@NotNull File file,
+                                                         @NotNull SourceFileFilter filter) {
+    return new FileBasedArtifactSourceRoot(file, filter, myRootIndex++);
+  }
+
+  public JarBasedArtifactSourceRoot createJarBasedRoot(@NotNull File jarFile,
+                                                       @NotNull String pathInJar,
+                                                       @NotNull SourceFileFilter filter) {
+    return new JarBasedArtifactSourceRoot(jarFile, pathInJar, filter, myRootIndex++);
   }
 }

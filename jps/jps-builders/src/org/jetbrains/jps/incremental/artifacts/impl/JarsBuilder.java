@@ -164,8 +164,7 @@ public class JarsBuilder {
         final String relativePath = pair.getFirst();
         if (pair.getSecond() instanceof ArtifactSourceRoot) {
           final ArtifactSourceRoot root = (ArtifactSourceRoot)pair.getSecond();
-          final int rootIndex = myInstructions.getRootIndex(root);
-          LOG.assertTrue(rootIndex != -1, root + " not found in instructions");
+          final int rootIndex = root.getRootIndex();
           final ArtifactBuilderLogger logger = myContext.getLoggingManager().getArtifactBuilderLogger();
           if (root instanceof FileBasedArtifactSourceRoot) {
             addFileToJar(jarOutputStream, jarFile, root.getRootFile(), root.getFilter(), relativePath, targetJarPath, writtenPaths,

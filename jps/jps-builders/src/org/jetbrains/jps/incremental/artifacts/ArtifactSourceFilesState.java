@@ -85,10 +85,10 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     myDeletedFiles.clear();
     getOrCreateInstructions().processRoots(new ArtifactRootProcessor() {
       @Override
-      public boolean process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
+      public boolean process(ArtifactSourceRoot root, DestinationInfo destinations) throws IOException {
         final File rootFile = root.getRootFile();
         if (rootFile.exists()) {
-          processRecursively(rootFile, rootIndex, dataManager, root.getFilter(), currentPaths);
+          processRecursively(rootFile, root.getRootIndex(), dataManager, root.getFilter(), currentPaths);
         }
         return true;
       }

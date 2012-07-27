@@ -419,7 +419,7 @@ class RunConfigurable extends BaseConfigurable {
     initTree();
     DefaultActionGroup actionsGroup = createActionsGroup();
     PopupHandler.installFollowingSelectionTreePopup(myTree, actionsGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    myToolbarDecorator = ToolbarDecorator.createDecorator(myTree).setActionGroup(actionsGroup).setForcedDnD();
+    myToolbarDecorator = ToolbarDecorator.createDecorator(myTree).setAsUsualTopToolbar().setActionGroup(actionsGroup).setForcedDnD();
     return myToolbarDecorator.createPanel();
   }
 
@@ -984,7 +984,7 @@ class RunConfigurable extends BaseConfigurable {
 
           });
       //new TreeSpeedSearch(myTree);
-      popup.showUnderneathOf(myToolbarDecorator.getPanel());
+      popup.showUnderneathOf(myToolbarDecorator.getActionsPanel());
     }
   }
 
@@ -1100,7 +1100,7 @@ class RunConfigurable extends BaseConfigurable {
         configurable.getNameTextField().setSelectionEnd(copyName.length());
       }
       catch (ConfigurationException e1) {
-        Messages.showErrorDialog(myToolbarDecorator.getPanel(), e1.getMessage(), e1.getTitle());
+        Messages.showErrorDialog(myToolbarDecorator.getActionsPanel(), e1.getMessage(), e1.getTitle());
       }
     }
 

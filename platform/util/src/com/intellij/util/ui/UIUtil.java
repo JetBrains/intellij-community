@@ -947,7 +947,7 @@ public class UIUtil {
   }
 
   public static boolean isFullRowSelectionLAF() {
-    return isUnderNimbusLookAndFeel() || isUnderQuaquaLookAndFeel();
+    return isUnderQuaquaLookAndFeel();
   }
 
   public static boolean isUnderNativeMacLookAndFeel() {

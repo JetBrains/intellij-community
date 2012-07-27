@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -42,7 +41,7 @@ public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructi
   }
 
   public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
-    addCopyInstruction(childPathInJar(outputFileName), new FileBasedArtifactSourceRoot(file, SourceFileFilter.ALL));
+    addCopyInstruction(childPathInJar(outputFileName), myInstructionsBuilder.createFileBasedRoot(file, SourceFileFilter.ALL));
   }
 
   private void addCopyInstruction(String pathInJar, final ArtifactSourceRoot root) {

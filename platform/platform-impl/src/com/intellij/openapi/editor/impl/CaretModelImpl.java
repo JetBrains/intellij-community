@@ -765,6 +765,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     myCaretInfo = createVerticalInfo(position);
   }
 
+  @NotNull
   private VerticalInfo createVerticalInfo(LogicalPosition position) {
     Document document = myEditor.getDocument();
     int logicalLine = position.line;

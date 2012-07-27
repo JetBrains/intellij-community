@@ -430,9 +430,22 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
     for (int componentIndex = 0, viewIndex = 0; componentIndex < size; componentIndex++) {
       RadViewComponent childComponent = (RadViewComponent)children.get(componentIndex);
-      if (!(childComponent instanceof RadRequestFocus)) {
-        updateComponent(childComponent, views.get(viewIndex++), nativeComponent, left, top);
+      int childViewCount = childComponent.getViewInfoCount();
+
+      if (childViewCount == 0) {
+        if (!(childComponent instanceof RadRequestFocus)) {
+          updateComponent(childComponent, new ViewInfo(childComponent.getMetaModel().getTarget(), null, 0, 0, 0, 0),
+                          nativeComponent, left, top);
+        }
       }
+      else if (childViewCount == 1) {
+        updateComponent(childComponent, views.get(viewIndex), nativeComponent, left, top);
+      }
+      else {
+        // XXX
+      }
+
+      viewIndex += childViewCount;
     }
   }
 

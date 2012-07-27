@@ -220,7 +220,7 @@ public class DomSemContributor extends SemContributor {
   }
 
   @Nullable
-  private DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
+  private static DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
     LinkedHashSet<XmlTag> allParents = new LinkedHashSet<XmlTag>();
     PsiElement each = tag;
     while (each instanceof XmlTag && allParents.add((XmlTag)each)) {
@@ -228,11 +228,12 @@ public class DomSemContributor extends SemContributor {
     }
     ArrayList<XmlTag> list = new ArrayList<XmlTag>(allParents);
     Collections.reverse(list);
+    DomManagerImpl manager = DomManagerImpl.getDomManager(tag.getProject());
     for (XmlTag xmlTag : list) {
-      mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, xmlTag);
+      manager.getDomHandler(xmlTag);
     }
 
-    return mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, tag);
+    return manager.getDomHandler(tag);
   }
 
   @Nullable

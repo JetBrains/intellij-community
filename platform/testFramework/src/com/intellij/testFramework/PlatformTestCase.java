@@ -79,13 +79,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -736,6 +739,30 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   protected File createTempDirectory(final boolean refresh) throws IOException {
     return createTempDir(getTestName(true), refresh);
+  }
+
+  public static void setContentOnDisk(File file, byte[] bom, String content, Charset charset) throws IOException {
+    FileOutputStream stream = new FileOutputStream(file);
+    if (bom != null) {
+      stream.write(bom);
+    }
+    OutputStreamWriter writer = new OutputStreamWriter(stream, charset);
+    try {
+      writer.write(content);
+    }
+    finally {
+      writer.close();
+    }
+  }
+
+  public static VirtualFile createTempFile(@NonNls String ext, @Nullable byte[] bom, @NonNls String content, Charset charset) throws IOException {
+    File temp = FileUtil.createTempFile("copy", "." + ext);
+    setContentOnDisk(temp, bom, content, charset);
+
+    myFilesToDelete.add(temp);
+    final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp);
+    assert file != null : temp;
+    return file;
   }
 
   @Nullable

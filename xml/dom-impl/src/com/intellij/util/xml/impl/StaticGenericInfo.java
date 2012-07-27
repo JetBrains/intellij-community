@@ -150,7 +150,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
       return new AddChildInvocation(getTypeGetter(method), getIndexGetter(method), description, description.getType());
     }
 
-    throw new RuntimeException("No implementation for method " + method.toString() + " in class " + myClass);
+    return null;
   }
 
   private static Function<Object[], Type> getTypeGetter(final JavaMethod method) {

@@ -114,10 +114,8 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
   }
 
   protected void updatePsi(PsiTreeChangeEvent event) {
-    if (myRunState) {
-      if (myFile == event.getFile()) {
-        addRequest();
-      }
+    if (myRunState && myFile == event.getFile()) {
+      addRequest();
     }
   }
 

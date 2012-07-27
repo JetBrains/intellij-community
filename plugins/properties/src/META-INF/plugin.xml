@@ -77,6 +77,7 @@
     <standardResource url="http://java.sun.com/dtd/properties.dtd" path="schemas/properties.dtd"/>
     <iconProvider implementation="com.intellij.lang.properties.xml.XmlPropertiesIconProvider"/>
     <psi.referenceContributor language="XML" implementation="com.intellij.lang.properties.xml.XmlPropertiesReferenceContributor"/>
+    <lang.foldingBuilder language="Properties" implementationClass="com.intellij.lang.properties.editor.PropertiesFoldingBuilder" />
   </extensions>
 
   <project-components>

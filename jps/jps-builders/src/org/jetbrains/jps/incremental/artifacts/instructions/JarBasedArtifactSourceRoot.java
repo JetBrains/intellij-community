@@ -24,8 +24,8 @@ public class JarBasedArtifactSourceRoot extends ArtifactSourceRoot {
   private final File myJarFile;
   private final String myPathInJar;
 
-  public JarBasedArtifactSourceRoot(@NotNull File jarFile, @NotNull String pathInJar, @NotNull SourceFileFilter filter) {
-    super(filter);
+  public JarBasedArtifactSourceRoot(@NotNull File jarFile, @NotNull String pathInJar, @NotNull SourceFileFilter filter, int index) {
+    super(filter, index);
     myJarFile = jarFile;
     myPathInJar = pathInJar;
   }

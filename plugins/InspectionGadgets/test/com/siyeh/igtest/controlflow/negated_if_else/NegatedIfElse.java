@@ -1,6 +1,6 @@
-package com.siyeh.igtest.confusing;
+package com.siyeh.igtest.controlflow.negated_if_else;
 
-public class NegatedIfInspection
+public class NegatedIfElse
 {
 
     public static void main(String[] args)
@@ -29,5 +29,10 @@ public class NegatedIfInspection
     private static boolean baz()
     {
         return true;
+    }
+
+    void foo(int i) {
+        if (i != 0) {
+        }
     }
 }

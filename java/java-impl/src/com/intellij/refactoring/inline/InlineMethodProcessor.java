@@ -199,7 +199,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
           if (reference != null) {
             InlineUtil.TailCallType type = InlineUtil.getTailCallType(reference);
             if (type == InlineUtil.TailCallType.Simple) {
-              conflicts.putValue(statement, "Inlined result won't be a valid statement");
+              conflicts.putValue(statement, "Inlined result would contain parse errors");
               break;
             }
           }
@@ -747,12 +747,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         if (returnValue == null) continue;
         PsiStatement statement;
         if (tailCallType == InlineUtil.TailCallType.Simple) {
-          if (returnValue instanceof PsiExpression) {
+          if (returnValue instanceof PsiExpression && returnStatement.getNextSibling() == myMethodCopy.getBody().getLastBodyElement()) {
             PsiExpressionStatement exprStatement = (PsiExpressionStatement) myFactory.createStatementFromText("a;", null);
             exprStatement.getExpression().replace(returnValue);
             returnStatement.getParent().addBefore(exprStatement, returnStatement);
+            statement = myFactory.createStatementFromText("return;", null);
+          } else {
+            statement = (PsiStatement)returnStatement.copy();
           }
-          statement = myFactory.createStatementFromText("return;", null);
         }
         else {
           statement = myFactory.createStatementFromText(resultName + "=0;", null);

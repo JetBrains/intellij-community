@@ -16,18 +16,19 @@
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.ListScrollingUtil;
-import com.intellij.ui.ListUtil;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.ui.*;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.HashSet;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Enumeration;
 
 /**
@@ -37,69 +38,27 @@ import java.util.Enumeration;
  * Time: 4:01:10 PM
  * To change this template use Options | File Templates.
  */
-public class ActionMacroConfigurationPanel {
-  private JPanel myPanel;
-  private JButton myDeleteButton;
-  private JButton myRenameButton;
-  private JButton myExcludeActionButton;
+public class ActionMacroConfigurationPanel implements Disposable {
+  private Splitter mySplitter;
   private JList myMacrosList;
   private JList myMacroActionsList;
-
   final DefaultListModel myMacrosModel = new DefaultListModel();
-  public ActionMacroConfigurationPanel() {
-    ListUtil.addRemoveListener(myDeleteButton, myMacrosList);
+  private static final String SPLITTER_PROPORTION = "ActionMacroConfigurationPanel.SPLITTER_PROPORTION";
 
+
+  public ActionMacroConfigurationPanel() {
+    myMacrosList = new JBList();
+    myMacroActionsList = new JBList();
     myMacrosList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myMacroActionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myRenameButton.setEnabled(false);
-    myDeleteButton.setEnabled(false);
-    myExcludeActionButton.setEnabled(false);
-    
     myMacrosList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(ListSelectionEvent e) {
         final int selIndex = myMacrosList.getSelectedIndex();
         if (selIndex == -1) {
           ((DefaultListModel) myMacroActionsList.getModel()).removeAllElements();
-          myExcludeActionButton.setEnabled(false);
-          myRenameButton.setEnabled(false);
         } else {
-          myRenameButton.setEnabled(true);
           initActionList((ActionMacro)myMacrosModel.getElementAt(selIndex));
-        }
-      }
-    });
-
-    myMacroActionsList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(ListSelectionEvent e) {
-        final int selIdx = myMacroActionsList.getSelectedIndex();
-        myExcludeActionButton.setEnabled(selIdx != -1);
-      }
-    });
-
-    myExcludeActionButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final int selIndex = myMacrosList.getSelectedIndex();
-
-        if (selIndex != -1) {
-          final ActionMacro macro = (ActionMacro)myMacrosModel.getElementAt(selIndex);
-          macro.deleteAction(myMacroActionsList.getSelectedIndex());
-        }
-        ListUtil.removeSelectedItems(myMacroActionsList);
-      }
-    });
-
-    myRenameButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        final int selIndex = myMacrosList.getSelectedIndex();
-        if (selIndex == -1) return;
-        final ActionMacro macro = (ActionMacro) myMacrosModel.getElementAt(selIndex);
-        final String newName = Messages.showInputDialog(myPanel, IdeBundle.message("prompt.enter.new.name"),
-                                                        IdeBundle.message("title.rename.macro"),
-                                                        Messages.getQuestionIcon(), macro.getName(), null);
-        if (newName != null) {
-          macro.setName(newName);
-          myMacrosList.repaint();
         }
       }
     });
@@ -126,7 +85,7 @@ public class ActionMacroConfigurationPanel {
 
     final Enumeration newMacros = myMacrosModel.elements();
     while (newMacros.hasMoreElements()) {
-      ActionMacro macro = (ActionMacro) newMacros.nextElement();
+      ActionMacro macro = (ActionMacro)newMacros.nextElement();
       manager.addMacro(macro);
       removedIds.remove(macro.getActionId());
     }
@@ -145,7 +104,7 @@ public class ActionMacroConfigurationPanel {
     if (allMacros.length != myMacrosModel.getSize()) return true;
     for (int i = 0; i < allMacros.length; i++) {
       ActionMacro macro = allMacros[i];
-      ActionMacro newMacro = (ActionMacro) myMacrosModel.get(i);
+      ActionMacro newMacro = (ActionMacro)myMacrosModel.get(i);
       if (!macro.equals(newMacro)) return true;
     }
     return false;
@@ -162,7 +121,50 @@ public class ActionMacroConfigurationPanel {
   }
 
   public JPanel getPanel() {
-    return myPanel;
+    if (mySplitter == null) {
+      mySplitter = new Splitter(false, 0.5f);
+      final String value = PropertiesComponent.getInstance().getValue(SPLITTER_PROPORTION);
+      if (value != null) {
+        mySplitter.setProportion(Float.parseFloat(value));
+      }
+
+      mySplitter.setFirstComponent(
+        ToolbarDecorator.createDecorator(myMacrosList)
+          .setEditAction(new AnActionButtonRunnable() {
+            @Override
+            public void run(AnActionButton button) {
+              final int selIndex = myMacrosList.getSelectedIndex();
+              if (selIndex == -1) return;
+              final ActionMacro macro = (ActionMacro)myMacrosModel.getElementAt(selIndex);
+              final String newName = Messages.showInputDialog(mySplitter, IdeBundle.message("prompt.enter.new.name"),
+                                                              IdeBundle.message("title.rename.macro"),
+                                                              Messages.getQuestionIcon(), macro.getName(), null);
+              if (newName != null) {
+                macro.setName(newName);
+                myMacrosList.repaint();
+              }
+            }
+          }).disableAddAction().disableUpDownActions().createPanel());
+
+      mySplitter.setSecondComponent(
+        ToolbarDecorator.createDecorator(myMacroActionsList)
+          .setRemoveAction(new AnActionButtonRunnable() {
+            @Override
+            public void run(AnActionButton button) {
+              final int macrosSelectedIndex = myMacrosList.getSelectedIndex();
+              if (macrosSelectedIndex != -1) {
+                final ActionMacro macro = (ActionMacro)myMacrosModel.getElementAt(macrosSelectedIndex);
+                macro.deleteAction(myMacroActionsList.getSelectedIndex());
+              }
+              ListUtil.removeSelectedItems(myMacroActionsList);
+            }
+          }).disableAddAction().disableUpDownActions().createPanel());
+    }
+    return mySplitter;
   }
 
+  @Override
+  public void dispose() {
+    PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION, Float.toString(mySplitter.getProportion()));
+  }
 }

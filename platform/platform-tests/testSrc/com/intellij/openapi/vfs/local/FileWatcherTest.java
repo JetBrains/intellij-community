@@ -15,13 +15,13 @@
  */
 package com.intellij.openapi.vfs.local;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -417,35 +417,16 @@ public class FileWatcherTest extends PlatformLangTestCase {
       return;
     }
 
-    final Set<Character> roots = ContainerUtil.map2Set(File.listRoots(),  new Function<File, Character>() {
-      @Override
-      public Character fun(File root) {
-        return root.getPath().toLowerCase(Locale.US).charAt(0);
-      }
-    });
-    char subst = 0;
-    for (char c = 'e'; c <= 'z'; c++) {
-      if (!roots.contains(c)) {
-        subst = c;
-        break;
-      }
-    }
-    assertFalse("Occupied: " + roots.toString(), subst == 0);
-
     final File targetDir = FileUtil.createTempDirectory("top.", null);
     final File subDir = FileUtil.createTempDirectory(targetDir, "sub.", null);
     final File file = FileUtil.createTempFile(subDir, "test.", ".txt", true, false);
-    final int rv = new GeneralCommandLine("subst", subst + ":", targetDir.getAbsolutePath()).createProcess().waitFor();
-    assertEquals(0, rv);
-
-    final String substRoot = (subst + ":").toUpperCase(Locale.US);
-    VirtualDirectoryImpl.allowRootAccess(substRoot);
-
-    final VirtualFile vfsRoot = myFileSystem.findFileByPath(substRoot);
-    assertNotNull(substRoot, vfsRoot);
+    final File rootFile = IoTestUtil.createSubst(targetDir.getAbsolutePath());
+    VirtualDirectoryImpl.allowRootAccess(rootFile.getPath());
+    final VirtualFile vfsRoot = myFileSystem.findFileByIoFile(rootFile);
 
     try {
-      final File substDir = new File(substRoot, subDir.getName());
+      assertNotNull(rootFile.getPath(), vfsRoot);
+      final File substDir = new File(rootFile, subDir.getName());
       final File substFile = new File(substDir, file.getName());
       refresh(targetDir);
       refresh(substDir);
@@ -476,10 +457,12 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       delete(targetDir);
-      new GeneralCommandLine("subst", subst + ":", "/d").createProcess().waitFor();
-      ((NewVirtualFile)vfsRoot).markDirty();
-      myFileSystem.refresh(false);
-      VirtualDirectoryImpl.disallowRootAccess(substRoot);
+      IoTestUtil.deleteSubst(rootFile.getPath());
+      if (vfsRoot != null) {
+        ((NewVirtualFile)vfsRoot).markDirty();
+        myFileSystem.refresh(false);
+      }
+      VirtualDirectoryImpl.disallowRootAccess(rootFile.getPath());
     }
   }
 

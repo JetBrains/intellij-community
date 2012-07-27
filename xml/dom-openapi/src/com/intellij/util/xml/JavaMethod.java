@@ -15,9 +15,9 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -29,21 +29,12 @@ import java.util.List;
  */
 public final class JavaMethod implements AnnotatedElement{
   public static final JavaMethod[] EMPTY_ARRAY = new JavaMethod[0];
+  private static final Object NONE = new Object();
 
   private final JavaMethodSignature mySignature;
   private final Class myDeclaringClass;
   private final Method myMethod;
-  private final FactoryMap<Class, Annotation> myAnnotationsMap = new ConcurrentFactoryMap<Class, Annotation>() {
-    protected Annotation create(Class annotationClass) {
-      for (Method method : mySignature.getAllMethods(myDeclaringClass)) {
-        final Annotation annotation = method.getAnnotation(annotationClass);
-        if (annotation != null) {
-          return annotation;
-        }
-      }
-      return null;
-    }
-  };
+  private volatile SmartFMap<Class, Object> myAnnotationsMap = SmartFMap.emptyMap();
 
   private JavaMethod(final Class declaringClass, final JavaMethodSignature signature) {
     mySignature = signature;
@@ -102,7 +93,22 @@ public final class JavaMethod implements AnnotatedElement{
   }
 
   public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
-    return (T)myAnnotationsMap.get(annotationClass);
+    Object annotation = myAnnotationsMap.get(annotationClass);
+    if (annotation == null) {
+      myAnnotationsMap = myAnnotationsMap.plus(annotationClass, annotation = findAnnotation(annotationClass));
+    }
+    //noinspection unchecked
+    return annotation == NONE ? null : (T)annotation;
+  }
+
+  @NotNull private Object findAnnotation(Class<? extends Annotation> annotationClass) {
+    for (Method method : mySignature.getAllMethods(myDeclaringClass)) {
+      final Annotation annotation = method.getAnnotation(annotationClass);
+      if (annotation != null) {
+        return annotation;
+      }
+    }
+    return NONE;
   }
 
   @Override

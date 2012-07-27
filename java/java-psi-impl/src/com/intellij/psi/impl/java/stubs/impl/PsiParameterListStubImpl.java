@@ -32,8 +32,6 @@ public class PsiParameterListStubImpl extends StubBase<PsiParameterList> impleme
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("PsiParameterListStub");
-    return builder.toString();
+    return "PsiParameterListStub";
   }
 }

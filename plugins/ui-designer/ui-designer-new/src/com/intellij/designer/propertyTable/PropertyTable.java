@@ -1061,8 +1061,6 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-      myPropertyNameRenderer.getTableCellRendererComponent(table, value, selected, hasFocus, row, column);
-
       column = table.convertColumnIndexToModel(column);
       Property property = (Property)value;
       Color background = table.getBackground();
@@ -1079,11 +1077,13 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
         background = Gray._240;
       }
 
-      if (!selected) {
-        myPropertyNameRenderer.setBackground(background);
-      }
-
       if (column == 0) {
+        myPropertyNameRenderer.getTableCellRendererComponent(table, value, selected, hasFocus, row, column);
+
+        if (!selected) {
+          myPropertyNameRenderer.setBackground(background);
+        }
+
         SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         if (property.isImportant()) {
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
@@ -1163,6 +1163,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
             myPropertyNameRenderer.setForeground(FileStatus.MODIFIED.getColor());
           }
         }
+        return myPropertyNameRenderer;
       }
       else {
         try {
@@ -1189,8 +1190,6 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
           return myErrorRenderer;
         }
       }
-
-      return myPropertyNameRenderer;
     }
   }
 }

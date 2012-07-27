@@ -17,6 +17,8 @@ package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -24,9 +26,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Locale;
+import java.util.Set;
 
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 public class IoTestUtil {
   private IoTestUtil() { }
@@ -92,6 +95,47 @@ public class IoTestUtil {
     return junctionFile;
   }
 
+  public static File createSubst(@NotNull final String target) throws InterruptedException, IOException {
+    assertTrue(SystemInfo.isWindows);
+
+    final File targetFile = new File(target);
+    assertTrue(targetFile.getPath(), targetFile.isDirectory());
+
+    final String substRoot = getFirstFreeDriveLetter() + ":";
+
+    final ProcessBuilder command = new ProcessBuilder("subst", substRoot, target);
+    final int res = runCommand(command);
+    assertEquals(command.command().toString(), 0, res);
+
+    final File rootFile = new File(substRoot);
+    assertTrue("target=" + target + ", subst=" + rootFile, rootFile.isDirectory());
+    return rootFile;
+  }
+
+  public static void deleteSubst(@NotNull final String substRoot) throws InterruptedException, IOException {
+    runCommand(new ProcessBuilder("subst", substRoot, "/d"));
+  }
+
+  private static char getFirstFreeDriveLetter() {
+    final Set<Character> roots = ContainerUtil.map2Set(File.listRoots(), new Function<File, Character>() {
+      @Override
+      public Character fun(File root) {
+        return root.getPath().toUpperCase(Locale.US).charAt(0);
+      }
+    });
+
+    char drive = 0;
+    for (char c = 'E'; c <= 'Z'; c++) {
+      if (!roots.contains(c)) {
+        drive = c;
+        break;
+      }
+    }
+
+    assertFalse("Occupied: " + roots.toString(), drive == 0);
+    return drive;
+  }
+
   private static File getFullLinkPath(final String link) {
     final boolean isAbsolute = SystemInfo.isUnix && StringUtil.startsWithChar(link, '/') ||
                                SystemInfo.isWindows && link.matches("^[c-zC-Z]:[/\\\\].*$");
@@ -138,5 +182,19 @@ public class IoTestUtil {
       }
     }).start();
     return process.waitFor();
+  }
+
+  public static void assertTimestampsEqual(final long expected, final long actual) {
+    final long roundedExpected = (expected / 1000) * 1000;
+    final long roundedActual = (actual / 1000) * 1000;
+    assertEquals("expected: " + expected + ", actual: " + actual,
+                 roundedExpected, roundedActual);
+  }
+
+  public static void assertTimestampsNotEqual(final long expected, final long actual) {
+    final long roundedExpected = (expected / 1000) * 1000;
+    final long roundedActual = (actual / 1000) * 1000;
+    assertTrue("(un)expected: " + expected + ", actual: " + actual,
+               roundedExpected != roundedActual);
   }
 }

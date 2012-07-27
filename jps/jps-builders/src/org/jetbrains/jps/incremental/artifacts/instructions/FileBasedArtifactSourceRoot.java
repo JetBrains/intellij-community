@@ -18,8 +18,8 @@ import java.util.Collections;
 public class FileBasedArtifactSourceRoot extends ArtifactSourceRoot {
   private final File myFile;
 
-  public FileBasedArtifactSourceRoot(@NotNull File file, @NotNull SourceFileFilter filter) {
-    super(filter);
+  public FileBasedArtifactSourceRoot(@NotNull File file, @NotNull SourceFileFilter filter, int index) {
+    super(filter, index);
     myFile = file;
   }
 

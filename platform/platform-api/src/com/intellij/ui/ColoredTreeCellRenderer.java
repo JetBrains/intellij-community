@@ -142,7 +142,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * It guaranties readability of selected text in any LAF.
    */
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
-    if (mySelected && (myFocused || UIUtil.isUnderNimbusLookAndFeel())) {
+    if (mySelected && myFocused) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
     }
     else if (mySelected && UIUtil.isUnderAquaBasedLookAndFeel()) {

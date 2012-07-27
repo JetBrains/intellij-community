@@ -117,7 +117,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
         for (JpsModule module : generationOutputs.keySet()) {
           File root = new File(generationOutputs.get(module));
-          rootsIndex.associateRoot(context, root, module, context.isCompilingTests(), true, true);
+          rootsIndex.associateRoot(context, root, module, context.isCompilingTests());
         }
       }
 

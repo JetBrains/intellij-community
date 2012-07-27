@@ -118,6 +118,7 @@ public class FileStructurePopup implements Disposable {
   private final ActionCallback myTreeHasBuilt = new ActionCallback();
   private boolean myInitialNodeIsLeaf;
   private final boolean myDaemonUpdateEnabled;
+  private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<Pair<String, JCheckBox>>();
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -313,6 +314,7 @@ public class FileStructurePopup implements Disposable {
           if (prefix == null) prefix = "";
 
           if (!filter.equals(prefix)) {
+            final boolean isBackspace = prefix.length() < filter.length();
             filter = prefix;
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               public void run() {
@@ -323,10 +325,14 @@ public class FileStructurePopup implements Disposable {
                       @Override
                       public void run() {
                         myTree.repaint();
+                        if (isBackspace && handleBackspace(filter)) {
+                          return;
+                        }
                         if (myFilteringStructure.getRootElement().getChildren().length == 0) {
                           for (JCheckBox box : myCheckBoxes.values()) {
                             if (!box.isSelected()) {
                               myAutoClicked.add(box);
+                              myTriggeredCheckboxes.add(0, Pair.create(filter, box));
                               box.doClick();
                               filter = "";
                               break;
@@ -349,6 +355,22 @@ public class FileStructurePopup implements Disposable {
         }
       }, 300);
     }
+  }
+
+  private boolean handleBackspace(String filter) {
+    boolean clicked = false;
+    final Iterator<Pair<String, JCheckBox>> iterator = myTriggeredCheckboxes.iterator();
+    while (iterator.hasNext()) {
+      final Pair<String, JCheckBox> next = iterator.next();
+      if (next.getFirst().length() < filter.length()) break;
+
+      if (next.getFirst().length() >= filter.length()) {
+        iterator.remove();
+        next.getSecond().doClick();
+        clicked = true;
+      }
+    }
+    return clicked;
   }
 
   @Nullable
@@ -802,7 +824,7 @@ public class FileStructurePopup implements Disposable {
           final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
           final Object userObject = node.getUserObject();
           if (userObject instanceof FilteringTreeStructure.FilteringNode) {
-            return FileStructurePopup.getText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
+            return getText(((FilteringTreeStructure.FilteringNode)userObject).getDelegate());
           }
           return "";
         }

@@ -31,7 +31,7 @@ public class CopyToDirectoryInstructionCreator extends ArtifactCompilerInstructi
   }
 
   public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
-    myInstructionsBuilder.addDestination(new FileBasedArtifactSourceRoot(file, SourceFileFilter.ALL), new ExplodedDestinationInfo(myOutputPath + "/" + outputFileName));
+    myInstructionsBuilder.addDestination(myInstructionsBuilder.createFileBasedRoot(file, SourceFileFilter.ALL), new ExplodedDestinationInfo(myOutputPath + "/" + outputFileName));
   }
 
   @Override

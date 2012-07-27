@@ -193,7 +193,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testNotAStatement() throws Exception {
-    doTestConflict("Inlined result won't be a valid statement");
+    doTestConflict("Inlined result would contain parse errors");
   }
 
   private void doTestConflict(final String conflict) throws Exception {

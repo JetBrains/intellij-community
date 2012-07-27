@@ -153,6 +153,7 @@
     <extensionPoint name="generation.topLevelFactory" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
     <extensionPoint name="codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

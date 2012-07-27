@@ -1139,6 +1139,7 @@ public class FileUtil extends FileUtilRt {
   public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return FileUtilRt.createTempDirectory(prefix, suffix);
   }
+
   @NotNull
   public static File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
     return FileUtilRt.createTempDirectory(prefix, suffix, deleteOnExit);
@@ -1148,8 +1149,9 @@ public class FileUtil extends FileUtilRt {
   public static File createTempDirectory(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return FileUtilRt.createTempDirectory(dir, prefix, suffix);
   }
+
   @NotNull
-  public static File createTempDirectory(File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
+  public static File createTempDirectory(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
     return FileUtilRt.createTempDirectory(dir, prefix, suffix,deleteOnExit);
   }
 

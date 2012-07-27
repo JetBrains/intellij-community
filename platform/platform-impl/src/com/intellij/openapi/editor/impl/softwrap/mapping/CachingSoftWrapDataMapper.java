@@ -302,6 +302,10 @@ public class CachingSoftWrapDataMapper implements SoftWrapDataMapper, SoftWrapAw
     cacheEntry.storeTabData(new TabData(widthInColumns, position.offset));
   }
 
+  @Override
+  public void recalculationEnds() {
+  }
+
   /**
    * Tries to retrieve {@link CacheEntry} object that stores data for the given visual line.
    * <p/>

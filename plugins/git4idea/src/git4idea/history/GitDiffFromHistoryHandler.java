@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -67,7 +68,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * @author Kirill Likhodedov
  */
-class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
+public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
   
   private static final Logger LOG = Logger.getInstance(GitDiffFromHistoryHandler.class);
 
@@ -75,7 +76,7 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
   @NotNull private final Git myGit;
   @NotNull private final GitRepositoryManager myRepositoryManager;
 
-  GitDiffFromHistoryHandler(@NotNull Project project) {
+  public GitDiffFromHistoryHandler(@NotNull Project project) {
     myProject = project;
     myGit = ServiceManager.getService(project, Git.class);
     myRepositoryManager = GitUtil.getRepositoryManager(project);
@@ -121,7 +122,7 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
   private void showDiffForDirectory(@NotNull final FilePath path, @NotNull final String hash1, @Nullable final String hash2) {
     GitRepository repository = getRepository(path);
-    calculateDiffInBackground(repository, hash1, hash2, new Consumer<List<Change>>() {
+    calculateDiffInBackground(repository, path, hash1, hash2, new Consumer<List<Change>>() {
       @Override
       public void consume(List<Change> changes) {
         showDirDiffDialog(path, hash1, hash2, changes);
@@ -138,14 +139,16 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     return repository;
   }
 
-  private void calculateDiffInBackground(@NotNull final GitRepository repository, final String hash1, @Nullable final String hash2,
+  private void calculateDiffInBackground(@NotNull final GitRepository repository, @NotNull final FilePath path,
+                                         @NotNull final String hash1, @Nullable final String hash2,
                                          final Consumer<List<Change>> successHandler) {
     new Task.Backgroundable(myProject, "Comparing revisions...") {
       private List<Change> myChanges;
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          myChanges = new ArrayList<Change>(GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), hash1, hash2));
+          myChanges = new ArrayList<Change>(GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), hash1, hash2,
+                                                                   Collections.singletonList(path)));
         }
         catch (VcsException e) {
           showError(e, "Error during requesting diff for directory");
@@ -163,10 +166,10 @@ class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
     DialogBuilder dialogBuilder = new DialogBuilder(myProject);
     String title;
     if (hash2 != null) {
-      title = String.format("%s diff in %s..%s", path.getName(), GitUtil.getShortHash(hash1), GitUtil.getShortHash(hash2));
+      title = String.format("Difference between %s and %s in %s", GitUtil.getShortHash(hash1), GitUtil.getShortHash(hash2), path.getName());
     }
     else {
-      title = String.format("%s diff from %s", path.getName(), GitUtil.getShortHash(hash1));
+      title = String.format("Difference between %s and local version in %s", GitUtil.getShortHash(hash1), path.getName());
     }
     dialogBuilder.setTitle(title);
     dialogBuilder.setActionDescriptors(new DialogBuilder.ActionDescriptor[] { new DialogBuilder.CloseDialogAction()});

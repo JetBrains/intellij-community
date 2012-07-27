@@ -14,9 +14,11 @@ import java.io.IOException;
  */
 public abstract class ArtifactSourceRoot {
   private final SourceFileFilter myFilter;
+  private final int myRootIndex;
 
-  protected ArtifactSourceRoot(@NotNull SourceFileFilter filter) {
+  protected ArtifactSourceRoot(@NotNull SourceFileFilter filter, int index) {
     myFilter = filter;
+    myRootIndex = index;
   }
 
   @NotNull
@@ -43,5 +45,9 @@ public abstract class ArtifactSourceRoot {
   @Override
   public int hashCode() {
     return myFilter.hashCode();
+  }
+
+  public int getRootIndex() {
+    return myRootIndex;
   }
 }

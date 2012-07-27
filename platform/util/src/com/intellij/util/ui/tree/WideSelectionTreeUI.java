@@ -42,10 +42,10 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   private static final Icon TREE_COLLAPSED_ICON = UIUtil.getTreeCollapsedIcon();
   private static final Icon TREE_EXPANDED_ICON = UIUtil.getTreeExpandedIcon();
-  private static final Icon TREE_SELECTED_COLLAPSED_ICON = UIUtil.isUnderAquaBasedLookAndFeel() ? AllIcons.Mac.Tree_white_right_arrow
-                                                                                                : TREE_COLLAPSED_ICON;
-  private static final Icon TREE_SELECTED_EXPANDED_ICON = UIUtil.isUnderAquaBasedLookAndFeel() ? AllIcons.Mac.Tree_white_down_arrow
-                                                                                               : TREE_EXPANDED_ICON;
+  private static final Icon TREE_SELECTED_COLLAPSED_ICON = UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()
+                                                           ? AllIcons.Mac.Tree_white_right_arrow : TREE_COLLAPSED_ICON;
+  private static final Icon TREE_SELECTED_EXPANDED_ICON = UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()
+                                                          ? AllIcons.Mac.Tree_white_down_arrow : TREE_EXPANDED_ICON;
 
   private static final Border LIST_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListSelectionBackgroundPainter");

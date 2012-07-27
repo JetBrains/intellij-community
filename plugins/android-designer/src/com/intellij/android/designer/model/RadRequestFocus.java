@@ -31,4 +31,9 @@ public class RadRequestFocus extends RadViewComponent {
   @Override
   public void setProperties(List<Property> properties) {
   }
+
+  @Override
+  public int getViewInfoCount() {
+    return 0;
+  }
 }

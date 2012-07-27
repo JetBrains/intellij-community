@@ -75,14 +75,14 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
   protected void doOKAction() {
     final LibraryCompositionSettings librarySettings = myComponent.getLibraryCompositionSettings();
     if (librarySettings != null) {
-      if (myConfigurable.isOnlyLibraryAdded()) {
-        final ModifiableRootModel modifiableModel = myModifiableModelsProvider.getModuleModifiableModel(myModule);
-        if (!askAndRemoveDuplicatedLibraryEntry(modifiableModel, librarySettings.getLibraryDescription())) {
+      final ModifiableRootModel modifiableModel = myModifiableModelsProvider.getModuleModifiableModel(myModule);
+      if (!askAndRemoveDuplicatedLibraryEntry(modifiableModel, librarySettings.getLibraryDescription())) {
+        if (myConfigurable.isOnlyLibraryAdded()) {
           myModifiableModelsProvider.disposeModuleModifiableModel(modifiableModel);
           return;
         }
-        myModifiableModelsProvider.commitModuleModifiableModel(modifiableModel);
       }
+      myModifiableModelsProvider.commitModuleModifiableModel(modifiableModel);
 
       final boolean downloaded = librarySettings.downloadFiles(getRootPane());
       if (!downloaded) {
