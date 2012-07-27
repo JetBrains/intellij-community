@@ -3,7 +3,7 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met:
+ * are met: 
  *
  * -Redistributions of source code must retain the above copyright
  *  notice, this list of conditions and the following disclaimer.
@@ -72,20 +72,20 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
       PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(),
                                        "-Class1.java\n" +
                                        " -Class1\n" +
-                                       "  getValue():int\n" +
-                                       "  getClass():Class<? extends Object>\n" +
-                                       "  hashCode():int\n" +
-                                       "  equals(Object):boolean\n" +
-                                       "  clone():Object\n" +
-                                       "  toString():String\n" +
-                                       "  notify():void\n" +
-                                       "  notifyAll():void\n" +
-                                       "  wait(long):void\n" +
-                                       "  wait(long, int):void\n" +
-                                       "  wait():void\n" +
-                                       "  finalize():void\n" +
-                                       "  myField1:boolean\n" +
-                                       "  myField2:boolean\n");
+                                       "  getValue(): int\n" +
+                                       "  getClass(): Class<? extends Object>\n" +
+                                       "  hashCode(): int\n" +
+                                       "  equals(Object): boolean\n" +
+                                       "  clone(): Object\n" +
+                                       "  toString(): String\n" +
+                                       "  notify(): void\n" +
+                                       "  notifyAll(): void\n" +
+                                       "  wait(long): void\n" +
+                                       "  wait(long, int): void\n" +
+                                       "  wait(): void\n" +
+                                       "  finalize(): void\n" +
+                                       "  myField1: boolean\n" +
+                                       "  myField2: boolean\n");
 
       new WriteCommandAction.Simple(getProject()) {
         @Override
@@ -103,21 +103,21 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
       //TreeUtil.expand(structureViewComponent.getTree(), 3);
 
       PlatformTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
-                                                                         " -Class1\n" + "  getValue():int\n" +
-                                                                         "  getClass():Class<? extends Object>\n" +
-                                                                         "  hashCode():int\n" +
-                                                                         "  equals(Object):boolean\n" +
-                                                                         "  clone():Object\n" +
-                                                                         "  toString():String\n" +
-                                                                         "  notify():void\n" +
-                                                                         "  notifyAll():void\n" +
-                                                                         "  wait(long):void\n" +
-                                                                         "  wait(long, int):void\n" +
-                                                                         "  wait():void\n" +
-                                                                         "  finalize():void\n" +
-                                                                         "  myField1:boolean\n" +
-                                                                         "  myField2:boolean\n" +
-                                                                         "  myNewField:boolean = false\n");
+                                                                         " -Class1\n" + "  getValue(): int\n" +
+                                                                         "  getClass(): Class<? extends Object>\n" +
+                                                                         "  hashCode(): int\n" +
+                                                                         "  equals(Object): boolean\n" +
+                                                                         "  clone(): Object\n" +
+                                                                         "  toString(): String\n" +
+                                                                         "  notify(): void\n" +
+                                                                         "  notifyAll(): void\n" +
+                                                                         "  wait(long): void\n" +
+                                                                         "  wait(long, int): void\n" +
+                                                                         "  wait(): void\n" +
+                                                                         "  finalize(): void\n" +
+                                                                         "  myField1: boolean\n" +
+                                                                         "  myField2: boolean\n" +
+                                                                         "  myNewField: boolean = false\n");
 
       Disposer.dispose(structureViewComponent);
 
@@ -140,11 +140,11 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
                                                                          " -Class2\n" +
                                                                          "  +InnerClass1\n" +
                                                                          "  +InnerClass2\n" +
-                                                                         "  getValue():int\n" +
-                                                                         "  myField1:boolean\n" +
-                                                                         "  myField2:boolean\n" +
-                                                                         "  myField3:boolean\n" +
-                                                                         "  myField4:boolean\n");
+                                                                         "  getValue(): int\n" +
+                                                                         "  myField1: boolean\n" +
+                                                                         "  myField2: boolean\n" +
+                                                                         "  myField3: boolean\n" +
+                                                                         "  myField4: boolean\n");
 
       final PsiField innerClassField = psiClass.getInnerClasses()[0].getFields()[0];
 
@@ -154,13 +154,13 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
                                                                          " -Class2\n" +
                                                                          "  -InnerClass1\n" +
                                                                          "   +InnerClass12\n" +
-                                                                         "   myInnerClassField:int\n" +
+                                                                         "   myInnerClassField: int\n" +
                                                                          "  +InnerClass2\n" +
-                                                                         "  getValue():int\n" +
-                                                                         "  myField1:boolean\n" +
-                                                                         "  myField2:boolean\n" +
-                                                                         "  myField3:boolean\n" +
-                                                                         "  myField4:boolean\n");
+                                                                         "  getValue(): int\n" +
+                                                                         "  myField1: boolean\n" +
+                                                                         "  myField2: boolean\n" +
+                                                                         "  myField3: boolean\n" +
+                                                                         "  myField4: boolean\n");
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
         @Override
@@ -187,11 +187,11 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
                                                                          "  -InnerClass1\n" +
                                                                          "   +InnerClass12\n" +
                                                                          "  +InnerClass2\n" +
-                                                                         "  getValue():int\n" +
-                                                                         "  myField1:boolean\n" +
-                                                                         "  myField2:boolean\n" +
-                                                                         "  myField3:boolean\n" +
-                                                                         "  myField4:boolean\n");
+                                                                         "  getValue(): int\n" +
+                                                                         "  myField1: boolean\n" +
+                                                                         "  myField2: boolean\n" +
+                                                                         "  myField3: boolean\n" +
+                                                                         "  myField4: boolean\n");
 
     }
     finally {
