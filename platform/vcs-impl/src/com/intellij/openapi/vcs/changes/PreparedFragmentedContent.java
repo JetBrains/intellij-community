@@ -265,7 +265,8 @@ public class PreparedFragmentedContent {
     if (myRanges == null || myRanges.isEmpty()) return Collections.emptyList();
     if (lines == -1) {
       final List<BeforeAfter<TextRange>> shiftedRanges = new ArrayList<BeforeAfter<TextRange>>(1);
-      shiftedRanges.add(new BeforeAfter<TextRange>(new TextRange(0, oldDocument.getLineCount() - 1), new TextRange(0, document.getLineCount() - 1)));
+      shiftedRanges.add(new BeforeAfter<TextRange>(new TextRange(0, oldDocument.getLineCount() == 0 ? 0 : oldDocument.getLineCount() - 1),
+                                                   new TextRange(0, document.getLineCount() == 0 ? 0 : document.getLineCount() - 1)));
       return shiftedRanges;
     }
     final List<BeforeAfter<TextRange>> shiftedRanges = new ArrayList<BeforeAfter<TextRange>>(myRanges.size());
