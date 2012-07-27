@@ -6,6 +6,7 @@ import com.intellij.lang.PsiParser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author oleg
@@ -38,7 +39,7 @@ public abstract class IndentationParser implements PsiParser {
     final PsiBuilder.Marker documentMarker = builder.mark();
 
     final Stack<BlockInfo> stack = new Stack<BlockInfo>();
-    stack.push(new BlockInfo(0, builder.mark()));
+    stack.push(new BlockInfo(0, builder.mark(), builder.getTokenType()));
 
     PsiBuilder.Marker startLineMarker = null;
     int currentIndent = 0;
@@ -71,17 +72,19 @@ public abstract class IndentationParser implements PsiParser {
             }
             // Close indentation blocks
             while (!stack.isEmpty() && currentIndent < stack.peek().getIndent()) {
-              closeBlock(builder, stack.pop().getMarker());
+              final BlockInfo blockInfo = stack.pop();
+              closeBlock(builder, blockInfo.getMarker(), blockInfo.getStartTokenType());
             }
 
             if (!stack.isEmpty()) {
               final BlockInfo blockInfo = stack.peek();
               if (currentIndent >= blockInfo.getIndent()) {
                 if (currentIndent == blockInfo.getIndent()) {
-                  closeBlock(builder, stack.pop().getMarker());
+                  final BlockInfo info = stack.pop();
+                  closeBlock(builder, info.getMarker(), info.getStartTokenType());
                 }
                 passEOLsAndIndents(builder);
-                stack.push(new BlockInfo(currentIndent, builder.mark()));
+                stack.push(new BlockInfo(currentIndent, builder.mark(), type));
               }
             }
             eolSeen = false;
@@ -97,7 +100,8 @@ public abstract class IndentationParser implements PsiParser {
       startLineMarker.drop();
     }
     while (!stack.isEmpty()){
-      closeBlock(builder, stack.pop().getMarker());
+      final BlockInfo blockInfo = stack.pop();
+      closeBlock(builder, blockInfo.getMarker(), blockInfo.getStartTokenType());
     }
 
     documentMarker.done(myDocumentType);
@@ -105,7 +109,10 @@ public abstract class IndentationParser implements PsiParser {
     return builder.getTreeBuilt();
   }
 
-  protected void closeBlock(@NotNull PsiBuilder builder, @NotNull PsiBuilder.Marker marker) {
+  protected void closeBlock(final @NotNull PsiBuilder builder,
+                            final @NotNull PsiBuilder.Marker marker,
+                            final @Nullable IElementType startTokenType)
+  {
     marker.done(myBlockElementType);
   }
 
@@ -125,10 +132,13 @@ public abstract class IndentationParser implements PsiParser {
     private final int myIndent;
     @NotNull
     private final PsiBuilder.Marker myMarker;
+    @Nullable
+    private final IElementType myStartTokenType;
 
-    private BlockInfo(final int indent, final @NotNull PsiBuilder.Marker marker) {
-      this.myIndent = indent;
-      this.myMarker = marker;
+    private BlockInfo(final int indent, final @NotNull PsiBuilder.Marker marker, final @Nullable IElementType type) {
+      myIndent = indent;
+      myMarker = marker;
+      myStartTokenType = type;
     }
 
     public int getIndent() {
@@ -138,6 +148,11 @@ public abstract class IndentationParser implements PsiParser {
     @NotNull
     public PsiBuilder.Marker getMarker() {
       return myMarker;
+    }
+
+    @Nullable
+    public IElementType getStartTokenType() {
+      return myStartTokenType;
     }
   }
 }

@@ -15,13 +15,15 @@
  */
 package com.intellij.psi.xml;
 
+import com.intellij.psi.PsiElement;
+
 /**
  * @author Mike
  */
 public interface XmlDoctype extends XmlElement {
   XmlElement getNameElement();
   String getDtdUri();
-  XmlElement getDtdUrlElement();
+  PsiElement getDtdUrlElement();
   XmlMarkupDecl getMarkupDecl();
   String getPublicId();
   String getSystemId();
