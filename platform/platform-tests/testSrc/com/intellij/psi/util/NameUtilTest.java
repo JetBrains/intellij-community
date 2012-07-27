@@ -441,6 +441,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("*ap", "add_profile", "application", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
     assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("*ea", "LEADING", "NORTH_EAST", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testPreferEarlyMatching() {

@@ -92,9 +92,9 @@ public class MinusculeMatcher implements Matcher {
 
     int startIndex = first.getStartOffset();
     boolean prefixMatching = isStartMatch(name, startIndex);
-    boolean middleWordStart = !prefixMatching && NameUtil.isWordStart(name, first.getStartOffset());
+    boolean middleWordStart = !prefixMatching && startIndex > 0 && NameUtil.isWordStart(name, startIndex) && !NameUtil.isWordStart(name, startIndex - 1);
 
-    return -fragmentCount + matchingCase * 20 + commonStart * 30 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100 - integral;
+    return -fragmentCount + matchingCase * 20 + commonStart * 30 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 1000 - integral;
   }
 
   public boolean isStartMatch(String name) {
