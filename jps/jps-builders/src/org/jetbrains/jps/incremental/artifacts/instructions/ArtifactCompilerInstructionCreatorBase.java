@@ -45,14 +45,14 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
   public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter) {
     final boolean copyExcluded = myInstructionsBuilder.getRootsIndex().isExcluded(directory);
     SourceFileFilter fileFilter = new SourceFileFilterImpl(filter, myInstructionsBuilder.getRootsIndex(), myInstructionsBuilder.getIgnoredFilePatterns(), copyExcluded);
-    addDirectoryCopyInstructions(new FileBasedArtifactSourceRoot(directory, fileFilter));
+    addDirectoryCopyInstructions(myInstructionsBuilder.createFileBasedRoot(directory, fileFilter));
   }
 
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar) {
     final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
                                                                  myInstructionsBuilder.getIgnoredFilePatterns(), false);
-    addDirectoryCopyInstructions(new JarBasedArtifactSourceRoot(jarFile, pathInJar, filter));
+    addDirectoryCopyInstructions(myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter));
   }
 
   protected abstract void addDirectoryCopyInstructions(ArtifactSourceRoot root);

@@ -130,23 +130,21 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
       final Set<JarInfo> changedJars = new THashSet<JarInfo>();
       instructions.processRoots(new ArtifactRootProcessor() {
         @Override
-        public boolean process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
+        public boolean process(ArtifactSourceRoot root, DestinationInfo destination) throws IOException {
           if (context.getCancelStatus().isCanceled()) return false;
 
-          final Set<String> sourcePaths = filesToProcess.get(rootIndex);
+          final Set<String> sourcePaths = filesToProcess.get(root.getRootIndex());
           if (sourcePaths == null) return true;
 
           for (String sourcePath : sourcePaths) {
             if (!root.containsFile(sourcePath, pd.dataManager)) continue;//todo[nik] this seems to be unnecessary
 
-            for (DestinationInfo destination : destinations) {
-              if (destination instanceof ExplodedDestinationInfo) {
-                root.copyFromRoot(sourcePath, rootIndex, destination.getOutputPath(), context, srcOutMapping, outSrcMapping);
-              }
-              else if (outSrcMapping.getState(destination.getOutputFilePath()) == null) {
-                outSrcMapping.update(destination.getOutputFilePath(), Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
-                changedJars.add(((JarDestinationInfo)destination).getJarInfo());
-              }
+            if (destination instanceof ExplodedDestinationInfo) {
+              root.copyFromRoot(sourcePath, root.getRootIndex(), destination.getOutputPath(), context, srcOutMapping, outSrcMapping);
+            }
+            else if (outSrcMapping.getState(destination.getOutputFilePath()) == null) {
+              outSrcMapping.update(destination.getOutputFilePath(), Collections.<ArtifactOutputToSourceMapping.SourcePathAndRootIndex>emptyList());
+              changedJars.add(((JarDestinationInfo)destination).getJarInfo());
             }
           }
           return true;
