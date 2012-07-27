@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ * http: //www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -42,8 +42,8 @@ class Foo {
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   Foo(int, int)
-  foo(int, int):Object
-  prop:int
+  foo(int, int): Object
+  prop: int
 """);
       }
     });
@@ -67,34 +67,34 @@ class Bar extends Foo {
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   Foo(int, int)
-  foo(int, int):Object
-  getClass():Class<? extends Object>
-  clone():Object
-  equals(Object):boolean
-  hashCode():int
-  wait(long):void
-  wait(long, int):void
-  wait():void
-  notify():void
-  finalize():void
-  toString():String
-  notifyAll():void
-  prop:int
+  foo(int, int): Object
+  getClass(): Class<? extends Object>
+  clone(): Object
+  equals(Object): boolean
+  hashCode(): int
+  wait(long): void
+  wait(long, int): void
+  wait(): void
+  notify(): void
+  finalize(): void
+  toString(): String
+  notifyAll(): void
+  prop: int
  -Bar
-  bar(int):Object
-  getClass():Class<? extends Object>
-  clone():Object
-  equals(Object):boolean
-  hashCode():int
-  foo(int, int):Object
-  wait(long):void
-  wait(long, int):void
-  wait():void
-  notify():void
-  finalize():void
-  toString():String
-  notifyAll():void
-  prop:int
+  bar(int): Object
+  getClass(): Class<? extends Object>
+  clone(): Object
+  equals(Object): boolean
+  hashCode(): int
+  foo(int, int): Object
+  wait(long): void
+  wait(long, int): void
+  wait(): void
+  notify(): void
+  finalize(): void
+  toString(): String
+  notifyAll(): void
+  prop: int
 """);
       }
     });
@@ -116,8 +116,8 @@ class Foo {
         component.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
-  foo():void
-  prop:int
+  foo(): void
+  prop: int
 """);
       }
     });

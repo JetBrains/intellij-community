@@ -1,5 +1,5 @@
 -SelectLeafFirst.java
  -SelectLeafFirst
-  [clear():void]
+  [clear(): void]
   -ClearClass
-   clear():void
+   clear(): void

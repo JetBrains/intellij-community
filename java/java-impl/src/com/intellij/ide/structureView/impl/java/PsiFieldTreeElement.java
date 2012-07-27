@@ -17,6 +17,7 @@ package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.SortableTreeElement;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -36,11 +37,11 @@ public class PsiFieldTreeElement extends JavaClassTreeElementBase<PsiField> impl
   }
 
   public String getPresentableText() {
-    return PsiFormatUtil.formatVariable(
+    return StringUtil.replace(PsiFormatUtil.formatVariable(
       getElement(),
       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE | PsiFormatUtil.TYPE_AFTER | PsiFormatUtil.SHOW_INITIALIZER,
       PsiSubstitutor.EMPTY
-    );
+    ), ":", ": ");
   }
 
   public PsiField getField() {

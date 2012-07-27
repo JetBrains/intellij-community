@@ -1,10 +1,10 @@
 -AnonymousInAnonymous.java
  -AnonymousInAnonymous
   AnonymousInAnonymous()
-  -foo():void
+  -foo(): void
    -$1
-    -toString():String
+    -toString(): String
      -$1
-      [method():void]
-  num1:int
-  num2:int
+      [method(): void]
+  num1: int
+  num2: int
