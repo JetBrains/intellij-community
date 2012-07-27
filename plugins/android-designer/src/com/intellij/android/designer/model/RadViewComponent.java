@@ -45,6 +45,9 @@ public class RadViewComponent extends RadVisualComponent {
   private List<Property> myProperties;
 
   public XmlTag getTag() {
+    if (myTag.getParent() == null || !myTag.isValid()) {
+      return EmptyXmlTag.INSTANCE;
+    }
     return myTag;
   }
 
@@ -75,6 +78,10 @@ public class RadViewComponent extends RadVisualComponent {
   public void setViewInfo(ViewInfo viewInfo) {
     myViewInfo = viewInfo;
     myMargins = null;
+  }
+
+  public int getViewInfoCount() {
+    return 1;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

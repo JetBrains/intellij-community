@@ -61,4 +61,9 @@ public class RadIncludeLayout extends RadViewComponent implements IConfigurableC
     }
     super.setProperties(properties);
   }
+
+  @Override
+  public int getViewInfoCount() {
+    return super.getViewInfoCount(); // TODO: Auto-generated method stub
+  }
 }

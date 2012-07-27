@@ -217,7 +217,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         try {
           RadComponent component = extractComponent(value);
 
-          if (component != null && myDesigner.doPaint) {
+          if (component != null) {
             myDesigner.getTreeDecorator().decorate(component, this, getAttributeWrapper(component), true);
 
             if (myMarkComponent == component) {

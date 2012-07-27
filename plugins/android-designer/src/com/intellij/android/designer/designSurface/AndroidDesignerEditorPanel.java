@@ -209,7 +209,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         myLayeredPane.add(rootPanel, LAYER_COMPONENT);
 
         myParseTime = false;
-        doPaint = true;
 
         runnable.run();
       }
@@ -596,7 +595,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       return false;
     }
     finally {
-      doPaint = true;
       myPSIChangeListener.start();
     }
   }
@@ -617,7 +615,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       showError("Execute command", e);
     }
     finally {
-      doPaint = true;
       myPSIChangeListener.start();
     }
   }

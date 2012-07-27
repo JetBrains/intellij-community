@@ -1023,7 +1023,6 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
     private final Map<HighlightSeverity, SimpleTextAttributes> myItalicAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
     private final ColoredTableCellRenderer myPropertyNameRenderer;
     private final ColoredTableCellRenderer myErrorRenderer;
-    private final JLabel myNoRenderer = new JLabel();
     private final Icon myExpandIcon;
     private final Icon myCollapseIcon;
     private final Icon myIndentedExpandIcon;
@@ -1167,10 +1166,6 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
         return myPropertyNameRenderer;
       }
       else {
-        if (!myDesigner.doPaint) {
-          return myNoRenderer;
-        }
-
         try {
           PropertyRenderer renderer = property.getRenderer();
           JComponent component = renderer.getComponent(getCurrentComponent(), getValue(property), selected, hasFocus);
