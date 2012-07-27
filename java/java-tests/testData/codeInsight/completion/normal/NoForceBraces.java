@@ -1,6 +1,8 @@
+import java.io.File;
+
 public class Foo {
   void foo(boolean flag) {
-      if ('\\' == File.separach<caret>)
+      if ('\\' == File.separaCh<caret>)
       System.out.println();
   }
 }
