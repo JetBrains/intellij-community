@@ -154,7 +154,6 @@
 
     <extensionPoint name="codeInsight.createFieldFromUsageHelper" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
 
-    <extensionPoint name="findUsages.java.customJavaFindUsagesHandlerProvider" interface="com.intellij.find.findUsages.CustomJavaFindUsagesHandlerProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
