@@ -28,6 +28,7 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Arrays;
 
+import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
@@ -290,13 +291,6 @@ public class FileAttributesReadingTest {
     assertEquals(file.length(), attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertTrue(attributes.isWritable());
-  }
-
-  private static void assertTimestampsEqual(final long expected, final long actual) {
-    final long roundedExpected = (expected / 1000) * 1000;
-    final long roundedActual = (actual / 1000) * 1000;
-    assertEquals("expected: " + expected + ", actual: " + actual,
-                 roundedExpected, roundedActual);
   }
 
   private static void assertDirectoriesEqual(@NotNull final File dir) {

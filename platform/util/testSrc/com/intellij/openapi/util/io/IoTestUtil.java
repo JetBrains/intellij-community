@@ -183,4 +183,18 @@ public class IoTestUtil {
     }).start();
     return process.waitFor();
   }
+
+  public static void assertTimestampsEqual(final long expected, final long actual) {
+    final long roundedExpected = (expected / 1000) * 1000;
+    final long roundedActual = (actual / 1000) * 1000;
+    assertEquals("expected: " + expected + ", actual: " + actual,
+                 roundedExpected, roundedActual);
+  }
+
+  public static void assertTimestampsNotEqual(final long expected, final long actual) {
+    final long roundedExpected = (expected / 1000) * 1000;
+    final long roundedActual = (actual / 1000) * 1000;
+    assertTrue("(un)expected: " + expected + ", actual: " + actual,
+               roundedExpected != roundedActual);
+  }
 }
