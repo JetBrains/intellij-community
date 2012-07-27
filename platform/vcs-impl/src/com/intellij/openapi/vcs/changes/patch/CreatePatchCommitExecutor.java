@@ -36,6 +36,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.WaitForProgressToShow;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -161,8 +162,27 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
 
     public void execute(Collection<Change> changes, String commitMessage) {
       if (! myPanel.isOkToExecute()) {
-        Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", myPanel.getError()), CommonBundle.getErrorTitle());
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            Messages
+              .showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", myPanel.getError()), CommonBundle.getErrorTitle());
+          }
+        });
         return;
+      }
+      final String fileName = myPanel.getFileName();
+      final File file = new File(fileName).getAbsoluteFile();
+      if (file.exists()) {
+        final int[] result = new int[1];
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            result[0] = Messages.showYesNoDialog(myProject, "File " + file.getName() + " (" + file.getParent() + ")" +
+                                " already exists.\nDo you want to overwrite it?", CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+          }
+        });
+        if (Messages.NO == result[0]) return;
       }
       myPanel.onOk();
       myCommitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, myPanel.isStoreTexts());
@@ -188,8 +208,6 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         return;
       }
       try {
-        final String fileName = myPanel.getFileName();
-        final File file = new File(fileName).getAbsoluteFile();
         VcsConfiguration.getInstance(myProject).acceptLastCreatedPatchName(file.getName());
         PATCH_PATH = file.getParent();
         final boolean reversePatch = myPanel.isReversePatch();
