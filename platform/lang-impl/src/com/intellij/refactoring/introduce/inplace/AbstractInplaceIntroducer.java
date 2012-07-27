@@ -512,6 +512,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       }.execute();
     }
 
+    if (!isIdentifier(getInputName(), myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {
