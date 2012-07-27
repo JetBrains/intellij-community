@@ -9,7 +9,6 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
 
 import java.io.*;
 import java.util.Collections;
@@ -34,11 +33,6 @@ public class JarBasedArtifactSourceRoot extends ArtifactSourceRoot {
   @Override
   public File getRootFile() {
     return myJarFile;
-  }
-
-  @Override
-  public boolean containsFile(String filePath, BuildDataManager dataManager) {
-    return new File(FileUtil.toSystemDependentName(filePath)).equals(myJarFile);
   }
 
   @Override

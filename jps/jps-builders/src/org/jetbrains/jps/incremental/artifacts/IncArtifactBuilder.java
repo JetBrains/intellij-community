@@ -137,8 +137,6 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
           if (sourcePaths == null) return true;
 
           for (String sourcePath : sourcePaths) {
-            if (!root.containsFile(sourcePath, pd.dataManager)) continue;//todo[nik] this seems to be unnecessary
-
             if (destination instanceof ExplodedDestinationInfo) {
               root.copyFromRoot(sourcePath, root.getRootIndex(), destination.getOutputPath(), context, srcOutMapping, outSrcMapping);
             }
