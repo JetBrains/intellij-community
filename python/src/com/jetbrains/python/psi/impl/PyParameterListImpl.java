@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   public PyParameter[] getParameters() {
-    return getStubOrPsiChildren(PyElementTypes.PARAMETERS, new PyParameter[0]);
+    return getStubOrPsiChildren(PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens(), new PyParameter[0]);
   }
 
   public void addParameter(final PyNamedParameter param) {

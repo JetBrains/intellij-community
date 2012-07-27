@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.jetbrains.cython.CythonInspectionsTest;
+import com.jetbrains.cython.CythonParsingTest;
 import com.jetbrains.cython.CythonRenameTest;
 import com.jetbrains.cython.CythonResolveTest;
 import com.jetbrains.django.lang.template.DjangoTemplateParserTest;
@@ -26,6 +27,7 @@ public class PythonAllTestsSuite {
     PyStringFormatParserTest.class,
     PyEncodingTest.class,
     PythonParsingTest.class,
+    CythonParsingTest.class,
     PyStringLiteralTest.class,
     PyIndentTest.class,
     PyWrapTest.class,

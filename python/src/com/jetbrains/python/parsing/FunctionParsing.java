@@ -31,10 +31,6 @@ public class FunctionParsing extends Parsing {
     return FUNCTION_TYPE;
   }
 
-  protected IElementType getParameterListType() {
-    return PARAMETER_LIST_TYPE;
-  }
-
   @Nullable
   protected IElementType getNameType() {
     return null;
@@ -114,7 +110,7 @@ public class FunctionParsing extends Parsing {
     else {
       myBuilder.error(message("PARSE.expected.@.or.def"));
       PsiBuilder.Marker parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
-      parameterList.done(getParameterListType());
+      parameterList.done(PyElementTypes.PARAMETER_LIST);
       endMarker.done(getFunctionType());
     }
   }
@@ -124,7 +120,7 @@ public class FunctionParsing extends Parsing {
     if (myBuilder.getTokenType() != PyTokenTypes.LPAR) {
       myBuilder.error(message("PARSE.expected.lpar"));
       parameterList = myBuilder.mark(); // To have non-empty parameters list at all the time.
-      parameterList.done(getParameterListType());
+      parameterList.done(PyElementTypes.PARAMETER_LIST);
       return;
     }
     parseParameterListContents(PyTokenTypes.RPAR, true, false);
@@ -172,7 +168,7 @@ public class FunctionParsing extends Parsing {
       myBuilder.advanceLexer();
     }
 
-    parameterList.done(getParameterListType());
+    parameterList.done(PyElementTypes.PARAMETER_LIST);
 
     if (myBuilder.getTokenType() == endToken && endToken == PyTokenTypes.COLON) {
       myBuilder.advanceLexer();
