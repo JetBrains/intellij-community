@@ -22,6 +22,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -36,13 +37,12 @@ import com.intellij.util.FunctionUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
-import git4idea.repo.GitRepositoryFiles;
-import git4idea.util.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
@@ -51,7 +51,9 @@ import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryFiles;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -612,8 +614,15 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       final List<String> usersList = getUsersList(project, roots);
       final Set<String> authors = usersList == null ? new HashSet<String>() : new HashSet<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
-      Collections.sort(new ArrayList<String>(authors));
-      myAuthor = new JComboBox(ArrayUtil.toObjectArray(authors));
+      List<String> list = new ArrayList<String>(authors);
+      Collections.sort(list);
+      list = ObjectsConvertor.convert(list, new Convertor<String, String>() {
+        @Override
+        public String convert(String o) {
+          return StringUtil.shortenTextWithEllipsis(o, 30, 0);
+        }
+      });
+      myAuthor = new JComboBox(ArrayUtil.toObjectArray(list));
       myAuthor.insertItemAt("", 0);
       myAuthor.setSelectedItem("");
       myAuthor.setEditable(true);
