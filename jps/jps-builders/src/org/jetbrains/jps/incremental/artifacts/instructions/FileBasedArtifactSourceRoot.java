@@ -35,22 +35,8 @@ public class FileBasedArtifactSourceRoot extends ArtifactSourceRoot {
   }
 
   @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    if (!super.equals(o)) return false;
-
-    return myFile.equals(((FileBasedArtifactSourceRoot)o).myFile);
-  }
-
-  @Override
   public String toString() {
     return myFile.getPath();
-  }
-
-  @Override
-  public int hashCode() {
-    return 31 * super.hashCode() + myFile.hashCode();
   }
 
   public void copyFromRoot(String filePath,
