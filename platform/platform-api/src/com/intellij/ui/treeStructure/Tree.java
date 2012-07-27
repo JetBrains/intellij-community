@@ -96,7 +96,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setUI(final TreeUI ui) {
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
-      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection()) {
+      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection() && !UIUtil.isUnderGTKLookAndFeel()) {
         actualUI = new WideSelectionTreeUI(isWideSelection(), !SystemInfo.isMac);
       }
     }
