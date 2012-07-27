@@ -225,7 +225,7 @@ public class UsersFilterAction extends BasePopupAction {
   }
   
   private String getMeText(final String name) {
-    return "me ( " + name + " )";
+    return "me ( " + StringUtil.shortenTextWithEllipsis(name, 30, 0) + " )";
   }
 
   @Override
