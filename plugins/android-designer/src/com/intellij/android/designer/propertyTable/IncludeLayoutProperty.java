@@ -16,6 +16,7 @@
 package com.intellij.android.designer.propertyTable;
 
 import com.android.resources.ResourceType;
+import com.intellij.android.designer.model.RadIncludeLayout;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
@@ -69,6 +70,7 @@ public class IncludeLayoutProperty extends Property<RadViewComponent> implements
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
         public void run() {
+          ((RadIncludeLayout)component).clearViewInfoCount();
           component.getTag().setAttribute("layout", (String)value);
         }
       });

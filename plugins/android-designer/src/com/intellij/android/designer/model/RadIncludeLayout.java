@@ -15,6 +15,9 @@
  */
 package com.intellij.android.designer.model;
 
+import com.android.AndroidConstants;
+import com.android.ide.common.resources.configuration.Configurable;
+import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.intellij.android.designer.propertyTable.IdProperty;
 import com.intellij.android.designer.propertyTable.IncludeLayoutProperty;
 import com.intellij.android.designer.propertyTable.editors.ResourceDialog;
@@ -22,6 +25,15 @@ import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.android.dom.converters.AndroidResourceReference;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +42,9 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class RadIncludeLayout extends RadViewComponent implements IConfigurableComponent {
+  private int myViewInfoCount = -1;
+  private FolderConfiguration myConfiguration;
+
   @Override
   public String getCreationXml() {
     return "<include android:layout_width=\"wrap_content\"\n" +
@@ -62,8 +77,99 @@ public class RadIncludeLayout extends RadViewComponent implements IConfigurableC
     super.setProperties(properties);
   }
 
+  public void clearViewInfoCount() {
+    myViewInfoCount = -1;
+  }
+
   @Override
   public int getViewInfoCount() {
-    return super.getViewInfoCount(); // TODO: Auto-generated method stub
+    FolderConfiguration configuration = getRoot().getClientProperty(ModelParser.FOLDER_CONFIG_KEY);
+
+    if (myViewInfoCount != -1 && !configuration.isMatchFor(myConfiguration)) {
+      myViewInfoCount = -1;
+    }
+
+    if (myViewInfoCount == -1) {
+      myConfiguration = configuration;
+
+      XmlAttribute layout = getTag().getAttribute("layout");
+      XmlAttributeValue value = layout == null ? null : layout.getValueElement();
+      if (value == null) {
+        myViewInfoCount = 0;
+      }
+      else {
+        PsiReference reference = value.getReference();
+
+        if (reference == null) {
+          myViewInfoCount = 0;
+        }
+        else {
+          XmlFile xmlFile = findFile(configuration, (AndroidResourceReference)reference);
+          XmlTag tag = xmlFile == null ? null : xmlFile.getRootTag();
+
+          if (tag == null) {
+            myViewInfoCount = 0;
+          }
+          else if ("merge".equalsIgnoreCase(tag.getName())) {
+            myViewInfoCount = tag.getSubTags().length;
+          }
+          else {
+            myViewInfoCount = 1;
+          }
+        }
+      }
+    }
+    return myViewInfoCount;
+  }
+
+  @Nullable
+  private static XmlFile findFile(FolderConfiguration configuration, AndroidResourceReference reference) {
+    PsiElement[] elements = reference.computeTargetElements();
+
+    if (elements.length == 0) {
+      return null;
+    }
+    if (elements.length == 1) {
+      return (XmlFile)elements[0];
+    }
+
+    List<MyConfigurable> configurables = new ArrayList<MyConfigurable>();
+    for (PsiElement element : elements) {
+      XmlFile xmlFile = (XmlFile)element;
+
+      VirtualFile file = xmlFile.getVirtualFile();
+      if (file == null) {
+        continue;
+      }
+      VirtualFile folder = file.getParent();
+      if (folder == null) {
+        continue;
+      }
+
+      FolderConfiguration includeConfig = FolderConfiguration.getConfig(folder.getName().split(AndroidConstants.RES_QUALIFIER_SEP));
+      configurables.add(new MyConfigurable(xmlFile, includeConfig));
+    }
+
+    MyConfigurable configurable = (MyConfigurable)configuration.findMatchingConfigurable(configurables);
+    return configurable == null ? null : configurable.getFile();
+  }
+
+  private static class MyConfigurable implements Configurable {
+    private final XmlFile myFile;
+    private final FolderConfiguration myConfig;
+
+    private MyConfigurable(XmlFile file, FolderConfiguration config) {
+      myFile = file;
+      myConfig = config;
+    }
+
+    @Override
+    public FolderConfiguration getConfiguration() {
+      return myConfig;
+    }
+
+    public XmlFile getFile() {
+      return myFile;
+    }
   }
 }

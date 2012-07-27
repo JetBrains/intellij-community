@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.RenderSession;
 import com.android.ide.common.rendering.api.ViewInfo;
+import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.designSurface.AndroidPasteFactory;
 import com.intellij.android.designer.designSurface.RootView;
@@ -41,6 +42,7 @@ import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.List;
 
 /**
@@ -52,6 +54,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
 
   public static final String XML_FILE_KEY = "XML_FILE";
   public static final String MODULE_KEY = "MODULE";
+  public static final String FOLDER_CONFIG_KEY = "FOLDER_CONFIG";
 
   private static final int EMPTY_COMPONENT_SIZE = 5;
 
@@ -379,7 +382,7 @@ public class ModelParser extends XmlRecursiveElementVisitor {
     return myLayoutXmlText;
   }
 
-  public void updateRootComponent(RenderSession session, RootView nativeComponent) throws Exception {
+  public void updateRootComponent(FolderConfiguration configuration, RenderSession session, RootView nativeComponent) throws Exception {
     if (myRootComponent == null) {
       myRootComponent = createComponent(myXmlFile.getRootTag(), myMetaManager.getModelByTag("<root>"));
     }
@@ -389,13 +392,16 @@ public class ModelParser extends XmlRecursiveElementVisitor {
       myRootComponent.add(rootComponent, null);
     }
 
-    updateRootComponent(myRootComponent, session, nativeComponent);
+    updateRootComponent(configuration, myRootComponent, session, nativeComponent);
     myRootComponent.setClientProperty(IdManager.KEY, myIdManager);
   }
 
-  public static void updateRootComponent(RadViewComponent rootComponent,
+  public static void updateRootComponent(FolderConfiguration configuration,
+                                         RadViewComponent rootComponent,
                                          RenderSession session,
                                          RootView nativeComponent) {
+    rootComponent.setClientProperty(FOLDER_CONFIG_KEY, configuration);
+
     updateChildren(rootComponent, session.getRootViews(), nativeComponent, 0, 0);
 
     rootComponent.setNativeComponent(nativeComponent);
@@ -442,7 +448,23 @@ public class ModelParser extends XmlRecursiveElementVisitor {
         updateComponent(childComponent, views.get(viewIndex), nativeComponent, left, top);
       }
       else {
-        // XXX
+        Rectangle bounds = null;
+        for (int subViewIndex = 0; subViewIndex < childViewCount; subViewIndex++) {
+          ViewInfo view = views.get(viewIndex + subViewIndex);
+          Rectangle viewBounds =
+            new Rectangle(view.getLeft(), view.getTop(), view.getRight() - view.getLeft(), view.getBottom() - view.getTop());
+          if (bounds == null) {
+            bounds = viewBounds;
+          }
+          else {
+            bounds = bounds.union(viewBounds);
+          }
+        }
+
+        updateComponent(childComponent,
+                        new ViewInfo(childComponent.getMetaModel().getTarget(), null, bounds.x, bounds.y, bounds.x + bounds.width,
+                                     bounds.y + bounds.height),
+                        nativeComponent, left, top);
       }
 
       viewIndex += childViewCount;
