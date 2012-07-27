@@ -130,7 +130,11 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
 
     public JComponent getAdditionalConfigurationUI(final Collection<Change> changes, final String commitMessage) {
       if (PATCH_PATH.length() == 0) {
-        PATCH_PATH = myProject.getBaseDir() == null ? PathManager.getHomePath() : myProject.getBaseDir().getPresentableUrl();
+        VcsApplicationSettings settings = VcsApplicationSettings.getInstance();
+        PATCH_PATH = settings.PATCH_STORAGE_LOCATION;
+        if (PATCH_PATH == null) {
+          PATCH_PATH = myProject.getBaseDir() == null ? PathManager.getHomePath() : myProject.getBaseDir().getPresentableUrl();
+        }
       }
       myPanel.setFileName(ShelveChangesManager.suggestPatchName(myProject, commitMessage, new File(PATCH_PATH), null));
       myPanel.setReversePatch(false);
@@ -222,6 +226,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         file.getParentFile().mkdirs();
         VcsConfiguration.getInstance(myProject).acceptLastCreatedPatchName(file.getName());
         PATCH_PATH = file.getParent();
+        VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = PATCH_PATH;
         final boolean reversePatch = myPanel.isReversePatch();
 
         List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, changes, myProject.getBaseDir().getPresentableUrl(), reversePatch);

@@ -46,10 +46,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.CommitContext;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -57,6 +60,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -89,10 +93,17 @@ public class ApplyPatchAction extends DumbAwareAction {
     }
     else {
       final FileChooserDescriptor descriptor = ApplyPatchDifferentiatedDialog.createSelectPatchDescriptor();
-      FileChooser.chooseFiles(descriptor, project, null, new Consumer<List<VirtualFile>>() {
+      final VcsApplicationSettings settings = VcsApplicationSettings.getInstance();
+      final VirtualFile toSelect = settings.PATCH_STORAGE_LOCATION == null ? null :
+                                   LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(settings.PATCH_STORAGE_LOCATION));
+      FileChooser.chooseFiles(descriptor, project, toSelect, new Consumer<List<VirtualFile>>() {
         @Override
         public void consume(List<VirtualFile> files) {
           if (files.size() != 1) return;
+          final VirtualFile parent = files.get(0).getParent();
+          if (parent != null) {
+            settings.PATCH_STORAGE_LOCATION = FileUtil.toSystemDependentName(parent.getPath());
+          }
           new ApplyPatchDifferentiatedDialog(
             project, new ApplyPatchDefaultExecutor(project),
             Collections.<ApplyPatchExecutor>singletonList(new ImportToShelfExecutor(project)), ApplyPatchMode.APPLY, files.get(0)
