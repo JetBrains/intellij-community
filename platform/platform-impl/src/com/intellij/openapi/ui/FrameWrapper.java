@@ -309,7 +309,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       }
     }
 
-    if (extendedState == Frame.ICONIFIED || extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {
+    if (extendedState == Frame.MAXIMIZED_BOTH && frame instanceof JFrame) {
       ((JFrame)frame).setExtendedState(extendedState);
     }
   }
