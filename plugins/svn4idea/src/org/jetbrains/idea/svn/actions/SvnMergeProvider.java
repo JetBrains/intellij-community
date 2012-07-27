@@ -36,6 +36,7 @@ import org.tmatesoft.svn.core.wc.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * @author lesya
@@ -59,6 +60,7 @@ public class SvnMergeProvider implements MergeProvider {
         File newFile = null;
         File workingFile = null;
         SVNWCClient client;
+        boolean mergeCase = false;
         try {
           client = vcs.createWCClient();
           SVNInfo info = client.doInfo(new File(file.getPath()), SVNRevision.UNDEFINED);
@@ -66,6 +68,13 @@ public class SvnMergeProvider implements MergeProvider {
             oldFile = info.getConflictOldFile();
             newFile = info.getConflictNewFile();
             workingFile = info.getConflictWrkFile();
+            mergeCase = workingFile.getName().contains("working");
+            if (mergeCase) {
+              // this is merge case
+              oldFile = info.getConflictNewFile();
+              newFile = info.getConflictOldFile();
+              workingFile = info.getConflictWrkFile();
+            }
             data.LAST_REVISION_NUMBER = new SvnRevisionNumber(info.getRevision());
           }
         }
@@ -73,13 +82,7 @@ public class SvnMergeProvider implements MergeProvider {
           throw new VcsException(e);
         }
         if (oldFile == null || newFile == null || workingFile == null) {
-          ByteArrayOutputStream bos = new ByteArrayOutputStream();
-          try {
-            client.doGetFileContents(new File(file.getPath()), SVNRevision.UNDEFINED, SVNRevision.BASE, true, bos);
-          }
-          catch (SVNException e) {
-            //
-          }
+          ByteArrayOutputStream bos = getBaseRevisionContents(client, file);
           data.ORIGINAL = bos.toByteArray();
           data.LAST = bos.toByteArray();
           data.CURRENT = readFile(new File(file.getPath()));
@@ -89,11 +92,31 @@ public class SvnMergeProvider implements MergeProvider {
           data.LAST = readFile(newFile);
           data.CURRENT = readFile(workingFile);
         }
+        if (mergeCase) {
+          final ByteArrayOutputStream contents = getBaseRevisionContents(vcs.createWCClient(), file);
+          if (! Arrays.equals(contents.toByteArray(), data.ORIGINAL)) {
+            // swap base and server: another order of merge arguments
+            byte[] original = data.ORIGINAL;
+            data.ORIGINAL = data.LAST;
+            data.LAST = original;
+          }
+        }
       }
     };
     VcsUtil.runVcsProcessWithProgress(runnable, VcsBundle.message("multiple.file.merge.loading.progress.title"), false, myProject);
 
     return data;
+  }
+
+  private ByteArrayOutputStream getBaseRevisionContents(SVNWCClient client, VirtualFile file) {
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try {
+      client.doGetFileContents(new File(file.getPath()), SVNRevision.UNDEFINED, SVNRevision.BASE, true, bos);
+    }
+    catch (SVNException e) {
+      //
+    }
+    return bos;
   }
 
   private static byte[] readFile(File workingFile) throws VcsException {
