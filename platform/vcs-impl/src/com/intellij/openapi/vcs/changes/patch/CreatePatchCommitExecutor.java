@@ -19,6 +19,7 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +37,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.util.WaitForProgressToShow;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -162,27 +162,38 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
 
     public void execute(Collection<Change> changes, String commitMessage) {
       if (! myPanel.isOkToExecute()) {
-        UIUtil.invokeLaterIfNeeded(new Runnable() {
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
           @Override
           public void run() {
             Messages
               .showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", myPanel.getError()), CommonBundle.getErrorTitle());
           }
-        });
+        }, ModalityState.NON_MODAL, myProject);
         return;
       }
       final String fileName = myPanel.getFileName();
       final File file = new File(fileName).getAbsoluteFile();
       if (file.exists()) {
         final int[] result = new int[1];
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
           @Override
           public void run() {
             result[0] = Messages.showYesNoDialog(myProject, "File " + file.getName() + " (" + file.getParent() + ")" +
-                                " already exists.\nDo you want to overwrite it?", CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+                                                            " already exists.\nDo you want to overwrite it?",
+                                                 CommonBundle.getWarningTitle(), Messages.getWarningIcon());
           }
         });
         if (Messages.NO == result[0]) return;
+      }
+      if (file.getParentFile() == null) {
+        WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", "Can not write patch to specified file: " +
+                                                                                              file.getPath()), CommonBundle.getErrorTitle());
+          }
+        }, ModalityState.NON_MODAL, myProject);
+        return;
       }
       myPanel.onOk();
       myCommitContext.putUserData(BaseRevisionTextPatchEP.ourPutBaseRevisionTextKey, myPanel.isStoreTexts());
@@ -208,6 +219,7 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
         return;
       }
       try {
+        file.getParentFile().mkdirs();
         VcsConfiguration.getInstance(myProject).acceptLastCreatedPatchName(file.getName());
         PATCH_PATH = file.getParent();
         final boolean reversePatch = myPanel.isReversePatch();
