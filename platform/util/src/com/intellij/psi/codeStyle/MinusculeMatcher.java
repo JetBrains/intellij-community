@@ -33,10 +33,19 @@ import static com.intellij.psi.codeStyle.NameUtil.MatchingCaseSensitivity.*;
 public class MinusculeMatcher implements Matcher {
   private final char[] myPattern;
   private final NameUtil.MatchingCaseSensitivity myOptions;
+  private final boolean myHasHumps;
 
   public MinusculeMatcher(String pattern, NameUtil.MatchingCaseSensitivity options) {
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
+    for (int i = 0; i < myPattern.length; i++) {
+      char c = myPattern[i];
+      if (Character.isUpperCase(c)) {
+        myHasHumps = true;
+        return;
+      }
+    }
+    myHasHumps = false;
   }
 
   private static FList<TextRange> prependRange(FList<TextRange> ranges, int from, int length) {
@@ -92,9 +101,9 @@ public class MinusculeMatcher implements Matcher {
 
     int startIndex = first.getStartOffset();
     boolean prefixMatching = isStartMatch(name, startIndex);
-    boolean middleWordStart = !prefixMatching && NameUtil.isWordStart(name, first.getStartOffset());
+    boolean middleWordStart = !prefixMatching && startIndex > 0 && NameUtil.isWordStart(name, startIndex) && !NameUtil.isWordStart(name, startIndex - 1);
 
-    return -fragmentCount + matchingCase * 20 + commonStart * 30 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 100 - integral;
+    return -fragmentCount + matchingCase * 20 + commonStart * 30 - startIndex + (prefixMatching ? 2 : middleWordStart ? 1 : 0) * 1000 - integral;
   }
 
   public boolean isStartMatch(String name) {
@@ -159,7 +168,7 @@ public class MinusculeMatcher implements Matcher {
 
     char p = myPattern[patternIndex];
     while (true) {
-      nameIndex = space ? indexOfWordStart(name, p, nameIndex) : StringUtil.indexOfIgnoreCase(name, p, nameIndex + 1);
+      nameIndex = space ? indexOfWordStart(name, patternIndex, nameIndex) : StringUtil.indexOfIgnoreCase(name, p, nameIndex + 1);
       if (nameIndex < 0) {
         return null;
       }
@@ -188,7 +197,7 @@ public class MinusculeMatcher implements Matcher {
           return null;
         }
         if (myPattern[patternIndex + i] != name.charAt(nameIndex + i)) {
-          int nextWordStart = indexOfWordStart(name, myPattern[patternIndex + i], nameIndex + i);
+          int nextWordStart = indexOfWordStart(name, patternIndex + i, nameIndex + i);
           FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart);
           if (ranges != null) {
             return prependRange(ranges, nameIndex, i);
@@ -202,7 +211,7 @@ public class MinusculeMatcher implements Matcher {
       return i >= minFragment ? FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i)) : null;
     }
     while (i >= minFragment) {
-      int nextWordStart = isWildcard(patternIndex + i) ? nameIndex + i : indexOfWordStart(name, myPattern[patternIndex + i], nameIndex + i);
+      int nextWordStart = isWildcard(patternIndex + i) ? nameIndex + i : indexOfWordStart(name, patternIndex + i, nameIndex + i);
       FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart);
       if (ranges != null) {
         return prependRange(ranges, nameIndex, i);
@@ -225,11 +234,13 @@ public class MinusculeMatcher implements Matcher {
     return myPattern[patternIndex] == c;
   }
 
-  private static int indexOfWordStart(String name, char p, int startFrom) {
+  private int indexOfWordStart(String name, int patternIndex, int startFrom) {
+    char p = myPattern[patternIndex];
     if (p == '.' || NameUtil.isWordSeparator(p)) {
       return StringUtil.indexOfIgnoreCase(name, p, startFrom + 1);
     }
-    if (startFrom >= name.length()) {
+    if (startFrom >= name.length() ||
+        myHasHumps && Character.isLowerCase(p) && !(patternIndex > 0 && NameUtil.isWordSeparator(myPattern[patternIndex - 1]))) {
       return -1;
     }
     int nextWordStart = startFrom;

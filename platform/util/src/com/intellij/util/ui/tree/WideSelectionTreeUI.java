@@ -40,17 +40,19 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
   @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
 
-  private static final Icon TREE_COLLAPSED_ICON = UIUtil.getTreeCollapsedIcon();
-  private static final Icon TREE_EXPANDED_ICON = UIUtil.getTreeExpandedIcon();
-  private static final Icon TREE_SELECTED_COLLAPSED_ICON = UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()
-                                                           ? AllIcons.Mac.Tree_white_right_arrow : TREE_COLLAPSED_ICON;
-  private static final Icon TREE_SELECTED_EXPANDED_ICON = UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel()
-                                                          ? AllIcons.Mac.Tree_white_down_arrow : TREE_EXPANDED_ICON;
+  private static Icon getTreeSelectedCollapsedIcon() {
+    return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()
+           ? AllIcons.Mac.Tree_white_right_arrow : UIUtil.getTreeCollapsedIcon();
+  }
 
-  private static final Border LIST_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListBackgroundPainter");
-  private static final Border LIST_SELECTION_BACKGROUND_PAINTER = (Border)UIManager.get("List.sourceListSelectionBackgroundPainter");
-  private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER =
-    (Border)UIManager.get("List.sourceListFocusedSelectionBackgroundPainter");
+  private static Icon getTreeSelectedExpandedIcon() {
+    return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()
+           ? AllIcons.Mac.Tree_white_down_arrow : UIUtil.getTreeExpandedIcon();
+  }
+
+  private static final Border LIST_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListBackgroundPainter");
+  private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
+  private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
 
   private boolean myWideSelection;
   private boolean myAlwaysPaintRowBackground;
@@ -106,9 +108,6 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
     tree.setShowsRootHandles(true);
     tree.addMouseListener(mySelectionListener);
-
-    //final InputMap inputMap = tree.getInputMap(JComponent.WHEN_FOCUSED);
-    //inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "clearSelection");
   }
 
   @Override
@@ -407,10 +406,10 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     boolean isPathSelected = tree.getSelectionModel().isPathSelected(path);
     boolean dark = UIUtil.isUnderDarcula();
 
-    Icon expandIcon = (isPathSelected && tree.hasFocus()) || dark ? TREE_SELECTED_EXPANDED_ICON
-                                                        : TREE_EXPANDED_ICON;
-    Icon collapseIcon = (isPathSelected && tree.hasFocus()) || dark? TREE_SELECTED_COLLAPSED_ICON
-                                                          : TREE_COLLAPSED_ICON;
+    Icon expandIcon = (isPathSelected && tree.hasFocus()) || dark ? getTreeSelectedExpandedIcon()
+                                                        : UIUtil.getTreeExpandedIcon();
+    Icon collapseIcon = (isPathSelected && tree.hasFocus()) || dark? getTreeSelectedCollapsedIcon()
+                                                          : UIUtil.getTreeCollapsedIcon();
 
 
     if (!isLeaf(row)) {

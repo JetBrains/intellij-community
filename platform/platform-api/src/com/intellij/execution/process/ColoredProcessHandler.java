@@ -35,7 +35,6 @@ public class ColoredProcessHandler extends OSProcessHandler {
   private static final String TEXT_ATTRS_PATTERN = "m" + TEXT_ATTRS_PREFIX_CH + "\\[";
 
   private Key myCurrentColor;
-  @Nullable private final Charset myCharset;
 
   public static TextAttributes getByKey(final TextAttributesKey key){
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
@@ -56,17 +55,7 @@ public class ColoredProcessHandler extends OSProcessHandler {
   public ColoredProcessHandler(final Process process,
                                final String commandLine,
                                @Nullable final Charset charset) {
-    super(process, commandLine);
-    myCharset = charset;
-  }
-
-  @Override
-  public Charset getCharset() {
-    if (myCharset != null) {
-      return myCharset;
-    }
-    // Charset wasn't specified - use default one
-    return super.getCharset();
+    super(process, commandLine, charset);
   }
 
   public final void notifyTextAvailable(final String text, final Key outputType) {

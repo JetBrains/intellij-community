@@ -45,15 +45,18 @@ public abstract class TemplateLanguageErrorFilter extends HighlightErrorFilter {
     if (!(viewProvider.getClass() == myTemplateFileViewProviderClass)) {
       return true;
     }
-    final Language parentLanguage = element.getParent().getLanguage();
-    final Language javaScript = Language.findLanguageByID("JavaScript");
-    final Language css = Language.findLanguageByID("CSS");
-    if (javaScript != null && parentLanguage.is(javaScript) || css != null && parentLanguage.is(css)) {
+    if (isKnownSubLanguage(element.getParent().getLanguage())) {
       final PsiElement next = viewProvider.findElementAt(element.getTextOffset() + 1, viewProvider.getBaseLanguage());
       if (next != null && myTemplateExpressionStartTokens.contains(next.getNode().getElementType())) {
         return false;
       }
     }
     return true;
+  }
+
+  protected boolean isKnownSubLanguage(final @NotNull Language language) {
+    final Language javaScript = Language.findLanguageByID("JavaScript");
+    final Language css = Language.findLanguageByID("CSS");
+    return javaScript != null && language.is(javaScript) || css != null && language.is(css);
   }
 }

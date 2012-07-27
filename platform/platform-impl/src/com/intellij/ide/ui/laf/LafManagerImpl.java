@@ -487,7 +487,9 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       uiDefaults.put("TextField.selectionBackground", bg);
       uiDefaults.put("RadioButtonMenuItem.selectionBackground", bg);
       uiDefaults.put("CheckBoxMenuItem.selectionBackground", bg);
-    } if (UIUtil.isUnderMetalLookAndFeel()) {
+    }
+
+    if (UIUtil.isUnderMetalLookAndFeel()) {
       uiDefaults.put("Tree.hash", new ColorUIResource(117, 117, 117));
     }
   }

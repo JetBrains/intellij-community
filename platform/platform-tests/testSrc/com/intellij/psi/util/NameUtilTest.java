@@ -226,6 +226,12 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
   }
 
+  public void testFileStructure() {
+    assertMatches("hint", "height:int");
+    assertDoesntMatch("Hint", "Height:int");
+    assertMatches("getColor", "getBackground():Color");
+  }
+
   public void testMiddleMatchingMinimumTwoConsecutiveLettersInWordMiddle() {
     assertMatches("*fo", "reformat");
     assertMatches("*f", "reFormat");
@@ -254,7 +260,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*Git", "BlaGitBla");
     assertFalse(firstLetterMatcher("*Git").matches("BlagitBla"));
     assertMatches("*git", "BlagitBla");
-    assertMatches("*Git*", "AtpGenerationItem");
+    assertDoesntMatch("*Git*", "AtpGenerationItem");
     assertMatches("Collec*Util*", "CollectionUtils");
     assertMatches("Collec*Util*", "CollectionUtilsTest");
     assertTrue(caseInsensitiveMatcher("*us").matches("usage"));
@@ -307,7 +313,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("foo", "fxOo");
     assertMatches("foo", "fXOo");
     assertMatches("fOo", "foo");
-    assertMatches("fOo", "FaOaOaXXXX");
+    assertDoesntMatch("fOo", "FaOaOaXXXX");
     assertMatches("ncdfoe", "NoClassDefFoundException");
     assertMatches("fob", "FOO_BAR");
     assertMatches("fo_b", "FOO_BAR");
@@ -330,7 +336,7 @@ public class NameUtilTest extends UsefulTestCase {
 
   public void testFinalSpace() {
     assertMatches("GrDebT ", "GroovyDebuggerTest");
-    assertMatches("grdebT ", "GroovyDebuggerTest");
+    assertDoesntMatch("grdebT ", "GroovyDebuggerTest");
     assertDoesntMatch("grdebt ", "GroovyDebuggerTest");
     assertMatches("Foo ", "Foo");
     assertDoesntMatch("Foo ", "FooBar");
@@ -441,6 +447,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("*ap", "add_profile", "application", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
     assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("*ea", "LEADING", "NORTH_EAST", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testPreferEarlyMatching() {

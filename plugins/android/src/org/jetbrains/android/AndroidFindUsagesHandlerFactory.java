@@ -26,6 +26,7 @@ import com.intellij.psi.xml.*;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.android.dom.resources.ResourceElement;
+import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.ResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -45,21 +46,26 @@ import java.util.List;
 public class AndroidFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
   @Override
   public boolean canFindUsages(@NotNull PsiElement element) {
-    if (element instanceof XmlAttributeValue) {
-      XmlAttributeValue value = (XmlAttributeValue)element;
+    PsiElement element1 = LazyValueResourceElementWrapper.computeLazyElement(element);
+    if (element1 == null) {
+      return false;
+    }
+
+    if (element1 instanceof XmlAttributeValue) {
+      XmlAttributeValue value = (XmlAttributeValue)element1;
       if (AndroidResourceUtil.findIdFields(value).length > 0) {
         return true;
       }
     }
-    element = correctResourceElement(element);
-    if (element instanceof PsiField) {
-      return AndroidResourceUtil.isResourceField((PsiField)element);
+    element1 = correctResourceElement(element1);
+    if (element1 instanceof PsiField) {
+      return AndroidResourceUtil.isResourceField((PsiField)element1);
     }
-    else if (element instanceof PsiFile) {
-      return AndroidResourceUtil.findResourceFieldsForFileResource((PsiFile)element, true).length > 0;
+    else if (element1 instanceof PsiFile) {
+      return AndroidResourceUtil.findResourceFieldsForFileResource((PsiFile)element1, true).length > 0;
     }
-    else if (element instanceof XmlTag) {
-      return AndroidResourceUtil.findResourceFieldsForValueResource((XmlTag)element, true).length > 0;
+    else if (element1 instanceof XmlTag) {
+      return AndroidResourceUtil.findResourceFieldsForValueResource((XmlTag)element1, true).length > 0;
     }
     return false;
   }
@@ -101,7 +107,11 @@ public class AndroidFindUsagesHandlerFactory extends FindUsagesHandlerFactory {
 
   @Override
   public FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, boolean forHighlightUsages) {
-    PsiElement e = element;
+    PsiElement e = LazyValueResourceElementWrapper.computeLazyElement(element);
+    if (e == null) {
+      return null;
+    }
+
     AndroidFacet facet = AndroidFacet.getInstance(e);
     assert facet != null;
     if (e instanceof XmlAttributeValue) {

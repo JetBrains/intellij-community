@@ -141,22 +141,21 @@ public class LocalResourceManager extends ResourceManager {
     for (ResourceType resourceType : AndroidResourceUtil.ALL_VALUE_RESOURCE_TYPES) {
       final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerKey(resourceType.getName());
 
-      for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
-        for (ResourceEntry entry : entrySet) {
-          final Collection<VirtualFile> files =
-            index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, AndroidValueResourcesIndex.createKey(entry), scope);
-
-          for (VirtualFile file : files) {
+      index.processValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, null, new FileBasedIndex.ValueProcessor<Set<AndroidValueResourcesIndex.MyResourceInfo>>() {
+        @Override
+        public boolean process(VirtualFile file, Set<AndroidValueResourcesIndex.MyResourceInfo> infos) {
+          for (AndroidValueResourcesIndex.MyResourceInfo info : infos) {
             Set<String> resourcesInFile = file2Types.get(file);
 
             if (resourcesInFile == null) {
               resourcesInFile = new HashSet<String>();
               file2Types.put(file, resourcesInFile);
             }
-            resourcesInFile.add(entry.getType());
+            resourcesInFile.add(info.getResourceEntry().getType());
           }
+          return true;
         }
-      }
+      }, scope);
     }
     final Set<String> result = new HashSet<String>();
 

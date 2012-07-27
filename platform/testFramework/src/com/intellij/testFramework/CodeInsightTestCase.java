@@ -1,9 +1,7 @@
 package com.intellij.testFramework;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 
@@ -13,12 +11,6 @@ import org.jetbrains.annotations.NonNls;
  */
 public class CodeInsightTestCase extends LightPlatformCodeInsightFixtureTestCase {
   @NonNls protected static final String CARET_STR = "<caret>";
-
-  protected CodeInsightTestFixture myFixture;
-
-  protected Project getProject() {
-    return myFixture.getProject();
-  }
 
   protected int findOffsetBySignature(String signature) {
     return findOffsetBySignature(signature, myFixture.getFile());

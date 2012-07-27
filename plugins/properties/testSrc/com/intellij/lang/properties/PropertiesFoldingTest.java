@@ -15,12 +15,12 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 
 /**
  * @author Rustam Vishnyakov
  */
-public class PropertiesFoldingTest extends LightCodeInsightFixtureTestCase {
+public class PropertiesFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private static final String BASE_PATH = "/plugins/properties/testData/propertiesFile/folding/";
 

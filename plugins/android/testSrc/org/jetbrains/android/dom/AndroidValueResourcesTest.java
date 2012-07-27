@@ -30,9 +30,9 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.actions.InlineAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
 import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 
 import java.util.ArrayList;
@@ -252,7 +252,8 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     PsiReference rootReference = psiFile.findReferenceAt(rootOffset);
     assertNotNull(rootReference);
     PsiElement element = rootReference.resolve();
-    assertTrue("Must be PsiClass reference", element instanceof XmlAttributeValue);
+    assertInstanceOf(element, LazyValueResourceElementWrapper.class);
+    assertNotNull(((LazyValueResourceElementWrapper)element).computeElement());
   }
 
   // see getPathToCopy()
