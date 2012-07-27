@@ -135,7 +135,10 @@
     </action>
     <action id="EditorScrollUp" />
     <action id="EditorSelectWord">
-      <keyboard-shortcut first-keystroke="meta alt W" />
+      <keyboard-shortcut first-keystroke="alt UP" />
+    </action>
+    <action id="EditorUnSelectWord">
+      <keyboard-shortcut first-keystroke="alt DOWN"/>
     </action>
     <action id="EditorTextEnd">
       <keyboard-shortcut first-keystroke="meta END" />
