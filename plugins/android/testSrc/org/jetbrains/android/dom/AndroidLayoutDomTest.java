@@ -12,6 +12,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.inspections.CreateFileResourceQuickFix;
 import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 
@@ -405,26 +408,67 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
   }
 
-  /*public void testCustomAttrsPerformance() throws Throwable {
+  public void testCustomAttrsPerformance() throws Throwable {
     myFixture.copyFileToProject("dom/resources/bigfile.xml", "res/values/bigfile.xml");
     myFixture.copyFileToProject("dom/resources/bigattrs.xml", "res/values/bigattrs.xml");
     myFixture.copyFileToProject("dom/resources/bigattrs.xml", "res/values/bigattrs1.xml");
     myFixture.copyFileToProject("dom/resources/bigattrs.xml", "res/values/bigattrs2.xml");
     myFixture.copyFileToProject("dom/resources/bigattrs.xml", "res/values/bigattrs3.xml");
-    String path = copyFileToProject("bigfile.xml");
-    VirtualFile f = myFixture.findFileInTempDir(path);
+    VirtualFile f = copyFileToProject("bigfile.xml");
     myFixture.configureFromExistingVirtualFile(f);
-    IdeaTestUtil.assertTiming("", 800, new Runnable() {
+
+    PlatformTestUtil.startPerformanceTest("android custom attrs highlighting is slow", 800, new ThrowableRunnable() {
       @Override
-      public void run() {
-        try {
-          myFixture.doHighlighting();
-        }
-        catch (Exception e) {
+      public void run() throws Throwable {
+        myFixture.doHighlighting();
+      }
+    }).attempts(2).cpuBound().usesAllCPUCores().assertTiming();
+  }
+
+  public void testResourceHighlightingPerformance() throws Throwable {
+    doCopyManyStrings();
+    final VirtualFile f = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    PlatformTestUtil.startPerformanceTest("android highlighting is slow", 400, new ThrowableRunnable() {
+      @Override
+      public void run() throws Throwable {
+        myFixture.doHighlighting();
+      }
+    }).attempts(2).cpuBound().usesAllCPUCores().assertTiming();
+  }
+
+  public void testResourceNavigationPerformance() throws Throwable {
+    doCopyManyStrings();
+    final VirtualFile f = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+    final List<PsiElement> navElements = new ArrayList<PsiElement>();
+
+    // warm
+    myFixture.doHighlighting();
+
+    PlatformTestUtil.startPerformanceTest("android highlighting is slow", 7000, new ThrowableRunnable() {
+      @SuppressWarnings("ConstantConditions")
+      @Override
+      public void run() throws Throwable {
+        final PsiReference reference = TargetElementUtilBase.findReference(myFixture.getEditor(), myFixture.getCaretOffset());
+        final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
+        for (ResolveResult result : results) {
+          final PsiElement navElement = result.getElement().getNavigationElement();
+          assertInstanceOf(navElement, XmlAttributeValue.class);
+          navElements.add(navElement);
         }
       }
-    });
-  }*/
+    }).attempts(1).cpuBound().usesAllCPUCores().assertTiming();
+    assertEquals(31, navElements.size());
+  }
+
+  private void doCopyManyStrings() {
+    myFixture.copyFileToProject(testFolder + "/many_strings.xml", "res/values/strings.xml");
+    for (int i = 0; i < 30; i++) {
+      myFixture.copyFileToProject(testFolder + "/many_strings.xml", "res/values-" + Integer.toString(i) + "/strings.xml");
+    }
+  }
 
   public void testViewClassReference() throws Throwable {
     VirtualFile file = myFixture.copyFileToProject(testFolder + "/vcr.xml", getPathToCopy("vcr.xml"));

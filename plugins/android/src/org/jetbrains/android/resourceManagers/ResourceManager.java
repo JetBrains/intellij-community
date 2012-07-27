@@ -23,11 +23,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -280,27 +279,28 @@ public abstract class ResourceManager {
     if (type == null) {
       return Collections.emptyList();
     }
-
     final FileBasedIndex index = FileBasedIndex.getInstance();
     final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerKey(resourceType);
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myModule.getProject());
 
     final Map<VirtualFile, Set<ResourceEntry>> file2resourceSet = new HashMap<VirtualFile, Set<ResourceEntry>>();
-    for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
-      for (ResourceEntry entry : entrySet) {
-        final Collection<VirtualFile> files = index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, entry, scope);
 
-        for (VirtualFile file : files) {
+    index.processValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, null, new FileBasedIndex.ValueProcessor<Set<AndroidValueResourcesIndex.MyResourceInfo>>() {
+      @Override
+      public boolean process(VirtualFile file, Set<AndroidValueResourcesIndex.MyResourceInfo> infos) {
+        for (AndroidValueResourcesIndex.MyResourceInfo info : infos) {
           Set<ResourceEntry> resourcesInFile = file2resourceSet.get(file);
 
           if (resourcesInFile == null) {
             resourcesInFile = new HashSet<ResourceEntry>();
             file2resourceSet.put(file, resourcesInFile);
           }
-          resourcesInFile.add(entry);
+          resourcesInFile.add(info.getResourceEntry());
         }
+        return true;
       }
-    }
+    }, scope);
+
     final List<ResourceEntry> result = new ArrayList<ResourceEntry>();
 
     for (VirtualFile file : getAllValueResourceFiles()) {
@@ -333,43 +333,40 @@ public abstract class ResourceManager {
 
   // searches only declarations such as "@+id/..."
   @NotNull
-  public List<IdResourceInfo> findIdDeclarationInfos(@NotNull final String id) {
+  public List<PsiElement> findIdDeclarations(@NotNull final String id) {
     if (!isResourcePublic(ResourceType.ID.getName(), id)) {
       return Collections.emptyList();
     }
 
-    final List<IdResourceInfo> result = new ArrayList<IdResourceInfo>();
+    final List<PsiElement> declarations = new ArrayList<PsiElement>();
     final Collection<VirtualFile> files =
       FileBasedIndex.getInstance().getContainingFiles(AndroidIdIndex.INDEX_ID, id, GlobalSearchScope.allScope(myModule.getProject()));
     final Set<VirtualFile> fileSet = new HashSet<VirtualFile>(files);
+    final PsiManager psiManager = PsiManager.getInstance(myModule.getProject());
 
     for (VirtualFile subdir : getResourceSubdirsToSearchIds()) {
       for (VirtualFile file : subdir.getChildren()) {
         if (fileSet.contains(file)) {
-          result.add(new IdResourceInfo(id, file, myModule.getProject()));
+          final PsiFile psiFile = psiManager.findFile(file);
+
+          if (psiFile instanceof XmlFile) {
+            psiFile.accept(new XmlRecursiveElementVisitor() {
+              @Override
+              public void visitXmlAttributeValue(XmlAttributeValue attributeValue) {
+                if (AndroidResourceUtil.isIdDeclaration(attributeValue)) {
+                  final String idInAttr = AndroidResourceUtil.getResourceNameByReferenceText(attributeValue.getValue());
+
+                  if (id.equals(idInAttr)) {
+                    declarations.add(attributeValue);
+                  }
+                }
+              }
+            });
+          }
         }
       }
     }
-    return result;
-  }
-
-  @NotNull
-  public List<PsiElement> findIdDeclarations(@NotNull String id) {
-    final List<IdResourceInfo> infos = findIdDeclarationInfos(id);
-
-    if (infos.size() == 0) {
-      return Collections.emptyList();
-    }
-    final List<PsiElement> result = new ArrayList<PsiElement>();
-
-    for (IdResourceInfo info : infos) {
-      final PsiElement element = info.computeXmlElement();
-
-      if (element != null) {
-        result.add(element);
-      }
-    }
-    return result;
+    return declarations;
   }
 
   @NotNull
@@ -451,37 +448,36 @@ public abstract class ResourceManager {
 
   @NotNull
   public List<ValueResourceInfoImpl> findValueResourceInfos(@NotNull String resourceType,
-                                                            @NotNull String resourceName,
-                                                            boolean distinguishDelimetersInName) {
+                                                            @NotNull final String resourceName,
+                                                            final boolean distinguishDelimetersInName) {
     final ResourceType type = ResourceType.getEnum(resourceType);
-    if (type == null) {
+    if (type == null || !AndroidResourceUtil.VALUE_RESOURCE_TYPES.contains(type)) {
+      // do not search for styleables and atts here because we don't want to resolve references to it
       return Collections.emptyList();
     }
 
+      new HashMap<VirtualFile, Set<AndroidValueResourcesIndex.MyResourceInfo>>();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myModule.getProject());
-    final List<Set<ResourceEntry>> values = FileBasedIndex.getInstance()
-      .getValues(AndroidValueResourcesIndex.INDEX_ID, AndroidValueResourcesIndex.createTypeNameMarkerKey(resourceType, resourceName),
-                 scope);
-
-    final Set<VirtualFile> valueResourceFiles = getAllValueResourceFiles();
     final List<ValueResourceInfoImpl> result = new ArrayList<ValueResourceInfoImpl>();
+    final Set<VirtualFile> valueResourceFiles = getAllValueResourceFiles();
 
-    for (Set<ResourceEntry> entrySet : values) {
-      for (ResourceEntry entry : entrySet) {
-        final String name = entry.getName();
+    FileBasedIndex.getInstance()
+      .processValues(AndroidValueResourcesIndex.INDEX_ID, AndroidValueResourcesIndex.createTypeNameMarkerKey(resourceType, resourceName),
+                     null, new FileBasedIndex.ValueProcessor<Set<AndroidValueResourcesIndex.MyResourceInfo>>() {
+      @Override
+      public boolean process(VirtualFile file, Set<AndroidValueResourcesIndex.MyResourceInfo> infos) {
+        for (AndroidValueResourcesIndex.MyResourceInfo info : infos) {
+          final String name = info.getResourceEntry().getName();
 
-        if (AndroidUtils.equal(resourceName, name, distinguishDelimetersInName)) {
-          final Collection<VirtualFile> files =
-            FileBasedIndex.getInstance().getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, entry, scope);
-
-          for (VirtualFile file : files) {
+          if (AndroidUtils.equal(resourceName, name, distinguishDelimetersInName)) {
             if (valueResourceFiles.contains(file)) {
-              result.add(new ValueResourceInfoImpl(name, type, file, myModule));
+              result.add(new ValueResourceInfoImpl(info.getResourceEntry().getName(), type, file, myModule, info.getOffset()));
             }
           }
         }
+        return true;
       }
-    }
+    }, scope);
     return result;
   }
 }
