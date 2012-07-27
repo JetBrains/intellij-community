@@ -498,12 +498,13 @@ public class NameUtilTest extends UsefulTestCase {
       nonMatching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PlatformTestUtil.startPerformanceTest("Matcher is slow", 1700, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("Matcher is slow", 2700, new ThrowableRunnable() {
       @Override
       public void run() {
         for (int i = 0; i < 100000; i++) {
           for (MinusculeMatcher matcher : matching) {
             assertTrue(matcher.toString(), matcher.matches(longName));
+            matcher.matchingDegree(longName);
           }
           for (MinusculeMatcher matcher : nonMatching) {
             assertFalse(matcher.toString(), matcher.matches(longName));
