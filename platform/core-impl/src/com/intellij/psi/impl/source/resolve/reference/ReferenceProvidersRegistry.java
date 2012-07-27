@@ -45,8 +45,15 @@ public abstract class ReferenceProvidersRegistry {
 
   public abstract PsiReferenceRegistrar getRegistrar(Language language);
 
+  /**
+   * @see #getReferencesFromProviders(com.intellij.psi.PsiElement)
+   */
   @Deprecated
   public static PsiReference[] getReferencesFromProviders(PsiElement context, @NotNull Class clazz) {
+    return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
+  }
+
+  public static PsiReference[] getReferencesFromProviders(PsiElement context) {
     return getReferencesFromProviders(context, PsiReferenceService.Hints.NO_HINTS);
   }
 

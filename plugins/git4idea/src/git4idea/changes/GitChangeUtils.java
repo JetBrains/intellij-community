@@ -413,7 +413,8 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<Change> getDiff(@NotNull Project project, @NotNull VirtualFile root,
-                                           @NotNull String oldRevision, @Nullable String newRevision) throws VcsException {
+                                           @NotNull String oldRevision, @Nullable String newRevision,
+                                           @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
     String range;
     GitRevisionNumber newRev;
     if (newRevision == null) {
@@ -425,7 +426,7 @@ public class GitChangeUtils {
       range = oldRevision + ".." + newRevision;
       newRev = loadRevision(project, root, newRevision);
     }
-    String output = getDiffOutput(project, root, range, null);
+    String output = getDiffOutput(project, root, range, dirtyPaths);
 
     Collection<Change> changes = new ArrayList<Change>();
     parseChanges(project, root, newRev, loadRevision(project, root, oldRevision), output, changes, Collections.<String>emptySet());

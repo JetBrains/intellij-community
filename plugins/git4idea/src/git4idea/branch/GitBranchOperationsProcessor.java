@@ -405,7 +405,7 @@ public final class GitBranchOperationsProcessor {
   @NotNull
   private static Collection<Change> loadTotalDiff(@NotNull GitRepository repository, @NotNull String branchName) {
     try {
-      return GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), "HEAD", branchName);
+      return GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), "HEAD", branchName, null);
     }
     catch (VcsException e) {
       // we treat it as critical and report an error
