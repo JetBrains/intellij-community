@@ -227,9 +227,21 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testFileStructure() {
-    assertMatches("hint", "height:int");
+    assertDoesntMatch("hint", "height: int");
     assertDoesntMatch("Hint", "Height:int");
-    assertMatches("getColor", "getBackground():Color");
+
+    assertMatches("getColor", "getBackground(): Color");
+    assertMatches("get color", "getBackground(): Color");
+    assertDoesntMatch("getcolor", "getBackground(): Color");
+
+    assertMatches("get()", "getBackground(): Color");
+
+    assertMatches("setColor", "setBackground(Color): void");
+    assertMatches("set color", "setBackground(Color): void");
+    assertMatches("set Color", "setBackground(Color): void");
+    assertMatches("set(color", "setBackground(Color): void");
+    assertMatches("set(color)", "setBackground(Color): void");
+    assertDoesntMatch("setcolor", "setBackground(Color): void");
   }
 
   public void testMiddleMatchingMinimumTwoConsecutiveLettersInWordMiddle() {
@@ -317,7 +329,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("ncdfoe", "NoClassDefFoundException");
     assertMatches("fob", "FOO_BAR");
     assertMatches("fo_b", "FOO_BAR");
-    assertMatches("fob", "FOO BAR");
+    assertDoesntMatch("fob", "FOO BAR");
     assertMatches("fo b", "FOO BAR");
     assertMatches("AACl", "AAClass");
     assertMatches("ZZZ", "ZZZZZZZZZZ");
