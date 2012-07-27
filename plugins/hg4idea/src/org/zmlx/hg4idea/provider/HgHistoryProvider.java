@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
@@ -116,5 +117,10 @@ public class HgHistoryProvider implements VcsHistoryProvider {
   @Override
   public DiffFromHistoryHandler getHistoryDiffHandler() {
     return null;
+  }
+
+  @Override
+  public boolean canShowHistoryFor(@NotNull VirtualFile file) {
+    return true;
   }
 }
