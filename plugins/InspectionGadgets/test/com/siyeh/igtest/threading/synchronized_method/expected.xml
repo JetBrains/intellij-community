@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SynchronizedMethod.java</file>
+    <line>4</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'synchronized' method</problem_class>
+    <description>Method 'fooBar()' declared &lt;code&gt;synchronized&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>SynchronizedMethod.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'synchronized' method</problem_class>
+    <description>Method 'bar()' declared &lt;code&gt;synchronized&lt;/code&gt; #loc</description>
+  </problem>
+
+</problems>
