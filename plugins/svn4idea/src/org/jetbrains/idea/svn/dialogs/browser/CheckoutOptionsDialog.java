@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.vcs.checkout.CheckoutStrategy;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.components.JBScrollPane;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
   private JLabel myDepthLabel;
   private JList myLocalTargetList;
   private FixedSizeButton mySelectTarget;
+  private JBScrollPane myScroll;
   private final String myRelativePath;
 
   public CheckoutOptionsDialog(final Project project, SVNURL url, File target, final VirtualFile root, final String relativePath) {
@@ -99,6 +101,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
     setTitle(SvnBundle.message("checkout.options.dialog.title"));
     myDepthLabel.setLabelFor(myDepthCombo);
     init();
+    myScroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
   }
 
   private void validateTargetSelected() {
@@ -125,6 +128,7 @@ public class CheckoutOptionsDialog extends DialogWrapper {
     }
     myLocalTargetList.setModel(listModel);
     myLocalTargetList.setVisibleRowCount(4);
+    myLocalTargetList.setPreferredSize(new Dimension(20, 80));
     myLocalTargetList.setMinimumSize(new Dimension(20, 80));
     myLocalTargetList.setSelectedValue(target, true);
     if (myLocalTargetList.getSelectedValues() == null && (! targets.isEmpty())) {
