@@ -211,7 +211,16 @@ public class MinusculeMatcher implements Matcher {
       return i >= minFragment ? FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, i)) : null;
     }
     while (i >= minFragment) {
-      int nextWordStart = isWildcard(patternIndex + i) ? nameIndex + i : indexOfWordStart(name, patternIndex + i, nameIndex + i);
+      int nextWordStart;
+      if (isWildcard(patternIndex + i)) {
+        nextWordStart = nameIndex + i;
+      }
+      else {
+        nextWordStart = indexOfWordStart(name, patternIndex + i, nameIndex + i);
+        if (!myHasHumps && StringUtil.containsAnyChar(name, " ()", nameIndex + i, nextWordStart)) {
+          nextWordStart = -1;
+        }
+      }
       FList<TextRange> ranges = matchWildcards(name, patternIndex + i, nextWordStart);
       if (ranges != null) {
         return prependRange(ranges, nameIndex, i);

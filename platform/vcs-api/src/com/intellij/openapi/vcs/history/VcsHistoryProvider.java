@@ -20,7 +20,9 @@ import com.intellij.openapi.vcs.CalledInBackground;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsProviderMarker;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -63,5 +65,13 @@ public interface VcsHistoryProvider extends VcsProviderMarker {
    */
   @Nullable
   DiffFromHistoryHandler getHistoryDiffHandler();
+
+  /**
+   * Provide any additional restrictions for showing history for the given file.
+   * Basic restrictions are checked in the TabbedShowHistoryAction.
+   * @param file File which history is requested or may be requested.
+   * @return true if the VCS can show history for this file.
+   */
+  boolean canShowHistoryFor(@NotNull VirtualFile file);
 
 }

@@ -66,7 +66,7 @@ public class FileStructureDialogTest extends BaseProjectViewTestCase {
         }
       });
       final CommanderPanel panel = dialog.getPanel();
-      assertListsEqual((ListModel)panel.getModel(), "Inner1\n" + "Inner2\n" + "__method():void\n" + "_myField1:int\n" + "_myField2:String\n");
+      assertListsEqual((ListModel)panel.getModel(), "Inner1\n" + "Inner2\n" + "__method(): void\n" + "_myField1: int\n" + "_myField2: String\n");
     }
     finally {
       if (dialog != null) dialog.close(0);

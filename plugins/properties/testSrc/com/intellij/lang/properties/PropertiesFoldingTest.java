@@ -22,7 +22,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
  */
 public class PropertiesFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  private static final String BASE_PATH = "/plugins/properties/testData/propertiesFile/folding/";
+  private static final String BASE_PATH = "/community/plugins/properties/testData/propertiesFile/folding/";
 
   protected String getBasePath() {
     return BASE_PATH;

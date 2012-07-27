@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -45,12 +46,22 @@ public class TabbedShowHistoryAction extends AbstractVcsAction {
     if (project == null) return false;
     VirtualFile someVFile = selectedFile.getVirtualFile() != null ?
                             selectedFile.getVirtualFile() : selectedFile.getVirtualFileParent();
+    if (someVFile == null) {
+      return false;
+    }
     AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(someVFile);
     if (vcs == null) return false;
     VcsHistoryProvider vcsHistoryProvider = getProvider(vcs);
     if (vcsHistoryProvider == null) return false;
     if (selectedFile.isDirectory() && (! vcsHistoryProvider.supportsHistoryForDirectories())) return false;
-    final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(someVFile);
+    if (!canFileHaveHistory(project, someVFile)) {
+      return false;
+    }
+    return vcsHistoryProvider.canShowHistoryFor(someVFile);
+  }
+
+  private static boolean canFileHaveHistory(@NotNull Project project, @NotNull VirtualFile file) {
+    final FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
     return fileStatus != FileStatus.ADDED && fileStatus != FileStatus.UNKNOWN && fileStatus != FileStatus.IGNORED;
   }
 

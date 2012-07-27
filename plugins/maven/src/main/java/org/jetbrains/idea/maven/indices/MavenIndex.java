@@ -20,6 +20,7 @@ import com.intellij.util.io.*;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
@@ -137,7 +138,7 @@ public class MavenIndex {
     open();
   }
 
-  private String normalizePathOrUrl(String pathOrUrl) {
+  private static String normalizePathOrUrl(String pathOrUrl) {
     pathOrUrl = pathOrUrl.trim();
     pathOrUrl = FileUtil.toSystemIndependentName(pathOrUrl);
     while (pathOrUrl.endsWith("/")) {
@@ -169,10 +170,16 @@ public class MavenIndex {
 
   private void doOpen() throws Exception {
     try {
+      File dataDir;
       if (myDataDirName == null) {
-        myDataDirName = findAvailableDataDirName();
+        dataDir = createNewDataDir();
+        myDataDirName = dataDir.getName();
       }
-      myData = openData(myDataDirName);
+      else {
+        dataDir = new File(myDir, myDataDirName);
+        dataDir.mkdirs();
+      }
+      myData = new IndexData(dataDir);
     }
     catch (Exception e) {
       cleanupBrokenData();
@@ -309,17 +316,16 @@ public class MavenIndex {
   }
 
   private void updateData(MavenProgressIndicator progress) throws MavenIndexException {
-    String newDataDirName;
     IndexData newData;
 
-    newDataDirName = findAvailableDataDirName();
+    File newDataDir = createNewDataDir();
     try {
-      FileUtil.copyDir(getUpdateDir(), getDataContextDir(getDataDir(newDataDirName)));
+      FileUtil.copyDir(getUpdateDir(), getDataContextDir(newDataDir));
     }
     catch (IOException e) {
       throw new MavenIndexException(e);
     }
-    newData = openData(newDataDirName);
+    newData = new IndexData(newDataDir);
 
     try {
       doUpdateIndexData(newData, progress);
@@ -327,7 +333,7 @@ public class MavenIndex {
     }
     catch (Throwable e) {
       newData.close(true);
-      FileUtil.delete(getDataDir(newDataDirName));
+      FileUtil.delete(newDataDir);
 
       if (e instanceof MavenServerIndexerException) throw new MavenIndexException(e);
       if (e instanceof IOException) throw new MavenIndexException(e);
@@ -338,18 +344,15 @@ public class MavenIndex {
       IndexData oldData = myData;
 
       myData = newData;
-      myDataDirName = newDataDirName;
+      myDataDirName = newDataDir.getName();
 
       myUpdateTimestamp = System.currentTimeMillis();
 
       oldData.close(true);
 
-      File[] children = myDir.listFiles();
-      if (children != null) {
-        for (File each : children) {
-          if (each.getName().startsWith(DATA_DIR_PREFIX) && !each.getName().equals(newDataDirName)) {
-            FileUtil.delete(each);
-          }
+      for (File each : FileUtil.notNullize(myDir.listFiles())) {
+        if (each.getName().startsWith(DATA_DIR_PREFIX) && !each.getName().equals(myDataDirName)) {
+          FileUtil.delete(each);
         }
       }
     }
@@ -366,7 +369,7 @@ public class MavenIndex {
     progress.setIndeterminate(true);
 
     try {
-      data.processArtifacts(new MavenIndicesProcessor() {
+      myIndexer.processArtifacts(data.indexId, new MavenIndicesProcessor() {
         @Override
         public void processArtifacts(Collection<MavenId> artifacts) {
           for (MavenId each : artifacts) {
@@ -393,7 +396,7 @@ public class MavenIndex {
     }
   }
 
-  private <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
+  private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
     Set<T> result = map.get(key);
     if (result == null) {
       result = new THashSet<T>();
@@ -408,18 +411,6 @@ public class MavenIndex {
     }
   }
 
-  private static void persist(Set<String> groups, PersistentStringEnumerator persistent) throws IOException {
-    for (String each : groups) {
-      persistent.enumerate(each);
-    }
-  }
-
-  private IndexData openData(String dataDir) throws MavenIndexException {
-    File dir = getDataDir(dataDir);
-    dir.mkdirs();
-    return new IndexData(dir);
-  }
-
   @TestOnly
   public File getDir() {
     return myDir;
@@ -427,19 +418,16 @@ public class MavenIndex {
 
   @TestOnly
   protected synchronized File getCurrentDataDir() {
-    return getDataDir(myDataDirName);
-  }
-
-  private File getDataDir(String dataDirName) {
-    return new File(myDir, dataDirName);
+    return new File(myDir, myDataDirName);
   }
 
   private static File getDataContextDir(File dataDir) {
     return new File(dataDir, "context");
   }
 
-  private String findAvailableDataDirName() {
-    return MavenIndices.findAvailableDir(myDir, DATA_DIR_PREFIX, 100).getName();
+  @NotNull
+  private File createNewDataDir() {
+    return MavenIndices.createNewDir(myDir, DATA_DIR_PREFIX, 100);
   }
 
   public synchronized void addArtifact(final File artifactFile) {
@@ -657,10 +645,6 @@ public class MavenIndex {
     public void flush() throws IOException {
       groupToArtifactMap.force();
       groupWithArtifactToVersionMap.force();
-    }
-
-    public void processArtifacts(MavenIndicesProcessor processor) throws MavenServerIndexerException {
-      myIndexer.processArtifacts(indexId, processor);
     }
 
     public MavenId addArtifact(File artifactFile) throws MavenServerIndexerException {

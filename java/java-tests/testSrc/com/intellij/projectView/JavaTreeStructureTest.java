@@ -3,7 +3,7 @@
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met:
+ * are met: 
  *
  * -Redistributions of source code must retain the above copyright
  *  notice, this list of conditions and the following disclaimer.
@@ -61,20 +61,20 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(),
                                                                  "-Class1.java\n" +
                                                                  " -Class1\n" +
-                                                                 "  getValue():int\n" +
-                                                                 "  getClass():Class<? extends Object>\n" +
-                                                                 "  hashCode():int\n" +
-                                                                 "  equals(Object):boolean\n" +
-                                                                 "  clone():Object\n" +
-                                                                 "  toString():String\n" +
-                                                                 "  notify():void\n" +
-                                                                 "  notifyAll():void\n" +
-                                                                 "  wait(long):void\n" +
-                                                                 "  wait(long, int):void\n" +
-                                                                 "  wait():void\n" +
-                                                                 "  finalize():void\n" +
-                                                                 "  myField1:boolean\n" +
-                                                                 "  myField2:boolean\n");
+                                                                 "  getValue(): int\n" +
+                                                                 "  getClass(): Class<? extends Object>\n" +
+                                                                 "  hashCode(): int\n" +
+                                                                 "  equals(Object): boolean\n" +
+                                                                 "  clone(): Object\n" +
+                                                                 "  toString(): String\n" +
+                                                                 "  notify(): void\n" +
+                                                                 "  notifyAll(): void\n" +
+                                                                 "  wait(long): void\n" +
+                                                                 "  wait(long, int): void\n" +
+                                                                 "  wait(): void\n" +
+                                                                 "  finalize(): void\n" +
+                                                                 "  myField1: boolean\n" +
+                                                                 "  myField2: boolean\n");
 
         structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
         structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, true);
@@ -82,25 +82,25 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
                                                                  " -Class1\n" +
-                                                                 "  getValue():int\n" +
-                                                                 "  myField1:boolean\n" +
-                                                                 "  myField2:boolean\n");
+                                                                 "  getValue(): int\n" +
+                                                                 "  myField1: boolean\n" +
+                                                                 "  myField2: boolean\n");
 
         structureViewComponent.setActionActive(PublicElementsFilter.ID, true);
 
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
                                                                  " -Class1\n" +
-                                                                 "  getValue():int\n" +
-                                                                 "  myField1:boolean\n" +
-                                                                 "  myField2:boolean\n");
+                                                                 "  getValue(): int\n" +
+                                                                 "  myField1: boolean\n" +
+                                                                 "  myField2: boolean\n");
 
         structureViewComponent.setActionActive(PublicElementsFilter.ID, false);
 
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class1.java\n" +
                                                                  " -Class1\n" +
-                                                                 "  getValue():int\n" +
-                                                                 "  myField1:boolean\n" +
-                                                                 "  myField2:boolean\n");
+                                                                 "  getValue(): int\n" +
+                                                                 "  myField1: boolean\n" +
+                                                                 "  myField2: boolean\n");
       }
     });
   }
@@ -116,22 +116,22 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
                                            " -Class2\n" +
                                            "  +InnerClass1\n" +
                                            "  +InnerClass2\n" +
-                                           "  getValue():int\n" +
-                                           "  getClass():Class<? extends Object>\n" +
-                                           "  hashCode():int\n" +
-                                           "  equals(Object):boolean\n" +
-                                           "  clone():Object\n" +
-                                           "  toString():String\n" +
-                                           "  notify():void\n" +
-                                           "  notifyAll():void\n" +
-                                           "  wait(long):void\n" +
-                                           "  wait(long, int):void\n" +
-                                           "  wait():void\n" +
-                                           "  finalize():void\n" +
-                                           "  myField1:boolean\n" +
-                                           "  myField2:boolean\n" +
-                                           "  myField3:boolean\n" +
-                                           "  myField4:boolean\n");
+                                           "  getValue(): int\n" +
+                                           "  getClass(): Class<? extends Object>\n" +
+                                           "  hashCode(): int\n" +
+                                           "  equals(Object): boolean\n" +
+                                           "  clone(): Object\n" +
+                                           "  toString(): String\n" +
+                                           "  notify(): void\n" +
+                                           "  notifyAll(): void\n" +
+                                           "  wait(long): void\n" +
+                                           "  wait(long, int): void\n" +
+                                           "  wait(): void\n" +
+                                           "  finalize(): void\n" +
+                                           "  myField1: boolean\n" +
+                                           "  myField2: boolean\n" +
+                                           "  myField3: boolean\n" +
+                                           "  myField4: boolean\n");
 
         structureViewComponent.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
 
@@ -139,11 +139,11 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
                                                                        " -Class2\n" +
                                                                        "  +InnerClass1\n" +
                                                                        "  +InnerClass2\n" +
-                                                                       "  getValue():int\n" +
-                                                                       "  myField1:boolean\n" +
-                                                                       "  myField2:boolean\n" +
-                                                                       "  myField3:boolean\n" +
-                                                                       "  myField4:boolean\n");
+                                                                       "  getValue(): int\n" +
+                                                                       "  myField1: boolean\n" +
+                                                                       "  myField2: boolean\n" +
+                                                                       "  myField3: boolean\n" +
+                                                                       "  myField4: boolean\n");
       }
     });
   }
@@ -156,17 +156,17 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
 
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
                                                                  " -Class2\n" +
-                                                                 "  __myPrivateFiield:int\n" +
-                                                                 "  _myProtectedField:int\n" +
-                                                                 "  myPublicField:int\n");
+                                                                 "  __myPrivateFiield: int\n" +
+                                                                 "  _myProtectedField: int\n" +
+                                                                 "  myPublicField: int\n");
 
         structureViewComponent.setActionActive(VisibilitySorter.ID, true);
 
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
                                                                  " -Class2\n" +
-                                                                 "  myPublicField:int\n" +
-                                                                 "  _myProtectedField:int\n" +
-                                                                 "  __myPrivateFiield:int\n");
+                                                                 "  myPublicField: int\n" +
+                                                                 "  _myProtectedField: int\n" +
+                                                                 "  __myPrivateFiield: int\n");
       }
     });
   }
@@ -180,10 +180,10 @@ public class JavaTreeStructureTest extends TestSourceBasedTestCase {
         IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(), "-Class2.java\n" +
                                                                  " -Class2\n" +
                                                                  "  Class2()\n" +
-                                                                 "  af():void\n" +
-                                                                 "  zf():void\n" +
-                                                                 "  ab:int\n" +
-                                                                 "  z:int\n"
+                                                                 "  af(): void\n" +
+                                                                 "  zf(): void\n" +
+                                                                 "  ab: int\n" +
+                                                                 "  z: int\n"
         );
       }
     });

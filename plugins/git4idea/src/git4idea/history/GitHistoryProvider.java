@@ -35,6 +35,8 @@ import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.changes.GitChangeUtils;
 import git4idea.config.GitExecutableValidator;
 import git4idea.history.browser.SHAHash;
+import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,4 +187,12 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   public DiffFromHistoryHandler getHistoryDiffHandler() {
     return new GitDiffFromHistoryHandler(myProject);
   }
+
+  @Override
+  public boolean canShowHistoryFor(@NotNull VirtualFile file) {
+    GitRepositoryManager manager = GitUtil.getRepositoryManager(myProject);
+    GitRepository repository = manager.getRepositoryForFile(file);
+    return repository != null && !repository.isFresh();
+  }
+
 }

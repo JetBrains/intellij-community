@@ -75,6 +75,11 @@ public class SvnHistoryProvider
     return null;
   }
 
+  @Override
+  public boolean canShowHistoryFor(@NotNull VirtualFile file) {
+    return true;
+  }
+
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
     final ColumnInfo[] columns;
     final Consumer<VcsFileRevision> listener;

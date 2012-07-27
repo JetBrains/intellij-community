@@ -15,6 +15,7 @@
  */
 package git4idea.test;
 
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
@@ -44,6 +45,11 @@ class GitTestRepositoryManager implements GitRepositoryManager {
 
   @Override
   public GitRepository getRepositoryForFile(@NotNull VirtualFile file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public GitRepository getRepositoryForFile(@NotNull FilePath file) {
     throw new UnsupportedOperationException();
   }
 
