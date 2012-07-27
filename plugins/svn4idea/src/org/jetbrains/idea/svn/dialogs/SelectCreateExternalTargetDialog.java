@@ -106,12 +106,13 @@ public class SelectCreateExternalTargetDialog extends RepositoryBrowserDialog {
   protected JPopupMenu createPopup(boolean toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
     DefaultActionGroup newGroup = new DefaultActionGroup("_New", true);
-    newGroup.add(new AddLocationAction());
-    newGroup.add(new MkDirAction());
+    final RepositoryBrowserComponent browser = getRepositoryBrowser();
+    newGroup.add(new AddLocationAction(browser));
+    newGroup.add(new MkDirAction(browser));
     group.add(newGroup);
     group.addSeparator();
-    group.add(new RefreshAction());
-    group.add(new DiscardLocationAction());
+    group.add(new RefreshAction(browser));
+    group.add(new DiscardLocationAction(browser));
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("", group);
     return menu.getComponent();
   }

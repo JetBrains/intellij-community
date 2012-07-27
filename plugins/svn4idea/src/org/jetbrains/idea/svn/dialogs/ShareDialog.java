@@ -102,16 +102,21 @@ public class ShareDialog extends RepositoryBrowserDialog {
   }
 
   protected JPopupMenu createPopup(boolean toolWindow) {
+    ActionPopupMenu menu = createShortPopupForRepositoryDialog(getRepositoryBrowser());
+    return menu.getComponent();
+  }
+
+  public static ActionPopupMenu createShortPopupForRepositoryDialog(RepositoryBrowserComponent browserComponent) {
     DefaultActionGroup group = new DefaultActionGroup();
     DefaultActionGroup newGroup = new DefaultActionGroup("_New", true);
-    newGroup.add(new AddLocationAction());
-    newGroup.add(new MkDirAction());
+    newGroup.add(new AddLocationAction(browserComponent));
+    newGroup.add(new MkDirAction(browserComponent));
     group.add(newGroup);
     group.addSeparator();
-    group.add(new RefreshAction());
-    group.add(new DiscardLocationAction());
-    ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu("", group);
-    return menu.getComponent();
+    group.add(new RefreshAction(browserComponent));
+    group.add(new DiscardLocationAction(browserComponent));
+    group.add(new DeleteAction(browserComponent));
+    return ActionManager.getInstance().createActionPopupMenu("", group);
   }
 
   @Override
