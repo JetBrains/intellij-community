@@ -108,7 +108,8 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
-        String actionName = VcsBundle.message("action.name.file.history", myPath.getName());
+        String actionName = VcsBundle.message(myPath.isDirectory() ? "action.name.file.history.dir" : "action.name.file.history",
+                                              myPath.getName());
         ContentManager contentManager = ProjectLevelVcsManagerEx.getInstanceEx(myVcs.getProject()).getContentManager();
 
         myFileHistoryPanel = resetHistoryPanel();
