@@ -409,8 +409,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
     // 1. vertical 2. number of lines 3. soft wraps (4. ignore spaces)
     PresentationState current = new PresentationState();
     if (myFragmentedContent != null && ! Comparing.equal(myPresentationState, current)) {
-      myFragmentedContent.recalculate();
-      refreshData(myFragmentedContent);
+      recalculatePresentation();
     } else {
       ensurePresentation();
     }
@@ -842,8 +841,11 @@ public class ChangesFragmentedDiffPanel implements Disposable {
           int value = slider.getModel().getValue();
           if (configuration.SHORT_DIFF_EXTRA_LINES != ourMarks[value - 1]) {
             configuration.SHORT_DIFF_EXTRA_LINES = ourMarks[value - 1];
-            myFragmentedContent.recalculate();
-            refreshData(myFragmentedContent);
+            try {
+              recalculatePresentation();
+            } catch (ChangeOutdatedException e) {
+              //
+            }
           }
         }
       });
@@ -858,6 +860,11 @@ public class ChangesFragmentedDiffPanel implements Disposable {
         popup.showInBestPositionFor(e.getDataContext());
       }
     }
+  }
+
+  private void recalculatePresentation() {
+    myFragmentedContent.recalculate();
+    refreshData(myFragmentedContent);
   }
 
   private class MyPreviousDiffAction extends DumbAwareAction {

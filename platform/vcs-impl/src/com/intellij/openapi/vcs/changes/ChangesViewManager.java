@@ -322,7 +322,11 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
         setChangeDetailsPanel(null);
       }
     } else {
-      myDiffDetails.refresh();
+      try {
+        myDiffDetails.refresh();
+      } catch(ChangeOutdatedException e) {
+        return;
+      }
       myDetailsFilePath = myDiffDetails.getCurrentFilePath();
 
       if (mySplitter.getSecondComponent() == null) {

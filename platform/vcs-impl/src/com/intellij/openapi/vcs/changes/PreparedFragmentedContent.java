@@ -106,7 +106,22 @@ public class PreparedFragmentedContent {
     myBeforeFragments = new ArrayList<TextRange>(myFragmentedContent.getSize());
     myAfterFragments = new ArrayList<TextRange>(myFragmentedContent.getSize());
     myLineRanges = new ArrayList<BeforeAfter<Integer>>();
+    checkFileOutdated();
     fromFragmentedContent(myFragmentedContent);
+  }
+
+  private void checkFileOutdated() {
+    if (myOneSide) {
+      if (myIsAddition) {
+        if (myFile == null || ! myFile.isValid()) {
+          throw new ChangeOutdatedException();
+        }
+      }
+    } else {
+      if (myFile == null || ! myFile.isValid()) {
+        throw new ChangeOutdatedException();
+      }
+    }
   }
 
   private void fromFragmentedContent(final FragmentedContent fragmentedContent) {
