@@ -859,12 +859,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
       int selectionSize = sel.size();
       if (selectionSize > 1) {
-        myDiffHandler.showDiff(e, myFilePath, sel.get(0).getRevision());
+        myDiffHandler.showDiffForTwo(myFilePath, sel.get(0), sel.get(sel.size() - 1));
       }
       else if (selectionSize == 1) {
+        final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
+        final int selectedRow = flatView.getSelectedRow();
         VcsFileRevision revision = getFirstSelectedRevision();
+
+        VcsFileRevision previousRevision;
+        if (selectedRow == (flatView.getRowCount() - 1)) {
+          // no previous
+          previousRevision = myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL;
+        } else {
+          previousRevision = flatView.getRow(selectedRow + 1);
+        }
+
         if (revision != null) {
-          myDiffHandler.showDiff(e, myFilePath, revision);
+          myDiffHandler.showDiffForOne(e, myFilePath, previousRevision, revision);
         }
       }
     }
@@ -907,7 +918,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
       VcsFileRevision selectedRevision = getFirstSelectedRevision();
       if (currentRevisionNumber != null && selectedRevision != null) {
-        myDiffHandler.showDiff(myFilePath, selectedRevision, new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
+        myDiffHandler.showDiffForTwo(myFilePath, selectedRevision, new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
       }
     }
 
@@ -1814,21 +1825,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private class StandardDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
     @Override
-    public void showDiff(@NotNull AnActionEvent e, @NotNull FilePath filePath, @NotNull VcsFileRevision revision) {
-      final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
-      final int selectedRow = flatView.getSelectedRow();
-      if (selectedRow == (flatView.getRowCount() - 1)) {
-        // no previous
-        VcsHistoryUtil.showDifferencesInBackground(myVcs.getProject(), filePath,
-                                                   myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL,
-                                                   revision, true);
-      } else {
-        VcsHistoryUtil.showDifferencesInBackground(myVcs.getProject(), myFilePath, flatView.getRow(selectedRow + 1), revision, true);
-      }
+    public void showDiffForOne(@NotNull AnActionEvent e, @NotNull FilePath filePath,
+                               @NotNull VcsFileRevision previousRevision, @NotNull VcsFileRevision revision) {
+      VcsHistoryUtil.showDifferencesInBackground(myVcs.getProject(), myFilePath, previousRevision, revision, true);
     }
 
     @Override
-    public void showDiff(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2) {
+    public void showDiffForTwo(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2) {
       VcsHistoryUtil.showDifferencesInBackground(myProject, myFilePath, revision1, revision2, true);
     }
   }

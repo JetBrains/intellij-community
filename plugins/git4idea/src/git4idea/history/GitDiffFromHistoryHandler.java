@@ -59,8 +59,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * {@link DiffFromHistoryHandler#showDiff(FilePath, VcsFileRevision, VcsFileRevision) "Show Diff" for 2 revision} calls the common code.
- * {@link DiffFromHistoryHandler#showDiff(AnActionEvent, FilePath, VcsFileRevision) "Show diff" for 1 revision}
+ * {@link DiffFromHistoryHandler#showDiffForTwo(FilePath, VcsFileRevision, VcsFileRevision) "Show Diff" for 2 revision} calls the common code.
+ * {@link DiffFromHistoryHandler#showDiffForOne(com.intellij.openapi.actionSystem.AnActionEvent, com.intellij.openapi.vcs.FilePath, com.intellij.openapi.vcs.history.VcsFileRevision, com.intellij.openapi.vcs.history.VcsFileRevision) "Show diff" for 1 revision}
  * behaves differently for merge commits: for them it shown a popup displaying the parents of the selected commit. Selecting a parent
  * from the popup shows the difference with this parent.
  * If an ordinary (not merge) revision with 1 parent, it is the same as usual: just compare with the parent;
@@ -82,11 +82,12 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
   }
 
   @Override
-  public void showDiff(@NotNull AnActionEvent e, @NotNull FilePath filePath, @NotNull VcsFileRevision revision) {
+  public void showDiffForOne(@NotNull AnActionEvent e, @NotNull FilePath filePath,
+                             @NotNull VcsFileRevision previousRevision, @NotNull VcsFileRevision revision) {
     GitFileRevision rev = (GitFileRevision)revision;
     Collection<String> parents = rev.getParents();
     if (parents.size() < 2) {
-      showDiffWithParent(revision, filePath, parents);
+      doShowDiff(filePath, previousRevision, revision, false);
     }
     else { // merge 
       showDiffForMergeCommit(e, filePath, rev, parents);
@@ -94,7 +95,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
   }
 
   @Override
-  public void showDiff(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2) {
+  public void showDiffForTwo(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2) {
     doShowDiff(filePath, revision1, revision2, true);
   }
 
@@ -281,18 +282,6 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
   @NotNull
   private AnAction createParentAction(@NotNull GitFileRevision rev, @NotNull FilePath filePath, @NotNull String parent) {
     return new ShowDiffWithParentAction(filePath, rev, parent);
-  }
-
-  private void showDiffWithParent(@NotNull VcsFileRevision revision, @NotNull FilePath filePath, @NotNull Collection<String> parents) {
-    VcsFileRevision parentRevision;
-    if (parents.size() == 1) {
-      String parent = parents.iterator().next();
-      parentRevision = makeRevisionFromHash(filePath, parent);
-    }
-    else {
-      parentRevision = VcsFileRevision.NULL;
-    }
-    doShowDiff(filePath, parentRevision, revision, false);
   }
 
   @NotNull
