@@ -36,7 +36,7 @@ public class ExternalPSIChangeListener extends com.intellij.designer.designSurfa
   public void deactivate() {
     super.deactivate();
 
-    if (!myDesigner.getProject().isDisposed()) {
+    if (!myDesigner.isProjectClosed()) {
       myResourceDepends = AndroidFacet.getInstance(myDesigner.getModule()).getLocalResourceManager().getAllResourceDirs();
     }
   }

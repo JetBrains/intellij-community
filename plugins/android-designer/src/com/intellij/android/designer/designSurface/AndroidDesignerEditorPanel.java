@@ -112,7 +112,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myProfileAction = new ProfileAction(this, new Runnable() {
       @Override
       public void run() {
-        if (getProject().isDisposed()) {
+        if (isProjectClosed()) {
           return;
         }
         myPSIChangeListener.setInitialize();
@@ -303,7 +303,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             @Override
             public void run() {
               try {
-                if (!getProject().isDisposed()) {
+                if (!isProjectClosed()) {
                   hideProgress();
                   runnable.consume(session);
                 }
