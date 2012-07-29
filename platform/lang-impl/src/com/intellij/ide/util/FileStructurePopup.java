@@ -18,7 +18,9 @@ package com.intellij.ide.util;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
@@ -119,6 +121,8 @@ public class FileStructurePopup implements Disposable {
   private boolean myInitialNodeIsLeaf;
   private final boolean myDaemonUpdateEnabled;
   private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<Pair<String, JCheckBox>>();
+  private final TreeExpander myTreeExpander;
+
 
   public FileStructurePopup(StructureViewModel structureViewModel,
                             @Nullable Editor editor,
@@ -219,6 +223,8 @@ public class FileStructurePopup implements Disposable {
         return false;
       }
     };
+
+    myTreeExpander = new DefaultTreeExpander(myTree);
 
     //myAbstractTreeBuilder.getUi().setPassthroughMode(true);
     myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
@@ -536,6 +542,9 @@ public class FileStructurePopup implements Disposable {
         }
         if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
           return myPopup;
+        }
+        if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+          return myTreeExpander;
         }
         return null;
       }
