@@ -61,6 +61,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -140,7 +141,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                 unusedDeclarations.add(highlightInfo);
               }
             }
-            else if (element instanceof GrField && PostHighlightingPass.isFieldUnused((GrField)element, progress, usageHelper)) {
+            else if (element instanceof GrField && isFieldUnused((GrField)element, progress, usageHelper)) {
               HighlightInfo highlightInfo =
                 PostHighlightingPass.createUnusedSymbolInfo(nameId, "Property " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL);
               QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(element));
@@ -204,6 +205,26 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
 
+  }
+
+  private static boolean isFieldUnused(GrField field, ProgressIndicator progress, GlobalUsageHelper usageHelper) {
+    if (!PostHighlightingPass.isFieldUnused(field, progress, usageHelper)) return false;
+    final GrAccessorMethod[] getters = field.getGetters();
+    final GrAccessorMethod setter = field.getSetter();
+
+    for (GrAccessorMethod getter : getters) {
+      if (getter.findSuperMethods().length > 0) {
+        return false;
+      }
+    }
+
+    if (setter != null) {
+      if (setter.findSuperMethods().length > 0) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private static boolean isOverriddenOrOverrides(PsiMethod method) {
