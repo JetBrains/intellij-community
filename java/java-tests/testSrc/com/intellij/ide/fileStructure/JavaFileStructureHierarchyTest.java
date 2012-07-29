@@ -33,4 +33,5 @@ public class JavaFileStructureHierarchyTest extends JavaFileStructureTestCase {
 
   public void testSimple() throws Exception {checkTree();}
   public void testAnonymousAsConstantInInterface() throws Exception {checkTree("getA");}
+  //public void testAnonymousHashCode() throws Exception {checkTree("hash");}
 }

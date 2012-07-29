@@ -1,0 +1,6 @@
+-A.java
+ -A
+  -[hashCode(): void]
+  -foo(): void
+   -$1
+    hashCode(): int
