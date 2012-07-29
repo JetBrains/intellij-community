@@ -41,6 +41,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.*;
+
 import static com.intellij.patterns.PlatformPatterns.character;
 
 public class CompletionUtil {
@@ -262,5 +264,23 @@ public class CompletionUtil {
   public static <T extends PsiElement> T getOriginalOrSelf(@NotNull T psi) {
     final T element = getOriginalElement(psi);
     return element == null ? psi : element;
+  }
+
+  public static LinkedHashSet<String> sortForCompletion(final PrefixMatcher matcher, List<String> _names) {
+    List<String> sorted = new ArrayList<String>(_names);
+    Collections.sort(sorted, new Comparator<String>() {
+      @Override
+      public int compare(String o1, String o2) {
+        return o1.compareToIgnoreCase(o2);
+      }
+    });
+    LinkedHashSet<String> result = new LinkedHashSet<String>();
+    for (String name : sorted) {
+      if (matcher.isStartMatch(name)) {
+        result.add(name);
+      }
+    }
+    result.addAll(sorted);
+    return result;
   }
 }
