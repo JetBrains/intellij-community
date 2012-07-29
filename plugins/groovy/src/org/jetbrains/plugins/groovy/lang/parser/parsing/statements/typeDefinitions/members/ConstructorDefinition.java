@@ -51,15 +51,16 @@ public class ConstructorDefinition implements GroovyElementTypes {
     }
 
     if (!ParserUtils.getToken(builder, mLPAREN)) {
-      builder.error(GroovyBundle.message("lparen.expected"));
+      constructorMarker.rollbackTo();
+      return false;
     }
 
     ParameterList.parse(builder, mRPAREN, parser);
 
     ParserUtils.getToken(builder, mNLS);
     if (!ParserUtils.getToken(builder, mRPAREN)) {
-      constructorMarker.rollbackTo();
-      return false;
+      constructorMarker.done(CONSTRUCTOR_DEFINITION);
+      return true;
     }
 
     if (ParserUtils.lookAhead(builder, mNLS, kTHROWS) || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
@@ -71,12 +72,9 @@ public class ConstructorDefinition implements GroovyElementTypes {
     if (builder.getTokenType() == mLCURLY || ParserUtils.lookAhead(builder, mNLS, mLCURLY)) {
       ParserUtils.getToken(builder, mNLS);
       ConstructorBody.parseConstructorBody(builder, parser);
-      constructorMarker.done(CONSTRUCTOR_DEFINITION);
-      return true;
     }
-
-    constructorMarker.rollbackTo();
-    return false;
+    constructorMarker.done(CONSTRUCTOR_DEFINITION);
+    return true;
   }
 
   private static boolean parseModifiers(PsiBuilder builder, GroovyParser parser) {

@@ -87,6 +87,7 @@ public class KeywordCompletionTest extends CompletionTestBase {
   void testThrows2()             { doTest() }
   void testThrows3()             { doTest() }
   void testPrimitiveTypes()      { doTest() }
+  void testIncompleteConstructor() { doTest() }
 
   @Override
   protected String getBasePath() {
