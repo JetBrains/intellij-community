@@ -314,8 +314,9 @@ public class GitImpl implements Git {
 
   @NotNull
   @Override
-  public GitCommandResult show(@NotNull GitRepository repository, @NotNull String revision) {
+  public GitCommandResult show(@NotNull GitRepository repository, @NotNull String... params) {
     final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.SHOW);
+    handler.addParameters(params);
     return run(handler);
   }
 
