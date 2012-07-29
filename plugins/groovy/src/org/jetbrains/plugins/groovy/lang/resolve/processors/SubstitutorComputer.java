@@ -48,7 +48,7 @@ import java.util.Set;
 /**
  * @author Max Medvedev
  */
-public abstract class SubstitutorComputer {
+public class SubstitutorComputer {
   private static final Logger LOG = Logger.getInstance(SubstitutorComputer.class);
 
   protected final GroovyPsiElement myPlace;
@@ -60,18 +60,21 @@ public abstract class SubstitutorComputer {
   private final boolean myAllVariants;
 
   private final GrControlFlowOwner myFlowOwner;
+  private final PsiElement myPlaceToInferContext;
 
 
   public SubstitutorComputer(PsiType thisType,
-                             PsiType[] argumentTypes,
+                             @Nullable PsiType[] argumentTypes,
                              PsiType[] typeArguments,
                              boolean allVariants,
-                             GroovyPsiElement place) {
+                             GroovyPsiElement place,
+                             PsiElement placeToInferContext) {
     myThisType = thisType;
     myArgumentTypes = argumentTypes;
     myTypeArguments = typeArguments;
     myAllVariants = allVariants;
     myPlace = place;
+    myPlaceToInferContext = placeToInferContext;
 
     if (canBeExitPoint(place)) {
       myFlowOwner = ControlFlowUtils.findControlFlowOwner(place);
@@ -84,16 +87,14 @@ public abstract class SubstitutorComputer {
   
   @Nullable
   protected PsiType inferContextType() {
-    PsiElement place = getPlaceToInferContext();
-
-    final PsiElement parent = place.getParent();
-    if (parent instanceof GrReturnStatement || exitsContains(place)) {
+    final PsiElement parent = myPlaceToInferContext.getParent();
+    if (parent instanceof GrReturnStatement || exitsContains(myPlaceToInferContext)) {
       final GrMethod method = PsiTreeUtil.getParentOfType(parent, GrMethod.class, true, GrClosableBlock.class);
       if (method != null) {
         return method.getReturnType();
       }
     }
-    else if (parent instanceof GrAssignmentExpression && place.equals(((GrAssignmentExpression)parent).getRValue())) {
+    else if (parent instanceof GrAssignmentExpression && myPlaceToInferContext.equals(((GrAssignmentExpression)parent).getRValue())) {
       return ((GrAssignmentExpression)parent).getLValue().getType();
     }
     else if (parent instanceof GrVariable) {
@@ -222,12 +223,6 @@ public abstract class SubstitutorComputer {
     }
     return substitutor;
   }
-
-  /**
-   * should return place for which expected type will be inferred
-   * @see org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer#inferContextType()
-   */
-  protected abstract PsiElement getPlaceToInferContext();
 
   private Set<PsiElement> myExitPoints;
   protected boolean exitsContains(PsiElement place) {

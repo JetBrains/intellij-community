@@ -45,17 +45,22 @@ import java.util.*;
  */
 public class MethodResolverProcessor extends ResolverProcessor {
   private final PsiType myThisType;
+
   @Nullable
   private final PsiType[] myArgumentTypes;
+
   private final boolean myAllVariants;
 
   protected final Set<GroovyResolveResult> myInapplicableCandidates = new LinkedHashSet<GroovyResolveResult>();
+
   private final boolean myIsConstructor;
 
   private boolean myStopExecuting = false;
+
   private final boolean myByShape;
   
   private final SubstitutorComputer mySubstitutorComputer;
+
   private final boolean myTypedContext;
 
   public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
@@ -76,12 +81,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     myAllVariants = allVariants;
     myByShape = byShape;
 
-    mySubstitutorComputer = new SubstitutorComputer(thisType, argumentTypes, typeArguments, allVariants, place) {
-      @Override
-      protected PsiElement getPlaceToInferContext() {
-        return myPlace.getParent();
-      }
-    };
+    mySubstitutorComputer = new SubstitutorComputer(thisType, argumentTypes, typeArguments, allVariants, place, myPlace.getParent());
     myTypedContext = GppTypeConverter.hasTypedContext(myPlace);
   }
 
