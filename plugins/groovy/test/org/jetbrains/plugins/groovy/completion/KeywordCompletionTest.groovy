@@ -88,11 +88,9 @@ public class KeywordCompletionTest extends CompletionTestBase {
   void testThrows3()             { doTest() }
   void testPrimitiveTypes()      { doTest() }
   void testIncompleteConstructor() { doTest() }
+  void testAtInterface()         { doTest() }
 
-  @Override
-  protected String getBasePath() {
-    "${TestUtils.testDataPath}groovy/oldCompletion/keyword"
-  }
+  String basePath = "${TestUtils.testDataPath}groovy/oldCompletion/keyword"
 
   @Override
   protected boolean addReferenceVariants() {

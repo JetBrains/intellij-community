@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -82,6 +83,10 @@ public class GroovyCompletionData {
 
     if (parent instanceof GrExpression && parent.getParent() instanceof GrAnnotationNameValuePair) {
       return;
+    }
+
+    if (afterAtInType(position)) {
+      result.addElement(keyword(PsiKeyword.INTERFACE, TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
 
     if (!PlatformPatterns.psiElement().afterLeaf(".", ".&", "@", "*.", "?.").accepts(position)) {
@@ -173,9 +178,6 @@ public class GroovyCompletionData {
   private static void addTypeDefinitionKeywords(CompletionResultSet result, PsiElement position) {
     if (suggestClassInterfaceEnum(position)) {
       addKeywords(result, true, PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM);
-    }
-    if (afterAtInType(position)) {
-      result.addElement(keyword(PsiKeyword.INTERFACE, TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
   }
 
@@ -362,15 +364,11 @@ public class GroovyCompletionData {
   }
 
   private static boolean afterAtInType(PsiElement context) {
-    PsiElement previous = PsiImplUtil.realPrevious(context.getPrevSibling());
+    PsiElement previous = PsiImplUtil.realPrevious(PsiTreeUtil.prevLeaf(context));
     if (previous != null &&
         GroovyTokenTypes.mAT.equals(previous.getNode().getElementType()) &&
-        context.getParent() != null &&
-        context.getParent().getParent() instanceof GroovyFile) {
-      return true;
-    }
-    if (context.getParent() instanceof PsiErrorElement &&
-        context.getParent().getParent() instanceof GrAnnotation) {
+        (context.getParent() != null && context.getParent().getParent() instanceof GroovyFile ||
+         context.getParent() instanceof GrCodeReferenceElement && context.getParent().getParent() instanceof GrAnnotation)) {
       return true;
     }
     return false;
