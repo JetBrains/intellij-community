@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.*;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class MethodReferencesSearch extends ExtensibleQueryFactory<PsiReference, MethodReferencesSearch.SearchParameters> {
+  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.methodReferencesSearch");
   public static final MethodReferencesSearch INSTANCE = new MethodReferencesSearch();
 
   public static class SearchParameters {
