@@ -17,6 +17,8 @@ package com.intellij.android.designer.propertyTable.editors;
 
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.renderers.ComponentRenderer;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
@@ -57,17 +59,18 @@ public abstract class ComponentEditor extends ComboEditor {
 
   @NotNull
   @Override
-  public JComponent getComponent(@NotNull RadComponent rootComponent,
-                                 @Nullable RadComponent component,
-                                 Object value,
+  public JComponent getComponent(@Nullable PropertiesContainer container,
+                                 @Nullable PropertyContext context, Object value,
                                  @Nullable InplaceContext inplaceContext) {
     DefaultComboBoxModel model = new DefaultComboBoxModel();
     myCombo.setModel(model);
     model.addElement(StringsComboEditor.UNSET);
-    for (RadComponent childComponent : getComponents(component)) {
-      model.addElement(childComponent);
+    if (container instanceof RadComponent) {
+      for (RadComponent childComponent : getComponents((RadComponent)container)) {
+        model.addElement(childComponent);
+      }
+      myCombo.setSelectedItem(myRenderer.getComponentById((RadComponent)container, (String)value));
     }
-    myCombo.setSelectedItem(myRenderer.getComponentById(component, (String)value));
     myCombo.setBorder(inplaceContext == null ? null : myComboBorder);
     return myCombo;
   }

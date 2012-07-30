@@ -18,8 +18,8 @@ package com.intellij.designer.propertyTable.actions;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.propertyTable.Property;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.model.Property;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -41,9 +41,9 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public class ShowJavadoc extends AnAction implements IPropertyTableAction {
-  private final PropertyTable myTable;
+  private final RadPropertyTable myTable;
 
-  public ShowJavadoc(PropertyTable table) {
+  public ShowJavadoc(RadPropertyTable table) {
     myTable = table;
 
     Presentation presentation = getTemplatePresentation();
@@ -63,7 +63,7 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
     setEnabled(myTable, getTemplatePresentation());
   }
 
-  private static void setEnabled(PropertyTable table, Presentation presentation) {
+  private static void setEnabled(RadPropertyTable table, Presentation presentation) {
     Property property = table.getSelectionProperty();
     presentation.setEnabled(property != null && (property.getJavadocElement() != null || !StringUtil.isEmpty(property.getJavadocText())));
   }

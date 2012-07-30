@@ -17,9 +17,11 @@ package com.intellij.android.designer.propertyTable.renderers;
 
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.designer.ModuleProvider;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyRenderer;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.designer.propertyTable.renderers.BooleanRenderer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -36,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alexander Lobas
@@ -63,16 +65,20 @@ public class ResourceRenderer implements PropertyRenderer {
 
   @NotNull
   @Override
-  public JComponent getComponent(@Nullable RadComponent component, @Nullable Object object, boolean selected, boolean hasFocus) {
+  public JComponent getComponent(@Nullable PropertiesContainer container,
+                                 PropertyContext context,
+                                 @Nullable Object object,
+                                 boolean selected,
+                                 boolean hasFocus) {
     String value = (String)object;
 
     if (myBooleanRenderer != null && (StringUtil.isEmpty(value) || "false".equals(value) || "true".equals(value))) {
-      return myBooleanRenderer.getComponent(component, "true".equals(value), selected, hasFocus);
+      return myBooleanRenderer.getComponent(container, context, "true".equals(value), selected, hasFocus);
     }
 
     myColoredComponent.clear();
-    PropertyTable.updateRenderer(myColoredComponent, selected);
-    formatValue(component, value);
+    RadPropertyTable.updateRenderer(myColoredComponent, selected);
+    if (container instanceof RadComponent) formatValue((RadComponent)container, value);
 
     return myColoredComponent;
   }

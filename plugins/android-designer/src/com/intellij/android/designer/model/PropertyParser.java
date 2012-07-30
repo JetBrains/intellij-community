@@ -18,12 +18,8 @@ package com.intellij.android.designer.model;
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.propertyTable.*;
-import com.intellij.designer.model.MetaManager;
-import com.intellij.designer.model.MetaModel;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.RadLayout;
-import com.intellij.designer.propertyTable.Property;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.model.*;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
@@ -205,7 +201,7 @@ public class PropertyParser {
 
         List<Property> superProperties = loadWidgetProperties(superComponentClass, superModel);
         for (Property superProperty : superProperties) {
-          if (PropertyTable.findProperty(properties, superProperty) == -1) {
+          if (RadPropertyTable.findProperty(properties, superProperty) == -1) {
             if (model == null) {
               properties.add(superProperty);
             }
@@ -226,11 +222,11 @@ public class PropertyParser {
 
         if (model != null) {
           for (String topName : model.getTopProperties()) {
-            PropertyTable.moveProperty(properties, topName, properties, 0);
+            RadPropertyTable.moveProperty(properties, topName, properties, 0);
           }
         }
 
-        PropertyTable.moveProperty(properties, "style", properties, 0);
+        RadPropertyTable.moveProperty(properties, "style", properties, 0);
       }
     }
 
@@ -317,7 +313,7 @@ public class PropertyParser {
 
       if (++index < components.length) {
         for (Property property : loadLayoutProperties(components, index, models)) {
-          if (PropertyTable.findProperty(properties, property) == -1) {
+          if (RadPropertyTable.findProperty(properties, property) == -1) {
             if (model == null) {
               properties.add(property);
             }
@@ -337,10 +333,10 @@ public class PropertyParser {
           }
         });
 
-        PropertyTable.moveProperty(properties, "layout:margin", properties, 0);
-        PropertyTable.moveProperty(properties, "layout:gravity", properties, 0);
-        PropertyTable.moveProperty(properties, "layout:height", properties, 0);
-        PropertyTable.moveProperty(properties, "layout:width", properties, 0);
+        RadPropertyTable.moveProperty(properties, "layout:margin", properties, 0);
+        RadPropertyTable.moveProperty(properties, "layout:gravity", properties, 0);
+        RadPropertyTable.moveProperty(properties, "layout:height", properties, 0);
+        RadPropertyTable.moveProperty(properties, "layout:width", properties, 0);
       }
 
       if (model != null) {
@@ -357,7 +353,7 @@ public class PropertyParser {
   public static void moveProperties(List<Property> source, Property destination, String... names) {
     List<Property> children = destination.getChildren(null);
     for (int i = 0; i < names.length; i += 2) {
-      Property property = PropertyTable.extractProperty(source, names[i]);
+      Property property = RadPropertyTable.extractProperty(source, names[i]);
       if (property != null) {
         children.add(property.createForNewPresentation(destination, names[i + 1]));
       }

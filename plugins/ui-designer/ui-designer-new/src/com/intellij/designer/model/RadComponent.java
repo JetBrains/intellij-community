@@ -21,8 +21,7 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.designSurface.tools.DragTracker;
 import com.intellij.designer.designSurface.tools.InputTool;
-import com.intellij.designer.propertyTable.Property;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +35,18 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class RadComponent {
+public abstract class RadComponent extends PropertiesContainer {
+  private static final String ERROR_KEY = "Inspection.Errors";
+
   protected MetaModel myMetaModel;
   private RadComponent myParent;
   private RadLayout myLayout;
   private final Map<Object, Object> myClientProperties = new HashMap<Object, Object>();
+
+  @Override
+  public List<Property> getProperties() {
+    return Collections.emptyList();
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -185,17 +191,13 @@ public abstract class RadComponent {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  public List<Property> getProperties() {
-    return Collections.emptyList();
-  }
-
   public List<Property> getInplaceProperties() throws Exception {
     List<Property> properties = new ArrayList<Property>();
 
     if (myMetaModel != null) {
       List<Property> allProperties = getProperties();
       for (String name : myMetaModel.getInplaceProperties()) {
-        Property property = PropertyTable.findProperty(allProperties, name);
+        Property property = RadPropertyTable.findProperty(allProperties, name);
         if (property != null) {
           properties.add(property);
         }
@@ -275,6 +277,31 @@ public abstract class RadComponent {
   // Utils
   //
   //////////////////////////////////////////////////////////////////////////////////////////
+
+
+  public static List<ErrorInfo> getError(RadComponent component) {
+    List<ErrorInfo> errorInfos = component.getClientProperty(ERROR_KEY);
+    return errorInfos == null ? Collections.<ErrorInfo>emptyList() : errorInfos;
+  }
+
+  public static void addError(RadComponent component, ErrorInfo errorInfo) {
+    List<ErrorInfo> errorInfos = component.getClientProperty(ERROR_KEY);
+    if (errorInfos == null) {
+      errorInfos = new ArrayList<ErrorInfo>();
+      component.setClientProperty(ERROR_KEY, errorInfos);
+    }
+    errorInfos.add(errorInfo);
+  }
+
+  public static void clearErrors(RadComponent component) {
+    component.accept(new RadComponentVisitor() {
+      @Override
+      public void endVisit(RadComponent component) {
+        component.extractClientProperty(ERROR_KEY);
+      }
+    }, true);
+  }
+
 
   public static Set<RadComponent> getParents(List<RadComponent> components) {
     Set<RadComponent> parents = new HashSet<RadComponent>();

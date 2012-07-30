@@ -20,10 +20,10 @@ import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.MetaModel;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.DefaultPaletteItem;
-import com.intellij.designer.propertyTable.Property;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -102,7 +102,7 @@ public final class AndroidTreeDecorator implements TreeComponentDecorator {
                                      component.getMetaModel().getTarget() +
                                      " without properties");
     }
-    Property property = PropertyTable.findProperty(component.getProperties(), name);
+    Property property = RadPropertyTable.findProperty(component.getProperties(), name);
     if (property != null) {
       try {
         return String.valueOf(property.getValue(component));

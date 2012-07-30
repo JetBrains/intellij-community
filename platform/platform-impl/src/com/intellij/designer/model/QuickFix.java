@@ -13,20 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.propertyTable;
-
-import com.intellij.designer.model.RadComponent;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.designer.model;
 
 import javax.swing.*;
 
 /**
  * @author Alexander Lobas
  */
-public interface PropertyRenderer {
-  @NotNull
-  JComponent getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus);
+public abstract class QuickFix implements Runnable {
+  private final String myName;
+  private final Icon myIcon;
 
-  void updateUI();
+  public QuickFix(String name, Icon icon) {
+    myName = name;
+    myIcon = icon;
+  }
+
+  public final String getName() {
+    return myName;
+  }
+
+  public final Icon getIcon() {
+    return myIcon;
+  }
 }

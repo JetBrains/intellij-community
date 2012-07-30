@@ -22,7 +22,7 @@ import com.intellij.designer.actions.StartInplaceEditing;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
-import com.intellij.designer.inspection.ErrorInfo;
+import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -151,7 +151,7 @@ public final class ComponentTree extends Tree implements DataProvider {
     if (path != null) {
       RadComponent component = extractComponent(path.getLastPathComponent());
       if (component != null) {
-        List<ErrorInfo> errorInfos = ErrorInfo.get(component);
+        List<ErrorInfo> errorInfos = RadComponent.getError(component);
         if (!errorInfos.isEmpty()) {
           return errorInfos.get(0).getName();
         }
@@ -164,7 +164,7 @@ public final class ComponentTree extends Tree implements DataProvider {
   private static HighlightDisplayLevel getHighlightDisplayLevel(Project project, RadComponent component) {
     HighlightDisplayLevel displayLevel = null;
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getInstance(project);
-    for (ErrorInfo errorInfo : ErrorInfo.get(component)) {
+    for (ErrorInfo errorInfo : RadComponent.getError(component)) {
       if (displayLevel == null || severityRegistrar.compare(errorInfo.getLevel().getSeverity(), displayLevel.getSeverity()) > 0) {
         displayLevel = errorInfo.getLevel();
       }

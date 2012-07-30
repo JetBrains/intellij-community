@@ -18,7 +18,7 @@ package com.intellij.android.designer.propertyTable;
 import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;

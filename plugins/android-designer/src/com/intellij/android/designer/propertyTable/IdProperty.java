@@ -17,8 +17,8 @@ package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.IdManager;
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.Property;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
@@ -83,7 +83,7 @@ public class IdProperty extends AttributeProperty {
   }
 
   @Override
-  public boolean availableFor(List<RadComponent> components) {
+  public boolean availableFor(List<PropertiesContainer> components) {
     return false;
   }
 }

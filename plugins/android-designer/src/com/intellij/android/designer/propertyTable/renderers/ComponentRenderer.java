@@ -18,9 +18,11 @@ package com.intellij.android.designer.propertyTable.renderers;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
 import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyRenderer;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -36,7 +38,7 @@ public abstract class ComponentRenderer extends ColoredListCellRenderer implemen
   @Override
   protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
     clear();
-    PropertyTable.updateRenderer(this, selected);
+    RadPropertyTable.updateRenderer(this, selected);
 
     if (value == StringsComboEditor.UNSET) {
       append(StringsComboEditor.UNSET);
@@ -54,12 +56,16 @@ public abstract class ComponentRenderer extends ColoredListCellRenderer implemen
 
   @NotNull
   @Override
-  public JComponent getComponent(@Nullable RadComponent component, @Nullable Object object, boolean selected, boolean hasFocus) {
+  public JComponent getComponent(@Nullable PropertiesContainer container,
+                                 PropertyContext context,
+                                 @Nullable Object object,
+                                 boolean selected,
+                                 boolean hasFocus) {
     clear();
-    PropertyTable.updateRenderer(this, selected);
+    RadPropertyTable.updateRenderer(this, selected);
 
     String value = (String)object;
-    RadComponent idComponent = getComponentById(component, value);
+    RadComponent idComponent = container instanceof RadComponent ? getComponentById((RadComponent)container, value) : null;
 
     if (idComponent != null) {
       renderComponent(idComponent);

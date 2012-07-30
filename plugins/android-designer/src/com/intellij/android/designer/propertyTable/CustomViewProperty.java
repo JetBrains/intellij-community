@@ -19,8 +19,8 @@ import com.intellij.android.designer.model.PropertyParser;
 import com.intellij.android.designer.model.RadCustomViewComponent;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
@@ -103,7 +103,7 @@ public class CustomViewProperty extends Property<RadCustomViewComponent> impleme
   }
 
   @Override
-  public boolean availableFor(List<RadComponent> components) {
+  public boolean availableFor(List<PropertiesContainer> components) {
     return false;
   }
 

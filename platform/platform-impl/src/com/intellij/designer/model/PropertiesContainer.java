@@ -13,27 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.android.designer.model;
+package com.intellij.designer.model;
 
-import com.intellij.designer.model.Property;
-
-import java.util.Collections;
 import java.util.List;
 
-/**
- * @author Alexander Lobas
- */
-public class RadRequestFocus extends RadViewComponent {
-  public RadRequestFocus() {
-    super.setProperties(Collections.<Property>emptyList());
-  }
-
-  @Override
-  public void setProperties(List<Property> properties) {
-  }
-
-  @Override
-  public int getViewInfoCount() {
-    return 0;
-  }
+public abstract class PropertiesContainer {
+  public abstract List<Property> getProperties();
 }

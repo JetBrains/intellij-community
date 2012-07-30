@@ -15,16 +15,11 @@
  */
 package com.intellij.designer.propertyTable;
 
-import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
-import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.designSurface.ComponentSelectionListener;
-import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.designSurface.EditableArea;
-import com.intellij.designer.inspection.ErrorInfo;
-import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.ErrorInfo;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.Property;
+import com.intellij.designer.model.PropertyContext;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -40,13 +35,11 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.IndentedIcon;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TableUI;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
@@ -57,17 +50,18 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-public final class PropertyTable extends JBTable implements DataProvider, ComponentSelectionListener {
+public abstract class PropertyTable extends JBTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.propertyTable.PropertyTable");
 
   private final AbstractTableModel myModel = new PropertyTableModel();
-  private List<RadComponent> myComponents = Collections.emptyList();
+  private List<PropertiesContainer> myContainers = Collections.emptyList();
   private List<Property> myProperties = Collections.emptyList();
   private final Set<String> myExpandedProperties = new HashSet<String>();
 
@@ -78,15 +72,8 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
   private final TableCellRenderer myCellRenderer = new PropertyCellRenderer();
 
   private boolean mySkipUpdate;
-  private EditableArea myArea;
-  private DesignerEditorPanel myDesigner;
-  private Property myInitialSelection;
-
   private boolean myShowExpert;
 
-  private QuickFixManager myQuickFixManager;
-
-  private PropertyTablePanel myPropertyTablePanel;
 
   public PropertyTable() {
     setModel(myModel);
@@ -94,14 +81,6 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
     showColumns(false);
 
     addMouseListener(new MouseTableListener());
-    getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-      @Override
-      public void valueChanged(ListSelectionEvent e) {
-        if (myDesigner != null) {
-          myDesigner.setSelectionProperty(getSelectionProperty());
-        }
-      }
-    });
 
     // TODO: Updates UI after LAF updated
   }
@@ -110,14 +89,6 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
     JTableHeader tableHeader = getTableHeader();
     tableHeader.setVisible(value);
     tableHeader.setPreferredSize(value ? null : new Dimension());
-  }
-
-  public void initQuickFixManager(JViewport viewPort) {
-    myQuickFixManager = new QuickFixManager(this, viewPort);
-  }
-
-  public void setPropertyTablePanel(PropertyTablePanel propertyTablePanel) {
-    myPropertyTablePanel = propertyTablePanel;
   }
 
   public void setUI(TableUI ui) {
@@ -160,56 +131,13 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
     return myCellRenderer;
   }
 
-  @Override
-  public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
-      return myDesigner.getEditor();
-    }
-    return null;
-  }
-
-  //////////////////////////////////////////////////////////////////////////////////////////
-  //
-  //
-  //
-  //////////////////////////////////////////////////////////////////////////////////////////
-
-  public void setArea(@Nullable DesignerEditorPanel designer, @Nullable EditableArea area) {
-    myDesigner = designer;
-    myInitialSelection = designer == null ? null : designer.getSelectionProperty();
-    myQuickFixManager.setDesigner(designer);
-
-    finishEditing();
-
-    if (myArea != null) {
-      myArea.removeSelectionListener(this);
-    }
-
-    myArea = area;
-
-    if (myArea != null) {
-      myArea.addSelectionListener(this);
-    }
-
-    updateProperties();
-  }
-
-  public void updateInspections() {
-    myQuickFixManager.update();
-  }
-
-  @Override
-  public void selectionChanged(EditableArea area) {
-    updateProperties();
-  }
-
   public boolean isShowExpert() {
     return myShowExpert;
   }
 
   public void showExpert(boolean showExpert) {
     myShowExpert = showExpert;
-    updateProperties();
+    update();
   }
 
   public void restoreDefaultValue() {
@@ -219,24 +147,26 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
         cellEditor.stopCellEditing();
       }
 
-      myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+      doRestoreDefault(new ThrowableRunnable<Exception>() {
         @Override
         public void run() throws Exception {
-          for (RadComponent component : myComponents) {
+          for (PropertiesContainer component : myContainers) {
             if (!property.isDefaultValue(component)) {
               property.setDefaultValue(component);
             }
           }
         }
-      }, DesignerBundle.message("designer.properties.restore_default"), false);
+      });
 
       repaint();
     }
   }
 
+  protected abstract boolean doRestoreDefault(ThrowableRunnable<Exception> runnable);
+
   @Nullable
   public ErrorInfo getErrorInfoForRow(int row) {
-    if (myComponents.size() != 1) {
+    if (myContainers.size() != 1) {
       return null;
     }
 
@@ -245,13 +175,15 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
       return null;
     }
 
-    for (ErrorInfo errorInfo : ErrorInfo.get(myComponents.get(0))) {
+    for (ErrorInfo errorInfo : getErrors(myContainers.get(0))) {
       if (property.getName().equals(errorInfo.getPropertyName())) {
         return errorInfo;
       }
     }
     return null;
   }
+
+  protected abstract List<ErrorInfo> getErrors(@NotNull PropertiesContainer container);
 
   @Override
   public String getToolTipText(MouseEvent event) {
@@ -277,7 +209,18 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  private void updateProperties() {
+  @Nullable
+  protected PropertyContext getPropertyContext() {
+    return null;
+  }
+
+  public void update() {
+    doUpdate(myContainers, null);
+  }
+
+  public void doUpdate(@NotNull List<? extends PropertiesContainer> containers, @Nullable Property initialSelection) {
+    finishEditing();
+
     if (mySkipUpdate) {
       return;
     }
@@ -288,28 +231,12 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
         cellEditor.stopCellEditing();
       }
 
-      if (myArea == null) {
-        myComponents = Collections.emptyList();
-        myProperties = Collections.emptyList();
-        myModel.fireTableDataChanged();
-      }
-      else {
-        Property selection = getSelectionProperty();
-        myComponents = new ArrayList<RadComponent>(myArea.getSelection());
-        fillProperties();
-        myModel.fireTableDataChanged();
+      Property selection = initialSelection != null ? initialSelection : getSelectionProperty();
+      myContainers = new ArrayList<PropertiesContainer>(containers);
+      fillProperties();
+      myModel.fireTableDataChanged();
 
-        if (myInitialSelection != null && !myComponents.isEmpty()) {
-          selection = myInitialSelection;
-          myInitialSelection = null;
-        }
-
-        restoreSelection(selection);
-      }
-
-      if (myPropertyTablePanel != null) {
-        myPropertyTablePanel.updateActions();
-      }
+      restoreSelection(selection);
     }
     finally {
       mySkipUpdate = false;
@@ -349,21 +276,21 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
 
   private void fillProperties() {
     myProperties = new ArrayList<Property>();
-    int size = myComponents.size();
+    int size = myContainers.size();
 
     if (size > 0) {
-      fillProperties(myComponents.get(0), myProperties);
+      fillProperties(myContainers.get(0), myProperties);
 
       if (size > 1) {
         for (Iterator<Property> I = myProperties.iterator(); I.hasNext(); ) {
-          if (!I.next().availableFor(myComponents)) {
+          if (!I.next().availableFor(myContainers)) {
             I.remove();
           }
         }
 
         for (int i = 1; i < size; i++) {
           List<Property> properties = new ArrayList<Property>();
-          fillProperties(myComponents.get(i), properties);
+          fillProperties(myContainers.get(i), properties);
 
           for (Iterator<Property> I = myProperties.iterator(); I.hasNext(); ) {
             Property property = I.next();
@@ -401,7 +328,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
     }
   }
 
-  private void fillProperties(RadComponent component, List<Property> properties) {
+  private void fillProperties(PropertiesContainer component, List<Property> properties) {
     for (Property property : component.getProperties()) {
       addProperty(property, properties);
     }
@@ -503,8 +430,8 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
   }
 
   @Nullable
-  private RadComponent getCurrentComponent() {
-    return myComponents.size() == 1 ? myComponents.get(0) : null;
+  private PropertiesContainer getCurrentComponent() {
+    return myContainers.size() == 1 ? myContainers.get(0) : null;
   }
 
   private List<Property> getChildren(Property property) {
@@ -523,7 +450,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
   }
 
   public boolean isDefault(Property property) throws Exception {
-    for (RadComponent component : myComponents) {
+    for (PropertiesContainer component : myContainers) {
       if (!property.isDefaultValue(component)) {
         return false;
       }
@@ -533,14 +460,14 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
 
   @Nullable
   private Object getValue(Property property) throws Exception {
-    int size = myComponents.size();
+    int size = myContainers.size();
     if (size == 0) {
       return null;
     }
 
-    Object value = property.getValue(myComponents.get(0));
+    Object value = property.getValue(myContainers.get(0));
     for (int i = 1; i < size; i++) {
-      if (!Comparing.equal(value, property.getValue(myComponents.get(i)))) {
+      if (!Comparing.equal(value, property.getValue(myContainers.get(i)))) {
         return null;
       }
     }
@@ -608,7 +535,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
     super.setValueAt(aValue, row, column);
 
     if (property.needRefreshPropertyList()) {
-      updateProperties();
+      update();
     }
 
     repaint();
@@ -700,39 +627,45 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
     boolean isSetValue = true;
 
     if (isNewValue) {
-      isSetValue = myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+      isSetValue = doSetValue(new ThrowableRunnable<Exception>() {
         @Override
         public void run() throws Exception {
-          for (RadComponent component : myComponents) {
+          for (PropertiesContainer component : myContainers) {
             property.setValue(component, newValue);
           }
         }
-      }, DesignerBundle.message("command.set.property.value"), false);
+      });
     }
 
     if (isSetValue) {
       if (property.needRefreshPropertyList()) {
-        updateProperties();
+        update();
       }
-      else if (myPropertyTablePanel != null) {
-        myPropertyTablePanel.updateActions();
+      else {
+        myModel.fireTableRowsUpdated(row, row);
       }
     }
 
     return isSetValue;
   }
 
+  protected abstract boolean doSetValue(ThrowableRunnable<Exception> runnable);
+
   private static void showInvalidInput(Exception e) {
     Throwable cause = e.getCause();
     String message = cause == null ? e.getMessage() : cause.getMessage();
 
     if (message == null || message.length() == 0) {
-      message = DesignerBundle.message("designer.properties.no_message.error");
+      message = "No message";
     }
 
-    Messages.showMessageDialog(DesignerBundle.message("designer.properties.setting.error", message),
-                               DesignerBundle.message("designer.properties.invalid_input"),
+    Messages.showMessageDialog(formatErrorGettingValueMesage(message),
+                               "Invalid Input",
                                Messages.getErrorIcon());
+  }
+
+  private static String formatErrorGettingValueMesage(String message) {
+    return MessageFormat.format("Error setting value: {0}", message);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -893,8 +826,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
   }
 
   private class PropertyTableModel extends AbstractTableModel {
-    private final String[] myColumnNames =
-      {DesignerBundle.message("designer.properties.column1"), DesignerBundle.message("designer.properties.column2")};
+    private final String[] myColumnNames = {"Property", "Value"};
 
     @Override
     public int getColumnCount() {
@@ -974,7 +906,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       try {
-        JComponent component = myEditor.getComponent(myDesigner.getRootComponent(), getCurrentComponent(), getValue((Property)value), null);
+        JComponent component = myEditor.getComponent(getCurrentComponent(), getPropertyContext() , getValue((Property)value), null);
 
         if (component instanceof JComboBox) {
           component.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
@@ -990,7 +922,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
         LOG.debug(e);
         SimpleColoredComponent errComponent = new SimpleColoredComponent();
         errComponent
-          .append(DesignerBundle.message("designer.properties.getting.error", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          .append(MessageFormat.format("Error getting value: {0}", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
         return errComponent;
       }
     }
@@ -1016,6 +948,9 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
       component.setBackground(UIUtil.getTableBackground());
     }
   }
+
+  @NotNull
+  protected abstract TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity);
 
   private class PropertyCellRenderer implements TableCellRenderer {
     private final Map<HighlightSeverity, SimpleTextAttributes> myRegularAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
@@ -1106,8 +1041,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
           SimpleTextAttributes errorAttributes = cache.get(severity);
 
           if (errorAttributes == null) {
-            TextAttributesKey attributesKey =
-              SeverityRegistrar.getInstance(myDesigner.getProject()).getHighlightInfoTypeBySeverity(severity).getAttributesKey();
+            TextAttributesKey attributesKey = getErrorAttributes(severity);
             TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
 
             if (property.isImportant()) {
@@ -1168,7 +1102,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
       else {
         try {
           PropertyRenderer renderer = property.getRenderer();
-          JComponent component = renderer.getComponent(getCurrentComponent(), getValue(property), selected, hasFocus);
+          JComponent component = renderer.getComponent(getCurrentComponent(), getPropertyContext(), getValue(property), selected, hasFocus);
 
           if (!selected) {
             component.setBackground(background);
@@ -1185,8 +1119,7 @@ public final class PropertyTable extends JBTable implements DataProvider, Compon
         catch (Throwable e) {
           LOG.debug(e);
           myErrorRenderer.clear();
-          myErrorRenderer
-            .append(DesignerBundle.message("designer.properties.getting.error", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          myErrorRenderer.append(formatErrorGettingValueMesage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
           return myErrorRenderer;
         }
       }

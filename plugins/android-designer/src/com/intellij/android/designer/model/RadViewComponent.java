@@ -17,12 +17,8 @@ package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.sdklib.SdkConstants;
-import com.intellij.designer.model.EmptyXmlTag;
-import com.intellij.designer.model.MetaModel;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.RadVisualComponent;
-import com.intellij.designer.propertyTable.Property;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.model.*;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -210,7 +206,7 @@ public class RadViewComponent extends RadVisualComponent {
   @Override
   public List<Property> getInplaceProperties() throws Exception {
     List<Property> properties = super.getInplaceProperties();
-    Property idProperty = PropertyTable.findProperty(myProperties, "id");
+    Property idProperty = RadPropertyTable.findProperty(myProperties, "id");
     if (idProperty != null) {
       properties.add(idProperty);
     }

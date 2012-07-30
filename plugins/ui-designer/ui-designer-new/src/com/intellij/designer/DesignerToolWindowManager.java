@@ -18,7 +18,7 @@ package com.intellij.designer;
 import com.intellij.designer.componentTree.ComponentTree;
 import com.intellij.designer.componentTree.ComponentTreeBuilder;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
-import com.intellij.designer.propertyTable.PropertyTablePanel;
+import com.intellij.designer.propertyTable.RadPropertyTablePanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -52,7 +52,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   private Splitter myToolWindowPanel;
   private ComponentTree myComponentTree;
   private ComponentTreeBuilder myTreeBuilder;
-  private PropertyTablePanel myPropertyTablePanel;
+  private RadPropertyTablePanel myPropertyTablePanel;
 
   public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
@@ -129,7 +129,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     treeScrollPane.setPreferredSize(new Dimension(250, -1));
     myComponentTree.initQuickFixManager(treeScrollPane.getViewport());
 
-    myPropertyTablePanel = new PropertyTablePanel();
+    myPropertyTablePanel = new RadPropertyTablePanel(myProject);
 
     myToolWindowPanel = new Splitter(true, 0.42f);
     myToolWindowPanel.setFirstComponent(treeScrollPane);

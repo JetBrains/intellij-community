@@ -25,11 +25,7 @@ import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.designer.inspection.AbstractQuickFixManager;
-import com.intellij.designer.inspection.ErrorInfo;
-import com.intellij.designer.inspection.QuickFix;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.RadComponentVisitor;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.*;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -48,7 +44,7 @@ import java.util.List;
  */
 public final class ErrorAnalyzer {
   public static void load(final Project project, final XmlFile xmlFile, RadComponent rootComponent, ProgressIndicator progress) {
-    ErrorInfo.clear(rootComponent);
+    RadComponent.clearErrors(rootComponent);
 
     AndroidLintExternalAnnotator annotator = new AndroidLintExternalAnnotator();
     State state = annotator.collectionInformation(xmlFile);
@@ -80,7 +76,7 @@ public final class ErrorAnalyzer {
             if (startElement != null && endElement != null && !inspection.isSuppressedFor(startElement)) {
               Pair<RadComponent, String> componentInfo = findComponent(rootComponent, startElement);
               ErrorInfo errorInfo = new ErrorInfo(message, componentInfo.second, pair.getSecond());
-              ErrorInfo.add(componentInfo.first, errorInfo);
+              RadComponent.addError(componentInfo.first, errorInfo);
 
               Icon icon =
                 errorInfo.getLevel() == HighlightDisplayLevel.ERROR ? AbstractQuickFixManager.ICON_ERROR : AbstractQuickFixManager.ICON;

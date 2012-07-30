@@ -16,7 +16,7 @@
 package com.intellij.designer.designSurface;
 
 import com.intellij.designer.inspection.AbstractQuickFixManager;
-import com.intellij.designer.inspection.ErrorInfo;
+import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +45,7 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Co
   protected List<ErrorInfo> getErrorInfos() {
     List<RadComponent> selection = myDesigner.getSurfaceArea().getSelection();
     if (selection.size() == 1) {
-      return ErrorInfo.get(selection.get(0));
+      return RadComponent.getError(selection.get(0));
     }
     return Collections.emptyList();
   }

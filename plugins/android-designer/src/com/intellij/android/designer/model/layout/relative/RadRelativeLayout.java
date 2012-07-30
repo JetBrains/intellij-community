@@ -24,14 +24,14 @@ import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.RadViewLayoutWithData;
 import com.intellij.android.designer.model.layout.actions.AllGravityAction;
 import com.intellij.android.designer.propertyTable.AttributeProperty;
-import com.intellij.android.designer.propertyTable.RelativeIdAttributeProperty;
 import com.intellij.android.designer.propertyTable.JavadocParser;
+import com.intellij.android.designer.propertyTable.RelativeIdAttributeProperty;
 import com.intellij.designer.componentTree.TreeEditOperation;
 import com.intellij.designer.designSurface.*;
 import com.intellij.designer.designSurface.selection.ResizeSelectionDecorator;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.propertyTable.Property;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,9 +89,9 @@ public class RadRelativeLayout extends RadViewLayoutWithData implements ILayoutD
                                   "layout:alignWithParentIfMissing", "missing");
     properties.add(alignParent);
 
-    PropertyTable.extractProperty(properties, "layout:centerInParent");
-    PropertyTable.extractProperty(properties, "layout:centerHorizontal");
-    PropertyTable.extractProperty(properties, "layout:centerVertical");
+    RadPropertyTable.extractProperty(properties, "layout:centerInParent");
+    RadPropertyTable.extractProperty(properties, "layout:centerHorizontal");
+    RadPropertyTable.extractProperty(properties, "layout:centerVertical");
     properties.add(new CenterProperty());
   }
 

@@ -15,9 +15,10 @@
  */
 package com.intellij.designer.propertyTable.renderers;
 
-import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.PropertyRenderer;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,13 +42,17 @@ public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
   }
 
   @NotNull
-  public JComponent getComponent(@Nullable RadComponent component, @Nullable Object value, boolean selected, boolean hasFocus) {
+  public JComponent getComponent(@Nullable PropertiesContainer container,
+                                 PropertyContext context,
+                                 @Nullable Object value,
+                                 boolean selected,
+                                 boolean hasFocus) {
     // Reset text and icon
     setText(null);
     setIcon(null);
 
     // Background and foreground
-    PropertyTable.updateRenderer(this, selected);
+    RadPropertyTable.updateRenderer(this, selected);
 
     if (value != null) {
       customize(value);

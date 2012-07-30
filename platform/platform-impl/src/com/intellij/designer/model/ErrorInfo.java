@@ -13,16 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.inspection;
+package com.intellij.designer.model;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.RadComponentVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -72,28 +69,5 @@ public final class ErrorInfo {
       }
     }
     return false;
-  }
-
-  public static List<ErrorInfo> get(RadComponent component) {
-    List<ErrorInfo> errorInfos = component.getClientProperty(KEY);
-    return errorInfos == null ? Collections.<ErrorInfo>emptyList() : errorInfos;
-  }
-
-  public static void add(RadComponent component, ErrorInfo errorInfo) {
-    List<ErrorInfo> errorInfos = component.getClientProperty(KEY);
-    if (errorInfos == null) {
-      errorInfos = new ArrayList<ErrorInfo>();
-      component.setClientProperty(KEY, errorInfos);
-    }
-    errorInfos.add(errorInfo);
-  }
-
-  public static void clear(RadComponent component) {
-    component.accept(new RadComponentVisitor() {
-      @Override
-      public void endVisit(RadComponent component) {
-        component.extractClientProperty(KEY);
-      }
-    }, true);
   }
 }

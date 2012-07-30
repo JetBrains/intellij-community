@@ -15,7 +15,8 @@
  */
 package com.intellij.designer.propertyTable.editors;
 
-import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.ui.DocumentAdapter;
@@ -52,11 +53,10 @@ public class TextEditor extends PropertyEditor {
 
   @NotNull
   @Override
-  public JComponent getComponent(@NotNull RadComponent rootComponent,
-                                 @Nullable RadComponent component,
-                                 Object value,
+  public JComponent getComponent(@Nullable PropertiesContainer container,
+                                 @Nullable PropertyContext context, Object value,
                                  @Nullable InplaceContext inplaceContext) {
-    setEditorValue(component, value);
+    setEditorValue(value);
     if (inplaceContext == null) {
       myTextField.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     }
@@ -79,7 +79,7 @@ public class TextEditor extends PropertyEditor {
     return myTextField.getText();
   }
 
-  protected void setEditorValue(@Nullable RadComponent component, Object value) {
+  protected void setEditorValue(Object value) {
     myTextField.setText(value == null ? "" : value.toString());
   }
 

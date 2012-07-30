@@ -13,27 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.inspection;
+package com.intellij.designer.model;
 
-import javax.swing.*;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Alexander Lobas
- */
-public abstract class QuickFix implements Runnable {
-  private final String myName;
-  private final Icon myIcon;
-
-  public QuickFix(String name, Icon icon) {
-    myName = name;
-    myIcon = icon;
-  }
-
-  public final String getName() {
-    return myName;
-  }
-
-  public final Icon getIcon() {
-    return myIcon;
-  }
+public interface RadPropertyContext extends PropertyContext {
+  @Nullable
+  RadComponent getRootComponent();
 }

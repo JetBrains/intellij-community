@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.designer.propertyTable;
+package com.intellij.designer.model;
 
-import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.propertyTable.PropertyEditor;
+import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class Property<T extends RadComponent> {
+public abstract class Property<T extends PropertiesContainer> {
   private final Property myParent;
   private final String myName;
   private boolean myImportant;
@@ -89,7 +90,7 @@ public abstract class Property<T extends RadComponent> {
   public void setDefaultValue(T component) throws Exception {
   }
 
-  public boolean availableFor(List<RadComponent> components) {
+  public boolean availableFor(List<PropertiesContainer> components) {
     return true;
   }
 

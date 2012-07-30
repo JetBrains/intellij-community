@@ -15,7 +15,8 @@
  */
 package com.intellij.designer.propertyTable;
 
-import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.PropertyContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +30,8 @@ public abstract class PropertyEditor {
   private final EventListenerList myListenerList = new EventListenerList();
 
   @NotNull
-  public abstract JComponent getComponent(@NotNull RadComponent rootComponent,
-                                          @Nullable RadComponent component,
+  public abstract JComponent getComponent(@Nullable PropertiesContainer container,
+                                          @Nullable PropertyContext context,
                                           Object value,
                                           @Nullable InplaceContext inplaceContext);
 
