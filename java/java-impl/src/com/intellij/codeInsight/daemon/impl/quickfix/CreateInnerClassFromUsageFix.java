@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -79,16 +80,28 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
     while (contextMember != null) {
       if (contextMember instanceof PsiClass && !(contextMember instanceof PsiTypeParameter)) {
-        result.add((PsiClass)contextMember);
+        if (!isUsedInExtends(run, (PsiClass)contextMember)) {
+          result.add((PsiClass)contextMember);
+        }
       }
       run = contextMember;
       contextMember = PsiTreeUtil.getParentOfType(run, PsiMember.class);
-      if (contextMember != null && contextMember.hasModifierProperty(PsiModifier.STATIC)) {
-        break;
-      }
     }
 
     return result.isEmpty() ? PsiClass.EMPTY_ARRAY : result.toArray(new PsiClass[result.size()]);
+  }
+
+  private static boolean isUsedInExtends(PsiElement element, PsiClass psiClass) {
+    final PsiReferenceList extendsList = psiClass.getExtendsList();
+    final PsiReferenceList implementsList = psiClass.getImplementsList();
+    if (extendsList != null && PsiTreeUtil.isAncestor(extendsList, element, false)) {
+      return true;
+    }
+      
+    if (implementsList != null && PsiTreeUtil.isAncestor(implementsList, element, false)) {
+      return true;
+    }
+    return false;
   }
 
   private void chooseTargetClass(PsiClass[] classes, final Editor editor, final String superClassName) {
@@ -149,6 +162,9 @@ public class CreateInnerClassFromUsageFix extends CreateClassFromUsageBaseFix {
       modifierList.setModifierProperty(PsiModifier.PACKAGE_LOCAL, true);
     } else {
       modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+    }
+    if (RefactoringUtil.isInStaticContext(ref, aClass)) {
+      modifierList.setModifierProperty(PsiModifier.STATIC, true);
     }
     if (superClassName != null) {
       PsiJavaCodeReferenceElement superClass =
