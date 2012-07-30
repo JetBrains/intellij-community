@@ -230,7 +230,9 @@ class GitLogRecord {
         break;
       case RENAMED:
         status = FileStatus.MODIFIED;
-        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, statusInfo.getSecondPath(), false, false, true);
+        String secondPath = statusInfo.getSecondPath();
+        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, secondPath == null ? path : secondPath,
+                                                                           false, false, true);
         after = GitContentRevision.createMultipleParentsRevision(project, filePathAfterRename, parentRevisions);
         before = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true, true, true);
         break;
