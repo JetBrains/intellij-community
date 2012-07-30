@@ -48,7 +48,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   private EditableArea myArea;
   private DesignerEditorPanel myDesigner;
   private QuickFixManager myQuickFixManager;
-  private RadPropertyTablePanel myPropertyTablePanel;
+  private PropertyTablePanel myPropertyTablePanel;
 
 
   public RadPropertyTable(@NotNull Project project) {
@@ -80,7 +80,7 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
     myQuickFixManager = new QuickFixManager(this, viewPort);
   }
 
-  public void setPropertyTablePanel(RadPropertyTablePanel propertyTablePanel) {
+  public void setPropertyTablePanel(PropertyTablePanel propertyTablePanel) {
     myPropertyTablePanel = propertyTablePanel;
   }
 
@@ -136,7 +136,12 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
 
   @Override
   public void update() {
-    doUpdate(myArea.getSelection(), myDesigner.getSelectionProperty());
+    if (myArea == null) {
+      doUpdate(Collections.<PropertiesContainer>emptyList(), null);
+    }
+    else {
+      doUpdate(myArea.getSelection(), myDesigner.getSelectionProperty());
+    }
   }
 
   @Override

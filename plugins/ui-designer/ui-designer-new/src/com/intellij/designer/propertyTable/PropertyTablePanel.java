@@ -33,11 +33,11 @@ import java.awt.*;
 /**
  * @author Alexander Lobas
  */
-public final class RadPropertyTablePanel extends JPanel implements ListSelectionListener {
+public final class PropertyTablePanel extends JPanel implements ListSelectionListener {
   private final RadPropertyTable myPropertyTable;
   private final AnAction[] myActions;
 
-  public RadPropertyTablePanel(Project project) {
+  public PropertyTablePanel(Project project) {
     myPropertyTable = new RadPropertyTable(project);
 
     setLayout(new GridBagLayout());
