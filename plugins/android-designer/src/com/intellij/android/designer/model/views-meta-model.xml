@@ -141,7 +141,7 @@
     <presentation title=" - &quot;%text%&quot;"/>
 
     <palette title="Switch" icon="/com/intellij/android/designer/icons/Switch.png"
-             version="Android version: 4.0"
+             version="Android 4.0 (API Level 14)"
              tooltip="A Switch is a two-state toggle switch widget that can select between two options."/>
 
     <creation>
@@ -580,7 +580,7 @@
         tag="QuickContactBadge">
 
     <palette title="QuickContactBadge" icon="/com/intellij/android/designer/icons/QuickContactBadge.png"
-             version="Android version: 2.0"
+             version="Android 2.0 (API Level 5)"
              tooltip="Widget used to show an image with the standard QuickContact badge and on-click behavior."/>
 
     <properties important="quickContactWindowSize"/>
@@ -600,7 +600,7 @@
         tag="Space">
 
     <palette title="Space" icon="/com/intellij/android/designer/icons/Space.png"
-             version="Android version: 4.0"
+             version="Android 4.0 (API Level 14)"
              tooltip="Space is a lightweight View subclass that may be used to create gaps between components in general purpose layouts."/>
 
     <creation>
@@ -699,7 +699,7 @@
         tag="CalendarView">
 
     <palette title="CalendarView" icon="/com/intellij/android/designer/icons/CalendarView.png"
-             version="Android version: 3.0"
+             version="Android 3.0 (API Level 11)"
              tooltip="This class is a calendar widget for displaying and selecting dates."/>
 
     <morphing to="DatePicker TimePicker"/>
@@ -744,7 +744,7 @@
         tag="NumberPicker">
 
     <palette title="NumberPicker" icon="/com/intellij/android/designer/icons/NumberPicker.png"
-             version="Android version: 3.0"
+             version="Android 3.0 (API Level 11)"
              tooltip="A widget that enables the user to select a number form a predefined range. The widget presents an input field and up and down buttons for selecting the current value. Pressing/long-pressing the up and down buttons increments and decrements the current value respectively."/>
 
     <properties important="solidColor flingable selectionDivider selectionDividerHeight"/>
@@ -781,7 +781,7 @@
         tag="SearchView">
 
     <palette title="SearchView" icon="/com/intellij/android/designer/icons/SearchView.png"
-             version="Android version: 3.0"
+             version="Android 3.0 (API Level 11)"
              tooltip="A widget that provides a user interface for the user to enter a search query and submit a request to a search provider. Shows a list of query suggestions or results, if available, and allows the user to pick a suggestion or result to launch into."/>
 
     <properties inplace="queryHint"
@@ -990,7 +990,7 @@
         tag="StackView">
 
     <palette title="StackView" icon="/com/intellij/android/designer/icons/StackView.png"
-             version="Android version: 3.0"
+             version="Android 3.0 (API Level 11)"
              tooltip="A view that displays its children in a stack and allows users to discretely swipe through the children."/>
 
     <properties important="resOutColor clickColor"/>
@@ -1010,7 +1010,7 @@
         tag="AdapterViewFlipper">
 
     <palette title="AdapterViewFlipper" icon="/com/intellij/android/designer/icons/AdapterViewFlipper.png"
-             version="Android version: 3.0"
+             version="Android 3.0 (API Level 11)"
              tooltip="Simple ViewAnimator that will animate between two or more views that have been added to it. Only one child is shown at a time. If requested, can automatically flip between each child at a regular interval."/>
 
     <properties important="flipInterval autoStart"/>
@@ -1414,7 +1414,7 @@
     <morphing to="TableLayout RelativeLayout"/>
 
     <palette title="GridLayout" icon="/com/intellij/android/designer/icons/GridLayout.png"
-             version="Android version: 4.0"
+             version="Android 4.0 (API Level 14)"
              tooltip="A layout that places its children in a rectangular grid."/>
 
     <creation>
@@ -1441,7 +1441,7 @@
     <morphing to="TableLayout RelativeLayout"/>
 
     <palette title="v7.GridLayout" icon="/com/intellij/android/designer/icons/GridLayout.png"
-             version="Android version: 2.1"
+             version="Android 2.1 (API Level 7)"
              tooltip="A layout that places its children in a rectangular grid."/>
 
     <creation>

@@ -62,6 +62,11 @@ public class DefaultPaletteItem implements PaletteItem {
     return myVersion;
   }
 
+  @Override
+  public boolean isEnabled() {
+    return true;//myVersion == null;
+  }
+
   public MetaModel getMetaModel() {
     return myMetaModel;
   }

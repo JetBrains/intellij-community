@@ -47,6 +47,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -84,6 +85,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final ProfileAction myProfileAction;
   private final Alarm mySessionAlarm = new Alarm();
   private FolderConfiguration myLastRenderedConfiguration;
+  private IAndroidTarget myLastTarget;
   private volatile RenderSession mySession;
   private boolean myParseTime;
   private int myProfileLastVersion;
@@ -117,7 +119,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }
         myPSIChangeListener.setInitialize();
         myActionPanel.update();
-        if (myRootComponent == null) {
+        if (myRootComponent == null || !Comparing.equal(myProfileAction.getProfileManager().getSelectedTarget(), myLastTarget)) {
           myPSIChangeListener.activate();
           myPSIChangeListener.addRequest();
         }
@@ -268,10 +270,10 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           float xdpi = deviceConfiguration.getDevice().getXDpi();
           float ydpi = deviceConfiguration.getDevice().getYDpi();
 
-          IAndroidTarget target = manager.getSelectedTarget();
+          myLastTarget = manager.getSelectedTarget();
           ThemeData theme = manager.getSelectedTheme();
 
-          if (target == null || theme == null) {
+          if (myLastTarget == null || theme == null) {
             throw new RenderingException();
           }
 
@@ -279,7 +281,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                                                            layoutXmlText,
                                                            myFile,
                                                            null,
-                                                           target,
+                                                           myLastTarget,
                                                            facet,
                                                            myLastRenderedConfiguration,
                                                            xdpi,
