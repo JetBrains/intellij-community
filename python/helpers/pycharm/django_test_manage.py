@@ -1,24 +1,18 @@
 #!/usr/bin/env python
-from fix_getpass import fixGetpass
 from django.core.management import setup_environ, ManagementUtility
 
 import os
 import sys
 
-try:
-  from runpy import run_module
-except ImportError:
-  from runpy_compat import run_module
-
-manage_file = 'manage'
-
 base_path = sys.argv.pop()
 sys.path.insert(0, base_path)
 os.chdir(base_path)
 
-#run user's manage.py (in django 1.4 there is environment setings)
-fixGetpass()
-run_module(manage_file, None, "__main__", True)
+manage_file = 'manage'
+try:
+  __import__(manage_file)
+except ImportError:
+  print ("There is no such manage file " + str(manage_file))
 
 settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:
