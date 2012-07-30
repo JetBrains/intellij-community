@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
@@ -143,7 +142,7 @@ public class ContentRevisionCache {
                                          VcsRevisionNumber number,
                                          VcsKey key,
                                          UniqueType type,
-                                         Throwable2Computable<byte[], VcsException, IOException> loader, Charset charset)
+                                         Throwable2Computable<byte[], VcsException, IOException> loader, @Nullable Charset charset)
     throws VcsException, IOException {
     if (charset == null) {
       return getOrLoadAsString(project, file, number, key, type, loader);
