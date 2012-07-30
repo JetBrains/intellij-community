@@ -37,6 +37,7 @@ import com.intellij.designer.model.WrapInProvider;
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
 import com.intellij.designer.palette.PaletteItem;
+import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -270,6 +271,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           float xdpi = deviceConfiguration.getDevice().getXDpi();
           float ydpi = deviceConfiguration.getDevice().getYDpi();
 
+          final boolean updatePalette = !Comparing.equal(myProfileAction.getProfileManager().getSelectedTarget(), myLastTarget);
           myLastTarget = manager.getSelectedTarget();
           ThemeData theme = manager.getSelectedTheme();
 
@@ -308,6 +310,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                 if (!isProjectClosed()) {
                   hideProgress();
                   runnable.consume(session);
+                  if (updatePalette) {
+                    updatePalette(myLastTarget);
+                  }
                 }
               }
               catch (Throwable e) {
@@ -579,7 +584,38 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   public ComponentPasteFactory createPasteFactory(String xmlComponents) {
-    return new AndroidPasteFactory(getProject(), xmlComponents);
+    return new AndroidPasteFactory(getModule(), myLastTarget, xmlComponents);
+  }
+
+  private void updatePalette(IAndroidTarget target) {
+    try {
+      ClassLoader classLoader = ProjectClassLoader.create(target, getModule());
+
+      for (PaletteGroup group : getPaletteGroups()) {
+        for (PaletteItem item : group.getItems()) {
+          if (item.getVersion() != null) {
+            DefaultPaletteItem paletteItem = (DefaultPaletteItem)item;
+            try {
+              String className = paletteItem.getMetaModel().getTarget();
+              classLoader.loadClass(className);
+              paletteItem.setEnabled(true);
+            }
+            catch (Throwable e) {
+              paletteItem.setEnabled(false);
+            }
+          }
+        }
+      }
+
+      PaletteItem item = getActivePaletteItem();
+      if (item != null && !item.isEnabled()) {
+        activatePaletteItem(null);
+      }
+
+      PaletteToolWindowManager.getInstance(getProject()).refresh();
+    }
+    catch (Throwable e) {
+    }
   }
 
   @Override

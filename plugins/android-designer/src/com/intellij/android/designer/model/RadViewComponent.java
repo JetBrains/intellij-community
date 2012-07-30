@@ -46,7 +46,7 @@ public class RadViewComponent extends RadVisualComponent {
   private List<Property> myProperties;
 
   public XmlTag getTag() {
-    if (myTag.getParent() == null || !myTag.isValid()) {
+    if (myTag != null && (myTag.getParent() == null || !myTag.isValid())) {
       return EmptyXmlTag.INSTANCE;
     }
     return myTag;

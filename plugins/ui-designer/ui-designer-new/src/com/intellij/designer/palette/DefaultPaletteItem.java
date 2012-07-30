@@ -29,6 +29,7 @@ public class DefaultPaletteItem implements PaletteItem {
   private Icon myIcon;
   private final String myTooltip;
   private final String myVersion;
+  private boolean myEnabled = true;
 
   protected MetaModel myMetaModel;
 
@@ -64,7 +65,11 @@ public class DefaultPaletteItem implements PaletteItem {
 
   @Override
   public boolean isEnabled() {
-    return true;//myVersion == null;
+    return myEnabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
   }
 
   public MetaModel getMetaModel() {

@@ -45,6 +45,10 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     myToolWindowPanel.clearActiveItem();
   }
 
+  public void refresh() {
+    myToolWindowPanel.repaint();
+  }
+
   @Override
   protected void initToolWindow() {
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, ToolWindowAnchor.RIGHT, myProject, true);

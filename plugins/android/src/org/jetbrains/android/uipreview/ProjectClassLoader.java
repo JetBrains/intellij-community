@@ -1,5 +1,6 @@
 package org.jetbrains.android.uipreview;
 
+import com.android.sdklib.IAndroidTarget;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.CompilerModuleExtension;
@@ -7,6 +8,8 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.sdk.AndroidPlatform;
+import org.jetbrains.android.sdk.AndroidTargetData;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -33,6 +36,13 @@ public final class ProjectClassLoader extends ClassLoader {
   public ProjectClassLoader(ClassLoader parentClassLoader, Module module) {
     super(parentClassLoader);
     myModule = module;
+  }
+
+  public static ClassLoader create(IAndroidTarget target, Module module) throws Exception {
+    AndroidPlatform androidPlatform = AndroidPlatform.getInstance(module);
+    AndroidTargetData targetData = androidPlatform.getSdkData().getTargetData(target);
+    RenderServiceFactory factory = targetData.getRenderServiceFactory(module.getProject());
+    return new ProjectClassLoader(factory.getLibrary().getClassLoader(), module);
   }
 
   @Override
