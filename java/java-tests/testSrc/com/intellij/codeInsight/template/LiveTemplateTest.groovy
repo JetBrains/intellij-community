@@ -5,6 +5,7 @@ package com.intellij.codeInsight.template;
 
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
@@ -39,6 +40,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
     ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
     if (state != null) {
       state.gotoEnd();
@@ -175,6 +177,17 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     myFixture.type('e')
     assert myFixture.lookupElementStrings == ['entry', 'barGooStringBuilderEntry', 'gooStringBuilderEntry', 'stringBuilderEntry', 'builderEntry']
     assert LookupManager.getActiveLookup(editor).currentItem.lookupString == 'entry'
+  }
+
+  public void testClassNameDotInTemplate() {
+    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    configure();
+    startTemplate("soutv", "output")
+    myFixture.type('File')
+    assert myFixture.lookupElementStrings == ['file']
+    myFixture.type('.')
+    checkResult()
+    assert !state.finished
   }
 
   private TemplateState getState() {

@@ -44,10 +44,10 @@ public class JavaCharFilter extends CharFilter {
   }
 
   public static boolean isNonImportedClassEntered(LookupImpl lookup, boolean orPackage) {
-    if (lookup.isSelectionTouched() || !lookup.isCompletion()) return false;
+    if (lookup.isSelectionTouched()) return false;
 
     CompletionProcess process = CompletionService.getCompletionService().getCurrentCompletion();
-    if (process == null || !process.isAutopopupCompletion()) return false;
+    if (process != null && !process.isAutopopupCompletion()) return false;
 
     LookupElement item = lookup.getCurrentItem();
     if (item == null) return false;
@@ -56,11 +56,6 @@ public class JavaCharFilter extends CharFilter {
     if (file == null) return false;
 
     final String prefix = lookup.itemPattern(item);
-    for (String s : item.getAllLookupStrings()) {
-      if (s.equalsIgnoreCase(prefix)) {
-        return false;
-      }
-    }
     for (PsiClass aClass : PsiShortNamesCache.getInstance(file.getProject()).getClassesByName(prefix, file.getResolveScope())) {
       if (!isObfuscated(aClass) && PsiUtil.isAccessible(aClass, file, null)) {
         return true;
@@ -88,8 +83,6 @@ public class JavaCharFilter extends CharFilter {
   }
 
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
-    if (!lookup.isCompletion()) return null;
-
     if (!lookup.getPsiFile().getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
       return null;
     }

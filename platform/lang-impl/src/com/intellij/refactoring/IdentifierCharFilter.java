@@ -17,14 +17,13 @@ package com.intellij.refactoring;
 
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public class IdentifierCharFilter extends CharFilter {
 
-  public Result acceptChar(char c, @NotNull final int prefixLength, final Lookup lookup) {
+  public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (lookup.isCompletion()) return null;
 
     if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
