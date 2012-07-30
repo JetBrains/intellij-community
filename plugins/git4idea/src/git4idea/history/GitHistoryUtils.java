@@ -372,8 +372,8 @@ public class GitHistoryUtils {
                                                new Date(record.getAuthorTimeStamp() * 1000), false, parents));
           List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
           if (statusInfos.isEmpty()) {
-            LOG.error(String.format("No status information for the file. File path: %s, current revision: %s, log record: %s",
-                                    currentPath, revision, record));
+            // can safely be empty, for example, for simple merge commits that don't change anything.
+            return;
           }
           if (statusInfos.get(0).getType() == GitChangeType.ADDED) {
             skipFurtherOutput.set(true);
