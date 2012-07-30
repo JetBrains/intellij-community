@@ -1,10 +1,18 @@
 package com.intellij.compiler.artifacts;
 
 import com.intellij.compiler.CompilerManagerImpl;
+import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,6 +42,32 @@ import java.util.Set;
  * @author nik
  */
 public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase {
+  protected boolean useJps() {
+    return false;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    if (useJps()) {
+      new WriteAction() {
+        protected void run(final Result result) {
+          CompilerWorkspaceConfiguration.getInstance(myProject).USE_COMPILE_SERVER = true;
+          ApplicationManagerEx.getApplicationEx().doNotSave(false);
+          ProjectJdkTable.getInstance().addJdk(getTestProjectJdk());
+        }
+      }.execute();
+    }
+  }
+
+  @Override
+  protected Sdk getTestProjectJdk() {
+    if (useJps()) {
+      return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+    }
+    return super.getTestProjectJdk();
+  }
+
   @Override
   protected void tearDown() throws Exception {
     for (Artifact artifact : ArtifactManager.getInstance(myProject).getArtifacts()) {
@@ -42,6 +76,16 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
         FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
       }
     }
+    if (useJps()) {
+      new WriteAction() {
+        protected void run(final Result result) {
+          CompilerWorkspaceConfiguration.getInstance(myProject).USE_COMPILE_SERVER = false;
+          ApplicationManagerEx.getApplicationEx().doNotSave();
+          ProjectJdkTable.getInstance().removeJdk(getTestProjectJdk());
+        }
+      }.execute();
+    }
+
     super.tearDown();
   }
 
@@ -125,7 +169,10 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
             }
           }
         };
-
+        if (useJps()) {
+          myProject.save();
+          CompilerTestUtil.scanSourceRootsToRecompile(myProject);
+        }
         action.run(callback);
       }
     });
@@ -170,14 +217,19 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     changeFile(file, null);
   }
 
-  protected void changeFile(VirtualFile file, final String newText) throws Exception {
-    if (newText != null) {
-      VfsUtil.saveText(file, newText);
+  protected void changeFile(VirtualFile file, final String newText) {
+    try {
+      if (newText != null) {
+        VfsUtil.saveText(file, newText);
+      }
+      ((NewVirtualFile)file).setTimeStamp(file.getTimeStamp() + 10);
     }
-    ((NewVirtualFile)file).setTimeStamp(file.getTimeStamp() + 10);
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  protected void deleteFile(final VirtualFile file) throws IOException {
+  protected void deleteFile(final VirtualFile file) {
     new WriteAction() {
       @Override
       protected void run(final Result result) {
@@ -196,6 +248,36 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
     super.setUpProject();
     final String baseUrl = myProject.getBaseDir().getUrl();
     CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(baseUrl + "/out");
+  }
+
+  @Override
+  protected File getIprFile() throws IOException {
+    File iprFile = super.getIprFile();
+    if (useJps()) {
+      FileUtil.delete(iprFile);
+    }
+    return iprFile;
+  }
+
+  @Override
+  protected Module doCreateRealModule(String moduleName) {
+    if (useJps()) {
+      //todo[nik] reuse code from PlatformTestCase
+      final VirtualFile baseDir = myProject.getBaseDir();
+      assertNotNull(baseDir);
+      final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+      myFilesToDelete.add(moduleFile);
+      return new WriteAction<Module>() {
+        @Override
+        protected void run(Result<Module> result) throws Throwable {
+          Module module = ModuleManager.getInstance(myProject)
+            .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
+          module.getModuleFile();
+          result.setResult(module);
+        }
+      }.execute().getResultObject();
+    }
+    return super.doCreateRealModule(moduleName);
   }
 
   protected static TestFileSystemBuilder fs() {

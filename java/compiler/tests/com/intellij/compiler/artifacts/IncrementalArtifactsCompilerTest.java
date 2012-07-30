@@ -12,6 +12,43 @@ import com.intellij.packaging.artifacts.ModifiableArtifactModel;
  * @author nik
  */
 public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
+  public static class IncrementalArtifactCompilerJpsModeTest extends ArtifactCompilerTestCase {
+    @Override
+    protected boolean useJps() {
+      return true;
+    }
+
+    public void testChangeFile() {
+      VirtualFile file = createFile("file.txt", "a");
+      Artifact a = addArtifact(root().dir("dir").file(file));
+      compileProject();
+      assertOutput(a, fs().dir("dir").file("file.txt", "a"));
+
+      changeFile(file, "b");
+      compileProject();
+      assertOutput(a, fs().dir("dir").file("file.txt", "b"));
+    }
+
+    public void testAddRemoveJavaClass() {
+      final VirtualFile file = createFile("src/A.java", "public class A {}");
+      final Module module = addModule("a", file.getParent());
+      Artifact a = addArtifact(root().module(module));
+      compile(module);
+      compile(a);
+      assertOutput(a, fs().file("A.class"));
+      VirtualFile file2 = createFile("src/B.java", "public class B{}");
+      compile(module);
+      compile(a);
+      assertOutput(a, fs().file("A.class").file("B.class"));
+
+      deleteFile(file2);
+      compile(module);
+      compile(a);
+      assertOutput(a, fs().file("A.class"));
+    }
+
+  }
+
   @Override
   protected void setUpProject() throws Exception {
     super.setUpProject();
