@@ -4,7 +4,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.testFramework.PsiTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
@@ -63,6 +65,15 @@ public class CompilerEncodingServiceTest extends PsiTestCase {
 
     assertSameElements(getService().getAllModuleEncodings(myModule), WINDOWS_1251, WINDOWS_1252);
     assertEquals(WINDOWS_1252, getService().getPreferredModuleEncoding(myModule));
+  }
+
+  public void testUseContentRootEncodingIfEncodingForSourceRootIsNotSpecified() throws IOException {
+    VirtualFile contentRoot = getVirtualFile(createTempDir("contentRoot"));
+    PsiTestUtil.addContentRoot(myModule, contentRoot);
+    VirtualFile srcDir = contentRoot.createChildDirectory(this, "src");
+    PsiTestUtil.addSourceRoot(myModule, srcDir);
+    EncodingProjectManager.getInstance(myProject).setEncoding(contentRoot, WINDOWS_1251);
+    assertSameElements(getService().getAllModuleEncodings(myModule), WINDOWS_1251);
   }
 
   private VirtualFile createFile(final String fileName) {
