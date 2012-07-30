@@ -243,6 +243,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testCompletion(@NonNls String[] filesBefore, @TestDataFile @NonNls String fileAfter);
 
+  void testCompletionTyping(@NonNls String[] filesBefore, String toType, @TestDataFile @NonNls String fileAfter);
+
   /**
    * Runs basic completion in caret position in fileBefore.
    * Implies that there is only one completion variant and it was inserted automatically, and checks the result file text with fileAfter
@@ -251,6 +253,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param additionalFiles
    */
   void testCompletion(@TestDataFile @NonNls String fileBefore, @TestDataFile @NonNls String fileAfter, final String... additionalFiles);
+
+  void testCompletionTyping(@TestDataFile @NonNls String fileBefore, String toType, @TestDataFile @NonNls String fileAfter, final String... additionalFiles);
 
   /**
    * Runs basic completion in caret position in fileBefore.
