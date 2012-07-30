@@ -67,16 +67,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
         allNames.add(s);
       }
     }
-    Collections.sort(allNames);
-
-    final LinkedHashSet<String> matchingNames = new LinkedHashSet<String>();
-    for (String name : allNames) {
-      if (resultSet.getPrefixMatcher().isStartMatch(name)) {
-        matchingNames.add(name);
-      }
-    }
-    matchingNames.addAll(allNames);
-    for (final String elementName : matchingNames) {
+    for (final String elementName : CompletionUtil.sortForCompletion(resultSet.getPrefixMatcher(), allNames)) {
       for (T element : StubIndex.getInstance().get(key, elementName, project, scope)) {
         if (condition.value(element)) {
           resultSet.addElement(LookupElementBuilder.create(element)
