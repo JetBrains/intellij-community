@@ -18,7 +18,9 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.CompilerEncodingService;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,6 +96,20 @@ public class CompilerEncodingServiceImpl extends CompilerEncodingService {
         }
       }
       set.add(charset);
+    }
+    //todo[nik,jeka] perhaps we should take into account encodings of source roots only not individual files
+    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+      for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots(true)) {
+        Charset encoding = EncodingProjectManager.getInstance(myProject).getEncoding(file, true);
+        if (encoding != null) {
+          Set<Charset> charsets = map.get(module);
+          if (charsets == null) {
+            charsets = new LinkedHashSet<Charset>();
+            map.put(module, charsets);
+          }
+          charsets.add(encoding);
+        }
+      }
     }
     
     return map;
