@@ -19,10 +19,10 @@ import com.intellij.execution.testframework.CompositePrintable;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -35,7 +35,8 @@ public class TestFailedState extends AbstractState {
   public TestFailedState(@Nullable final String localizedMessage,
                          @Nullable final String stackTrace)
   {
-    myPresentationText = ContainerUtilRt.newArrayList(buildErrorPresentationText(localizedMessage, stackTrace));
+    myPresentationText = new ArrayList<String>();
+    myPresentationText.add(buildErrorPresentationText(localizedMessage, stackTrace));
   }
 
   public void addError(@Nullable String localizedMessage, @Nullable String stackTrace, Printer printer) {
