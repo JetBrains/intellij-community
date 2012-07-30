@@ -69,11 +69,11 @@ public class ConsoleViewRunningState extends ConsoleState {
   }
 
   private static OutputStreamWriter createOutputStreamWriter(OutputStream processInput, ProcessHandler processHandler) {
-    Charset charset;
+    Charset charset = null;
     if (processHandler instanceof OSProcessHandler) {
       charset = ((OSProcessHandler)processHandler).getCharset();
     }
-    else {
+    if (charset == null) {
       charset = EncodingManager.getInstance().getDefaultCharset();
     }
 
