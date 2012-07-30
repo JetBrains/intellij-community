@@ -8,7 +8,10 @@ base_path = sys.argv.pop()
 sys.path.insert(0, base_path)
 os.chdir(base_path)
 
-manage_file = 'manage'
+manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
+if not manage_file:
+  manage_file = 'manage'
+
 try:
   __import__(manage_file)
 except ImportError:

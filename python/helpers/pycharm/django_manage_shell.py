@@ -10,10 +10,11 @@ except ImportError:
   from runpy_compat import run_module
 
 
-def run():
+def run(working_dir):
+  sys.path.insert(0, working_dir)
   manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
   if not manage_file:
-      manage_file = 'manage'
+    manage_file = 'manage'
 
   def execute_manager(settings_mod, argv = None):
       management.setup_environ(settings_mod)
