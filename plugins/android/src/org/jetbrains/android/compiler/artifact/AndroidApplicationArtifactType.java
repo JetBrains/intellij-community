@@ -1,6 +1,8 @@
 package org.jetbrains.android.compiler.artifact;
 
+import com.intellij.facet.FacetModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.ModuleOutputSourceItem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -58,47 +60,58 @@ public class AndroidApplicationArtifactType extends ArtifactType {
   @NotNull
   @Override
   public List<? extends ArtifactTemplate> getNewArtifactTemplates(@NotNull PackagingElementResolvingContext context) {
-    return Collections.singletonList(new MyTemplate(context));
+    final List<AndroidFacet> facets = new ArrayList<AndroidFacet>();
+
+    for (Module module : context.getModulesProvider().getModules()) {
+      final FacetModel facetModel = context.getModulesProvider().getFacetModel(module);
+      final AndroidFacet facet = facetModel.getFacetByType(AndroidFacet.ID);
+
+      if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
+        facets.add(facet);
+      }
+    }
+
+    if (facets.size() == 0) {
+      return Collections.emptyList();
+    }
+    return Collections.singletonList(new MyTemplate(context.getProject(), facets));
   }
 
   private class MyTemplate extends ArtifactTemplate {
-    protected PackagingElementResolvingContext myContext;
+    private final Project myProject;
+    private final List<AndroidFacet> myFacets;
 
-    public MyTemplate(@NotNull PackagingElementResolvingContext context) {
-      myContext = context;
+    private MyTemplate(@NotNull Project project, @NotNull List<AndroidFacet> facets) {
+      assert facets.size() > 0;
+      myProject = project;
+      myFacets = facets;
     }
 
     @Override
     public String getPresentableName() {
-      return "From module...";
+      return myFacets.size() == 1
+             ? "From module '" + myFacets.get(0).getModule().getName() + "'"
+             : "From module...";
     }
 
     @Override
     public NewArtifactConfiguration createArtifact() {
-      final List<Module> modules = new ArrayList<Module>();
-
-      for (Module module : myContext.getModulesProvider().getModules()) {
-        final AndroidFacet facet = AndroidFacet.getInstance(module);
-
-        if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
-          modules.add(module);
-        }
-      }
-
-      final AndroidFacet facet = AndroidArtifactUtil.chooseAndroidApplicationModule(myContext.getProject(), modules);
+      final AndroidFacet facet = myFacets.size() == 1
+                                 ? myFacets.get(0)
+                                 : AndroidArtifactUtil.chooseAndroidApplicationModule(myProject, myFacets);
       if (facet == null) {
         return null;
       }
 
       final CompositePackagingElement<?> rootElement =
         AndroidApplicationArtifactType.this.createRootElement(facet.getModule().getName());
-      rootElement.addFirstChild(new AndroidFinalPackageElement(myContext.getProject(), facet));
+      rootElement.addFirstChild(new AndroidFinalPackageElement(myProject, facet));
       return new NewArtifactConfiguration(rootElement, facet.getModule().getName(), AndroidApplicationArtifactType.this);
     }
 
     @Override
     public void setUpArtifact(@NotNull Artifact artifact, @NotNull NewArtifactConfiguration configuration) {
-      final AndroidFacet facet = AndroidArtifactUtil.getPackagedFacet(myContext.getProject(), artifact);
+      final AndroidFacet facet = AndroidArtifactUtil.getPackagedFacet(myProject, artifact);
 
       if (facet != null) {
         final ArtifactProperties<?> properties = artifact.getProperties(AndroidArtifactPropertiesProvider.getInstance());
