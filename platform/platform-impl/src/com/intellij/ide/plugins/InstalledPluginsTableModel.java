@@ -89,17 +89,20 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     setSortKey(new RowSorter.SortKey(getNameColumn(), SortOrder.ASCENDING));
   }
 
-  public void appendOrUpdateDescriptor(IdeaPluginDescriptor descriptor) {
+  public boolean appendOrUpdateDescriptor(IdeaPluginDescriptor descriptor) {
     final PluginId descrId = descriptor.getPluginId();
     final IdeaPluginDescriptor existing = PluginManager.getPlugin(descrId);
     if (existing != null) {
       updateExistingPlugin(descriptor, existing);
-    } else {
+      return true;
+    } else if (!myInstalled.contains(descriptor)) {
       myInstalled.add(descriptor);
       view.add(descriptor);
       setEnabled(descriptor, true);
       fireTableDataChanged();
+      return true;
     }
+    return false;
   }
 
   public static void updateExistingPlugin(IdeaPluginDescriptor descriptor, IdeaPluginDescriptor existing) {
