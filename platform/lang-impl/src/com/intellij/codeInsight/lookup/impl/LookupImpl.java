@@ -950,7 +950,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         @Override
         public void run() {
           assert !myDisposed;
-          if (!Registry.is("completion.show.intention.icon") || ((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) {
+          if (!ShowHideIntentionIconLookupAction.shouldShowLookupHint() ||
+              ((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) {
             return;
           }
           myElementHint = new LookupHint();

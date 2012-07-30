@@ -23,15 +23,19 @@ import com.intellij.openapi.util.registry.Registry;
  * @author Konstantin Bulenkov
  */
 public class ShowHideIntentionIconLookupAction extends LookupElementAction {
-  private static final String KEY = "completion.show.intention.icon";
+  static final String KEY = "completion.show.intention.icon";
 
   public ShowHideIntentionIconLookupAction() {
-    super(AllIcons.Actions.IntentionBulb, (Registry.is(KEY) ? "Never show" : "Show") + " intention icon");
+    super(AllIcons.Actions.IntentionBulb, (shouldShowLookupHint() ? "Never show" : "Show") + " intention icon");
+  }
+
+  public static boolean shouldShowLookupHint() {
+    return Registry.is(KEY);
   }
 
   @Override
   public Result performLookupAction() {
-    Registry.get(KEY).setValue(!Registry.is(KEY));
+    Registry.get(KEY).setValue(!shouldShowLookupHint());
     return Result.REFRESH_ITEM;
   }
 }
