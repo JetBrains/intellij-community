@@ -363,7 +363,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
       provider.fillActions(element, this, consumer);
     }
-    consumer.consume(new ShowHideIntentionIconLookupAction());
+    if (!consumer.getResult().isEmpty()) {
+      consumer.consume(new ShowHideIntentionIconLookupAction());
+    }
     return consumer.getResult();
   }
 

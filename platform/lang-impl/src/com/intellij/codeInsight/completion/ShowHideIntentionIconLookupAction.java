@@ -26,7 +26,7 @@ public class ShowHideIntentionIconLookupAction extends LookupElementAction {
   private static final String KEY = "completion.show.intention.icon";
 
   public ShowHideIntentionIconLookupAction() {
-    super(AllIcons.Actions.IntentionBulb, (Registry.is(KEY) ? "Never" : "Always") + " show intention icon");
+    super(AllIcons.Actions.IntentionBulb, (Registry.is(KEY) ? "Never show" : "Show") + " intention icon");
   }
 
   @Override
