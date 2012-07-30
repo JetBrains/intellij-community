@@ -116,7 +116,7 @@ public class GitHistoryUtilsTest extends GitTest {
 
     // Retrieve hashes and timestamps
     String[] revisions = myRepo.log("--pretty=format:%H#%at#%P", "-M").split("\n");
-    // later revisions to the first in the log output
+    // newer revisions go first in the log output
     for (int i = revisions.length - 1, j = 0; i >= 0; i--, j++) {
       String[] details = revisions[j].trim().split("#");
       String[] parents;
