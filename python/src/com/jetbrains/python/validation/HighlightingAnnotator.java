@@ -3,6 +3,7 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.cython.psi.CythonClass;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 
@@ -42,7 +43,11 @@ public class HighlightingAnnotator extends PyAnnotator {
       }
     }
     final int index = ArrayUtil.find(function.getParameterList().getParameters(), node);
-    if (function.getContainingClass() != null && index == 0) {
+    final PyClass cls = function.getContainingClass();
+    if (cls != null && index == 0) {
+      if (cls instanceof CythonClass && ((CythonClass)cls).isCppClass()) {
+        return false;
+      }
       final PyFunction.Modifier modifier = function.getModifier();
       if (modifier != PyFunction.Modifier.CLASSMETHOD && modifier != PyFunction.Modifier.STATICMETHOD) {
         return true;
