@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.completion
-
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl
@@ -45,7 +44,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
-
 /**
  * @author peter
  */
@@ -142,7 +140,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertContains "iterable", "iterable2"
 
     assertEquals 'iterable', lookup.currentItem.lookupString
-    lookup.currentItem = lookup.items[1]
+    edt { lookup.currentItem = lookup.items[1] }
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
@@ -201,7 +199,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
 
     assertContains 'abcd', 'abce'
     assertEquals 'abcd', lookup.currentItem.lookupString
-    lookup.currentItem = lookup.items[1]
+    edt { lookup.currentItem = lookup.items[1] }
     assertEquals 'abce', lookup.currentItem.lookupString
 
     type '\t'
@@ -558,17 +556,24 @@ public interface Test {
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT) }
     assert myFixture.editor.caretModel.offset == offset + 1
+    joinAutopopup()
+    joinCompletion()
+    assert !lookup.calculating
     assertContains "iterable"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     assert myFixture.editor.caretModel.offset == offset
+    joinAutopopup()
+    joinCompletion()
+    assert !lookup.calculating
     assertContains "if", "iterable", "int"
     assertEquals 'iterable', lookup.currentItem.lookupString
 
     edt { myFixture.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_CARET_LEFT) }
     joinAutopopup()
     joinCompletion()
+    assert !lookup.calculating
     assert lookup.items.size() > 3
 
     for (i in 0.."iter".size()) {
@@ -773,7 +778,7 @@ class Foo {
   public void testRestartWithVisibleLookup() {
     registerContributor(LongContributor, LoadingOrder.FIRST)
 
-    myFixture.configureByText("a.java", """ class Foo { { int abcdef; a<caret> } } """)
+    myFixture.configureByText("a.java", """ class Foo { { int abcdef, abcdefg; ab<caret> } } """)
     myFixture.completeBasic()
     while (!lookup.shown) {
       Thread.sleep(1)
@@ -781,10 +786,10 @@ class Foo {
     def l = lookup
     edt {
       assert lookup.calculating
-      myFixture.type 'b'
+      myFixture.type 'c'
     }
     joinCommit {
-      myFixture.type 'c'
+      myFixture.type 'd'
     }
     joinAutopopup()
     joinCompletion()

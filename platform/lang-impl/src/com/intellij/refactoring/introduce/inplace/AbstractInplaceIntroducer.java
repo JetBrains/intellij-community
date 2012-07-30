@@ -297,6 +297,12 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     }
   }
 
+  private boolean myShouldSelect = true;
+  @Override
+  protected boolean shouldSelectAll() {
+    return myShouldSelect;
+  }
+
   public void restartInplaceIntroduceTemplate() {
     Runnable restartTemplateRunnable = new Runnable() {
       public void run() {
@@ -305,7 +311,13 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
           myEditor.putUserData(INTRODUCE_RESTART, true);
           try {
             templateState.gotoEnd(true);
-            startInplaceIntroduceTemplate();
+            try {
+              myShouldSelect = false;
+              startInplaceIntroduceTemplate();
+            }
+            finally {
+              myShouldSelect = true;
+            }
           }
           finally {
             myEditor.putUserData(INTRODUCE_RESTART, false);
@@ -317,6 +329,13 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     CommandProcessor.getInstance().executeCommand(myProject, restartTemplateRunnable, getCommandName(), getCommandName());
   }
 
+  @Override
+  protected void restoreSelection() {
+    if (!shouldSelectAll()) {
+      myEditor.getSelectionModel().removeSelection();
+    }
+  }
+ 
   public String getInputName() {
     return myInsertedName;
   }
@@ -493,6 +512,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       }.execute();
     }
 
+    if (!isIdentifier(getInputName(), myExpr != null ? myExpr.getLanguage() : getLocalVariable().getLanguage())) return false;
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       @Override
       public void run() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -216,14 +216,18 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     final String separator = StringUtil.repeatSymbol(' ', getTypesMaxLength() - typeText.length() + 1);
     String text = typeText + separator + item.parameter.getName();
     final String defaultValue = item.defaultValueCodeFragment.getText();
+    String tail = "";
     if (StringUtil.isNotEmpty(defaultValue)) {
-      text += " // default value = " + defaultValue;
+      tail += " default value = " + defaultValue;
     }
     if (item.parameter.isUseAnySingleVariable()) {
       if (StringUtil.isNotEmpty(defaultValue)) {
-        text += ";";
+        tail += ";";
       }
-      text += " Use any var.";
+      tail += " Use any var.";
+    }
+    if (!StringUtil.isEmpty(tail)) {
+      text += " //" + tail;
     }
     final EditorTextField field = new EditorTextField(" " + text, getProject(), getFileType()) {
       @Override

@@ -29,10 +29,8 @@ class Bar<T> { java.util.List<T> foo(T param); }
 new Bar<String>().f<caret>oo();
   '''
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    assertEquals(
-            """<a href="psi_element://Bar">Bar</a><br/>java.util.<a href="psi_element://java.util.List">List</a>&lt;java.lang.String&gt; foo (java.lang.String param)""",
-            CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
-    ) 
+    assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) == """Bar
+java.util.List&lt;java.lang.String&gt; foo (java.lang.String param)"""
   }
 
   public void testGenericField() {
@@ -41,9 +39,8 @@ class Bar<T> { T field; }
 new Bar<Integer>().fi<caret>eld
   '''
     def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    assertEquals(
-            """<a href="psi_element://Bar">Bar</a><br/>java.lang.Integer getField ()""",
-            CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
-    )
+    assert CtrlMouseHandler.getInfo(ref.resolve(), ref.element) == """Bar
+java.lang.Integer getField ()"""
   }
+
 }

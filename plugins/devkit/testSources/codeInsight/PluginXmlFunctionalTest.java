@@ -136,6 +136,14 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.checkResultByFile(getTestName(false) + "_after.xml");
   }
 
+  public void testNoClassCompletionOutsideJavaReferences() throws Throwable {
+    myFixture.addClass("package foo; public class FooFooFooFooFoo { }");
+
+    myFixture.configureByFile(getTestName(false) + ".xml");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(false) + "_after.xml");
+  }
+
   public void testDeprecatedExtensionAttribute() {
     myFixture.enableInspections(DeprecatedClassUsageInspection.class);
     myFixture.testHighlighting("deprecatedExtensionAttribute.xml", "MyExtBean.java");

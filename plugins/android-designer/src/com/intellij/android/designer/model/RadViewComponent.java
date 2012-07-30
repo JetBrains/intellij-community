@@ -17,6 +17,7 @@ package com.intellij.android.designer.model;
 
 import com.android.ide.common.rendering.api.ViewInfo;
 import com.android.sdklib.SdkConstants;
+import com.intellij.designer.model.EmptyXmlTag;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.model.RadVisualComponent;
@@ -45,6 +46,9 @@ public class RadViewComponent extends RadVisualComponent {
   private List<Property> myProperties;
 
   public XmlTag getTag() {
+    if (myTag.getParent() == null || !myTag.isValid()) {
+      return EmptyXmlTag.INSTANCE;
+    }
     return myTag;
   }
 
@@ -75,6 +79,10 @@ public class RadViewComponent extends RadVisualComponent {
   public void setViewInfo(ViewInfo viewInfo) {
     myViewInfo = viewInfo;
     myMargins = null;
+  }
+
+  public int getViewInfoCount() {
+    return 1;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////

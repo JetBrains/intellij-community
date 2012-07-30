@@ -17,10 +17,13 @@ package com.intellij.codeInsight.hint;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.Html;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -29,12 +32,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
 public class HintUtil {
@@ -52,16 +51,17 @@ public class HintUtil {
   }
 
   public static JComponent createInformationLabel(@NotNull String text) {
-    return createInformationLabel(text, null, null);
+    return createInformationLabel(text, null, null, null);
   }
 
   public static JComponent createInformationLabel(@NotNull String text,
                                                   @Nullable HyperlinkListener hyperlinkListener,
-                                                  @Nullable MouseListener mouseListener)
+                                                  @Nullable MouseListener mouseListener,
+                                                  @Nullable Ref<Consumer<String>> updatedTextConsumer)
   {
-    HintHint hintHint = new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
+    HintHint hintHint = getInformationHint();
 
-    HintLabel label = new HintLabel();
+    final HintLabel label = new HintLabel();
     label.setText(text, hintHint);
     label.setIcon(INFORMATION_ICON);
 
@@ -79,8 +79,26 @@ public class HintUtil {
     if (mouseListener != null) {
       label.myPane.addMouseListener(mouseListener);
     }
+    if (updatedTextConsumer != null) {
+      updatedTextConsumer.set(new Consumer<String>() {
+        @Override
+        public void consume(String s) {
+          Dimension size = label.myPane.getPreferredSize();
+          label.myPane.setText(s);
+          
+          // Force preferred size recalculation.
+          label.setPreferredSize(null);
+          label.myPane.setPreferredSize(null);
+        }
+      });
+    }
 
     return label;
+  }
+
+  @NotNull
+  public static HintHint getInformationHint() {
+    return new HintHint().setTextBg(INFORMATION_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
   }
 
   public static CompoundBorder createHintBorder() {
@@ -148,18 +166,6 @@ public class HintUtil {
     return UIUtil.getLabelFont().deriveFont(Font.BOLD);
   }
 
-  public static JLabel createAdComponent(final String bottomText) {
-    return createAdComponent(bottomText, getDefaultAdComponentBorder());
-  }
-
-  public static EmptyBorder getDefaultAdComponentBorder() {
-    return new EmptyBorder(1, 2, 1, 2);
-  }
-
-  public static JLabel createAdComponent(final String bottomText, final Border border) {
-    return createAdComponent(bottomText, border, SwingUtilities.LEFT);
-  }
-
   public static JLabel createAdComponent(final String bottomText, final Border border, @JdkConstants.HorizontalAlignment int alignment) {
     JLabel label = new JLabel();
     label.setText(bottomText);
@@ -169,6 +175,20 @@ public class HintUtil {
       label.setBorder(border);
     }
     return label;
+  }
+  
+  @NotNull
+  public static String prepareHintText(@NotNull String text, @NotNull HintHint hintHint) {
+    return prepareHintText(new Html(text), hintHint);
+  }
+  
+  public static String prepareHintText(@NotNull Html text, @NotNull HintHint hintHint) {
+    String htmlBody = UIUtil.getHtmlBody(text);
+    return String.format(
+      "<html><head>%s</head><body>%s</body></html>",
+      UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()),
+      htmlBody
+    );
   }
 
   private static class HintLabel extends JPanel {
@@ -227,8 +247,8 @@ public class HintUtil {
         remove(myIcon);
       }
 
-      myIcon = new JLabel(icon, JLabel.CENTER);
-      myIcon.setVerticalAlignment(JLabel.TOP);
+      myIcon = new JLabel(icon, SwingConstants.CENTER);
+      myIcon.setVerticalAlignment(SwingConstants.TOP);
 
       add(myIcon, BorderLayout.WEST);
 

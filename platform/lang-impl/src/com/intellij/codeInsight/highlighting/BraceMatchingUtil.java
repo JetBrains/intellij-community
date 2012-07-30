@@ -84,7 +84,8 @@ public class BraceMatchingUtil {
     String brace1TagName;
     boolean isStrict;
     boolean isCaseSensitive;
-    private BraceMatcher myMatcher;
+    @NotNull
+    private final BraceMatcher myMatcher;
 
     private final Stack<IElementType> myBraceStack = new Stack<IElementType>();
     private final Stack<String> myTagNameStack = new Stack<String>();
@@ -98,10 +99,10 @@ public class BraceMatchingUtil {
       myMatcher = getBraceMatcher(_fileType, _iterator);
       brace1Token = iterator.getTokenType();
       group = getTokenGroup(brace1Token, fileType);
-      brace1TagName = myMatcher == null ? null : getTagName(myMatcher, fileText, iterator);
+      brace1TagName = getTagName(myMatcher, fileText, iterator);
 
-      isStrict = myMatcher != null && isStrictTagMatching(myMatcher, fileType, group);
-      isCaseSensitive = myMatcher != null && areTagsCaseSensitive(myMatcher, fileType, group);
+      isStrict = isStrictTagMatching(myMatcher, fileType, group);
+      isCaseSensitive = areTagsCaseSensitive(myMatcher, fileType, group);
     }
 
     MatchBraceContext(CharSequence _fileText, FileType _fileType, HighlighterIterator _iterator, boolean _forward,
@@ -134,7 +135,7 @@ public class BraceMatchingUtil {
         if (getTokenGroup(tokenType, fileType) != group) {
           continue;
         }
-        String tagName = myMatcher == null ? null : getTagName(myMatcher, fileText, iterator);
+        String tagName = getTagName(myMatcher, fileText, iterator);
         if (!isStrict && !Comparing.equal(brace1TagName, tagName, isCaseSensitive)) continue;
         if (forward ? isLBraceToken(iterator, fileText, fileType) : isRBraceToken(iterator, fileText, fileType)) {
           myBraceStack.push(tokenType);
@@ -151,7 +152,7 @@ public class BraceMatchingUtil {
 
           if (!isStrict) {
             final IElementType baseType = myMatcher.getOppositeBraceTokenType(tokenType);
-            if (myMatcher != null && myBraceStack.contains(baseType)) {
+            if (myBraceStack.contains(baseType)) {
               while (!isPairBraces(topTokenType, tokenType, fileType) && !myBraceStack.empty()) {
                 topTokenType = myBraceStack.pop();
               }

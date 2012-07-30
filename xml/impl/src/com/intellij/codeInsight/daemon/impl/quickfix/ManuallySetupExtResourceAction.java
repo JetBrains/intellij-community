@@ -15,12 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.javaee.ExternalResourceConfigurable;
+import com.intellij.javaee.MapExternalResourceDialog;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,19 +33,17 @@ public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
   }
 
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      public void run() {
-        ExternalResourceManager.getInstance().addResource(uri, "");
-      }
-    });
-
-    final Project project = file.getProject();
-    final ExternalResourceConfigurable component = new ExternalResourceConfigurable(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, component, new Runnable() {
-      public void run() {
-        component.selectResource(uri);
-      }
-    });
+    final MapExternalResourceDialog dialog = new MapExternalResourceDialog(uri, file.getProject(), file, null);
+    dialog.show();
+    if (dialog.isOK()) {
+      ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
+        public void run() {
+          String location = dialog.getResourceLocation();
+          ExternalResourceManager.getInstance().addResource(dialog.getUri(), location);
+        }
+      });
+    }
   }
 
   public boolean startInWriteAction() {

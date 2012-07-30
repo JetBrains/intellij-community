@@ -507,6 +507,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public boolean isNotNull(DfaVariableValue dfaVar) {
+    if (getVariableState(dfaVar).isNotNull()) {
+      return true;
+    }
+
     DfaConstValue dfaNull = myFactory.getConstFactory().getNull();
     Integer c1Index = getOrCreateEqClassIndex(dfaVar);
     Integer c2Index = getOrCreateEqClassIndex(dfaNull);

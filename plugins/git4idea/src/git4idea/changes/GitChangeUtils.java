@@ -413,13 +413,23 @@ public class GitChangeUtils {
 
   @NotNull
   public static Collection<Change> getDiff(@NotNull Project project, @NotNull VirtualFile root,
-                                           @Nullable String firstRevision, @NotNull String nextRevision,
+                                           @NotNull String oldRevision, @Nullable String newRevision,
                                            @Nullable Collection<FilePath> dirtyPaths) throws VcsException {
-    Collection<Change> changes = new ArrayList<Change>();
-    String range = firstRevision == null ? nextRevision : firstRevision + ".." + nextRevision;
+    String range;
+    GitRevisionNumber newRev;
+    if (newRevision == null) {
+      // it is current revision
+      range = oldRevision;
+      newRev = null;
+    }
+    else {
+      range = oldRevision + ".." + newRevision;
+      newRev = loadRevision(project, root, newRevision);
+    }
     String output = getDiffOutput(project, root, range, dirtyPaths);
-    GitRevisionNumber thisRevision = firstRevision == null ? null : loadRevision(project, root, firstRevision);
-    parseChanges(project, root, thisRevision, loadRevision(project, root, nextRevision), output, changes, Collections.<String>emptySet());
+
+    Collection<Change> changes = new ArrayList<Change>();
+    parseChanges(project, root, newRev, loadRevision(project, root, oldRevision), output, changes, Collections.<String>emptySet());
     return changes;
   }
 

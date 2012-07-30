@@ -94,4 +94,9 @@ public class IntentionActionWrapper implements IntentionAction {
   public String toString() {
     return "Intention: ("+getDelegate().getClass()+"): '" + getText()+"'";
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    return super.equals(obj) || getDelegate().equals(obj);
+  }
 }

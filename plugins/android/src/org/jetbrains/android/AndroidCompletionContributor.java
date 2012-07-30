@@ -19,8 +19,11 @@ import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.dom.animation.AndroidAnimationUtils;
@@ -52,42 +55,34 @@ public class AndroidCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static boolean complete(@NotNull AndroidFacet facet, PsiElement position, CompletionResultSet resultSet) {
-    PsiElement parent = position.getParent();
-    if (parent instanceof XmlTag) {
-      XmlTag tag = (XmlTag)parent;
-      if (tag.getParentTag() == null) {
-        PsiFile file = tag.getContainingFile().getOriginalFile();
-        if (file instanceof XmlFile) {
-          XmlFile xmlFile = (XmlFile)file;
-          if (ManifestDomFileDescription.isManifestFile(xmlFile)) {
-            resultSet.addElement(LookupElementBuilder.create("manifest"));
-            return false;
-          }
-          else if (LayoutDomFileDescription.isLayoutFile(xmlFile)) {
-            addAll(AndroidLayoutUtil.getPossibleRoots(facet), resultSet);
-            return false;
-          }
-          else if (AnimationDomFileDescription.isAnimationFile(xmlFile)) {
-            addAll(AndroidAnimationUtils.getPossibleChildren(facet), resultSet);
-            return false;
-          }
-          else if (AnimatorDomFileDescription.isAnimatorFile(xmlFile)) {
-            addAll(AndroidAnimatorUtil.getPossibleChildren(), resultSet);
-            return false;
-          }
-          else if (XmlResourceDomFileDescription.isXmlResourceFile(xmlFile)) {
-            addAll(AndroidXmlResourcesUtil.getPossibleRoots(facet), resultSet);
-            return false;
-          }
-          else if (AndroidDrawableDomUtil.isDrawableResourceFile(xmlFile)) {
-            addAll(AndroidDrawableDomUtil.getPossibleRoots(), resultSet);
-          }
-          else if (ColorDomFileDescription.isColorResourceFile(xmlFile)) {
-            addAll(Arrays.asList(DrawableStateListDomFileDescription.SELECTOR_TAG_NAME), resultSet);
-          }
-        }
-      }
+  private static boolean complete(@NotNull AndroidFacet facet, @NotNull XmlFile xmlFile, @NotNull CompletionResultSet resultSet) {
+    if (ManifestDomFileDescription.isManifestFile(xmlFile)) {
+      resultSet.addElement(LookupElementBuilder.create("manifest"));
+      return false;
+    }
+    else if (LayoutDomFileDescription.isLayoutFile(xmlFile)) {
+      addAll(AndroidLayoutUtil.getPossibleRoots(facet), resultSet);
+      return false;
+    }
+    else if (AnimationDomFileDescription.isAnimationFile(xmlFile)) {
+      addAll(AndroidAnimationUtils.getPossibleChildren(facet), resultSet);
+      return false;
+    }
+    else if (AnimatorDomFileDescription.isAnimatorFile(xmlFile)) {
+      addAll(AndroidAnimatorUtil.getPossibleChildren(), resultSet);
+      return false;
+    }
+    else if (XmlResourceDomFileDescription.isXmlResourceFile(xmlFile)) {
+      addAll(AndroidXmlResourcesUtil.getPossibleRoots(facet), resultSet);
+      return false;
+    }
+    else if (AndroidDrawableDomUtil.isDrawableResourceFile(xmlFile)) {
+      addAll(AndroidDrawableDomUtil.getPossibleRoots(), resultSet);
+      return false;
+    }
+    else if (ColorDomFileDescription.isColorResourceFile(xmlFile)) {
+      addAll(Arrays.asList(DrawableStateListDomFileDescription.SELECTOR_TAG_NAME), resultSet);
+      return false;
     }
     return true;
   }
@@ -96,8 +91,43 @@ public class AndroidCompletionContributor extends CompletionContributor {
   public void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet resultSet) {
     PsiElement position = parameters.getPosition();
     AndroidFacet facet = AndroidFacet.getInstance(position);
-    if (facet == null) return;
-    if (!complete(facet, position, resultSet)) {
+
+    if (facet == null) {
+      return;
+    }
+    PsiElement parent = position.getParent();
+
+    if (!(parent instanceof XmlTag)) {
+      return;
+    }
+    XmlTag tag = (XmlTag)parent;
+
+    if (tag.getParentTag() != null) {
+      return;
+    }
+    final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode());
+
+    if (startTagName == null || startTagName.getPsi() != position) {
+      return;
+    }
+    final PsiFile file = tag.getContainingFile();
+    if (!(file instanceof XmlFile)) {
+      return;
+    }
+    final PsiReference reference = file.findReferenceAt(parameters.getOffset());
+    if (reference != null) {
+      final PsiElement element = reference.getElement();
+      if (element != null) {
+        final int refOffset = element.getTextRange().getStartOffset() +
+                              reference.getRangeInElement().getStartOffset();
+        if (refOffset != position.getTextRange().getStartOffset()) {
+          // do not provide completion if we're inside some reference starting in the middle of tag name
+          return;
+        }
+      }
+    }
+
+    if (!complete(facet, (XmlFile)file, resultSet)) {
       resultSet.stopHere();
     }
   }

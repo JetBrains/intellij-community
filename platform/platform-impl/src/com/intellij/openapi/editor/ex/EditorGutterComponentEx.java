@@ -56,4 +56,6 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract Point getPoint(GutterIconRenderer renderer);
 
   public abstract void setLineNumberConvertor(final Convertor<Integer, Integer> lineNumberConvertor);
+
+  public abstract void setShowDefaultGutterPopup(boolean show);
 }

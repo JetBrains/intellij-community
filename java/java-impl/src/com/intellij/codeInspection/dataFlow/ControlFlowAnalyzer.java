@@ -18,10 +18,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
@@ -702,6 +699,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     return NOT_FOUND;
   }
 
+  private static class ApplyNotNullInstruction extends Instruction {
+    @Override
+    public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState state, InstructionVisitor visitor) {
+      DfaValue value = state.pop();
+      DfaValueFactory factory = runner.getFactory();
+      state.applyCondition(factory.getRelationFactory().create(value, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
+      return nextInstruction(runner, state);
+    }
+  }
+
   class CatchDescriptor {
     private final PsiType myType;
     private PsiParameter myParameter;
@@ -1181,6 +1188,21 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
       if (!myCatchStack.isEmpty()) {
         addMethodThrows(expression.resolveMethod());
+      }
+
+      if (paramExprs.length == 1 && method instanceof PsiMethod &&
+          "equals".equals(((PsiMethod)method).getName()) && parameters.length == 1 &&
+          parameters[0].getType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT) &&
+          PsiType.BOOLEAN.equals(((PsiMethod)method).getReturnType())) {
+        addInstruction(new PushInstruction(myFactory.getConstFactory().getFalse(), null));
+        addInstruction(new SwapInstruction());
+        addInstruction(new ConditionalGotoInstruction(getEndOffset(expression), true, null));
+
+        addInstruction(new PopInstruction());
+        addInstruction(new PushInstruction(myFactory.getConstFactory().getTrue(), null));
+
+        paramExprs[0].accept(this);
+        addInstruction(new ApplyNotNullInstruction());
       }
     }
     finally {

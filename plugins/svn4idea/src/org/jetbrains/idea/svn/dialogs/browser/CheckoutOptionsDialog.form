@@ -60,7 +60,7 @@
               <toolTipText resource-bundle="org/jetbrains/idea/svn/SvnBundle" key="label.depth.description"/>
             </properties>
           </component>
-          <scrollpane id="cd7a3" class="com.intellij.ui.components.JBScrollPane">
+          <scrollpane id="cd7a3" class="com.intellij.ui.components.JBScrollPane" binding="myScroll">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>

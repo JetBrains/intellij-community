@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.IgnoredFilePatterns;
-import org.jetbrains.jps.PathUtil;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.JarPathUtil;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
@@ -45,14 +45,14 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
   public void addDirectoryCopyInstructions(@NotNull File directory, @Nullable SourceFileFilter filter) {
     final boolean copyExcluded = myInstructionsBuilder.getRootsIndex().isExcluded(directory);
     SourceFileFilter fileFilter = new SourceFileFilterImpl(filter, myInstructionsBuilder.getRootsIndex(), myInstructionsBuilder.getIgnoredFilePatterns(), copyExcluded);
-    addDirectoryCopyInstructions(new FileBasedArtifactSourceRoot(directory, fileFilter));
+    addDirectoryCopyInstructions(myInstructionsBuilder.createFileBasedRoot(directory, fileFilter));
   }
 
   @Override
   public void addExtractDirectoryInstruction(@NotNull File jarFile, @NotNull String pathInJar) {
     final SourceFileFilterImpl filter = new SourceFileFilterImpl(null, myInstructionsBuilder.getRootsIndex(),
                                                                  myInstructionsBuilder.getIgnoredFilePatterns(), false);
-    addDirectoryCopyInstructions(new JarBasedArtifactSourceRoot(jarFile, pathInJar, filter));
+    addDirectoryCopyInstructions(myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter));
   }
 
   protected abstract void addDirectoryCopyInstructions(ArtifactSourceRoot root);
@@ -89,7 +89,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     public boolean accept(@NotNull String fullFilePath, BuildDataManager dataManager) throws IOException {
       if (myBaseFilter != null && !myBaseFilter.accept(fullFilePath, dataManager)) return false;
 
-      if (myIgnoredFilePatterns.isIgnored(PathUtil.getFileName(fullFilePath))) {
+      if (myIgnoredFilePatterns.isIgnored(JpsPathUtil.getFileName(fullFilePath))) {
         return false;
       }
 

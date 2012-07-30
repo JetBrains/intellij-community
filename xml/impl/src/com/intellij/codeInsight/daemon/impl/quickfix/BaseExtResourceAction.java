@@ -26,7 +26,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReferenc
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlBundle;
-import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,12 +39,8 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
 
     int offset = editor.getCaretModel().getOffset();
     String uri = findUri(file, offset);
+    if (uri == null || !isAcceptableUri(uri)) return false;
 
-    if (uri == null) return false;
-
-    XmlFile xmlFile = XmlUtil.findNamespaceByLocation(file, uri);
-    if (xmlFile != null) return false;
-    if (!isAcceptableUri(uri)) return false;
     setText(XmlBundle.message(getQuickFixKeyId()));
     return true;
   }
@@ -84,5 +79,10 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
       return currentRef.getCanonicalText();
     }
     return null;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof ManuallySetupExtResourceAction;
   }
 }

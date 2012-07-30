@@ -1367,15 +1367,13 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
         return ourAnyLanguageWhitespaceTokens.contains(n2.getTokenType()) ||
                n2 instanceof Token && ((Token)n2).myBuilder.myWhitespaces.contains(n2.getTokenType());
       }
+      IElementType n1t;
+      if (n1 instanceof ForeignLeafPsiElement)
+        n1t = ((ForeignLeafPsiElement)n1).getForeignType();
+      else
+        n1t = n1.getElementType();
 
-      return dereferenceToken(n1.getElementType()) == dereferenceToken(n2.getTokenType());
-    }
-
-    public static IElementType dereferenceToken(IElementType probablyWrapper) {
-      if (probablyWrapper instanceof TokenWrapper) {
-        return dereferenceToken(((TokenWrapper)probablyWrapper).getDelegate());
-      }
-      return probablyWrapper;
+      return Comparing.equal(n1t, n2.getTokenType());
     }
 
     @Override

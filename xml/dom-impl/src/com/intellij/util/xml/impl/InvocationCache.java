@@ -24,6 +24,12 @@ public class InvocationCache {
       return ourCoreInvocations.get(new JavaMethodSignature(key));
     }
   };
+  private final Map<Method, JavaMethod> myJavaMethods = new ConcurrentFactoryMap<Method, JavaMethod>() {
+    @Override
+    protected JavaMethod create(Method key) {
+      return JavaMethod.getMethod(myType, key);
+    }
+  };
   private final Map<JavaMethod, Boolean> myGetters = new ConcurrentFactoryMap<JavaMethod, Boolean>() {
     @Override
     protected Boolean create(JavaMethod key) {
@@ -105,11 +111,10 @@ public class InvocationCache {
         return attribute != null ? attribute.getValueElement() : null;
       }
     });
-    final JavaMethod getValue = JavaMethod.getMethod(GenericValue.class, new JavaMethodSignature("getValue"));
     ourCoreInvocations.put(new JavaMethodSignature("getConverter"), new Invocation() {
       public final Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
         try {
-          return handler.getScalarConverter(getValue);
+          return handler.getScalarConverter();
         }
         catch (Throwable e) {
           final Throwable cause = e.getCause();
@@ -166,6 +171,10 @@ public class InvocationCache {
   @Nullable
   public Invocation getInvocation(Method method) {
     return myInvocations.get(method);
+  }
+
+  public JavaMethod getInternedMethod(Method method) {
+    return myJavaMethods.get(method);
   }
 
   public void putInvocation(Method method, Invocation invocation) {

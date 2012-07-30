@@ -87,7 +87,7 @@ public class ExternalAnnotationsManagerImpl extends ExternalAnnotationsManager {
 
   @NotNull private final ConcurrentMap<String, List<XmlFile>> myExternalAnnotations = new ConcurrentWeakValueHashMap<String, List<XmlFile>>();
   @NotNull private volatile ThreeState myHasAnyAnnotationsRoots = ThreeState.UNSURE;
-  @NotNull private static final List<XmlFile> NULL = new ArrayList<XmlFile>();
+  @NotNull private static final List<XmlFile> NULL = new ArrayList<XmlFile>(0);
   private final PsiManager myPsiManager;
 
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {

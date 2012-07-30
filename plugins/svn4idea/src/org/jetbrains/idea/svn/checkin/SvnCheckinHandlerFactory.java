@@ -16,27 +16,37 @@
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vcs.update.ActionInfo;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.update.AutoSvnUpdater;
 
 import javax.swing.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created with IntelliJ IDEA.
@@ -55,13 +65,21 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     final Project project = panel.getProject();
     final Collection<VirtualFile> commitRoots = panel.getRoots();
     return new CheckinHandler() {
+      private Collection<Change> myChanges = panel.getSelectedChanges();
+
       @Override
       public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
         return null;
       }
 
       @Override
+      public void includedChangesChanged() {
+        myChanges = panel.getSelectedChanges();
+      }
+
+      @Override
       public void checkinSuccessful() {
+        forceRefreshAdministrative(project);
         if (SvnConfiguration.getInstance(project).isAutoUpdateAfterCommit()) {
           final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(SvnVcs.getInstance(project));
           final List<FilePath> paths = new ArrayList<FilePath>();
@@ -89,6 +107,69 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                                   updater.getTemplatePresentation(), ActionManager.getInstance(), 0));
             }
           }, ModalityState.NON_MODAL);
+        }
+      }
+
+      private void forceRefreshAdministrative(Project project) {
+        final SvnVcs vcs = SvnVcs.getInstance(project);
+        final SvnFileUrlMapping mapping = vcs.getSvnFileUrlMapping();
+        final List<FilePath> paths = ChangesUtil.getPaths(myChanges);
+        // for annotations
+        final SvnEntriesFileListener listener = vcs.getEntriesFileListener();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            for (FilePath path : paths) {
+              VirtualFile vf = path.getVirtualFile();
+              if (vf == null) {
+                path.hardRefresh();
+                vf = path.getVirtualFile();
+              }
+              if (vf != null) {
+                listener.fileRevisionProbablyChanged(vf);
+              }
+            }
+          }
+        }, ModalityState.NON_MODAL);
+
+        final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+
+        final Map<File, File> less17 = new HashMap<File, File>();
+        final Map<VirtualFile, VirtualFile> exactly17 = new HashMap<VirtualFile, VirtualFile>();
+
+        for (FilePath path : paths) {
+          if (! vcs.equals(vcsManager.getVcsFor(path))) continue;
+          final RootUrlInfo root = mapping.getWcRootForFilePath(path.getIOFile());
+          if (root == null) continue;
+
+          final WorkingCopyFormat format = root.getFormat();
+          if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)) {
+            if (! exactly17.containsKey(root.getVirtualFile())) {
+              final VirtualFile admin = root.getVirtualFile().findChild(SvnUtil.SVN_ADMIN_DIR_NAME);
+              if (admin != null) {
+                final VirtualFile wc_db = admin.findChild(SvnUtil.WC_DB_FILE_NAME);
+                if (wc_db != null) {
+                  exactly17.put(root.getVirtualFile(), wc_db);
+                }
+              }
+            }
+          } else {
+            final File parentOfAdmin = path.isDirectory() ? path.getIOFile() : (path.getParentPath() == null ? null : path.getParentPath().getIOFile());
+            if (parentOfAdmin != null && ! less17.containsKey(parentOfAdmin)) {
+              final File entries = new File(parentOfAdmin, SvnUtil.SVN_ADMIN_DIR_NAME + File.separator + SvnUtil.ENTRIES_FILE_NAME);
+              less17.put(parentOfAdmin, entries);
+            }
+          }
+        }
+
+        for (VirtualFile file : exactly17.values()) {
+          if (file != null) {
+            file.refresh(false, false);
+          }
+        }
+        final LocalFileSystem lfs = LocalFileSystem.getInstance();
+        for (File file : less17.values()) {
+          lfs.refreshAndFindFileByIoFile(file);
         }
       }
     };

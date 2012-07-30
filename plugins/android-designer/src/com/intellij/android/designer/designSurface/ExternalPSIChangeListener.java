@@ -15,119 +15,38 @@
  */
 package com.intellij.android.designer.designSurface;
 
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiTreeChangeAdapter;
 import com.intellij.psi.PsiTreeChangeEvent;
-import com.intellij.util.Alarm;
-import com.intellij.util.containers.ComparatorUtil;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Alexander Lobas
  */
-public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
-  private final Alarm myAlarm = new Alarm();
-  private final AndroidDesignerEditorPanel myDesigner;
-  private final PsiFile myFile;
-  private final int myDelayMillis;
-  private final Runnable myRunnable;
-  private volatile boolean myRunState;
-  private volatile boolean myInitialize;
-  private String myContent;
+public class ExternalPSIChangeListener extends com.intellij.designer.designSurface.ExternalPSIChangeListener {
   private VirtualFile[] myResourceDepends;
-  private boolean myUpdateRenderer;
 
-  public ExternalPSIChangeListener(AndroidDesignerEditorPanel designer, PsiFile file, int delayMillis, Runnable runnable) {
-    myDesigner = designer;
-    myFile = file;
-    myDelayMillis = delayMillis;
-    myRunnable = runnable;
-    myContent = myDesigner.getEditorText();
-    PsiManager.getInstance(myDesigner.getProject()).addPsiTreeChangeListener(this);
+  public ExternalPSIChangeListener(DesignerEditorPanel designer, PsiFile file, int delayMillis, Runnable runnable) {
+    super(designer, file, delayMillis, runnable);
   }
 
-  public void setInitialize() {
-    myInitialize = true;
-  }
-
-  public void start() {
-    if (!myRunState) {
-      myRunState = true;
-    }
-  }
-
-  public void dispose() {
-    PsiManager.getInstance(myDesigner.getProject()).removePsiTreeChangeListener(this);
-    stop();
-  }
-
-  public void stop() {
-    if (myRunState) {
-      myRunState = false;
-      clear();
-    }
-  }
-
-  public void activate() {
-    if (!myRunState) {
-      start();
-      if (!ComparatorUtil.equalsNullable(myContent, myDesigner.getEditorText()) || myDesigner.getRootComponent() == null) {
-        myUpdateRenderer = false;
-        addRequest();
-      }
-      myContent = null;
-    }
-  }
-
+  @Override
   public void deactivate() {
-    if (myRunState) {
-      stop();
-      myContent = myDesigner.getEditorText();
-    }
+    super.deactivate();
 
-    myUpdateRenderer = false;
-
-    if (!myDesigner.getProject().isDisposed()) {
+    if (!myDesigner.isProjectClosed()) {
       myResourceDepends = AndroidFacet.getInstance(myDesigner.getModule()).getLocalResourceManager().getAllResourceDirs();
     }
   }
 
-  public void addRequest() {
-    addRequest(myRunnable);
-  }
+  @Override
+  protected void updatePsi(PsiTreeChangeEvent event) {
+    boolean runState = myRunState;
+    super.updatePsi(event);
 
-  public boolean isUpdateRenderer() {
-    return myUpdateRenderer;
-  }
-
-  public void addRequest(final Runnable runnable) {
-    clear();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        if (myRunState && myInitialize && !myDesigner.getProject().isDisposed()) {
-          runnable.run();
-        }
-      }
-    }, myDelayMillis, ModalityState.stateForComponent(myDesigner));
-  }
-
-  public void clear() {
-    myAlarm.cancelAllRequests();
-  }
-
-  private void updatePsi(PsiTreeChangeEvent event) {
-    if (myRunState) {
-      if (myFile == event.getFile()) {
-        addRequest();
-      }
-    }
-    else if (myResourceDepends != null && !myUpdateRenderer) {
+    if (!runState && myResourceDepends != null && !myUpdateRenderer) {
       PsiFile psiFile = event.getFile();
       if (psiFile == null) {
         return;
@@ -143,41 +62,5 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
         }
       }
     }
-  }
-
-  //////////////////////////////////////////////////////////////////////////////////////////
-  //
-  // PSI
-  //
-  //////////////////////////////////////////////////////////////////////////////////////////
-
-  @Override
-  public void childAdded(@NotNull PsiTreeChangeEvent event) {
-    updatePsi(event);
-  }
-
-  @Override
-  public void childRemoved(@NotNull PsiTreeChangeEvent event) {
-    updatePsi(event);
-  }
-
-  @Override
-  public void childReplaced(@NotNull PsiTreeChangeEvent event) {
-    updatePsi(event);
-  }
-
-  @Override
-  public void childMoved(@NotNull PsiTreeChangeEvent event) {
-    updatePsi(event);
-  }
-
-  @Override
-  public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
-    updatePsi(event);
-  }
-
-  @Override
-  public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
-    updatePsi(event);
   }
 }

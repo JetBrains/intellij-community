@@ -21,8 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomDeclarationSearcher;
 import com.intellij.pom.PomTarget;
 import com.intellij.psi.*;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectConsumer;
@@ -50,25 +49,30 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 public class GrHighlightUtil {
   private static final Logger LOG = Logger.getInstance(GrHighlightUtil.class);
 
-  static boolean isReassigned(GrVariable var) {
+  static boolean isReassigned(final GrVariable var) {
     PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
     PsiNamedElement scope = method == null ? var.getContainingFile() : method;
     if (scope == null) {
       return false;
     }
-    boolean hasAssignment = var.getInitializerGroovy() != null || var instanceof GrParameter;
-    for (PsiReference reference : ReferencesSearch.search(var, new LocalSearchScope(scope)).findAll()) {
-      if (reference instanceof GrReferenceExpression &&
-          (PsiUtil.isLValue((GrReferenceExpression)reference) ||
-           ((GrReferenceExpression)reference).getParent() instanceof GrUnaryExpression &&
-           ((GrUnaryExpression)((GrReferenceExpression)reference).getParent()).isPostfix())) {
-        if (hasAssignment) {
-          return true;
+    return !PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
+      boolean hasAssignment = var.getInitializerGroovy() != null || var instanceof GrParameter;
+      @Override
+      public boolean execute(@NotNull PsiElement element) {
+        if (element instanceof GrReferenceExpression &&
+            var.getName().equals(((GrReferenceExpression)element).getReferenceName()) &&
+            ((GrReferenceExpression)element).isReferenceTo(var)) {
+          if (PsiUtil.isLValue((GrReferenceExpression)element) ||
+              element.getParent() instanceof GrUnaryExpression && ((GrUnaryExpression)element.getParent()).isPostfix()) {
+            if (hasAssignment) {
+              return false;
+            }
+            hasAssignment = true;
+          }
         }
-        hasAssignment = true;
+        return true;
       }
-    }
-    return false;
+    });
   }
 
   @Nullable

@@ -46,6 +46,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererProvider {
+  @NonNls private static final String END_MARKER = "<!-- end marker -->";
   private final Project myProject;
 
   public DaemonTooltipRendererProvider(final Project project) {
@@ -156,8 +157,11 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
             }
             text += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
                                                         DaemonBundle.message("inspection.collapse.description")) +
-                    BORDER_LINE + description + BORDER_LINE;
+                    END_MARKER + "<p>" + description + BORDER_LINE;
           }
+        }
+        else {
+          text += UIUtil.getHtmlBody(problem) + BORDER_LINE;
         }
       }
       if (!text.isEmpty()) { //otherwise do not change anything
@@ -183,14 +187,12 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
 
     @Override
     protected void stripDescription() {
-      final String[] problems = UIUtil.getHtmlBody(myText).split(BORDER_LINE);
+      final List<String> problems = StringUtil.split(UIUtil.getHtmlBody(myText), BORDER_LINE);
       myText = "<html><body>";
-      for (int i = 0; i < problems.length; i++) {
-        final String problem = problems[i];
-        if (i % 2 == 0) {
-          myText += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
-                                                 DaemonBundle.message("inspection.extended.description")) + BORDER_LINE;
-        }
+      for (int i = 0, size = problems.size(); i < size; i++) {
+        final String problem = StringUtil.split(problems.get(i), END_MARKER).get(0);
+        myText += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.collapse.description"),
+                                                      DaemonBundle.message("inspection.extended.description")) + BORDER_LINE;
       }
       myText = StringUtil.trimEnd(myText, BORDER_LINE) + "</body></html>";
     }

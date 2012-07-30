@@ -24,18 +24,23 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.vcs.DirectoryData;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.UIUtil;
+import junit.framework.Assert;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
+import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsNotEqual;
 
 public class VfsUtilTest extends PlatformLangTestCase {
   @Override
@@ -76,16 +81,6 @@ public class VfsUtilTest extends PlatformLangTestCase {
   public void testFindFileByUrl() throws Exception {
     VirtualFile file0;
 
-    // Should not find in jre jars - it creates a lot of VirtualFileImpl!
-
-//    file0 = VfsUtil.findFileByURL(ClassLoader.getSystemResource("java/lang/Object.class"));
-//    assertNotNull(file0);
-//    assertFalse(file0.isDirectory());
-//
-//    file0 = VfsUtil.findFileByURL(ClassLoader.getSystemResource("com/sun"));
-//    assertNotNull(file0);
-//    assertTrue(file0.isDirectory());
-
     File file1 = new File(PathManagerEx.getTestDataPath());
     file1 = new File(file1, "vfs");
     file1 = new File(file1, "findFileByUrl");
@@ -118,7 +113,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
     File file3 = new File(file1, "1.txt");
     file0 = VfsUtil.findFileByURL(file3.toURI().toURL());
-    String content = VfsUtil.loadText(file0);
+    String content = VfsUtilCore.loadText(file0);
     assertNotNull(file0);
     assertFalse(file0.isDirectory());
     assertEquals(content, "test text");
@@ -144,26 +139,51 @@ public class VfsUtilTest extends PlatformLangTestCase {
     assertEquals("", VfsUtilCore.getRelativePath(vTestRoot, vTestRoot, '/'));
   }
 
+  public void testVisitRecursively() throws Exception {
+    final DirectoryData data = new DirectoryData(myProject.getBaseDir());
+    try {
+      data.clear();
+      data.create();
+
+      final File subDir = new File(data.getBase().getPath(), "DL0N1");
+      final VirtualFile vSubDir = LocalFileSystem.getInstance().findFileByIoFile(subDir);
+      assertNotNull(vSubDir);
+
+      VfsUtilCore.visitChildrenRecursively(data.getBase(), new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          Assert.assertTrue(!VfsUtilCore.isAncestor(vSubDir, file, true));
+          return !vSubDir.equals(file);
+        }
+      });
+    }
+    finally {
+      data.clear();
+    }
+  }
+
   public void testAsyncRefresh() throws Throwable {
     final Throwable[] ex = {null};
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), false,
-                                                new Processor<Object>() {
-                                                  @Override
-                                                  public boolean process(Object o) {
-                                                    try {
-                                                      doAsyncRefreshTest();
-                                                    }
-                                                    catch (Throwable t) {
-                                                      ex[0] = t;
-                                                    }
-                                                    return true;
-                                                  }
-                                                });
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+      Arrays.asList(new Object[8]), ProgressManager.getInstance().getProgressIndicator(), false, new Processor<Object>() {
+      @Override
+      public boolean process(Object o) {
+        try {
+          doAsyncRefreshTest();
+        }
+        catch (Throwable t) {
+          ex[0] = t;
+        }
+        return true;
+      }
+    });
     if (ex[0] != null) throw ex[0];
   }
 
   private void doAsyncRefreshTest() throws Exception {
-    int N = 1000;
+    final int N = 1000;
+    final byte[] data = "xxx".getBytes();
+
     File temp = new WriteAction<File>() {
       @Override
       protected void run(Result<File> result) throws Throwable {
@@ -173,13 +193,13 @@ public class VfsUtilTest extends PlatformLangTestCase {
     }.execute().getResultObject();
     LocalFileSystem fs = LocalFileSystem.getInstance();
     VirtualFile vTemp = fs.findFileByIoFile(temp);
-    assert vTemp != null;
+    assertNotNull(vTemp);
     VirtualFile[] children = new VirtualFile[N];
 
     long[] timestamp = new long[N];
-    for (int i=0;i< N;i++) {
+    for (int i = 0; i < N; i++) {
       File file = new File(temp, i + ".txt");
-      FileUtil.writeToFile(file, "xxx".getBytes());
+      FileUtil.writeToFile(file, data);
       VirtualFile child = fs.refreshAndFindFileByIoFile(file);
       assertNotNull(child);
       children[i] = child;
@@ -188,29 +208,22 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
     vTemp.refresh(false, true);
 
-    for (int i=0;i< N;i++) {
+    for (int i = 0; i < N; i++) {
       File file = new File(temp, i + ".txt");
       assertEquals(timestamp[i], file.lastModified());
+      VirtualFile child = fs.findFileByIoFile(file);
+      assertNotNull(child);
+      assertTimestampsEqual(timestamp[i], child.getTimeStamp());
     }
 
     for (int i = 0; i < N; i++) {
       File file = new File(temp, i + ".txt");
-      VirtualFile child = fs.findFileByIoFile(file);
-      assertNotNull(child);
-
-      long mod = child.getTimeStamp();
-      assertEquals("File:" + child.getPath() + "; mod:" + new Date(mod) + "; io:" + new File(child.getPath()).lastModified(),
-                          timestamp[i], mod);
-    }
-
-    Thread.sleep(2000);  // todo[r.sh] find a way to get timestamps with millisecond granularity on Linux ?
-    for (int i=0;i< N;i++) {
-      File file = new File(temp, i + ".txt");
       FileUtil.writeToFile(file, "xxx".getBytes());
+      assertTrue(file.setLastModified(timestamp[i] - 2000));
       long modified = file.lastModified();
       assertTrue("File:" + file.getPath() + "; time:" + modified, timestamp[i] != modified);
       timestamp[i] = modified;
-      assertTrue(children[i].getTimeStamp() != modified);
+      assertTimestampsNotEqual(children[i].getTimeStamp(), modified);
     }
 
     final CountDownLatch latch = new CountDownLatch(N);
@@ -230,8 +243,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
 
     for (int i = 0; i < N; i++) {
       VirtualFile child = children[i];
-      long mod = child.getTimeStamp();
-      assertEquals(timestamp[i], mod);
+      assertTimestampsEqual(timestamp[i], child.getTimeStamp());
     }
   }
 

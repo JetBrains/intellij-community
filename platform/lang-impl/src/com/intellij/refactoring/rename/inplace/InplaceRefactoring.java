@@ -104,7 +104,7 @@ public abstract class InplaceRefactoring {
   protected String myAdvertisementText;
   private ArrayList<RangeHighlighter> myHighlighters;
   protected String myInitialName;
-  protected final String myOldName;
+  protected String myOldName;
   protected RangeMarker myBeforeRevert = null;
   protected String myInsertedName;
   protected LinkedHashSet<String> myNameSuggestions;
@@ -273,6 +273,14 @@ public abstract class InplaceRefactoring {
         return true;
       }
       else {
+
+        if (!ourRenamersStack.isEmpty() && ourRenamersStack.peek() == this) {
+          ourRenamersStack.pop();
+          if (!ourRenamersStack.empty()) {
+            myOldName = ourRenamersStack.peek().myOldName;
+          }
+        }
+
         revertState();
         final TemplateState templateState = TemplateManagerImpl.getTemplateState(InjectedLanguageUtil.getTopLevelEditor(myEditor));
         if (templateState != null) {
@@ -300,6 +308,8 @@ public abstract class InplaceRefactoring {
   protected void beforeTemplateStart() {
     myCaretRangeMarker = myEditor.getDocument()
           .createRangeMarker(new TextRange(myEditor.getCaretModel().getOffset(), myEditor.getCaretModel().getOffset()));
+    myCaretRangeMarker.setGreedyToLeft(true);
+    myCaretRangeMarker.setGreedyToRight(true);
   }
 
   private void startTemplate(final TemplateBuilderImpl builder) {
@@ -388,7 +398,7 @@ public abstract class InplaceRefactoring {
   }
 
   protected int restoreCaretOffset(int offset) {
-    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getStartOffset() : offset;
+    return myCaretRangeMarker.isValid() ? myCaretRangeMarker.getEndOffset() : offset;
   }
 
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {

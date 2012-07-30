@@ -68,7 +68,7 @@ public class StyleItemNameConverter extends ResolvingConverter<String> {
   @Override
   public String fromString(@Nullable @NonNls String s, ConvertContext context) {
     if (s == null) return null;
-    String[] strs = s.split(s);
+    String[] strs = s.split(":");
     if (strs.length < 2 || !"android".equals(strs[0])) {
       return s;
     }

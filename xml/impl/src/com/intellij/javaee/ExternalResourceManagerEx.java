@@ -59,5 +59,8 @@ public abstract class ExternalResourceManagerEx extends ExternalResourceManager 
 
   public abstract void setDefaultHtmlDoctype(@NotNull String defaultHtmlDoctype, @NotNull Project project);
 
+  public abstract String getCatalogPropertiesFile();
+  public abstract void setCatalogPropertiesFile(@Nullable String filePath);
+
   public abstract long getModificationCount(@NotNull Project project);
 }

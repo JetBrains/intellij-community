@@ -20,7 +20,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 /**
@@ -40,8 +42,13 @@ public class PsiIntersectionType extends PsiType {
   }
 
   private static PsiType[] flattenAndRemoveDuplicates(PsiType[] conjuncts) {
-    Set<PsiType> flattened = flatten(conjuncts, new THashSet<PsiType>());
-    return flattened.toArray(new PsiType[flattened.size()]);
+    try {
+      Set<PsiType> flattened = flatten(conjuncts, new THashSet<PsiType>());
+      return flattened.toArray(new PsiType[flattened.size()]);
+    }
+    catch (NoSuchElementException e) {
+      throw new RuntimeException(Arrays.toString(conjuncts), e);
+    }
   }
 
   private static Set<PsiType> flatten(PsiType[] conjuncts, Set<PsiType> types) {

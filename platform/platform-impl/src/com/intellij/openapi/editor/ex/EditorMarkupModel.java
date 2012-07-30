@@ -40,4 +40,6 @@ public interface EditorMarkupModel extends MarkupModel {
   ErrorStripTooltipRendererProvider getErrorStripTooltipRendererProvider();
 
   void setMinMarkHeight(int minMarkHeight);
+
+  boolean isErrorStripeVisible();
 }

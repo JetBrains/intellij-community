@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -37,6 +37,8 @@ public class SynchronizedMethodInspection extends BaseInspection {
    */
   public boolean m_includeNativeMethods = true;
 
+  @SuppressWarnings("PublicField")
+  public boolean ignoreSynchronizedSuperMethods = true;
 
   @Override
   @NotNull
@@ -69,13 +71,16 @@ public class SynchronizedMethodInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "synchronized.method.include.option"),
-                                          this, "m_includeNativeMethods");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("synchronized.method.include.option"), "m_includeNativeMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("synchronized.method.ignore.synchronized.super.option"),
+                      "ignoreSynchronizedSuperMethods");
+    return panel;
   }
 
   private static class SynchronizedMethodFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -86,11 +91,10 @@ public class SynchronizedMethodInspection extends BaseInspection {
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement nameElement = descriptor.getPsiElement();
-      final PsiModifierList modiferList =
-        (PsiModifierList)nameElement.getParent();
-      assert modiferList != null;
-      final PsiMethod method = (PsiMethod)modiferList.getParent();
-      modiferList.setModifierProperty(PsiModifier.SYNCHRONIZED, false);
+      final PsiModifierList modifierList = (PsiModifierList)nameElement.getParent();
+      assert modifierList != null;
+      final PsiMethod method = (PsiMethod)modifierList.getParent();
+      modifierList.setModifierProperty(PsiModifier.SYNCHRONIZED, false);
       assert method != null;
       final PsiCodeBlock body = method.getBody();
       if (body == null) {
@@ -102,21 +106,15 @@ public class SynchronizedMethodInspection extends BaseInspection {
         final PsiClass containingClass = method.getContainingClass();
         assert containingClass != null;
         final String className = containingClass.getName();
-        replacementText = "{ synchronized(" + className + ".class){" +
-                          text.substring(1) + '}';
+        replacementText = "{ synchronized(" + className + ".class){" + text.substring(1) + '}';
       }
       else {
-        replacementText = "{ synchronized(this){" + text.substring(1) +
-                          '}';
+        replacementText = "{ synchronized(this){" + text.substring(1) + '}';
       }
-      final PsiElementFactory elementFactory =
-        JavaPsiFacade.getElementFactory(project);
-      final PsiCodeBlock block =
-        elementFactory.createCodeBlockFromText(replacementText,
-                                               null);
+      final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+      final PsiCodeBlock block = elementFactory.createCodeBlockFromText(replacementText, null);
       body.replace(block);
-      final CodeStyleManager codeStyleManager =
-        CodeStyleManager.getInstance(project);
+      final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
       codeStyleManager.reformat(method);
     }
   }
@@ -125,13 +123,19 @@ public class SynchronizedMethodInspection extends BaseInspection {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
-      //no call to super, so we don't drill into anonymous classes
       if (!method.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
         return;
       }
-      if (!m_includeNativeMethods &&
-          method.hasModifierProperty(PsiModifier.NATIVE)) {
+      if (!m_includeNativeMethods && method.hasModifierProperty(PsiModifier.NATIVE)) {
         return;
+      }
+      if (ignoreSynchronizedSuperMethods) {
+        final PsiMethod[] superMethods = method.findSuperMethods();
+        for (final PsiMethod superMethod : superMethods) {
+          if (superMethod.hasModifierProperty(PsiModifier.SYNCHRONIZED)) {
+            return;
+          }
+        }
       }
       registerModifierError(PsiModifier.SYNCHRONIZED, method, method);
     }

@@ -15,12 +15,14 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.ForceableComparable;
 import com.intellij.util.ProcessingContext;
 
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -31,6 +33,7 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
   private final LookupElementWeigher myWeigher;
   private Ref<Comparable> myFirstWeight;
   private boolean myPrimitive = true;
+  private int myPrefixChanges = -1;
 
   public CachingComparingClassifier(Classifier<LookupElement> next, LookupElementWeigher weigher) {
     super(next, weigher.toString(), weigher.isNegated());
@@ -39,16 +42,35 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
 
   @Override
   public final Comparable getWeight(LookupElement t) {
-    return myWeights.get(t);
+    Comparable w = myWeights.get(t);
+    if (w == null && myWeigher.isPrefixDependent()) {
+      myWeights.put(t, w = myWeigher.weigh(t));
+    }
+    return w;
   }
 
   @Override
   public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
-    if (myPrimitive) {
+    if (!myWeigher.isPrefixDependent() && myPrimitive) {
       return myNext.classify(source, context);
     }
+    checkPrefixChanged(context);
 
     return super.classify(source, context);
+  }
+
+  private void checkPrefixChanged(ProcessingContext context) {
+    int actualPrefixChanges = context.get(CompletionLookupArranger.PREFIX_CHANGES).intValue();
+    if (myWeigher.isPrefixDependent() && myPrefixChanges != actualPrefixChanges) {
+      myPrefixChanges = actualPrefixChanges;
+      myWeights.clear();
+    }
+  }
+
+  @Override
+  public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
+    checkPrefixChanged(context);
+    super.describeItems(map, context);
   }
 
   @Override
@@ -57,7 +79,7 @@ public class CachingComparingClassifier extends ComparingClassifier<LookupElemen
     if (weight instanceof ForceableComparable) {
       ((ForceableComparable)weight).force();
     }
-    if (myPrimitive) {
+    if (!myWeigher.isPrefixDependent() && myPrimitive) {
       if (myFirstWeight == null) {
         myFirstWeight = Ref.create(weight);
       } else if (!Comparing.equal(myFirstWeight.get(), weight)) {

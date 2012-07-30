@@ -49,8 +49,13 @@ public class AssignmentToNullInspection extends BaseInspection {
 
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    PsiVariable resolve = (PsiVariable)((PsiReferenceExpression)infos[0]).resolve();
-    return resolve != null ? new AddAnnotationFix(AnnotationUtil.NULLABLE, resolve) : null;
+    if (infos[0] instanceof PsiReferenceExpression) {
+      final PsiElement resolve = ((PsiReferenceExpression)infos[0]).resolve();
+      if (resolve instanceof PsiVariable) {
+        return new AddAnnotationFix(AnnotationUtil.NULLABLE, (PsiVariable)resolve);
+      }
+    }
+    return null;
   }
 
   @Override

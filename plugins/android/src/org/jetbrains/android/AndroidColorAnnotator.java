@@ -16,6 +16,7 @@
 
 package org.jetbrains.android;
 
+import com.android.resources.ResourceType;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -81,10 +82,10 @@ public class AndroidColorAnnotator implements Annotator {
     myColors.put("magenta", Integer.valueOf(MAGENTA));
   }
 
-  public void annotate(PsiElement element, AnnotationHolder holder) {
+  public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof XmlTag) {
       XmlTag tag = (XmlTag)element;
-      if (("color".equals(tag.getName()) || "drawable".equals(tag.getName()))) {
+      if ((ResourceType.COLOR.getName().equals(tag.getName()) || ResourceType.DRAWABLE.getName().equals(tag.getName()))) {
         DomElement domElement = DomManager.getDomManager(element.getProject()).getDomElement(tag);
         if (domElement instanceof ResourceElement) {
           Annotation annotation = holder.createInfoAnnotation(element, null);

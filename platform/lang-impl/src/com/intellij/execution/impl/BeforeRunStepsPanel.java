@@ -91,7 +91,7 @@ class BeforeRunStepsPanel extends JPanel {
 
     ToolbarDecorator myDecorator = ToolbarDecorator.createDecorator(myList);
     if (!SystemInfo.isMac) {
-      myDecorator.setAsTopToolbar();
+      myDecorator.setAsUsualTopToolbar();
     }
     myDecorator.setEditAction(new AnActionButtonRunnable() {
       @Override

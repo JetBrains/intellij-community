@@ -123,6 +123,7 @@
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.formatter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.importOptimizer" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.rearranger" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.unwrapDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.parserDefinition" beanClass="com.intellij.lang.LanguageExtensionPoint"/>

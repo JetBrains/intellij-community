@@ -31,6 +31,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
+/**
+ * The DialogBuilder is a simpler alternative to {@link DialogWrapper}.
+ * There is no need to create a subclass (which is needed in the DialogWrapper), which can be nice for simple dialogs.
+ */
 public class DialogBuilder implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.DialogBuilder");
 
@@ -68,7 +72,8 @@ public class DialogBuilder implements Disposable {
   }
 
   private MyDialogWrapper showImpl(boolean isModal) {
-    LOG.assertTrue(myTitle != null && myTitle.trim().length() != 0, String.valueOf(myTitle));
+    LOG.assertTrue(myTitle != null && myTitle.trim().length() != 0,
+                   String.format("Dialog title shouldn't be empty or null: [%s]", myTitle));
     myDialogWrapper.setTitle(myTitle);
     myDialogWrapper.init();
     myDialogWrapper.setModal(isModal);
@@ -212,6 +217,10 @@ public class DialogBuilder implements Disposable {
 
   public static class CloseDialogAction extends DialogActionDescriptor {
     private final int myExitCode;
+
+    public CloseDialogAction() {
+      this(CommonBundle.getCloseButtonText(), -1, DialogWrapper.CLOSE_EXIT_CODE);
+    }
 
     public CloseDialogAction(String name, int mnemonicChar, int exitCode) {
       super(name, mnemonicChar);

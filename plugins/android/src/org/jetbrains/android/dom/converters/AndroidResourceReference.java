@@ -15,7 +15,7 @@
  */
 package org.jetbrains.android.dom.converters;
 
-import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -26,12 +26,14 @@ import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.ConvertContextImpl;
 import com.intellij.util.xml.impl.DomCompletionContributor;
 import org.jetbrains.android.dom.AndroidDomUtil;
-import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.dom.wrappers.FileResourceElementWrapper;
-import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
+import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
+import org.jetbrains.android.dom.wrappers.ResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
+import org.jetbrains.android.resourceManagers.ValueResourceInfo;
+import org.jetbrains.android.resourceManagers.ValueResourceInfoImpl;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
@@ -85,9 +87,14 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
     ResourceValue value = myValue.getValue();
     assert value != null;
     String resType = value.getResourceType();
+
     if (resType != null && newElementName != null) {
-      myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType,
-                                                 AndroidCommonUtils.getResourceName(resType, newElementName)));
+      // todo: do not allow new value resource name to contain dot, because it is impossible to check if it file or value otherwise
+
+      final String newResName = newElementName.contains(".") // it is file
+                                ? AndroidCommonUtils.getResourceName(resType, newElementName)
+                                : newElementName;
+      myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType, newResName));
     }
     return myValue.getXmlTag();
   }
@@ -95,6 +102,29 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
+  }
+
+  @NotNull
+  public PsiElement[] computeTargetElements() {
+    final ResolveResult[] resolveResults = multiResolve(false);
+    final List<PsiElement> results = new ArrayList<PsiElement>();
+
+    for (ResolveResult result : resolveResults) {
+      PsiElement element = result.getElement();
+
+      if (element instanceof LazyValueResourceElementWrapper) {
+        element = ((LazyValueResourceElementWrapper)element).computeElement();
+      }
+
+      if (element instanceof ResourceElementWrapper) {
+        element = ((ResourceElementWrapper)element).getWrappee();
+      }
+
+      if (element != null) {
+        results.add(element);
+      }
+    }
+    return results.toArray(new PsiElement[results.size()]);
   }
 
   @NotNull
@@ -117,7 +147,7 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
     collectTargets(myFacet, myResourceValue, elements, files);
 
     final List<ResolveResult> result = new ArrayList<ResolveResult>();
-    
+
     for (PsiFile target : files) {
       if (target != null) {
         final PsiFile e = new FileResourceElementWrapper(target);
@@ -126,15 +156,12 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
     }
 
     for (PsiElement target : elements) {
-      final PsiElement e = target instanceof NavigationItem && target instanceof XmlAttributeValue
-                           ? new ValueResourceElementWrapper((XmlAttributeValue)target)
-                           : target;
-      result.add(new PsiElementResolveResult(e));
+      result.add(new PsiElementResolveResult(target));
     }
     return result.toArray(new ResolveResult[result.size()]);
   }
 
-  private static void collectTargets(AndroidFacet facet, ResourceValue resValue, List<PsiElement> elements, List<PsiFile> files) {
+  private void collectTargets(AndroidFacet facet, ResourceValue resValue, List<PsiElement> elements, List<PsiFile> files) {
     String resType = resValue.getResourceType();
     if (resType == null) {
       return;
@@ -143,20 +170,46 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
     if (manager != null) {
       String resName = resValue.getResourceName();
       if (resName != null) {
-        List<ResourceElement> valueResources = manager.findValueResources(resType, resName, false);
-        for (ResourceElement resource : valueResources) {
-          elements.add(resource.getName().getXmlAttributeValue());
+        List<ValueResourceInfoImpl> valueResources = manager.findValueResourceInfos(resType, resName, false);
+
+        for (final ValueResourceInfo resource : valueResources) {
+          elements.add(new LazyValueResourceElementWrapper(resource, myElement));
         }
         if (resType.equals("id")) {
-          List<PsiElement> idAttrs = manager.findIdDeclarations(resName);
-          if (idAttrs != null) {
-            elements.addAll(idAttrs);
-          }
+          elements.addAll(manager.findIdDeclarations(resName));
         }
         if (elements.size() == 0) {
           files.addAll(manager.findResourceFiles(resType, resName, false));
         }
       }
     }
+  }
+
+  @Override
+  public boolean isReferenceTo(PsiElement element) {
+    final ResolveResult[] results = multiResolve(false);
+    final PsiFile psiFile = element.getContainingFile();
+    final VirtualFile vFile = psiFile != null ? psiFile.getVirtualFile() : null;
+
+    for (ResolveResult result : results) {
+      final PsiElement target = result.getElement();
+
+      if (element.getManager().areElementsEquivalent(target, element)) {
+        return true;
+      }
+
+      if (target instanceof LazyValueResourceElementWrapper && vFile != null) {
+        final ValueResourceInfo info = ((LazyValueResourceElementWrapper)target).getResourceInfo();
+
+        if (info.getContainingFile().equals(vFile)) {
+          final XmlAttributeValue realTarget = info.computeXmlElement();
+
+          if (element.getManager().areElementsEquivalent(realTarget, element)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 }

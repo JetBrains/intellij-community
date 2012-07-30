@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.drawable;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -32,7 +33,7 @@ public class InsetOrClipOrScaleDomFileDescription extends AndroidResourceDomFile
   @NonNls private static final String[] ROOT_TAGS = new String[] {"inset", "clip", "scale", "animated-rotate", "rotate"};
 
   public InsetOrClipOrScaleDomFileDescription() {
-    super(InsetOrClipOrScale.class, ROOT_TAGS[0], "drawable");
+    super(InsetOrClipOrScale.class, ROOT_TAGS[0], ResourceType.DRAWABLE.getName());
   }
 
   @Override

@@ -67,12 +67,12 @@ public class PsiMethodTreeElement extends JavaClassTreeElementBase<PsiMethod> im
   }
 
   public String getPresentableText() {
-    return PsiFormatUtil.formatMethod(
+    return StringUtil.replace(PsiFormatUtil.formatMethod(
       getElement(),
       PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME |
                             PsiFormatUtilBase.SHOW_TYPE | PsiFormatUtilBase.TYPE_AFTER | PsiFormatUtilBase.SHOW_PARAMETERS,
       PsiFormatUtilBase.SHOW_TYPE
-    );
+    ), ":", ": ");
   }
 
 

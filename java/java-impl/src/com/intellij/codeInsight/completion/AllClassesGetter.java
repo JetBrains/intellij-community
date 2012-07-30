@@ -162,6 +162,13 @@ public class AllClassesGetter {
         return true;
       }
     };
+    processJavaClasses(prefixMatcher, project, scope, processor);
+  }
+
+  public static void processJavaClasses(final PrefixMatcher prefixMatcher,
+                                        Project project,
+                                        GlobalSearchScope scope,
+                                        Processor<PsiClass> processor) {
     AllClassesSearch.search(scope, project, new Condition<String>() {
       public boolean value(String s) {
         return prefixMatcher.isStartMatch(s);

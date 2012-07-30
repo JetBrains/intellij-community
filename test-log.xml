@@ -31,6 +31,11 @@
     <appender-ref ref="CONSOLE-ALL"/>
   </category>
 
+  <category name="#com.intellij.openapi.util.io.win32.Win32LocalFileSystem">
+    <priority value="DEBUG"/>
+    <appender-ref ref="CONSOLE-ALL"/>
+  </category>
+
   <root>
     <priority value="INFO"/>
     <appender-ref ref="CONSOLE-WARN"/>

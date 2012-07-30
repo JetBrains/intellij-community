@@ -83,7 +83,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
 
   @Nullable
   public String getDtdUri() {
-    final XmlElement dtdUrlElement = getDtdUrlElement();
+    final PsiElement dtdUrlElement = getDtdUrlElement();
     if (dtdUrlElement == null || dtdUrlElement.getTextLength() == 0) return null;
     return extractValue(dtdUrlElement);
   }
@@ -120,7 +120,7 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
   }
 
   @Nullable
-  public XmlElement getDtdUrlElement() {
+  public PsiElement getDtdUrlElement() {
     PsiElement docTypePublic = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC);
 
     if (docTypePublic != null){
@@ -216,33 +216,32 @@ public class XmlDoctypeImpl extends XmlElementImpl implements XmlDoctype {
 
   @NotNull
   public PsiReference[] getReferences() {
-    final XmlElement dtdUrlElement = getDtdUrlElement();
-    final PsiElement docTypePublic = findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC);
-    PsiReference[] uriRefs = null;
+    final PsiElement dtdUrlElement = getDtdUrlElement();
 
+    PsiReference uriRef = null;
     if (dtdUrlElement != null) {
-      uriRefs = new PsiReference[1];
-      uriRefs[0] = new URLReference(XmlDoctypeImpl.this) {
-        @NotNull
-        public Object[] getVariants() {
-          return docTypePublic != null ?
-                 super.getVariants(): EMPTY_ARRAY;
-        }
-        @NotNull
-        public String getCanonicalText() {
-          return extractValue(dtdUrlElement);
-        }
-        public TextRange getRangeInElement() {
-          return TextRange.from(dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset() + 1, Math.max(dtdUrlElement.getTextRange().getLength() - 2, 0));
-        }
-      };
+      uriRef = createUrlReference(dtdUrlElement);
     }
 
-    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlDoctype.class);
+    final PsiReference[] refs = ReferenceProvidersRegistry.getReferencesFromProviders(this);
 
-    return ArrayUtil.mergeArrays(
-      uriRefs != null? uriRefs: PsiReference.EMPTY_ARRAY,
-      referencesFromProviders
-    );
+    return uriRef == null ? refs : ArrayUtil.mergeArrays(new PsiReference[] {uriRef}, refs);
+  }
+
+  protected PsiReference createUrlReference(final PsiElement dtdUrlElement) {
+    return new URLReference(XmlDoctypeImpl.this) {
+      @NotNull
+      public Object[] getVariants() {
+        return findChildByRoleAsPsiElement(XmlChildRole.XML_DOCTYPE_PUBLIC) != null ?
+               super.getVariants(): EMPTY_ARRAY;
+      }
+      @NotNull
+      public String getCanonicalText() {
+        return extractValue(dtdUrlElement);
+      }
+      public TextRange getRangeInElement() {
+        return TextRange.from(dtdUrlElement.getTextRange().getStartOffset() - getTextRange().getStartOffset() + 1, Math.max(dtdUrlElement.getTextRange().getLength() - 2, 0));
+      }
+    };
   }
 }

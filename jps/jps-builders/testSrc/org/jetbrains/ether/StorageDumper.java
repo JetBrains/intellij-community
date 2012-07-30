@@ -1,12 +1,8 @@
 package org.jetbrains.ether;
 
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.ether.dependencyView.Mappings;
 
 import java.io.File;
-import java.io.PrintStream;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * Created with IntelliJ IDEA.
@@ -111,25 +107,29 @@ public class StorageDumper {
 
     env.report();
 
-    final String path = env.getProjectPath();
+    final String dataPath = env.getProjectPath();
     final String oath = env.getOutputPath();
 
-    if (path == null) {
+    if (dataPath == null) {
       System.err.println("No project path specified.");
     }
     else {
       try {
-        final File outputPath = new File(oath == null ? "" : oath, "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh-mm-ss)").format(new Date()) + ".log");
-        final File dataStorageRoot = new File(path + File.separator + "mappings");
-        FileUtil.createIfDoesntExist(outputPath);
+        final File parent = new File(oath == null ? "" : oath);
+        final File dataStorageRoot = new File(dataPath, "mappings");
 
         final Mappings mappings = new Mappings(dataStorageRoot, true);
-        final PrintStream p = new PrintStream(outputPath);
-
-        mappings.toStream(p);
-        mappings.close();
-
-        p.close();
+        try {
+          //final File outputPath = new File(parent, "snapshot-" + new SimpleDateFormat("dd-MM-yy(hh-mm-ss)").format(new Date()) + ".log");
+          //FileUtil.createIfDoesntExist(outputPath);
+          //final PrintStream p = new PrintStream(outputPath);
+          //mappings.toStream(p);
+          //p.close();
+          mappings.toStream(parent);
+        }
+        finally {
+          mappings.close();
+        }
       }
       catch (Exception e) {
         throw new RuntimeException(e);

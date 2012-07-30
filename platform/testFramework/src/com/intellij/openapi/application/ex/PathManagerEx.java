@@ -167,6 +167,14 @@ public class PathManagerEx {
     return getTestDataPath(strategy);
   }
 
+  /**
+   * @return path to 'community' project home irrespective of current project
+   */
+  public static String getCommunityHomePath() {
+    String path = PathManager.getHomePath();
+    return isLocatedInCommunity() ? path : path + File.separator + "community";
+  }
+
   private static boolean isLocatedInCommunity() {
     FileSystemLocation projectLocation = parseProjectLocation();
     return projectLocation == FileSystemLocation.COMMUNITY;

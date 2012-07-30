@@ -19,6 +19,7 @@
  */
 package com.intellij.ui;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -40,7 +41,10 @@ public abstract class ClickListener {
 
       @Override
       public void mousePressed(MouseEvent e) {
-        if (Math.abs(lastTimeClicked - e.getWhen()) > TIME_EPS || (lastClickPoint != null && !isWithinEps(lastClickPoint, e.getPoint()))) {
+        final Point point = e.getPoint();
+        SwingUtilities.convertPointToScreen(point, e.getComponent());
+
+        if (Math.abs(lastTimeClicked - e.getWhen()) > TIME_EPS || (lastClickPoint != null && !isWithinEps(lastClickPoint, point))) {
           clickCount = 0;
           lastClickPoint = null;
         }
@@ -48,13 +52,14 @@ public abstract class ClickListener {
         lastTimeClicked = e.getWhen();
 
         if (!e.isPopupTrigger()) {
-          pressPoint = e.getPoint();
+          pressPoint = point;
         }
       }
 
       @Override
       public void mouseReleased(MouseEvent e) {
         Point releasedAt = e.getPoint();
+        SwingUtilities.convertPointToScreen(releasedAt, e.getComponent());
         Point clickedAt = pressPoint;
         lastClickPoint = clickedAt;
         pressPoint = null;
@@ -63,7 +68,7 @@ public abstract class ClickListener {
 
         if (clickedAt == null) return;
         if (e.isPopupTrigger()) return;
-        if (releasedAt.x < 0 || releasedAt.y < 0 || releasedAt.x >= c.getWidth() || releasedAt.y >= c.getHeight()) return;
+        if (!e.getComponent().contains(e.getPoint())) return;
 
         if (isWithinEps(releasedAt, clickedAt)) {
           if (onClick(e, clickCount)) {

@@ -17,19 +17,22 @@
 package org.jetbrains.android.dom;
 
 import com.android.sdklib.SdkConstants;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.refactoring.actions.InlineAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
 import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 
 import java.util.ArrayList;
@@ -70,7 +73,11 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   }
 
   public void testStyles2() throws Throwable {
-    toTestCompletion("styles2.xml", "styles2_after.xml");
+    VirtualFile file = copyFileToProject("styles2.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResultByFile(testFolder + '/' + "styles2_after.xml");
   }
 
   public void testStyles3() throws Throwable {
@@ -84,6 +91,44 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   public void testAttrFormatCompletion() throws Throwable {
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     toTestCompletion("attrs1.xml", "attrs1_after.xml");
+  }
+
+  public void testDeclareStyleableNameCompletion() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    doTestCompletionVariants("attrs2.xml", "LabelView");
+  }
+
+  public void testDeclareStyleableNameHighlighting() throws Throwable {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    doTestHighlighting("attrs3.xml");
+  }
+
+  public void testDeclareStyleableNameNavigation1() throws Exception {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    final VirtualFile file = copyFileToProject("attrs4.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+
+    PsiElement[] targets =
+      GotoDeclarationAction.findAllTargetElements(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
+    assertNotNull(targets);
+    assertEquals(1, targets.length);
+    PsiElement targetElement = targets[0];
+    assertInstanceOf(targetElement, PsiClass.class);
+    assertEquals("android.widget.TextView", ((PsiClass)targetElement).getQualifiedName());
+  }
+
+  public void testDeclareStyleableNameNavigation2() throws Exception {
+    copyFileToProject("LabelView.java", "src/p1/p2/LabelView.java");
+    final VirtualFile file = copyFileToProject("attrs5.xml");
+    myFixture.configureFromExistingVirtualFile(file);
+
+    PsiElement[] targets =
+      GotoDeclarationAction.findAllTargetElements(myFixture.getProject(), myFixture.getEditor(), myFixture.getCaretOffset());
+    assertNotNull(targets);
+    assertEquals(1, targets.length);
+    PsiElement targetElement = targets[0];
+    assertInstanceOf(targetElement, PsiClass.class);
+    assertEquals("p1.p2.LabelView", ((PsiClass)targetElement).getQualifiedName());
   }
 
   public void testResourceTypeCompletion() throws Throwable {
@@ -115,7 +160,11 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
   }
 
   public void testStylesAttrNameWithoutPrefix() throws Throwable {
-    doTestCompletion();
+    VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResultByFile(testFolder + '/' + getTestName(true) + "_after.xml");
   }
 
   public void testMoreTypes() throws Throwable {
@@ -174,6 +223,10 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testNameValidation() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testResourceReferenceAsValueCompletion1() throws Throwable {
     doTestCompletion();
   }
@@ -199,7 +252,8 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     PsiReference rootReference = psiFile.findReferenceAt(rootOffset);
     assertNotNull(rootReference);
     PsiElement element = rootReference.resolve();
-    assertTrue("Must be PsiClass reference", element instanceof XmlAttributeValue);
+    assertInstanceOf(element, LazyValueResourceElementWrapper.class);
+    assertNotNull(((LazyValueResourceElementWrapper)element).computeElement());
   }
 
   // see getPathToCopy()

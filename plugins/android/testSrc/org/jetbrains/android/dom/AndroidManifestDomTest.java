@@ -117,10 +117,9 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   }
 
   public void testActivityCompletion3() throws Throwable {
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     copyFileToProject("MyActivity.java", "src/p1/p2/MyActivity.java");
     copyFileToProject("MyActivity1.java", "src/p1/p2/p3/MyActivity1.java");
-    doTestCompletion(false);
+    doTestCompletionVariants(getTestName(false) + ".xml", ".MyActivity", ".p3.MyActivity1");
   }
 
   public void testActivityCompletion4() throws Throwable {

@@ -57,7 +57,7 @@ public class TreeTableTree extends Tree {
   }
 
   @Override
-  protected final boolean isMacWideSelection() {
+  protected final boolean isWideSelection() {
     return false;
   }
 

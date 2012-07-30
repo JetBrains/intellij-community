@@ -25,19 +25,31 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnnotationTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+
+import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 
 /**
  * @author peter
  */
 public class GroovyNoVariantsDelegator extends CompletionContributor {
 
+  private static boolean suggestMetaAnnotations(CompletionParameters parameters) {
+    PsiElement position = parameters.getPosition();
+    return psiElement().withParents(GrCodeReferenceElement.class, GrAnnotation.class, GrModifierList.class, GrAnnotationTypeDefinition.class).accepts(position);
+  }
+
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(result.runRemainingContributors(parameters, true));
+    final boolean empty = JavaNoVariantsDelegator.containsOnlyPackages(result.runRemainingContributors(parameters, true)) ||
+                          suggestMetaAnnotations(parameters);
 
     if (!empty && parameters.getInvocationCount() == 0) {
       result.restartCompletionWhenNothingMatches();

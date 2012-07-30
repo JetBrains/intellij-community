@@ -23,6 +23,7 @@ public class JpsLibraryTest extends JpsModelTestCase {
 
     final JpsLibrary library = assertOneElement(myModel.getProject().getLibraryCollection().getLibraries());
     assertEquals("file://my-url", assertOneElement(library.getRoots(JpsOrderRootType.COMPILED)).getUrl());
+    assertEmpty(library.getRoots(JpsOrderRootType.SOURCES));
   }
 
   public void testCreateReferenceByLibrary() {

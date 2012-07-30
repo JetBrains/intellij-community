@@ -23,7 +23,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
-import com.intellij.util.ui.tree.MacTreeUI;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -106,7 +106,7 @@ public class EditSourceOnDoubleClickHandler {
 
     @Override
     public boolean onDoubleClick(MouseEvent e) {
-      final TreePath path = myTree.getUI() instanceof MacTreeUI ? myTree.getClosestPathForLocation(e.getX(), e.getY())
+      final TreePath path = myTree.getUI() instanceof WideSelectionTreeUI ? myTree.getClosestPathForLocation(e.getX(), e.getY())
                                                                        : myTree.getPathForLocation(e.getX(), e.getY());
       if (path == null) return false;
 

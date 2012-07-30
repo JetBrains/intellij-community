@@ -2,11 +2,19 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.*;
+import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectChunks;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.module.JpsDependencyElement;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,18 +55,18 @@ public class FSOperations {
   public static void markDirty(CompileContext context, final ModuleChunk chunk) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     pd.fsState.clearContextRoundData(context);
-    final Set<Module> modules = chunk.getModules();
-    for (Module module : modules) {
+    final Set<JpsModule> modules = chunk.getModules();
+    for (JpsModule module : modules) {
       markDirtyFiles(context, module, pd.timestamps.getStorage(), true, context.isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
     }
   }
 
   public static void markDirtyRecursively(CompileContext context, ModuleChunk chunk) throws IOException {
-    final Set<Module> modules = chunk.getModules();
-    final Set<Module> dirtyModules = new HashSet<Module>(modules);
+    final Set<JpsModule> modules = chunk.getModules();
+    final Set<JpsModule> dirtyModules = new HashSet<JpsModule>(modules);
 
     // now mark all modules that depend on dirty modules
-    final ClasspathKind classpathKind = ClasspathKind.compile(context.isCompilingTests());
+    final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(context.isCompilingTests());
     final ProjectChunks chunks = context.isCompilingTests()? context.getTestChunks() : context.getProductionChunks();
     boolean found = false;
     for (ModuleChunk moduleChunk : chunks.getChunkList()) {
@@ -68,8 +76,8 @@ public class FSOperations {
         }
       }
       else {
-        for (final Module module : moduleChunk.getModules()) {
-          final Set<Module> deps = getDependentModulesRecursively(module, classpathKind);
+        for (final JpsModule module : moduleChunk.getModules()) {
+          final Set<JpsModule> deps = getDependentModulesRecursively(module, classpathKind);
           if (Utils.intersects(deps, modules)) {
             dirtyModules.addAll(moduleChunk.getModules());
             break;
@@ -79,32 +87,32 @@ public class FSOperations {
     }
 
     final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
-    for (Module module : dirtyModules) {
+    for (JpsModule module : dirtyModules) {
       markDirtyFiles(context, module, timestamps, true, context.isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
     }
 
     if (context.isMake()) {
       // mark as non-incremental only the module that triggered non-incremental change
-      for (Module module : modules) {
+      for (JpsModule module : modules) {
         context.markNonIncremental(module);
       }
     }
   }
 
-  private static Set<Module> getDependentModulesRecursively(final Module module, final ClasspathKind kind) {
-    final Set<Module> result = new HashSet<Module>();
+  private static Set<JpsModule> getDependentModulesRecursively(final JpsModule module, final JpsJavaClasspathKind kind) {
+    final Set<JpsModule> result = new HashSet<JpsModule>();
 
     new Object() {
-      final Set<Module> processed = new HashSet<Module>();
+      final Set<JpsModule> processed = new HashSet<JpsModule>();
 
-      void traverse(Module module, ClasspathKind kind, Collection<Module> result, boolean exportedOnly) {
+      void traverse(JpsModule module, JpsJavaClasspathKind kind, Collection<JpsModule> result, boolean exportedOnly) {
         if (processed.add(module)) {
-          for (ClasspathItem item : module.getClasspath(kind, exportedOnly)) {
-            if (item instanceof ModuleSourceEntry) {
-              result.add(((ModuleSourceEntry)item).getModule());
+          for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module, kind, exportedOnly)) {
+            if (item instanceof JpsModuleSourceDependency) {
+              result.add(module);
             }
-            else if (item instanceof Module) {
-              traverse((Module)item, kind, result, true);
+            else if (item instanceof JpsModuleDependency) {
+              traverse(((JpsModuleDependency)item).getModule(), kind, result, true);
             }
           }
         }
@@ -117,23 +125,21 @@ public class FSOperations {
 
   public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor processor) throws IOException {
     final BuildFSState fsState = context.getProjectDescriptor().fsState;
-    for (Module module : chunk.getModules()) {
+    for (JpsModule module : chunk.getModules()) {
       fsState.processFilesToRecompile(context, module, processor);
     }
   }
 
   static void markDirtyFiles(CompileContext context,
-                             Module module,
+                             JpsModule module,
                              final Timestamps tsStorage,
                              final boolean forceMarkDirty,
                              @NotNull final DirtyMarkScope scope,
                              @Nullable final Set<File> currentFiles) throws IOException {
-    final Set<File> excludes = new HashSet<File>();
-    for (String excludePath : module.getExcludes()) {
-      excludes.add(new File(excludePath));
-    }
+    final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
+    final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(module));
     final Collection<RootDescriptor> roots = new ArrayList<RootDescriptor>();
-    for (RootDescriptor rd : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, module.getName())) {
+    for (RootDescriptor rd : rootsIndex.getModuleRoots(context, module.getName())) {
       roots.add(rd);
     }
     for (RootDescriptor rd : roots) {
@@ -158,7 +164,7 @@ public class FSOperations {
   private static void traverseRecursively(CompileContext context, final RootDescriptor rd, final File file, Set<File> excludes, @NotNull final Timestamps tsStorage, final boolean forceDirty, @Nullable Set<File> currentFiles) throws IOException {
     final File[] children = file.listFiles();
     if (children != null) { // is directory
-      if (children.length > 0 && !PathUtil.isUnder(excludes, file)) {
+      if (children.length > 0 && !JpsPathUtil.isUnder(excludes, file)) {
         for (File child : children) {
           traverseRecursively(context, rd, child, excludes, tsStorage, forceDirty, currentFiles);
         }

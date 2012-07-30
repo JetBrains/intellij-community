@@ -17,7 +17,10 @@ package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.util.Pair;
+import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,14 +28,25 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 7/13/12 11:43 AM
  */
-public class ShowQuickDocAtPinnedWindowFromTooltipAction extends ShowQuickDocFromTooltipAction {
+public class ShowQuickDocAtPinnedWindowFromTooltipAction extends AbstractDocumentationTooltipAction {
 
   public ShowQuickDocAtPinnedWindowFromTooltipAction() {
-    super(AllIcons.General.Pin_tab);
+    String className = getClass().getSimpleName();
+    String actionId = className.substring(0, className.lastIndexOf("Action"));
+    getTemplatePresentation().setText(ActionsBundle.actionText(actionId));
+    getTemplatePresentation().setDescription(ActionsBundle.actionDescription(actionId));
+    getTemplatePresentation().setIcon(AllIcons.General.Pin_tab);
   }
 
   @Override
-  protected void doActionPerformed(@NotNull Pair<PsiElement, PsiElement> docInfo, @NotNull DocumentationManager docManager) {
-    docManager.createToolWindow(docInfo.first, docInfo.second);
+  protected void doActionPerformed(@NotNull DataContext context, @NotNull PsiElement docAnchor, @NotNull PsiElement originalElement) {
+    Project project = PlatformDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return;
+    }
+
+    DocumentationManager docManager = DocumentationManager.getInstance(project);
+    docManager.setAllowContentUpdateFromContext(false);
+    docManager.showJavaDocInfoAtToolWindow(docAnchor, originalElement); 
   }
 }

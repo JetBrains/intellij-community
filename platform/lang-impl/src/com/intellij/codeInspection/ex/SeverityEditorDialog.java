@@ -32,7 +32,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -129,9 +128,10 @@ public class SeverityEditorDialog extends DialogWrapper {
             }
           });
           if (name == null) return;
-          final TextAttributes textAttributes = TextAttributesKeyDefaults.getDefaultAttributes(CodeInsightColors.WARNINGS_ATTRIBUTES);
+          final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
           HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 50),
-                                                                                                     TextAttributesKey
+                                                                                                     com.intellij.openapi.editor.colors
+                                                                                                       .TextAttributesKey
                                                                                                        .createTextAttributesKey(name));
 
           SeverityBasedTextAttributes newSeverityBasedTextAttributes = new SeverityBasedTextAttributes(textAttributes.clone(), info);

@@ -19,12 +19,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
-import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
+import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.MouseEvent;
 
 /**
  * @author nik
@@ -56,7 +61,15 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
     }
 
     public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
-      return myHandler.isEnabled(project) && (event == null || event.getInputEvent()== null || !event.getInputEvent().isAltDown());
+      Editor editor = event.getData(PlatformDataKeys.EDITOR);
+      MouseEvent mouseEvent = event.getInputEvent() instanceof MouseEvent ? (MouseEvent)event.getInputEvent(): null;
+      if (editor == null || mouseEvent == null || !(mouseEvent.isAltDown()))
+        return false;
+      Component deepestComponentAt = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+      if (!SwingUtilities.isDescendingFrom(deepestComponentAt, editor.getComponent()))
+        return false;
+      EditorMouseEventArea area = editor.getMouseEventArea(SwingUtilities.convertMouseEvent(mouseEvent.getComponent(), mouseEvent, deepestComponentAt));
+      return myHandler.isEnabled(project) && area == EditorMouseEventArea.EDITING_AREA;
     }
   }
 }

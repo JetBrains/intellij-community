@@ -16,10 +16,10 @@
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.JavaTemplateUtil;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -63,7 +63,7 @@ public class SubtypesMacro extends Macro {
 
       final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
       JavaTemplateUtil.addTypeLookupItem(set, type);
-      CodeInsightUtil.processSubTypes(type, element, false, Condition.TRUE, new Consumer<PsiType>() {
+      CodeInsightUtil.processSubTypes(type, element, false, PrefixMatcher.ALWAYS_TRUE, new Consumer<PsiType>() {
         @Override
         public void consume(PsiType psiType) {
           JavaTemplateUtil.addTypeLookupItem(set, psiType);

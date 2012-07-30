@@ -57,9 +57,6 @@ public class JarHandler extends JarHandlerBase implements FileSystemInterface {
     }
   }
 
-  public void dispose() {
-  }
-
   @Nullable
   public VirtualFile markDirty() {
     synchronized (lock) {

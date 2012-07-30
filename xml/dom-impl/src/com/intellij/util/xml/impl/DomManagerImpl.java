@@ -376,8 +376,14 @@ public final class DomManagerImpl extends DomManager {
   }
 
   @Nullable
-  public DomInvocationHandler getDomHandler(final XmlTag tag) {
+  public DomInvocationHandler getDomHandler(final XmlElement tag) {
     if (tag == null) return null;
+
+    List<DomInvocationHandler> cached = mySemService.getCachedSemElements(DOM_HANDLER_KEY, tag);
+    if (cached != null && !cached.isEmpty()) {
+      return cached.get(0);
+    }
+
 
     return mySemService.getSemElement(DOM_HANDLER_KEY, tag);
   }

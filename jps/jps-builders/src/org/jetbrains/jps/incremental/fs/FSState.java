@@ -17,7 +17,8 @@ import java.util.*;
  *         Date: 4/20/12
  */
 public class FSState {
-  private final Map<String, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<String, FilesDelta>());
+  private final Map<String, FilesDelta> myProductionDeltas = Collections.synchronizedMap(new HashMap<String, FilesDelta>());
+  private final Map<String, FilesDelta> myTestDeltas = Collections.synchronizedMap(new HashMap<String, FilesDelta>());
   protected final Set<String> myInitialTestsScanPerformed = Collections.synchronizedSet(new HashSet<String>());
   protected final Set<String> myInitialProductionScanPerformed = Collections.synchronizedSet(new HashSet<String>());
 
@@ -25,13 +26,13 @@ public class FSState {
     out.writeInt(myInitialTestsScanPerformed.size());
     for (String moduleName : myInitialTestsScanPerformed) {
       IOUtil.writeString(moduleName, out);
-      getDelta(moduleName).save(out, true);
+      getDelta(moduleName, true).save(out);
     }
 
     out.writeInt(myInitialProductionScanPerformed.size());
     for (String moduleName : myInitialProductionScanPerformed) {
       IOUtil.writeString(moduleName, out);
-      getDelta(moduleName).save(out, false);
+      getDelta(moduleName, false).save(out);
     }
   }
 
@@ -39,35 +40,30 @@ public class FSState {
     int testsDeltaCount = in.readInt();
     while (testsDeltaCount-- > 0) {
       final String moduleName = IOUtil.readString(in);
-      getDelta(moduleName).load(in, true);
+      getDelta(moduleName, true).load(in);
       myInitialTestsScanPerformed.add(moduleName);
     }
 
     int productionDeltaCount = in.readInt();
     while (productionDeltaCount-- > 0) {
       final String moduleName = IOUtil.readString(in);
-      getDelta(moduleName).load(in, false);
+      getDelta(moduleName, false).load(in);
       myInitialProductionScanPerformed.add(moduleName);
     }
   }
 
   public void clearAll() {
-    myDeltas.clear();
-  }
-
-  public void init(String moduleName, final Collection<String> deleteProduction, final Collection<String> deletedTests, final Map<File, Set<File>> recompileProduction, final Map<File, Set<File>> recompileTests) {
-    getDelta(moduleName).init(deleteProduction, deletedTests, recompileProduction, recompileTests);
-    myInitialTestsScanPerformed.add(moduleName);
-    myInitialProductionScanPerformed.add(moduleName);
+    myProductionDeltas.clear();
+    myTestDeltas.clear();
   }
 
   public final void clearRecompile(final RootDescriptor rd) {
-    getDelta(rd.module).clearRecompile(rd.root, rd.isTestRoot);
+    getDelta(rd.module, rd.isTestRoot).clearRecompile(rd.root);
   }
 
   public boolean markDirty(@Nullable CompileContext context, final File file, final RootDescriptor rd, final @Nullable Timestamps tsStorage) throws IOException {
-    final FilesDelta mainDelta = getDelta(rd.module);
-    final boolean marked = mainDelta.markRecompile(rd.root, rd.isTestRoot, file);
+    final FilesDelta mainDelta = getDelta(rd.module, rd.isTestRoot);
+    final boolean marked = mainDelta.markRecompile(rd.root, file);
     if (marked && tsStorage != null) {
       tsStorage.removeStamp(file);
     }
@@ -78,7 +74,7 @@ public class FSState {
                                        final File file,
                                        final RootDescriptor rd,
                                        final @Nullable Timestamps tsStorage) throws IOException {
-    final boolean marked = getDelta(rd.module).markRecompileIfNotDeleted(rd.root, rd.isTestRoot, file);
+    final boolean marked = getDelta(rd.module, rd.isTestRoot).markRecompileIfNotDeleted(rd.root, file);
     if (marked && tsStorage != null) {
       tsStorage.removeStamp(file);
     }
@@ -86,45 +82,54 @@ public class FSState {
   }
 
   public void registerDeleted(final String moduleName, final File file, final boolean forTests, @Nullable Timestamps tsStorage) throws IOException {
-    getDelta(moduleName).addDeleted(file, forTests);
+    getDelta(moduleName, forTests).addDeleted(file);
     if (tsStorage != null) {
       tsStorage.removeStamp(file);
     }
   }
 
   public Map<File, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, final String moduleName, boolean forTests) {
-    return getDelta(moduleName).getSourcesToRecompile(forTests);
+    return getDelta(moduleName, forTests).getSourcesToRecompile();
   }
 
   public void clearDeletedPaths(final String moduleName, final boolean forTests) {
-    final FilesDelta delta = myDeltas.get(moduleName);
+    final FilesDelta delta = getDeltas(forTests).get(moduleName);
     if (delta != null) {
-      delta.clearDeletedPaths(forTests);
+      delta.clearDeletedPaths();
     }
   }
 
+  private Map<String, FilesDelta> getDeltas(boolean forTests) {
+    return forTests ? myTestDeltas : myProductionDeltas;
+  }
+
   public Collection<String> getAndClearDeletedPaths(final String moduleName, final boolean forTests) {
-    final FilesDelta delta = myDeltas.get(moduleName);
+    final FilesDelta delta = getDeltas(forTests).get(moduleName);
     if (delta != null) {
-      return delta.getAndClearDeletedPaths(forTests);
+      return delta.getAndClearDeletedPaths();
     }
     return Collections.emptyList();
   }
 
   @NotNull
-  protected final FilesDelta getDelta(final String moduleName) {
-    synchronized (myDeltas) {
-      FilesDelta delta = myDeltas.get(moduleName);
+  protected final FilesDelta getDelta(final String moduleName, boolean forTests) {
+    Map<String, FilesDelta> deltas = getDeltas(forTests);
+    synchronized (deltas) {
+      FilesDelta delta = deltas.get(moduleName);
       if (delta == null) {
         delta = new FilesDelta();
-        myDeltas.put(moduleName, delta);
+        deltas.put(moduleName, delta);
       }
       return delta;
     }
   }
 
   public boolean hasWorkToDo() {
-    for (Map.Entry<String, FilesDelta> entry : myDeltas.entrySet()) {
+    return hasWorkToDo(false) || hasWorkToDo(true);
+  }
+
+  private boolean hasWorkToDo(final boolean forTests) {
+    for (Map.Entry<String, FilesDelta> entry : getDeltas(forTests).entrySet()) {
       final String moduleName = entry.getKey();
       if (!myInitialProductionScanPerformed.contains(moduleName) || !myInitialTestsScanPerformed.contains(moduleName)) {
         return true;

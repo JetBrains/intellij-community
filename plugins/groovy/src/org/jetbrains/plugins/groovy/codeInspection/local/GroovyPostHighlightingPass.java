@@ -56,12 +56,12 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -109,7 +109,6 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     };
 
     final List<HighlightInfo> unusedDeclarations = new ArrayList<HighlightInfo>();
-    final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(PsiUtil.getValidImportStatements(myFile));
 
     final Map<GrParameter, Boolean> usedParams = new HashMap<GrParameter, Boolean>();
     myFile.accept(new PsiRecursiveElementWalkingVisitor() {
@@ -117,12 +116,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       public void visitElement(PsiElement element) {
         if (element instanceof GrReferenceElement) {
           for (GroovyResolveResult result : ((GrReferenceElement)element).multiResolve(true)) {
-            GroovyPsiElement context = result.getCurrentFileResolveContext();
             PsiElement resolved = result.getElement();
-            if (context instanceof GrImportStatement) {
-              GrImportStatement importStatement = (GrImportStatement)context;
-              unusedImports.remove(importStatement);
-            }
             if (resolved instanceof GrParameter && resolved.getContainingFile() == myFile) {
               usedParams.put((GrParameter)resolved, Boolean.TRUE);
             }
@@ -147,7 +141,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
                 unusedDeclarations.add(highlightInfo);
               }
             }
-            else if (element instanceof GrField && PostHighlightingPass.isFieldUnused((GrField)element, progress, usageHelper)) {
+            else if (element instanceof GrField && isFieldUnused((GrField)element, progress, usageHelper)) {
               HighlightInfo highlightInfo =
                 PostHighlightingPass.createUnusedSymbolInfo(nameId, "Property " + name + " is unused", HighlightInfoType.UNUSED_SYMBOL);
               QuickFixAction.registerQuickFixAction(highlightInfo, new SafeDeleteFix(element));
@@ -164,6 +158,8 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
         super.visitElement(element);
       }
     });
+    final Set<GrImportStatement> unusedImports = new HashSet<GrImportStatement>(PsiUtil.getValidImportStatements(myFile));
+    unusedImports.removeAll(GroovyImportOptimizer.findUsedImports(myFile));
     myUnusedImports = unusedImports;
 
     if (deadCodeEnabled) {
@@ -209,6 +205,26 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
       }
     }
 
+  }
+
+  private static boolean isFieldUnused(GrField field, ProgressIndicator progress, GlobalUsageHelper usageHelper) {
+    if (!PostHighlightingPass.isFieldUnused(field, progress, usageHelper)) return false;
+    final GrAccessorMethod[] getters = field.getGetters();
+    final GrAccessorMethod setter = field.getSetter();
+
+    for (GrAccessorMethod getter : getters) {
+      if (getter.findSuperMethods().length > 0) {
+        return false;
+      }
+    }
+
+    if (setter != null) {
+      if (setter.findSuperMethods().length > 0) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private static boolean isOverriddenOrOverrides(PsiMethod method) {

@@ -76,7 +76,9 @@ public class NameUtil {
         index++;
       }
       String word = name.substring(wordStart, index);
-      array.add(word);
+      if (!StringUtil.isEmptyOrSpaces(word)) {
+        array.add(word);
+      }
     }
     return ArrayUtil.toStringArray(array);
   }
@@ -333,7 +335,7 @@ public class NameUtil {
     if (!Character.isLetterOrDigit(text.charAt(i))) {
       return false;
     }
-    if (i > 0 && (isWordSeparator(text.charAt(i - 1)) || text.charAt(i - 1) == '.')) {
+    if (i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1))) {
       return true;
     }
     return false;

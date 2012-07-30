@@ -6,14 +6,15 @@ import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.ProjectPaths;
-import org.jetbrains.jps.artifacts.Artifact;
-import org.jetbrains.jps.artifacts.LayoutElement;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
 import org.jetbrains.jps.incremental.artifacts.builders.LayoutElementBuildersRegistry;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 
 import java.io.File;
 import java.io.IOException;
@@ -24,8 +25,9 @@ import java.util.*;
  */
 public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private final Project myProject;
-  private final Artifact myArtifact;
+  private final JpsArtifact myArtifact;
   private final int myArtifactId;
+  private final JpsModel myModel;
   private final ModuleRootsIndex myRootsIndex;
   private final ArtifactSourceTimestampStorage myTimestampStorage;
   private Map<String, IntArrayList> myChangedFiles = new HashMap<String, IntArrayList>();
@@ -36,12 +38,13 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   private final File mySrcOutMappingsFile;
   private File myOutSrcMappingsFile;
 
-  public ArtifactSourceFilesState(Artifact artifact, int artifactId, Project project,
-                                  ModuleRootsIndex rootsIndex,
+  public ArtifactSourceFilesState(JpsArtifact artifact, int artifactId, Project project,
+                                  JpsModel model, ModuleRootsIndex rootsIndex,
                                   ArtifactSourceTimestampStorage timestampStorage,
                                   File mappingsDir) {
     myProject = project;
     myArtifact = artifact;
+    myModel = model;
     myRootsIndex = rootsIndex;
     myTimestampStorage = timestampStorage;
     myArtifactId = artifactId;
@@ -82,10 +85,10 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
     myDeletedFiles.clear();
     getOrCreateInstructions().processRoots(new ArtifactRootProcessor() {
       @Override
-      public boolean process(ArtifactSourceRoot root, int rootIndex, Collection<DestinationInfo> destinations) throws IOException {
+      public boolean process(ArtifactSourceRoot root, DestinationInfo destinations) throws IOException {
         final File rootFile = root.getRootFile();
         if (rootFile.exists()) {
-          processRecursively(rootFile, rootIndex, dataManager, root.getFilter(), currentPaths);
+          processRecursively(rootFile, root.getRootIndex(), dataManager, root.getFilter(), currentPaths);
         }
         return true;
       }
@@ -144,8 +147,8 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
   }
 
   private ArtifactInstructionsBuilder computeInstructions() {
-    final LayoutElement rootElement = myArtifact.getRootElement();
-    ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(myProject, new ProjectPaths(myProject));
+    final JpsCompositePackagingElement rootElement = myArtifact.getRootElement();
+    ArtifactInstructionsBuilderContext context = new ArtifactInstructionsBuilderContextImpl(myModel, myRootsIndex, new ProjectPaths(myModel.getProject()));
     final ArtifactInstructionsBuilderImpl instructionsBuilder = new ArtifactInstructionsBuilderImpl(myRootsIndex, myProject.getIgnoredFilePatterns());
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(instructionsBuilder, myArtifact.getOutputPath());
     LayoutElementBuildersRegistry.getInstance().generateInstructions(rootElement, instructionCreator, context);

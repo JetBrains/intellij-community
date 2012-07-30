@@ -15,6 +15,10 @@
  */
 package org.jetbrains.idea.svn.dialogs.browser;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -24,11 +28,13 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserComponent;
+import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
 import org.jetbrains.idea.svn.dialogs.RepositoryTreeNode;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -124,6 +130,25 @@ public class CopyOptionsDialog extends DialogWrapper {
   private void createUI() {
     myMainPanel = new JPanel(new BorderLayout());
     myBrowser = new RepositoryBrowserComponent(SvnVcs.getInstance(myProject));
+
+    final DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new RepositoryBrowserDialog.MkDirAction(myBrowser) {
+      @Override
+      public void update(AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().setText("New Remote Folder...");
+      }
+    });
+    group.add(new RepositoryBrowserDialog.DeleteAction(myBrowser));
+    group.add(new RepositoryBrowserDialog.RefreshAction(myBrowser));
+    final ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu("", group);
+    final JPopupMenu component = popupMenu.getComponent();
+    myBrowser.getRepositoryTree().addMouseListener(new PopupHandler() {
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        component.show(comp, x, y);
+      }
+    });
 
     final Splitter splitter = new Splitter(true);
     splitter.setProportion(0.7f);

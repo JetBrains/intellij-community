@@ -20,6 +20,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +44,19 @@ public class RunContextAction extends BaseRunConfigurationAction {
       }
       runManager.setTemporaryConfiguration(configuration);
     }
-    runManager.setActiveConfiguration(configuration);
-
-    ProgramRunnerUtil.executeConfiguration(context.getProject(), configuration, myExecutor);
+    runManager.setSelectedConfiguration(configuration);
+    Project project = context.getProject();
+    if (configuration.isSingleton()) {
+      ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
+      ExecutionManager.getInstance(project).restartRunProfile(project,
+                                                              myExecutor,
+                                                              activeTarget,
+                                                              configuration,
+                                                              null);
+    } else
+    {
+      ProgramRunnerUtil.executeConfiguration(project, configuration, myExecutor);
+    }
   }
 
   @Override

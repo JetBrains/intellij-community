@@ -197,16 +197,14 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       removeWildcardPatterns();
     }
     try {
-      addWildcardResourcePattern("?*.properties");
-      addWildcardResourcePattern("?*.xml");
-      addWildcardResourcePattern("?*.gif");
-      addWildcardResourcePattern("?*.png");
-      addWildcardResourcePattern("?*.jpeg");
-      addWildcardResourcePattern("?*.jpg");
-      addWildcardResourcePattern("?*.html");
-      addWildcardResourcePattern("?*.dtd");
-      addWildcardResourcePattern("?*.tld");
-      addWildcardResourcePattern("?*.ftl");
+      addWildcardResourcePattern("!?*.java");
+      addWildcardResourcePattern("!?*.form");
+      addWildcardResourcePattern("!?*.class");
+      addWildcardResourcePattern("!?*.groovy");
+      addWildcardResourcePattern("!?*.scala");
+      addWildcardResourcePattern("!?*.flex");
+      addWildcardResourcePattern("!?*.kt");
+      addWildcardResourcePattern("!?*.clj");
     }
     catch (MalformedPatternException e) {
       LOG.error(e);

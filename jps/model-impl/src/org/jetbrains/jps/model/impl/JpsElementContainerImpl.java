@@ -49,6 +49,16 @@ public class JpsElementContainerImpl implements JpsElementContainer {
     return setChild(kind, child);
   }
 
+  @NotNull
+  @Override
+  public <T extends JpsElement, K extends JpsElementKind<T> & JpsElementCreator<T>> T getOrSetChild(@NotNull K kind) {
+    final T child = getChild(kind);
+    if (child == null) {
+      return setChild(kind);
+    }
+    return child;
+  }
+
   @Override
   public <T extends JpsElement> T setChild(JpsElementKind<T> kind, T child) {
     myElements.put(kind, child);

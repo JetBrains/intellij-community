@@ -20,26 +20,35 @@ import java.io.File;
 public class PatchNameChecker {
   public final static int MAX = 100;
   private final String myName;
+  private boolean myPreventsOk;
   private String myError;
   private final String myPath;
 
   public PatchNameChecker(final String name) {
     myPath = name;
     myName = new File(name).getName();
+    myPreventsOk = false;
   }
 
   public boolean nameOk() {
     if (myName == null || myName.length() == 0) {
       myError = "File name cannot be empty";
+      myPreventsOk = true;
       return false;
     } else if (myName.length() > MAX) {
       myError = "File name length cannot exceed " + MAX + " characters";
+      myPreventsOk = true;
       return false;
     } else if (new File(myPath).exists()) {
       myError = "File with the same name already exists";
+      myPreventsOk = false;
       return false;
     }
     return true;
+  }
+
+  public boolean isPreventsOk() {
+    return myPreventsOk;
   }
 
   public String getError() {

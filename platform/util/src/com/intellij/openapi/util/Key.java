@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.util.containers.ConcurrentWeakValueHashMap;
+import com.intellij.util.containers.ConcurrentWeakValueIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +34,7 @@ public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
   private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
-  private static final ConcurrentWeakValueHashMap<Integer, Key> allKeys = new ConcurrentWeakValueHashMap<Integer, Key>();
+  private static final ConcurrentWeakValueIntObjectHashMap<Key> allKeys = new ConcurrentWeakValueIntObjectHashMap<Key>();
 
   public Key(@NotNull @NonNls String name) {
     myName = name;

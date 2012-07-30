@@ -21,6 +21,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -32,7 +33,6 @@ import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -527,9 +527,9 @@ public class SingleInspectionProfilePanel extends JPanel {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)event.getPath().getLastPathComponent();
         final InspectionProfileImpl parentProfile = (InspectionProfileImpl)selected.getParentProfile();
         if (parentProfile != null) {
-          parentProfile.getExpandedNodes().collapseNode(node);
+          parentProfile.getExpandedNodes().saveVisibleState(myTree);
         }
-        selected.getExpandedNodes().collapseNode(node);
+        selected.getExpandedNodes().saveVisibleState(myTree);
       }
 
       public void treeExpanded(TreeExpansionEvent event) {
@@ -729,7 +729,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         try {
           final HintHint hintHint = new HintHint(myBrowser, new Point(0, 0));
           hintHint.setFont(myBrowser.getFont());
-          myBrowser.read(new StringReader(SearchUtil.markup(IdeTooltipManager.formatHtml(description, hintHint), myProfileFilter.getFilter())), null);
+          myBrowser.read(new StringReader(SearchUtil.markup(HintUtil.prepareHintText(description, hintHint), myProfileFilter.getFilter())), null);
         }
         catch (IOException e2) {
           try {

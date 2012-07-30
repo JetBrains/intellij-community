@@ -139,23 +139,23 @@ public class LocalResourceManager extends ResourceManager {
     final GlobalSearchScope scope = GlobalSearchScope.projectScope(myModule.getProject());
 
     for (ResourceType resourceType : AndroidResourceUtil.ALL_VALUE_RESOURCE_TYPES) {
-      final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerEntry(resourceType.getName());
+      final ResourceEntry typeMarkerEntry = AndroidValueResourcesIndex.createTypeMarkerKey(resourceType.getName());
 
-      for (Set<ResourceEntry> entrySet : index.getValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, scope)) {
-        for (ResourceEntry entry : entrySet) {
-          final Collection<VirtualFile> files = index.getContainingFiles(AndroidValueResourcesIndex.INDEX_ID, entry, scope);
-
-          for (VirtualFile file : files) {
+      index.processValues(AndroidValueResourcesIndex.INDEX_ID, typeMarkerEntry, null, new FileBasedIndex.ValueProcessor<Set<AndroidValueResourcesIndex.MyResourceInfo>>() {
+        @Override
+        public boolean process(VirtualFile file, Set<AndroidValueResourcesIndex.MyResourceInfo> infos) {
+          for (AndroidValueResourcesIndex.MyResourceInfo info : infos) {
             Set<String> resourcesInFile = file2Types.get(file);
 
             if (resourcesInFile == null) {
               resourcesInFile = new HashSet<String>();
               file2Types.put(file, resourcesInFile);
             }
-            resourcesInFile.add(entry.getType());
+            resourcesInFile.add(info.getResourceEntry().getType());
           }
+          return true;
         }
-      }
+      }, scope);
     }
     final Set<String> result = new HashSet<String>();
 
@@ -285,7 +285,7 @@ public class LocalResourceManager extends ResourceManager {
   @NotNull
   public List<PsiElement> findResourcesByFieldName(@NotNull String resClassName, @NotNull String fieldName) {
     List<PsiElement> targets = new ArrayList<PsiElement>();
-    if (resClassName.equals("id")) {
+    if (resClassName.equals(ResourceType.ID.getName())) {
       targets.addAll(findIdDeclarations(fieldName));
     }
     for (PsiFile file : findResourceFiles(resClassName, fieldName, false)) {
@@ -294,12 +294,12 @@ public class LocalResourceManager extends ResourceManager {
     for (ResourceElement element : findValueResources(resClassName, fieldName, false)) {
       targets.add(element.getName().getXmlAttributeValue());
     }
-    if (resClassName.equals("attr")) {
+    if (resClassName.equals(ResourceType.ATTR.getName())) {
       for (Attr attr : findAttrs(fieldName)) {
         targets.add(attr.getName().getXmlAttributeValue());
       }
     }
-    else if (resClassName.equals("styleable")) {
+    else if (resClassName.equals(ResourceType.STYLEABLE.getName())) {
       for (DeclareStyleable styleable : findStyleables(fieldName)) {
         targets.add(styleable.getName().getXmlAttributeValue());
       }

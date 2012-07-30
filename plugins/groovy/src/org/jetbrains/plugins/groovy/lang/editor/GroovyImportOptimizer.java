@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -30,14 +29,21 @@ import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.lang.psi.*;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassResolverProcessor;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.lang.editor.GroovyImportHelper.isImplicitlyImported;
+import static org.jetbrains.plugins.groovy.lang.editor.GroovyImportHelper.processImports;
 
 /**
  * @author ven
@@ -59,7 +65,7 @@ public class GroovyImportOptimizer implements ImportOptimizer {
     return file instanceof GroovyFile;
   }
 
-  private static void processFile(@Nullable PsiFile file,
+  private static void processFile(@Nullable final PsiFile file,
                                   @Nullable final Set<String> importedClasses,
                                   @Nullable final Set<String> staticallyImportedMembers,
                                   @Nullable final Set<GrImportStatement> usedImports,
@@ -69,16 +75,14 @@ public class GroovyImportOptimizer implements ImportOptimizer {
                                   @Nullable final Map<String, String> annotations) {
     if (!(file instanceof GroovyFile)) return;
 
-    ((GroovyFile)file).accept(new GroovyRecursiveElementVisitor() {
-      public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
-        visitRefElement(refElement);
-        super.visitCodeReferenceElement(refElement);
-      }
-
-      public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
-        visitRefElement(referenceExpression);
-        super.visitReferenceExpression(referenceExpression);
-      }
+    ((GroovyFile)file).accept(new PsiRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitElement(PsiElement element) {
+          super.visitElement(element);
+          if (element instanceof GrReferenceElement) {
+            visitRefElement((GrReferenceElement)element);
+          }
+        }
 
       private void visitRefElement(GrReferenceElement refElement) {
         final GroovyResolveResult[] resolveResults = refElement.multiResolve(false);
@@ -89,8 +93,12 @@ public class GroovyImportOptimizer implements ImportOptimizer {
 
           if (context instanceof GrImportStatement) {
             final GrImportStatement importStatement = (GrImportStatement)context;
-            if (usedImports != null) {
+
+            if (usedImports != null && isImportUsed(refElement, element)) {
               usedImports.add(importStatement);
+            }
+            if (isImplicitlyImported(element, refElement.getReferenceName(), (GroovyFile)file)) {
+              addImplicitClass(element);
             }
 
             if (!importStatement.isAliasedImport() && !isAnnotatedImport(importStatement)) {
@@ -157,18 +165,38 @@ public class GroovyImportOptimizer implements ImportOptimizer {
             }
           }
           else if (context == null && !(refElement.getParent() instanceof GrImportStatement) && refElement.getQualifier() == null) {
-            final String qname = getTargetQualifiedName(element);
-            if (qname != null) {
-              if (implicitlyImported != null) {
-                implicitlyImported.add(qname);
-              }
-              if (importedClasses != null) {
-                importedClasses.add(qname);
-              }
-            }
+            addImplicitClass(element);
           }
         }
       }
+
+      private void addImplicitClass(PsiElement element) {
+        final String qname = getTargetQualifiedName(element);
+        if (qname != null) {
+          if (implicitlyImported != null) {
+            implicitlyImported.add(qname);
+          }
+          if (importedClasses != null) {
+            importedClasses.add(qname);
+          }
+        }
+      }
+
+      /**
+       * checks if import for implicitly imported class is needed
+       */
+      private boolean isImportUsed(GrReferenceElement refElement, PsiElement element) {
+        if (isImplicitlyImported(element, refElement.getReferenceName(), (GroovyFile)file)) {
+          final ClassResolverProcessor processor =
+            new ClassResolverProcessor(refElement.getReferenceName(), refElement, ResolverProcessor.RESOLVE_KINDS_CLASS);
+          processImports(ResolveState.initial(), null, refElement, processor, ((GroovyFile)file).getImportStatements(), true);
+          if (!processor.hasCandidates()) {
+            return false;
+          }
+        }
+        return true;
+      }
+
     });
   }
 

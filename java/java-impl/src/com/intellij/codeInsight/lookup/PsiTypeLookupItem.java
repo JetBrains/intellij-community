@@ -16,11 +16,15 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.*;
+import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.errordialog.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.util.PsiUtil;
@@ -35,6 +39,7 @@ import java.util.Set;
  * @author peter
  */
 public class PsiTypeLookupItem extends LookupItem {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.PsiTypeLookupItem");
   public static final ClassConditionKey<PsiTypeLookupItem> CLASS_CONDITION_KEY = ClassConditionKey.create(PsiTypeLookupItem.class);
   private final boolean myDiamond;
   private final int myBracketsCount;
@@ -158,10 +163,6 @@ public class PsiTypeLookupItem extends LookupItem {
 
     PsiTypeLookupItem item = doCreateItem(type, context, dim);
 
-    if (dim > 0) {
-      item.setAttribute(TAIL_TEXT_ATTR, " " + StringUtil.repeat("[]", dim));
-      item.setAttribute(TAIL_TEXT_SMALL_ATTR, "");
-    }
     item.setAttribute(TYPE, original);
     return item;
   }
@@ -187,10 +188,10 @@ public class PsiTypeLookupItem extends LookupItem {
         Set<String> allStrings = new HashSet<String>();
         String lookupString = psiClass.getName();
         allStrings.add(lookupString);
-        if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass)) {
+        if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
           // inner class name should be shown qualified if its not accessible by single name
           PsiClass aClass = psiClass.getContainingClass();
-          while (aClass != null) {
+          while (aClass != null && !PsiUtil.isInnerClass(aClass)) {
             lookupString = aClass.getName() + '.' + lookupString;
             allStrings.add(lookupString);
             aClass = aClass.getContainingClass();
@@ -228,10 +229,9 @@ public class PsiTypeLookupItem extends LookupItem {
       presentation.setItemText(((PsiType)object).getCanonicalText());
       presentation.setItemTextBold(getAttribute(LookupItem.HIGHLIGHTED_ATTR) != null || object instanceof PsiPrimitiveType);
 
-      String tailText = (String)getAttribute(LookupItem.TAIL_TEXT_ATTR);
-      if (tailText != null) {
-        presentation.setTailText(tailText, getAttribute(LookupItem.TAIL_TEXT_SMALL_ATTR) != null);
-      }
+    }
+    if (myBracketsCount > 0) {
+      presentation.setTailText(StringUtil.repeat("[]", myBracketsCount) + StringUtil.notNullize(presentation.getTailText()), true);
     }
   }
 
@@ -239,6 +239,14 @@ public class PsiTypeLookupItem extends LookupItem {
     if (aClass.getQualifiedName() == null) return;
     PsiFile file = context.getFile();
     int newTail = JavaCompletionUtil.insertClassReference(aClass, file, context.getStartOffset(), context.getTailOffset());
+    if (newTail > context.getDocument().getTextLength() || newTail < 0) {
+      LOG.error(LogMessageEx.createEvent("Invalid offset after insertion ",
+                                         "offset=" + newTail + "\n" +
+                                         "document=" + context.getDocument() + "\n" +
+                                         DebugUtil.currentStackTrace(),
+                                         new Attachment(context.getDocument())));
+
+    }
     context.setTailOffset(newTail);
     JavaCompletionUtil.shortenReference(file, context.getStartOffset());
     PostprocessReformattingAspect.getInstance(context.getProject()).doPostponedFormatting();

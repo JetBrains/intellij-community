@@ -111,6 +111,7 @@ public class ConfigImportHelper {
     return new ConfigImportSettings();
   }
 
+  @Nullable
   private static File findOldConfigDir(String newConfigPath, @Nullable String customPathSelector) {
     final File configDir = new File(newConfigPath);
     final File selectorDir = CONFIG_RELATED_PATH.length() == 0 ? configDir : configDir.getParentFile();
@@ -130,7 +131,7 @@ public class ConfigImportHelper {
     for (File file : parent.listFiles(new FilenameFilter() {
       @Override
       public boolean accept(File file, String name) {
-        return name.startsWith(prefix);
+        return StringUtil.startsWithIgnoreCase(name, prefix);
       }
     })) {
       final File options = new File(file, CONFIG_RELATED_PATH + OPTIONS_XML);

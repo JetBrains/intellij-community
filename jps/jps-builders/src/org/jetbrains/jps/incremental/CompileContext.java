@@ -3,9 +3,13 @@ package org.jetbrains.jps.incremental;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.*;
+import org.jetbrains.jps.AnnotationProcessingProfile;
+import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectChunks;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.model.module.JpsModule;
 
 /**
  * @author Eugene Zhuravlev
@@ -32,7 +36,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   boolean isCompilingTests();
 
   @NotNull
-  AnnotationProcessingProfile getAnnotationProcessingProfile(Module module);
+  AnnotationProcessingProfile getAnnotationProcessingProfile(JpsModule module);
 
 
   boolean shouldDifferentiate(ModuleChunk chunk, boolean forTests);
@@ -51,7 +55,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
 
   long getCompilationStartStamp();
 
-  void markNonIncremental(Module module);
+  void markNonIncremental(JpsModule module);
 
-  void clearNonIncrementalMark(Module module);
+  void clearNonIncrementalMark(JpsModule module);
 }

@@ -159,14 +159,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
     applianceManager.addListener(myVisualSizeManager);
     applianceManager.addListener(new SoftWrapAwareDocumentParsingListenerAdapter() {
       @Override
-      public void onCacheUpdateStart(@NotNull IncrementalCacheUpdateEvent event) {
-        for (SoftWrapChangeListener listener : mySoftWrapListeners) {
-          listener.recalculationStarts();
-        }
-      }
-
-      @Override
-      public void onRecalculationEnd(@NotNull IncrementalCacheUpdateEvent event, boolean normal) {
+      public void recalculationEnds() {
         for (SoftWrapChangeListener listener : mySoftWrapListeners) {
           listener.recalculationEnds();
         }

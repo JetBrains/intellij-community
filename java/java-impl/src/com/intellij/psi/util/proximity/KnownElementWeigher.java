@@ -71,7 +71,7 @@ public class KnownElementWeigher extends ProximityWeigher {
   }
 
   private static Comparable getJdkClassProximity(@Nullable PsiClass element) {
-    if (element == null) {
+    if (element == null || element.getContainingClass() != null) {
       return 0;
     }
 

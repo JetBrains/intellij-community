@@ -3,12 +3,18 @@ package org.jetbrains.jps.model.serialization.java;
 import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelLoaderExtension;
+import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementLoader;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author nik
@@ -18,6 +24,26 @@ public class JpsJavaModelLoaderExtension extends JpsModelLoaderExtension {
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
     loadExplodedDirectoryExtension(module, rootModel);
     loadJavaModuleExtension(module, rootModel);
+  }
+
+  @Override
+  public void loadProjectRoots(JpsProject project, Element rootManagerElement) {
+    loadJavaProjectExtensions(project, rootManagerElement);
+  }
+
+  private static void loadJavaProjectExtensions(JpsProject project, Element rootManagerElement) {
+    JpsJavaProjectExtension extension = JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(project);
+    final Element output = rootManagerElement.getChild("output");
+    if (output != null) {
+      String url = output.getAttributeValue("url");
+      if (url != null) {
+        extension.setOutputUrl(url);
+      }
+    }
+    String languageLevel = rootManagerElement.getAttributeValue("languageLevel");
+    if (languageLevel != null) {
+      extension.setLanguageLevel(LanguageLevel.valueOf(languageLevel));
+    }
   }
 
   @Override
@@ -51,6 +77,11 @@ public class JpsJavaModelLoaderExtension extends JpsModelLoaderExtension {
       return JpsAnnotationRootType.INSTANCE;
     }
     return null;
+  }
+
+  @Override
+  public List<? extends JpsPackagingElementLoader<?>> getPackagingElementLoaders() {
+    return Arrays.asList(new JpsModuleOutputPackagingElementLoader(), new JpsTestModuleOutputPackagingElementLoader());
   }
 
   private static void loadExplodedDirectoryExtension(JpsModule module, Element rootModelComponent) {
@@ -89,6 +120,29 @@ public class JpsJavaModelLoaderExtension extends JpsModelLoaderExtension {
     final Element roots = rootModelComponent.getChild(rootsTagName);
     for (Element root : JDOMUtil.getChildren(roots, "root")) {
       result.addUrl(root.getAttributeValue("url"));
+    }
+  }
+
+  private static class JpsModuleOutputPackagingElementLoader extends JpsPackagingElementLoader<JpsProductionModuleOutputPackagingElement> {
+    private JpsModuleOutputPackagingElementLoader() {
+      super("module-output");
+    }
+
+    @Override
+    public JpsProductionModuleOutputPackagingElement load(Element element) {
+      return JpsJavaExtensionService.getInstance().createProductionModuleOutput(JpsElementFactory.getInstance().createModuleReference(element.getAttributeValue("name")));
+    }
+  }
+
+  private static class JpsTestModuleOutputPackagingElementLoader extends JpsPackagingElementLoader<JpsTestModuleOutputPackagingElement> {
+    private JpsTestModuleOutputPackagingElementLoader() {
+      super("module-test-output");
+    }
+
+    @Override
+    public JpsTestModuleOutputPackagingElement load(Element element) {
+      return JpsJavaExtensionService.getInstance().createTestModuleOutput(
+        JpsElementFactory.getInstance().createModuleReference(element.getAttributeValue("name")));
     }
   }
 }

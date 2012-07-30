@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
+  public static final int FULL_DIFF_DIVIDER_POLYGONS_OFFSET = 3;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.external.DiffManagerImpl");
 
   private static final Externalizer<String> TOOL_PATH_UPDATE = new Externalizer<String>() {
@@ -137,7 +138,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
   }
 
   public DiffPanel createDiffPanel(Window window, Project project) {
-    return new DiffPanelImpl(window, project, true, true);
+    return new DiffPanelImpl(window, project, true, true, FULL_DIFF_DIVIDER_POLYGONS_OFFSET);
   }
 
   @Override

@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 /**
@@ -52,9 +54,10 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   private final String branch;
   private final Date myAuthorTime;
   private final boolean myNoCache;
+  @NotNull private final Collection<String> myParents;
 
   public GitFileRevision(@NotNull Project project, @NotNull FilePath path, @NotNull GitRevisionNumber revision, boolean noCache) {
-    this(project, path, revision, null, null, null, null, noCache);
+    this(project, path, revision, null, null, null, null, noCache, Collections.<String>emptyList());
   }
 
   public GitFileRevision(@NotNull Project project,
@@ -62,7 +65,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
                          @NotNull GitRevisionNumber revision,
                          @Nullable Pair<Pair<String, String>, Pair<String, String>> authorAndCommitter,
                          @Nullable String message,
-                         @Nullable String branch, final Date authorTime, boolean noCache) {
+                         @Nullable String branch, @Nullable final Date authorTime, boolean noCache, @NotNull Collection<String> parents) {
     this.project = project;
     this.path = path;
     this.revision = revision;
@@ -71,6 +74,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     this.branch = branch;
     myAuthorTime = authorTime;
     myNoCache = noCache;
+    myParents = parents;
   }
 
   /**
@@ -152,4 +156,15 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
   public String toString() {
     return path.getName() + ":" + revision.getShortRev();
   }
+
+  @NotNull
+  public Collection<String> getParents() {
+    return myParents;
+  }
+
+  @NotNull
+  public String getHash() {
+    return revision.getRev();
+  }
+
 }

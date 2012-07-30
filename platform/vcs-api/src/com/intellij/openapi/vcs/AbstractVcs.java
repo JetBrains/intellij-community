@@ -272,6 +272,10 @@ public abstract class AbstractVcs<ComList extends CommittedChangeList> extends S
     }
   }
 
+  public boolean isTrackingUnchangedContent() {
+    return false;
+  }
+
   public static boolean fileInVcsByFileStatus(final Project project, final FilePath path) {
     final VirtualFile virtualFile = path.getVirtualFile();
     if (virtualFile != null) {

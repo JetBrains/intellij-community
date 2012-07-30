@@ -18,10 +18,13 @@ package com.intellij.compiler.server.impl;
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -52,26 +55,53 @@ public class CompileServerClasspathManager {
         classpath.add(baseFile);
       }
       else if (baseFile.isDirectory()) {
-        final String relativePath = serverPlugin.getJarPath();
-
-        final File jarFile = relativePath.startsWith("../")
-                             ? new File(baseFile, relativePath.substring(3))
-                             : new File(new File(baseFile, "lib"), relativePath);
-        if (jarFile.exists()) {
-          classpath.add(jarFile);
-        }
-        else {
-          //development mode: add directory out/classes/production/<jar-name> to classpath, assuming that jar-name is equal to module name
-          final String moduleName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(relativePath));
-          final File dir = new File(baseFile.getParentFile(), moduleName);
-          if (!dir.exists()) {
-            LOG.warn("Cannot add plugin " + pluginId + " to compile server classpath: " + jarFile.getAbsolutePath() + " and " +
-                     dir.getAbsolutePath() + " don't exist");
+        for (String relativePath : StringUtil.split(serverPlugin.getClasspath(), ";")) {
+          final File jarFile = new File(new File(baseFile, "lib"), relativePath);
+          if (jarFile.exists()) {
+            classpath.add(jarFile);
           }
-          classpath.add(dir);
+          else {
+            //development mode: add directory out/classes/production/<jar-name> to classpath, assuming that jar-name is equal to module name
+            final String moduleName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(relativePath));
+            final File dir = new File(baseFile.getParentFile(), moduleName);
+            if (dir.exists()) {
+              classpath.add(dir);
+            }
+            else {
+              //looks like <jar-name> refers to a library, try to find it under <plugin-dir>/lib
+              File pluginDir = getPluginDir(plugin);
+              if (pluginDir != null) {
+                File libraryFile = new File(pluginDir, "lib" + File.separator + PathUtil.getFileName(relativePath));
+                if (libraryFile.exists()) {
+                  classpath.add(libraryFile);
+                }
+                else {
+                  LOG.error("Cannot add plugin '" + plugin.getName() + "' to external compiler classpath: library " +
+                            libraryFile.getAbsolutePath() + " not found");
+                }
+              }
+              else {
+                LOG.error("Cannot add plugin '" + plugin.getName() + "' to external compiler classpath: home directory of plugin not found");
+              }
+            }
+          }
         }
+
       }
     }
     return classpath;
+  }
+
+  @Nullable
+  private static File getPluginDir(IdeaPluginDescriptor plugin) {
+    String pluginDirName = StringUtil.getShortName(plugin.getPluginId().getIdString());
+    String[] roots = {PathManager.getHomePath(), PathManager.getHomePath() + File.separator + "community"};
+    for (String root : roots) {
+      File pluginDir = new File(root, "plugins" + File.separator + pluginDirName);
+      if (pluginDir.isDirectory()) {
+        return pluginDir;
+      }
+    }
+    return null;
   }
 }

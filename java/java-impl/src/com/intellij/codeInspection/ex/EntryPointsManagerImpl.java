@@ -26,6 +26,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.ide.DataManager;
@@ -367,6 +368,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
       protected void doOKAction() {
         ADDITIONAL_ANNOTATIONS.clear();
         ADDITIONAL_ANNOTATIONS.addAll(list);
+        DaemonCodeAnalyzer.getInstance(myProject).restart();
         super.doOKAction();
       }
     }.show();

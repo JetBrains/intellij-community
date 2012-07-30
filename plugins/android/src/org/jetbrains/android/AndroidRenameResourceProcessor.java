@@ -41,6 +41,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.android.dom.resources.ResourceElement;
+import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
 import org.jetbrains.android.dom.wrappers.ValueResourceElementWrapper;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
@@ -67,23 +68,28 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
   public boolean canProcessElement(@NotNull final PsiElement element) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        if (element instanceof PsiFile) {
-          return AndroidFacet.getInstance(element) != null && AndroidResourceUtil.isInResourceSubdirectory((PsiFile)element, null);
+        final PsiElement element1 = LazyValueResourceElementWrapper.computeLazyElement(element);
+        if (element1 == null) {
+          return false;
         }
-        else if (element instanceof PsiField) {
-          PsiField field = (PsiField)element;
+
+        if (element1 instanceof PsiFile) {
+          return AndroidFacet.getInstance(element1) != null && AndroidResourceUtil.isInResourceSubdirectory((PsiFile)element1, null);
+        }
+        else if (element1 instanceof PsiField) {
+          PsiField field = (PsiField)element1;
           if (AndroidResourceUtil.isResourceField(field)) {
             return AndroidResourceUtil.findResourcesByField(field).size() > 0;
           }
         }
-        else if (element instanceof XmlAttributeValue) {
-          LocalResourceManager manager = LocalResourceManager.getInstance(element);
+        else if (element1 instanceof XmlAttributeValue) {
+          LocalResourceManager manager = LocalResourceManager.getInstance(element1);
           if (manager != null) {
-            if (AndroidResourceUtil.isIdDeclaration((XmlAttributeValue)element)) {
+            if (AndroidResourceUtil.isIdDeclaration((XmlAttributeValue)element1)) {
               return true;
             }
             // then it is value resource
-            XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+            XmlTag tag = PsiTreeUtil.getParentOfType(element1, XmlTag.class);
             return tag != null && manager.getValueResourceType(tag) != null;
           }
         }
@@ -94,22 +100,29 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
 
   @Override
   public void prepareRenaming(PsiElement element, String newName, Map<PsiElement, String> allRenames) {
-    AndroidFacet facet = AndroidFacet.getInstance(element);
-    assert facet != null;
-    if (element instanceof PsiFile) {
-      prepareResourceFileRenaming((PsiFile)element, newName, allRenames, facet);
+    final PsiElement element1 = LazyValueResourceElementWrapper.computeLazyElement(element);
+    if (element1 == null) {
+      return;
     }
-    else if (element instanceof XmlAttributeValue) {
-      XmlAttributeValue value = (XmlAttributeValue)element;
+
+    // todo: support renaming alternative value resources
+
+    AndroidFacet facet = AndroidFacet.getInstance(element1);
+    assert facet != null;
+    if (element1 instanceof PsiFile) {
+      prepareResourceFileRenaming((PsiFile)element1, newName, allRenames, facet);
+    }
+    else if (element1 instanceof XmlAttributeValue) {
+      XmlAttributeValue value = (XmlAttributeValue)element1;
       if (AndroidResourceUtil.isIdDeclaration(value)) {
         prepareIdRenaming(value, newName, allRenames, facet);
       }
       else {
-        prepareValueResourceRenaming(element, newName, allRenames, facet);
+        prepareValueResourceRenaming(element1, newName, allRenames, facet);
       }
     }
-    else if (element instanceof PsiField) {
-      prepareResourceFieldRenaming((PsiField)element, newName, allRenames);
+    else if (element1 instanceof PsiField) {
+      prepareResourceFieldRenaming((PsiField)element1, newName, allRenames);
     }
   }
 
@@ -125,8 +138,10 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
       }
     }
     String name = AndroidResourceUtil.getResourceNameByReferenceText(newName);
-    for (PsiField resField : AndroidResourceUtil.findIdFields(value)) {
-      allRenames.put(resField, name);
+    if (name != null) {
+      for (PsiField resField : AndroidResourceUtil.findIdFields(value)) {
+        allRenames.put(resField, AndroidResourceUtil.getFieldNameByResourceName(name));
+      }
     }
   }
 
@@ -186,7 +201,7 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     }
     PsiField[] resFields = AndroidResourceUtil.findResourceFieldsForValueResource(tag, false);
     for (PsiField resField : resFields) {
-      allRenames.put(resField, newName);
+      allRenames.put(resField, AndroidResourceUtil.getFieldNameByResourceName(newName));
     }
   }
 
@@ -226,7 +241,7 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     PsiField[] resFields = AndroidResourceUtil.findResourceFieldsForFileResource(file, false);
     for (PsiField resField : resFields) {
       String newFieldName = AndroidCommonUtils.getResourceName(type, newName);
-      allRenames.put(resField, newFieldName);
+      allRenames.put(resField, AndroidResourceUtil.getFieldNameByResourceName(newFieldName));
     }
   }
 

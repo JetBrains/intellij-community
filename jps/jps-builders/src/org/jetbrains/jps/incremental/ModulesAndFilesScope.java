@@ -1,9 +1,10 @@
 package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.Project;
-import org.jetbrains.jps.artifacts.Artifact;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.util.Collection;
@@ -21,13 +22,13 @@ public class ModulesAndFilesScope extends CompileScope {
   private final Map<String, Set<File>> myFiles;
   private final boolean myForcedCompilation;
 
-  public ModulesAndFilesScope(Project project, Collection<Module> modules, Map<String, Set<File>> files, Set<Artifact> artifacts,
-                              boolean isForcedCompilation) {
-    super(project, artifacts);
+  public ModulesAndFilesScope(Project project, JpsProject jpsProject, Collection<JpsModule> modules, Map<String, Set<File>> files,
+                              Set<JpsArtifact> artifacts, boolean isForcedCompilation) {
+    super(project, jpsProject, artifacts);
     myFiles = files;
     myForcedCompilation = isForcedCompilation;
     myModules = new HashSet<String>();
-    for (Module module : modules) {
+    for (JpsModule module : modules) {
       myModules.add(module.getName());
     }
   }

@@ -72,6 +72,7 @@ public class LowLevelSearchUtil {
     TreeElement leafNode = null;
     ASTNode scopeNode = scope.getNode();
     boolean useTree = scopeNode != null;
+    assert scope.isValid();
 
     int start;
     if (useTree) {
@@ -87,6 +88,7 @@ public class LowLevelSearchUtil {
         leafElement = scope.findElementAt(offset);
       }
       if (leafElement == null) return true;
+      assert leafElement.isValid();
       start = offset - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
     }
     if (start < 0) {

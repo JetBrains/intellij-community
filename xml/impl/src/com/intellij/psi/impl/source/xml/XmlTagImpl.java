@@ -22,7 +22,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -59,9 +58,7 @@ import com.intellij.xml.XmlExtension;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.impl.dtd.XmlNSDescriptorImpl;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
-import com.intellij.xml.index.IndexedRelevantResource;
 import com.intellij.xml.index.XmlNamespaceIndex;
-import com.intellij.xml.index.XsdNamespaceBuilder;
 import com.intellij.xml.util.XmlTagUtil;
 import com.intellij.xml.util.XmlUtil;
 import gnu.trove.THashMap;
@@ -153,13 +150,17 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     String prefix = getNamespacePrefix();
 
     TagNameReference startTagRef = TagNameReference.createTagNameReference(this, startTagName, true);
-    refs.add(startTagRef);
+    if (startTagRef != null) {
+      refs.add(startTagRef);
+    }
     if (prefix.length() > 0) {
       refs.add(createPrefixReference(startTagName, prefix, startTagRef));
     }
     if (endTagName != null) {
       TagNameReference endTagRef = TagNameReference.createTagNameReference(this, endTagName, false);
-      refs.add(endTagRef);
+      if (endTagRef != null) {
+        refs.add(endTagRef);
+      }
       prefix = XmlUtil.findPrefixByQualifiedName(endTagName.getText());
       if (StringUtil.isNotEmpty(prefix)) {
         refs.add(createPrefixReference(endTagName, prefix, endTagRef));
@@ -326,7 +327,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(final String namespace,
-                                                                     final String version,
+                                                                     @Nullable final String version,
                                                                      final String fileLocation,
                                                                      Map<String, CachedValue<XmlNSDescriptor>> map) {
     if (map == null) map = new THashMap<String, CachedValue<XmlNSDescriptor>>();
@@ -385,7 +386,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private XmlNSDescriptor getImplicitNamespaceDescriptor(String ns) {
     PsiFile file = getContainingFile();
     if (file == null) return null;
-    Module module = ModuleUtil.findModuleForPsiElement(file);
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
     if (module != null) {
       for (ImplicitNamespaceDescriptorProvider provider : Extensions.getExtensions(ImplicitNamespaceDescriptorProvider.EP_NAME)) {
         XmlNSDescriptor nsDescriptor = provider.getNamespaceDescriptor(module, ns, file);
@@ -408,9 +409,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       return (XmlFile)psiFile;
     }
 
-    IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
-      XmlNamespaceIndex.guessSchema(namespace, myLocalName, version, ModuleUtilCore.findModuleForPsiElement(file));
-    return resource == null ? null : (XmlFile)file.getManager().findFile(resource.getFile());
+    return XmlNamespaceIndex.guessSchema(namespace, myLocalName, version, file);
   }
 
   @Nullable
@@ -655,7 +654,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   @NotNull
-  public XmlTag[] findSubTags(final String name, final String namespace) {
+  public XmlTag[] findSubTags(final String name, @Nullable final String namespace) {
     final XmlTag[] subTags = getSubTags();
     final List<XmlTag> result = new ArrayList<XmlTag>();
     for (final XmlTag subTag : subTags) {
@@ -1146,7 +1145,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
         final XmlElementDescriptor parentDescriptor = getDescriptor();
         final XmlTag[] subTags = getSubTags();
         final PsiElement declaration = parentDescriptor != null ? parentDescriptor.getDeclaration() : null;
-        // filtring out generated dtds
+        // filtering out generated dtds
         if (declaration != null &&
             declaration.getContainingFile() != null &&
             declaration.getContainingFile().isPhysical() &&

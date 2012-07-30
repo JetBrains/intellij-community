@@ -16,6 +16,7 @@
 package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
+import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
@@ -30,7 +31,7 @@ import java.util.EnumSet;
 public class CompoundDimensionProperty extends CompoundProperty {
   private ResourceRenderer myRenderer = new ResourceRenderer(EnumSet.of(AttributeFormat.Dimension)) {
     @Override
-    protected void formatValue(String value) {
+    protected void formatValue(RadComponent component, String value) {
       myColoredComponent.append("[");
       if (!StringUtil.isEmpty(value)) {
         int index = 0;
@@ -44,7 +45,7 @@ public class CompoundDimensionProperty extends CompoundProperty {
               myColoredComponent.append("?", SimpleTextAttributes.EXCLUDED_ATTRIBUTES);
             }
             else {
-              super.formatValue(childValue);
+              super.formatValue(component, childValue);
             }
           }
         }

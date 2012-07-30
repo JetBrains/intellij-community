@@ -28,6 +28,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class DiffDivider extends JComponent {
+  public static final int MERGE_DIVIDER_POLYGONS_OFFSET = 1;
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.util.DiffDivider");
   private final Editor[] myEditors = new Editor[2];
   private final FragmentSide myLeftSide;
@@ -72,7 +73,7 @@ public class DiffDivider extends JComponent {
 
   public void listenEditors(@NotNull EditingSides sides) {
     stopListenEditors();
-    myPaint = new DiffDividerPaint(sides, myLeftSide);
+    myPaint = new DiffDividerPaint(sides, myLeftSide, MERGE_DIVIDER_POLYGONS_OFFSET);
     myEditors[0] = sides.getEditor(FragmentSide.SIDE1);
     myEditors[1] = sides.getEditor(FragmentSide.SIDE2);
     if (myEditors[0] == null || myEditors[1] == null) {

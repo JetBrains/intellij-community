@@ -21,7 +21,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
@@ -134,9 +134,14 @@ public abstract class FindUsagesHandler {
   public void processUsagesInText(@NotNull final PsiElement element,
                                   @NotNull Processor<UsageInfo> processor,
                                   @NotNull GlobalSearchScope searchScope) {
-    Collection<String> stringToSearch = getStringsToSearch(element);
+    Collection<String> stringToSearch = ApplicationManager.getApplication().runReadAction(new NullableComputable<Collection<String>>() {
+      @Override
+      public Collection<String> compute() {
+        return getStringsToSearch(element);
+      }
+    });
     if (stringToSearch == null) return;
-    final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new Computable<TextRange>() {
+    final TextRange elementTextRange = ApplicationManager.getApplication().runReadAction(new NullableComputable<TextRange>() {
       @Override
       public TextRange compute() {
         if (!element.isValid()) return null;

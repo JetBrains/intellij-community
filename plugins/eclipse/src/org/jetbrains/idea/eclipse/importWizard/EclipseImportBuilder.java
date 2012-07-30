@@ -411,11 +411,15 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   }
 
   public Parameters getParameters() {
+    return getParameters(getCurrentProject());
+  }
+
+  public Parameters getParameters(final Project project) {
     if (parameters == null) {
       parameters = new Parameters();
       parameters.existingModuleNames = new HashSet<String>();
-      if (isUpdate()) {
-        for (Module module : ModuleManager.getInstance(getCurrentProject()).getModules()) {
+      if (isUpdate() && project != null) {
+        for (Module module : ModuleManager.getInstance(project).getModules()) {
           parameters.existingModuleNames.add(module.getName());
         }
       }

@@ -160,10 +160,9 @@ public class TargetElementUtilBase {
     if (activeLookup != null && (flags & LOOKUP_ITEM_ACCEPTED) != 0) {
       LookupElement item = activeLookup.getCurrentItem();
       final PsiElement psi = item == null ? null : CompletionUtil.getTargetElement(item);
-      if (psi != null && !psi.isValid()) {
-        throw new AssertionError("Invalid element in lookup: item=" + item);
+      if (psi != null && psi.isValid()) {
+        return psi;
       }
-      return psi;
     }
 
     Document document = editor.getDocument();

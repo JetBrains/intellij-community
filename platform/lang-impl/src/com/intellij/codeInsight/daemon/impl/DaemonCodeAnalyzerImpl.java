@@ -198,7 +198,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     assert !myDisposed;
     Application application = ApplicationManager.getApplication();
     application.assertIsDispatchThread();
-    assert !application.isWriteAccessAllowed();
+    assert !application.isWriteAccessAllowed() : "Write access is required";
 
     // pump first so that queued event do not interfere
     UIUtil.dispatchAllInvocationEvents();
@@ -711,6 +711,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
         if (PowerSaveMode.isEnabled()) return;
         Editor activeEditor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
 
+        final PsiDocumentManagerImpl documentManager = (PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject);
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
@@ -728,9 +729,8 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
               // we'll restart when write action finish
               return;
             }
-            if (PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments()) {
-              ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).cancelAndRunWhenAllCommitted(
-                "restart daemon when all committed", this);
+            if (documentManager.hasUncommitedDocuments()) {
+              documentManager.cancelAndRunWhenAllCommitted("restart daemon when all committed", this);
               return;
             }
 
@@ -755,8 +755,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
           runnable.run();
         }
         else {
-          ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(myProject)).cancelAndRunWhenAllCommitted(
-            "start daemon when all committed", runnable);
+          documentManager.cancelAndRunWhenAllCommitted("start daemon when all committed", runnable);
         }
       }
     };
@@ -790,7 +789,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
   @NotNull
   @TestOnly
   public static List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file ) {
-    return UpdateHighlightersUtil.getFileLeveleHighlights(project, file);
+    return UpdateHighlightersUtil.getFileLevelHighlights(project, file);
   }
 
   @TestOnly

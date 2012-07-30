@@ -29,7 +29,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
@@ -53,7 +52,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
-import org.jetbrains.plugins.groovy.lang.resolve.DefaultImportContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.MethodTypeInferencer;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
@@ -61,8 +59,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.editor.GroovyImportHelper.*;
 
 /**
  * Implements all abstractions related to Groovy file
@@ -142,18 +141,13 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
     final String expectedName = ResolveUtil.getNameHint(processor);
 
-    PsiScopeProcessor importProcessor = !processClasses || expectedName == null ? processor : new DelegatingScopeProcessor(processor) {
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
-        return isImplicitlyImported(element, expectedName) || super.execute(element, state);
-      }
-    };
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     GrImportStatement[] importStatements = getImportStatements();
-    if (!processImports(state, lastParent, place, importProcessor, importStatements, false)) return false;
+    if (!processImports(state, lastParent, place, processor, importStatements, false)) return false;
     if (!processDeclarationsInPackage(processor, state, lastParent, place, facade, getPackageName())) return false;
-    if (!processImports(state, lastParent, place, importProcessor, importStatements, true)) return false;
+    if (!processImports(state, lastParent, place, processor, importStatements, true)) return false;
 
-    if (processClasses && !processImplicitImports(processor, state, lastParent, place)) {
+    if (processClasses && !processImplicitImports(processor, state, lastParent, place, this)) {
       return false;
     }
 
@@ -185,84 +179,6 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private PsiElement getShellComment() {
     final ASTNode node = getNode().findChildByType(GroovyTokenTypes.mSH_COMMENT);
     return node == null ? null : node.getPsi();
-  }
-
-  private static boolean processImports(ResolveState state,
-                                        PsiElement lastParent,
-                                        PsiElement place,
-                                        PsiScopeProcessor importProcessor,
-                                        GrImportStatement[] importStatements,
-                                        boolean shouldProcessOnDemand) {
-    for (int i = importStatements.length - 1; i >= 0; i--) {
-      final GrImportStatement imp = importStatements[i];
-      if (shouldProcessOnDemand != imp.isOnDemand()) continue;
-      if (!imp.processDeclarations(importProcessor, state, lastParent, place)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private boolean isImplicitlyImported(PsiElement element, String expectedName) {
-    if (!(element instanceof PsiClass)) return false;
-
-    final PsiClass psiClass = (PsiClass)element;
-    if (!expectedName.equals(psiClass.getName())) return false;
-
-    final String qname = psiClass.getQualifiedName();
-    if (qname == null) return false;
-
-    for (String importedClass : IMPLICITLY_IMPORTED_CLASSES) {
-      if (qname.equals(importedClass)) {
-        return true;
-      }
-    }
-    for (String pkg : getImplicitlyImportedPackages()) {
-      if (qname.equals(pkg + "." + expectedName) || pkg.length() == 0 && qname.equals(expectedName)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-
-  private LinkedHashSet<String> getImplicitlyImportedPackages() {
-    final LinkedHashSet<String> result = new LinkedHashSet<String>();
-    ContainerUtil.addAll(result, IMPLICITLY_IMPORTED_PACKAGES);
-
-    for (DefaultImportContributor contributor : DefaultImportContributor.EP_NAME.getExtensions()) {
-      result.addAll(contributor.appendImplicitlyImportedPackages(this));
-    }
-
-    return result;
-  }
-
-  private boolean processImplicitImports(PsiScopeProcessor processor, ResolveState state, PsiElement lastParent, PsiElement place) {
-    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
-
-    final DelegatingScopeProcessor packageSkipper = new DelegatingScopeProcessor(processor) {
-      @Override
-      public boolean execute(@NotNull PsiElement element, ResolveState state) {
-        if (element instanceof PsiPackage) return true;
-        return super.execute(element, state);
-      }
-    };
-
-
-    for (final String implicitlyImported : getImplicitlyImportedPackages()) {
-      PsiPackage aPackage = facade.findPackage(implicitlyImported);
-      if (aPackage == null) continue;
-
-      if (!aPackage.processDeclarations(packageSkipper, state, lastParent, place)) {
-        return false;
-      }
-    }
-
-    for (String implicitlyImportedClass : IMPLICITLY_IMPORTED_CLASSES) {
-      PsiClass clazz = facade.findClass(implicitlyImportedClass, getResolveScope());
-      if (clazz != null && !ResolveUtil.processElement(processor, clazz, state)) return false;
-    }
-    return true;
   }
 
   private static boolean processDeclarationsInPackage(final PsiScopeProcessor processor,
@@ -464,9 +380,15 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       final ASTNode currNode = currentPackage.getNode();
       fileNode.replaceChild(currNode, newNode);
     } else {
-      final ASTNode anchor = fileNode.getFirstChildNode();
+      ASTNode anchor = fileNode.getFirstChildNode();
+      if (anchor != null && anchor.getElementType() == GroovyTokenTypes.mSH_COMMENT) {
+        anchor = anchor.getTreeNext();
+        fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
+      }
       fileNode.addChild(newNode, anchor);
-      fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
+      if (anchor != null && !anchor.getText().startsWith("\n\n")) {
+        fileNode.addLeaf(GroovyTokenTypes.mNLS, "\n", anchor);
+      }
     }
   }
 

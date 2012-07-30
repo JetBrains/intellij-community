@@ -5,12 +5,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
-import org.jetbrains.jps.Module;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +35,7 @@ public abstract class ModuleLevelBuilder extends Builder {
     myCategory = category;
   }
 
-  public static enum ExitCode {
+  public enum ExitCode {
     NOTHING_DONE, OK, ABORT, ADDITIONAL_PASS_REQUIRED, CHUNK_REBUILD_REQUIRED
   }
 
@@ -64,7 +64,7 @@ public abstract class ModuleLevelBuilder extends Builder {
    * @throws Exception
    */
   public final boolean updateMappings(CompileContext context, final Mappings delta, ModuleChunk chunk, Collection<File> filesToCompile, Collection<File> successfullyCompiled) throws IOException {
-    if (Utils.ERRORS_DETECTED_KEY.get(context, Boolean.FALSE)) {
+    if (Utils.errorsDetected(context)) {
       return false;
     }
     try {
@@ -194,7 +194,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected)
     throws IOException {
     final Set<String> chunkModules = new HashSet<String>();
-    for (Module module : chunk.getModules()) {
+    for (JpsModule module : chunk.getModules()) {
       chunkModules.add(module.getName());
     }
     if (!chunkModules.isEmpty()) {
@@ -232,7 +232,7 @@ public abstract class ModuleLevelBuilder extends Builder {
       return Collections.emptySet();
     }
     final Set<String> removed = new HashSet<String>();
-    for (Module module : chunk.getModules()) {
+    for (JpsModule module : chunk.getModules()) {
       final Collection<String> modulePaths = map.get(module.getName());
       if (modulePaths != null) {
         removed.addAll(modulePaths);
@@ -244,7 +244,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   private static void dropRemovedPaths(CompileContext context, ModuleChunk chunk) throws IOException {
     final Map<String, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
     if (map != null) {
-      for (Module module : chunk.getModules()) {
+      for (JpsModule module : chunk.getModules()) {
         final Collection<String> paths = map.remove(module.getName());
         if (paths != null) {
           final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(),
@@ -259,8 +259,8 @@ public abstract class ModuleLevelBuilder extends Builder {
 
   private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
     private final CompileContext myContext;
-    private final Set<Module> myChunkModules;
-    private final Map<Module, Set<Module>> myCache = new HashMap<Module, Set<Module>>();
+    private final Set<JpsModule> myChunkModules;
+    private final Map<JpsModule, Set<JpsModule>> myCache = new HashMap<JpsModule, Set<JpsModule>>();
 
     private ModulesBasedFileFilter(CompileContext context, ModuleChunk chunk) {
       myContext = context;
@@ -273,11 +273,11 @@ public abstract class ModuleLevelBuilder extends Builder {
       if (rd == null) {
         return true;
       }
-      final Module moduleOfFile = myContext.getProjectDescriptor().rootsIndex.getModuleByName(rd.module);
+      final JpsModule moduleOfFile = myContext.getProjectDescriptor().rootsIndex.getModuleByName(rd.module);
       if (myChunkModules.contains(moduleOfFile)) {
         return true;
       }
-      Set<Module> moduleOfFileWithDependencies = myCache.get(moduleOfFile);
+      Set<JpsModule> moduleOfFileWithDependencies = myCache.get(moduleOfFile);
       if (moduleOfFileWithDependencies == null) {
         moduleOfFileWithDependencies = ProjectPaths.getModulesWithDependentsRecursively(moduleOfFile, true);
         myCache.put(moduleOfFile, moduleOfFileWithDependencies);

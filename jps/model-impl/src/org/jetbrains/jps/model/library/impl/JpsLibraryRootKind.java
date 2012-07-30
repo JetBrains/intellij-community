@@ -5,15 +5,17 @@ import org.jetbrains.jps.model.JpsEventDispatcher;
 import org.jetbrains.jps.model.impl.JpsElementKindBase;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsLibraryRootListener;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
 
 /**
  * @author nik
  */
 public class JpsLibraryRootKind extends JpsElementKindBase<JpsLibraryRoot> {
-  public static final JpsLibraryRootKind INSTANCE = new JpsLibraryRootKind();
+  private final JpsOrderRootType myRootType;
 
-  public JpsLibraryRootKind() {
+  public JpsLibraryRootKind(@NotNull JpsOrderRootType rootType) {
     super("library root");
+    myRootType = rootType;
   }
 
   @Override
@@ -24,5 +26,18 @@ public class JpsLibraryRootKind extends JpsElementKindBase<JpsLibraryRoot> {
   @Override
   public void fireElementRemoved(@NotNull JpsEventDispatcher dispatcher, @NotNull JpsLibraryRoot element) {
     dispatcher.getPublisher(JpsLibraryRootListener.class).rootRemoved(element);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    return myRootType.equals(((JpsLibraryRootKind)o).myRootType);
+  }
+
+  @Override
+  public int hashCode() {
+    return myRootType.hashCode();
   }
 }

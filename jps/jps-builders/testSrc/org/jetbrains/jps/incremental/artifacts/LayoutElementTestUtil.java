@@ -16,48 +16,48 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.Library;
-import org.jetbrains.jps.Module;
-import org.jetbrains.jps.artifacts.*;
-
-import java.util.Collections;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.*;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.module.JpsModule;
 
 /**
  * @author nik
  */
 public class LayoutElementTestUtil {
   public static LayoutElementCreator root() {
-    return new LayoutElementCreator(new RootElement(Collections.<LayoutElement>emptyList()), null);
+    return new LayoutElementCreator(JpsPackagingElementFactory.getInstance().createArtifactRoot(), null);
   }
 
   public static LayoutElementCreator archive(String name) {
-    return new LayoutElementCreator(new ArchiveElement(name, Collections.<LayoutElement>emptyList()), null);
+    return new LayoutElementCreator(JpsPackagingElementFactory.getInstance().createArchive(name), null);
   }
 
-  public static void addArtifactToLayout(Artifact main, Artifact included) {
-    final ArtifactLayoutElement element = new ArtifactLayoutElement();
-    element.setArtifactName(included.getName());
-    ((CompositeLayoutElement)main.getRootElement()).getChildren().add(element);
+  public static void addArtifactToLayout(JpsArtifact main, JpsArtifact included) {
+    main.getRootElement().addChild(JpsPackagingElementFactory.getInstance().createArtifactOutput(included.createReference()));
   }
 
   public static class LayoutElementCreator {
-    private CompositeLayoutElement myElement;
+    private JpsPackagingElementFactory myFactory;
+    private JpsCompositePackagingElement myElement;
     private LayoutElementCreator myParent;
     
-    public LayoutElementCreator(CompositeLayoutElement element, LayoutElementCreator parent) {
+    public LayoutElementCreator(JpsCompositePackagingElement element, LayoutElementCreator parent) {
       myElement = element;
       myParent = parent;
+      myFactory = JpsPackagingElementFactory.getInstance();
     }
 
     public LayoutElementCreator dir(String name) {
-      DirectoryElement dir = new DirectoryElement(name, Collections.<LayoutElement>emptyList());
-      myElement.getChildren().add(dir);
+      JpsDirectoryPackagingElement dir = myFactory.createDirectory(name);
+      myElement.addChild(dir);
       return new LayoutElementCreator(dir, this);
     }
 
     public LayoutElementCreator archive(String name) {
-      ArchiveElement archive = new ArchiveElement(name, Collections.<LayoutElement>emptyList());
-      myElement.getChildren().add(archive);
+      JpsArchivePackagingElement archive = myFactory.createArchive(name);
+      myElement.addChild(archive);
       return new LayoutElementCreator(archive, this);
     }
 
@@ -66,49 +66,39 @@ public class LayoutElementTestUtil {
     }
 
     public LayoutElementCreator fileCopy(String filePath, @Nullable String outputFileName) {
-      return element(new FileCopyElement(filePath, outputFileName));
+      return element(myFactory.createFileCopy(filePath, outputFileName));
     }
 
     public LayoutElementCreator dirCopy(String dirPath) {
-      return element(new DirectoryCopyElement(dirPath));
+      return element(myFactory.createDirectoryCopy(dirPath));
     }
 
-    public LayoutElementCreator module(Module module) {
-      final ModuleOutputElement element = new ModuleOutputElement();
-      element.setModuleName(module.getName());
-      return element(element);
+    public LayoutElementCreator module(JpsModule module) {
+      return element(JpsJavaExtensionService.getInstance().createProductionModuleOutput(module.createReference()));
     }
 
-    public LayoutElementCreator element(LayoutElement element) {
-      myElement.getChildren().add(element);
+    public LayoutElementCreator element(JpsPackagingElement element) {
+      myElement.addChild(element);
       return this;
     }
 
-    public LayoutElementCreator lib(Library library) {
-      final LibraryFilesElement element = new LibraryFilesElement();
-      element.setLibraryName(library.getName());
-      element.setLibraryLevel(LibraryFilesElement.PROJECT_LEVEL);
-      return element(element);
+    public LayoutElementCreator lib(JpsLibrary library) {
+      return element(myFactory.createLibraryElement(library.createReference()));
     }
 
     public LayoutElementCreator extractedDir(String jarPath, String pathInJar) {
-      ExtractedDirectoryElement dir = new ExtractedDirectoryElement();
-      dir.setJarPath(jarPath);
-      dir.setPathInJar(pathInJar);
-      return element(dir);
+      return element(myFactory.createExtractedDirectory(jarPath, pathInJar));
     }
 
-    public LayoutElementCreator artifact(Artifact included) {
-      final ArtifactLayoutElement element = new ArtifactLayoutElement();
-      element.setArtifactName(included.getName());
-      return element(element);
+    public LayoutElementCreator artifact(JpsArtifact included) {
+      return element(myFactory.createArtifactOutput(included.createReference()));
     }
 
     public LayoutElementCreator end() {
       return myParent;
     }
 
-    public CompositeLayoutElement buildElement() {
+    public JpsCompositePackagingElement buildElement() {
       if (myParent != null) {
         return myParent.buildElement();
       }

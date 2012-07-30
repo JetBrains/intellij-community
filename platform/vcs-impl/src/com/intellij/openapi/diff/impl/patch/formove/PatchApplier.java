@@ -379,39 +379,44 @@ public class PatchApplier<BinaryType extends FilePatch> {
     }
     final RefreshSession session = RefreshQueue.getInstance().createSession(false, true, new Runnable() {
       public void run() {
-        if (project.isDisposed()) return;
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (project.isDisposed()) return;
 
-        final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-        if (! directlyAffected.isEmpty() && targetChangelistMover != null) {
-          changeListManager.invokeAfterUpdate(new Runnable() {
-              @Override
-              public void run() {
-                if (targetChangelistMover != null) {
-                  targetChangelistMover.consume(directlyAffected);
+            final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+            if (! directlyAffected.isEmpty() && targetChangelistMover != null) {
+              changeListManager.invokeAfterUpdate(new Runnable() {
+                  @Override
+                  public void run() {
+                    if (targetChangelistMover != null) {
+                      targetChangelistMover.consume(directlyAffected);
+                    }
+                    scheduleProjectFilesReload.run();
+                    if (context != null) {
+                      context.ping();
+                    }
+                  }
+                }, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
+              VcsBundle.message("change.lists.manager.move.changes.to.list"),
+              new Consumer<VcsDirtyScopeManager>() {
+                public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
+                  vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
+                  vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
                 }
-                scheduleProjectFilesReload.run();
-                if (context != null) {
-                  context.ping();
-                }
-              }
-            }, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
-          VcsBundle.message("change.lists.manager.move.changes.to.list"),
-          new Consumer<VcsDirtyScopeManager>() {
-            public void consume(final VcsDirtyScopeManager vcsDirtyScopeManager) {
+              }, null);
+            } else {
+              final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
+              // will schedule update
               vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
               vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
+              scheduleProjectFilesReload.run();
+              if (context != null) {
+                context.ping();
+              }
             }
-          }, null);
-        } else {
-          final VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(project);
-          // will schedule update
-          vcsDirtyScopeManager.filePathsDirty(directlyAffected, null);
-          vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
-          scheduleProjectFilesReload.run();
-          if (context != null) {
-            context.ping();
           }
-        }
+        });
       }
     });
     session.addAllFiles(indirectlyAffected);

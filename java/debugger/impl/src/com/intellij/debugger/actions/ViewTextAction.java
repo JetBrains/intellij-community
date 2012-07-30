@@ -15,11 +15,10 @@
  */
 package com.intellij.debugger.actions;
 
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
+import com.intellij.debugger.ui.impl.watch.NodeDescriptorImpl;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -27,7 +26,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.EditorTextField;
 
 import javax.swing.*;
@@ -38,19 +36,13 @@ import java.awt.*;
  */
 public class ViewTextAction extends BaseValueAction {
   protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
-    try {
-      final TextWithImports expressionText = DebuggerTreeNodeExpression.createEvaluationText(node, debuggerContext);
-      final MyDialog dialog = new MyDialog(project);
-      final String title = "View Text: \"" + expressionText.getText() + "\"";
-      dialog.setTitle(title);
-      dialog.setText(text);
-      dialog.show();
-    }
-    catch (EvaluateException e) {
-      Messages.showErrorDialog(project, e.getMessage(), "View Text");
-    }
+    final NodeDescriptorImpl descriptor = node.getDescriptor();
+    final String labelText = descriptor instanceof ValueDescriptorImpl? ((ValueDescriptorImpl)descriptor).getValueLabel() : null;
+    final MyDialog dialog = new MyDialog(project);
+    dialog.setTitle(labelText != null? "View Text for: " + labelText : "View Text");
+    dialog.setText(text);
+    dialog.show();
   }
-
 
   private static class MyDialog extends DialogWrapper {
 

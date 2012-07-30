@@ -34,8 +34,9 @@ public class ColorUtil {
   }
 
   public static Color softer(@NotNull Color color) {
+    if (color.getBlue() > 220 && color.getRed() > 220 && color.getGreen() > 220) return color;
     final float[] hsb = Color.RGBtoHSB(color.getRed(), color.getGreen(), color.getBlue(), null);
-    return Color.getHSBColor(hsb[0], 0.4f *hsb[1], hsb[2]);
+    return Color.getHSBColor(hsb[0], 0.6f *hsb[1], hsb[2]);
   }
 
   private static int shift(int colorComponent, double d) {

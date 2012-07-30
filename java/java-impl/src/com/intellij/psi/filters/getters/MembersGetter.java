@@ -106,7 +106,7 @@ public abstract class MembersGetter {
     };
     consumer.consume(baseType);
     if (searchInheritors && !CommonClassNames.JAVA_LANG_OBJECT.equals(where.getQualifiedName())) {
-      CodeInsightUtil.processSubTypes(baseType, context, true, Condition.TRUE, consumer);
+      CodeInsightUtil.processSubTypes(baseType, context, true, PrefixMatcher.ALWAYS_TRUE, consumer);
     }
   }
 

@@ -51,6 +51,7 @@ import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.popup.AbstractPopup;
@@ -59,6 +60,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -481,7 +483,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
   private static boolean hasMnemonicInWindow(Component focusOwner, int keyCode) {
     if (keyCode == KeyEvent.VK_ALT || keyCode == 0) return false; // Optimization
     final Container container = getContainer(focusOwner);
-    return hasMnemonic(container, keyCode);
+    return hasMnemonic(container, keyCode) || hasMnemonicInBalloons(container, keyCode);
   }
 
   @Nullable
@@ -524,6 +526,19 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
       if (component instanceof Container) {
         if (hasMnemonic((Container)component, keyCode)) return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasMnemonicInBalloons(Container container, int code) {
+    final Component parent = UIUtil.findUltimateParent(container);
+    if (parent instanceof RootPaneContainer) {
+      final JLayeredPane pane = ((RootPaneContainer)parent).getLayeredPane();
+      for (Component component : pane.getComponents()) {
+        if (component instanceof ComponentWithMnemonics && component instanceof Container && hasMnemonic((Container)component, code)) {
+          return true;
+        }
       }
     }
     return false;

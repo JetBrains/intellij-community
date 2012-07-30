@@ -18,7 +18,7 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.MacTreeUI;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -133,13 +133,13 @@ public class TreeExpandableItemsHandler extends AbstractExpandableItemsHandler<I
   @Override
   protected Dimension getImageSize(int width, int height) {
     final TreeUI ui = myComponent.getUI();
-    return new Dimension(width, ui instanceof MacTreeUI && ((MacTreeUI)ui).isWideSelection() ? height - 1 : height);
+    return new Dimension(width, ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection() ? height - 1 : height);
   }
 
   @Override
   protected void doFillBackground(final int height, final int width, final Graphics2D g) {
     final TreeUI ui = myComponent.getUI();
-    super.doFillBackground(ui instanceof MacTreeUI && ((MacTreeUI)ui).isWideSelection() ? height - 1 : height, width, g);
+    super.doFillBackground(ui instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)ui).isWideSelection() ? height - 1 : height, width, g);
   }
 
   @Override

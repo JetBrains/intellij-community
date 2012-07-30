@@ -67,17 +67,21 @@ public class AttributeProperty extends Property<RadViewComponent> implements IXm
         myEditor = new StringsComboEditor(definition.getValues());
       }
       else {
-        myRenderer = new ResourceRenderer(formats);
+        myRenderer = createResourceRenderer(definition, formats);
         myEditor = createResourceEditor(definition, formats);
       }
     }
     else {
-      myRenderer = new ResourceRenderer(formats);
+      myRenderer = createResourceRenderer(definition, formats);
       myEditor = createResourceEditor(definition, formats);
     }
   }
 
-  private static ResourceEditor createResourceEditor(AttributeDefinition definition, Set<AttributeFormat> formats) {
+  protected PropertyRenderer createResourceRenderer(AttributeDefinition definition, Set<AttributeFormat> formats) {
+    return new ResourceRenderer(formats);
+  }
+
+  protected PropertyEditor createResourceEditor(AttributeDefinition definition, Set<AttributeFormat> formats) {
     String type = AndroidDomUtil.SPECIAL_RESOURCE_TYPES.get(definition.getName());
     if (type == null) {
       return new ResourceEditor(formats, definition.getValues());

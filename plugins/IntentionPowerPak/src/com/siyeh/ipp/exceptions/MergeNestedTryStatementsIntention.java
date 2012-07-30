@@ -37,10 +37,13 @@ public class MergeNestedTryStatementsIntention extends Intention {
   @Override
   protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiTryStatement tryStatement1 = (PsiTryStatement)element.getParent();
-    final StringBuilder newTryStatement = new StringBuilder("try (");
+    final StringBuilder newTryStatement = new StringBuilder("try ");
     final PsiResourceList list1 = tryStatement1.getResourceList();
     boolean semicolon = false;
+    boolean resourceList = false;
     if (list1 != null) {
+      resourceList = true;
+      newTryStatement.append('(');
       final List<PsiResourceVariable> variables1 = list1.getResourceVariables();
       for (PsiResourceVariable variable : variables1) {
         if (semicolon) {
@@ -57,29 +60,41 @@ public class MergeNestedTryStatementsIntention extends Intention {
       return;
     }
     final PsiStatement[] statements = tryBlock1.getStatements();
-    final PsiTryStatement tryStatement2 = (PsiTryStatement)statements[0];
-    final PsiResourceList list2 = tryStatement2.getResourceList();
-    if (list2 == null) {
+    if (statements.length != 1) {
       return;
     }
-    final List<PsiResourceVariable> variables2 = list2.getResourceVariables();
-    for (PsiResourceVariable variable : variables2) {
-      if (semicolon) {
-        newTryStatement.append(';');
+    final PsiTryStatement tryStatement2 = (PsiTryStatement)statements[0];
+    final PsiResourceList list2 = tryStatement2.getResourceList();
+    if (list2 != null) {
+      if (!resourceList) {
+        newTryStatement.append('(');
       }
-      else {
-        semicolon = true;
+      resourceList = true;
+      final List<PsiResourceVariable> variables2 = list2.getResourceVariables();
+      for (PsiResourceVariable variable : variables2) {
+        if (semicolon) {
+          newTryStatement.append(';');
+        }
+        else {
+          semicolon = true;
+        }
+        newTryStatement.append(variable.getText());
       }
-      newTryStatement.append(variable.getText());
     }
-    newTryStatement.append(")");
+    if (resourceList) {
+      newTryStatement.append(")");
+    }
     final PsiCodeBlock tryBlock2 = tryStatement2.getTryBlock();
     if (tryBlock2 == null) {
       return;
     }
     newTryStatement.append(tryBlock2.getText());
-    final PsiCatchSection[] catchSections = tryStatement1.getCatchSections();
-    for (PsiCatchSection section : catchSections) {
+    final PsiCatchSection[] catchSections2 = tryStatement2.getCatchSections();
+    for (PsiCatchSection section : catchSections2) {
+      newTryStatement.append(section.getText());
+    }
+    final PsiCatchSection[] catchSections1 = tryStatement1.getCatchSections();
+    for (PsiCatchSection section : catchSections1) {
       newTryStatement.append(section.getText());
     }
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());

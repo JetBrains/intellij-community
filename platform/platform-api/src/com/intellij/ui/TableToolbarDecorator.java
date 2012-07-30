@@ -62,7 +62,7 @@ class TableToolbarDecorator extends ToolbarDecorator {
   }
 
   protected void updateButtons() {
-    final CommonActionsPanel p = getPanel();
+    final CommonActionsPanel p = getActionsPanel();
     if (p != null) {
       if (myTable.isEnabled()) {
         final int index = myTable.getSelectedRow();

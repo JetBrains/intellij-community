@@ -2,6 +2,7 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.QueryExecutor;
@@ -15,7 +16,7 @@ public class PsiAnnotationMethodReferencesSearcher implements QueryExecutor<PsiR
   @Override
   public boolean execute(@NotNull final ReferencesSearch.SearchParameters p, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement refElement = p.getElementToSearch();
-    if (refElement instanceof PsiAnnotationMethod) {
+    if (PsiUtil.isAnnotationMethod(refElement)) {
       PsiMethod method = (PsiMethod)refElement;
       if (PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME.equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
         final Query<PsiReference> query = ReferencesSearch.search(method.getContainingClass(), p.getScope(), p.isIgnoreAccessScope());

@@ -363,7 +363,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public final void showError(@NotNull String message, @NotNull Throwable e) {
-    if (getProject().isDisposed()) {
+    if (isProjectClosed()) {
       return;
     }
 
@@ -538,6 +538,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   @Override
   public final Project getProject() {
     return myProject;
+  }
+
+  public final boolean isProjectClosed() {
+    return myProject.isDisposed() || !myProject.isOpen();
   }
 
   public EditableArea getSurfaceArea() {

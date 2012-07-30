@@ -698,6 +698,11 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   }
 
   @Override
+  public int getVerticalScrollbarOrientation() {
+    return myDelegate.getVerticalScrollbarOrientation();
+  }
+
+  @Override
   public void setVerticalScrollbarVisible(final boolean b) {
     myDelegate.setVerticalScrollbarVisible(b);
   }
@@ -782,6 +787,11 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
   @Override
   public void setPurePaintingMode(boolean enabled) {
     myDelegate.setPurePaintingMode(enabled); 
+  }
+
+  @Override
+  public void registerScrollBarRepaintCallback(@Nullable RepaintCallback callback) {
+    myDelegate.registerScrollBarRepaintCallback(callback);
   }
 
   @Override

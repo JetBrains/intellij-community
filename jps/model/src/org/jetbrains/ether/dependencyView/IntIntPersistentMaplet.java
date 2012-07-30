@@ -86,7 +86,7 @@ public class IntIntPersistentMaplet extends IntIntMaplet {
   @Override
   public int get(final int key) {
     final Object obj = myCache.get(key);
-    return obj == NULL_OBJ? -1 : (Integer)obj;
+    return obj == NULL_OBJ? 0 : (Integer)obj;
   }
 
   @Override

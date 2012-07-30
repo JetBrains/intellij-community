@@ -729,7 +729,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public boolean isSingleToolInSelection() {
-    return myTree.getSelectedTool() != null;
+    return myTree != null && myTree.getSelectedTool() != null;
   }
 
   public boolean isRerun() {

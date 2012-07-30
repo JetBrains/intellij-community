@@ -102,7 +102,7 @@ public class AndroidDebugRunner extends DefaultProgramRunner {
       launcher.setRunDescriptor(runDescriptor);
     }
     if (runDescriptor == null) {
-      throw new ExecutionException("Can't run an application");
+      return null;
     }
     tryToCloseOldSessions(executor, project);
     runningState.getProcessHandler().putUserData(ANDROID_PROCESS_HANDLER, runDescriptor);

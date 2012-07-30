@@ -19,8 +19,6 @@ package com.intellij.facet.impl.ui;
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.facet.ui.FacetEditorContext;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -33,7 +31,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +43,6 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   private final ModulesProvider myModulesProvider;
   private final Facet myFacet;
   private final UserDataHolder mySharedModuleData;
-  private final EventDispatcher<FacetContextChangeListener> myFacetContextChangeDispatcher = EventDispatcher.create(FacetContextChangeListener.class);
   private final UserDataHolder mySharedProjectData;
 
   public FacetEditorContextBase(@NotNull Facet facet, final @Nullable FacetEditorContext parentContext, final @Nullable FacetsProvider facetsProvider,
@@ -119,18 +115,6 @@ public abstract class FacetEditorContextBase extends UserDataHolderBase implemen
   @NotNull
   public ModuleRootModel getRootModel() {
     return getModifiableRootModel();
-  }
-
-  public void addFacetContextChangeListener(FacetContextChangeListener facetContextChangeListener) {
-    myFacetContextChangeDispatcher.addListener(facetContextChangeListener);
-  }
-
-  public void fireModuleRootsChanged(final ModifiableRootModel moduleRootModel) {
-    myFacetContextChangeDispatcher.getMulticaster().moduleRootsChanged(moduleRootModel);
-  }
-
-  public void fireFacetModelChanged(final Module module) {
-    myFacetContextChangeDispatcher.getMulticaster().facetModelChanged(module);
   }
 
   public abstract LibrariesContainer getContainer();

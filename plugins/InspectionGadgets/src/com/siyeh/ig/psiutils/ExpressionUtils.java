@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2011 Bas Leijdekkers
+ * Copyright 2005-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -240,20 +240,18 @@ public class ExpressionUtils {
   }
 
   public static boolean isNegation(@Nullable PsiExpression condition,
-                                   boolean ignoreNegatedNullComparison) {
+                                   boolean ignoreNegatedNullComparison, boolean ignoreNegatedZeroComparison) {
     condition = ParenthesesUtils.stripParentheses(condition);
     if (condition instanceof PsiPrefixExpression) {
-      final PsiPrefixExpression prefixExpression =
-        (PsiPrefixExpression)condition;
+      final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
       final IElementType tokenType = prefixExpression.getOperationTokenType();
       return tokenType.equals(JavaTokenType.EXCL);
     }
     else if (condition instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)condition;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      if (rhs == null) {
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
+      final PsiExpression lhs = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
+      final PsiExpression rhs = ParenthesesUtils.stripParentheses(binaryExpression.getROperand());
+      if (lhs == null || rhs == null) {
         return false;
       }
       final IElementType tokenType = binaryExpression.getOperationTokenType();
@@ -261,20 +259,32 @@ public class ExpressionUtils {
         if (ignoreNegatedNullComparison) {
           final String lhsText = lhs.getText();
           final String rhsText = rhs.getText();
-          return !PsiKeyword.NULL.equals(lhsText) &&
-                 !PsiKeyword.NULL.equals(rhsText);
+          if (PsiKeyword.NULL.equals(lhsText) || PsiKeyword.NULL.equals(rhsText)) {
+            return false;
+          }
         }
-        else {
-          return true;
-        }
-      }
-      else {
-        return false;
+        return !(ignoreNegatedZeroComparison && (isZeroLiteral(lhs) || isZeroLiteral(rhs)));
       }
     }
-    else {
+    return false;
+  }
+
+  private static boolean isZeroLiteral(PsiExpression expression) {
+    if (!(expression instanceof PsiLiteralExpression)) {
       return false;
     }
+    final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
+    final Object value = literalExpression.getValue();
+    if (value instanceof Integer) {
+      if (((Integer)value).intValue() == 0) {
+        return true;
+      }
+    } else if (value instanceof Long) {
+      if (((Long)value).longValue() == 0L) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isOffsetArrayAccess(

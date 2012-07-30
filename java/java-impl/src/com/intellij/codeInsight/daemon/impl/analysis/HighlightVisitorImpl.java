@@ -190,7 +190,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (parent instanceof PsiNameValuePair) {
       method = (PsiMethod)parent.getReference().resolve();
     }
-    else if (parent instanceof PsiAnnotationMethod) {
+    else if (PsiUtil.isAnnotationMethod(parent)) {
       method = (PsiMethod)parent;
     }
     if (method != null) {

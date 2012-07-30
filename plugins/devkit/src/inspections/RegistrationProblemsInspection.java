@@ -24,6 +24,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -302,14 +303,14 @@ public class RegistrationProblemsInspection extends DevKitInspectionBase {
       if (attribute != null) {
         final PsiElement token = getAttValueToken(attribute);
         if (token != null) {
-          final String actionName = attribute.getValue().trim();
-          final PsiClass actionClass = JavaPsiFacade.getInstance(myPsiManager.getProject()).findClass(actionName, myScope);
+          final String actionClassName = attribute.getValue().trim();
+          final PsiClass actionClass = ClassUtil.findPsiClass(myPsiManager, actionClassName, null, true,  myScope);
           if (actionClass == null) {
             addProblem(token,
                     DevKitBundle.message("inspections.registration.problems.cannot.resolve.class",
                             DevKitBundle.message("class.action")),
                     ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, myOnTheFly, ((LocalQuickFix)QuickFixFactory.getInstance()
-              .createCreateClassOrInterfaceFix(token, actionName, true, AnAction.class.getName())));
+              .createCreateClassOrInterfaceFix(token, actionClassName, true, AnAction.class.getName())));
           } else {
             if (!type.isOfType(actionClass)) {
               final PsiClass psiClass = JavaPsiFacade.getInstance(myPsiManager.getProject()).findClass(type.myClassName, myScope);

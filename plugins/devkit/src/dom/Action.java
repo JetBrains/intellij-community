@@ -64,7 +64,7 @@ public interface Action extends DomElement {
 	 * @return the value of the class child.
 	 */
 	@NotNull
-	@com.intellij.util.xml.Attribute ("class")
+	@Attribute ("class")
 	@Required
         @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
             instantiatable = true, allowNonPublic = true, allowAbstract = false, allowInterface = false)

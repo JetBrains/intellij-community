@@ -133,7 +133,7 @@ public class PropertyGroup implements Group, ColoredItemPresentation, AccessLeve
   }
 
   public String getPresentableText() {
-    return myPropertyName + ":" + myPropertyType.getPresentableText();
+    return myPropertyName + ": " + myPropertyType.getPresentableText();
   }
 
   public String toString() {

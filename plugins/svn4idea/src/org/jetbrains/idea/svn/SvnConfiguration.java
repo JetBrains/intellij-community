@@ -20,7 +20,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -100,7 +99,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   public static final AuthStorage RUNTIME_AUTH_CACHE = new AuthStorage();
   public String LAST_MERGED_REVISION = null;
-  public SVNDepth UPDATE_DEPTH = SVNDepth.INFINITY;
+  public SVNDepth UPDATE_DEPTH = SVNDepth.UNKNOWN;
 
   public boolean MERGE_DRY_RUN = false;
   public boolean MERGE_DIFF_USE_ANCESTRY = true;

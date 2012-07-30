@@ -1,11 +1,11 @@
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.application.PathManager;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
 
-import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class JpsModuleSerializationTest extends JpsSerializationTestCase {
   public void test() {
-    loadProject("iprProject/iprProject.ipr");
+    loadProject("/jps/model-serialization/testData/iprProject/iprProject.ipr");
     final JpsModule module = assertOneElement(myModel.getProject().getModules());
     assertEquals("iprProject", module.getName());
 
@@ -28,14 +28,12 @@ public class JpsModuleSerializationTest extends JpsSerializationTestCase {
     assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class);
     assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class);
   }
-
-  private void loadProject(final String path) {
-    try {
-      final String projectPath = getTestDataPath(path);
-      JpsProjectLoader.loadProject(myModel.getProject(), Collections.<String, String>emptyMap(), projectPath);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  
+  public void _testLoadIdeaProject() {
+    long start = System.currentTimeMillis();
+    final JpsProject project = myModel.getProject();
+    loadProject(PathManager.getHomePath());
+    assertTrue(project.getModules().size() > 0);
+    System.out.println("Time: " + (System.currentTimeMillis() - start));
   }
 }

@@ -100,7 +100,7 @@ public final class ObjectNode<T> {
 
   private void ensureChildArray() {
     if (myChildren == null) {
-      myChildren = new LinkedHashSet<ObjectNode<T>>();
+      myChildren = new LinkedHashSet<ObjectNode<T>>(1);
     }
   }
   

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
-import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.impl.VisualSizeChangeListener;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapPainter;
@@ -33,7 +32,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 12/6/10 12:02 PM
  */
-public class SoftWrapAwareVisualSizeManager implements SoftWrapAwareDocumentParsingListener {
+public class SoftWrapAwareVisualSizeManager extends SoftWrapAwareDocumentParsingListenerAdapter {
 
   private final List<VisualSizeChangeListener> myListeners  = new ArrayList<VisualSizeChangeListener>();
   private final TIntIntHashMap                 myLineWidths = new TIntIntHashMap();
@@ -74,24 +73,12 @@ public class SoftWrapAwareVisualSizeManager implements SoftWrapAwareDocumentPars
   }
 
   @Override
-  public void onVisualLineStart(@NotNull EditorPosition position) {
-  }
-
-  @Override
   public void onVisualLineEnd(@NotNull EditorPosition position) {
     if (myListeners.isEmpty()) {
       return;
     }
     updateLineWidthIfNecessary(position.logicalLine, position.x);
     myLastLogicalLine = position.logicalLine;
-  }
-
-  @Override
-  public void onCollapsedFoldRegion(@NotNull FoldRegion foldRegion, int collapsedFoldingWidthInColumns, int visualLine) {
-  }
-
-  @Override
-  public void onTabulation(@NotNull EditorPosition position, int widthInColumns) {
   }
 
   @Override
@@ -111,17 +98,5 @@ public class SoftWrapAwareVisualSizeManager implements SoftWrapAwareDocumentPars
     if (width > storedWidth) {
       myLineWidths.put(line, width);
     }
-  }
-  
-  @Override
-  public void afterSoftWrapLineFeed(@NotNull EditorPosition position) {
-  }
-
-  @Override
-  public void revertToOffset(int offset, int visualLine) {
-  }
-
-  @Override
-  public void reset() {
   }
 }

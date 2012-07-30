@@ -18,20 +18,16 @@ import java.util.*;
 final class FilesDelta {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.FilesDelta");
 
-  private final Set<String> myDeletedProduction = Collections.synchronizedSet(new HashSet<String>());
-  private final Set<String> myDeletedTests = Collections.synchronizedSet(new HashSet<String>());
-  private final Map<File, Set<File>> mySourcesToRecompile = Collections.synchronizedMap(new HashMap<File, Set<File>>()); // srcRoot -> set of sources
-  private final Map<File, Set<File>> myTestsToRecompile = Collections.synchronizedMap(new HashMap<File, Set<File>>());   // srcRoot -> set of sources
+  private final Set<String> myDeletedPaths = Collections.synchronizedSet(new HashSet<String>());
+  private final Map<File, Set<File>> myFilesToRecompile = Collections.synchronizedMap(new HashMap<File, Set<File>>()); // srcRoot -> set of sources
 
-  public void save(DataOutput out, final boolean tests) throws IOException {
-    final Set<String> deleted = tests? myDeletedTests : myDeletedProduction;
-    out.writeInt(deleted.size());
-    for (String path : deleted) {
+  public void save(DataOutput out) throws IOException {
+    out.writeInt(myDeletedPaths.size());
+    for (String path : myDeletedPaths) {
       IOUtil.writeString(path, out);
     }
-    final Map<File, Set<File>> recompile = tests? myTestsToRecompile : mySourcesToRecompile;
-    out.writeInt(recompile.size());
-    for (Map.Entry<File, Set<File>> entry : recompile.entrySet()) {
+    out.writeInt(myFilesToRecompile.size());
+    for (Map.Entry<File, Set<File>> entry : myFilesToRecompile.entrySet()) {
       final File root = entry.getKey();
       IOUtil.writeString(FileUtil.toSystemIndependentName(root.getPath()), out);
       final Set<File> files = entry.getValue();
@@ -42,22 +38,20 @@ final class FilesDelta {
     }
   }
 
-  public void load(DataInput in, final boolean tests) throws IOException {
-    final Set<String> deleted = tests? myDeletedTests : myDeletedProduction;
-    deleted.clear();
+  public void load(DataInput in) throws IOException {
+    myDeletedPaths.clear();
     int deletedCount = in.readInt();
     while (deletedCount-- > 0) {
-      deleted.add(IOUtil.readString(in));
+      myDeletedPaths.add(IOUtil.readString(in));
     }
-    final Map<File, Set<File>> recompile = tests? myTestsToRecompile : mySourcesToRecompile;
-    recompile.clear();
+    myFilesToRecompile.clear();
     int recompileCount = in.readInt();
     while (recompileCount-- > 0) {
       final File root = new File(IOUtil.readString(in));
-      Set<File> files = recompile.get(root);
+      Set<File> files = myFilesToRecompile.get(root);
       if (files == null) {
         files = createSetOfFiles();
-        recompile.put(root, files);
+        myFilesToRecompile.put(root, files);
       }
       int filesCount = in.readInt();
       while (filesCount-- > 0) {
@@ -85,110 +79,82 @@ final class FilesDelta {
     });
   }
 
-  public void init(Collection<String> deletedProduction, Collection<String> deletedTests, Map<File, Set<File>> recompileProduction, Map<File, Set<File>> recompileTests) {
-    myDeletedProduction.clear();
-    myDeletedProduction.addAll(deletedProduction);
-    myDeletedTests.clear();
-    myDeletedTests.addAll(deletedTests);
-    mySourcesToRecompile.clear();
-    mySourcesToRecompile.putAll(recompileProduction);
-    myTestsToRecompile.clear();
-    myTestsToRecompile.putAll(recompileTests);
-  }
-
-
-  public boolean markRecompile(File root, boolean isTestRoot, File file) {
-    final boolean added = _addToRecompiled(root, isTestRoot, file);
+  public boolean markRecompile(File root, File file) {
+    final boolean added = _addToRecompiled(root, file);
     if (added) {
-      final Set<String> deleted = isTestRoot? myDeletedTests : myDeletedProduction;
-      synchronized (deleted) {
-        if (!deleted.isEmpty()) { // optimization
-          deleted.remove(FileUtil.toCanonicalPath(file.getPath()));
+      synchronized (myDeletedPaths) {
+        if (!myDeletedPaths.isEmpty()) { // optimization
+          myDeletedPaths.remove(FileUtil.toCanonicalPath(file.getPath()));
         }
       }
     }
     return added;
   }
 
-  public boolean markRecompileIfNotDeleted(File root, boolean isTestRoot, File file) {
-    final Set<String> deleted = isTestRoot? myDeletedTests : myDeletedProduction;
+  public boolean markRecompileIfNotDeleted(File root, File file) {
     final boolean isMarkedDeleted;
-    synchronized (deleted) {
-      isMarkedDeleted = !deleted.isEmpty() && deleted.contains(FileUtil.toCanonicalPath(file.getPath()));
+    synchronized (myDeletedPaths) {
+      isMarkedDeleted = !myDeletedPaths.isEmpty() && myDeletedPaths.contains(FileUtil.toCanonicalPath(file.getPath()));
     }
     if (!isMarkedDeleted) {
-      return _addToRecompiled(root, isTestRoot, file);
+      return _addToRecompiled(root, file);
     }
     return false;
   }
 
-  private boolean _addToRecompiled(File root, boolean isTestRoot, File file) {
+  private boolean _addToRecompiled(File root, File file) {
     if (Utils.IS_TEST_MODE) {
       LOG.info("Marking dirty: " + file.getPath());
     }
 
-    final Map<File, Set<File>> toRecompile = isTestRoot ? myTestsToRecompile : mySourcesToRecompile;
     Set<File> files;
-    synchronized (toRecompile) {
-      files = toRecompile.get(root);
+    synchronized (myFilesToRecompile) {
+      files = myFilesToRecompile.get(root);
       if (files == null) {
         files = createSetOfFiles();
-        toRecompile.put(root, files);
+        myFilesToRecompile.put(root, files);
       }
       return files.add(file);
     }
   }
 
-  public void addDeleted(File file, boolean isTest) {
+  public void addDeleted(File file) {
     // ensure the file is no more marked to recompilation
-    final Map<File, Set<File>> toRecompile = isTest ? myTestsToRecompile : mySourcesToRecompile;
-    synchronized (toRecompile) {
-      for (Set<File> files : toRecompile.values()) {
+    synchronized (myFilesToRecompile) {
+      for (Set<File> files : myFilesToRecompile.values()) {
         files.remove(file);
       }
     }
-    final Set<String> deleted = isTest? myDeletedTests : myDeletedProduction;
     final String path = FileUtil.toCanonicalPath(file.getPath());
-    deleted.add(path);
+    myDeletedPaths.add(path);
     if (Utils.IS_TEST_MODE) {
       LOG.info("Marking deleted: " + path);
     }
   }
 
-  public void clearDeletedPaths(boolean isTest) {
-    final Set<String> deleted = isTest? myDeletedTests : myDeletedProduction;
-    deleted.clear();
+  public void clearDeletedPaths() {
+    myDeletedPaths.clear();
   }
 
-  public Set<String> getAndClearDeletedPaths(boolean isTest) {
-    final Set<String> deleted = isTest? myDeletedTests : myDeletedProduction;
-    synchronized (deleted) {
+  public Set<String> getAndClearDeletedPaths() {
+    synchronized (myDeletedPaths) {
       try {
-        return new HashSet<String>(deleted);
+        return new HashSet<String>(myDeletedPaths);
       }
       finally {
-        deleted.clear();
+        myDeletedPaths.clear();
       }
     }
   }
 
-  public Map<File, Set<File>> getSourcesToRecompile(boolean forTests) {
-    return forTests? myTestsToRecompile : mySourcesToRecompile;
+  public Map<File, Set<File>> getSourcesToRecompile() {
+    return myFilesToRecompile;
   }
 
   public boolean hasSourcesToRecompile() {
-    synchronized (myTestsToRecompile) {
-      if(!myTestsToRecompile.isEmpty()) {
-        for (Set<File> files : myTestsToRecompile.values()) {
-          if (!files.isEmpty()) {
-            return true;
-          }
-        }
-      }
-    }
-    synchronized (mySourcesToRecompile) {
-      if(!mySourcesToRecompile.isEmpty()) {
-        for (Set<File> files : mySourcesToRecompile.values()) {
+    synchronized (myFilesToRecompile) {
+      if(!myFilesToRecompile.isEmpty()) {
+        for (Set<File> files : myFilesToRecompile.values()) {
           if (!files.isEmpty()) {
             return true;
           }
@@ -199,18 +165,17 @@ final class FilesDelta {
   }
 
   public boolean hasPathsToDelete() {
-    return !myDeletedTests.isEmpty() || !myDeletedProduction.isEmpty();
+    return !myDeletedPaths.isEmpty();
   }
 
-  public Set<String> getDeletedPaths(boolean isTest) {
-    final Set<String> deleted = isTest ? myDeletedTests : myDeletedProduction;
-    synchronized (deleted) {
-      return deleted.isEmpty()? Collections.<String>emptySet() : new HashSet<String>(deleted);
+  public Set<String> getDeletedPaths() {
+    synchronized (myDeletedPaths) {
+      return myDeletedPaths.isEmpty()? Collections.<String>emptySet() : new HashSet<String>(myDeletedPaths);
     }
   }
 
   @Nullable
-  public Set<File> clearRecompile(File root, boolean isTestRoot) {
-    return isTestRoot? myTestsToRecompile.remove(root) : mySourcesToRecompile.remove(root);
+  public Set<File> clearRecompile(File root) {
+    return myFilesToRecompile.remove(root);
   }
 }

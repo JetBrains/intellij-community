@@ -20,10 +20,12 @@ import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.mock.MockProject;
 import com.intellij.mock.MockResolveScopeManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.roots.FileIndexFacade;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.*;
@@ -95,6 +97,18 @@ public class CoreProjectEnvironment {
                                                 final Class<? extends T> aClass) {
     CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(myProject), extensionPointName, aClass);
   }
+
+  protected <T> void addProjectExtension(final ExtensionPointName<T> name, final T extension) {
+    final ExtensionPoint<T> extensionPoint = Extensions.getArea(myProject).getExtensionPoint(name);
+    extensionPoint.registerExtension(extension);
+    Disposer.register(myParentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        extensionPoint.unregisterExtension(extension);
+      }
+    });
+  }
+
 
   public <T> void registerProjectComponent(final Class<T> interfaceClass, final T implementation) {
     CoreApplicationEnvironment.registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);

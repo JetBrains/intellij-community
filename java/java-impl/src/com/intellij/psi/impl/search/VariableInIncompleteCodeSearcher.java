@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -44,7 +45,10 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
     final SearchScope scope = p.getEffectiveSearchScope();
     if (!(scope instanceof LocalSearchScope)) return;
 
-    PsiTreeUtil.processElements(new PsiElementProcessor() {
+    PsiElement[] elements = ((LocalSearchScope)scope).getScope();
+    if (elements == null || elements.length == 0) return;
+
+    PsiElementProcessor processor = new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {
         if (element instanceof PsiJavaCodeReferenceElement) {
@@ -56,6 +60,12 @@ public class VariableInIncompleteCodeSearcher extends QueryExecutorBase<PsiRefer
         }
         return true;
       }
-    }, ((LocalSearchScope)scope).getScope());
+    };
+
+    for (PsiElement element : elements) {
+      if (element.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+        PsiTreeUtil.processElements(element, processor);
+      }
+    }
   }
 }

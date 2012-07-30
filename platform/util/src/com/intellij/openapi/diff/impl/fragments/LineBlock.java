@@ -58,7 +58,7 @@ public class LineBlock {
     return myStartingLine2 + myModifiedLines2;
   }
 
-  public static final Comparator COMPARATOR = new Comparator<LineBlock>() {
+  public static final Comparator<LineBlock> COMPARATOR = new Comparator<LineBlock>() {
     public int compare(LineBlock block1, LineBlock block2) {
       return block1.getStartingLine1() - block2.getStartingLine1();
     }

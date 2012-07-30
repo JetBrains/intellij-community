@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,15 @@ public interface DocumentationProvider {
   @Nullable
   List<String> getUrlFor(PsiElement element, PsiElement originalElement);
 
+  /**
+   * Callback for asking the doc provider for the complete documentation.
+   * <p/>
+   * Underlying implementation may be time-consuming, that's why this method is expected not to be called from EDT.
+   *  
+   * @param element          target element which documentation is being requested
+   * @param originalElement  element initially picked up from the current context
+   * @return                 target element's documentation (if any)
+   */
   @Nullable
   String generateDoc(PsiElement element, PsiElement originalElement);
 

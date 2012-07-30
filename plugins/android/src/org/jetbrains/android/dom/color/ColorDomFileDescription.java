@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.color;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.xml.XmlFile;
@@ -25,7 +26,7 @@ import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
  */
 public class ColorDomFileDescription extends AndroidResourceDomFileDescription<ColorSelector> {
   public ColorDomFileDescription() {
-    super(ColorSelector.class, "selector", "color");
+    super(ColorSelector.class, "selector", ResourceType.COLOR.getName());
   }
 
   @Override

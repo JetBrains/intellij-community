@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.InplaceButton;
+import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
@@ -127,7 +127,7 @@ public interface ComponentPopupBuilder {
   @NotNull ComponentPopupBuilder setShowShadow(boolean show);
 
   @NotNull
-  ComponentPopupBuilder setCommandButton(@NotNull InplaceButton commandButton);
+  ComponentPopupBuilder setCommandButton(@NotNull ActiveComponent commandButton);
 
   @NotNull
   ComponentPopupBuilder setCouldPin(@Nullable Processor<JBPopup> callback);

@@ -17,6 +17,7 @@
 package org.jetbrains.android.dom;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlElementDescriptorProvider;
@@ -32,6 +33,7 @@ import org.jetbrains.android.dom.xml.XmlResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.SimpleClassMapConstructor;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
@@ -45,7 +47,7 @@ import java.util.Map;
  */
 public class AndroidDomElementDescriptorProvider implements XmlElementDescriptorProvider {
   @Nullable
-  private static XmlElementDescriptor getDescriptor(DomElement domElement, XmlTag tag, String baseClassName) {
+  private static XmlElementDescriptor getDescriptor(DomElement domElement, XmlTag tag, @Nullable String baseClassName) {
     AndroidFacet facet = AndroidFacet.getInstance(domElement);
     if (facet == null) return null;
     PsiClass aClass;
@@ -78,6 +80,15 @@ public class AndroidDomElementDescriptorProvider implements XmlElementDescriptor
   }
 
   public XmlElementDescriptor getDescriptor(XmlTag tag) {
+    final Pair<AndroidDomElement, String> pair = getDomElementAndBaseClassQName(tag);
+    if (pair == null) {
+      return null;
+    }
+    return getDescriptor(pair.getFirst(), tag, pair.getSecond());
+  }
+
+  @Nullable
+  public static Pair<AndroidDomElement, String> getDomElementAndBaseClassQName(@NotNull XmlTag tag) {
     Project project = tag.getProject();
     if (project.isDefault()) return null;
     final DomElement domElement = DomManager.getDomManager(project).getDomElement(tag);
@@ -92,6 +103,6 @@ public class AndroidDomElementDescriptorProvider implements XmlElementDescriptor
     else if (domElement instanceof XmlResourceElement) {
       className = AndroidXmlResourcesUtil.PREFERENCE_CLASS_NAME;
     }
-    return getDescriptor(domElement, tag, className);
+    return Pair.create((AndroidDomElement)domElement, className);
   }
 }

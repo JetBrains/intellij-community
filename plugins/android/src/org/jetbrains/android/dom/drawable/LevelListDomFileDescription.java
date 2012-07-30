@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom.drawable;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -30,7 +31,7 @@ public class LevelListDomFileDescription extends AndroidResourceDomFileDescripti
   @NonNls static final String LEVEL_LIST_TAG = "level-list";
 
   public LevelListDomFileDescription() {
-    super(LevelList.class, LEVEL_LIST_TAG, "drawable");
+    super(LevelList.class, LEVEL_LIST_TAG, ResourceType.DRAWABLE.getName());
   }
 
   @Override

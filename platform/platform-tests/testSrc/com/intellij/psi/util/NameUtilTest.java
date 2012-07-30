@@ -51,6 +51,16 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("AACl", "AAClass");
     assertMatches("ZZZ", "ZZZZZZZZZZ");
   }
+
+  public void testEmptyPrefix() {
+    assertMatches("", "");
+    assertMatches("", "asdfs");
+  }
+
+  public void testSkipWords() {
+    assertMatches("nt", "NameUtilTest");
+    assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
+  }
   
   public void testSimpleCasesWithFirstLowercased() throws Exception {
     assertMatches("N", "nameUtilTest");
@@ -79,9 +89,9 @@ public class NameUtilTest extends UsefulTestCase {
   
   public void testXMLCompletion() throws Exception {
     assertDoesntMatch("N_T", "NameUtilTest");
-    assertDoesntMatch("ORGS_ACC", "ORGS_POSITION_ACCOUNTABILITY");
-    assertDoesntMatch("ORGS-ACC", "ORGS-POSITION_ACCOUNTABILITY");
-    assertDoesntMatch("ORGS.ACC", "ORGS.POSITION_ACCOUNTABILITY");
+    assertMatches("ORGS_ACC", "ORGS_POSITION_ACCOUNTABILITY");
+    assertMatches("ORGS-ACC", "ORGS-POSITION_ACCOUNTABILITY");
+    assertMatches("ORGS.ACC", "ORGS.POSITION_ACCOUNTABILITY");
   }
 
   public void testStarFalsePositive() throws Exception {
@@ -112,7 +122,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("ARS.j", "activity_report_summary.xml");
     assertDoesntMatch("ARS.j", "activity_report_summary_justsometingwrong.xml");
 
-    assertDoesntMatch("foo.goo", "foo.bar.goo");
+    assertMatches("foo.goo", "foo.bar.goo");
   }
 
   public void testSpaceForAnyWordsInBetween() {
@@ -168,8 +178,8 @@ public class NameUtilTest extends UsefulTestCase {
   public void testSkipDot() {
     assertMatches("ja", "jquery.autocomplete.js");
     assertMatches("ja.js", "jquery.autocomplete.js");
-    assertDoesntMatch("jajs", "jquery.autocomplete.js");
-    assertDoesntMatch("j.ajs", "jquery.autocomplete.js");
+    assertMatches("jajs", "jquery.autocomplete.js");
+    assertMatches("j.ajs", "jquery.autocomplete.js");
   }
 
   public void testNoExtension() {
@@ -192,11 +202,11 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("*inspection*.pro", "InspectionsInProgress.png");
   }
 
-  public void testIgnoreLeadingUnderscore() throws Exception {
-    assertMatches("form", "_form.html.erb");
+  public void testLeadingUnderscore() throws Exception {
+    assertDoesntMatch("form", "_form.html.erb");
     assertMatches("_form", "_form.html.erb");
     assertMatches("_form", "__form");
-    assertFalse(NameUtil.buildMatcher("_form", 1, true, true, false).matches("__form"));
+    assertTrue(firstLetterMatcher("_form").matches("__form"));
   }
 
   public void testLowerCaseWords() throws Exception {
@@ -208,10 +218,46 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testObjectiveCCases() throws Exception {
+    assertMatches("h*:", "h:aaa");
+    assertMatches("h:", "h:aaa");
     assertMatches("text:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("abc", "aaa:bbb:ccc");
     assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
+  }
+
+  public void testFileStructure() {
+    assertDoesntMatch("hint", "height: int");
+    assertDoesntMatch("Hint", "Height:int");
+
+    assertMatches("getColor", "getBackground(): Color");
+    assertMatches("get color", "getBackground(): Color");
+    assertDoesntMatch("getcolor", "getBackground(): Color");
+
+    assertMatches("get()", "getBackground(): Color");
+
+    assertMatches("setColor", "setBackground(Color): void");
+    assertMatches("set color", "setBackground(Color): void");
+    assertMatches("set Color", "setBackground(Color): void");
+    assertMatches("set(color", "setBackground(Color): void");
+    assertMatches("set(color)", "setBackground(Color): void");
+    assertDoesntMatch("setcolor", "setBackground(Color): void");
+  }
+
+  public void testMiddleMatchingMinimumTwoConsecutiveLettersInWordMiddle() {
+    assertMatches("*fo", "reformat");
+    assertMatches("*f", "reFormat");
+    assertMatches("*f", "format");
+    assertMatches("*f", "Format");
+    assertMatches("*Stri", "string");
+    assertDoesntMatch("*f", "reformat");
+    assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
+  }
+
+  public void testMiddleMatchingUnderscore() {
+    assertMatches("*_dark", "collapseAll_dark.png");
+    assertMatches("*_dark.png", "collapseAll_dark.png");
+    assertMatches("**_dark.png", "collapseAll_dark.png");
   }
 
   public void testMiddleMatching() {
@@ -226,7 +272,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*Git", "BlaGitBla");
     assertFalse(firstLetterMatcher("*Git").matches("BlagitBla"));
     assertMatches("*git", "BlagitBla");
-    assertMatches("*Git*", "AtpGenerationItem");
+    assertDoesntMatch("*Git*", "AtpGenerationItem");
     assertMatches("Collec*Util*", "CollectionUtils");
     assertMatches("Collec*Util*", "CollectionUtilsTest");
     assertTrue(caseInsensitiveMatcher("*us").matches("usage"));
@@ -246,6 +292,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertFalse(firstLetterMatcher(" a").matches("Aaa"));
     assertFalse(firstLetterMatcher(" _bl").matches("_top"));
     assertFalse(firstLetterMatcher("*Ch").matches("char"));
+    assertTrue(firstLetterMatcher("*codes").matches("CFLocaleCopyISOCountryCodes"));
   }
 
   private static Matcher firstLetterMatcher(String pattern) {
@@ -276,13 +323,13 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("foo", "fxoo");
     assertMatches("foo", "fOo");
     assertMatches("foo", "fxOo");
-    assertDoesntMatch("foo", "fXOo");
+    assertMatches("foo", "fXOo");
     assertMatches("fOo", "foo");
-    assertMatches("fOo", "FaOaOaXXXX");
+    assertDoesntMatch("fOo", "FaOaOaXXXX");
     assertMatches("ncdfoe", "NoClassDefFoundException");
     assertMatches("fob", "FOO_BAR");
     assertMatches("fo_b", "FOO_BAR");
-    assertMatches("fob", "FOO BAR");
+    assertDoesntMatch("fob", "FOO BAR");
     assertMatches("fo b", "FOO BAR");
     assertMatches("AACl", "AAClass");
     assertMatches("ZZZ", "ZZZZZZZZZZ");
@@ -301,7 +348,7 @@ public class NameUtilTest extends UsefulTestCase {
 
   public void testFinalSpace() {
     assertMatches("GrDebT ", "GroovyDebuggerTest");
-    assertMatches("grdebT ", "GroovyDebuggerTest");
+    assertDoesntMatch("grdebT ", "GroovyDebuggerTest");
     assertDoesntMatch("grdebt ", "GroovyDebuggerTest");
     assertMatches("Foo ", "Foo");
     assertDoesntMatch("Foo ", "FooBar");
@@ -321,7 +368,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("a@b", "a@bc");
 
     assertMatches("a/text", "a/Text");
-    assertDoesntMatch("a/text", "a/bbbText");
+    assertMatches("a/text", "a/bbbText");
   }
 
   public void testMinusculeFirstLetter() {
@@ -392,12 +439,16 @@ public class NameUtilTest extends UsefulTestCase {
     assertPreference("cL", "class", "classLoader");
   }
 
+  public void testPreferAdjacentWords() {
+    assertPreference("*psfi", "PsiJavaFileBaseImpl", "PsiFileImpl", NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
   public void testPreferStartMatchToMiddleMatch() {
     assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
-    assertPreference("*f", "barfoo", "barFoo");
-    assertPreference("*f", "barfoo", "foo");
-    assertPreference("*f", "asdf", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("*fo", "barfoo", "barFoo");
+    assertPreference("*fo", "barfoo", "foo");
+    assertPreference("*fo", "asdfo", "Foo", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" sto", "ArrayStoreException", "StackOverflowError", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference(" EUC-", "x-EUC-TW", "EUC-JP");
     assertPreference(" boo", "Boolean", "boolean", NameUtil.MatchingCaseSensitivity.NONE);
@@ -405,8 +456,10 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testPreferWordBoundaryMatch() {
+    assertPreference("*ap", "add_profile", "application", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
     assertPreference("*les", "configureByFiles", "getLookupElementStrings", NameUtil.MatchingCaseSensitivity.NONE);
+    assertPreference("*ea", "LEADING", "NORTH_EAST", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
   public void testPreferEarlyMatching() {
@@ -441,22 +494,23 @@ public class NameUtilTest extends UsefulTestCase {
     for (String s : CollectionFactory.ar("*", "*i", "*a", "*u", "T", "ti", longName, longName.substring(0, 20))) {
       matching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
-    for (String s : CollectionFactory.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "ta")) {
+    for (String s : CollectionFactory.ar("A", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "tag")) {
       nonMatching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PlatformTestUtil.startPerformanceTest("Matcher is slow", 1700, new ThrowableRunnable() {
+    PlatformTestUtil.startPerformanceTest("Matcher is slow", 2700, new ThrowableRunnable() {
       @Override
       public void run() {
         for (int i = 0; i < 100000; i++) {
           for (MinusculeMatcher matcher : matching) {
-            assertTrue(matcher.matches(longName));
+            assertTrue(matcher.toString(), matcher.matches(longName));
+            matcher.matchingDegree(longName);
           }
           for (MinusculeMatcher matcher : nonMatching) {
-            assertFalse(matcher.matches(longName));
+            assertFalse(matcher.toString(), matcher.matches(longName));
           }
         }
       }
-    }).cpuBound().assertTiming();
+    }).cpuBound().attempts(20).assertTiming();
   }
 }

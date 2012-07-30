@@ -20,8 +20,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -30,21 +28,19 @@ import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.CurrentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import git4idea.GitBranch;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.history.GitDiffFromHistoryHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,13 +62,20 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     final VirtualFile file = getAffectedFile(event);
 
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      return;
-    }
     GitRepository repository = manager.getRepositoryForFile(file);
     assert repository != null;
 
-    final String head = repository.getCurrentRevision();
+    GitBranch currentBranch = repository.getCurrentBranch();
+    final String head;
+    if (currentBranch == null) {
+      String currentRevision = repository.getCurrentRevision();
+      LOG.assertTrue(currentRevision != null,
+                     "Current revision is null for " + repository + ". Compare with branch shouldn't be available for fresh repository");
+      head = GitUtil.getShortHash(currentRevision);
+    }
+    else {
+      head = currentBranch.getName();
+    }
     final List<String> branchNames = getBranchNamesExceptCurrent(repository);
 
     // prepare and invoke popup
@@ -125,18 +128,13 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
     }
 
     VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-    if (vFiles == null || vFiles.length != 1 || vFiles[0] == null || vFiles[0].isDirectory()) { // only 1 file for now, not for dirs
+    if (vFiles == null || vFiles.length != 1 || vFiles[0] == null) { // only 1 file for now
       presentation.setEnabled(false);
       presentation.setVisible(true);
       return;
     }
 
     GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
-    if (manager == null) {
-      presentation.setEnabled(false);
-      presentation.setVisible(true);
-      return;
-    }
 
     GitRepository repository = manager.getRepositoryForFile(vFiles[0]);
     if (repository == null || repository.isFresh() || noBranchesToCompare(repository)) {
@@ -173,43 +171,42 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
 
     @Override
     public void run() {
-      new Task.Backgroundable(myProject, "Comparing...") {
-        @Override public void run(@NotNull ProgressIndicator indicator) {
-          String branchToCompare = myList.getSelectedValue().toString();
-          try {
-            showDiffWithBranch(myProject, myFile, myHead, branchToCompare);
-          }
-          catch (VcsException e) {
-            if (e.getMessage().contains("exists on disk, but not in")) {
-              fileDoesntExistInBranchError(myProject, myFile, branchToCompare);
-            } else {
-              GitUIUtil.notifyError(myProject, "Couldn't compare with branch",
-                                    "Couldn't compare file [" + myFile + "] with selected branch [" + myList.getSelectedValue() + "]",
-                                    false, e);
-            }
-          }
+      String branchToCompare = myList.getSelectedValue().toString();
+      try {
+        showDiffWithBranch(myProject, myFile, myHead, branchToCompare);
+      }
+      catch (VcsException e) {
+        if (e.getMessage().contains("exists on disk, but not in")) {
+          fileDoesntExistInBranchError(myProject, myFile, branchToCompare);
+        } else {
+          GitUIUtil.notifyError(myProject, "Couldn't compare with branch",
+                                String.format("Couldn't compare file [%s] with selected branch [%s]", myFile, myList.getSelectedValue()),
+                                false, e);
         }
-      }.queue();
+      }
     }
 
-    private static void showDiffWithBranch(@NotNull Project project, @NotNull VirtualFile file, @NotNull String head, @NotNull String branchToCompare) throws VcsException {
+    private static void showDiffWithBranch(@NotNull Project project, @NotNull VirtualFile file, @NotNull String head,
+                                           @NotNull String branchToCompare) throws VcsException {
       final FilePath filePath = new FilePathImpl(file);
-      final VcsRevisionNumber currentRevisionNumber = GitHistoryUtils.getCurrentRevision(project, filePath, head);
-      final VcsRevisionNumber compareRevisionNumber = GitHistoryUtils.getCurrentRevision(project, filePath, branchToCompare);
+      // we could use something like GitRepository#getCurrentRevision here,
+      // but this way we can easily identify if the file is available in the branch
+      final GitRevisionNumber currentRevisionNumber = (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, filePath, head);
+      final GitRevisionNumber compareRevisionNumber =
+        (GitRevisionNumber)GitHistoryUtils.getCurrentRevision(project, filePath, branchToCompare);
+
       if (compareRevisionNumber == null) {
         fileDoesntExistInBranchError(project, file, branchToCompare);
         return;
       }
-      final VcsFileRevision compareRevision = new GitFileRevision(project, filePath, (GitRevisionNumber)compareRevisionNumber, false);
-      final String currentTitle = currentRevisionNumber != null ? ((GitRevisionNumber)currentRevisionNumber).getShortRev() + " on " + head : "Local changes on " + head;
-      final String compareTitle = ((GitRevisionNumber)compareRevisionNumber).getShortRev() + " on " + branchToCompare;
+      LOG.assertTrue(currentRevisionNumber != null,
+                     String.format("Current revision number is null for file [%s] and branch [%s]", filePath, head));
 
-      try {
-        VcsHistoryUtil.showDiff(project, filePath, new CurrentRevision(file, currentRevisionNumber), compareRevision, currentTitle, compareTitle);
-      }
-      catch (IOException e) {
-        throw new VcsException(String.format("Couldn't show diff for file [%s], head [%s] and branch [%s]", file.getPresentableUrl(), head, branchToCompare), e);
-      }
+      // constructing the revision with human readable name (will work for files comparison however).
+      final VcsFileRevision compareRevision =
+        new GitFileRevision(project, filePath, new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp()), false);
+      CurrentRevision currentRevision = new CurrentRevision(file, new GitRevisionNumber(head, currentRevisionNumber.getTimestamp()));
+      new GitDiffFromHistoryHandler(project).showDiffForTwo(new FilePathImpl(file), compareRevision, currentRevision);
     }
 
     private static void fileDoesntExistInBranchError(Project project, VirtualFile file, String branchToCompare) {

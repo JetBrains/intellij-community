@@ -155,7 +155,7 @@ public class SvnEntriesFileListener extends VirtualFileAdapter {
     }
   }
 
-  private void fileRevisionProbablyChanged(final VirtualFile file) {
+  public void fileRevisionProbablyChanged(final VirtualFile file) {
     final SvnEntriesListener[] listeners = myListeners.toArray(new SvnEntriesListener[myListeners.size()]);
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {

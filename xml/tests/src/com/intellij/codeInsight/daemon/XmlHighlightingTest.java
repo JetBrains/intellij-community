@@ -6,6 +6,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnboundNsPrefixInspection;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddXsiSchemaLocationForExtResourceAction;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.htmlInspections.HtmlUnknownTagInspection;
@@ -1193,10 +1194,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testSpecifyXsiSchemaLocationQuickFix() throws Exception {
     configureByFile(BASE_PATH + "web-app_2_4.xsd");
     final String testName = getTestName(false);
-    final String actionName = XmlBundle.message("add.xsi.schema.location.for.external.resource");
+    final String actionName = XmlBundle.message(AddXsiSchemaLocationForExtResourceAction.KEY);
     doTestWithQuickFix(BASE_PATH + testName, actionName, true);
     doTestWithQuickFix(BASE_PATH + testName + "2", actionName, true);
     doTestWithQuickFix(BASE_PATH + testName + "3", actionName, true);
+    doTestWithQuickFix(BASE_PATH + testName + "4", actionName, true);
   }
 
   public void testHighlightingWithConditionalSectionsInDtd() throws Exception {
@@ -1863,6 +1865,29 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       new VirtualFile[] {
         getVirtualFile(BASE_PATH + testName + ".xml"),
         getVirtualFile(BASE_PATH + testName + ".xsd")
+      },
+      true,
+      false
+    );
+  }
+
+  public void testSchemaAutodetection() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "SchemaAutodetection/policy.xml"),
+        getVirtualFile(BASE_PATH + "SchemaAutodetection/cs-xacml-schema-policy-01.xsd"),
+        getVirtualFile(BASE_PATH + "SchemaAutodetection/cs-xacml-schema-context-01.xsd")
+      },
+      true,
+      false
+    );
+  }
+
+  public void testDtdAutodetection() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "nuancevoicexml-2-0.xml"),
+        getVirtualFile(BASE_PATH + "nuancevoicexml-2-0.dtd")
       },
       true,
       false

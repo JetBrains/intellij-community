@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.popup.util;
 
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -38,6 +40,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 
 /**
 * Created with IntelliJ IDEA.
@@ -60,6 +66,16 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   private JLabel myNothingToShowInEditor = new JLabel("Nothing to show");
   private RangeHighlighter myHighlighter;
   private PreviewEditorState myEditorState = PreviewEditorState.EMPTY;
+  private JComponent myParentComponent;
+
+
+  public void setDoneRunnable(Runnable doneRunnable, JComponent parent) {
+    myParentComponent = parent;
+    myDoneRunnable = doneRunnable;
+  }
+
+  private Runnable myDoneRunnable;
+
   public DetailViewImpl(Project project) {
     super(new BorderLayout());
     myProject = project;
@@ -150,7 +166,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       validate();
       getEditor().getScrollingModel().scrollToCaret(ScrollType.CENTER);
 
-      getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
+      getEditor().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
       clearHightlighting();
       if (lineAttributes != null) {
@@ -187,14 +203,15 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     if (panel != null) {
       if (myDetailScrollPanel == null) {
         myDetailPanelWrapper = new JPanel(new GridLayout(1, 1));
-        myDetailPanelWrapper.setBorder(BorderFactory.createEmptyBorder(5, 30, 5, 30));
+        myDetailPanelWrapper.setBorder(IdeBorderFactory.createEmptyBorder(5, 30, 5, 30));
         myDetailPanelWrapper.add(panel);
 
         myDetailScrollPanel =
           new JBScrollPane(myDetailPanelWrapper, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         myDetailScrollPanel.setPreferredSize(myDetailPanelWrapper.getPreferredSize());
         myDetailScrollPanel.setBorder(null);
-        add(myDetailScrollPanel, BorderLayout.SOUTH);
+
+        add(myDetailScrollPanel, BorderLayout.NORTH);
       } else {
         myDetailPanelWrapper.removeAll();
         myDetailPanelWrapper.add(panel);
@@ -205,6 +222,33 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       myDetailPanelWrapper.add(myNothingToShow);
     }
     myDetailPanel = panel;
+  }
+
+  private Component wrapWithDoneButtonIfNeeded(JBScrollPane panel) {
+    if (myDoneRunnable == null) return panel;
+
+    JPanel panel1 = new JPanel(new BorderLayout());
+    panel1.add(panel, BorderLayout.NORTH);
+    JPanel bottomPanel = new JPanel(new BorderLayout());
+    JButton done = new JButton("Done");
+    done.setMnemonic('o');
+
+    new AnAction("Done") {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        myDoneRunnable.run();
+      }
+    }.registerCustomShortcutSet(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK, myParentComponent);
+
+    done.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        myDoneRunnable.run();
+      }
+    });
+    bottomPanel.add(done, BorderLayout.EAST);
+    panel1.add(bottomPanel);
+    return panel1;
   }
 
   final UserDataHolderBase myDataHolderBase = new UserDataHolderBase();

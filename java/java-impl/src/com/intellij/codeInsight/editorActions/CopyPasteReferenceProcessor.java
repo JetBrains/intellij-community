@@ -96,7 +96,7 @@ public abstract class CopyPasteReferenceProcessor<TRef extends PsiElement> imple
   public void processTransferableData(final Project project,
                                       final Editor editor,
                                       final RangeMarker bounds,
-                                      int caretColumn,
+                                      int caretOffset,
                                       Ref<Boolean> indented, final ReferenceTransferableData value) {
     if (DumbService.getInstance(project).isDumb()) {
       return;

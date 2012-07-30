@@ -346,6 +346,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myFontSizeSlider.setSnapToTicks(true);
     UIUtil.setSliderIsFilled(myFontSizeSlider, true);
     result.add(myFontSizeSlider);
+    result.setBorder(BorderFactory.createLineBorder(UIUtil.getBorderColor(), 1));
 
     myFontSizeSlider.addChangeListener(new ChangeListener() {
       @Override
@@ -421,7 +422,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myNavigateCallback = navigateCallback;
   }
 
-  public void setText(String text, PsiElement element, boolean clearHistory) {
+  public void setText(String text, @Nullable PsiElement element, boolean clearHistory) {
     setText(text, element, false, clearHistory);
   }
 

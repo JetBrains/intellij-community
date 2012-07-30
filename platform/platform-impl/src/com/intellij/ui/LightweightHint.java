@@ -31,6 +31,7 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.event.EventListenerList;
 import java.awt.*;
@@ -458,21 +459,44 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     }
   }
 
-  public void setSize(Dimension size) {
-    if (myIsRealPopup) {
-      myPopup.setSize(size);
+  public void setSize(final Dimension size) {
+    if (myIsRealPopup && myPopup != null) {
+      // There is a possible case that a popup wraps target content component into other components which might have borders.
+      // That's why we can't just apply component's size to the whole popup. It needs to be adjusted before that.
+      JComponent popupContent = myPopup.getContent();
+      int widthExpand = 0;
+      int heightExpand = 0;
+      boolean adjustSize = false;
+      JComponent prev = myComponent;
+      for (Container c = myComponent.getParent(); c != null; c = c.getParent()) {
+        if (c == popupContent) {
+          adjustSize = true;
+          break;
+        }
+        if (c instanceof JComponent) {
+          Border border = ((JComponent)c).getBorder();
+          if (prev != null && border != null) {
+            Insets insets = border.getBorderInsets(prev);
+            widthExpand += insets.left + insets.right;
+            heightExpand += insets.top + insets.bottom;
+          }
+          prev = (JComponent)c;
+        }
+        else {
+          prev = null;
+        }
+      }
+      Dimension sizeToUse = size;
+      if (adjustSize && (widthExpand != 0 || heightExpand != 0)) {
+        sizeToUse = new Dimension(size.width + widthExpand, size.height + heightExpand);
+      }
+      myPopup.setSize(sizeToUse);
     }
-    else {
-      //todo kirillk
-      if (isAwtTooltip()) {
-        return;
-      }
-      else {
-        myComponent.setSize(size);
+    else if (!isAwtTooltip()) {
+      myComponent.setSize(size);
 
-        myComponent.revalidate();
-        myComponent.repaint();
-      }
+      myComponent.revalidate();
+      myComponent.repaint();
     }
   }
 

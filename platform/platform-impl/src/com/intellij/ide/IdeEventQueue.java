@@ -421,7 +421,7 @@ public class IdeEventQueue extends EventQueue {
     _dispatchEvent(e, false);
   }
 
-  public void _dispatchEvent(AWTEvent e, boolean typeaheadFlushing) {
+  public void _dispatchEvent(AWTEvent e, boolean typeAheadFlushing) {
     if (e.getID() == MouseEvent.MOUSE_DRAGGED) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
       if (dndManager != null) {
@@ -431,10 +431,9 @@ public class IdeEventQueue extends EventQueue {
 
     myEventCount++;
 
-
     if (processAppActivationEvents(e)) return;
 
-    if (!typeaheadFlushing) {
+    if (!typeAheadFlushing) {
       fixStickyFocusedComponents(e);
     }
 
@@ -450,7 +449,7 @@ public class IdeEventQueue extends EventQueue {
       }
     }
 
-    if (!typeaheadFlushing && typeAheadDispatchToFocusManager(e)) {
+    if (!typeAheadFlushing && typeAheadDispatchToFocusManager(e)) {
       return;
     }
 

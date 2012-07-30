@@ -231,6 +231,7 @@ public class GenericsUtil {
     return internalCanonicalText != null && internalCanonicalText.equals(type.getCanonicalText());
   }
 
+  @Nullable
   public static PsiType getVariableTypeByExpressionType(final PsiType type) {
     PsiType transformed = type.accept(new PsiTypeVisitor<PsiType>() {
       @Override
@@ -307,7 +308,7 @@ public class GenericsUtil {
       }
     });
 
-    PsiType componentType = transformed.getDeepComponentType();
+    PsiType componentType = transformed != null ? transformed.getDeepComponentType() : null;
     if (componentType instanceof PsiWildcardType) {
       componentType = ((PsiWildcardType)componentType).getExtendsBound();
       int dims = transformed.getArrayDimensions();

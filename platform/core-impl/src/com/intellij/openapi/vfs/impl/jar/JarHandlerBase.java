@@ -308,7 +308,7 @@ public class JarHandlerBase {
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
     synchronized (lock) {
       final JarFile.JarEntry entry = convertToEntry(file);
-      return entry != null ? new FileAttributes(entry.isDirectory(), false, false, entry.getSize(), entry.getTime(), false) : null;
+      return entry != null ? new FileAttributes(entry.isDirectory(), false, false, false, entry.getSize(), entry.getTime(), false) : null;
     }
   }
 }

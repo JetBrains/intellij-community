@@ -48,12 +48,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     myPropertyName = propertyName;
 
     mySearchForGetter = searchForGetter;
-    mySubstitutorComputer = byShape ? null : new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, typeArguments, false, place) {
-      @Override
-      protected PsiElement getPlaceToInferContext() {
-        return myPlace;
-      }
-    };
+    mySubstitutorComputer = byShape ? null : new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, typeArguments, false, place, myPlace);
   }
 
   public boolean execute(@NotNull PsiElement element, ResolveState state) {

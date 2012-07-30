@@ -312,6 +312,14 @@ public class GitImpl implements Git {
     return push(repository, remote.getName(), pushSpec.getSource().getName() + ":" + destination, listeners);
   }
 
+  @NotNull
+  @Override
+  public GitCommandResult show(@NotNull GitRepository repository, @NotNull String... params) {
+    final GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.SHOW);
+    handler.addParameters(params);
+    return run(handler);
+  }
+
   @Override
   @NotNull
   public GitCommandResult cherryPick(@NotNull GitRepository repository, @NotNull String hash, boolean autoCommit,

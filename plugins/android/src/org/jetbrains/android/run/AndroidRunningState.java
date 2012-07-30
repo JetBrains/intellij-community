@@ -53,6 +53,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
@@ -69,7 +70,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -622,6 +623,7 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
     message("Target device: " + getDevicePresentableName(device), STDOUT);
     try {
       if (myDeploy) {
+        if (!checkPackageNames()) return false;
         if (!uploadAndInstall(device, myPackageName, myFacet)) return false;
         if (!uploadAndInstallDependentModules(device)) return false;
         myApplicationDeployed = true;
@@ -660,6 +662,45 @@ public abstract class AndroidRunningState implements RunProfileState, AndroidDeb
       message("I/O Error" + (message != null ? ": " + message : ""), STDERR);
       return false;
     }
+  }
+  
+  private boolean checkPackageNames() {
+    final Map<String, List<String>> packageName2ModuleNames = new HashMap<String, List<String>>();
+    packageName2ModuleNames.put(myPackageName, new ArrayList<String>(Arrays.asList(myFacet.getModule().getName())));
+
+    for (Map.Entry<AndroidFacet, String> entry : myAdditionalFacet2PackageName.entrySet()) {
+      final String moduleName = entry.getKey().getModule().getName();
+      final String packageName = entry.getValue();
+      List<String> list = packageName2ModuleNames.get(packageName);
+
+      if (list == null) {
+        list = new ArrayList<String>();
+        packageName2ModuleNames.put(packageName, list);
+      }
+      list.add(moduleName);
+    }
+    boolean result = true;
+
+    for (Map.Entry<String, List<String>> entry : packageName2ModuleNames.entrySet()) {
+      final String packageName = entry.getKey();
+      final List<String> moduleNames = entry.getValue();
+
+      if (moduleNames.size() > 1) {
+        final StringBuilder messageBuilder = new StringBuilder("Applications have the same package name ");
+        messageBuilder.append(packageName).append(":\n    ");
+
+        for (Iterator<String> it = moduleNames.iterator(); it.hasNext(); ) {
+          String moduleName = it.next();
+          messageBuilder.append(moduleName);
+          if (it.hasNext()) {
+            messageBuilder.append(", ");
+          }
+        }
+        message(messageBuilder.toString(), STDERR);
+        result = false;
+      }
+    }
+    return result;
   }
 
   protected static void clearLogcatAndConsole(@NotNull final Project project, @NotNull final IDevice device) {

@@ -222,7 +222,7 @@ public class SvnChangeProvider implements ChangeProvider {
           if (childUrl == null) {
             continue;
           }
-          final String childURL = childUrl.toString();
+          final String childURL = childUrl.toDecodedString();
           if (StringUtil.startsWithConcatenationOf(childURL, copyFromURL, "/")) {
             String relativePath = childURL.substring(copyFromURL.length());
             File newPath = new File(copiedFile.getFilePath().getIOFile(), relativePath);

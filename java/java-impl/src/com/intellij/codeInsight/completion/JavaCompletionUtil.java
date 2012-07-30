@@ -23,7 +23,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.ide.highlighter.XmlLikeFileType;
+import com.intellij.lang.StdLanguages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -418,7 +418,7 @@ public class JavaCompletionUtil {
 
   public static Set<LookupElement> processJavaReference(PsiElement element, PsiJavaReference javaReference, ElementFilter elementFilter,
                                                         final boolean checkAccess, boolean filterStaticAfterInstance, final PrefixMatcher matcher, CompletionParameters parameters) {
-    final THashSet<LookupElement> set = new THashSet<LookupElement>();
+    final Set<LookupElement> set = new LinkedHashSet<LookupElement>();
     final Condition<String> nameCondition = new Condition<String>() {
       public boolean value(String s) {
         return matcher.prefixMatches(s);
@@ -736,7 +736,9 @@ public class JavaCompletionUtil {
     PsiElement element = file.findElementAt(startOffset);
     if (element instanceof PsiIdentifier) {
       PsiElement parent = element.getParent();
-      if (parent instanceof PsiJavaCodeReferenceElement && !((PsiJavaCodeReferenceElement)parent).isQualified() && !(parent.getParent() instanceof PsiPackageStatement)) {
+      if (parent instanceof PsiJavaCodeReferenceElement &&
+          !((PsiJavaCodeReferenceElement)parent).isQualified() &&
+          !(parent.getParent() instanceof PsiPackageStatement)) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)parent;
 
         if (psiClass.isValid() && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference(ref))) {
@@ -750,8 +752,8 @@ public class JavaCompletionUtil {
           documentManager.commitDocument(document);
 
           newElement = CodeInsightUtilBase.findElementInRange(file, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(),
-                                                                  PsiJavaCodeReferenceElement.class,
-                                                                  JavaLanguage.INSTANCE);
+                                                              PsiJavaCodeReferenceElement.class,
+                                                              JavaLanguage.INSTANCE);
           rangeMarker.dispose();
           if (newElement != null) {
             newEndOffset = newElement.getTextRange().getEndOffset();
@@ -762,7 +764,9 @@ public class JavaCompletionUtil {
               }
             }
 
-            if (!staticImport && !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement))) {
+            if (!staticImport &&
+                !psiClass.getManager().areElementsEquivalent(psiClass, resolveReference((PsiReference)newElement)) &&
+                !PsiUtil.isInnerClass(psiClass)) {
               final String qName = psiClass.getQualifiedName();
               if (qName != null) {
                 document.replaceString(newElement.getTextRange().getStartOffset(), newEndOffset, qName);
@@ -944,8 +948,8 @@ public class JavaCompletionUtil {
   }
 
   public static String escapeXmlIfNeeded(InsertionContext context, String generics) {
-    if (context.getFile().getFileType() instanceof XmlLikeFileType) {
-      generics = StringUtil.escapeXml(generics);
+    if (context.getFile().getViewProvider().getBaseLanguage() == StdLanguages.JSPX) {
+      return StringUtil.escapeXml(generics);
     }
     return generics;
   }

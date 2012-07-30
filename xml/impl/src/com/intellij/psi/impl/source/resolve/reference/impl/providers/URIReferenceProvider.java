@@ -134,6 +134,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
       return refs.toArray(new PsiReference[refs.size()]);
     }
 
+
     if (isUrlText(s, element.getProject()) ||
         (parent instanceof XmlAttribute &&
           ( ((XmlAttribute)parent).isNamespaceDeclaration() ||
@@ -148,7 +149,7 @@ public class URIReferenceProvider extends PsiReferenceProvider {
         if (!namespaceSoftRef && parent instanceof XmlAttribute && ((XmlAttribute)parent).isNamespaceDeclaration()) {
           namespaceSoftRef = parent.getContainingFile().getContext() != null;
         }
-        return getUrlReference(element, namespaceSoftRef);
+        return new URLReference[] { new URLReference(element, null, namespaceSoftRef)};
       }
     }
 
@@ -170,9 +171,4 @@ public class URIReferenceProvider extends PsiReferenceProvider {
     if (protocolIndex > 1 && !s.regionMatches(0,"classpath",0,protocolIndex)) return true;
     return ExternalResourceManager.getInstance().getResourceLocation(s, project) != s;
   }
-
-  private static URLReference[] getUrlReference(final PsiElement element, boolean soft) {
-    return new URLReference[] { new URLReference(element, null, soft)};
-  }
-
 }

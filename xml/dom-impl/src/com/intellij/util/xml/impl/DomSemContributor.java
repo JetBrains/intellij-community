@@ -38,10 +38,14 @@ import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
@@ -84,7 +88,7 @@ public class DomSemContributor extends SemContributor {
       public IndexedElementInvocationHandler fun(XmlTag tag) {
         final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
         assert parentTag != null;
-        DomInvocationHandler parent = mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, parentTag);
+        DomInvocationHandler parent = getParentDom(parentTag);
         if (parent == null) return null;
 
         final String localName = tag.getLocalName();
@@ -127,7 +131,7 @@ public class DomSemContributor extends SemContributor {
       public CollectionElementInvocationHandler fun(XmlTag tag) {
         final XmlTag parentTag = PhysicalDomParentStrategy.getParentTag(tag);
         assert parentTag != null;
-        DomInvocationHandler parent = mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, parentTag);
+        DomInvocationHandler parent = getParentDom(parentTag);
         if (parent == null) return null;
 
         final DomCollectionChildDescription description = findChildrenDescription(parent.getGenericInfo().getCollectionChildrenDescriptions(), tag, parent);
@@ -150,7 +154,7 @@ public class DomSemContributor extends SemContributor {
         DomInvocationHandler parent = myGuard.doPreventingRecursion(tag, true, new NullableComputable<DomInvocationHandler>() {
           @Override
           public DomInvocationHandler compute() {
-            return mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, parentTag);
+            return getParentDom(parentTag);
           }
         });
         if (parent == null) return null;
@@ -183,7 +187,7 @@ public class DomSemContributor extends SemContributor {
     registrar.registerSemElementProvider(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, xmlAttribute(), new NullableFunction<XmlAttribute, AttributeChildInvocationHandler>() {
       public AttributeChildInvocationHandler fun(final XmlAttribute attribute) {
         final XmlTag tag = PhysicalDomParentStrategy.getParentTag(attribute);
-        final DomInvocationHandler handler = mySemService.getSemElement(DomManagerImpl.DOM_HANDLER_KEY, tag);
+        final DomInvocationHandler handler = getParentDom(tag);
         if (handler == null) return null;
 
         final String localName = attribute.getLocalName();
@@ -213,6 +217,23 @@ public class DomSemContributor extends SemContributor {
       }
     });
 
+  }
+
+  @Nullable
+  private static DomInvocationHandler getParentDom(@NotNull XmlTag tag) {
+    LinkedHashSet<XmlTag> allParents = new LinkedHashSet<XmlTag>();
+    PsiElement each = tag;
+    while (each instanceof XmlTag && allParents.add((XmlTag)each)) {
+      each = PhysicalDomParentStrategy.getParentTagCandidate((XmlTag)each);
+    }
+    ArrayList<XmlTag> list = new ArrayList<XmlTag>(allParents);
+    Collections.reverse(list);
+    DomManagerImpl manager = DomManagerImpl.getDomManager(tag.getProject());
+    for (XmlTag xmlTag : list) {
+      manager.getDomHandler(xmlTag);
+    }
+
+    return manager.getDomHandler(tag);
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,71 +39,71 @@ public class NegatedConditionalInspection extends BaseInspection {
    */
   public boolean m_ignoreNegatedNullComparison = true;
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message(
       "negated.conditional.display.name");
   }
 
+  @Override
   @NotNull
   public String getID() {
     return "ConditionalExpressionWithNegatedCondition";
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "negated.conditional.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NegatedConditionalVisitor();
   }
 
+  @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "negated.conditional.ignore.option"), this,
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("negated.conditional.ignore.option"), this,
                                           "m_ignoreNegatedNullComparison");
   }
 
+  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new NegatedConditionalFix();
   }
 
   private static class NegatedConditionalFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "negated.conditional.invert.quickfix");
+      return InspectionGadgetsBundle.message("negated.conditional.invert.quickfix");
     }
 
-    public void doFix(Project project,
-                      ProblemDescriptor descriptor)
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
-      final PsiConditionalExpression exp =
-        (PsiConditionalExpression)element.getParent();
-      assert exp != null;
-      final PsiExpression elseBranch = exp.getElseExpression();
-      final PsiExpression thenBranch = exp.getThenExpression();
-      final PsiExpression condition = exp.getCondition();
-      final String negatedCondition =
-        BoolUtils.getNegatedExpressionText(condition);
+      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)element.getParent();
+      assert conditionalExpression != null;
+      final PsiExpression elseBranch = conditionalExpression.getElseExpression();
+      final PsiExpression thenBranch = conditionalExpression.getThenExpression();
+      final PsiExpression condition = conditionalExpression.getCondition();
+      final String negatedCondition = BoolUtils.getNegatedExpressionText(condition);
       assert elseBranch != null;
       assert thenBranch != null;
-      final String newStatement =
-        negatedCondition + '?' + elseBranch.getText() + ':' +
-        thenBranch.getText();
-      replaceExpression(exp, newStatement);
+      final String newStatement = negatedCondition + '?' + elseBranch.getText() + ':' + thenBranch.getText();
+      replaceExpression(conditionalExpression, newStatement);
     }
   }
 
   private class NegatedConditionalVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitConditionalExpression(
-      PsiConditionalExpression expression) {
+    public void visitConditionalExpression(PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiExpression thenBranch = expression.getThenExpression();
       if (thenBranch == null) {
@@ -114,8 +114,7 @@ public class NegatedConditionalInspection extends BaseInspection {
         return;
       }
       final PsiExpression condition = expression.getCondition();
-      if (!ExpressionUtils.isNegation(condition,
-                                      m_ignoreNegatedNullComparison)) {
+      if (!ExpressionUtils.isNegation(condition, m_ignoreNegatedNullComparison, false)) {
         return;
       }
       registerError(condition);

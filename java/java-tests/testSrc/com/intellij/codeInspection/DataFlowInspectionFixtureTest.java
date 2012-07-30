@@ -70,4 +70,6 @@ public class DataFlowInspectionFixtureTest extends JavaCodeInsightFixtureTestCas
   public void testMultiCatch() throws Throwable { doTest(); }
   public void testContinueFlushesLoopVariable() throws Throwable { doTest(); }
 
+  public void testEqualsNotNull() throws Throwable { doTest(); }
+
 }

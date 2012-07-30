@@ -33,17 +33,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.WeighingComparable;
-import com.intellij.psi.WeighingService;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,9 +50,8 @@ public class CompletionLookupArranger extends LookupArranger {
   private static final Key<String> PRESENTATION_INVARIANT = Key.create("PRESENTATION_INVARIANT");
   private static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
+  public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
-  private static final String SELECTED = "selected";
-  static final String IGNORED = "ignored";
   static {
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
       @Override
@@ -68,20 +62,11 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private final CompletionLocation myLocation;
-  @SuppressWarnings("unchecked")
-  private final Map<LookupElement, Comparable> mySortingWeights = new THashMap<LookupElement, Comparable>(TObjectHashingStrategy.IDENTITY);
-  private final TreeMap<LookupElement, Object> mySortedByWeight = new TreeMap<LookupElement, Object>(new Comparator<LookupElement>() {
-    @Override
-    public int compare(LookupElement o1, LookupElement o2) {
-      //noinspection unchecked
-      return mySortingWeights.get(o1).compareTo(mySortingWeights.get(o2));
-    }
-  });
-
   private final CompletionParameters myParameters;
   private final CompletionProgressIndicator myProcess;
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
   private final Map<CompletionSorterImpl, Classifier<LookupElement>> myClassifiers = new LinkedHashMap<CompletionSorterImpl, Classifier<LookupElement>>();
+  private int myPrefixChanges;
 
   public CompletionLookupArranger(final CompletionParameters parameters, CompletionProgressIndicator process) {
     myParameters = parameters;
@@ -123,7 +108,7 @@ public class CompletionLookupArranger extends LookupArranger {
       }
       Classifier<LookupElement> classifier = myClassifiers.get(sorter);
       if (classifier != null) {
-        classifier.describeItems(subMap, new ProcessingContext());
+        classifier.describeItems(subMap, createContext(false));
       }
     }
 
@@ -133,22 +118,6 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
-    WeighingComparable<LookupElement,CompletionLocation> w = WeighingService.weigh(CompletionService.SORTING_KEY, element, myLocation);
-    w.force();
-    mySortingWeights.put(element, w);
-
-    Object old = mySortedByWeight.put(element, element);
-    if (old != null) {
-      List<LookupElement> list = new SmartList<LookupElement>();
-      if (old instanceof List) {
-        list.addAll((List<LookupElement>)old);
-      } else {
-        list.add((LookupElement)old);
-      }
-      list.add(element);
-      mySortedByWeight.put(element, list);
-    }
-
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     if (classifier == null) {
@@ -168,35 +137,20 @@ public class CompletionLookupArranger extends LookupArranger {
   @Override
   public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
     List<LookupElement> items = matchingItems(lookup);
-    if (isAlphaSorted()) {
-      Collections.sort(items, new Comparator<LookupElement>() {
-        public int compare(LookupElement o1, LookupElement o2) {
-          String invariant = PRESENTATION_INVARIANT.get(o1);
-          assert invariant != null;
-          return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
-        }
-      });
-    } else {
-      Set<LookupElement> set = new LinkedHashSet<LookupElement>(items);
-      items.clear();
-      for (Object o : mySortedByWeight.values()) {
-        if (o instanceof LookupElement && set.contains(o)) {
-          items.add((LookupElement)o);
-        } else if (o instanceof List) {
-          for (LookupElement item : (List<LookupElement>)o) {
-            if (set.contains(item)) {
-              items.add(item);
-            }
-          }
-        }
+    Collections.sort(items, new Comparator<LookupElement>() {
+      public int compare(LookupElement o1, LookupElement o2) {
+        String invariant = PRESENTATION_INVARIANT.get(o1);
+        assert invariant != null;
+        return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
       }
-    }
+    });
 
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(items);
 
     final List<LookupElement> byRelevance = new ArrayList<LookupElement>();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
-      ContainerUtil.addAll(byRelevance, myClassifiers.get(sorter).classify(inputBySorter.get(sorter), new ProcessingContext()));
+      ProcessingContext context = createContext(false);
+      ContainerUtil.addAll(byRelevance, myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context));
     }
 
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
@@ -230,6 +184,15 @@ public class CompletionLookupArranger extends LookupArranger {
     ArrayList<LookupElement> listModel = new ArrayList<LookupElement>(model);
 
     return new Pair<List<LookupElement>, Integer>(listModel, getItemToSelect(lookup, listModel, inputBySorter, onExplicitAction));
+  }
+
+  private ProcessingContext createContext(boolean pureRelevance) {
+    ProcessingContext context = new ProcessingContext();
+    context.put(PREFIX_CHANGES, myPrefixChanges);
+    if (pureRelevance) {
+      context.put(PURE_RELEVANCE, Boolean.TRUE);
+    }
+    return context;
   }
 
 
@@ -269,8 +232,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     final CompletionPreselectSkipper[] skippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
-      ProcessingContext context = new ProcessingContext();
-      context.put(PURE_RELEVANCE, Boolean.TRUE);
+      ProcessingContext context = createContext(true);
       for (LookupElement element : myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context)) {
         if (!shouldSkip(skippers, element)) {
           return items.indexOf(element);
@@ -286,28 +248,17 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   public static StatisticsUpdate collectStatisticChanges(CompletionProgressIndicator indicator, LookupElement item) {
-    LookupImpl lookupImpl = indicator.getLookup();
     applyLastCompletionStatisticsUpdate();
 
-    CompletionLocation myLocation = new CompletionLocation(indicator.getParameters());
-    final StatisticsInfo main = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
-    final List<LookupElement> items = lookupImpl.getItems();
-    final int count = Math.min(3, lookupImpl.getList().getSelectedIndex());
+    CompletionLocation location = new CompletionLocation(indicator.getParameters());
+    final StatisticsInfo main = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
 
-    final List<StatisticsInfo> ignored = new ArrayList<StatisticsInfo>();
-    for (int i = 0; i < count; i++) {
-      final LookupElement element = items.get(i);
-      StatisticsInfo baseInfo = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, element, myLocation);
-      if (baseInfo != null && baseInfo != StatisticsInfo.EMPTY && StatisticsManager.getInstance().getUseCount(baseInfo) == 0) {
-        ignored.add(new StatisticsInfo(composeContextWithValue(baseInfo), IGNORED));
-      }
+    final List<StatisticsInfo> toIncrement = new ArrayList<StatisticsInfo>();
+    if (main != null && main != StatisticsInfo.EMPTY) {
+      toIncrement.addAll(StatisticsWeigher.composeStatsWithPrefix(main, location, item));
     }
 
-    StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
-    final StatisticsInfo selected =
-      info != null && info != StatisticsInfo.EMPTY ? new StatisticsInfo(composeContextWithValue(info), SELECTED) : null;
-
-    StatisticsUpdate update = new StatisticsUpdate(ignored, selected, main);
+    StatisticsUpdate update = new StatisticsUpdate(toIncrement);
     ourPendingUpdate = update;
     Disposer.register(update, new Disposable() {
       @Override
@@ -393,31 +344,22 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public void prefixChanged() {
+    myPrefixChanges++;
     myFrozenItems.clear();
     super.prefixChanged();
   }
 
   static class StatisticsUpdate implements Disposable {
-    private final List<StatisticsInfo> myIgnored;
-    private final StatisticsInfo mySelected;
-    private final StatisticsInfo myMain;
+    private final List<StatisticsInfo> myInfos;
     private int mySpared;
 
-    public StatisticsUpdate(List<StatisticsInfo> ignored, StatisticsInfo selected, StatisticsInfo main) {
-      myIgnored = ignored;
-      mySelected = selected;
-      myMain = main;
+    public StatisticsUpdate(List<StatisticsInfo> infos) {
+      myInfos = infos;
     }
 
     void performUpdate() {
-      for (StatisticsInfo statisticsInfo : myIgnored) {
+      for (StatisticsInfo statisticsInfo : myInfos) {
         StatisticsManager.getInstance().incUseCount(statisticsInfo);
-      }
-      if (mySelected != null) {
-        StatisticsManager.getInstance().incUseCount(mySelected);
-      }
-      if (myMain != null) {
-        StatisticsManager.getInstance().incUseCount(myMain);
       }
       ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getCompletionStatistics().registerInvocation(mySpared);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,26 +72,25 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
-    String navigateInfo = null;
     if (element instanceof PsiClass) {
-      navigateInfo = generateClassInfo((PsiClass)element);
+      return generateClassInfo((PsiClass)element);
     }
     else if (element instanceof PsiMethod) {
-      navigateInfo = generateMethodInfo((PsiMethod)element, calcSubstitutor(originalElement));
+      return generateMethodInfo((PsiMethod)element, calcSubstitutor(originalElement));
     }
     else if (element instanceof PsiField) {
-      navigateInfo = generateFieldInfo((PsiField)element, calcSubstitutor(originalElement));
+      return generateFieldInfo((PsiField)element, calcSubstitutor(originalElement));
     }
     else if (element instanceof PsiVariable) {
-      navigateInfo = generateVariableInfo((PsiVariable)element);
+      return generateVariableInfo((PsiVariable)element);
     }
     else if (element instanceof PsiPackage) {
-      navigateInfo = generatePackageInfo((PsiPackage)element);
+      return generatePackageInfo((PsiPackage)element);
     }
     else if (element instanceof BeanPropertyElement) {
-      navigateInfo = generateMethodInfo(((BeanPropertyElement) element).getMethod(), PsiSubstitutor.EMPTY);
+      return generateMethodInfo(((BeanPropertyElement) element).getMethod(), PsiSubstitutor.EMPTY);
     }
-    return StringUtil.escapeXml(StringUtil.unescapeXml(navigateInfo));
+    return null;
   }
 
   private static PsiSubstitutor calcSubstitutor(PsiElement originalElement) {
@@ -158,7 +157,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       final List<OrderEntry> orderEntries = fileIndex.getOrderEntriesForFile(vFile);
       if (orderEntries.size() > 0) {
         final OrderEntry orderEntry = orderEntries.get(0);
-        buffer.append("[").append(orderEntry.getPresentableName()).append("] ");
+        buffer.append("[").append(StringUtil.escapeXml(orderEntry.getPresentableName())).append("] ");
       }
     }
     else {

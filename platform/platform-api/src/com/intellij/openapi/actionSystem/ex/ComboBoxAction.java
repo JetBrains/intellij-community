@@ -35,10 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
@@ -101,6 +98,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private boolean myForcePressed = false;
     private PropertyChangeListener myButtonSynchronizer;
     private boolean myMouseInside = false;
+    private JBPopup myPopup;
 
     public ComboBoxButton(Presentation presentation) {
       myPresentation = presentation;
@@ -143,7 +141,56 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           myMouseInside = false;
           repaint();
         }
+
+        @Override
+        public void mousePressed(final MouseEvent e) {
+          if (SwingUtilities.isLeftMouseButton(e)) {
+            e.consume();
+            doClick();
+          }
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+          dispatchEventToPopup(e);
+        }
       });
+      addMouseMotionListener(new MouseMotionListener() {
+        @Override
+        public void mouseDragged(MouseEvent e) {
+          mouseMoved(new MouseEvent(e.getComponent(),
+                                    MouseEvent.MOUSE_MOVED,
+                                    e.getWhen(),
+                                    e.getModifiers(),
+                                    e.getX(),
+                                    e.getY(),
+                                    e.getClickCount(),
+                                    e.isPopupTrigger(),
+                                    e.getButton()));
+        }
+
+        @Override
+        public void mouseMoved(MouseEvent e) {
+          dispatchEventToPopup(e);
+        }
+      });
+    }
+    // Event forwarding. We need it if user does press-and-drag gesture for opening popup and choosing item there.
+    // It works in JComboBox, here we provide the same behavior
+    private void dispatchEventToPopup(MouseEvent e) {
+      if (myPopup != null && myPopup.isVisible()) {
+        JComponent content = myPopup.getContent();
+        Rectangle rectangle = content.getBounds();
+        Point location = rectangle.getLocation();
+        SwingUtilities.convertPointToScreen(location, content);
+        Point eventPoint = e.getLocationOnScreen();
+        rectangle.setLocation(location);
+        if (rectangle.contains(eventPoint)) {
+          MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, myPopup.getContent());
+          Component component = SwingUtilities.getDeepestComponentAt(content, event.getX(), event.getY());
+          component.dispatchEvent(event);
+        }
+      }
     }
 
     public void showPopup() {
@@ -156,15 +203,15 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             public void run() {
               myForcePressed = false;
+              myPopup = null;
             }
           });
           repaint();
         }
       };
 
-      JBPopup popup = createPopup(onDispose);
-
-      popup.show(new RelativePoint(this, new Point(0, this.getHeight() - 1)));
+      myPopup = createPopup(onDispose);
+      myPopup.show(new RelativePoint(this, new Point(0, this.getHeight() - 1)));
     }
 
     @Nullable
@@ -370,10 +417,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       }
       icon.paintIcon(null, g, x, (size.height - icon.getIconHeight()) / 2);
       g.setPaintMode();
-    }
-
-    private boolean isGlowSupported() {
-      return false;
     }
 
     protected void updateButtonSize() {

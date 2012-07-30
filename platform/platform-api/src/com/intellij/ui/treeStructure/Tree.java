@@ -17,17 +17,17 @@ package com.intellij.ui.treeStructure;
 
 import com.intellij.Patches;
 import com.intellij.ide.util.treeView.*;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.MacTreeUI;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,8 +96,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   public void setUI(final TreeUI ui) {
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
-      if (!(ui instanceof MacTreeUI) && UIUtil.isUnderAquaBasedLookAndFeel()) {
-        actualUI = new MacTreeUI(isMacWideSelection(), !isFileColorsEnabled());
+      if (!(ui instanceof WideSelectionTreeUI) && isWideSelection() && !UIUtil.isUnderGTKLookAndFeel()) {
+        actualUI = new WideSelectionTreeUI(isWideSelection(), !SystemInfo.isMac);
       }
     }
     super.setUI(actualUI);
@@ -126,7 +126,17 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return false;
   }
 
+  /**
+   * Will be removed in version 13
+   *
+   * @deprecated use isWideSelection
+   * @see #isWideSelection()
+   */
   protected boolean isMacWideSelection() {
+    return isWideSelection();
+  }
+
+  protected boolean isWideSelection() {
     return true;
   }
 

@@ -218,6 +218,9 @@ public class IdeMenuBar extends JMenuBar {
       }
 
       updateMenuActions();
+      if (UIUtil.isWinLafOnVista()) {
+        repaint();
+      }
     }
   }
 }

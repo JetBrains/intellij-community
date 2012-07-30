@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class NonProjectFilesScope extends NamedScope {
     super(NAME, new AbstractPackageSet("NonProject") {
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         if (file == null) return true;
+        if (file.getFileSystem() != LocalFileSystem.getInstance()) return true;
         if (isInsideProjectContent(holder.getProject(), file)) return false;
         return !ProjectScope.getProjectScope(holder.getProject()).contains(file);
       }

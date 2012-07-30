@@ -34,6 +34,7 @@ public abstract class DomGenericInfoEx implements DomGenericInfo {
 
   public abstract boolean checkInitialized();
 
+  @Nullable
   public abstract Invocation createInvocation(final JavaMethod method);
 
   @NotNull

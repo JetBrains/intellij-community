@@ -1222,7 +1222,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     }
   }
 
-  private class MyComponent extends JPanel {
+  private class MyComponent extends JPanel implements ComponentWithMnemonics {
 
     private BufferedImage myImage;
     private float myAlpha;

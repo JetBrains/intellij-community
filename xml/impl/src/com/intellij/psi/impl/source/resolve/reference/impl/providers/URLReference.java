@@ -1,4 +1,3 @@
-
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
@@ -219,8 +218,8 @@ public class URLReference implements PsiReference, QuickFixProvider, EmptyResolv
     QuickFixAction.registerQuickFixAction(info, new FetchExtResourceAction());
     QuickFixAction.registerQuickFixAction(info, new ManuallySetupExtResourceAction());
     QuickFixAction.registerQuickFixAction(info, new IgnoreExtResourceAction());
-    final PsiElement parentElement = reference.getElement().getParent();
 
+    final PsiElement parentElement = reference.getElement().getParent();
     if (parentElement instanceof XmlAttribute && ((XmlAttribute)parentElement).isNamespaceDeclaration()) {
       QuickFixAction.registerQuickFixAction(info, new AddXsiSchemaLocationForExtResourceAction());
     }

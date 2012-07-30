@@ -15,26 +15,36 @@
  */
 package com.intellij.openapi.diff.impl.splitter;
 
+import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.EditingSides;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.GraphicsUtil;
 
 import java.awt.*;
+import java.awt.geom.CubicCurve2D;
+import java.awt.geom.Path2D;
 import java.util.ArrayList;
 
+/**
+ * A polygon, which is drawn between editors in merge or diff dialogs, and which indicates the change flow from one editor to another.
+ */
 public class DividerPolygon {
-  public static final int OFFSET = 3;
+
   private final Color myColor;
   private final int myStart1;
   private final int myStart2;
   private final int myEnd1;
   private final int myEnd2;
+  private final boolean myApplied;
 
-  public DividerPolygon(int start1, int start2, int end1, int end2, Color color) {
+  public static final double CTRL_PROXIMITY_X = 0.3;
+
+  public DividerPolygon(int start1, int start2, int end1, int end2, Color color, boolean applied) {
+    myApplied = applied;
     myStart1 = advance(start1);
     myStart2 = advance(start2);
     myEnd1 = advance(end1);
@@ -47,11 +57,45 @@ public class DividerPolygon {
   }
 
   private void paint(Graphics2D g, int width) {
-    g.setColor(myColor);
-    g.fill(new Polygon(new int[]{0, 0, width, width}, new int[]{myStart1, myEnd1, myEnd2, myStart2}, 4));
-    g.setColor(Color.GRAY);
-    UIUtil.drawLine(g, 0, myStart1, width, myStart2);
-    UIUtil.drawLine(g, 0, myEnd1, width, myEnd2);
+    GraphicsUtil.setupAntialiasing(g);
+
+
+    if (!myApplied) {
+      Shape upperCurve = makeCurve(width, myStart1, myStart2, true);
+      Shape lowerCurve = makeCurve(width, myEnd1, myEnd2, false);
+
+      Path2D path = new Path2D.Double();
+      path.append(upperCurve, true);
+      path.append(lowerCurve, true);
+      g.setColor(myColor);
+      g.fill(path);
+
+      g.setColor(DiffUtil.getFramingColor(myColor));
+      g.draw(upperCurve);
+      g.draw(lowerCurve);
+    }
+    else {
+      g.setColor(myColor);
+      g.draw(makeCurve(width, myStart1 + 1, myStart2 + 1, true));
+      g.draw(makeCurve(width, myStart1 + 2, myStart2 + 2, true));
+      g.draw(makeCurve(width, myEnd1 + 1, myEnd2 + 1, false));
+      g.draw(makeCurve(width, myEnd1 + 2, myEnd2 + 2, false));
+    }
+  }
+
+  private static Shape makeCurve(int width, int y1, int y2, boolean forward) {
+    if (forward) {
+      return new CubicCurve2D.Double(0, y1,
+                                     width * CTRL_PROXIMITY_X, y1,
+                                     width * (1.0 - CTRL_PROXIMITY_X), y2,
+                                     width, y2);
+    }
+    else {
+      return new CubicCurve2D.Double(width, y2,
+                                     width * (1.0 - CTRL_PROXIMITY_X), y2,
+                                     width * CTRL_PROXIMITY_X, y1,
+                                     0, y1);
+    }
   }
 
   public int hashCode() {
@@ -71,8 +115,28 @@ public class DividerPolygon {
     return "<" + myStart1 + ", " + myEnd1 + " : " + myStart2 + ", " + myEnd2 + "> " + myColor;
   }
 
-  Color getColor() {
+  public Color getColor() {
     return myColor;
+  }
+
+  public int getTopLeftY() {
+    return myStart1;
+  }
+
+  public int getTopRightY() {
+    return myStart2;
+  }
+
+  public int getBottomLeftY() {
+    return myEnd1;
+  }
+
+  public int getBottomRightY() {
+    return myEnd2;
+  }
+
+  public boolean isApplied() {
+    return myApplied;
   }
 
   public static void paintPolygons(ArrayList<DividerPolygon> polygons, Graphics2D g, int width) {
@@ -86,7 +150,7 @@ public class DividerPolygon {
     //g.setComposite(composite);
   }
 
-  public static ArrayList<DividerPolygon> createVisiblePolygons(EditingSides sides, FragmentSide left) {
+  public static ArrayList<DividerPolygon> createVisiblePolygons(EditingSides sides, FragmentSide left, int diffDividerPolygonsOffset) {
     Editor editor1 = sides.getEditor(left);
     Editor editor2 = sides.getEditor(left.otherSide());
     LineBlocks lineBlocks = sides.getLineBlocks();
@@ -100,7 +164,7 @@ public class DividerPolygon {
       Trapezium trapezium = lineBlocks.getTrapezium(i);
       final TextDiffType type = lineBlocks.getType(i);
       Color color = type.getPolygonColor(editor1);
-      polygons.add(createPolygon(transformations, trapezium, color, left));
+      polygons.add(createPolygon(transformations, trapezium, color, left, diffDividerPolygonsOffset, type.isApplied()));
     }
     return polygons;
   }
@@ -110,7 +174,8 @@ public class DividerPolygon {
     return new FoldingTransformation(editor);
   }
 
-  private static DividerPolygon createPolygon(Transformation[] transformations, Trapezium trapezium, Color color, FragmentSide left) {
+  private static DividerPolygon createPolygon(Transformation[] transformations, Trapezium trapezium, Color color, FragmentSide left,
+                                              int diffDividerPolygonsOffset, boolean applied) {
     Interval base1 = trapezium.getBase(left);
     Interval base2 = trapezium.getBase(left.otherSide());
     Transformation leftTransform = transformations[left.getIndex()];
@@ -119,7 +184,9 @@ public class DividerPolygon {
     int end1 = leftTransform.transform(base1.getEnd());
     int start2 = rightTransform.transform(base2.getStart());
     int end2 = rightTransform.transform(base2.getEnd());
-    return new DividerPolygon(start1 - OFFSET, start2 - OFFSET, end1 - OFFSET, end2 - OFFSET, color);
+    return new DividerPolygon(start1 - diffDividerPolygonsOffset, start2 - diffDividerPolygonsOffset,
+                              end1 - diffDividerPolygonsOffset, end2 - diffDividerPolygonsOffset,
+                              color, applied);
   }
 
   static Interval getVisibleInterval(Editor editor) {

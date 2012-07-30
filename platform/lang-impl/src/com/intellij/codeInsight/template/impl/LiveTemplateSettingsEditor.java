@@ -31,7 +31,9 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -77,6 +79,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   private final Map<TemplateOptionalProcessor, Boolean> myOptions;
   private final Map<TemplateContextType, Boolean> myContext;
   private JBPopup myContextPopup;
+  private Dimension myLastSize;
 
   public LiveTemplateSettingsEditor(TemplateImpl template,
                                     final String defaultShortcut,
@@ -331,9 +334,19 @@ public class LiveTemplateSettingsEditor extends JPanel {
       public boolean onClick(MouseEvent e, int clickCount) {
         if (disposeContextPopup()) return false;
 
-        JPanel content = createPopupContextPanel(updateLabel);
+        final JPanel content = createPopupContextPanel(updateLabel);
+        Dimension prefSize = content.getPreferredSize();
+        if (myLastSize != null && (myLastSize.width > prefSize.width || myLastSize.height > prefSize.height)) {
+          content.setPreferredSize(new Dimension(Math.max(prefSize.width, myLastSize.width), Math.max(prefSize.height, myLastSize.height)));
+        }
         myContextPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(content, null).setResizable(true).createPopup();
         myContextPopup.show(new RelativePoint(change, new Point(change.getWidth() , -content.getPreferredSize().height - 10)));
+        myContextPopup.addListener(new JBPopupAdapter() {
+          @Override
+          public void onClosed(LightweightWindowEvent event) {
+            myLastSize = content.getSize();
+          }
+        });
         return true;
       }
     }.installOn(change);

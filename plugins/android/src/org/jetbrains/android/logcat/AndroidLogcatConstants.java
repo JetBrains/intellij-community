@@ -18,8 +18,8 @@ package org.jetbrains.android.logcat;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import static com.intellij.execution.ui.ConsoleViewContentType.registerNewConsoleViewType;
+
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.colors.TextAttributesKeyDefaults;
 import com.intellij.openapi.util.Key;
 
 /**
@@ -31,28 +31,22 @@ import com.intellij.openapi.util.Key;
  */
 public class AndroidLogcatConstants {
   public static final TextAttributesKey VERBOSE_OUTPUT_KEY =
-    TextAttributesKeyDefaults.createTextAttributesKey("LOGCAT_VERBOSE_OUTPUT", TextAttributesKeyDefaults
-      .getDefaultAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY));
+    TextAttributesKey.createTextAttributesKey("LOGCAT_VERBOSE_OUTPUT", ConsoleViewContentType.NORMAL_OUTPUT_KEY.getDefaultAttributes());
 
   public static final TextAttributesKey DEBUG_OUTPUT_KEY =
-    TextAttributesKeyDefaults.createTextAttributesKey("LOGCAT_DEBUG_OUTPUT", TextAttributesKeyDefaults
-      .getDefaultAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY));
+    TextAttributesKey.createTextAttributesKey("LOGCAT_DEBUG_OUTPUT", ConsoleViewContentType.NORMAL_OUTPUT_KEY.getDefaultAttributes());
 
   public static final TextAttributesKey INFO_OUTPUT_KEY =
-    TextAttributesKeyDefaults.createTextAttributesKey("LOGCAT_INFO_OUTPUT", TextAttributesKeyDefaults
-      .getDefaultAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY));
+    TextAttributesKey.createTextAttributesKey("LOGCAT_INFO_OUTPUT", ConsoleViewContentType.NORMAL_OUTPUT_KEY.getDefaultAttributes());
 
   public static final TextAttributesKey WARNING_OUTPUT_KEY =
-    TextAttributesKeyDefaults.createTextAttributesKey("LOGCAT_WARNING_OUTPUT", TextAttributesKeyDefaults
-      .getDefaultAttributes(ConsoleViewContentType.SYSTEM_OUTPUT_KEY));
+    TextAttributesKey.createTextAttributesKey("LOGCAT_WARNING_OUTPUT", ConsoleViewContentType.SYSTEM_OUTPUT_KEY.getDefaultAttributes());
 
   public static final TextAttributesKey ERROR_OUTPUT_KEY =
-    TextAttributesKeyDefaults.createTextAttributesKey("LOGCAT_ERROR_OUTPUT", TextAttributesKeyDefaults
-      .getDefaultAttributes(ConsoleViewContentType.ERROR_OUTPUT_KEY));
+    TextAttributesKey.createTextAttributesKey("LOGCAT_ERROR_OUTPUT", ConsoleViewContentType.ERROR_OUTPUT_KEY.getDefaultAttributes());
 
   public static final TextAttributesKey ASSERT_OUTPUT_KEY =
-    TextAttributesKeyDefaults.createTextAttributesKey("LOGCAT_ASSERT_OUTPUT", TextAttributesKeyDefaults
-      .getDefaultAttributes(ConsoleViewContentType.ERROR_OUTPUT_KEY));
+    TextAttributesKey.createTextAttributesKey("LOGCAT_ASSERT_OUTPUT", ConsoleViewContentType.ERROR_OUTPUT_KEY.getDefaultAttributes());
 
   public static final Key VERBOSE = new Key("verbose.level.title");
   public static final Key DEBUG = new Key("debug.level.title");

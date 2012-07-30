@@ -151,11 +151,28 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
       else if (selectionModel.hasSelection()) {
         int selectionStart = selectionModel.getSelectionStart();
         int selectionEnd = selectionModel.getSelectionEnd();
+        if (commenter instanceof IndentedCommenter) {
+          final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
+          if (value != null && value == Boolean.TRUE) {
+            selectionStart = myDocument.getLineStartOffset(myDocument.getLineNumber(selectionStart));
+            selectionEnd = myDocument.getLineEndOffset(myDocument.getLineNumber(selectionEnd));
+          }
+        }
         commentRange(selectionStart, selectionEnd, prefix, suffix, commenter);
       }
       else {
         EditorUtil.fillVirtualSpaceUntilCaret(editor);
         int caretOffset = myEditor.getCaretModel().getOffset();
+        if (commenter instanceof IndentedCommenter) {
+          final Boolean value = ((IndentedCommenter)commenter).forceIndentedLineComment();
+          if (value != null && value == Boolean.TRUE) {
+            final int lineNumber = myDocument.getLineNumber(caretOffset);
+            final int start = myDocument.getLineStartOffset(lineNumber);
+            final int end = myDocument.getLineEndOffset(lineNumber);
+            commentRange(start, end, prefix, suffix, commenter);
+            return;
+          }
+        }
         myDocument.insertString(caretOffset, prefix + suffix);
         myEditor.getCaretModel().moveToOffset(caretOffset + prefix.length());
       }

@@ -71,6 +71,7 @@ public class CreatePatchConfigurationPanel {
   private SelectFilesToAddTextsToPatchPanel mySelectFilesToAddTextsToPatchPanel;
   private HideableTitledPanel myHideableTitledPanel;
   private JPanel myPanelWithSelectedFiles;
+  private boolean myExecute;
 
   public CreatePatchConfigurationPanel(final Project project) {
     myProject = project;
@@ -212,8 +213,9 @@ public class CreatePatchConfigurationPanel {
     else {
       myErrorLabel.setText(patchNameChecker.getError());
     }
+    myExecute = patchNameChecker.nameOk() || !patchNameChecker.isPreventsOk();
     if (myOkEnabledListener != null) {
-      myOkEnabledListener.consume(patchNameChecker.nameOk());
+      myOkEnabledListener.consume(myExecute);
     }
   }
 
@@ -258,7 +260,7 @@ public class CreatePatchConfigurationPanel {
   }
 
   public boolean isOkToExecute() {
-    return myErrorLabel.getText() == null || myErrorLabel.getText().length() == 0;
+    return myExecute;
   }
 
   public String getError() {

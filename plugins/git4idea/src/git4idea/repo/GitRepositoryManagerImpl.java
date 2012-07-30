@@ -22,6 +22,7 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -99,13 +100,26 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
   @Nullable
   public GitRepository getRepositoryForFile(@NotNull VirtualFile file) {
     final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
-    if (vcsRoot == null) { return null; }
+    return getRepositoryForVcsRoot(vcsRoot, file.getPath());
+  }
+
+  @Override
+  public GitRepository getRepositoryForFile(@NotNull FilePath file) {
+    final VcsRoot vcsRoot = myVcsManager.getVcsRootObjectFor(file);
+    return getRepositoryForVcsRoot(vcsRoot, file.getPath());
+  }
+
+  @Nullable
+  private GitRepository getRepositoryForVcsRoot(VcsRoot vcsRoot, String filePath) {
+    if (vcsRoot == null) {
+      return null;
+    }
     final AbstractVcs vcs = vcsRoot.getVcs();
     if (!myVcs.equals(vcs)) {
       if (vcs != null) {
         // if null, the file is just not under version control, nothing interesting;
         // otherwise log, because Git method is requested not for a Git-controlled file
-        LOG.info(String.format("getRepositoryForFile returned non-Git (%s) root for file %s", vcs.getDisplayName(), file));
+        LOG.info(String.format("getRepositoryForFile returned non-Git (%s) root for file %s", vcs.getDisplayName(), filePath));
       }
       return null;
     }

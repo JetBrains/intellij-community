@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.MacTreeUI;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -64,9 +64,11 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     if (UIUtil.isFullRowSelectionLAF()) {
         setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
     }
-    else if (UIUtil.isUnderAquaBasedLookAndFeel() && tree.getUI() instanceof MacTreeUI && ((MacTreeUI)tree.getUI()).isWideSelection()) {
+    else if (tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
       setPaintFocusBorder(false);
-      //setBackground(selected ? UIUtil.getTreeSelectionBackground() : null);
+      if (selected) {
+        setBackground(hasFocus ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground());
+      }
     }
     else {
       if (selected) {
@@ -100,7 +102,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
-    else if (UIUtil.isUnderAquaBasedLookAndFeel() && tree.getUI() instanceof MacTreeUI && ((MacTreeUI)tree.getUI()).isWideSelection()) {
+    else if (tree.getUI() instanceof WideSelectionTreeUI && ((WideSelectionTreeUI)tree.getUI()).isWideSelection()) {
       super.setOpaque(false);  // avoid erasing Nimbus focus frame
       super.setIconOpaque(false);
     }
@@ -108,7 +110,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       super.setOpaque(myOpaque || selected && hasFocus || selected && isFocused()); // draw selection background even for non-opaque tree
     }
 
-    if (tree.getUI() instanceof MacTreeUI) {
+    if (tree.getUI() instanceof WideSelectionTreeUI && UIUtil.isUnderAquaBasedLookAndFeel()) {
       setMyBorder(null);
       setIpad(new Insets(0, 2,  0, 2));
     }
@@ -140,7 +142,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * It guaranties readability of selected text in any LAF.
    */
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
-    if (mySelected && (myFocused || UIUtil.isUnderNimbusLookAndFeel())) {
+    if (mySelected && myFocused) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);
     }
     else if (mySelected && UIUtil.isUnderAquaBasedLookAndFeel()) {

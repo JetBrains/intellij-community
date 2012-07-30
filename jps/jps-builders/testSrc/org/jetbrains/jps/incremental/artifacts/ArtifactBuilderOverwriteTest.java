@@ -1,6 +1,6 @@
 package org.jetbrains.jps.incremental.artifacts;
 
-import org.jetbrains.jps.artifacts.Artifact;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 import static org.jetbrains.jps.incremental.artifacts.LayoutElementTestUtil.archive;
@@ -13,7 +13,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   public void testOverwriteArchives() {
     final String aFile = createFile("aaa.txt", "a");
     final String bFile = createFile("bbb.txt", "b");
-    final Artifact a = addArtifact(
+    final JpsArtifact a = addArtifact(
       root()
         .archive("x.jar").fileCopy(aFile).end()
         .archive("x.jar")
@@ -41,7 +41,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   public void testOverwriteNestedArchive() {
     final String cFile = createFile("c.txt", "c");
     final String eFile = createFile("e.txt", "e");
-    final Artifact a = addArtifact(
+    final JpsArtifact a = addArtifact(
       root()
         .archive("a.jar").archive("b.jar").fileCopy(cFile).end().end()
         .archive("a.jar").archive("d.jar").fileCopy(eFile));
@@ -65,7 +65,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   public void testOverwriteFileByArchive() {
     final String xFile = createFile("x.txt", "1");
     final String jarFile = createFile("junit.jar", "123");
-    Artifact a = addArtifact(root()
+    JpsArtifact a = addArtifact(root()
                                .archive("junit.jar").fileCopy(xFile).end()
                                .fileCopy(jarFile));
     buildAll();
@@ -88,7 +88,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   public void testOverwriteArchiveByFile() {
     final String xFile = createFile("x.txt", "1");
     final String jarFile = createFile("jdom.jar", "123");
-    Artifact a = addArtifact(root()
+    JpsArtifact a = addArtifact(root()
                                .fileCopy(jarFile)
                                .archive("jdom.jar").fileCopy(xFile));
     buildAll();
@@ -112,7 +112,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
     final String firstFile = createFile("d1/xxx.txt", "first");
     final String secondFile = createFile("d2/xxx.txt", "second");
     final String fooFile = createFile("d3/xxx.txt", "foo");
-    final Artifact a = addArtifact(
+    final JpsArtifact a = addArtifact(
       root().dir("ddd")
          .fileCopy(firstFile)
          .fileCopy(fooFile)
@@ -144,7 +144,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   public void testDeleteOverwritingFiles() {
     final String firstFile = createFile("d1/xxx.txt", "1");
     final String secondFile = createFile("d2/xxx.txt", "2");
-    final Artifact a = addArtifact("a",
+    final JpsArtifact a = addArtifact("a",
       root().dir("ddd").fileCopy(firstFile).fileCopy(secondFile).fileCopy(createFile("y.txt"))
     );
     buildAll();
@@ -165,7 +165,7 @@ public class ArtifactBuilderOverwriteTest extends ArtifactBuilderTestCase {
   public void testUpdateManifest() {
     final String manifestText1 = "Manifest-Version: 1.0\r\nMain-Class: A\r\n\r\n";
     final String manifest = createFile("MANIFEST.MF", manifestText1);
-    final Artifact a = addArtifact("a", archive("a.jar").dir("META-INF").fileCopy(manifest).fileCopy(createFile("a.txt")));
+    final JpsArtifact a = addArtifact("a", archive("a.jar").dir("META-INF").fileCopy(manifest).fileCopy(createFile("a.txt")));
     buildAll();
     assertOutput(a, fs().archive("a.jar").dir("META-INF").file("MANIFEST.MF", manifestText1).file("a.txt"));
 

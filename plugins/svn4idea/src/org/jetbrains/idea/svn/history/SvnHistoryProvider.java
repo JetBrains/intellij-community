@@ -70,6 +70,16 @@ public class SvnHistoryProvider
     return true;
   }
 
+  @Override
+  public DiffFromHistoryHandler getHistoryDiffHandler() {
+    return null;
+  }
+
+  @Override
+  public boolean canShowHistoryFor(@NotNull VirtualFile file) {
+    return true;
+  }
+
   public VcsDependentHistoryComponents getUICustomization(final VcsHistorySession session, JComponent forShortcutRegistration) {
     final ColumnInfo[] columns;
     final Consumer<VcsFileRevision> listener;
@@ -289,7 +299,7 @@ public class SvnHistoryProvider
         myException = new VcsException("File " + myFile.getPath() + " is not under Subversion control");
         return;
       }
-      myUrl = myInfo.getURL().toString();
+      myUrl = myInfo.getURL().toDecodedString();
     }
 
     @Override

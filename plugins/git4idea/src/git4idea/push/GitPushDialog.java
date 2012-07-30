@@ -31,14 +31,14 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.history.browser.GitCommit;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -50,6 +50,7 @@ public class GitPushDialog extends DialogWrapper {
   private static final String DEFAULT_REMOTE = "origin";
 
   private Project myProject;
+  private final GitRepositoryManager myRepositoryManager;
   private final GitPusher myPusher;
   private final GitPushLog myListPanel;
   private GitCommitsByRepoAndBranch myGitCommitsToPush;
@@ -66,8 +67,9 @@ public class GitPushDialog extends DialogWrapper {
     super(project);
     myProject = project;
     myPusher = new GitPusher(myProject, new EmptyProgressIndicator());
+    myRepositoryManager = GitUtil.getRepositoryManager(myProject);
 
-    myRepositories = GitUtil.getRepositoryManager(myProject).getRepositories();
+    myRepositories = getRepositoriesWithRemotes();
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this.getDisposable());
 
@@ -87,6 +89,17 @@ public class GitPushDialog extends DialogWrapper {
     setOKButtonText("Push");
     setOKButtonMnemonic('P');
     setTitle("Git Push");
+  }
+
+  @NotNull
+  private List<GitRepository> getRepositoriesWithRemotes() {
+    List<GitRepository> repositories = new ArrayList<GitRepository>();
+    for (GitRepository repository : myRepositoryManager.getRepositories()) {
+      if (!repository.getRemotes().isEmpty()) {
+        repositories.add(repository);
+      }
+    }
+    return repositories;
   }
 
   @Override

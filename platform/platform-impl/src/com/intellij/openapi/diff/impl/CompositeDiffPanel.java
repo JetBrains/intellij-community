@@ -25,6 +25,7 @@ import com.intellij.openapi.diff.impl.external.DiscloseMultiRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -121,6 +122,7 @@ public class CompositeDiffPanel implements DiffViewer {
     return myUi.getComponent();
   }
 
+  @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
     final Content[] contents = myUi.getContents();

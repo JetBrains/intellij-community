@@ -17,23 +17,26 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
-import groovy.lang.Closure;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.*;
-import org.jetbrains.jps.api.CanceledStatus;
-import org.jetbrains.jps.artifacts.Artifact;
-import org.jetbrains.jps.cmdline.ClasspathBootstrap;
+import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.*;
-import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.AllProjectScope;
+import org.jetbrains.jps.incremental.BuildLoggingManager;
+import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
-import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
+import org.jetbrains.jps.model.library.JpsSdkProperties;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,26 +47,24 @@ import static com.intellij.util.io.TestFileSystemItem.fs;
 /**
  * @author nik
  */
-public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
+public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   private ProjectDescriptor myDescriptor;
-  private Project myProject;
   private File myProjectDir;
   private TestArtifactBuilderLogger myArtifactBuilderLogger;
-  private Sdk myJdk;
+  private JpsTypedLibrary<JpsSdkProperties> myJdk;
 
   protected void setUp() throws Exception {
     super.setUp();
-    myProject = new Project();
-    myProject.setProjectName(getProjectName());
-    final File serverRoot = FileUtil.createTempDirectory("compile-server", null);
-    Utils.setSystemRoot(serverRoot);
     myArtifactBuilderLogger = new TestArtifactBuilderLogger();
   }
 
   @Override
   protected void tearDown() throws Exception {
-    for (Artifact artifact : myProject.getArtifacts().values()) {
-      FileUtil.delete(new File(FileUtil.toSystemDependentName(artifact.getOutputPath())));
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myJpsProject)) {
+      String outputPath = artifact.getOutputPath();
+      if (outputPath != null) {
+        FileUtil.delete(new File(FileUtil.toSystemDependentName(outputPath)));
+      }
     }
     myDescriptor.release();
     myProjectDir = null;
@@ -85,11 +86,20 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     }
   }
   
-  protected Artifact addArtifact(LayoutElementTestUtil.LayoutElementCreator root) {
-    final String name = UniqueNameGenerator.generateUniqueName("a", myProject.getArtifacts().keySet());
+  protected JpsArtifact addArtifact(LayoutElementTestUtil.LayoutElementCreator root) {
+    Set<String> usedNames = getArtifactNames();
+    final String name = UniqueNameGenerator.generateUniqueName("a", usedNames);
     return addArtifact(name, root);
   }
-  
+
+  private Set<String> getArtifactNames() {
+    Set<String> usedNames = new HashSet<String>();
+    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(myJpsProject)) {
+      usedNames.add(artifact.getName());
+    }
+    return usedNames;
+  }
+
   private File getOrCreateProjectDir() {
     if (myProjectDir == null) {
       try {
@@ -102,14 +112,10 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     return myProjectDir;
   }
   
-  protected Artifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root) {
-    assertFalse("Artifact " + name + " already exists", myProject.getArtifacts().containsKey(name));
-    Artifact artifact = new Artifact();
-    artifact.setName(name);
-    artifact.setRootElement(root.buildElement());
-    
+  protected JpsArtifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root) {
+    assertFalse("JpsArtifact " + name + " already exists", getArtifactNames().contains(name));
+    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myJpsProject, name, root.buildElement(), DirectoryArtifactType.INSTANCE);
     artifact.setOutputPath(getAbsolutePath("out/artifacts/" + name));
-    myProject.getArtifacts().put(name, artifact);
     return artifact;
   }
 
@@ -117,97 +123,49 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     return FileUtil.toSystemIndependentName(new File(getOrCreateProjectDir(), pathRelativeToProjectRoot).getAbsolutePath());
   }
 
-  protected Module addModule(String moduleName, String... srcPaths) {
+  protected JpsModule addModule(String moduleName, String... srcPaths) {
     if (myJdk == null) {
-      try {
-        myJdk = myProject.createSdk("JavaSDK", "jdk", "1.6", System.getProperty("java.home"), null);
-        final List<String> paths = new LinkedList<String>();
-        paths.add(FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
-        myJdk.setClasspath(paths);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      myJdk = initJdk("1.6");
     }
-    final Module module = myProject.createModule(moduleName, Closure.IDENTITY);
-    module.setSdk(myJdk);
-    module.addDependency(myJdk, PredefinedDependencyScopes.getCOMPILE(), false);
+    final JpsModule module = myJpsProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
+    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, myJdk.createReference());
+    module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
     if (srcPaths.length > 0) {
       for (String srcPath : srcPaths) {
-        module.getContentRoots().add(srcPath);
-        module.getSourceRoots().add(srcPath);
+        module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(srcPath));
+        module.addSourceRoot(JpsPathUtil.pathToUrl(srcPath), JavaSourceRootType.SOURCE);
       }
-      module.setOutputPath(getAbsolutePath("out/production/" + moduleName));
+      final String outputUrl = JpsPathUtil.pathToUrl(getAbsolutePath("out/production/" + moduleName));
+      JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module).setOutputUrl(outputUrl);
     }
     return module;
   }
 
-  protected Library addProjectLibrary(String name, String jarPath) {
-    final Library library = myProject.createLibrary(name, Closure.IDENTITY);
-    library.getClasspath().add(jarPath);
+  protected JpsLibrary addProjectLibrary(String name, String jarPath) {
+    final JpsLibrary library = myJpsProject.getLibraryCollection().addLibrary(name, JpsJavaLibraryType.INSTANCE);
+    library.addRoot(JpsPathUtil.pathToUrl(jarPath), JpsOrderRootType.COMPILED);
     return library;
   }
 
   protected void buildAll() {
-    Collection<Artifact> artifacts = myProject.getArtifacts().values();
-    buildArtifacts(artifacts.toArray(new Artifact[artifacts.size()]));
+    Collection<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(myJpsProject);
+    buildArtifacts(artifacts.toArray(new JpsArtifact[artifacts.size()]));
   }
 
-  protected void buildArtifacts(Artifact... artifact) {
+  protected void buildArtifacts(JpsArtifact... artifact) {
     doBuild(false, false, artifact);
   }
 
-  private ProjectDescriptor createProjectDescriptor() {
-    try {
-      final File dataStorageRoot = Utils.getDataStorageRoot(myProject);
-      ProjectTimestamps timestamps = new ProjectTimestamps(dataStorageRoot);
-      BuildDataManager dataManager = new BuildDataManager(dataStorageRoot, true);
-      return new ProjectDescriptor(myProject, new BuildFSState(true), timestamps, dataManager, new BuildLoggingManager(myArtifactBuilderLogger,
-                                                                                                                  new JavaBuilderLoggerImpl()));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private String getProjectName() {
-    return getTestName(true);
-  }
-
-  private void doBuild(boolean force, final boolean shouldFail, Artifact... artifacts) {
+  private void doBuild(boolean force, final boolean shouldFail, JpsArtifact... artifacts) {
     if (myDescriptor == null) {
-      myDescriptor = createProjectDescriptor();
+      myDescriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
       myDescriptor.incUsageCounter();
     }
     myArtifactBuilderLogger.clear();
-    final Timestamps timestamps = myDescriptor.timestamps.getStorage();
-    IncProjectBuilder builder = new IncProjectBuilder(myDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL,
-                                                      null);
-    final List<BuildMessage> errorMessages = new ArrayList<BuildMessage>();
-    final List<BuildMessage> infoMessages = new ArrayList<BuildMessage>();
-    builder.addMessageHandler(new MessageHandler() {
-      @Override
-      public void processMessage(BuildMessage msg) {
-        if (msg.getKind() == BuildMessage.Kind.ERROR) {
-          errorMessages.add(msg);
-        }
-        else {
-          infoMessages.add(msg);
-        }
-      }
-    });
-    try {
-      builder.build(new AllProjectScope(myDescriptor.project, new HashSet<Artifact>(Arrays.asList(artifacts)), force), !force, false, false);
-    }
-    catch (RebuildRequestedException e) {
-      fail(e.getMessage());
-    }
-    if (shouldFail) {
-      assertFalse("Build not failed as expected", errorMessages.isEmpty());
-    }
-    else {
-      assertTrue("Build failed. \nErrors:\n" + errorMessages + "\nInfo messages:\n" + infoMessages, errorMessages.isEmpty());
-    }
+    IncProjectBuilder builder = createBuilder(myDescriptor);
+    final CompileScope scope = new AllProjectScope(myDescriptor.project, myDescriptor.jpsProject,
+                                                   new HashSet<JpsArtifact>(Arrays.asList(artifacts)), force);
+    doBuild(builder, scope, shouldFail, !force, false);
   }
 
   protected static String getJUnitJarPath() {
@@ -216,11 +174,11 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     return FileUtil.toSystemIndependentName(file.getAbsolutePath());
   }
 
-  protected static void assertEmptyOutput(Artifact a1) {
+  protected static void assertEmptyOutput(JpsArtifact a1) {
     assertOutput(a1, fs());
   }
 
-  protected void assertBuildFailed(Artifact a) {
+  protected void assertBuildFailed(JpsArtifact a) {
     doBuild(false, true, a);
   }
 
@@ -260,7 +218,7 @@ public abstract class ArtifactBuilderTestCase extends UsefulTestCase {
     assertSameElements(myArtifactBuilderLogger.myCopiedFilePaths, copiedPaths);
   }
 
-  protected static void assertOutput(Artifact a, TestFileSystemBuilder expected) {
+  protected static void assertOutput(JpsArtifact a, TestFileSystemBuilder expected) {
     expected.build().assertDirectoryEqual(new File(FileUtil.toSystemDependentName(a.getOutputPath())));
   }
 

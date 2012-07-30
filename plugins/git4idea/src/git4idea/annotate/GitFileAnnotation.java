@@ -157,7 +157,9 @@ public class GitFileAnnotation implements FileAnnotation {
    * Fire annotation changed event
    */
   private void fireAnnotationChanged() {
-    myListeners.getMulticaster().onAnnotationChanged();
+    if (!myProject.isDisposed()) {
+      myListeners.getMulticaster().onAnnotationChanged();
+    }
   }
 
   /**
@@ -388,6 +390,7 @@ public class GitFileAnnotation implements FileAnnotation {
 
   private class MyFileStatusListener implements FileStatusListener {
     public void fileStatusesChanged() {
+      checkAndFire();
     }
 
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {

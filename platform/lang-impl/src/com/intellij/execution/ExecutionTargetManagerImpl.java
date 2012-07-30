@@ -30,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-@State(name = "XcodeMetaData", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE, scheme = StorageScheme.DEFAULT)})
+@State(name = "ExecutionTargetManager", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE, scheme = StorageScheme.DEFAULT)})
 public class ExecutionTargetManagerImpl extends ExecutionTargetManager implements ProjectComponent, PersistentStateComponent<Element> {
   @NotNull private final Project myProject;
   @NotNull private final Object myActiveTargetLock = new Object();

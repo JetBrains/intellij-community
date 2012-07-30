@@ -1,0 +1,7 @@
+<zzz xmlns:foo="">
+    <foo:kk>
+
+    </foo:kk>
+    <<caret>
+</zzz>
+

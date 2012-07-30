@@ -660,7 +660,7 @@ public class UpdateHighlightersUtil {
 
   @NotNull
   @TestOnly
-  static List<HighlightInfo> getFileLeveleHighlights(@NotNull Project project, @NotNull PsiFile file) {
+  static List<HighlightInfo> getFileLevelHighlights(@NotNull Project project, @NotNull PsiFile file) {
     VirtualFile vFile = file.getViewProvider().getVirtualFile();
     final FileEditorManager manager = FileEditorManager.getInstance(project);
     List<HighlightInfo> result = new ArrayList<HighlightInfo>();

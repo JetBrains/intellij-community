@@ -1,25 +1,22 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataOutputStream;
-import groovy.util.Node;
-import groovy.util.XmlParser;
-import org.codehaus.groovy.runtime.MethodClosure;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
+import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
-import org.jetbrains.jps.Library;
-import org.jetbrains.jps.Module;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.Project;
-import org.jetbrains.jps.Sdk;
 import org.jetbrains.jps.api.*;
-import org.jetbrains.jps.artifacts.Artifact;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.incremental.*;
@@ -29,6 +26,18 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.java.JpsJavaLibraryType;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
+import org.jetbrains.jps.model.library.JpsSdkProperties;
+import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.JpsSdkPropertiesLoader;
+import org.jetbrains.jps.model.serialization.JpsSdkTableLoader;
 
 import java.io.*;
 import java.util.*;
@@ -171,7 +180,9 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     try {
       final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta);
-      if (shouldApplyEvent && buildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
+      if (shouldApplyEvent && buildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()
+          && artifacts.isEmpty()//todo[nik] currently changes in artifacts source files aren't registered in the delta
+        ) {
         applyFSEvent(null, myInitialFSDelta);
         return;
       }
@@ -208,8 +219,9 @@ final class BuildSession implements Runnable, CanceledStatus {
         msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
       }
 
+      final JpsModel jpsModel = loadJpsProject(projectPath);
       final Project project = loadProject(projectPath);
-      final ProjectDescriptor pd = new ProjectDescriptor(project, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
+      final ProjectDescriptor pd = new ProjectDescriptor(project, jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
       myProjectDescriptor = pd;
       if (shouldApplyEvent) {
         applyFSEvent(pd, myInitialFSDelta);
@@ -498,13 +510,65 @@ final class BuildSession implements Runnable, CanceledStatus {
     return myCanceled;
   }
 
+  private JpsModel loadJpsProject(String projectPath) {
+    final long start = System.currentTimeMillis();
+    try {
+      final JpsModel model = JpsElementFactory.getInstance().createModel();
+      try {
+        for (GlobalLibrary library : myGlobalLibraries) {
+          JpsLibrary jpsLibrary = null;
+          if (library instanceof SdkLibrary) {
+            final SdkLibrary sdkLibrary = (SdkLibrary)library;
+            final JpsSdkPropertiesLoader<?> loader = JpsSdkTableLoader.getSdkPropertiesLoader(sdkLibrary.getTypeName());
+            if (loader != null) {
+              jpsLibrary = addLibrary(model, sdkLibrary, loader);
+            }
+            else {
+              LOG.info("Sdk type " + sdkLibrary.getTypeName() + " not registered");
+            }
+          }
+          else {
+            jpsLibrary = model.getGlobal().getLibraryCollection().addLibrary(library.getName(), JpsJavaLibraryType.INSTANCE);
+          }
+          if (jpsLibrary != null) {
+            for (String path : library.getPaths()) {
+              jpsLibrary.addRoot(JpsPathUtil.pathToUrl(path), JpsOrderRootType.COMPILED);
+            }
+          }
+        }
+        JpsProjectLoader.loadProject(model.getProject(), myPathVars, projectPath);
+        LOG.info("New JPS model: " + model.getProject().getModules().size() + " modules, " + model.getProject().getLibraryCollection().getLibraries().size() + " libraries");
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+      return model;
+    }
+    finally {
+      final long loadTime = System.currentTimeMillis() - start;
+      LOG.info("New JPS model: project " + projectPath + " loaded in " + loadTime + " ms");
+    }
+  }
+
+  private static <P extends JpsSdkProperties> JpsLibrary addLibrary(JpsModel model, SdkLibrary sdkLibrary, JpsSdkPropertiesLoader<P> loader) {
+    try {
+      final String xml = sdkLibrary.getAdditionalDataXml();
+      final Element element = xml != null ? JDOMUtil.loadDocument(xml).getRootElement() : null;
+      return model.getGlobal().getLibraryCollection().addLibrary(sdkLibrary.getName(), loader.getType(), loader.loadProperties(sdkLibrary.getHomePath(), sdkLibrary.getVersion(),
+                                                                                                                        element));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    catch (JDOMException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   private Project loadProject(String projectPath) {
     final long start = System.currentTimeMillis();
     try {
       final Project project = new Project();
-
-      initSdksAndGlobalLibraries(project);
 
       final File projectFile = new File(projectPath);
 
@@ -525,41 +589,6 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void initSdksAndGlobalLibraries(Project project) {
-    final MethodClosure fakeClosure = new MethodClosure(new Object(), "hashCode");
-    for (GlobalLibrary library : myGlobalLibraries) {
-      if (library instanceof SdkLibrary) {
-        final SdkLibrary sdk = (SdkLibrary)library;
-        Node additionalData = null;
-        final String additionalXml = sdk.getAdditionalDataXml();
-        if (additionalXml != null) {
-          try {
-            additionalData = new XmlParser(false, false).parseText(additionalXml);
-          }
-          catch (Exception e) {
-            LOG.info(e);
-          }
-        }
-        final Sdk jdk = project.createSdk(sdk.getTypeName(), sdk.getName(), sdk.getVersion(), sdk.getHomePath(), additionalData);
-        if (jdk != null) {
-          jdk.setClasspath(sdk.getPaths());
-        }
-        else {
-          LOG.info("Failed to load SDK " + sdk.getName() + ", type: " + sdk.getTypeName());
-        }
-      }
-      else {
-        final Library lib = project.createGlobalLibrary(library.getName(), fakeClosure);
-        if (lib != null) {
-          lib.setClasspath(library.getPaths());
-        }
-        else {
-          LOG.info("Failed to load global library " + library.getName());
-        }
-      }
-    }
-  }
-
   private static boolean isDirectoryBased(File projectFile) {
     return !(projectFile.isFile() && projectFile.getName().endsWith(".ipr"));
   }
@@ -570,15 +599,13 @@ final class BuildSession implements Runnable, CanceledStatus {
                                                      Collection<String> artifactNames,
                                                      Collection<String> paths) throws Exception {
     final Timestamps timestamps = pd.timestamps.getStorage();
-    Set<Artifact> artifacts = new HashSet<Artifact>();
+    Set<JpsArtifact> artifacts = new HashSet<JpsArtifact>();
     if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
-      artifacts.addAll(pd.project.getArtifacts().values());
+      artifacts.addAll(JpsArtifactService.getInstance().getArtifacts(pd.jpsProject));
     }
     else {
-      final Map<String, Artifact> artifactMap = pd.project.getArtifacts();
-      for (String name : artifactNames) {
-        final Artifact artifact = artifactMap.get(name);
-        if (artifact != null && !StringUtil.isEmpty(artifact.getOutputPath())) {
+      for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(pd.jpsProject)) {
+        if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
           artifacts.add(artifact);
         }
       }
@@ -586,13 +613,13 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     final CompileScope compileScope;
     if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
-      compileScope = new AllProjectScope(pd.project, artifacts, buildType != BuildType.MAKE);
+      compileScope = new AllProjectScope(pd.project, pd.jpsProject, artifacts, buildType != BuildType.MAKE);
     }
     else {
-      final Set<Module> forcedModules;
+      final Set<JpsModule> forcedModules;
       if (!modules.isEmpty()) {
-        forcedModules = new HashSet<Module>();
-        for (Module m : pd.project.getModules().values()) {
+        forcedModules = new HashSet<JpsModule>();
+        for (JpsModule m : pd.jpsProject.getModules()) {
           if (modules.contains(m.getName())) {
             forcedModules.add(m);
           }
@@ -626,10 +653,10 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
 
       if (filesToCompile.isEmpty()) {
-        compileScope = new ModulesScope(pd.project, forcedModules, artifacts, buildType != BuildType.MAKE);
+        compileScope = new ModulesScope(pd.project, pd.jpsProject, forcedModules, artifacts, buildType != BuildType.MAKE);
       }
       else {
-        compileScope = new ModulesAndFilesScope(pd.project, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE);
+        compileScope = new ModulesAndFilesScope(pd.project, pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE);
       }
     }
     return compileScope;

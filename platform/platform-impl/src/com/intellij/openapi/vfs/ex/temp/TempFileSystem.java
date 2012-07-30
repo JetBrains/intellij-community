@@ -382,6 +382,6 @@ public class TempFileSystem extends NewVirtualFileSystem {
     final FSItem item = convert(file);
     if (item == null) return null;
     final long length = item instanceof FSFile ? ((FSFile)item).myContent.length : 0;
-    return new FileAttributes(item.isDirectory(), false, false, length, item.myTimestamp, item.myWritable);
+    return new FileAttributes(item.isDirectory(), false, false, false, length, item.myTimestamp, item.myWritable);
   }
 }

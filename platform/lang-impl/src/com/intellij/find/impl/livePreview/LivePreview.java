@@ -367,10 +367,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
         balloonBuilder.setHideOnAction(false);
         balloonBuilder.setCloseButtonEnabled(true);
         myReplacementBalloon = balloonBuilder.createBalloon();
-        final int startOffset = cursor.getPrimaryRange().getStartOffset();
-        final int endOffset = cursor.getPrimaryRange().getEndOffset();
 
-        myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor, startOffset, endOffset, cursor), Balloon.Position.above);
+        myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.above);
       }
     }
   }
@@ -449,24 +447,25 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   private class ReplacementBalloonPositionTracker extends PositionTracker<Balloon> {
     private final Editor myEditor;
-    private final int myStartOffset;
-    private final int myEndOffset;
-    private final LiveOccurrence myCursor;
 
-    public ReplacementBalloonPositionTracker(Editor editor, int startOffset, int endOffset, LiveOccurrence cursor) {
+    public ReplacementBalloonPositionTracker(Editor editor) {
       super(editor.getContentComponent());
       myEditor = editor;
-      myStartOffset = startOffset;
-      myEndOffset = endOffset;
-      myCursor = cursor;
+
     }
 
     @Override
     public RelativePoint recalculateLocation(final Balloon object) {
-      Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(myStartOffset));
-      Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(myEndOffset));
+      LiveOccurrence cursor = mySearchResults.getCursor();
+      if (cursor == null) return null;
+      final TextRange cur = cursor.getPrimaryRange();
+      int startOffset = cur.getStartOffset();
+      int endOffset = cur.getEndOffset();
+
+      Point startPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(startOffset));
+      Point endPoint = myEditor.visualPositionToXY(myEditor.offsetToVisualPosition(endOffset));
       Point point = new Point((startPoint.x + endPoint.x)/2, startPoint.y);
-      if (!SearchResults.insideVisibleArea(myEditor, myCursor.getPrimaryRange())) {
+      if (!SearchResults.insideVisibleArea(myEditor, cur)) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -477,7 +476,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
         VisibleAreaListener visibleAreaListener = new VisibleAreaListener() {
           @Override
           public void visibleAreaChanged(VisibleAreaEvent e) {
-            if (SearchResults.insideVisibleArea(myEditor, myCursor.getPrimaryRange())) {
+            if (SearchResults.insideVisibleArea(myEditor, cur)) {
               showReplacementPreview();
               final VisibleAreaListener visibleAreaListener = this;
               myEditor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);

@@ -19,7 +19,6 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 
@@ -38,10 +37,9 @@ public abstract class HighlightHandlerBase {
     findManager.setFindNextModel(model);
   }
 
-  protected static void setLineTextErrorStripeTooltip(final RangeHighlighter highlighter) {
-    Document document = highlighter.getDocument();
-    final int lineNumber = document.getLineNumber(highlighter.getStartOffset());
+  public static String getLineTextErrorStripeTooltip(Document document, int offset) {
+    final int lineNumber = document.getLineNumber(offset);
     final String lineText = document.getText().substring(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber));
-    highlighter.setErrorStripeTooltip("  " + StringUtil.escapeXml(lineText.trim()) + "  ");
+    return "  " + StringUtil.escapeXml(lineText.trim()) + "  ";
   }
 }

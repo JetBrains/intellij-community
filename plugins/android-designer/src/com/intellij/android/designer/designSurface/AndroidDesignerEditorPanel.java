@@ -32,6 +32,7 @@ import com.intellij.designer.designSurface.selection.NonResizeSelectionDecorator
 import com.intellij.designer.designSurface.tools.ComponentCreationFactory;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadVisualComponent;
 import com.intellij.designer.model.WrapInProvider;
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
@@ -82,6 +83,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final ExternalPSIChangeListener myPSIChangeListener;
   private final ProfileAction myProfileAction;
   private final Alarm mySessionAlarm = new Alarm();
+  private FolderConfiguration myLastRenderedConfiguration;
   private volatile RenderSession mySession;
   private boolean myParseTime;
   private int myProfileLastVersion;
@@ -110,7 +112,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     myProfileAction = new ProfileAction(this, new Runnable() {
       @Override
       public void run() {
-        if (getProject().isDisposed()) {
+        if (isProjectClosed()) {
           return;
         }
         myPSIChangeListener.setInitialize();
@@ -178,9 +180,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     createRenderer(parser.getLayoutXmlText(), new MyThrowable(), new ThrowableConsumer<RenderSession, Throwable>() {
       @Override
       public void consume(RenderSession session) throws Throwable {
-        RootView rootView = new RootView(session.getImage(), 30, 20);
+        RootView rootView = new RootView(30, 20, session.getImage());
         try {
-          parser.updateRootComponent(session, rootView);
+          parser.updateRootComponent(myLastRenderedConfiguration, session, rootView);
         }
         catch (Throwable e) {
           myRootComponent = parser.getRootComponent();
@@ -251,17 +253,17 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             throw new RenderingException("Device is not specified");
           }
 
-          FolderConfiguration config = new FolderConfiguration();
-          config.set(deviceConfiguration.getConfiguration());
-          config.setUiModeQualifier(new UiModeQualifier(manager.getSelectedDockMode()));
-          config.setNightModeQualifier(new NightModeQualifier(manager.getSelectedNightMode()));
+          myLastRenderedConfiguration = new FolderConfiguration();
+          myLastRenderedConfiguration.set(deviceConfiguration.getConfiguration());
+          myLastRenderedConfiguration.setUiModeQualifier(new UiModeQualifier(manager.getSelectedDockMode()));
+          myLastRenderedConfiguration.setNightModeQualifier(new NightModeQualifier(manager.getSelectedNightMode()));
 
           LocaleData locale = manager.getSelectedLocale();
           if (locale == null) {
             throw new RenderingException("Locale is not specified");
           }
-          config.setLanguageQualifier(new LanguageQualifier(locale.getLanguage()));
-          config.setRegionQualifier(new RegionQualifier(locale.getRegion()));
+          myLastRenderedConfiguration.setLanguageQualifier(new LanguageQualifier(locale.getLanguage()));
+          myLastRenderedConfiguration.setRegionQualifier(new RegionQualifier(locale.getRegion()));
 
           float xdpi = deviceConfiguration.getDevice().getXDpi();
           float ydpi = deviceConfiguration.getDevice().getYDpi();
@@ -273,8 +275,18 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             throw new RenderingException();
           }
 
-          RenderingResult result =
-            RenderUtil.renderLayout(getModule(), layoutXmlText, myFile, null, target, facet, config, xdpi, ydpi, theme, 10000, true);
+          RenderingResult result = RenderUtil.renderLayout(getModule(),
+                                                           layoutXmlText,
+                                                           myFile,
+                                                           null,
+                                                           target,
+                                                           facet,
+                                                           myLastRenderedConfiguration,
+                                                           xdpi,
+                                                           ydpi,
+                                                           theme,
+                                                           10000,
+                                                           true);
 
           if (ApplicationManagerEx.getApplicationEx().isInternal()) {
             System.out.println("Render time: " + (System.currentTimeMillis() - time)); // XXX
@@ -291,7 +303,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
             @Override
             public void run() {
               try {
-                if (!getProject().isDisposed()) {
+                if (!isProjectClosed()) {
                   hideProgress();
                   runnable.consume(session);
                 }
@@ -345,7 +357,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         RadViewComponent rootComponent = (RadViewComponent)myRootComponent;
         RootView rootView = (RootView)rootComponent.getNativeComponent();
         rootView.setImage(session.getImage());
-        ModelParser.updateRootComponent(rootComponent, session, rootView);
+        ModelParser.updateRootComponent(myLastRenderedConfiguration, rootComponent, session, rootView);
 
         myParseTime = false;
 
@@ -360,7 +372,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   private void removeNativeRoot() {
     if (myRootComponent != null) {
-      Component component = ((RadViewComponent)myRootComponent).getNativeComponent();
+      Component component = ((RadVisualComponent)myRootComponent).getNativeComponent();
       if (component != null) {
         myLayeredPane.remove(component.getParent());
       }

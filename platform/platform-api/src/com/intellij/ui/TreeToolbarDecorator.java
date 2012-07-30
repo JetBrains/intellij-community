@@ -116,7 +116,7 @@ class TreeToolbarDecorator extends ToolbarDecorator {
 
   @Override
   protected void updateButtons() {
-    getPanel().setEnabled(CommonActionsPanel.Buttons.REMOVE, myTree.getSelectionPath() != null);
+    getActionsPanel().setEnabled(CommonActionsPanel.Buttons.REMOVE, myTree.getSelectionPath() != null);
   }
 
   @Override

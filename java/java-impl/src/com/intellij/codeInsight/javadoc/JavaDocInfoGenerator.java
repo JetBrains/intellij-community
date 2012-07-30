@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,8 +55,6 @@ public class JavaDocInfoGenerator {
 
   private static final @NonNls Pattern ourNotDot = Pattern.compile("[^.]");
   private static final @NonNls Pattern ourWhitespaces = Pattern.compile("[ \\n\\r\\t]+");
-  private static final @NonNls Matcher ourNotDotMatcher = ourNotDot.matcher("");
-  private static final @NonNls Matcher ourWhitespacesMatcher = ourWhitespaces.matcher("");
 
   private final Project myProject;
   private final PsiElement myElement;
@@ -382,7 +380,11 @@ public class JavaDocInfoGenerator {
 
   @Nullable
   private static PsiDocComment getDocComment(final PsiDocCommentOwner docOwner) {
-    PsiDocComment comment = ((PsiDocCommentOwner)docOwner.getNavigationElement()).getDocComment();
+    PsiElement navElement = docOwner.getNavigationElement();
+    if (!(navElement instanceof PsiDocCommentOwner)) {
+      throw new AssertionError("Wrong navElement: " + navElement + "; original = " + docOwner + " of class " + docOwner.getClass());
+    }
+    PsiDocComment comment = ((PsiDocCommentOwner)navElement).getDocComment();
     if (comment == null) { //check for non-normalized fields
       final PsiModifierList modifierList = docOwner.getModifierList();
       if (modifierList != null) {
@@ -851,13 +853,16 @@ public class JavaDocInfoGenerator {
   }
 
   private static boolean isEmptyDescription(PsiDocComment comment) {
+    if (comment == null) {
+      return true;
+    }
     PsiElement[] descriptionElements = comment.getDescriptionElements();
 
     for (PsiElement description : descriptionElements) {
       String text = description.getText();
 
       if (text != null) {
-        if (ourWhitespacesMatcher.reset(text).replaceAll("").length() != 0) {
+        if (ourWhitespaces.matcher(text).replaceAll("").length() != 0) {
           return false;
         }
       }
@@ -936,13 +941,16 @@ public class JavaDocInfoGenerator {
       LOG.error("Class or member expected but found " + myElement.getClass().getName());
     }
 
+    if (aClass == null) {
+      return "";
+    }
+    
     String qName = aClass.getQualifiedName();
-
     if (qName == null) {
       return "";
     }
 
-    return "../" + ourNotDotMatcher.reset(qName).replaceAll("").replaceAll(".", "../");
+    return "../" + ourNotDot.matcher(qName).replaceAll("").replaceAll(".", "../");
   }
 
   private void generateValue(StringBuilder buffer,
@@ -1489,7 +1497,7 @@ public class JavaDocInfoGenerator {
   @SuppressWarnings({"HardCodedStringLiteral"})
   public static int generateType(StringBuilder buffer, PsiType type, PsiElement context, boolean generateLink) {
     if (type instanceof PsiPrimitiveType) {
-      String text = type.getCanonicalText();
+      String text = StringUtil.escapeXml(type.getCanonicalText());
       buffer.append(text);
       return text.length();
     }
@@ -1532,7 +1540,7 @@ public class JavaDocInfoGenerator {
       PsiSubstitutor psiSubst = result.getSubstitutor();
 
       if (psiClass == null) {
-        String text = "<font color=red>" + type.getCanonicalText() + "</font>";
+        String text = "<font color=red>" + StringUtil.escapeXml(type.getCanonicalText()) + "</font>";
         buffer.append(text);
         return text.length();
       }
@@ -1540,7 +1548,7 @@ public class JavaDocInfoGenerator {
       String qName = psiClass.getQualifiedName();
 
       if (qName == null || psiClass instanceof PsiTypeParameter) {
-        String text = type.getCanonicalText();
+        String text = StringUtil.escapeXml(type.getCanonicalText());
         buffer.append(text);
         return text.length();
       }
@@ -1589,7 +1597,7 @@ public class JavaDocInfoGenerator {
 
     if (type instanceof PsiDisjunctionType) {
       if (!generateLink) {
-        final String text = type.getCanonicalText();
+        final String text = StringUtil.escapeXml(type.getCanonicalText());
         buffer.append(text);
         return text.length();
       }

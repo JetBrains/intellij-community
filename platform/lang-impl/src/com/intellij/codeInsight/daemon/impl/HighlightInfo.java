@@ -225,16 +225,17 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, String description) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, int start, int end, @Nullable String description) {
     return createHighlightInfo(type, null, start, end, description, htmlEscapeToolTip(description));
   }
 
   @Nullable
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, @Nullable String description) {
     return createHighlightInfo(type, textRange.getStartOffset(), textRange.getEndOffset(), description);
   }
 
-  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange, String description, String toolTip, TextAttributes textAttributes) {
+  public static HighlightInfo createHighlightInfo(@NotNull HighlightInfoType type, @NotNull TextRange textRange,
+                                                  @Nullable String description, @Nullable String toolTip, @Nullable TextAttributes textAttributes) {
     // do not use HighlightInfoFilter
     return new HighlightInfo(textAttributes, null, type, textRange.getStartOffset(), textRange.getEndOffset(), description,
                              htmlEscapeToolTip(toolTip), type.getSeverity(null), false, null, false);
@@ -569,6 +570,11 @@ public class HighlightInfo implements Segment {
 
     public Icon getIcon() {
       return myIcon;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof IntentionActionDescriptor && myAction.equals(((IntentionActionDescriptor)obj).myAction);
     }
   }
 

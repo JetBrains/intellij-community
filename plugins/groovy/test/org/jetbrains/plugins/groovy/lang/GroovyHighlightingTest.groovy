@@ -1219,4 +1219,29 @@ class S {
   }
 }''')
   }
+
+  void testUnusedImportToList() {
+    myFixture.addClass('''package java.awt; public class Component{}''')
+    testHighlighting('''\
+import java.awt.Component
+<warning descr="Unused import">import java.util.List</warning>
+
+print Component
+print List
+''')
+  }
+
+  void testUsedImportToList() {
+    myFixture.addClass('''package java.awt; public class Component{}''')
+    myFixture.addClass('''package java.awt; public class List{}''')
+    myFixture.addClass('''package java.util.concurrent; public class ConcurrentHashMap{}''')
+    testHighlighting('''\
+import java.awt.*
+import java.util.List
+<warning descr="Unused import">import java.util.concurrent.ConcurrentHashMap</warning>
+
+print Component
+print List
+''')
+  }
 }

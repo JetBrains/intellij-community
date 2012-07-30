@@ -92,6 +92,7 @@ import org.tmatesoft.svn.util.SVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.*;
@@ -275,12 +276,18 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myProject.isDefault()) return;
     myCopiesRefreshManager = new SvnCopiesRefreshManager(myProject, (SvnFileUrlMappingImpl) getSvnFileUrlMapping());
     if (! myConfiguration.isCleanupRun()) {
-      if (cleanup17copies()) {
-        myConfiguration.setCleanupRun(true);
-      }
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (cleanup17copies()) {
+            myConfiguration.setCleanupRun(true);
+          }
+        }
+      });
+    } else {
+      invokeRefreshSvnRoots(true);
     }
 
-    invokeRefreshSvnRoots(true);
     myWorkingCopiesContent.activate();
   }
 
@@ -796,6 +803,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     if (myEntriesFileListener != null) {
       myEntriesFileListener.removeListener(listener);
     }
+  }
+
+  public SvnEntriesFileListener getEntriesFileListener() {
+    return myEntriesFileListener;
   }
 
   @Override

@@ -24,8 +24,10 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.rollback.DefaultRollbackEnvironment;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.WaitForProgressToShow;
@@ -39,10 +41,16 @@ import java.util.List;
 
 public class RollbackWorker {
   private final Project myProject;
+  private final String myOperationName;
   private final List<VcsException> myExceptions;
 
-  public RollbackWorker(final Project project, final boolean synchronous/*todo[irengrig] and what?*/) {
+  public RollbackWorker(final Project project) {
+    this(project, DefaultRollbackEnvironment.ROLLBACK_OPERATION_NAME);
+  }
+
+  public RollbackWorker(final Project project, final String operationName) {
     myProject = project;
+    myOperationName = operationName;
     myExceptions = new ArrayList<VcsException>(0);
   }
 
@@ -69,7 +77,7 @@ public class RollbackWorker {
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance()
-        .run(new Task.Backgroundable(myProject, VcsBundle.message("changes.action.rollback.text"), true,
+        .run(new Task.Backgroundable(myProject, myOperationName, true,
                                      new PerformInBackgroundOption() {
                                        public boolean shouldStartInBackground() {
                                          return VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND;
@@ -128,7 +136,7 @@ public class RollbackWorker {
               changesToRefresh.addAll(changes);
 
               if (myIndicator != null) {
-                myIndicator.setText(vcs.getDisplayName() + ": performing rollback...");
+                myIndicator.setText(vcs.getDisplayName() + ": performing " + StringUtil.toLowerCase(myOperationName) + "...");
                 myIndicator.setIndeterminate(false);
                 myIndicator.checkCanceled();
               }
@@ -157,19 +165,17 @@ public class RollbackWorker {
       }
 
       doRefresh(myProject, changesToRefresh);
-
-      AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, VcsBundle.message("changes.action.rollback.text"));
+      AbstractVcsHelper.getInstance(myProject).showErrors(myExceptions, myOperationName);
     }
 
     private void doRefresh(final Project project, final List<Change> changesToRefresh) {
-      final String actionName = VcsBundle.message("changes.action.rollback.text");
-      final LocalHistoryAction action = LocalHistory.getInstance().startAction(actionName);
+      final LocalHistoryAction action = LocalHistory.getInstance().startAction(myOperationName);
 
       final Runnable forAwtThread = new Runnable() {
         public void run() {
           action.finish();
           LocalHistory.getInstance().putSystemLabel(myProject, (myLocalHistoryActionName == null) ?
-                                                                                             actionName : myLocalHistoryActionName, -1);
+                                                                                             myOperationName : myLocalHistoryActionName, -1);
           final VcsDirtyScopeManager manager = PeriodicalTasksCloser.getInstance().safeGetComponent(project, VcsDirtyScopeManager.class);
           for (Change change : changesToRefresh) {
             final ContentRevision beforeRevision = change.getBeforeRevision();

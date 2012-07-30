@@ -17,10 +17,7 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.completion.CodeCompletionFeatures;
-import com.intellij.codeInsight.completion.CompletionLookupArranger;
-import com.intellij.codeInsight.completion.PrefixMatcher;
-import com.intellij.codeInsight.completion.RangeMarkerSpy;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -50,6 +47,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -360,6 +358,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
       provider.fillActions(element, this, consumer);
     }
+    consumer.consume(new ShowHideIntentionIconLookupAction());
     return consumer.getResult();
   }
 
@@ -472,6 +471,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       updateListHeight(listModel);
 
       myList.setSelectedIndex(toSelect);
+      if (onExplicitAction && myShown) {
+        myList.ensureIndexIsVisible(toSelect);
+      }
       return !oldModel.equals(items);
     }
 
@@ -937,6 +939,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         @Override
         public void run() {
           assert !myDisposed;
+          if (!Registry.is("completion.show.intention.icon") || ((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) {
+            return;
+          }
           myElementHint = new LookupHint();
           myLayeredPane.add(myElementHint, 20, 0);
           myLayeredPane.layoutHint();
@@ -1301,8 +1306,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       public void run() {
         if (!myDisposed) {
           myAdComponent.addAdvertisement(text);
-          requestResize();
-          refreshUi(false, false);
+          if (myShown) {
+            requestResize();
+            refreshUi(false, false);
+          }
         }
       }
     });

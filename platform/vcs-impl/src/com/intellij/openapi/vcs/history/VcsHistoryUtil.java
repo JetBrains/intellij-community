@@ -17,14 +17,21 @@ package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -32,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.util.WaitForProgressToShow;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -40,6 +48,8 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 public class VcsHistoryUtil {
+
+  private static final Logger LOG = Logger.getInstance(VcsHistoryUtil.class);
 
   private VcsHistoryUtil() {
   }
@@ -77,7 +87,9 @@ public class VcsHistoryUtil {
    * @throws com.intellij.openapi.vcs.VcsException
    * @throws java.io.IOException
    */
-  public static void showDiff(final Project project, FilePath filePath, VcsFileRevision revision1, VcsFileRevision revision2, String title1, String title2) throws VcsException, IOException {
+  public static void showDiff(@NotNull final Project project, @NotNull FilePath filePath,
+                              @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2,
+                              @NotNull String title1, @NotNull String title2) throws VcsException, IOException {
     final byte[] content1 = loadRevisionContent(revision1);
     final byte[] content2 = loadRevisionContent(revision2);
 
@@ -139,7 +151,7 @@ public class VcsHistoryUtil {
     }, null, project);
   }
 
-    public static byte[] loadRevisionContent(VcsFileRevision revision) throws VcsException, IOException {
+    public static byte[] loadRevisionContent(@NotNull VcsFileRevision revision) throws VcsException, IOException {
     byte[] content = revision.getContent();
     if (content == null) {
       revision.loadContent();
@@ -149,7 +161,7 @@ public class VcsHistoryUtil {
     return content;
   }
 
-  public static String loadRevisionContentGuessEncoding(final VcsFileRevision revision, @Nullable final VirtualFile file,
+  public static String loadRevisionContentGuessEncoding(@NotNull final VcsFileRevision revision, @Nullable final VirtualFile file,
                                                         @Nullable final Project project) throws VcsException, IOException {
     final byte[] bytes = loadRevisionContent(revision);
     if (file != null) {
@@ -181,6 +193,72 @@ public class VcsHistoryUtil {
 
   private static boolean isCurrent(VcsFileRevision revision) {
     return revision instanceof CurrentRevision;
+  }
+
+
+  /**
+   * Shows difference between two revisions of a file in a diff tool.
+   * The content of revisions is queried in a background thread.
+   * If {@code findOlderNewer} is set to {@code true}, revisions may be specified in any order:
+   * this method will sort them so that the older revision is at the left, and the newer one is at the right.
+   * @param findOlderNewer specify {@code true} to let method compare revisions, and put the older revision at the left, and newer revision
+   *                       at the right.<br/>
+   *                       Specify {@code false} to put {@code revision1} at the left, and {@code revision2} at the right.
+   * @see #showDiff(Project, FilePath, VcsFileRevision, VcsFileRevision, String, String)
+   */
+  public static void showDifferencesInBackground(@NotNull final Project project, @NotNull final FilePath filePath,
+                                                 @NotNull final VcsFileRevision revision1, @NotNull final VcsFileRevision revision2,
+                                                 final boolean findOlderNewer) {
+    new Task.Backgroundable(project, "Loading revisions to compare") {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        VcsFileRevision left = revision1;
+        VcsFileRevision right = revision2;
+        if (findOlderNewer) {
+          Pair<VcsFileRevision, VcsFileRevision> pair = sortRevisions(revision1, revision2);
+          left = pair.first;
+          right = pair.second;
+        }
+
+        try {
+          final String leftTitle = left.getRevisionNumber().asString() +
+                                   (left instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+          final String rightTitle = right.getRevisionNumber().asString() +
+                                    (right instanceof CurrentRevision ? " (" + VcsBundle.message("diff.title.local") + ")" : "");
+          showDiff(project, filePath, left, right, leftTitle, rightTitle);
+        }
+        catch (final VcsException e) {
+          LOG.info(e);
+          WaitForProgressToShow.runOrInvokeLaterAboveProgress(new Runnable() {
+            public void run() {
+              Messages.showErrorDialog(VcsBundle.message("message.text.cannot.show.differences", e.getLocalizedMessage()),
+                                       VcsBundle.message("message.title.show.differences"));
+            }
+          }, null, project);
+        }
+        catch (IOException e) {
+          LOG.info(e);
+        }
+        catch (ProcessCanceledException ex) {
+          LOG.info(ex);
+        }
+      }
+    }.queue();
+  }
+
+  /**
+   * Compares the given revisions and returns a pair of them, where the first one is older, and second is newer.
+   */
+  @NotNull
+  public static Pair<VcsFileRevision, VcsFileRevision> sortRevisions(@NotNull VcsFileRevision revision1,
+                                                                     @NotNull VcsFileRevision revision2) {
+    VcsFileRevision left = revision1;
+    VcsFileRevision right = revision2;
+    if (compare(revision1, revision2) > 0) {
+      left = revision2;
+      right = revision1;
+    }
+    return Pair.create(left, right);
   }
 
 }

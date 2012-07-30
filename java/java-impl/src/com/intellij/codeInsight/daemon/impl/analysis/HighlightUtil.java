@@ -331,6 +331,9 @@ public class HighlightUtil {
     PsiType checkType = typeElement.getType();
     PsiType operandType = operand.getType();
     if (operandType == null) return null;
+    if (operandType instanceof PsiLambdaExpressionType) {
+      return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, "Lambda expression is not expected here");
+    }
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
         || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
         || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
@@ -511,10 +514,15 @@ public class HighlightUtil {
     if (suppressed(Kind.RETURN_STATEMENT, statement)) return null;
 
     PsiMethod method = null;
+    PsiLambdaExpression lambda = null;
     PsiElement parent = statement.getParent();
     while (true) {
       if (parent instanceof PsiFile) break;
       if (parent instanceof PsiClassInitializer) break;
+      if (parent instanceof PsiLambdaExpression){
+        lambda = (PsiLambdaExpression)parent;
+        break;
+      }
       if (parent instanceof PsiMethod) {
         method = (PsiMethod)parent;
         break;
@@ -524,7 +532,9 @@ public class HighlightUtil {
     String description;
     int navigationShift = 0;
     HighlightInfo errorResult = null;
-    if (method == null && !(parent instanceof JspFile)) {
+    if (method == null && lambda != null) {
+      //todo check return statements type inside lambda
+    } else if (method == null && !(parent instanceof JspFile)) {
       description = JavaErrorMessages.message("return.outside.method");
       errorResult = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, statement, description);
     }
@@ -2527,7 +2537,7 @@ public class HighlightUtil {
 
   @Nullable
   static HighlightInfo checkAnnotationMethodParameters(@NotNull PsiParameterList list) {
-    if (list.getParent() instanceof PsiAnnotationMethod && list.getParametersCount() > 0) {
+    if (PsiUtil.isAnnotationMethod(list.getParent()) && list.getParametersCount() > 0) {
       final String message = JavaErrorMessages.message("annotation.interface.members.may.not.have.parameters");
       return HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, list, message);
     }
@@ -2628,10 +2638,6 @@ public class HighlightUtil {
 
   @Nullable
   public static HighlightInfo checkLambdaFeature(final PsiLambdaExpression expression) {
-    final HighlightInfo info = checkFeature(expression, Feature.LAMBDA_EXPRESSIONS);
-    if (info != null) return info;
-    // todo[r.sh] stub; remove after implementing support in TypeConversionUtil
-    final String message = "Lambda expressions type check is not yet implemented";
-    return HighlightInfo.createHighlightInfo(HighlightInfoType.WEAK_WARNING, expression, message);
+    return checkFeature(expression, Feature.LAMBDA_EXPRESSIONS);
   }
 }

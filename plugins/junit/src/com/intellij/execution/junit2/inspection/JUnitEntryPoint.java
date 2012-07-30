@@ -98,6 +98,6 @@ public class JUnitEntryPoint extends EntryPoint {
 
   @Override
   public String[] getIgnoreAnnotations() {
-    return new String[]{"org.junit.Rule"};
+    return new String[]{"org.junit.Rule", "org.mockito.Mock"};
   }
 }

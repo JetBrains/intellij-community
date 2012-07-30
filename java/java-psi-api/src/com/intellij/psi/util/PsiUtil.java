@@ -200,7 +200,7 @@ public final class PsiUtil extends PsiUtilCore {
     while (element != null) {
       // variable can be defined in for loop initializer
       PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiExpression)) {
+      if (!(parent instanceof PsiExpression) || parent instanceof PsiLambdaExpression) {
         if (element instanceof PsiCodeBlock || element instanceof PsiForStatement || element instanceof PsiForeachStatement) {
           blockSoFar = element;
         }
@@ -688,6 +688,12 @@ public final class PsiUtil extends PsiUtilCore {
       return VfsUtilCore.getVirtualFileForJar(file);
     }
     return file;
+  }
+
+  public static boolean isAnnotationMethod(PsiElement element) {
+    if (!(element instanceof PsiAnnotationMethod)) return false;
+    PsiClass psiClass = ((PsiAnnotationMethod)element).getContainingClass();
+    return psiClass != null && psiClass.isAnnotationType();
   }
 
   private static class TypeParameterIterator implements Iterator<PsiTypeParameter> {

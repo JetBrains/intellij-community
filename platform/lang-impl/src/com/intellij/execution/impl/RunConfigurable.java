@@ -96,7 +96,7 @@ class RunConfigurable extends BaseConfigurable {
     this(project, null);
   }
 
-  public RunConfigurable(final Project project, final RunDialogBase runDialog) {
+  public RunConfigurable(final Project project, @Nullable final RunDialogBase runDialog) {
     myProject = project;
     myRunDialog = runDialog;
   }
@@ -183,7 +183,7 @@ class RunConfigurable extends BaseConfigurable {
     final ConfigurationType[] factories = manager.getConfigurationFactories();
     for (ConfigurationType type : factories) {
       final RunnerAndConfigurationSettings[] configurations = manager.getConfigurationSettings(type);
-      if (configurations != null && configurations.length > 0) {
+      if (configurations.length > 0) {
         final DefaultMutableTreeNode typeNode = new DefaultMutableTreeNode(type);
         myRoot.add(typeNode);
         for (RunnerAndConfigurationSettings configuration : configurations) {
@@ -419,7 +419,7 @@ class RunConfigurable extends BaseConfigurable {
     initTree();
     DefaultActionGroup actionsGroup = createActionsGroup();
     PopupHandler.installFollowingSelectionTreePopup(myTree, actionsGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    myToolbarDecorator = ToolbarDecorator.createDecorator(myTree).setActionGroup(actionsGroup).setForcedDnD();
+    myToolbarDecorator = ToolbarDecorator.createDecorator(myTree).setAsUsualTopToolbar().setActionGroup(actionsGroup).setForcedDnD();
     return myToolbarDecorator.createPanel();
   }
 
@@ -640,7 +640,6 @@ class RunConfigurable extends BaseConfigurable {
       manager.addConfiguration(each.getSettings(), each.isShared(), each.getStepsBeforeLaunch(), false);
     }
 
-    RunnerAndConfigurationSettings selected = manager.getSelectedConfiguration();
     for (RunnerAndConfigurationSettings each : toDeleteSettings) {
       manager.removeConfiguration(each);
     }
@@ -985,7 +984,7 @@ class RunConfigurable extends BaseConfigurable {
 
           });
       //new TreeSpeedSearch(myTree);
-      popup.showUnderneathOf(myToolbarDecorator.getPanel());
+      popup.showUnderneathOf(myToolbarDecorator.getActionsPanel());
     }
   }
 
@@ -1101,7 +1100,7 @@ class RunConfigurable extends BaseConfigurable {
         configurable.getNameTextField().setSelectionEnd(copyName.length());
       }
       catch (ConfigurationException e1) {
-        Messages.showErrorDialog(myToolbarDecorator.getPanel(), e1.getMessage(), e1.getTitle());
+        Messages.showErrorDialog(myToolbarDecorator.getActionsPanel(), e1.getMessage(), e1.getTitle());
       }
     }
 
@@ -1181,7 +1180,7 @@ class RunConfigurable extends BaseConfigurable {
           RunnerAndConfigurationSettings selectedSettings = getSettings(treeNode);
           if (selectedSettings == null)
             return;
-          RunnerAndConfigurationSettings siblingSettings = null;
+          RunnerAndConfigurationSettings siblingSettings;
           if (myDirection < 0) {
             siblingSettings = getSettings(treeNode.getPreviousSibling());
           } else {
@@ -1228,7 +1227,7 @@ class RunConfigurable extends BaseConfigurable {
       myConfigurable = configurable;
       mySettings = (RunnerAndConfigurationSettings)myConfigurable.getSettings();
       final ConfigurationSettingsEditorWrapper editorWrapper = (ConfigurationSettingsEditorWrapper)myConfigurable.getEditor();
-      myShared = editorWrapper.isStoreProjectConfiguration();
+      myShared = configurable.isStoreProjectConfiguration();
       myStepsBeforeLaunch = editorWrapper.getStepsBeforeLaunch();
     }
 

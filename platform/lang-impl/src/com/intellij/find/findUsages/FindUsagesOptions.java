@@ -87,6 +87,15 @@ public class FindUsagesOptions extends UserDataHolderBase implements Cloneable {
     return result;
   }
 
+  @Override
+  public String toString() {
+    return getClass().getSimpleName() + "{" +
+           "searchScope=" + searchScope +
+           ", isSearchForTextOccurrences=" + isSearchForTextOccurrences +
+           ", isUsages=" + isUsages +
+           '}';
+  }
+
   public String generateUsagesString() {
     return FindBundle.message("find.usages.panel.title.usages");
   }

@@ -164,7 +164,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   @Override
   public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
     final THashSet<LookupElement> lifted = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
-    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, new ProcessingContext());
+    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, context);
     if (!lifted.isEmpty()) {
       for (LookupElement element : map.keySet()) {
         final StringBuilder builder = map.get(element);

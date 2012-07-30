@@ -93,7 +93,16 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondNeg12() throws Exception { doTest(false, false); }
   public void testDiamondNeg13() throws Exception { doTest(false, false); }
   public void testDiamondNeg14() throws Exception { doTest(false, false); }
-  public void testDiamondMisc() throws Exception { doTest(false, false); }
+  public void testDiamondMisc() throws Exception {
+    final LanguageLevel oldLevel = getLanguageLevel();
+    try {
+      setLanguageLevel(LanguageLevel.JDK_1_7);
+      doTest(false, false);
+    }
+    finally {
+      setLanguageLevel(oldLevel);
+    }
+  }
   public void testHighlightInaccessibleFromClassModifierList() throws Exception { doTest(false, false); }
   public void testInnerInTypeArguments() throws Exception { doTest(false, false); }
 

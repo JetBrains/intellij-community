@@ -29,6 +29,7 @@ import org.jetbrains.ether.dependencyView.Mappings;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
+import org.jetbrains.jps.api.SequentialTaskExecutor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -38,6 +39,12 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.LanguageLevel;
+import org.jetbrains.jps.model.library.JpsSdkProperties;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.module.JpsModule;
 
 import javax.tools.*;
 import java.io.*;
@@ -105,7 +112,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
             }
           }
           out.setTemp(isTemp);
-          if (!isTemp && out.getKind() == JavaFileObject.Kind.CLASS) {
+          if (!isTemp && out.getKind() == JavaFileObject.Kind.CLASS && !Utils.errorsDetected(context)) {
             final Callbacks.Backend callback = DELTA_MAPPINGS_CALLBACK_KEY.get(context);
             if (callback != null) {
               final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
@@ -123,7 +130,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   public JavaBuilder(Executor tasksExecutor) {
     super(BuilderCategory.TRANSLATOR);
-    myTaskRunner = tasksExecutor;
+    myTaskRunner = new SequentialTaskExecutor(tasksExecutor);
     //add here class processors in the sequence they should be executed
   }
 
@@ -142,7 +149,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       final Set<File> formsToCompile = new HashSet<File>();
 
       FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
-        public boolean apply(Module module, File file, String sourceRoot) throws IOException {
+        public boolean apply(JpsModule module, File file, String sourceRoot) throws IOException {
           if (JAVA_SOURCES_FILTER.accept(file)) {
             filesToCompile.add(file);
           }
@@ -284,7 +291,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         exitCode = ExitCode.OK;
         final Set<File> tempRootsSourcePath = new HashSet<File>();
         final ModuleRootsIndex index = pd.rootsIndex;
-        for (Module module : chunk.getModules()) {
+        for (JpsModule module : chunk.getModules()) {
           for (RootDescriptor rd : index.getModuleRoots(context, module)) {
             if (rd.isTemp) {
               tempRootsSourcePath.add(rd.root);
@@ -314,7 +321,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
                 if (pd.project.getUiDesignerConfiguration().isCopyFormsRuntimeToOutput() && !context.isCompilingTests()) {
-                  for (Module module : chunk.getModules()) {
+                  for (JpsModule module : chunk.getModules()) {
                     final File outputDir = paths.getModuleOutputDir(module, false);
                     if (outputDir != null) {
                       CopyResourcesUtil.copyFormsRuntime(outputDir.getAbsolutePath(), false);
@@ -374,7 +381,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   private static String getChunkPresentableName(ModuleChunk chunk) {
-    final Set<Module> modules = chunk.getModules();
+    final Set<JpsModule> modules = chunk.getModules();
     if (modules.isEmpty()) {
       return "<empty>";
     }
@@ -382,7 +389,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       return modules.iterator().next().getName();
     }
     final StringBuilder buf = new StringBuilder();
-    for (Module module : modules) {
+    for (JpsModule module : modules) {
       if (buf.length() > 0) {
         buf.append(",");
       }
@@ -404,14 +411,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final TasksCounter counter = new TasksCounter();
     COUNTER_KEY.set(context, counter);
 
-    final Set<Module> modules = chunk.getModules();
+    final Set<JpsModule> modules = chunk.getModules();
     AnnotationProcessingProfile profile = null;
     if (modules.size() == 1) {
       profile = context.getAnnotationProcessingProfile(modules.iterator().next());
     }
     else {
       // check that all chunk modules are excluded from annotation processing
-      for (Module module : modules) {
+      for (JpsModule module : modules) {
         final AnnotationProcessingProfile prof = context.getAnnotationProcessingProfile(module);
         if (prof.isEnabled()) {
           String message = "Annotation processing is not supported for module cycles. Please ensure that all modules from cycle [" + getChunkPresentableName(chunk) + "] are excluded from annotation processing";
@@ -487,12 +494,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     String javaHome = SystemProperties.getJavaHome();
     int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
 
-    for (JavaSdk sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
-      final String version = sdk.getVersion();
+    for (JpsTypedLibrary<JpsSdkProperties> sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
+      final String version = sdk.getProperties().getVersionString();
       final int ver = convertToNumber(version);
       if (ver > javaVersion) {
         javaVersion = ver;
-        javaHome = sdk.getHomePath();
+        javaHome = sdk.getProperties().getHomePath();
       }
     }
 
@@ -641,20 +648,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    final String langlevel = chunk.getModules().iterator().next().getLanguageLevel();
-    if (!StringUtil.isEmpty(langlevel)) {
+    final String langLevel = getLanguageLevel(chunk.getModules().iterator().next());
+    if (!StringUtil.isEmpty(langLevel)) {
       options.add("-source");
-      options.add(langlevel);
+      options.add(langLevel);
     }
 
     final BytecodeTargetConfiguration targetConfig = context.getProjectDescriptor().project.getCompilerConfiguration().getBytecodeTarget();
     String bytecodeTarget = null;
     int chunkSdkVersion = -1;
-    for (Module module : chunk.getModules()) {
-      final Sdk sdk = module.getSdk();
-      if (sdk instanceof JavaSdk) {
-        final JavaSdk moduleSdk = (JavaSdk)sdk;
-        final int moduleSdkVersion = convertToNumber(moduleSdk.getVersion());
+    for (JpsModule module : chunk.getModules()) {
+      final JpsTypedLibrary<JpsSdkProperties> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
+      if (sdk != null) {
+        final JpsSdkProperties sdkProperties = sdk.getProperties();
+        final int moduleSdkVersion = convertToNumber(sdkProperties.getVersionString());
         if (moduleSdkVersion != 0 /*could determine the version*/&& (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
           chunkSdkVersion = moduleSdkVersion;
         }
@@ -718,6 +725,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return options;
   }
 
+  private static String getLanguageLevel(JpsModule module) {
+    LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
+    if (level == null) return null;
+    switch (level) {
+      case JDK_1_3: return "1.3";
+      case JDK_1_4: return "1.4";
+      case JDK_1_5: return "1.5";
+      case JDK_1_6: return "1.6";
+      case JDK_1_7: return "1.7";
+      case JDK_1_8: return "8";
+      default: return null;
+    }
+  }
+
   private static boolean isEncodingSet(List<String> options) {
     for (String option : options) {
       if ("-encoding".equals(option)) {
@@ -736,8 +757,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
     if (!USE_EMBEDDED_JAVAC) {
       // in case of external javac, run compiler from the newest jdk that is used in the project
-      for (JavaSdk sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
-        final String version = sdk.getVersion();
+      for (JpsTypedLibrary<JpsSdkProperties> sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
+        final String version = sdk.getProperties().getVersionString();
         final int ver = convertToNumber(version);
         if (ver > javaVersion) {
           javaVersion = ver;
@@ -749,7 +770,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  private static String getModuleTarget(BytecodeTargetConfiguration config, Module module) {
+  private static String getModuleTarget(BytecodeTargetConfiguration config, JpsModule module) {
     final String level = config.getModulesBytecodeTarget().get(module.getName());
     if (level != null) {
       return level.isEmpty()? null : level;
@@ -817,9 +838,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
     final boolean compilingTests = context.isCompilingTests();
-    for (Module module : chunk.getModules()) {
-      final String output = compilingTests ? module.getTestOutputPath() : module.getOutputPath();
-      if (output == null) {
+    for (JpsModule module : chunk.getModules()) {
+      final String outputUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, compilingTests);
+      if (outputUrl == null) {
         continue;
       }
       final Set<File> roots = new LinkedHashSet<File>();
@@ -828,7 +849,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           roots.add(descriptor.root);
         }
       }
-      map.put(new File(output), roots);
+      map.put(JpsPathUtil.urlToFile(outputUrl), roots);
     }
     return map;
   }

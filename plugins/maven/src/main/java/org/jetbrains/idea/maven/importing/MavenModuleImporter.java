@@ -23,7 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -232,7 +232,7 @@ public class MavenModuleImporter {
     String encoding = myMavenProject.getEncoding();
     if (encoding != null) {
       try {
-        EncodingManager.getInstance().setEncoding(myMavenProject.getDirectoryFile(), Charset.forName(encoding));
+        EncodingProjectManager.getInstance(myModule.getProject()).setEncoding(myMavenProject.getDirectoryFile(), Charset.forName(encoding));
       }
       catch (UnsupportedCharsetException ignored) {/**/}
       catch (IllegalCharsetNameException ignored) {/**/}

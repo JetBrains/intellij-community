@@ -186,7 +186,7 @@ public class TodoCheckinHandler extends CheckinHandler {
       buttons = new String[]{commitButtonText, CommonBundle.getCancelButtonText()};
     }
 
-    final int answer = Messages.showOkCancelDialog(text, "TODO", buttons[0], buttons[1], UIUtil.getWarningIcon());
+    final int answer = Messages.showOkCancelDialog(myCheckinProjectPanel.getComponent(), text, "TODO", buttons[0], buttons[1], UIUtil.getWarningIcon());
     if (thereAreTodoFound && answer == 0) {
       showTodo(worker);
       return ReturnResult.CLOSE_WINDOW;

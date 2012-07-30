@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.history.integration;
-
 
 import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Revision;
@@ -27,6 +25,7 @@ import com.intellij.util.ui.UIUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testRefreshingSynchronously() throws Exception {
@@ -40,7 +39,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   @Override
   public void setUp() throws Exception {
     if (getName().equals("testRefreshingAsynchronously")) {
-      // this methods waits for another thread to finish, that leds
+      // this methods waits for another thread to finish, that leads
       // to deadlock in swing-thread. Therefore we have to run this test
       // outside of swing-thread
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -63,7 +62,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   @Override
   protected void tearDown() throws Exception {
     if (getName().equals("testRefreshingAsynchronously")) {
-      // this methods waits for another thread to finish, that leds
+      // this methods waits for another thread to finish, that leads
       // to deadlock in swing-thread. Therefore we have to run this test
       // outside of swing-thread
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -183,10 +182,10 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   public void testDeletionOfFilteredDirectoryExternallyDoesNotThrowExceptionDuringRefresh() throws Exception {
     int before = getRevisionsFor(myRoot).size();
 
-    myRoot.createChildDirectory(null, FILTERED_DIR_NAME);
+    myRoot.createChildDirectory(this, FILTERED_DIR_NAME);
     String path = Paths.appended(myRoot.getPath(), FILTERED_DIR_NAME);
 
-    new File(path).delete();
+    FileUtil.delete(new File(path));
     assertEquals(before, getRevisionsFor(myRoot).size());
 
     refreshVFS();
@@ -200,13 +199,14 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
     // files under the excluded dir.
 
     File targetDir = createTargetDir();
-
     FileUtil.copyDir(targetDir, new File(myRoot.getPath(), "target"));
     VirtualFileManager.getInstance().refresh(false);
 
     String classesPath = myRoot.getPath() + "/target/classes";
     addExcludedDir(classesPath);
-    LocalFileSystem.getInstance().findFileByPath(classesPath).getParent().delete(null);
+    final VirtualFile classesDir = LocalFileSystem.getInstance().findFileByPath(classesPath);
+    assertNotNull(classesDir);
+    classesDir.getParent().delete(this);
 
     FileUtil.copyDir(targetDir, new File(myRoot.getPath(), "target"));
     VirtualFileManager.getInstance().refresh(false); // shouldn't throw
@@ -215,16 +215,16 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
   private File createTargetDir() throws IOException {
     File result = createTempDirectory();
     File classes = new File(result, "classes");
-    classes.mkdir();
-    new File(classes, "bak.txt").createNewFile();
+    assertTrue(classes.mkdir());
+    assertTrue(new File(classes, "bak.txt").createNewFile());
     return result;
   }
 
-  private void refreshVFS() {
+  private static void refreshVFS() {
     refreshVFS(false);
   }
 
-  private void refreshVFS(boolean async) {
+  private static void refreshVFS(boolean async) {
     try {
       final Semaphore s = new Semaphore(1);
       s.acquire();
@@ -234,7 +234,7 @@ public class ExternalChangesAndRefreshingTest extends IntegrationTestCase {
           s.release();
         }
       });
-      s.acquire();
+      assertTrue(s.tryAcquire(1, TimeUnit.MINUTES));
     }
     catch (InterruptedException e) {
       throw new RuntimeException(e);

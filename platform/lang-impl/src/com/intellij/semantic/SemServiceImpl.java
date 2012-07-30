@@ -312,8 +312,12 @@ public class SemServiceImpl extends SemService{
   private ConcurrentMap<SemKey, List<SemElement>> cacheOrGetMap(final PsiElement element, @NotNull PsiElement root) {
     FileChunk chunk = obtainChunk(root);
     if (chunk == null) {
-      chunk = new FileChunk(root);
-      myCache.putIfAbsent(root, new SoftReference(chunk));
+      synchronized (myCache) {
+        chunk = obtainChunk(root);
+        if (chunk == null) {
+          myCache.put(root, new SoftReference(chunk = new FileChunk(root)));
+        }
+      }
     }
 
     ConcurrentMap<SemKey, List<SemElement>> map = chunk.map.get(element);

@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,22 +42,17 @@ import java.io.OutputStream;
 import java.util.*;
 
 public class JarFileSystemImpl extends JarFileSystem implements ApplicationComponent {
+  @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
+
+  private static final class JarFileSystemImplLock { }
+  private static final Object LOCK = new JarFileSystemImplLock();
+
   private final Set<String> myNoCopyJarPaths = SystemInfo.isFileSystemCaseSensitive ?
                                                new ConcurrentHashSet<String>() :
                                                new ConcurrentHashSet<String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-
-  private final static Logger LOG = Logger.getInstance(JarFileSystemImpl.class);
-
-  @NonNls private static final String IDEA_JARS_NOCOPY = "idea.jars.nocopy";
-  private File myNoCopyJarDir;
-
   private final Map<String, JarHandler> myHandlers = new HashMap<String, JarHandler>();
+  private File myNoCopyJarDir;
   private String[] jarPathsCache; // jarPathsCache = myHandlers.keySet()
-
-  private static final class JarFileSystemImplLock {
-  }
-
-  private static final Object LOCK = new JarFileSystemImplLock();
 
   public JarFileSystemImpl(MessageBus bus) {
     bus.connect().subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
@@ -107,7 +101,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
                 }
               }
 
-              VirtualFile[] roots = VfsUtil.toVirtualFileArray(rootsToRefresh);
+              VirtualFile[] roots = VfsUtilCore.toVirtualFileArray(rootsToRefresh);
               RefreshQueue.getInstance().refresh(false, true, null, roots);
             }
           };
@@ -301,8 +295,8 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public void setTimeStamp(@NotNull final VirtualFile file, final long modstamp) throws IOException {
-    getHandler(file).setTimeStamp(file, modstamp);
+  public void setTimeStamp(@NotNull final VirtualFile file, final long modStamp) throws IOException {
+    getHandler(file).setTimeStamp(file, modStamp);
   }
 
   @Override
