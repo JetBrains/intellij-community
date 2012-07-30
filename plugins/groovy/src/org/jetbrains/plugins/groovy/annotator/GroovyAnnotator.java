@@ -43,9 +43,7 @@ import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -90,6 +88,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -129,6 +128,29 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         GroovyAssignabilityCheckInspection.checkElement((GroovyPsiElement)element, holder);
       }
       myHolder = null;
+    }
+    else {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof GrMethod) {
+        if (element.equals(((GrMethod)parent).getNameIdentifierGroovy()) &&
+            ((GrMethod)parent).getReturnTypeElementGroovy() == null) {
+          checkMethodReturnType((GrMethod)parent, element, holder);
+        }
+      }
+      else if (parent instanceof GrField) {
+        final GrField field = (GrField)parent;
+        if (element.equals(field.getNameIdentifierGroovy())) {
+          final GrAccessorMethod[] getters = field.getGetters();
+          for (GrAccessorMethod getter : getters) {
+            checkMethodReturnType(getter, field.getNameIdentifierGroovy(), holder);
+          }
+
+          final GrAccessorMethod setter = field.getSetter();
+          if (setter != null) {
+            checkMethodReturnType(setter, field.getNameIdentifierGroovy(), holder);
+          }
+        }
+      }
     }
   }
 
@@ -776,6 +798,91 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       checkTypeArgForPrimitive(element, GroovyBundle.message("primitive.type.parameters.are.not.allowed"));
     }
   }
+
+  @Override
+  public void visitTypeElement(GrTypeElement typeElement) {
+    super.visitTypeElement(typeElement);
+
+    final PsiElement parent = typeElement.getParent();
+    if (!(parent instanceof GrMethod)) return;
+
+    checkMethodReturnType(((GrMethod)parent), typeElement, myHolder);
+
+
+  }
+
+  private static void checkMethodReturnType(PsiMethod method, PsiElement toHighlight, AnnotationHolder holder) {
+    final HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
+    final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
+
+    PsiType returnType = signature.getSubstitutor().substitute(method.getReturnType());
+
+    for (HierarchicalMethodSignature superMethodSignature : superSignatures) {
+      PsiMethod superMethod = superMethodSignature.getMethod();
+      PsiType declaredReturnType = superMethod.getReturnType();
+      PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(declaredReturnType);
+      if (superReturnType == PsiType.VOID && method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) return;
+      if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(declaredReturnType);
+      if (returnType == null || superReturnType == null || method == superMethod) continue;
+      PsiClass superClass = superMethod.getContainingClass();
+      if (superClass == null) continue;
+      String highlightInfo = checkSuperMethodSignature(superMethod, superMethodSignature, superReturnType, method, signature, returnType);
+      if (highlightInfo != null) {
+        holder.createErrorAnnotation(toHighlight, highlightInfo);
+        return;
+      }
+    }
+  }
+
+  @Nullable
+  private static String checkSuperMethodSignature(PsiMethod superMethod,
+                                                  MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                  PsiType superReturnType,
+                                                  PsiMethod method,
+                                                  MethodSignatureBackedByPsiMethod methodSignature,
+                                                  PsiType returnType) {
+    if (superReturnType == null) return null;
+    PsiType substitutedSuperReturnType;
+    if (!superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
+      PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
+                                                                                                  superMethodSignature);
+      substitutedSuperReturnType = unifyingSubstitutor == null
+                                   ? superReturnType
+                                   : unifyingSubstitutor.substitute(superMethodSignature.getSubstitutor().substitute(superReturnType));
+    }
+    else {
+      substitutedSuperReturnType = TypeConversionUtil.erasure(superReturnType);
+    }
+
+    if (returnType.equals(substitutedSuperReturnType)) return null;
+    if (!(returnType instanceof PsiPrimitiveType) &&
+        substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType &&
+        TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
+      return null;
+    }
+
+    String qName = getQName(method);
+    String baseQName = getQName(superMethod);
+    final String presentation = returnType.getCanonicalText()+" "+GroovyPresentationUtil.getSignaturePresentation(methodSignature);
+    final String basePresentation = superReturnType.getCanonicalText()+" "+GroovyPresentationUtil.getSignaturePresentation(superMethodSignature);
+    return GroovyBundle.message("return.type.is.incompatible", presentation, qName, basePresentation, baseQName);
+  }
+
+  @NotNull
+  private static String getQName(PsiMethod method) {
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass instanceof PsiAnonymousClass) {
+      return GroovyBundle.message("anonymous.class.derived.from") + " " + ((PsiAnonymousClass)aClass).getBaseClassType().getCanonicalText();
+    }
+    if (aClass != null) {
+      final String qname = aClass.getQualifiedName();
+      if (qname != null) {
+        return qname;
+      }
+    }
+    return "<null>";
+  }
+
 
   private void checkTypeArgForPrimitive(@Nullable GrTypeElement element, String message) {
     if (element == null || !(element.getType() instanceof PsiPrimitiveType)) return;

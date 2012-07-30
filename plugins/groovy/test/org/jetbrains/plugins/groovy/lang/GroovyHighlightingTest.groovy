@@ -1244,4 +1244,48 @@ print Component
 print List
 ''')
   }
+
+  void testIncompatibleTypeOfImplicitGetter() {
+    testHighlighting('''\
+abstract class Base {
+    abstract String getFoo()
+}
+
+class Inheritor extends Base {
+    final <error descr="The return type of java.lang.Object getFoo() in Inheritor is incompatible with java.lang.String getFoo() in Base">foo</error> = '3'
+}''')
+  }
+
+  void testIncompatibleTypeOfInheritedMethod() {
+    testHighlighting('''\
+abstract class Base {
+  abstract String getFoo()
+}
+
+class Inheritor extends Base {
+    def <error descr="The return type of java.lang.Object getFoo() in Inheritor is incompatible with java.lang.String getFoo() in Base">getFoo</error>() {''}
+}''')
+  }
+
+  void testIncompatibleTypeOfInheritedMethod2() {
+    testHighlighting('''\
+abstract class Base {
+  abstract String getFoo()
+}
+
+class Inheritor extends Base {
+    <error descr="The return type of java.lang.Object getFoo() in Inheritor is incompatible with java.lang.String getFoo() in Base">Object</error> getFoo() {''}
+}''')
+  }
+
+  void testIncompatibleTypeOfInheritedMethodInAnonymous() {
+    testHighlighting('''\
+abstract class Base {
+  abstract String getFoo()
+}
+
+new Base() {
+    <error descr="The return type of java.lang.Object getFoo() in anonymous class derived from Base is incompatible with java.lang.String getFoo() in Base">Object</error> getFoo() {''}
+}''')
+  }
 }
