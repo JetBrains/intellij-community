@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
@@ -89,6 +90,8 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
       String logExpression = myBreakpoint.getLogExpression();
       myLogExpressionCheckBox.setSelected(logExpression != null);
       myLogExpressionComboBox.setText(logExpression != null ? logExpression : "");
+
+      IdeFocusManager.findInstance().requestFocus(myLogExpressionComboBox.getComponent(), false);
     }
     onCheckboxChanged();
   }

@@ -49,7 +49,7 @@ public interface DetailView extends UserDataHolder {
 
   boolean hasEditorOnly();
 
-  void setCurrentItem(ItemWrapper item);
+  void setCurrentItem(@Nullable ItemWrapper item);
 
   class PreviewEditorState {
 

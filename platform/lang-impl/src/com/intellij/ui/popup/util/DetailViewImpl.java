@@ -63,7 +63,6 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
 
   private JPanel myDetailPanelWrapper;
   private JLabel myNothingToShow = new JLabel("Nothing to show");
-  private JLabel myNothingToShowInEditor = new JLabel("Nothing to show");
   private RangeHighlighter myHighlighter;
   private PreviewEditorState myEditorState = PreviewEditorState.EMPTY;
   private JComponent myParentComponent;
@@ -81,7 +80,6 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     myProject = project;
     setPreferredSize(new Dimension(700, 400));
     myNothingToShow.setHorizontalAlignment(JLabel.CENTER);
-    myNothingToShowInEditor.setHorizontalAlignment(JLabel.CENTER);
   }
 
   @Override
@@ -92,12 +90,11 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       EditorFactory.getInstance().releaseEditor(getEditor());
       myEditorState = PreviewEditorState.EMPTY;
       setEditor(null);
-      add(myNothingToShowInEditor, BorderLayout.CENTER);
       repaint();
     }
   }
 
-  public void setCurrentItem(ItemWrapper wrapper) {
+  public void setCurrentItem(@Nullable ItemWrapper wrapper) {
     myWrapper = wrapper;
   }
 
@@ -144,7 +141,6 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     if (document != null) {
       if (getEditor() == null || getEditor().getDocument() != document) {
         clearEditor();
-        remove(myNothingToShowInEditor);
         setEditor(EditorFactory.getInstance().createViewer(document, project));
 
         final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
