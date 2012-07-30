@@ -5,20 +5,25 @@ from django.core.management import setup_environ, ManagementUtility
 import os
 import sys
 
-manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
-if not manage_file:
-  manage_file = 'manage'
+try:
+  from runpy import run_module
+except ImportError:
+  from runpy_compat import run_module
+
+manage_file = 'manage'
+
+base_path = sys.argv.pop()
+sys.path.insert(0, base_path)
+os.chdir(base_path)
+
+#run user's manage.py (in django 1.4 there is environment setings)
+fixGetpass()
+run_module(manage_file, None, "__main__", True)
 
 settings_file = os.getenv('DJANGO_SETTINGS_MODULE')
 if not settings_file:
   settings_file = 'settings'
 
-
-base_path = sys.argv.pop()
-proj_name = base_path.split("/")[-1]
-sys.path.insert(0, base_path)
-os.chdir(base_path)
-os.environ.setdefault('DJANGO_SETTINGS_MODULE',proj_name+".settings")
 from django.core import management
 from django.core.management.commands.test import Command
 from django.conf import settings
@@ -75,11 +80,6 @@ class PycharmTestManagementUtility(ManagementUtility):
 
 
 if __name__ == "__main__":
-  try:
-    __import__(manage_file)
-  except ImportError:
-    print ("There is no such manage file " + str(manage_file))
-  fixGetpass()
 
   try:
     custom_settings = __import__(settings_file)
