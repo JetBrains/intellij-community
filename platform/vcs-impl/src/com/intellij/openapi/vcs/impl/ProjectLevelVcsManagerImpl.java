@@ -317,6 +317,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ApplicationManager.getApplication().runReadAction(new Computable<VcsRoot>() {
       @Nullable
       public VcsRoot compute() {
+        if (myProject.isDisposed()) {
+          return null;
+        }
         VirtualFile vFile = ChangesUtil.findValidParent(file);
         if (vFile != null) {
           return getVcsRootObjectFor(vFile);
