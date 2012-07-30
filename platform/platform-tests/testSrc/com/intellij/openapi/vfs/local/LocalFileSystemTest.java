@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -245,10 +246,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       assertNotNull(virtualFile);
 
       NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
-      fs = PersistentFS.replaceWithNativeFS(fs);
-
-      assertTrue(fs.exists(virtualFile));
-      final FileAttributes attributes = fs.getAttributes(virtualFile);
+      FileAttributes attributes = fs.getAttributes(virtualFile);
       assertNotNull(attributes);
       assertEquals(FileAttributes.Type.FILE, attributes.type);
       assertEquals(FileAttributes.HIDDEN, attributes.flags);
@@ -284,5 +282,22 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       }
     }
     assertEquals(expectedCount, children.length);
+  }
+
+  public void testSingleFileRootRefresh() throws Exception {
+    File file = FileUtil.createTempFile("test.", ".txt");
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(virtualFile);
+    assertTrue(virtualFile.exists());
+    assertTrue(virtualFile.isValid());
+
+    virtualFile.refresh(false, false);
+    assertFalse(((VirtualFileSystemEntry)virtualFile).isDirty());
+
+    FileUtil.delete(file);
+    assertFalse(file.exists());
+    virtualFile.refresh(false, false);
+    assertFalse(virtualFile.exists());
+    assertFalse(virtualFile.isValid());
   }
 }

@@ -52,8 +52,8 @@ import java.util.Locale;
 public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl");
 
-  protected static final long DEFAULT_LENGTH = 0;
-  protected static final long DEFAULT_TIMESTAMP = 0;
+  private static final FileAttributes FAKE_ROOT_ATTRIBUTES =
+    new FileAttributes(true, false, false, false, DEFAULT_LENGTH, DEFAULT_TIMESTAMP, false);
 
   private final List<LocalFileOperationsHandler> myHandlers = new ArrayList<LocalFileOperationsHandler>();
 
@@ -143,14 +143,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   private static File convertToIOFileAndCheck(@NotNull final VirtualFile file) throws FileNotFoundException {
     final File ioFile = convertToIOFile(file);
 
-    int intFlags = FileUtil.getBooleanAttributes(ioFile);
-    if (intFlags != -1) {
-      if ((intFlags & FileUtil.BA_EXISTS) != 0 && (intFlags & FileUtil.BA_REGULAR) == 0) {
-        throw new FileNotFoundException("Not a file: " + ioFile);
-      }
-      return ioFile;
-    }
-    if (ioFile.exists() && !ioFile.isFile()) {
+    final FileAttributes attributes = FileSystemUtil.getAttributes(ioFile);
+    if (attributes != null && !attributes.isFile()) {
       throw new FileNotFoundException("Not a file: " + ioFile);
     }
 
@@ -158,36 +152,38 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public boolean exists(@NotNull final VirtualFile fileOrDirectory) {
-    String path = fileOrDirectory.getPath();
-    if (fileOrDirectory.getParent() == null && path.startsWith("//")) return true; // Windows UNC root like //unit-333
-    if (StringUtil.isEmpty(path)) return true; // fake top dir for Windows
-    return convertToIOFile(fileOrDirectory).exists();
+  public boolean exists(@NotNull final VirtualFile file) {
+    return getAttributes(file) != null;
   }
 
   @Override
   public long getLength(@NotNull final VirtualFile file) {
-    return convertToIOFile(file).length();
+    final FileAttributes attributes = getAttributes(file);
+    return attributes != null ? attributes.length : DEFAULT_LENGTH;
   }
 
   @Override
   public long getTimeStamp(@NotNull final VirtualFile file) {
-    return convertToIOFile(file).lastModified();
+    final FileAttributes attributes = getAttributes(file);
+    return attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
   }
 
   @Override
   public boolean isDirectory(@NotNull final VirtualFile file) {
-    return convertToIOFile(file).isDirectory();
+    final FileAttributes attributes = getAttributes(file);
+    return attributes != null && attributes.isDirectory();
   }
 
   @Override
   public boolean isWritable(@NotNull final VirtualFile file) {
-    return convertToIOFile(file).canWrite();
+    final FileAttributes attributes = getAttributes(file);
+    return attributes != null && attributes.isWritable();
   }
 
   @Override
   public boolean isSymLink(@NotNull final VirtualFile file) {
-    return FileSystemUtil.isSymLink(file.getPath());
+    final FileAttributes attributes = getAttributes(file);
+    return attributes != null && attributes.isSymLink();
   }
 
   @Override
@@ -197,17 +193,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public boolean isSpecialFile(@NotNull final VirtualFile file) {
-    if (!SystemInfo.isUnix) return false;
-    final File ioFile = convertToIOFile(file);
-    return isSpecialFile(ioFile);
-  }
-
-  private static boolean isSpecialFile(@NotNull File ioFile) {
-    int flags = FileUtil.getBooleanAttributes(ioFile);
-    if (flags != -1) {
-      return (flags & (FileUtil.BA_REGULAR | FileUtil.BA_DIRECTORY | FileUtil.BA_EXISTS)) == (~FileUtil.BA_REGULAR & ~FileUtil.BA_DIRECTORY & FileUtil.BA_EXISTS);
-    }
-    return !ioFile.isFile() && !ioFile.isDirectory() && ioFile.exists();
+    final FileAttributes attributes = getAttributes(file);
+    return attributes != null && attributes.isSpecial();
   }
 
   @Override
@@ -243,6 +230,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
   }
 
+  // todo[r.sh] drop the restriction in favor of VfsUtilCore.visitChildrenRecursively()
   protected static boolean isInvalidSymLink(@NotNull final VirtualFile file) {
     if (!file.isSymLink()) return false;
     final VirtualFile target = file.getCanonicalFile();
@@ -301,7 +289,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         }
       }
 
-      RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtil.toVirtualFileArray(filesToRefresh));
+      RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtilCore.toVirtualFileArray(filesToRefresh));
     }
     finally {
       if (fireCommonRefreshSession) manager.fireAfterRefreshFinish(false);
@@ -323,7 +311,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       collection = new ArrayList<VirtualFile>();
       ContainerUtil.addAll(collection, files);
     }
-    RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtil.toVirtualFileArray(collection));
+    RefreshQueue.getInstance().refresh(async, recursive, onFinish, VfsUtilCore.toVirtualFileArray(collection));
   }
 
   @Override
@@ -570,11 +558,13 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
                               @NotNull final VirtualFile vFile,
                               @NotNull final VirtualFile newParent,
                               @NotNull final String copyName) throws IOException {
-    File physicalFile = convertToIOFile(vFile);
-    if (isSpecialFile(physicalFile)) {
-      throw new FileNotFoundException("Not a file: " + physicalFile);
+    final FileAttributes attributes = getAttributes(vFile);
+
+    if (attributes == null || attributes.isSpecial()) {
+      throw new FileNotFoundException("Not a file: " + vFile);
     }
 
+    File physicalFile = convertToIOFile(vFile);
     File physicalCopy = auxCopy(vFile, newParent, copyName);
 
     try {
@@ -583,7 +573,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         physicalCopy = new File(newPhysicalParent, copyName);
 
         try {
-          if (physicalFile.isDirectory()) {
+          if (attributes.isDirectory()) {
             FileUtil.copyDir(physicalFile, physicalCopy);
           }
           else {
@@ -604,6 +594,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         }
       });
     }
+
     return new FakeVirtualFile(newParent, copyName);
   }
 
@@ -726,18 +717,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   @Override
-  public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
-    int attributes = FileUtil.getBooleanAttributes(convertToIOFile(file));
-    if (attributes != -1) return attributes & flags;
-    return ((flags & FileUtil.BA_EXISTS) != 0 && exists(file) ? FileUtil.BA_EXISTS : 0) |
-           ((flags & FileUtil.BA_DIRECTORY) != 0 && isDirectory(file) ? FileUtil.BA_DIRECTORY : 0) |
-           ((flags & FileUtil.BA_REGULAR) != 0 && !isSpecialFile(file) ? FileUtil.BA_REGULAR : 0) |
-           ((flags & FileUtil.BA_HIDDEN) != 0 && convertToIOFile(file).isHidden() ? FileUtil.BA_HIDDEN : 0);
-  }
-
-  @Override
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(file.getPath()));
+    final String path = file.getPath();
+    if (StringUtil.isEmpty(path) || file.getParent() == null && path.startsWith("//")) {
+      return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
+    }
+    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(path));
   }
 
   @Override

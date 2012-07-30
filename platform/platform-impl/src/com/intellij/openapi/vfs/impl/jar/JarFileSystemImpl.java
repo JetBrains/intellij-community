@@ -360,24 +360,6 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
-    int exists = 0;
-    JarHandler handler = getHandler(file);
-    if ((flags & FileUtil.BA_EXISTS) != 0) {
-      exists = handler.exists(file) ? FileUtil.BA_EXISTS : 0;
-    }
-    int isDir = 0;
-    if ((flags & FileUtil.BA_DIRECTORY) != 0) {
-      isDir = handler.isDirectory(file) ? FileUtil.BA_DIRECTORY : 0;
-    }
-    int regular = 0;
-    if ((flags & FileUtil.BA_REGULAR) != 0) {
-      regular = isDir == 0 ? FileUtil.BA_REGULAR : 0;
-    }
-    return exists | isDir | regular;
-  }
-
-  @Override
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
     final JarHandler handler = getHandler(file);
     if (handler == null) return null;
@@ -385,8 +367,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
     if (file.getParent() == null) {
       final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
       final VirtualFile originalFile = localFileSystem.findFileByIoFile(handler.getOriginalFile());
-      assert originalFile != null : file;
-      return localFileSystem.getAttributes(originalFile);
+      return originalFile != null ? localFileSystem.getAttributes(originalFile) : null;
     }
 
     return handler.getAttributes(file);

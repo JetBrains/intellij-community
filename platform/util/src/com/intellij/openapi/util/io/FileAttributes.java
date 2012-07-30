@@ -123,6 +123,18 @@ public final class FileAttributes {
     return flags;
   }
 
+  public boolean isFile() {
+    return type == Type.FILE;
+  }
+
+  public boolean isDirectory() {
+    return type == Type.DIRECTORY;
+  }
+
+  public boolean isSpecial() {
+    return type == Type.SPECIAL;
+  }
+
   public boolean isSymLink() {
     return isSet(flags, SYM_LINK);
   }

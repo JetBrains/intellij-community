@@ -411,7 +411,7 @@ public class FileSystemUtil {
 
     private JnaUnixMediatorImpl() throws Exception {
       myLibC = (LibC)Native.loadLibrary("c", LibC.class);
-      mySharedMem = new Memory(512);
+      mySharedMem = new Memory(256);
       myModeOffset = SystemInfo.isLinux ? (SystemInfo.is32Bit ? 16 : 24) :
                      SystemInfo.isMac | SystemInfo.isFreeBSD ? 8 :
                      SystemInfo.isSolaris ? (SystemInfo.is32Bit ? 20 : 16) :
@@ -436,7 +436,6 @@ public class FileSystemUtil {
       int mode = (SystemInfo.isLinux ? mySharedMem.getInt(myModeOffset) : mySharedMem.getShort(myModeOffset)) & LibC.S_MASK;
       final boolean isSymlink = (mode & LibC.S_IFLNK) == LibC.S_IFLNK;
       if (isSymlink) {
-        mySharedMem.clear();
         res = SystemInfo.isLinux ? myLibC.__xstat64(0, path, mySharedMem) : myLibC.stat(path, mySharedMem);
         if (res != 0) {
           return FileAttributes.BROKEN_SYMLINK;

@@ -19,7 +19,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -87,8 +86,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   private void calcLinkStatus() {
-    putUserData(SYMLINK_TARGET, isSymLink() ? FileSystemUtil.resolveSymLink(getPath()) : null);
-    setFlagInt(HAS_SYMLINK_FLAG, isSymLink() || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
+    boolean symLink = isSymLink();
+    putUserData(SYMLINK_TARGET, symLink ? myParent.getFileSystem().resolveSymLink(this) : null);
+    setFlagInt(HAS_SYMLINK_FLAG, symLink || ((VirtualFileSystemEntry)myParent).getFlagInt(HAS_SYMLINK_FLAG));
   }
 
   private static Object encodeName(@NotNull String name) {
