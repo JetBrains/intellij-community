@@ -21,9 +21,11 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -64,7 +66,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
       }
     });
 
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final ProgressIndicator indicator = ProgressIndicatorProvider.getInstance().getProgressIndicator();
     if (indicator != null) {
       indicator.checkCanceled();
     }
@@ -92,7 +94,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     });
 
     for (final String name : sorted) {
-      ProgressManager.checkCanceled();
+      ProgressIndicatorProvider.checkCanceled();
       final PsiClass[] classes = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
         @Override
         public PsiClass[] compute() {
@@ -100,7 +102,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
         }
       });
       for (PsiClass psiClass : classes) {
-        ProgressManager.checkCanceled();
+        ProgressIndicatorProvider.checkCanceled();
         if (!processor.process(psiClass)) {
           return false;
         }
