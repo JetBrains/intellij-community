@@ -18,7 +18,9 @@
           <root url="jar://$MODULE_DIR$/lib/asm-all.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MODULE_DIR$/../../community/lib/src/asm4-src.zip!/" />
+        </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library" exported="">
