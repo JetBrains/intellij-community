@@ -54,4 +54,9 @@ public class PythonTokenSetContributor implements PythonDialectsTokenSetContribu
       YIELD_KEYWORD,
       NONE_KEYWORD, TRUE_KEYWORD, FALSE_KEYWORD, NONLOCAL_KEYWORD, DEBUG_KEYWORD);
   }
+
+  @Override
+  public TokenSet getParameterTokens() {
+    return TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER, SINGLE_STAR_PARAMETER);
+  }
 }

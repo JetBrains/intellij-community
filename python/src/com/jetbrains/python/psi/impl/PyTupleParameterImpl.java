@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -59,6 +58,6 @@ public class PyTupleParameterImpl extends PyPresentableElementImpl<PyTupleParame
 
   @NotNull
   public PyParameter[] getContents() {
-    return getStubOrPsiChildren(PyElementTypes.PARAMETERS, new PyParameter[0]);
+    return getStubOrPsiChildren(PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens(), new PyParameter[0]);
   }
 }
