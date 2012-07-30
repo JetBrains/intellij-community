@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.completion;
-
-
+package com.intellij.codeInsight.completion
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.Lookup
@@ -25,21 +23,14 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.psi.*
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 
 public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/";
-  }
-
-  @Override
-  protected void setUp() {
-    super.setUp()
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
   }
 
   public void testSimple() throws Exception {
@@ -79,7 +70,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment("b<caret>", clazz.methods[0].parameterList, true);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
     complete();
-    assertStringItems('boolean', 'byte')
+    assertFirstStringItems('boolean', 'byte')
   }
 
   public void testQualifierCastingInExpressionCodeFragment() throws Throwable {
@@ -140,7 +131,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     doTest 'a\n'
   }
 
-  public void testSimpleVariable() throws Exception { doTest() }
+  public void testSimpleVariable() throws Exception { doTest('\n') }
 
   public void testMethodItemPresentation() {
     configure()
@@ -324,6 +315,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testMethodInAnnotation() throws Exception {
     configureByFile("Annotation.java");
+    myFixture.type('\n')
     checkResultByFile("Annotation_after.java");
   }
 
@@ -360,7 +352,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testIDEADEV6408() throws Exception {
     configureByFile("IDEADEV6408.java");
-    assertStringItems "boolean", "byte"
+    assertFirstStringItems "boolean", "byte"
   }
 
   public void testMethodWithLeftParTailType() throws Exception {
@@ -420,7 +412,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
    checkResult()
   }
 
-  public void testFieldType() throws Throwable { doTest(); }
+  public void testFieldType() throws Throwable { doTest('\n'); }
 
   public void testPackageInAnnoParam() throws Throwable {
     doTest();
@@ -434,7 +426,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testNoForceBraces() {
     codeStyleSettings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
-    doTest()
+    doTest('\n')
   }
 
   public void testExcludeStringBuffer() throws Throwable {
@@ -490,7 +482,7 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testAtUnderClass() throws Throwable {
-    doTest();
+    doTest('\n');
   }
 
   public void testLocalClassName() throws Throwable { doTest(); }
@@ -582,12 +574,12 @@ public class ListUtils {
   }
 
   public void testBooleanLiterals() throws Throwable {
-    doTest();
+    doTest('\n');
   }
 
   public void testDoubleBooleanInParameter() throws Throwable {
     configure()
-    assertStringItems("boolean", "byte")
+    assertFirstStringItems("boolean", "byte")
   }
 
   public void testDoubleConstant() throws Throwable {
@@ -749,15 +741,15 @@ public class ListUtils {
   public void testBreakInSwitch() throws Throwable { doTest() }
 
   public void testSuperInConstructor() throws Throwable {
-    doTest();
+    doTest('\n');
   }
 
   public void testSuperInConstructorWithParams() throws Throwable {
-    doTest();
+    doTest('\n');
   }
 
   public void testSuperInMethod() throws Throwable {
-    doTest();
+    doTest('\n');
   }
 
   public void testSecondMethodParameterName() throws Throwable {
@@ -829,12 +821,11 @@ public class ListUtils {
 
   public void testDoubleFalse() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    assertStringItems("false", "fefefef", "finalize");
+    assertFirstStringItems("false", "fefefef", "finalize");
   }
 
   public void testSameNamedVariableInNestedClasses() throws Throwable {
-    doTest();
-    assertNull(getLookup());
+    doTest('\n');
   }
 
   public void testHonorUnderscoreInPrefix() throws Throwable {
@@ -848,6 +839,7 @@ public class ListUtils {
   public void testImportInGenericType() throws Throwable {
     configure()
     myFixture.complete(CompletionType.BASIC, 2)
+    myFixture.type('\n')
     checkResult();
   }
 
@@ -919,6 +911,7 @@ public class ListUtils {
   public void testProtectedInaccessibleOnSecondInvocation() throws Throwable {
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.complete(CompletionType.BASIC, 2);
+    myFixture.type('\n')
     checkResult()
   }
 
@@ -945,7 +938,7 @@ public class ListUtils {
     assertNull(getLookup());
   }
 
-  public void testSecondAnonymousClassParameter() throws Throwable { doTest(); }
+  public void testSecondAnonymousClassParameter() throws Throwable { doTest('\n'); }
 
   public void testSpaceAfterReturn() throws Throwable {
     configure()
@@ -999,7 +992,7 @@ public class ListUtils {
 
   public void testEnumConstantFromEnumMember() throws Throwable { doTest(); }
 
-  public void testPrimitiveMethodParameter() throws Throwable { doTest(); }
+  public void testPrimitiveMethodParameter() throws Throwable { doTest('\n'); }
 
   public void testNewExpectedClassParens() throws Throwable { doTest('\n'); }
 
@@ -1098,9 +1091,9 @@ public class ListUtils {
   public void testAfterCommonPrefix() throws Throwable {
     configure()
     type 'eq'
-    assertStringItems("equals", "equalsIgnoreCase");
+    assertFirstStringItems("equals", "equalsIgnoreCase");
     complete()
-    assertStringItems("equals", "equalsIgnoreCase");
+    assertFirstStringItems("equals", "equalsIgnoreCase");
     type '('
     checkResult()
   }
@@ -1185,7 +1178,7 @@ public class ListUtils {
 
   public void testNoMethodsInParameterType() {
     configure()
-    assertOrderedEquals myFixture.lookupElementStrings, "final", "float"
+    assertFirstStringItems "final", "float"
   }
 
   public void testStaticallyImportedFieldsTwice() {

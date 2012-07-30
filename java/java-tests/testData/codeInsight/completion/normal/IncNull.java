@@ -1,5 +1,5 @@
 class Foo {
     {
-        ++nu<caret>
+        ++nul<caret>
     }
 }

@@ -2,7 +2,7 @@ public class Foooo {
 
     {
         int intaaaa;
-        for (in<caret>)
+        for (int<caret>)
     }
 
 }
