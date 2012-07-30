@@ -27,10 +27,7 @@ import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 public class TargetElementUtil extends TargetElementUtilBase {
   public static final int NEW_AS_CONSTRUCTOR = 0x04;
@@ -205,7 +202,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
       }
       PsiResolveHelper helper = JavaPsiFacade.getInstance(parent.getProject()).getResolveHelper();
       PsiElement[] candidates = PsiUtil.mapElements(helper.getReferencedMethodCandidates(callExpr, false));
-      ArrayList<PsiElement> methods = new ArrayList<PsiElement>();
+      final Collection<PsiElement> methods = new LinkedHashSet<PsiElement>();
       for (PsiElement candidate1 : candidates) {
         PsiMethod candidate = (PsiMethod)candidate1;
         if (candidate.hasModifierProperty(PsiModifier.STATIC) && !allowStatics) continue;
