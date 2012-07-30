@@ -27,6 +27,12 @@ public class PasteAction extends AnAction implements DumbAware {
 
     PasteProvider provider = PlatformDataKeys.PASTE_PROVIDER.getData(dataContext);
     presentation.setEnabled(provider != null && provider.isPastePossible(dataContext));
+    if (event.getPlace().equals(ActionPlaces.EDITOR_POPUP) && provider != null) {
+      presentation.setVisible(presentation.isEnabled());
+    }
+    else {
+      presentation.setVisible(true);
+    }
   }
 
   public void actionPerformed(AnActionEvent e) {

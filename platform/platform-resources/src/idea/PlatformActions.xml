@@ -406,9 +406,17 @@
       <reference ref="PasteMultiple"/>
       <reference ref="EditorPasteSimple"/>
       <reference ref="EditorToggleColumnMode"/>
+      <action id="$SearchWeb" class="com.intellij.ide.actions.SearchWebAction"/>
       <separator/>
       <reference ref="CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingGroup"/>
+    </group>
+
+    <group id="ConsoleEditorPopupMenu">
+      <reference ref="CutCopyPasteGroup"/>
+      <separator/>
+      <reference ref="CompareClipboardWithSelection"/>
+      <reference ref="$SearchWeb"/>
     </group>
 
     <group id="EditorTabPopupMenu">

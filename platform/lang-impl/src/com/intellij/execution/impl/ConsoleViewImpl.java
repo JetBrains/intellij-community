@@ -894,7 +894,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (group == null) {
       group = (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU);
     }
-    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
     menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
   }
 
@@ -1089,13 +1089,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (consoleView != null) {
         consoleView.clear();
       }
-    }
-  }
-
-  public static class CopyAction extends EditorCopyAction {
-    @Override
-    protected boolean isEnabled(AnActionEvent e) {
-      return super.isEnabled(e) && e.getData(LangDataKeys.CONSOLE_VIEW) != null;
     }
   }
 

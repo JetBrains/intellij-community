@@ -775,8 +775,7 @@
     </group>
 
     <group id="ConsoleView.PopupMenu">
-      <action id="ConsoleView.Copy" class="com.intellij.execution.impl.ConsoleViewImpl$CopyAction"/>
-      <reference ref="CompareClipboardWithSelection"/>
+      <reference ref="ConsoleEditorPopupMenu"/>
       <separator/>
       <action id="ConsoleView.ClearAll" class="com.intellij.execution.impl.ConsoleViewImpl$ClearAllAction"/>
     </group>
