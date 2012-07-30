@@ -240,7 +240,7 @@ public class CompletionLookupArranger extends LookupArranger {
       }
     }
 
-    return items.size() - 1;
+    return 0;
   }
 
   private static boolean isLiveTemplate(LookupElement element) {
