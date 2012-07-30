@@ -265,7 +265,8 @@ public class GitCherryPicker {
   }
 
   private static String getSubjectFromCommitMessage(String commitMessage) {
-    return commitMessage.substring(0, commitMessage.indexOf("\n"));
+    int newLine = commitMessage.indexOf("\n");
+    return newLine < 0 ? commitMessage : commitMessage.substring(0, newLine);
   }
 
   /**
