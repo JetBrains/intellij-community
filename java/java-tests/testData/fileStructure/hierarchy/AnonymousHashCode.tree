@@ -1,6 +1,3 @@
--A.java
+-AnonymousHashCode.java
  -A
-  -[hashCode(): void]
-  -foo(): void
-   -$1
-    hashCode(): int
+  [hashCode(): int]
