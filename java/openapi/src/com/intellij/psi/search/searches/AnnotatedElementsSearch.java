@@ -15,13 +15,16 @@
  */
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.InstanceofQuery;
 import com.intellij.util.Query;
+import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
 public class AnnotatedElementsSearch extends ExtensibleQueryFactory<PsiModifierListOwner, AnnotatedElementsSearch.Parameters> {
+  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.annotatedElementsSearch");
   public static final AnnotatedElementsSearch INSTANCE = new AnnotatedElementsSearch();
 
   public static class Parameters {

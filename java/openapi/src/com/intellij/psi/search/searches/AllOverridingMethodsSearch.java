@@ -16,6 +16,7 @@
 
 package com.intellij.psi.search.searches;
 
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -24,6 +25,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.EmptyQuery;
 import com.intellij.util.Query;
+import com.intellij.util.QueryExecutor;
 
 /**
  * @author ven
@@ -31,6 +33,7 @@ import com.intellij.util.Query;
  * (method in original class, overriding method)
  */
 public class AllOverridingMethodsSearch extends ExtensibleQueryFactory<Pair<PsiMethod, PsiMethod>, AllOverridingMethodsSearch.SearchParameters> {
+  public static ExtensionPointName<QueryExecutor> EP_NAME = ExtensionPointName.create("com.intellij.allOverridingMethodsSearch");
   public static final AllOverridingMethodsSearch INSTANCE = new AllOverridingMethodsSearch();
 
   public static class SearchParameters {
