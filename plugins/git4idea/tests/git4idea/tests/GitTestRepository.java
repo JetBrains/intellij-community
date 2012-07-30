@@ -243,7 +243,7 @@ public class GitTestRepository {
   }
 
   public String lastCommit() throws IOException {
-    return myRunEnv.run("rev-parse", "HEAD").trim();
+    return myRunEnv.run(true, "rev-parse", "HEAD").trim();
   }
 
   public String createAddCommit() throws IOException {

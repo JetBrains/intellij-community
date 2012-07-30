@@ -37,6 +37,10 @@ public class GitTestRunEnv {
   private String gitExecutable;
   private File myRootDir;
 
+  private int myRetryCount;
+  private static final int MAX_RETRIES = 3;
+
+
   public GitTestRunEnv(@NotNull File rootDir) {
     gitExecutable = getExecutable();
     myRootDir = rootDir;
@@ -48,8 +52,14 @@ public class GitTestRunEnv {
    * @return
    */
   public String run(@NotNull String command, String... params) throws IOException {
+    return run(false, command, params);
+  }
+
+  public String run(boolean silent, @NotNull String command, String... params) throws IOException {
     String[] arguments = ArrayUtil.mergeArrays(new String[]{gitExecutable, command}, params);
-    log("# " + StringUtil.join(arguments, " "));
+    if (!silent) {
+      log("# " + StringUtil.join(arguments, " "));
+    }
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
     builder.directory(myRootDir);
     builder.redirectErrorStream(true);
@@ -61,12 +71,25 @@ public class GitTestRunEnv {
       throw new RuntimeException("Timeout waiting for Git execution");
     }
 
-    log("{ " + result.getExitCode() + "}");
-    final String out = result.getStdout().trim();
+    if (result.getExitCode() != 0) {
+      log("{" + result.getExitCode() + "}");
+    }
+    String stdout = result.getStdout();
+    final String out = stdout.trim();
     if (out.length() > 0) {
       log(out);
     }
-    return result.getStdout();
+    if (stdout.contains("fatal")) {
+      if (stdout.contains("Unable to create") && stdout.contains(".git/index.lock") && myRetryCount <= MAX_RETRIES){
+        // retry
+        myRetryCount++;
+        return run(silent, command, params);
+      }
+      myRetryCount = 0;
+      throw new RuntimeException("fatal error during execution of Git command: " + StringUtil.join(arguments, " "));
+    }
+    myRetryCount = 0;
+    return stdout;
   }
 
   protected void log(String message) {
