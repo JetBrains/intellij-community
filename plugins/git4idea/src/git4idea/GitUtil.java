@@ -855,4 +855,14 @@ public class GitUtil {
     }
     return hash;
   }
+
+  @NotNull
+  public static String fileOrFolder(@NotNull VirtualFile file) {
+    if (file.isDirectory()) {
+      return "Folder";
+    }
+    else {
+      return "File";
+    }
+  }
 }
