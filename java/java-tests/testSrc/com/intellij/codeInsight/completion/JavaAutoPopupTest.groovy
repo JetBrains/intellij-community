@@ -1299,4 +1299,14 @@ class Foo {
     assert myFixture.lookupElementStrings == ['true', 'truex']
   }
 
+  public void testBackspaceUntilDot() {
+    myFixture.configureByText 'a.java', 'class Foo{ void foo(String s) { s<caret> }}'
+    type '.sub'
+    assert myFixture.lookupElementStrings
+    type '\b\b\b'
+    assert lookup
+    type '\b'
+    assert !lookup
+  }
+
 }

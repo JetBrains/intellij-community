@@ -98,6 +98,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private boolean myStableStart;
   private RangeMarker myLookupStartMarker;
+  private RangeMarker myLookupOriginalStartMarker;
   private final JBList myList = new JBList(new CollectionListModel<LookupElement>()) {
     @Override
     protected void processKeyEvent(final KeyEvent e) {
@@ -211,6 +212,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myIconPanel.add(myProcessIcon);
 
     updateLookupStart(0);
+
+    int caret = myEditor.getCaretModel().getOffset();
+    myLookupOriginalStartMarker = myEditor.getDocument().createRangeMarker(caret, caret);
+    myLookupOriginalStartMarker.setGreedyToLeft(true);
 
     final CollectionListModel<LookupElement> model = getListModel();
     addEmptyItem(model);
@@ -741,6 +746,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myLookupStartMarker.getStartOffset();
   }
 
+  public int getLookupOriginalStart() {
+    return myLookupOriginalStartMarker.isValid() ? myLookupOriginalStartMarker.getStartOffset() : -1;
+  }
+
   public boolean performGuardedChange(Runnable change) {
     return performGuardedChange(change, null);
   }
@@ -1235,6 +1244,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myLookupStartMarker.dispose();
       myLookupStartMarker = null;
     }
+    myLookupOriginalStartMarker.dispose();
     Disposer.dispose(myProcessIcon);
     Disposer.dispose(myHintAlarm);
     myDisposed = true;
