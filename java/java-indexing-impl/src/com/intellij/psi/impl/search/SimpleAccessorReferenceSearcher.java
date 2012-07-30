@@ -17,7 +17,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -51,10 +50,7 @@ public class SimpleAccessorReferenceSearcher extends QueryExecutorBase<PsiRefere
   static void addPropertyAccessUsages(PsiMethod method, SearchScope scope, SearchRequestCollector collector) {
     final String propertyName = PropertyUtil.getPropertyName(method);
     if (StringUtil.isNotEmpty(propertyName)) {
-      SearchScope additional = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.allScope(method.getProject()),
-                                                                               StdFileTypes.JSP, StdFileTypes.JSPX,
-                                                                               StdFileTypes.XML, StdFileTypes.XHTML);
-
+      SearchScope additional = GlobalSearchScope.EMPTY_SCOPE;
       for (CustomPropertyScopeProvider provider : Extensions.getExtensions(CustomPropertyScopeProvider.EP_NAME)) {
         additional = additional.union(provider.getScope(method.getProject()));
       }

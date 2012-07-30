@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @author max
  */
 public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters> {
-  protected MethodUsagesSearcher() {
+  public MethodUsagesSearcher() {
     super(true);
   }
 
