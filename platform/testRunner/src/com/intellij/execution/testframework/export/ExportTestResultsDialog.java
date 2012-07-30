@@ -20,20 +20,28 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 public class ExportTestResultsDialog extends DialogWrapper {
-  private final Project myProject;
   private final ExportTestResultsForm myForm;
+  private final ExportTestResultsConfiguration myConfig;
 
   public ExportTestResultsDialog(Project project, ExportTestResultsConfiguration config, String defaultFileName) {
     super(project);
-    myProject = project;
-    String defaultFolder = StringUtil.isNotEmpty(config.getOutputFolder()) ?
-                           FileUtil.toSystemDependentName(config.getOutputFolder()) : FileUtil.toSystemDependentName(project.getBaseDir().getPresentableUrl());
+    myConfig = config;
+    final String defaultFolder;
+    if (StringUtil.isNotEmpty(config.getOutputFolder())) {
+      defaultFolder = FileUtil.toSystemDependentName(config.getOutputFolder());
+    }
+    else {
+      final VirtualFile dir = project.getBaseDir();
+      assert dir != null;
+      defaultFolder = FileUtil.toSystemDependentName(dir.getPresentableUrl());
+    }
     myForm = new ExportTestResultsForm(config, defaultFileName, defaultFolder);
     myForm.addChangeListener(new ChangeListener() {
       @Override
@@ -52,7 +60,7 @@ public class ExportTestResultsDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myForm.apply(ExportTestResultsConfiguration.getInstance(myProject));
+    myForm.apply(myConfig);
     super.doOKAction();
   }
 
