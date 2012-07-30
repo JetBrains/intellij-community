@@ -19,7 +19,9 @@ package org.jetbrains.plugins.groovy.mvc;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.process.DefaultJavaProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.Extensions;
@@ -271,9 +273,17 @@ public abstract class MvcRunConfiguration extends ModuleBasedConfiguration<RunCo
     @NotNull
     @Override
     protected OSProcessHandler startProcess() throws ExecutionException {
-      final OSProcessHandler handler = super.startProcess();
+      final OSProcessHandler handler = new DefaultJavaProcessHandler(createCommandLine()) {
+        @Override
+        protected boolean shouldDestroyProcessRecursively() {
+          return true;
+        }
+      };
+      ProcessTerminatedListener.attach(handler);
+
       final RunnerSettings runnerSettings = getRunnerSettings();
       JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(MvcRunConfiguration.this, handler, runnerSettings);
+
       return handler;
     }
 
