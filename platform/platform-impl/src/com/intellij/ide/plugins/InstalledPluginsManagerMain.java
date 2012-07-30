@@ -139,7 +139,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     }
     if (!notInstalled.isEmpty()) {
-      Messages.showErrorDialog("Plugin " +
+      Messages.showWarningDialog("Plugin " +
                                pluginDescriptor.getName() +
                                " depends on unknown plugin" +
                                (notInstalled.size() > 1 ? "s " : " ") +
