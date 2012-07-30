@@ -443,6 +443,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
 
+    if (UIUtil.isWinLafOnVista()) {
+      uiDefaults.put("ComboBox.border", null);
+    }
+
     initInputMapDefaults(uiDefaults);
 
     UIManager.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
