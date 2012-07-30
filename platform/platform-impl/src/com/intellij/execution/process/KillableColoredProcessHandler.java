@@ -17,7 +17,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.KillableProcess;
 import com.intellij.openapi.util.SystemInfo;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
@@ -30,7 +30,7 @@ import java.nio.charset.Charset;
  * P.S: probably OSProcessHandler is better place for this feature but it can affect other run configurations and should be tested
  */
 public class KillableColoredProcessHandler extends ColoredProcessHandler implements KillableProcess {
-  public KillableColoredProcessHandler(final Process process, final String commandLine, @Nullable final Charset charset) {
+  public KillableColoredProcessHandler(final Process process, final String commandLine, @NotNull final Charset charset) {
     super(process, commandLine, charset);
   }
 
