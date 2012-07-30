@@ -15,4 +15,6 @@ public interface BuildListener extends EventListener{
    * @param paths collection of pairs [output root->relative path to generated file]
    */
   void filesGenerated(Collection<Pair<String, String>> paths);
+
+  void filesDeleted(Collection<String> paths);
 }

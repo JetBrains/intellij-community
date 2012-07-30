@@ -35,8 +35,8 @@ public class CopyToDirectoryInstructionCreator extends ArtifactCompilerInstructi
   }
 
   @Override
-  protected void addDirectoryCopyInstructions(ArtifactSourceRoot root) {
-    myInstructionsBuilder.addDestination(root, new ExplodedDestinationInfo(myOutputPath));
+  protected void addDirectoryCopyInstructions(ArtifactRootDescriptor descriptor) {
+    myInstructionsBuilder.addDestination(descriptor, new ExplodedDestinationInfo(myOutputPath));
   }
 
   public CopyToDirectoryInstructionCreator subFolder(@NotNull String directoryName) {

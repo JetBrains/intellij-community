@@ -19,25 +19,21 @@ import java.util.zip.ZipFile;
 /**
  * @author nik
  */
-public class JarBasedArtifactSourceRoot extends ArtifactSourceRoot {
-  private final File myJarFile;
+public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private final String myPathInJar;
 
-  public JarBasedArtifactSourceRoot(@NotNull File jarFile, @NotNull String pathInJar, @NotNull SourceFileFilter filter, int index) {
-    super(filter, index);
-    myJarFile = jarFile;
+  public JarBasedArtifactRootDescriptor(@NotNull File jarFile,
+                                        @NotNull String pathInJar,
+                                        @NotNull SourceFileFilter filter,
+                                        int index,
+                                        int artifactId, String artifactName) {
+    super(jarFile, filter, index, artifactId, artifactName);
     myPathInJar = pathInJar;
-  }
-
-  @NotNull
-  @Override
-  public File getRootFile() {
-    return myJarFile;
   }
 
   @Override
   public String toString() {
-    return myJarFile.getPath() + JarPathUtil.JAR_SEPARATOR + myPathInJar;
+    return myRoot.getPath() + JarPathUtil.JAR_SEPARATOR + myPathInJar;
   }
 
   public void processEntries(EntryProcessor processor) throws IOException {
@@ -47,7 +43,7 @@ public class JarBasedArtifactSourceRoot extends ArtifactSourceRoot {
       prefix = "";
     }
 
-    ZipFile zipFile = new ZipFile(myJarFile);
+    ZipFile zipFile = new ZipFile(myRoot);
     try {
       final Enumeration<? extends ZipEntry> entries = zipFile.entries();
 

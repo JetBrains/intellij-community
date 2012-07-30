@@ -33,10 +33,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLogger;
-import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
-import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
-import org.jetbrains.jps.incremental.artifacts.IncArtifactBuilder;
+import org.jetbrains.jps.incremental.artifacts.*;
 import org.jetbrains.jps.incremental.artifacts.instructions.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -162,21 +159,21 @@ public class JarsBuilder {
 
       for (Pair<String, Object> pair : jar.getContent()) {
         final String relativePath = pair.getFirst();
-        if (pair.getSecond() instanceof ArtifactSourceRoot) {
-          final ArtifactSourceRoot root = (ArtifactSourceRoot)pair.getSecond();
-          final int rootIndex = root.getRootIndex();
+        if (pair.getSecond() instanceof ArtifactRootDescriptor) {
+          final ArtifactRootDescriptor descriptor = (ArtifactRootDescriptor)pair.getSecond();
+          final int rootIndex = descriptor.getRootIndex();
           final ArtifactBuilderLogger logger = myContext.getLoggingManager().getArtifactBuilderLogger();
-          if (root instanceof FileBasedArtifactSourceRoot) {
-            addFileToJar(jarOutputStream, jarFile, root.getRootFile(), root.getFilter(), relativePath, targetJarPath, writtenPaths,
+          if (descriptor instanceof FileBasedArtifactRootDescriptor) {
+            addFileToJar(jarOutputStream, jarFile, descriptor.getRootFile(), descriptor.getFilter(), relativePath, targetJarPath, writtenPaths,
                          rootIndex);
           }
           else {
-            final String filePath = FileUtil.toSystemIndependentName(root.getRootFile().getAbsolutePath());
+            final String filePath = FileUtil.toSystemIndependentName(descriptor.getRootFile().getAbsolutePath());
             logger.fileCopied(filePath);
             mySrcOutMapping.appendData(filePath, Collections.singletonList(targetJarPath));
             myOutSrcMapping.appendData(targetJarPath, Collections
               .singletonList(new ArtifactOutputToSourceMapping.SourcePathAndRootIndex(filePath, rootIndex)));
-            extractFileAndAddToJar(jarOutputStream, (JarBasedArtifactSourceRoot)root, relativePath, writtenPaths);
+            extractFileAndAddToJar(jarOutputStream, (JarBasedArtifactRootDescriptor)descriptor, relativePath, writtenPaths);
           }
         }
         else {
@@ -207,15 +204,15 @@ public class JarsBuilder {
   @Nullable
   private Manifest loadManifest(JarInfo jar, String targetJarPath) throws IOException {
     for (Pair<String, Object> pair : jar.getContent()) {
-      if (pair.getSecond() instanceof ArtifactSourceRoot) {
+      if (pair.getSecond() instanceof ArtifactRootDescriptor) {
         final String rootPath = pair.getFirst();
         if (!JarFile.MANIFEST_NAME.startsWith(rootPath)) {
           continue;
         }
         final String manifestPath = JpsPathUtil.trimForwardSlashes(JarFile.MANIFEST_NAME.substring(rootPath.length()));
-        final ArtifactSourceRoot root = (ArtifactSourceRoot)pair.getSecond();
-        if (root instanceof FileBasedArtifactSourceRoot) {
-          final File manifestFile = new File(root.getRootFile(), manifestPath);
+        final ArtifactRootDescriptor descriptor = (ArtifactRootDescriptor)pair.getSecond();
+        if (descriptor instanceof FileBasedArtifactRootDescriptor) {
+          final File manifestFile = new File(descriptor.getRootFile(), manifestPath);
           if (manifestFile.exists()) {
             final String fullManifestPath = FileUtil.toSystemIndependentName(manifestFile.getAbsolutePath());
             myContext.getLoggingManager().getArtifactBuilderLogger().fileCopied(fullManifestPath);
@@ -226,11 +223,11 @@ public class JarsBuilder {
         }
         else {
           final Ref<Manifest> manifestRef = Ref.create(null);
-          ((JarBasedArtifactSourceRoot)root).processEntries(new JarBasedArtifactSourceRoot.EntryProcessor() {
+          ((JarBasedArtifactRootDescriptor)descriptor).processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
             @Override
             public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
               if (manifestRef.isNull() && relativePath.equals(manifestPath) && inputStream != null) {
-                manifestRef.set(createManifest(inputStream, root.getRootFile()));
+                manifestRef.set(createManifest(inputStream, descriptor.getRootFile()));
               }
             }
           });
@@ -261,11 +258,11 @@ public class JarsBuilder {
     }
   }
 
-  private static void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactSourceRoot root,
+  private static void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
                                              final String relativeOutputPath, final Set<String> writtenPaths)
     throws IOException {
     final long timestamp = root.getRootFile().lastModified();
-    root.processEntries(new JarBasedArtifactSourceRoot.EntryProcessor() {
+    root.processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {
         String pathInJar = addParentDirectories(jarOutputStream, writtenPaths, JpsPathUtil.appendToPath(relativeOutputPath, relativePath));

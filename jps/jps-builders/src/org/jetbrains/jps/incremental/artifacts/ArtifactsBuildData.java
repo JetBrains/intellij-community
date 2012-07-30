@@ -2,11 +2,9 @@ package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.jps.Project;
-import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.storage.CompositeStorageOwner;
 import org.jetbrains.jps.incremental.storage.StorageOwner;
-import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.File;
@@ -36,14 +34,18 @@ public class ArtifactsBuildData extends CompositeStorageOwner {
     }
   }
 
-  public ArtifactSourceFilesState getOrCreateState(JpsArtifact artifact, Project project, JpsModel model, ModuleRootsIndex index) {
+  public ArtifactSourceFilesState getOrCreateState(JpsArtifact artifact, ProjectDescriptor projectDescriptor) {
     ArtifactSourceFilesState state = myArtifactState.get(artifact);
     if (state == null) {
-      final int artifactId = myPersistentData.getId(artifact.getName());
-      state = new ArtifactSourceFilesState(artifact, artifactId, project, model, index, myTimestampStorage, myMappingsDir);
+      final int artifactId = getArtifactId(artifact);
+      state = new ArtifactSourceFilesState(artifact, artifactId, projectDescriptor, myTimestampStorage, myMappingsDir);
       myArtifactState.put(artifact, state);
     }
     return state;
+  }
+
+  public int getArtifactId(JpsArtifact artifact) {
+    return myPersistentData.getId(artifact.getName());
   }
 
   public void clean() throws IOException {
@@ -70,5 +72,9 @@ public class ArtifactsBuildData extends CompositeStorageOwner {
   @Override
   protected Iterable<? extends StorageOwner> getChildStorages() {
     return ContainerUtil.concat(myArtifactState.values(), Arrays.asList(myTimestampStorage, myPersistentData));
+  }
+
+  public ArtifactSourceTimestampStorage getTimestampStorage() {
+    return myTimestampStorage;
   }
 }

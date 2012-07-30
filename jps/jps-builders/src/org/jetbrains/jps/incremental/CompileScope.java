@@ -19,15 +19,21 @@ public abstract class CompileScope {
   private final Project myProject;
   private final JpsProject myJpsProject;
   private final Set<JpsArtifact> myArtifacts;
+  protected final boolean myForcedCompilation;
 
-  protected CompileScope(@NotNull Project project, JpsProject jpsProject, Set<JpsArtifact> artifacts) {
+  protected CompileScope(@NotNull Project project, JpsProject jpsProject, Set<JpsArtifact> artifacts, boolean forcedCompilation) {
     myProject = project;
     myJpsProject = jpsProject;
     myArtifacts = artifacts;
+    myForcedCompilation = forcedCompilation;
   }
 
   public boolean isAffected(JpsArtifact artifact) {
     return myArtifacts.contains(artifact);
+  }
+
+  public boolean isRecompilationForced(JpsArtifact artifact) {
+    return myForcedCompilation && myArtifacts.contains(artifact);
   }
 
   public abstract boolean isAffected(String moduleName, @NotNull File file);

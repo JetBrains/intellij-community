@@ -36,17 +36,17 @@ public class PackIntoArchiveInstructionCreator extends ArtifactCompilerInstructi
   }
 
   @Override
-  protected void addDirectoryCopyInstructions(ArtifactSourceRoot root) {
-    addCopyInstruction(myPathInJar, root);
+  protected void addDirectoryCopyInstructions(ArtifactRootDescriptor descriptor) {
+    addCopyInstruction(myPathInJar, descriptor);
   }
 
   public void addFileCopyInstruction(@NotNull File file, @NotNull String outputFileName) {
     addCopyInstruction(childPathInJar(outputFileName), myInstructionsBuilder.createFileBasedRoot(file, SourceFileFilter.ALL));
   }
 
-  private void addCopyInstruction(String pathInJar, final ArtifactSourceRoot root) {
-    if (myInstructionsBuilder.addDestination(root, new JarDestinationInfo(pathInJar, myJarInfo, myJarDestination))) {
-      myJarInfo.addContent(pathInJar, root);
+  private void addCopyInstruction(String pathInJar, final ArtifactRootDescriptor descriptor) {
+    if (myInstructionsBuilder.addDestination(descriptor, new JarDestinationInfo(pathInJar, myJarInfo, myJarDestination))) {
+      myJarInfo.addContent(pathInJar, descriptor);
     }
   }
 

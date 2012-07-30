@@ -55,7 +55,7 @@ public abstract class ArtifactCompilerInstructionCreatorBase implements Artifact
     addDirectoryCopyInstructions(myInstructionsBuilder.createJarBasedRoot(jarFile, pathInJar, filter));
   }
 
-  protected abstract void addDirectoryCopyInstructions(ArtifactSourceRoot root);
+  protected abstract void addDirectoryCopyInstructions(ArtifactRootDescriptor descriptor);
 
   @Override
   public abstract ArtifactCompilerInstructionCreatorBase subFolder(@NotNull String directoryName);

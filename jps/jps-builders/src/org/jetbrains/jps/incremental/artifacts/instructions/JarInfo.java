@@ -34,8 +34,8 @@ public class JarInfo {
     myContent = new ArrayList<Pair<String, Object>>();
   }
 
-  public void addContent(String pathInJar, ArtifactSourceRoot sourceFile) {
-    myContent.add(Pair.create(pathInJar, (Object)sourceFile));
+  public void addContent(String pathInJar, ArtifactRootDescriptor descriptor) {
+    myContent.add(Pair.create(pathInJar, (Object)descriptor));
   }
 
   public void addJar(String pathInJar, JarInfo jarInfo) {

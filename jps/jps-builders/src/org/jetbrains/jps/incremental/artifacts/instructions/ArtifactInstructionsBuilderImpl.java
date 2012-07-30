@@ -18,29 +18,33 @@ import java.util.Map;
  */
 public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuilder {
   private final Map<String, JarInfo> myJarByPath;
-  private final List<Pair<ArtifactSourceRoot, DestinationInfo>> myInstructions;
+  private final List<Pair<ArtifactRootDescriptor, DestinationInfo>> myInstructions;
   private final ModuleRootsIndex myRootsIndex;
   private final IgnoredFilePatterns myIgnoredFilePatterns;
+  private final int myArtifactId;
+  private final String myArtifactName;
   private int myRootIndex;
 
-  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, IgnoredFilePatterns patterns) {
+  public ArtifactInstructionsBuilderImpl(ModuleRootsIndex rootsIndex, IgnoredFilePatterns patterns, int artifactId, String artifactName) {
     myRootsIndex = rootsIndex;
     myIgnoredFilePatterns = patterns;
+    myArtifactId = artifactId;
+    myArtifactName = artifactName;
     myJarByPath = new HashMap<String, JarInfo>();
-    myInstructions = new ArrayList<Pair<ArtifactSourceRoot, DestinationInfo>>();
+    myInstructions = new ArrayList<Pair<ArtifactRootDescriptor, DestinationInfo>>();
   }
 
   public IgnoredFilePatterns getIgnoredFilePatterns() {
     return myIgnoredFilePatterns;
   }
 
-  public boolean addDestination(@NotNull ArtifactSourceRoot root, @NotNull DestinationInfo destinationInfo) {
-    if (destinationInfo instanceof ExplodedDestinationInfo && root instanceof FileBasedArtifactSourceRoot
-        && root.getRootFile().equals(new File(FileUtil.toSystemDependentName(destinationInfo.getOutputFilePath())))) {
+  public boolean addDestination(@NotNull ArtifactRootDescriptor descriptor, @NotNull DestinationInfo destinationInfo) {
+    if (destinationInfo instanceof ExplodedDestinationInfo && descriptor instanceof FileBasedArtifactRootDescriptor
+        && descriptor.getRootFile().equals(new File(FileUtil.toSystemDependentName(destinationInfo.getOutputFilePath())))) {
       return false;
     }
 
-    myInstructions.add(Pair.create(root, destinationInfo));
+    myInstructions.add(Pair.create(descriptor, destinationInfo));
     return true;
   }
 
@@ -58,21 +62,26 @@ public class ArtifactInstructionsBuilderImpl implements ArtifactInstructionsBuil
 
   @Override
   public void processRoots(ArtifactRootProcessor processor) throws IOException {
-    for (Pair<ArtifactSourceRoot, DestinationInfo> pair : myInstructions) {
+    for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : myInstructions) {
       if (!processor.process(pair.getFirst(), pair.getSecond())) {
         break;
       }
     }
   }
 
-  public FileBasedArtifactSourceRoot createFileBasedRoot(@NotNull File file,
-                                                         @NotNull SourceFileFilter filter) {
-    return new FileBasedArtifactSourceRoot(file, filter, myRootIndex++);
+  @Override
+  public List<Pair<ArtifactRootDescriptor, DestinationInfo>> getInstructions() {
+    return myInstructions;
   }
 
-  public JarBasedArtifactSourceRoot createJarBasedRoot(@NotNull File jarFile,
+  public FileBasedArtifactRootDescriptor createFileBasedRoot(@NotNull File file,
+                                                         @NotNull SourceFileFilter filter) {
+    return new FileBasedArtifactRootDescriptor(file, filter, myRootIndex++, myArtifactId, myArtifactName);
+  }
+
+  public JarBasedArtifactRootDescriptor createJarBasedRoot(@NotNull File jarFile,
                                                        @NotNull String pathInJar,
                                                        @NotNull SourceFileFilter filter) {
-    return new JarBasedArtifactSourceRoot(jarFile, pathInJar, filter, myRootIndex++);
+    return new JarBasedArtifactRootDescriptor(jarFile, pathInJar, filter, myRootIndex, myArtifactId, myArtifactName);
   }
 }

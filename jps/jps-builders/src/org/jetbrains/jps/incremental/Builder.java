@@ -14,6 +14,6 @@ public abstract class Builder {
   public void buildStarted(CompileContext context) {
   }
 
-  public void buildFinished(CompileContext ICompileContext) {
+  public void buildFinished(CompileContext context) {
   }
 }

@@ -13,16 +13,12 @@ import java.util.Set;
  *         Date: 9/17/11
  */
 public class AllProjectScope extends CompileScope {
-
-  private final boolean myIsForcedCompilation;
-
   public AllProjectScope(Project project, JpsProject jpsProject, Set<JpsArtifact> artifacts, boolean forcedCompilation) {
-    super(project, jpsProject, artifacts);
-    myIsForcedCompilation = forcedCompilation;
+    super(project, jpsProject, artifacts, forcedCompilation);
   }
 
   public boolean isRecompilationForced(@NotNull String moduleName) {
-    return myIsForcedCompilation;
+    return myForcedCompilation;
   }
 
   public boolean isAffected(@NotNull String moduleName) {

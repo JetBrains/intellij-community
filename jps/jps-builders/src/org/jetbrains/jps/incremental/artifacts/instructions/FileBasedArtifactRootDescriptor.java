@@ -14,23 +14,18 @@ import java.util.Collections;
 /**
  * @author nik
  */
-public class FileBasedArtifactSourceRoot extends ArtifactSourceRoot {
-  private final File myFile;
-
-  public FileBasedArtifactSourceRoot(@NotNull File file, @NotNull SourceFileFilter filter, int index) {
-    super(filter, index);
-    myFile = file;
-  }
-
-  @NotNull
-  @Override
-  public File getRootFile() {
-    return myFile;
+public class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
+  public FileBasedArtifactRootDescriptor(@NotNull File file,
+                                         @NotNull SourceFileFilter filter,
+                                         int index,
+                                         int artifactId,
+                                         String artifactName) {
+    super(file, filter, index, artifactId, artifactName);
   }
 
   @Override
   public String toString() {
-    return myFile.getPath();
+    return myRoot.getPath();
   }
 
   public void copyFromRoot(String filePath,
