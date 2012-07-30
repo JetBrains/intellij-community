@@ -871,7 +871,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           // no previous
           previousRevision = myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL;
         } else {
-          previousRevision = flatView.getRow(selectedRow + 1);
+          previousRevision = flatView.getRow(selectedRow + 1).getRevision();
         }
 
         if (revision != null) {
