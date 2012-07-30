@@ -1363,12 +1363,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           int maxCellWidth = myLookupTextWidth + myCellRenderer.getIconIndent();
           int scrollBarWidth = myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width;
           int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().MAX_LOOKUP_WIDTH2);
-          int adWidth = myAdComponent.getAdComponent().getPreferredSize().width;
-          int panelHeight = mainPanel.getPreferredSize().height;
+
+          Dimension adSize = myAdComponent.getAdComponent().getPreferredSize();
+
+          int panelHeight = myList.getPreferredSize().height + adSize.height;
           if (getListModel().getSize() > myList.getVisibleRowCount() && myList.getVisibleRowCount() >= 5) {
             panelHeight -= myList.getFixedCellHeight() / 2;
           }
-          return new Dimension(Math.max(listWidth, adWidth), Math.min(panelHeight, myMaximumHeight));
+          return new Dimension(Math.max(listWidth, adSize.width), Math.min(panelHeight, myMaximumHeight));
         }
 
         @Override
