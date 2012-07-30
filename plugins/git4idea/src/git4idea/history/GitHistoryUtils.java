@@ -55,6 +55,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static git4idea.history.GitLogParser.GitLogOption.*;
@@ -321,7 +322,7 @@ public class GitHistoryUtils {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile finalRoot = (root == null ? GitUtil.getGitRoot(path) : root);
-    final GitLogParser logParser = new GitLogParser(project, GitLogParser.NameStatus.NAME,
+    final GitLogParser logParser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                                     HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                                     SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
 
@@ -329,9 +330,13 @@ public class GitHistoryUtils {
     final AtomicReference<String> firstCommitParent = new AtomicReference<String>("HEAD");
     final AtomicReference<FilePath> currentPath = new AtomicReference<FilePath>(path);
     final AtomicReference<GitLineHandler> logHandler = new AtomicReference<GitLineHandler>();
+    final AtomicBoolean skipFurtherOutput = new AtomicBoolean();
 
     final Consumer<GitLogRecord> resultAdapter = new Consumer<GitLogRecord>() {
       public void consume(GitLogRecord record) {
+        if (skipFurtherOutput.get()) {
+          return;
+        }
         if (record == null) {
           exceptionConsumer.consume(new VcsException("revision details are null."));
           return;
@@ -342,7 +347,8 @@ public class GitHistoryUtils {
         final String[] parentHashes = record.getParentsHashes();
         if (parentHashes == null || parentHashes.length < 1) {
           firstCommitParent.set(null);
-        } else {
+        }
+        else {
           firstCommitParent.set(parentHashes[0]);
         }
         final String message = record.getFullMessage();
@@ -352,17 +358,28 @@ public class GitHistoryUtils {
           final List<FilePath> paths = record.getFilePaths(finalRoot);
           if (paths.size() > 0) {
             revisionPath = paths.get(0);
-          } else {
+          }
+          else {
             // no paths are shown for merge commits, so we're using the saved path we're inspecting now
             revisionPath = currentPath.get();
           }
 
           final Pair<String, String> authorPair = Pair.create(record.getAuthorName(), record.getAuthorEmail());
-          final Pair<String, String> committerPair = record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
+          final Pair<String, String> committerPair =
+            record.getCommitterName() == null ? null : Pair.create(record.getCommitterName(), record.getCommitterEmail());
           Collection<String> parents = parentHashes == null ? Collections.<String>emptyList() : Arrays.asList(parentHashes);
           consumer.consume(new GitFileRevision(project, revisionPath, revision, Pair.create(authorPair, committerPair), message, null,
                                                new Date(record.getAuthorTimeStamp() * 1000), false, parents));
-        } catch (VcsException e) {
+          List<GitLogStatusInfo> statusInfos = record.getStatusInfos();
+          if (statusInfos.isEmpty()) {
+            LOG.error(String.format("No status information for the file. File path: %s, current revision: %s, log record: %s",
+                                    currentPath, revision, record));
+          }
+          if (statusInfos.get(0).getType() == GitChangeType.ADDED) {
+            skipFurtherOutput.set(true);
+          }
+        }
+        catch (VcsException e) {
           exceptionConsumer.consume(e);
         }
       }
@@ -410,6 +427,7 @@ public class GitHistoryUtils {
       semaphore.waitFor();
 
       currentPath.set(getFirstCommitRenamePath(project, finalRoot, firstCommit.get(), currentPath.get()));
+      skipFurtherOutput.set(false);
     }
 
   }
@@ -418,7 +436,7 @@ public class GitHistoryUtils {
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
-    h.addParameters("--name-only", parser.getPretty(), "--encoding=UTF-8", lastCommit);
+    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8", lastCommit);
     if (parameters != null && parameters.length > 0) {
       h.addParameters(parameters);
     }

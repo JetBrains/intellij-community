@@ -63,6 +63,11 @@ class GitLogRecord {
   }
 
   @NotNull
+  List<GitLogStatusInfo> getStatusInfos() {
+    return myStatusInfo;
+  }
+
+  @NotNull
   public List<FilePath> getFilePaths(VirtualFile root) throws VcsException {
     List<FilePath> res = new ArrayList<FilePath>();
     String prefix = root.getPath() + "/";
@@ -251,5 +256,11 @@ class GitLogRecord {
    */
   public void setUsedHandler(GitHandler handler) {
     myHandler = handler;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("GitLogRecord{myOptions=%s, myPaths=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
+                         myOptions, myPaths, myStatusInfo, mySupportsRawBody, myHandler);
   }
 }
