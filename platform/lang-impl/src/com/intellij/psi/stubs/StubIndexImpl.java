@@ -127,14 +127,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, StubIdList> storage = new MapIndexStorage<K, StubIdList>(
+        final MapIndexStorage<K, int[]> storage = new MapIndexStorage<K, int[]>(
           IndexInfrastructure.getStorageFile(indexKey),
           extension.getKeyDescriptor(),
           new StubIdExternalizer(),
           extension.getCacheSize(),
           extension.isKeyHighlySelective()
         );
-        final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<K, StubIdList>(storage);
+        final MemoryIndexStorage<K, int[]> memStorage = new MemoryIndexStorage<K, int[]>(storage);
         myIndices.put(indexKey, new MyIndex<K>(memStorage));
         break;
       }
@@ -148,40 +148,40 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return needRebuild;
   }
 
-  private static class StubIdExternalizer implements DataExternalizer<StubIdList> {
+  private static class StubIdExternalizer implements DataExternalizer<int[]> {
     @Override
-    public void save(final DataOutput out, @NotNull final StubIdList value) throws IOException {
-      int size = value.size();
+    public void save(final DataOutput out, @NotNull final int[] value) throws IOException {
+      int size = value.length;
       if (size == 0) {
         DataInputOutputUtil.writeSINT(out, Integer.MAX_VALUE);
       }
       else if (size == 1) {
-        DataInputOutputUtil.writeSINT(out, -value.get(0)); // todo we can store it unsigned and have 3M indices benefit!
+        DataInputOutputUtil.writeSINT(out, -value[0]);
       }
       else {
         DataInputOutputUtil.writeSINT(out, size);
-        for(int i = 0; i < size; ++i) {
-          DataInputOutputUtil.writeINT(out, value.get(i));
+        for (int i = 0; i < size; i++) {
+          DataInputOutputUtil.writeINT(out, value[i]);
         }
       }
     }
 
     @NotNull
     @Override
-    public StubIdList read(final DataInput in) throws IOException {
+    public int[] read(final DataInput in) throws IOException {
       int size = DataInputOutputUtil.readSINT(in);
       if (size == Integer.MAX_VALUE) {
-        return new StubIdList();
+        return new int[0];
       }
       else if (size <= 0) {
-        return new StubIdList(-size);
+        return new int[] {-size};
       }
       else {
         int[] result = new int[size];
-        for(int i = 0; i < size; ++i) {
+        for (int i = 0; i < size; i++) {
           result[i] = DataInputOutputUtil.readINT(in);
         }
-        return new StubIdList(result, size);
+        return result;
       }
     }
   }
@@ -216,13 +216,13 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
         FileBasedIndexImpl.disableUpToDateCheckForCurrentThread();
         index.getReadLock().lock();
-        final ValueContainer<StubIdList> container = index.getData(key);
+        final ValueContainer<int[]> container = index.getData(key);
 
         final FileBasedIndexImpl.ProjectIndexableFilesFilter projectFilesFilter = fileBasedIndex.projectIndexableFiles(project);
 
-        return container.forEach(new ValueContainer.ContainerAction<StubIdList>() {
+        return container.forEach(new ValueContainer.ContainerAction<int[]>() {
           @Override
-          public boolean perform(final int id, @NotNull final StubIdList value) {
+          public boolean perform(final int id, @NotNull final int[] value) {
             if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return true;
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file == null || scope != null && !scope.contains(file)) {
@@ -252,8 +252,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                 return true;
               }
               final List<StubElement<?>> plained = stubTree.getPlainList();
-              for (int i = 0, size = value.size(); i < size; i++) {
-                final StubElement<?> stub = plained.get(value.get(i));
+              for (int i = 0; i < value.length; i++) {
+                final StubElement<?> stub = plained.get(value[i]);
                 final ASTNode tree = psiFile.findTreeForStub(stubTree, stub);
 
                 if (tree != null) {
@@ -293,8 +293,8 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
             }
             else {
               final List<StubElement<?>> plained = stubTree.getPlainList();
-              for (int i = 0, size = value.size(); i < size; i++) {
-                final int stubTreeIndex = value.get(i);
+              for (int i = 0; i < value.length; i++) {
+                final int stubTreeIndex = value[i];
                 if (stubTreeIndex >= plained.size()) {
                   final VirtualFile virtualFile = psiFile.getVirtualFile();
                   StubTree stubTreeFromIndex = StubTreeLoader.getInstance().readFromVFile(project, file);
@@ -473,7 +473,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     index.flush();
   }
 
-  public <K> void updateIndex(@NotNull StubIndexKey key, int fileId, @NotNull final Map<K, StubIdList> oldValues, @NotNull Map<K, StubIdList> newValues) {
+  public <K> void updateIndex(@NotNull StubIndexKey key, int fileId, @NotNull final Map<K, int[]> oldValues, @NotNull Map<K, int[]> newValues) {
     try {
       final MyIndex<K> index = (MyIndex<K>)myIndices.get(key);
       index.updateWithMap(fileId, newValues, new Callable<Collection<K>>() {
@@ -489,13 +489,13 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     }
   }
 
-  private static class MyIndex<K> extends MapReduceIndex<K, StubIdList, Void> {
-    public MyIndex(final IndexStorage<K, StubIdList> storage) {
+  private static class MyIndex<K> extends MapReduceIndex<K, int[], Void> {
+    public MyIndex(final IndexStorage<K, int[]> storage) {
       super(null, null, storage);
     }
 
     @Override
-    public void updateWithMap(final int inputId, @NotNull final Map<K, StubIdList> newData, @NotNull Callable<Collection<K>> oldKeysGetter) throws StorageException {
+    public void updateWithMap(final int inputId, @NotNull final Map<K, int[]> newData, @NotNull Callable<Collection<K>> oldKeysGetter) throws StorageException {
       super.updateWithMap(inputId, newData, oldKeysGetter);
     }
   }
