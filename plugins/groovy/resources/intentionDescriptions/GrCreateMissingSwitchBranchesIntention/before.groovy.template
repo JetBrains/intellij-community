@@ -1,0 +1,4 @@
+int f(Color a) {
+  <spot>switch(a) {
+  }</spot>
+}
