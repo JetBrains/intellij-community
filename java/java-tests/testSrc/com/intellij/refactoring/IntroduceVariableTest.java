@@ -282,6 +282,26 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("collection", true, true, true, "java.util.List<? extends java.util.Collection<?>>"));
   }
 
+  public void testNameSuggestion() throws Exception {
+    final String expectedTypeName = "Path";
+    doTest(new MockIntroduceVariableHandler("path", true, false, false, expectedTypeName) {
+      @Override
+      public IntroduceVariableSettings getSettings(Project project, Editor editor,
+                                                   PsiExpression expr, PsiExpression[] occurrences,
+                                                   TypeSelectorManagerImpl typeSelectorManager,
+                                                   boolean declareFinalIfAll,
+                                                   boolean anyAssignmentLHS,
+                                                   InputValidator validator,
+                                                   PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
+        final PsiType type = typeSelectorManager.getDefaultType();
+        Assert.assertTrue(type.getPresentableText(), type.getPresentableText().equals(expectedTypeName));
+        Assert.assertEquals("path", IntroduceVariableBase.getSuggestedName(type, expr).names[0]);
+        return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
+                                 validator, anchor, replaceChoice);
+      }
+    });
+  }
+
   public void testSiblingInnerClassType() throws Exception {
     doTest(new MockIntroduceVariableHandler("vari", true, false, false, "A.B") {
       @Override
