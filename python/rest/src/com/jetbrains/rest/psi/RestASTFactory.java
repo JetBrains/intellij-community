@@ -30,7 +30,7 @@ public class RestASTFactory implements RestTokenTypes, RestElementTypes {
     if (type == FIELD) {
       return new RestRole(node);
     }
-    if (type == INLINE_LINE) {
+    if (type == INLINE_BLOCK) {
       return new RestInlineBlock(node);
     }
     return new ASTWrapperPsiElement(node);

@@ -1,6 +1,7 @@
 package com.jetbrains.rest.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.jetbrains.rest.validation.RestElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,8 +17,15 @@ public class RestInlineBlock extends RestElement {
   public String toString() {
     return "RestInlineBlock";
   }
-  public boolean isValid() {
-    return getText().matches("(.|\n)*\n *\n");
+  public boolean validBlock() {
+    String text = getText();
+    if (text.endsWith("\n")) {
+      text = text.substring(0, text.length()-1);
+      final int index = text.lastIndexOf("\n");
+      if (index > -1 && StringUtil.isEmptyOrSpaces(text.substring(index)))
+        return true;
+    }
+    return false;
   }
 
   @Override

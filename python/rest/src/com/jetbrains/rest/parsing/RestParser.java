@@ -54,12 +54,7 @@ public class RestParser implements PsiParser {
       else if (type == RestTokenTypes.INLINE_LINE) {
         PsiBuilder.Marker marker = builder.mark();
         builder.advanceLexer();
-        type = builder.getTokenType();
-        while (type == RestTokenTypes.INLINE_LINE) {
-          builder.advanceLexer();
-          type = builder.getTokenType();
-        }
-        marker.done(RestTokenTypes.INLINE_LINE);
+        marker.done(RestElementTypes.INLINE_BLOCK);
       }
       else if (type == RestTokenTypes.ANONYMOUS_HYPERLINK) {
         PsiBuilder.Marker marker = builder.mark();
