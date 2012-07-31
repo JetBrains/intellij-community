@@ -470,13 +470,22 @@ public class CreateTestDialog extends DialogWrapper {
 
   @Nullable
   private PsiDirectory chooseDefaultDirectory(String packageName) {
+    List<PsiDirectory> dirs = new ArrayList<PsiDirectory>();
     for (ContentEntry e : ModuleRootManager.getInstance(myTargetModule).getContentEntries()) {
       for (SourceFolder f : e.getSourceFolders()) {
         final VirtualFile file = f.getFile();
         if (file != null && f.isTestSource()) {
-          return PsiManager.getInstance(myProject).findDirectory(file);
+          dirs.add(PsiManager.getInstance(myProject).findDirectory(file));
         }
       }
+    }
+    if (!dirs.isEmpty()) {
+      for (PsiDirectory dir : dirs) {
+        final String dirName = dir.getVirtualFile().getPath();
+        if (dirName.contains("generated")) continue;
+        return dir;
+      }
+      return dirs.get(0);
     }
     return PackageUtil.findPossiblePackageDirectoryInModule(myTargetModule, packageName);
   }

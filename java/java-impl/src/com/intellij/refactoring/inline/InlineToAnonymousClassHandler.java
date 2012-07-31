@@ -87,7 +87,13 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
   public boolean canInlineElementInEditor(PsiElement element, Editor editor) {
     if (canInlineElement(element)) {
       PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
-      return !InlineMethodHandler.isThisReference(reference);
+      if (!InlineMethodHandler.isThisReference(reference)) {
+        if (element instanceof PsiMethod && reference != null) {
+          final PsiElement referenceElement = reference.getElement();
+          return referenceElement != null && !PsiTreeUtil.isAncestor(((PsiMethod)element).getContainingClass(), referenceElement, false);
+        }
+        return true;
+      }
     }
     return false;
   }

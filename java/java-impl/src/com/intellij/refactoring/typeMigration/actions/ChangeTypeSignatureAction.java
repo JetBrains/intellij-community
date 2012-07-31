@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.typeMigration.actions;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -50,7 +51,8 @@ public class ChangeTypeSignatureAction extends BaseRefactoringAction {
   }
 
   protected boolean isAvailableOnElementInEditorAndFile(final PsiElement element, final Editor editor, PsiFile file, DataContext context) {
-    final PsiElement psiElement = file.findElementAt(editor.getCaretModel().getOffset());
+    final int offset = TargetElementUtilBase.adjustOffset(editor.getDocument(), editor.getCaretModel().getOffset());
+    final PsiElement psiElement = file.findElementAt(offset);
     final PsiReferenceParameterList referenceParameterList = PsiTreeUtil.getParentOfType(psiElement, PsiReferenceParameterList.class);
     if (referenceParameterList != null) {
       return referenceParameterList.getTypeArguments().length > 0;
