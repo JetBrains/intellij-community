@@ -30,8 +30,6 @@ import java.util.Map;
  * @author Dmitry Avdeev
  */
 class Win32FsCache {
-  //private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.win32.Win32FsCache");
-
   private final IdeaWin32 myKernel = IdeaWin32.getInstance();
   private final Map<String, FileInfo> myCache = new THashMap<String, FileInfo>();
 
@@ -64,11 +62,6 @@ class Win32FsCache {
 
   @Nullable
   FileInfo getInfo(@NotNull VirtualFile file) {
-    // todo[r.sh]: uncomment and remove FS cache usage wherever it's not bulk?
-    //if (myCache.isEmpty()) {
-    //  LOG.error("Called on empty cache - shouldn't happen");
-    //}
-
     String path = file.getPath();
     FileInfo info = myCache.get(path);
     if (info == null) {

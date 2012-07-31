@@ -155,7 +155,7 @@ public class BackgroundTaskQueue {
     }
   }
 
-  private boolean isTestMode() {
+  public boolean isTestMode() {
     if (myForcedTestMode != null) return myForcedTestMode;
     return ApplicationManager.getApplication().isUnitTestMode();
   }
