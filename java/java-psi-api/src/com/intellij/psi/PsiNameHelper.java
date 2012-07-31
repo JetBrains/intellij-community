@@ -127,6 +127,7 @@ public abstract class PsiNameHelper {
     return referenceName != null ? referenceName : "";
   }
 
+  @NotNull
   public static String getQualifiedClassName(String referenceText, boolean removeWhitespace) {
     if (removeWhitespace) {
       referenceText = removeWhitespace(referenceText);
