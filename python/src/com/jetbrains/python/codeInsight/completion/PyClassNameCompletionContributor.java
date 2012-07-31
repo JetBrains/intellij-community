@@ -61,13 +61,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     final GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
 
     Collection<String> keys = StubIndex.getInstance().getAllKeys(key, project);
-    final List<String> allNames = new ArrayList<String>();
-    for (String s : keys) {
-      if (resultSet.getPrefixMatcher().prefixMatches(s)) {
-        allNames.add(s);
-      }
-    }
-    for (final String elementName : CompletionUtil.sortForCompletion(resultSet.getPrefixMatcher(), allNames)) {
+    for (final String elementName : CompletionUtil.sortMatching(resultSet.getPrefixMatcher(), keys)) {
       for (T element : StubIndex.getInstance().get(key, elementName, project, scope)) {
         if (condition.value(element)) {
           resultSet.addElement(LookupElementBuilder.create(element)
