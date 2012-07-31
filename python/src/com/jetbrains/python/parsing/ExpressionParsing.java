@@ -381,7 +381,7 @@ public class ExpressionParsing extends Parsing {
   private static TokenSet BRACKET_OR_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA);
   private static TokenSet BRACKET_COLON_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COLON, PyTokenTypes.COMMA);
 
-  private void parseSliceEnd(PsiBuilder.Marker exprStart, PsiBuilder.Marker sliceItemStart) {
+  public void parseSliceEnd(PsiBuilder.Marker exprStart, PsiBuilder.Marker sliceItemStart) {
     myBuilder.advanceLexer();
     if (atToken(PyTokenTypes.RBRACKET)) {
       PsiBuilder.Marker sliceMarker = myBuilder.mark();
