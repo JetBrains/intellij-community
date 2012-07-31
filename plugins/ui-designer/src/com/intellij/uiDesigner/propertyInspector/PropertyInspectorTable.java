@@ -1208,9 +1208,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if(isEditing()){
         finishEditing();
         getSelectionModel().setSelectionInterval(selectedRow,selectedRow);
+        scrollRectToVisible(getCellRect(selectedRow, 0, true));
         startEditing(selectedRow);
       } else {
         getSelectionModel().setSelectionInterval(selectedRow,selectedRow);
+        scrollRectToVisible(getCellRect(selectedRow, 0, true));
       }
     }
   }
@@ -1229,9 +1231,11 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       if(isEditing()){
         finishEditing();
         getSelectionModel().setSelectionInterval(selectedRow,selectedRow);
+        scrollRectToVisible(getCellRect(selectedRow, 0, true));
         startEditing(selectedRow);
       }else{
         getSelectionModel().setSelectionInterval(selectedRow,selectedRow);
+        scrollRectToVisible(getCellRect(selectedRow, 0, true));
       }
     }
   }

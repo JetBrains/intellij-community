@@ -692,10 +692,12 @@ public abstract class PropertyTable extends JBTable {
       if (isEditing()) {
         finishEditing();
         getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
+        scrollRectToVisible(getCellRect(selectedRow, 0, true));
         startEditing(selectedRow);
       }
       else {
         getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
+        scrollRectToVisible(getCellRect(selectedRow, 0, true));
       }
     }
   }
@@ -714,10 +716,12 @@ public abstract class PropertyTable extends JBTable {
       if (isEditing()) {
         finishEditing();
         getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
+        scrollRectToVisible(getCellRect(selectedRow, 0, true));
         startEditing(selectedRow);
       }
       else {
         getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
+        scrollRectToVisible(getCellRect(selectedRow, 0, true));
       }
     }
   }
