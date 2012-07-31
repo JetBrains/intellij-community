@@ -21,6 +21,7 @@ import com.intellij.codeInsight.hint.ElementLocationUtil;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ExternalJavaDocAction;
 import com.intellij.lang.documentation.CompositeDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -65,37 +66,39 @@ import java.util.List;
 import java.util.Stack;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider {
-  
+
+  private static final String DOCUMENTATION_TOPIC_ID = "reference.toolWindows.Documentation";
+
   private static final DataContext EMPTY_DATA_CONTEXT = new DataContext() {
     @Override
     public Object getData(@NonNls String dataId) {
       return null;
     }
   };
-  
-  private static final int MAX_WIDTH = 500;
+
+  private static final int MAX_WIDTH  = 500;
   private static final int MAX_HEIGHT = 300;
   private static final int MIN_HEIGHT = 45;
 
-  private DocumentationManager myManager;
+  private DocumentationManager   myManager;
   private SmartPsiElementPointer myElement;
 
-  private final Stack<Context> myBackStack = new Stack<Context>();
+  private final Stack<Context> myBackStack    = new Stack<Context>();
   private final Stack<Context> myForwardStack = new Stack<Context>();
-  private ActionToolbar myToolBar;
-  private boolean myIsEmpty;
-  private boolean myIsShown;
-  private final JLabel myElementLabel;
-  private Style myFontSizeStyle;
-  private JSlider myFontSizeSlider;
-  private JComponent mySettingsPanel;
-  private MyShowSettingsButton myShowSettingsButton;
-  private boolean myIgnoreFontSizeSliderChange;
+  private       ActionToolbar        myToolBar;
+  private       boolean              myIsEmpty;
+  private       boolean              myIsShown;
+  private final JLabel               myElementLabel;
+  private       Style                myFontSizeStyle;
+  private       JSlider              myFontSizeSlider;
+  private       JComponent           mySettingsPanel;
+  private       MyShowSettingsButton myShowSettingsButton;
+  private       boolean              myIgnoreFontSizeSliderChange;
 
   private static class Context {
     final SmartPsiElementPointer element;
-    final String text;
-    final Rectangle viewRect;
+    final String                 text;
+    final Rectangle              viewRect;
 
     public Context(SmartPsiElementPointer element, String text, Rectangle viewRect) {
       this.element = element;
@@ -104,18 +107,18 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private final JScrollPane myScrollPane;
-  private final JEditorPane myEditorPane;
-  private String myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
-  private final JPanel myControlPanel;
-  private boolean myControlPanelVisible;
-  private final ExternalDocAction myExternalDocAction;
-  private Consumer<PsiElement> myNavigateCallback;
+  private final JScrollPane          myScrollPane;
+  private final JEditorPane          myEditorPane;
+  private       String               myText; // myEditorPane.getText() surprisingly crashes.., let's cache the text
+  private final JPanel               myControlPanel;
+  private       boolean              myControlPanelVisible;
+  private final ExternalDocAction    myExternalDocAction;
+  private       Consumer<PsiElement> myNavigateCallback;
 
   private JBPopup myHint;
 
   private final HashMap<KeyStroke, ActionListener> myKeyboardActions = new HashMap<KeyStroke, ActionListener>();
-    // KeyStroke --> ActionListener
+  // KeyStroke --> ActionListener
 
   public boolean requestFocusInWindow() {
     return myScrollPane.requestFocusInWindow();
@@ -166,6 +169,13 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         super.paintComponent(g);
       }
     };
+    DataProvider helpDataProvider = new DataProvider() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        return PlatformDataKeys.HELP_ID.is(dataId) ? DOCUMENTATION_TOPIC_ID : null;
+      }
+    };
+    myEditorPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
     myText = "";
     myEditorPane.setEditable(false);
     myEditorPane.setBackground(HintUtil.INFORMATION_COLOR);
@@ -202,6 +212,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     };
     myScrollPane.setBorder(null);
+    myScrollPane.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, helpDataProvider);
 
     final MouseAdapter mouseAdapter = new MouseAdapter() {
       public void mousePressed(MouseEvent e) {
