@@ -137,10 +137,10 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   @Override
   public void update() {
     if (myArea == null) {
-      doUpdate(Collections.<PropertiesContainer>emptyList(), null);
+      update(Collections.<PropertiesContainer>emptyList(), null);
     }
     else {
-      doUpdate(myArea.getSelection(), myDesigner.getSelectionProperty());
+      update(myArea.getSelection(), myDesigner.getSelectionProperty());
     }
   }
 

@@ -100,7 +100,6 @@ public abstract class PropertyTable extends JBTable {
     InputMap ancestorInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
     actionMap.put("selectPreviousRow", new MySelectPreviousRowAction());
-
     actionMap.put("selectNextRow", new MySelectNextRowAction());
 
     actionMap.put("startEditing", new MyStartEditingAction());
@@ -215,10 +214,10 @@ public abstract class PropertyTable extends JBTable {
   }
 
   public void update() {
-    doUpdate(myContainers, null);
+    update(myContainers, null);
   }
 
-  public void doUpdate(@NotNull List<? extends PropertiesContainer> containers, @Nullable Property initialSelection) {
+  public void update(@NotNull List<? extends PropertiesContainer> containers, @Nullable Property initialSelection) {
     finishEditing();
 
     if (mySkipUpdate) {

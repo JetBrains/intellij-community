@@ -39,11 +39,15 @@ public abstract class Property<T extends PropertiesContainer> {
     myName = name;
   }
 
+  @Nullable
   public Property<T> createForNewPresentation() {
     return createForNewPresentation(myParent, myName);
   }
 
-  public abstract Property<T> createForNewPresentation(@Nullable Property parent, @NotNull String name);
+  @Nullable
+  public Property<T> createForNewPresentation(@Nullable Property parent, @NotNull String name) {
+    return null;
+  }
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -51,10 +55,12 @@ public abstract class Property<T extends PropertiesContainer> {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  @Nullable
   public final Property getParent() {
     return myParent;
   }
 
+  @NotNull
   public List<Property<T>> getChildren(@Nullable T component) {
     return Collections.emptyList();
   }
@@ -76,11 +82,12 @@ public abstract class Property<T extends PropertiesContainer> {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  @Nullable
   public Object getValue(T component) throws Exception {
     return null;
   }
 
-  public void setValue(T component, Object value) throws Exception {
+  public void setValue(T component, @Nullable Object value) throws Exception {
   }
 
   public boolean isDefaultValue(T component) throws Exception {

@@ -59,6 +59,7 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
     }
   }
 
+  @NotNull
   @Override
   public List<Property<RadViewComponent>> getChildren(@Nullable RadViewComponent component) {
     return myChildren;

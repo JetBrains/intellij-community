@@ -65,6 +65,7 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
     }
   }
 
+  @NotNull
   @Override
   public List<Property<RadViewComponent>> getChildren(@Nullable RadViewComponent component) {
     return myOptions;
