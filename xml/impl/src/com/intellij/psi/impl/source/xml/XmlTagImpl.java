@@ -470,9 +470,11 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     XmlElementDescriptor elementDescriptor = null;
     final XmlNSDescriptor nsDescriptor = getNSDescriptor(namespace, false);
 
-    LOG.debug(
-      "Descriptor for namespace " + namespace + " is " + (nsDescriptor != null ? nsDescriptor.getClass().getCanonicalName() : "NULL"));
-    
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(
+        "Descriptor for namespace " + namespace + " is " + (nsDescriptor != null ? nsDescriptor.getClass().getCanonicalName() : "NULL"));
+    }
+
     if (nsDescriptor != null) {
       if (!DumbService.getInstance(getProject()).isDumb() || DumbService.isDumbAware(nsDescriptor)) {
         elementDescriptor = nsDescriptor.getElementDescriptor(this);
