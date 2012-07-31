@@ -21,7 +21,7 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.designSurface.tools.DragTracker;
 import com.intellij.designer.designSurface.tools.InputTool;
-import com.intellij.designer.propertyTable.RadPropertyTable;
+import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -42,11 +42,6 @@ public abstract class RadComponent extends PropertiesContainer {
   private RadComponent myParent;
   private RadLayout myLayout;
   private final Map<Object, Object> myClientProperties = new HashMap<Object, Object>();
-
-  @Override
-  public List<Property> getProperties() {
-    return Collections.emptyList();
-  }
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
@@ -191,13 +186,43 @@ public abstract class RadComponent extends PropertiesContainer {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  @Override
+  public List<Property> getProperties() {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  public String getPropertyValue(String name) {
+    if (getProperties() == null) {
+      throw new NullPointerException("Component " +
+                                     this +
+                                     ", " +
+                                     myLayout +
+                                     ", " +
+                                     myMetaModel.getTag() +
+                                     ", " +
+                                     myMetaModel.getTarget() +
+                                     " without properties");
+    }
+    Property property = PropertyTable.findProperty(getProperties(), name);
+    if (property != null) {
+      try {
+        return String.valueOf(property.getValue(this));
+      }
+      catch (Exception e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
   public List<Property> getInplaceProperties() throws Exception {
     List<Property> properties = new ArrayList<Property>();
 
     if (myMetaModel != null) {
       List<Property> allProperties = getProperties();
       for (String name : myMetaModel.getInplaceProperties()) {
-        Property property = RadPropertyTable.findProperty(allProperties, name);
+        Property property = PropertyTable.findProperty(allProperties, name);
         if (property != null) {
           properties.add(property);
         }

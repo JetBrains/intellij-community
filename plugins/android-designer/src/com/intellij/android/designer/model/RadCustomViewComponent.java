@@ -20,7 +20,7 @@ import com.intellij.android.designer.propertyTable.editors.ChooseClassDialog;
 import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.model.*;
-import com.intellij.designer.propertyTable.RadPropertyTable;
+import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.xml.XmlTag;
@@ -133,13 +133,13 @@ public class RadCustomViewComponent extends RadViewComponent implements IConfigu
     properties.add(CLASS_PROPERTY);
 
     for (String name : metaModel.getInplaceProperties()) {
-      Property property = RadPropertyTable.findProperty(allProperties, name);
+      Property property = PropertyTable.findProperty(allProperties, name);
       if (property != null) {
         properties.add(property);
       }
     }
 
-    properties.add(RadPropertyTable.findProperty(allProperties, "id"));
+    properties.add(PropertyTable.findProperty(allProperties, "id"));
 
     return properties;
   }

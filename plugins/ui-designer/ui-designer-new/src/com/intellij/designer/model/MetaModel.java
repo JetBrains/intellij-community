@@ -34,8 +34,8 @@ public class MetaModel {
   private final String myTag;
   private DefaultPaletteItem myPaletteItem;
   private String myTitle;
-  protected String myIconPath;
-  protected Icon myIcon;
+  private String myIconPath;
+  private Icon myIcon;
   private String myCreation;
   private boolean myDelete = true;
   private List<String> myInplaceProperties = Collections.emptyList();

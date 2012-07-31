@@ -21,7 +21,7 @@ import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyRenderer;
-import com.intellij.designer.propertyTable.RadPropertyTable;
+import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.designer.propertyTable.renderers.BooleanRenderer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -77,7 +77,7 @@ public class ResourceRenderer implements PropertyRenderer {
     }
 
     myColoredComponent.clear();
-    RadPropertyTable.updateRenderer(myColoredComponent, selected);
+    PropertyTable.updateRenderer(myColoredComponent, selected);
     if (container instanceof RadComponent) formatValue((RadComponent)container, value);
 
     return myColoredComponent;
