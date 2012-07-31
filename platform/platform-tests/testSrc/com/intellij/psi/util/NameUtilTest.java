@@ -228,7 +228,8 @@ public class NameUtilTest extends UsefulTestCase {
 
   public void testFileStructure() {
     assertDoesntMatch("hint", "height: int");
-    assertDoesntMatch("Hint", "Height:int");
+    assertMatches("Hint", "Height:int");
+    assertDoesntMatch("Hint", "Height: int");
 
     assertMatches("getColor", "getBackground(): Color");
     assertMatches("get color", "getBackground(): Color");
@@ -344,6 +345,8 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("WebLOgic", "WebLogic");
     assertMatches("WEbLogic", "WebLogic");
     assertDoesntMatch("WebLogic", "Webologic");
+
+    assertMatches("Wlo", "WebLogic");
   }
 
   public void testFinalSpace() {
