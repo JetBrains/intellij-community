@@ -4,7 +4,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.KillableColoredProcessHandler;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
 
@@ -18,7 +17,7 @@ public class PythonProcessHandler extends KillableColoredProcessHandler {
     super(process, commandLine.getCommandLineString());
   }
 
-  public PythonProcessHandler(Process process, String commandLine, @Nullable Charset charset) {
+  public PythonProcessHandler(Process process, String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
   }
 
