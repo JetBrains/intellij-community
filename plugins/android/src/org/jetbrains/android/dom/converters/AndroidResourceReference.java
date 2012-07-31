@@ -81,12 +81,14 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
 
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    System.out.println("Handle element rename to " + newElementName);
     if (newElementName.startsWith(AndroidResourceUtil.NEW_ID_PREFIX)) {
       newElementName = AndroidResourceUtil.getResourceNameByReferenceText(newElementName);
     }
     ResourceValue value = myValue.getValue();
     assert value != null;
     String resType = value.getResourceType();
+    System.out.println("Restype: " + resType);
 
     if (resType != null && newElementName != null) {
       // todo: do not allow new value resource name to contain dot, because it is impossible to check if it file or value otherwise
@@ -94,6 +96,7 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
       final String newResName = newElementName.contains(".") // it is file
                                 ? AndroidCommonUtils.getResourceName(resType, newElementName)
                                 : newElementName;
+      System.out.println("New res name: " + newResName);
       myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType, newResName));
     }
     return myValue.getXmlTag();
