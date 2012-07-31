@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.progress;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +24,7 @@ import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +33,7 @@ import com.intellij.util.PlusMinus;
 import com.intellij.util.concurrency.QueueProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 /**
  * Runs backgroundable tasks one by one.
@@ -157,7 +160,14 @@ public class BackgroundTaskQueue {
     return ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  public void setForcedTestMode(Boolean forcedTestMode) {
+  @TestOnly
+  public void setForcedTestMode(Boolean forcedTestMode, Disposable parentDisposable) {
     myForcedTestMode = forcedTestMode;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myForcedTestMode = null;
+      }
+    });
   }
 }
