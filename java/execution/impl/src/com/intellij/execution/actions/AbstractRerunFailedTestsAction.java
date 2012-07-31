@@ -30,10 +30,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -43,16 +40,36 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
-public class AbstractRerunFailedTestsAction extends AnAction {
+public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
+  private static List<AbstractRerunFailedTestsAction> registry = new ArrayList<AbstractRerunFailedTestsAction>();
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction");
   private TestFrameworkRunningModel myModel;
   private Getter<TestFrameworkRunningModel> myModelProvider;
   protected TestConsoleProperties myConsoleProperties;
   protected ExecutionEnvironment myEnvironment;
+  private final JComponent myParent;
+
+
+  public AbstractRerunFailedTestsAction() {
+    //We call this constructor with a little help from reflection.
+    myParent = null;
+  }
+
+  protected AbstractRerunFailedTestsAction(JComponent parent) {
+    myParent = parent;
+    registry.add(this);
+    copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
+    registerCustomShortcutSet(getShortcutSet(), parent);
+  }
 
   public void init(final TestConsoleProperties consoleProperties,
                    final ExecutionEnvironment environment) {
@@ -68,8 +85,36 @@ public class AbstractRerunFailedTestsAction extends AnAction {
     myModelProvider = modelProvider;
   }
 
-  public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(isActive(e) && !getModel().isRunning());
+  @NotNull
+  private AbstractRerunFailedTestsAction findActualAction() {
+    if (myParent != null  || registry.isEmpty())
+      return this;
+    List<AbstractRerunFailedTestsAction> candidates = new ArrayList<AbstractRerunFailedTestsAction>(registry);
+    Collections.sort(candidates, new Comparator<AbstractRerunFailedTestsAction>() {
+      @Override
+      public int compare(AbstractRerunFailedTestsAction action1, AbstractRerunFailedTestsAction action2) {
+        Window window1 = SwingUtilities.windowForComponent(action1.myParent);
+        Window window2 = SwingUtilities.windowForComponent(action2.myParent);
+        if (window1 == null)
+          return 1;
+        if (window2 == null)
+          return -1;
+        boolean showing1 = action1.myParent.isShowing();
+        boolean showing2 = action2.myParent.isShowing();
+        if (showing1 && !showing2)
+          return -1;
+        if (showing2 && !showing1)
+          return 1;
+        return (window1.isActive() ? -1 : 1);
+      }
+    });
+    return candidates.get(0);
+  }
+
+  public final void update(AnActionEvent e) {
+    AbstractRerunFailedTestsAction action = findActualAction();
+    TestFrameworkRunningModel model = action.getModel();
+    e.getPresentation().setEnabled(action.isActive(e) && model != null && !model.isRunning());
   }
 
   private boolean isActive(AnActionEvent e) {
@@ -78,7 +123,7 @@ public class AbstractRerunFailedTestsAction extends AnAction {
     if (project == null) return false;
     TestFrameworkRunningModel model = getModel();
     if (model == null || model.getRoot() == null) return false;
-    final List<? extends AbstractTestProxy> myAllTests = getModel().getRoot().getAllTests();
+    final List<? extends AbstractTestProxy> myAllTests = model.getRoot().getAllTests();
     for (Object test : myAllTests) {
       if (Filter.FAILED_OR_INTERRUPTED.and(JavaAwareFilter.METHOD(project)).shouldAccept((AbstractTestProxy)test)) return true;
     }
@@ -87,13 +132,22 @@ public class AbstractRerunFailedTestsAction extends AnAction {
 
   @NotNull
   protected List<AbstractTestProxy> getFailedTests(Project project) {
-    final List<? extends AbstractTestProxy> myAllTests = getModel().getRoot().getAllTests();
+    TestFrameworkRunningModel model = getModel();
+    final List<? extends AbstractTestProxy> myAllTests = model != null
+                                                         ? model.getRoot().getAllTests()
+                                                         : Collections.<AbstractTestProxy>emptyList();
     return Filter.FAILED_OR_INTERRUPTED.and(JavaAwareFilter.METHOD(project)).select(myAllTests);
   }
 
   public void actionPerformed(AnActionEvent e) {
+    findActualAction().performAction();
+  }
+
+  private void performAction() {
     boolean isDebug = myConsoleProperties.isDebug();
     final MyRunProfile profile = getRunProfile();
+    if (profile == null)
+      return;
     try {
       final Executor executor = isDebug ? DefaultDebugExecutor.getDebugExecutorInstance() : DefaultRunExecutor.getRunExecutorInstance();
       final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), profile);
@@ -114,10 +168,12 @@ public class AbstractRerunFailedTestsAction extends AnAction {
     }
   }
 
+  @Nullable
   public MyRunProfile getRunProfile() {
     return null;
   }
 
+  @Nullable
   public TestFrameworkRunningModel getModel() {
     if (myModel != null) {
       return myModel;
