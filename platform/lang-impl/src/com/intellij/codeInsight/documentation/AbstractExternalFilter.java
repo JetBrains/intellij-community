@@ -23,13 +23,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.*;
-import com.intellij.psi.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.io.UrlConnectionUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
@@ -49,7 +54,11 @@ import java.util.regex.Pattern;
 
 public abstract class AbstractExternalFilter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.javadoc.JavaDocExternalFilter");
-
+  
+  private static final Pattern ourClassDataStartPattern = Pattern.compile("START OF CLASS DATA", Pattern.CASE_INSENSITIVE);
+  private static final Pattern ourClassDataEndPattern = Pattern.compile("SUMMARY ========", Pattern.CASE_INSENSITIVE);
+  private static final Pattern ourNonClassDataEndPattern = Pattern.compile("<A NAME=", Pattern.CASE_INSENSITIVE);
+  
   protected static @NonNls final Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
   protected static @NonNls final Pattern ourHTMLFilesuffix = Pattern.compile("/([^/]*[.][hH][tT][mM][lL]?)$");
   private static @NonNls final Pattern ourAnnihilator = Pattern.compile("/[^/^.]*/[.][.]/");
@@ -213,17 +222,11 @@ public abstract class AbstractExternalFilter {
 
   protected void doBuildFromStream(String surl, Reader input, StringBuffer data, boolean search4Encoding) throws IOException {
     BufferedReader buf = new BufferedReader(input);
-    Matcher anchorMatcher = ourAnchorsuffix.matcher(surl);
-    @NonNls String startSection = "<!-- ======== START OF CLASS DATA ======== -->";
-    @NonNls String endSection = "SUMMARY ========";
+    Trinity<Pattern, Pattern, Boolean> settings = getParseSettings(surl);
+    @NonNls Pattern startSection = settings.first;
+    @NonNls Pattern endSection = settings.second;
+    boolean useDt = settings.third;
     @NonNls String greatestEndSection = "<!-- ========= END OF CLASS DATA ========= -->";
-    boolean isClassDoc = true;
-
-    if (anchorMatcher.find()) {
-      isClassDoc = false;
-      startSection = "<A NAME=\"" + StringUtilRt.toUpperCase(anchorMatcher.group(1)) + "\"";
-      endSection = "<A NAME=";
-    }
 
     data.append(HTML);
     data.append( "<style type=\"text/css\">" +
@@ -253,7 +256,7 @@ public abstract class AbstractExternalFilter {
         }
       }
     }
-    while (read != null && !StringUtilRt.toUpperCase(read).contains(startSection));
+    while (read != null && !startSection.matcher(StringUtilRt.toUpperCase(read)).find());
 
     if (input instanceof MyReader && contentEncoding != null) {
       if (contentEncoding != null && !contentEncoding.equals("UTF-8") && !contentEncoding.equals(((MyReader)input).getEncoding())) { //restart page parsing with correct encoding
@@ -275,18 +278,15 @@ public abstract class AbstractExternalFilter {
       return;
     }
 
-    appendLine(data, read);
-
-    if (isClassDoc) {
+    if (useDt) {
       boolean skip = false;
-
-      while (((read = buf.readLine()) != null) && !StringUtilRt.toUpperCase(read).trim().equals(DL) &&
-             !StringUtil.containsIgnoreCase(read, "<div class=\"description\"")) {
+      
+      do {
         if (StringUtilRt.toUpperCase(read).contains(H2) && !read.toUpperCase().contains("H2")) { // read=class name in <H2>
           data.append(H2);
           skip = true;
         }
-        else if (StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) != -1) {
+        else if (endSection.matcher(read).find() || StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) != -1) {
           data.append(HTML_CLOSE);
           return;
         }
@@ -294,6 +294,8 @@ public abstract class AbstractExternalFilter {
           appendLine(data, read);
         }
       }
+      while (((read = buf.readLine()) != null) && !StringUtilRt.toUpperCase(read).trim().equals(DL) &&
+             !StringUtil.containsIgnoreCase(read, "<div class=\"description\""));
 
       data.append(DL);
 
@@ -312,11 +314,14 @@ public abstract class AbstractExternalFilter {
       data.append(classDetails);
       data.append(P);
     }
+    else {
+      appendLine(data, read);
+    }
 
     while (((read = buf.readLine()) != null) &&
-           StringUtil.indexOfIgnoreCase(read, endSection, 0) == -1 &&
+           !endSection.matcher(read).find() &&
            StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) == -1) {
-      if (StringUtilRt.toUpperCase(read).indexOf(HR) == -1
+      if (!StringUtilRt.toUpperCase(read).contains(HR)
           && !StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">")
           && !StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">")) {
         appendLine(data, read);
@@ -326,9 +331,32 @@ public abstract class AbstractExternalFilter {
     data.append(HTML_CLOSE);
   }
 
+  /**
+   * Decides what settings should be used for parsing content represented by the given url.
+   *
+   * @param url  url which points to the target content
+   * @return     following data: (start interested data boundary pattern; end interested data boundary pattern;
+   *             replace table data by &lt;dt&gt;)
+   */
+  @NotNull
+  protected Trinity<Pattern, Pattern, Boolean> getParseSettings(@NotNull String url) {
+    Pattern startSection = ourClassDataStartPattern;
+    Pattern endSection = ourClassDataEndPattern;
+    boolean useDt = true;
+
+    Matcher anchorMatcher = ourAnchorsuffix.matcher(url);
+    if (anchorMatcher.find()) {
+      useDt = false;
+      startSection = Pattern.compile(Pattern.quote("<a name=\"" + anchorMatcher.group(1) + "\""), Pattern.CASE_INSENSITIVE);
+      endSection = ourNonClassDataEndPattern;
+    }
+    return Trinity.create(startSection, endSection, useDt);
+  }
+
   private static boolean reachTheEnd(StringBuffer data, String read, StringBuffer classDetails) {
     if (StringUtil.indexOfIgnoreCase(read, FIELD_SUMMARY, 0) != -1 ||
-        StringUtil.indexOfIgnoreCase(read, CLASS_SUMMARY, 0) != -1) {
+        StringUtil.indexOfIgnoreCase(read, CLASS_SUMMARY, 0) != -1)
+    {
       data.append(classDetails);
       data.append(HTML_CLOSE);
       return true;
@@ -355,11 +383,11 @@ public abstract class AbstractExternalFilter {
   }
 
   private static class MyJavadocFetcher implements Runnable {
-    private static boolean ourFree = true;
-    private final StringBuffer data = new StringBuffer();
-    private final String surl;
+    private static boolean      ourFree = true;
+    private final  StringBuffer data    = new StringBuffer();
+    private final String       surl;
     private final MyDocBuilder myBuilder;
-    private final Exception [] myExceptions = new Exception[1];
+    private final Exception[] myExceptions = new Exception[1];
     private final HttpConfigurable myHttpConfigurable;
 
     public MyJavadocFetcher(final String surl, MyDocBuilder builder) {
