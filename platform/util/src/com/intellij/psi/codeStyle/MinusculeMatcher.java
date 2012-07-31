@@ -40,7 +40,7 @@ public class MinusculeMatcher implements Matcher {
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
     for (int i = 0; i < myPattern.length; i++) {
       char c = myPattern[i];
-      if (Character.isUpperCase(c)) {
+      if (Character.isUpperCase(c) && (i > 0 || myOptions != FIRST_LETTER)) {
         myHasHumps = true;
         return;
       }
