@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
 import com.intellij.openapi.vfs.newvfs.*;
@@ -156,12 +155,12 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   @NotNull
-  private static Pair<String[],int[]> persistAllChildren(@NotNull VirtualFile file, int id, @NotNull Pair<String[],int[]> current) {
+  private static Pair<String[], int[]> persistAllChildren(@NotNull VirtualFile file, int id, @NotNull Pair<String[], int[]> current) {
     String[] currentNames = current.first;
     int[] currentIds = current.second;
 
-    final NewVirtualFileSystem delegate = getDelegate(file);
-    String[] delegateNames = VfsUtil.filterNames(delegate.list(file));
+    NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
+    String[] delegateNames = VfsUtil.filterNames(fs.list(file));
     if (delegateNames.length == 0 && currentNames.length > 0) {
       return current;
     }
@@ -187,9 +186,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       }
       else {
         final FakeVirtualFile child = new FakeVirtualFile(file, name);
-        final FileAttributes attributes = delegate.getAttributes(child);
-        assert attributes != null : delegate + ": " + child;
-        final int childId = createAndCopyRecord(delegate, child, id, attributes);
+        final FileAttributes attributes = fs.getAttributes(child);
+        assert attributes != null : fs + ": " + child;
+        final int childId = createAndCopyRecord(fs, child, id, attributes);
         childrenIds[i] = childId;
       }
     }
@@ -1149,12 +1148,11 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   @NotNull
-  public static NewVirtualFileSystem replaceWithNativeFS(@NotNull NewVirtualFileSystem delegate) {
-    if (delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) &&
-        Registry.is("filesystem.useNative") &&
-        SystemInfo.isWindows &&
+  public static NewVirtualFileSystem replaceWithNativeFS(@NotNull final NewVirtualFileSystem delegate) {
+    if (SystemInfo.isWindows &&
+        delegate.getProtocol().equals(LocalFileSystem.PROTOCOL) &&
         Win32LocalFileSystem.isAvailable()) {
-      delegate = Win32LocalFileSystem.getWin32Instance();
+      return Win32LocalFileSystem.getWin32Instance();
     }
     return delegate;
   }
