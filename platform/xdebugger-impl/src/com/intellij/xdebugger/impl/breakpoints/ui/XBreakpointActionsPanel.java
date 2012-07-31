@@ -90,8 +90,6 @@ public class XBreakpointActionsPanel<B extends XBreakpoint<?>> extends XBreakpoi
       String logExpression = myBreakpoint.getLogExpression();
       myLogExpressionCheckBox.setSelected(logExpression != null);
       myLogExpressionComboBox.setText(logExpression != null ? logExpression : "");
-
-      IdeFocusManager.findInstance().requestFocus(myLogExpressionComboBox.getComponent(), false);
     }
     onCheckboxChanged();
   }
