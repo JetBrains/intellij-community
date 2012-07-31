@@ -650,7 +650,9 @@ public class DtdParsing extends XmlParsing implements XmlElementType {
       if (myBuilder.getTokenType() == XML_ENTITY_REF_TOKEN) {
         parseEntityRef();
       }
-      else if (parseAttributeDecl()) {
+      else if (myBuilder.getTokenType() == XML_COMMENT_START) {
+        parseComment();
+      } else if (parseAttributeDecl()) {
       }
       else {
         break;
