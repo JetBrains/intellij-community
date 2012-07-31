@@ -120,10 +120,6 @@ public class ThreeStateCheckBox extends JCheckBox {
         }
 
         if (icon != null) {
-          //final Color selected = UIManager.getColor("CheckBox.focus");
-          //if (selected != null) {
-          //  g.setColor(selected);
-          //}
           final Insets i = getInsets();
           final Rectangle r = getBounds();
           final Rectangle r1 = new Rectangle();
@@ -141,7 +137,11 @@ public class ThreeStateCheckBox extends JCheckBox {
             r1, r2, r3,
             getText() == null ? 0 : getIconTextGap());
 
-          g.fillRect(r2.x + r2.width / 2 - r2.width / 5, r2.y + r2.height / 2 -1, r2.width / 3, 2);
+          // selected table cell: do not paint white on white
+          g.setColor(UIUtil.getTreeForeground());
+          int height = r2.height / 10;
+          int width = r2.width / 3;
+          g.fillRect(r2.x + r2.width / 2 - width / 2, r2.y + r2.height / 2 - height / 2, width, height);
         }
         break;
       default:
