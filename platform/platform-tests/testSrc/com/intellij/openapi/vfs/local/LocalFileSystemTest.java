@@ -206,6 +206,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
     final boolean safeWrite = GeneralSettings.getInstance().isUseSafeWrite();
     final File dir = FileUtil.createTempDirectory("hardlinks.", ".dir", false);
+    final SafeWriteRequestor requestor = new SafeWriteRequestor() { };
     try {
       GeneralSettings.getInstance().setUseSafeWrite(false);
 
@@ -215,7 +216,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
       final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
-      file.setBinaryContent("hello".getBytes(), 0, 0, new SafeWriteRequestor() {});
+      file.setBinaryContent("hello".getBytes(), 0, 0, requestor);
 
       final VirtualFile check = LocalFileSystem.getInstance().findFileByIoFile(hardLinkFile);
       assertNotNull(check);
