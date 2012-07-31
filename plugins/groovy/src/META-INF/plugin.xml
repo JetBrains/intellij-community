@@ -732,7 +732,7 @@
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNegatedConditionalInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyInArgumentCheck" displayName="Incompatible 'in' argument types"
-                     enabledByDefault="false" groupName="Probable bugs" level="WARNING"
+                     enabledByDefault="true" groupName="Probable bugs" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyInArgumentCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNegatedIf" displayName="Negated if condition expression"
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
