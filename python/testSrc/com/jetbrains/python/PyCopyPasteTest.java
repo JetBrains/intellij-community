@@ -199,6 +199,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testNonRectangleTopLevel() {    //PY-6995
+    doTest();
+  }
+
   private void doTest() {
     String name = getTestName(false);
 

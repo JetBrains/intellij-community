@@ -97,7 +97,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           newText += "\n";
         }
         else
-          newText = new String(text);      //user already prepared place to paste to and we just want to indent right
+          newText = new String(newText);      //user already prepared place to paste to and we just want to indent right
       }
     }
     return newText;
