@@ -102,7 +102,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
 
   @Override
   protected String[] suggestNames(PsiType defaultType, String propName) {
-    return suggestFieldName(defaultType, (PsiLocalVariable)getLocalVariable(), myExpr, myStatic, myParentClass).names;
+    return suggestFieldName(defaultType, (PsiLocalVariable)getLocalVariable(), myExpr != null && myExpr.isValid() ? myExpr : null, myStatic, myParentClass).names;
   }
 
   public static SuggestedNameInfo suggestFieldName(@Nullable PsiType defaultType,
