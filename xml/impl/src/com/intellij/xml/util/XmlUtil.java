@@ -613,7 +613,7 @@ public class XmlUtil {
       if (element instanceof XmlEntityRef) {
         XmlEntityRef ref = (XmlEntityRef)element;
 
-        PsiElement newElement = parseEntityRef(targetFile, ref, true);
+        PsiElement newElement = parseEntityRef(targetFile, ref);
 
         while (newElement != null) {
           if (!processElement(newElement, deepFlag, wideFlag, processIncludes)) return false;
@@ -666,12 +666,12 @@ public class XmlUtil {
     }
   }
 
-  private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref, boolean cacheValue) {
+  private static PsiElement parseEntityRef(PsiFile targetFile, XmlEntityRef ref) {
     XmlEntityDecl.EntityContextType type = getContextType(ref);
 
     {
       final XmlEntityDecl entityDecl = ref.resolve(targetFile);
-      if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, cacheValue, ref);
+      if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
     }
 
     PsiElement e = ref;
@@ -681,7 +681,7 @@ public class XmlUtil {
         final PsiFile f = e.getContainingFile();
         if (f != null) {
           final XmlEntityDecl entityDecl = ref.resolve(targetFile);
-          if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, cacheValue, ref);
+          if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
         }
 
         continue;
@@ -689,7 +689,7 @@ public class XmlUtil {
       if (e instanceof PsiFile) {
         PsiFile refFile = (PsiFile)e;
         final XmlEntityDecl entityDecl = ref.resolve(refFile);
-        if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, cacheValue, ref);
+        if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
         break;
       }
 
@@ -699,7 +699,7 @@ public class XmlUtil {
     final PsiElement element = ref.getUserData(XmlElement.DEPENDING_ELEMENT);
     if (element instanceof XmlFile) {
       final XmlEntityDecl entityDecl = ref.resolve((PsiFile)element);
-      if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, cacheValue, ref);
+      if (entityDecl != null) return parseEntityDecl(entityDecl, targetFile, type, ref);
     }
 
     return null;
@@ -741,10 +741,7 @@ public class XmlUtil {
   private static PsiElement parseEntityDecl(final XmlEntityDecl entityDecl,
                                             final PsiFile targetFile,
                                             final XmlEntityDecl.EntityContextType type,
-                                            boolean cacheValue,
                                             final XmlEntityRef entityRef) {
-    if (!cacheValue) return entityDecl.parse(targetFile, type, entityRef);
-
     synchronized (PsiLock.LOCK) { // we depend on targetFile and entityRef
       CachedValue<PsiElement> value = entityRef.getUserData(PARSED_DECL_KEY);
       //    return entityDecl.parse(targetFile, type);

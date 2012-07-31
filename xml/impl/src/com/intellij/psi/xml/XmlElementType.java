@@ -16,18 +16,14 @@
 package com.intellij.psi.xml;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.dtd.DTDLanguage;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.lang.xhtml.XHTMLLanguage;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.impl.source.parsing.xml.OldXmlParser;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
+import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
 import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IFileElementType;
-import com.intellij.psi.tree.IReparseableElementType;
 import com.intellij.psi.tree.xml.IXmlElementType;
 import com.intellij.util.CharTable;
 
@@ -66,22 +62,11 @@ public interface XmlElementType extends XmlTokenType {
   IElementType XHTML_FILE = new IFileElementType(XHTMLLanguage.INSTANCE);
 
 
-  IElementType DTD_FILE = new IReparseableElementType("DTD_FILE", DTDLanguage.INSTANCE){
-    public ASTNode parseContents(ASTNode chameleon) {
-      return new OldXmlParser(chameleon.getChars(),
-                              XML_DOCUMENT,
-                              XmlEntityDecl.EntityContextType.GENERIC_XML,
-                              SharedImplUtil.findCharTableByTree(chameleon),
-                              SharedImplUtil.getManagerByTree(chameleon)
-      ).parse();
-    }
-    public boolean isParsable(CharSequence buffer, Language fileLanguage, final Project project) {return true;}
-  };
+  IFileElementType DTD_FILE = new IFileElementType("DTD_FILE", DTDLanguage.INSTANCE);
 
   IElementType XML_MARKUP_DECL = new CustomParsingType("XML_MARKUP_DECL", XMLLanguage.INSTANCE){
     public ASTNode parse(CharSequence text, CharTable table) {
-      // TODO
-      return new OldXmlParser(text, XML_MARKUP_DECL, OldXmlParser.TYPE_FOR_MARKUP_DECL, table, null).parse();
+      return new DtdParsing(text, XML_MARKUP_DECL, DtdParsing.TYPE_FOR_MARKUP_DECL, null).parse();
     }
   };
 }

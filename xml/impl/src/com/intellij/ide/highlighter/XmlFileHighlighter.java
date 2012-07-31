@@ -15,7 +15,7 @@
  */
 package com.intellij.ide.highlighter;
 
-import com.intellij.lexer.DtdHighlightingLexer;
+import com.intellij.lexer.DtdLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.XHtmlHighlightingLexer;
 import com.intellij.lexer.XmlHighlightingLexer;
@@ -137,7 +137,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
   @NotNull
   public Lexer getHighlightingLexer() {
     if (myIsDtd) {
-      return new DtdHighlightingLexer();
+      return new DtdLexer(true);
     } else if (myIsXHtml) {
       return new XHtmlHighlightingLexer();
     } else {

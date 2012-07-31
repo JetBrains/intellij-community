@@ -13,27 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.impl.source.parsing.xml;
+package com.intellij.lexer;
 
-import com.intellij.lexer.OldXmlLexer;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 
 /**
- * @author Mike
+ * @author ik
  */
-public class XmlPsiLexer extends OldXmlLexer{
-  public XmlPsiLexer() {
-  }
+public class DtdLexer extends MergingLexerAdapter {
+  private final static TokenSet TOKENS_TO_MERGE =
+    TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS, XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN, XmlTokenType.XML_PI_TARGET);
 
-  public IElementType getTokenType() {
-    IElementType type = super.getTokenType();
-
-    if (type == XmlTokenType.XML_WHITE_SPACE) {
-      return TokenType.WHITE_SPACE;
-    }
-
-    return type;
+  public DtdLexer(boolean highlightingMode) {
+    super(new FlexAdapter(new _DtdLexer(highlightingMode)), TOKENS_TO_MERGE);
   }
 }

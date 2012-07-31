@@ -8,13 +8,16 @@ import com.intellij.psi.xml.*;
 %%
 
 %{
-   public _OldXmlLexer() {
+   private boolean isHighlightModeOn = false;
+
+   public _DtdLexer(boolean highlightModeOn) {
      this((java.io.Reader)null);
+     isHighlightModeOn = highlightModeOn;
    }
 %}
 
 %unicode
-%class _OldXmlLexer
+%class _DtdLexer
 %public
 %implements FlexLexer
 %function advance
@@ -136,7 +139,7 @@ NMTOKEN=({ALPHA}|{DIGIT}|"_"|":"|"."|"-")+
 <YYINITIAL,TAG_NAME,TAG_ATTRIBUTES,ATTRIBUTE_VALUE_START,ATTRIBUTE_VALUE_DQ,ATTRIBUTE_VALUE_SQ>"</" { yybegin(TAG_NAME); return XmlTokenType.XML_END_TAG_START; }
 
 
-<TAG_NAME> {TAG_NAME} { yybegin(TAG_ATTRIBUTES); return XmlTokenType.XML_TAG_NAME; }
+<TAG_NAME> {TAG_NAME} { yybegin(TAG_ATTRIBUTES); return isHighlightModeOn ? XmlTokenType.XML_TAG_NAME:XmlTokenType.XML_NAME; }
 
 <TAG_ATTRIBUTES> ">" { yybegin(YYINITIAL); return XmlTokenType.XML_TAG_END; }
 <TAG_ATTRIBUTES> "/>" { yybegin(YYINITIAL); return XmlTokenType.XML_EMPTY_ELEMENT_END; }
