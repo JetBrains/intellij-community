@@ -205,6 +205,6 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
         return upper == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.<PsiFileSystemItem>singletonList(upper);
       }
     }
-    return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
+    return ResolveImportUtil.resolveFromOrForeignImportStatementSource(this, qName);
   }
 }

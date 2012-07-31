@@ -11,14 +11,11 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonDocStringFinder;
+import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
@@ -414,24 +411,24 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyFunction[] getMethods() {
-    return getClassChildren(PyElementTypes.FUNCTION_DECLARATION, PyFunction.ARRAY_FACTORY);
+    return getClassChildren(PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens(), PyFunction.ARRAY_FACTORY);
   }
 
   @Override
   public PyClass[] getNestedClasses() {
-    return getClassChildren(PyElementTypes.CLASS_DECLARATION, PyClass.ARRAY_FACTORY);
+    return getClassChildren(TokenSet.create(PyElementTypes.CLASS_DECLARATION), PyClass.ARRAY_FACTORY);
   }
 
-  protected <T extends PsiElement> T[] getClassChildren(IElementType elementType, ArrayFactory<T> factory) {
+  protected <T extends PsiElement> T[] getClassChildren(TokenSet elementTypes, ArrayFactory<T> factory) {
     // TODO: gather all top-level functions, maybe within control statements
     final PyClassStub classStub = getStub();
     if (classStub != null) {
-      return classStub.getChildrenByType(elementType, factory);
+      return classStub.getChildrenByType(elementTypes, factory);
     }
     List<T> result = new ArrayList<T>();
     final PyStatementList statementList = getStatementList();
     for (PsiElement element : statementList.getChildren()) {
-      if (element.getNode().getElementType() == elementType) {
+      if (elementTypes.contains(element.getNode().getElementType())) {
         //noinspection unchecked
         result.add((T) element);
       }
