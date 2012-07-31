@@ -57,12 +57,16 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
     myRemoteConnection = remoteConnection;
     myPollConnection = pollConnection;
 
+    mySearchScope = createSearchScope(project, runProfile);
+  }
+
+  public static GlobalSearchScope createSearchScope(Project project, RunProfile runProfile) {
     Module[] modules = null;
-    if (myRunProfile instanceof ModuleRunProfile) {
-      modules = ((ModuleRunProfile)myRunProfile).getModules();
+    if (runProfile instanceof ModuleRunProfile) {
+      modules = ((ModuleRunProfile)runProfile).getModules();
     }
     if (modules == null || modules.length == 0) {
-      mySearchScope = GlobalSearchScope.allScope(project);
+      return GlobalSearchScope.allScope(project);
     }
     else {
       GlobalSearchScope scope = GlobalSearchScope.moduleRuntimeScope(modules[0], true);
@@ -70,7 +74,7 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
         Module module = modules[idx];
         scope = scope.uniteWith(GlobalSearchScope.moduleRuntimeScope(module, true));
       }
-      mySearchScope = scope;
+      return scope;
     }
   }
 
