@@ -942,20 +942,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
             VcsBundle.message("action.description.get.file.content.from.repository"), "get", 1, FileHistoryPanelImpl.this);
     }
 
-    public void update(AnActionEvent e) {
-      if (getVirtualParent() == null) {
-        Presentation presentation = e.getPresentation();
-        presentation.setVisible(false);
-        presentation.setEnabled(false);
-      }
-      else {
-        super.update(e);
-      }
-    }
-
     @Override
     public boolean isEnabled() {
-      return super.isEnabled() && myHistorySession.isContentAvailable(getFirstSelectedRevision()) && !myFilePath.isDirectory();
+      return super.isEnabled() && getVirtualParent() != null &&
+             myHistorySession.isContentAvailable(getFirstSelectedRevision()) && !myFilePath.isDirectory();
     }
 
     protected void executeAction(AnActionEvent e) {
