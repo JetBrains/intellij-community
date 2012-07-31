@@ -421,7 +421,7 @@ public class FileSystemUtil {
                      SystemInfo.isSolaris ? (SystemInfo.is32Bit ? 48 : 40) :
                      -1;
       myTimeOffset = SystemInfo.isLinux ? (SystemInfo.is32Bit ? 72 : 88) :
-                     SystemInfo.isMac | SystemInfo.isFreeBSD ? 40 :
+                     SystemInfo.isMac | SystemInfo.isFreeBSD ? (SystemInfo.is32Bit ? 32 : 40) :
                      SystemInfo.isSolaris ? 64 :
                      -1;
       if (myModeOffset < 0) throw new IllegalStateException("Unsupported OS: " + SystemInfo.OS_NAME);
