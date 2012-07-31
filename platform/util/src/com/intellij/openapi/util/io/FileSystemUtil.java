@@ -63,45 +63,48 @@ public class FileSystemUtil {
   private static Mediator ourMediator = getMediator();
 
   private static Mediator getMediator() {
+    Throwable error = null;
     final boolean forceUseNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
-    final String quickTestPath = SystemInfo.isWindows ? "C:\\" :  "/";
 
     if (!forceUseNio2) {
       if (SystemInfo.isWindows) {
         try {
-          final Mediator mediator = new IdeaWin32MediatorImpl();
-          mediator.getAttributes(quickTestPath);
-          return mediator;
+          return check(new IdeaWin32MediatorImpl());
         }
         catch (Throwable t) {
-          LOG.warn(t);
+          error = t;
         }
       }
       else if (SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) {
         try {
-          final Mediator mediator = new JnaUnixMediatorImpl();
-          mediator.getAttributes(quickTestPath);
-          return mediator;
+          return check(new JnaUnixMediatorImpl());
         }
         catch (Throwable t) {
-          LOG.warn(t);
+          error = t;
         }
       }
     }
 
     if (SystemInfo.isJavaVersionAtLeast("1.7") && !"1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
       try {
-        final Mediator mediator = new Nio2MediatorImpl();
-        mediator.getAttributes(quickTestPath);
-        return mediator;
+        return check(new Nio2MediatorImpl());
       }
       catch (Throwable t) {
-        LOG.warn(t);
+        error = t;
       }
     }
 
-    // todo: after introducing IdeaWin32 mediator, fail tests at this point, or issue a warning in production
+    final String message =
+      "Failed to load filesystem access layer (" + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", " + forceUseNio2 + ")";
+    LOG.error(message, error);
+
     return new StandardMediatorImpl();
+  }
+
+  private static Mediator check(final Mediator mediator) throws Exception {
+    final String quickTestPath = SystemInfo.isWindows ? "C:\\" :  "/";
+    mediator.getAttributes(quickTestPath);
+    return mediator;
   }
 
   @TestOnly
