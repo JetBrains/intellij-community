@@ -294,17 +294,22 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
-  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+)(?::|@|,|#)(\\d+)?(?:(?:\\D)(\\d+)?)?");
+  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+)(?::|@|,)(\\d+)?(?:(?:\\D)(\\d+)?)?");
   private static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
+  private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
   public String transformPattern(String pattern) {
     Pattern regex = null;
     if (pattern.indexOf(':') != -1 ||
         pattern.indexOf(',') != -1 ||
         pattern.indexOf(';') != -1 ||
-        pattern.indexOf('#') != -1 ||
+        //pattern.indexOf('#') != -1 ||
         pattern.indexOf('@') != -1) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
+    }
+
+    if (pattern.indexOf('#') != -1) {
+      regex = patternToDetectMembers;
     }
 
     if (pattern.indexOf('$') != -1) {
@@ -361,5 +366,16 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   public int getColumnPosition() {
     return getLineOrColumn(false);
+  }
+
+  @Nullable
+  public String getMemberPattern() {
+    final int index = getEnteredText().lastIndexOf('#');
+    if (index == -1) {
+      return null;
+    }
+
+    String name = getEnteredText().substring(index + 1).trim();
+    return StringUtil.isEmpty(name) ? null : name;
   }
 }
