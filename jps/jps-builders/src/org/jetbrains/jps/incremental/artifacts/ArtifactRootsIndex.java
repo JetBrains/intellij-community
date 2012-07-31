@@ -24,13 +24,11 @@ import java.util.*;
  */
 public class ArtifactRootsIndex {
   private MultiMap<File, ArtifactRootDescriptor> myRootToDescriptorMap;
-  private Map<ArtifactRootId, ArtifactRootDescriptor> myIdToDescriptorMap;
   private Map<JpsArtifact, ArtifactInstructionsBuilder> myInstructions;
 
   public ArtifactRootsIndex(JpsModel model, Project project, BuildDataManager manager, ModuleRootsIndex rootsIndex) {
     myRootToDescriptorMap = new MultiMap<File, ArtifactRootDescriptor>();
     myInstructions = new HashMap<JpsArtifact, ArtifactInstructionsBuilder>();
-    myIdToDescriptorMap = new HashMap<ArtifactRootId, ArtifactRootDescriptor>();
     ArtifactsBuildData data = manager.getArtifactsBuildData();
     for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(model.getProject())) {
       int artifactId = data.getArtifactId(artifact);
@@ -44,7 +42,6 @@ public class ArtifactRootsIndex {
       for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : builder.getInstructions()) {
         ArtifactRootDescriptor descriptor = pair.getFirst();
         myRootToDescriptorMap.putValue(descriptor.getRootFile(), descriptor);
-        myIdToDescriptorMap.put(descriptor.getRootId(), descriptor);
       }
     }
   }

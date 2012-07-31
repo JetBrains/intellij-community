@@ -3,7 +3,6 @@ package org.jetbrains.jps.incremental.artifacts.instructions;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.artifacts.ArtifactOutputToSourceMapping;
-import org.jetbrains.jps.incremental.artifacts.ArtifactRootId;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceToOutputMapping;
 
 import java.io.File;
@@ -15,22 +14,24 @@ import java.io.IOException;
 public abstract class ArtifactRootDescriptor {
   protected final File myRoot;
   private final SourceFileFilter myFilter;
-  private final ArtifactRootId myRootId;
+  private final int myRootIndex;
+  private final int myArtifactId;
   private final String myArtifactName;
 
   protected ArtifactRootDescriptor(File root, @NotNull SourceFileFilter filter, int index, int artifactId, String artifactName) {
     myRoot = root;
     myFilter = filter;
+    myRootIndex = index;
+    myArtifactId = artifactId;
     myArtifactName = artifactName;
-    myRootId = new ArtifactRootId(artifactId, index);
   }
 
   public final String getArtifactName() {
     return myArtifactName;
   }
 
-  public final ArtifactRootId getRootId() {
-    return myRootId;
+  public int getArtifactId() {
+    return myArtifactId;
   }
 
   @NotNull
@@ -48,6 +49,6 @@ public abstract class ArtifactRootDescriptor {
   }
 
   public int getRootIndex() {
-    return myRootId.getRootIndex();
+    return myRootIndex;
   }
 }
