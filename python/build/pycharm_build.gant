@@ -205,6 +205,24 @@ target('default': "Build artifacts") {
   buildDmg("pycharm", "${home}/python/build/DMG_background.png")
 }
 
+// Collect pyCharm plugins
+private layoutPlugins() {
+  def layouts = includeFile("$home/build/scripts/layouts.gant")
+
+  dir("plugins") {
+    layouts.layoutPlugin("django-db-config")
+    layouts.layoutPlugin("python-javascript-debugger")
+    layouts.layoutPlugin("python-remote-interpreter")
+    layouts.layoutPlugin("python-uml")
+    layouts.layoutPlugin("localization")
+    layouts.layoutPlugin("python-localization")
+    layouts.layoutPlugin("rest")
+    layouts.layoutPlugin("python-rest")
+  }
+
+  layouts.layoutPlugins()
+}
+
 private scramble() {
   copyAndPatchFile("$home/build/conf/script.zkm.stub", "${paths.sandbox}/script.zkm",
                    ["CLASSES": "\"${paths.distAll}/lib/pycharm.jar\"", "SCRAMBLED_CLASSES": paths.distAll, "INCREMENTAL": ""])
@@ -323,68 +341,7 @@ private layoutFull(Map args, String target, Set usedJars) {
       fileset(dir: "$home/community/license")
     }
 
-    dir("plugins") {
-      dir("django-db-config") {
-        dir("lib") {
-          jar("django-db-config.jar") {
-            module("django-db-config")
-          }
-        }
-      }
-      dir("python-javascript-debugger") {
-        dir("lib") {
-          jar("python-javascript-debugger.jar") {
-            module("python-javascript-debugger")
-          }
-        }
-      }
-      dir("python-remote-interpreter") {
-        dir("lib") {
-          jar("python-remote-interpreter.jar") {
-            module("python-remote-interpreter")
-          }
-        }
-      }
-      dir("python-uml") {
-        dir("lib") {
-          jar("python-uml.jar") {
-            module("python-uml")
-          }
-        }
-      }
-      dir("localization") {
-        dir("lib") {
-          jar("localization.jar") {
-            module("localization")
-          }
-        }
-      }
-      dir("python-localization") {
-        dir("lib") {
-          jar("python-localization.jar") {
-            module("python-localization")
-          }
-        }
-      }
-
-      dir("rest") {
-        dir("lib") {
-          jar("rest.jar") {
-            module("rest")
-          }
-        }
-      }
-      dir("python-rest") {
-        dir("lib") {
-          jar("python-rest.jar") {
-            module("python-rest")
-          }
-        }
-      }
-    }
-
-    def layouts = includeFile("$home/build/scripts/layouts.gant")
-    layouts.layoutPlugins()
+    layoutPlugins()
 
     dir("bin") {
       fileset(dir: "$home/community/bin") {
