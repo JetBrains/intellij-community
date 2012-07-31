@@ -12,8 +12,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyStringLiteralExpression;
 
 import java.util.List;
 
@@ -49,7 +51,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       final List<String> strings = StringUtil.split(text, "\n");
       if (StringUtil.countChars(text, '\n') > 0 || StringUtil.startsWithWhitespace(text)) { //2, 3, 4 case from doc
         final PsiElement element = PsiUtilCore.getElementAtOffset(file, caretOffset - 1);
-
+        if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
         caretModel.moveToOffset(lineStartOffset);
         String spaceString;
         int indent = 0;
