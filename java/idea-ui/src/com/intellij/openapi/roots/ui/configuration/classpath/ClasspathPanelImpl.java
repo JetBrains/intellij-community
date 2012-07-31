@@ -184,6 +184,11 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       public void actionPerformed(AnActionEvent e) {
         doEdit();
       }
+
+      @Override
+      public boolean isDumbAware() {
+        return true;
+      }
     };
     add(createTableWithButtons(), BorderLayout.CENTER);
 
