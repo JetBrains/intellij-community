@@ -1,7 +1,23 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.compiler.notNullVerification;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.compiler.PsiClassWriter;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.UsefulTestCase;
@@ -20,6 +36,7 @@ import java.lang.reflect.Method;
  * @author yole
  */
 public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
+  private final boolean myJava6 = SystemInfo.isJavaVersionAtLeast("1.6");
   private IdeaProjectTestFixture myFixture;
 
   @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
@@ -100,10 +117,11 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     File classesDir = FileUtil.createTempDirectory(baseClassName, "output");
 
     try {
-      com.sun.tools.javac.Main.compile(new String[] { "-classpath", base+"annotations.jar", "-d", classesDir.getAbsolutePath(), javaPath } );
+      com.sun.tools.javac.Main.compile(new String[]{"-classpath", base + "annotations.jar", "-d", classesDir.getAbsolutePath(), javaPath});
 
       Class mainClass = null;
       final File[] files = classesDir.listFiles();
+      assertNotNull(files);
       boolean modified = false;
       MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
       for (File file : files) {
@@ -111,7 +129,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
         byte[] content = FileUtil.loadFileBytes(file);
 
         ClassReader reader = new ClassReader(content, 0, content.length);
-        ClassWriter writer = new PsiClassWriter(myFixture.getProject(), false);
+        ClassWriter writer = new PsiClassWriter(myFixture.getProject(), myJava6);
         final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
         reader.accept(instrumenter, 0);
         modified |= instrumenter.isModification();
@@ -136,7 +154,6 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     public MyClassLoader(ClassLoader parent) {
       super(parent);
     }
-
 
     public Class doDefineClass(String name, byte[] data) {
       return defineClass(name, data, 0, data.length);
