@@ -20,6 +20,7 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -41,6 +42,9 @@ import javax.swing.event.HyperlinkEvent;
 public abstract class ExecutableValidator {
 
   public static final String NOTIFICATION_ID = "External Executable Critical Failures";
+
+  private static final Logger LOG = Logger.getInstance(ExecutableValidator.class);
+
   private final NotificationGroup myNotificationGroup = new NotificationGroup(NOTIFICATION_ID, NotificationDisplayType.TOOL_WINDOW, true,
                                                                               ToolWindowId.VCS);
 
@@ -105,6 +109,7 @@ public abstract class ExecutableValidator {
       return;
     }
 
+    LOG.info("Git executable is not valid: " + getCurrentExecutable());
     myNotificationGroup.createNotification("", prepareDescription(), NotificationType.ERROR,
       new NotificationListener() {
         public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
