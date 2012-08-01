@@ -16,6 +16,8 @@ public abstract class JpsArtifactService {
     return JpsServiceManager.getInstance().getService(JpsArtifactService.class);
   }
 
+  public abstract JpsArtifact createArtifact(String name, JpsCompositePackagingElement rootElement, JpsArtifactType type);
+
   public abstract List<JpsArtifact> getArtifacts(@NotNull JpsProject project);
 
   public abstract JpsArtifact addArtifact(@NotNull JpsProject project,

@@ -44,6 +44,12 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl> i
     return new JpsModuleImpl(this);
   }
 
+  @Override
+  @NotNull
+  public JpsElementProperties getProperties() {
+    return myContainer.getChild(TYPED_DATA_KIND).getProperties();
+  }
+
   @NotNull
   @Override
   public JpsUrlList getContentRootsList() {
@@ -167,5 +173,10 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl> i
   public JpsProject getProject() {
     JpsModel model = getModel();
     return model != null ? model.getProject() : null;
+  }
+
+  @Override
+  public JpsModuleType<?> getModuleType() {
+    return myContainer.getChild(TYPED_DATA_KIND).getType();
   }
 }

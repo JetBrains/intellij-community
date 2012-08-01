@@ -25,6 +25,12 @@ public abstract class JpsJavaExtensionService {
     return JpsServiceManager.getInstance().getService(JpsJavaExtensionService.class);
   }
 
+  public static JpsJavaDependenciesEnumerator dependencies(JpsModule module) {
+    return getInstance().enumerateDependencies(module);
+  }
+
+  protected abstract JpsJavaDependenciesEnumerator enumerateDependencies(JpsModule module);
+
   @NotNull
   public abstract JpsJavaProjectExtension getOrCreateProjectExtension(@NotNull JpsProject project);
 

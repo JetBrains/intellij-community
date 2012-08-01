@@ -25,8 +25,13 @@ public class JpsArtifactServiceImpl extends JpsArtifactService {
   @Override
   public JpsArtifact addArtifact(@NotNull JpsProject project, @NotNull String name, @NotNull JpsCompositePackagingElement rootElement,
                                  @NotNull JpsArtifactType type) {
-    JpsArtifact artifact = new JpsArtifactImpl(name, rootElement, type);
+    JpsArtifact artifact = createArtifact(name, rootElement, type);
     return project.getContainer().getOrSetChild(JpsArtifactKind.ARTIFACT_COLLECTION_KIND).addChild(artifact);
+  }
+
+  @Override
+  public JpsArtifact createArtifact(String name, JpsCompositePackagingElement rootElement, JpsArtifactType type) {
+    return new JpsArtifactImpl(name, rootElement, type);
   }
 
   @Override

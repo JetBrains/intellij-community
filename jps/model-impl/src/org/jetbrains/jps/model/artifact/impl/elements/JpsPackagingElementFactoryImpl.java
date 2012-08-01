@@ -35,6 +35,16 @@ public class JpsPackagingElementFactoryImpl extends JpsPackagingElementFactory {
     return root;
   }
 
+  @Override
+  public JpsCompositePackagingElement getOrCreateDirectory(@NotNull JpsCompositePackagingElement root, @NotNull String path) {
+    return getOrCreateDirectoryOrArchive(root, path, true);
+  }
+
+  @Override
+  public JpsCompositePackagingElement getOrCreateArchive(@NotNull JpsCompositePackagingElement root, @NotNull String path) {
+    return getOrCreateDirectoryOrArchive(root, path, false);
+  }
+
   @NotNull
   private JpsCompositePackagingElement getOrCreateDirectoryOrArchive(@NotNull JpsCompositePackagingElement root,
                                                                      @NotNull @NonNls String path, final boolean directory) {

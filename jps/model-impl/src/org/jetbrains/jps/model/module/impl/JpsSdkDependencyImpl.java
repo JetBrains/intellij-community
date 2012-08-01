@@ -44,16 +44,11 @@ public class JpsSdkDependencyImpl extends JpsDependencyElementBase<JpsSdkDepende
   @Override
   @Nullable
   public JpsLibraryReference getSdkReference() {
-    JpsModuleImpl module = getDependenciesList().getParent();
-    return module.getSdkReference(mySdkType);
+    return getContainingModule().getSdkReference(mySdkType);
   }
 
   @Override
   public boolean isInherited() {
     return false;
-  }
-
-  public JpsDependenciesListImpl getDependenciesList() {
-    return (JpsDependenciesListImpl)myParent.getParent();
   }
 }

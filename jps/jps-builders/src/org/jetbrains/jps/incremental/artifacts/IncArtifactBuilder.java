@@ -15,8 +15,8 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
+import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,14 +35,17 @@ public class IncArtifactBuilder extends ProjectLevelBuilder {
   @Override
   public void build(CompileContext context) throws ProjectBuildException {
     Set<JpsArtifact> affected = new HashSet<JpsArtifact>();
-    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(context.getProjectDescriptor().jpsProject)) {
+    JpsBuilderArtifactService artifactService = JpsBuilderArtifactService.getInstance();
+    JpsModel model = context.getProjectDescriptor().jpsModel;
+    for (JpsArtifact artifact : artifactService.getArtifacts(model, false)) {
       if (context.getScope().isAffected(artifact)) {
         affected.add(artifact);
       }
     }
+    affected.addAll(artifactService.getSyntheticArtifacts(model));
     final Set<JpsArtifact> toBuild = ArtifactSorter.addIncludedArtifacts(affected);
 
-    final ArtifactSorter sorter = new ArtifactSorter(context.getProjectDescriptor().jpsModel);
+    final ArtifactSorter sorter = new ArtifactSorter(model);
     final Map<JpsArtifact, JpsArtifact> selfIncludingNameMap = sorter.getArtifactToSelfIncludingNameMap();
     for (JpsArtifact artifact : sorter.getArtifactsSortedByInclusion()) {
       context.checkCanceled();

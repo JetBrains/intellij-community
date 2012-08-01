@@ -12,6 +12,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -135,5 +136,10 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @NotNull
   public JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference) {
     return new JpsTestModuleOutputPackagingElementImpl(moduleReference);
+  }
+
+  @Override
+  protected JpsJavaDependenciesEnumerator enumerateDependencies(JpsModule module) {
+    return new JpsJavaDependenciesEnumeratorImpl(Collections.singletonList(module));
   }
 }
