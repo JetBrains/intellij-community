@@ -33,6 +33,14 @@ public class FragmentCompletionTest extends LightCodeInsightFixtureTestCase {
     myFixture.checkResult(text);
   }
 
+  public void testNoKeywordsInReferenceCodeFragment() throws Throwable {
+    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment("<caret>", null, true, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    assert myFixture.completeBasic()
+    assert !('package' in myFixture.lookupElementStrings)
+    assert !('import' in myFixture.lookupElementStrings)
+  }
+
   public void testNoPackagesInExpressionCodeFragment() throws Throwable {
     final String text = "jav<caret>";
     PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, null, null, true);
