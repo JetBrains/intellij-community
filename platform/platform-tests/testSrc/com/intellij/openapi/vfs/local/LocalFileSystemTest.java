@@ -34,6 +34,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Locale;
 
 public class LocalFileSystemTest extends PlatformLangTestCase {
   public void testChildrenAccessedButNotCached() throws Exception {
@@ -152,7 +153,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
   }
 
   public void testFindRoot() throws IOException {
-    VirtualFile root;
+    VirtualFile root, root2;
 
     root = LocalFileSystem.getInstance().findFileByPath("wrong_path");
     assertNull(root);
@@ -160,6 +161,9 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     if (SystemInfo.isWindows) {
       root = LocalFileSystem.getInstance().findFileByPath("\\\\unit-133");
       assertNotNull(root);
+      root2 = LocalFileSystem.getInstance().findFileByPath("\\\\UNIT-133");
+      assertNotNull(root2);
+      assertTrue(String.valueOf(root2), root == root2);
       RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
 
       root = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\unit-133"));
@@ -170,7 +174,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
         root = LocalFileSystem.getInstance().findFileByPath("c:");
         assertNotNull(root);
 
-        VirtualFile root2 = LocalFileSystem.getInstance().findFileByPath("C:\\");
+        root2 = LocalFileSystem.getInstance().findFileByPath("C:\\");
         assertTrue(String.valueOf(root2), root == root2);
       }
     }
@@ -186,8 +190,13 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     root = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath() + "!/");
     assertNotNull(root);
 
-    VirtualFile root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().replace(File.separator, "//") + "!/");
+    root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().replace(File.separator, "//") + "!/");
     assertTrue(String.valueOf(root2), root == root2);
+
+    if (!SystemInfo.isFileSystemCaseSensitive) {
+      root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().toUpperCase(Locale.US) + "!/");
+      assertTrue(String.valueOf(root2), root == root2);
+    }
   }
 
   public void testFileLength() throws Exception {
