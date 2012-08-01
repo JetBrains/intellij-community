@@ -799,4 +799,9 @@ public class PlatformTestUtil {
     }
   };
 
+  @NotNull
+  public static <T> T notNull(@Nullable T t) {
+    assertNotNull(t);
+    return t;
+  }
 }

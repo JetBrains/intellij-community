@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.diagnostic.Log;
@@ -12,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import junit.framework.AssertionFailedError;
 import junit.framework.TestSuite;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.TreeModelEvent;
@@ -23,10 +39,12 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class TreeUiTest extends AbstractTreeBuilderTest {
+import static com.intellij.testFramework.PlatformTestUtil.notNull;
 
-  public TreeUiTest(boolean passthrougth) {
-    super(passthrougth);
+@SuppressWarnings("JUnitTestClassNamingConvention")
+public class TreeUiTest extends AbstractTreeBuilderTest {
+  public TreeUiTest(boolean passThrough) {
+    super(passThrough);
   }
 
   public TreeUiTest(boolean yieldingUiBuild, boolean bgStructureBuilding) {
@@ -90,7 +108,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -jetbrains\n"
                + "  +[fabrique]\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     updateFromRoot();
 
@@ -100,7 +118,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -jetbrains\n"
                + "  +[fabrique]\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
   }
 
@@ -114,7 +132,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       new NodeElement("com"),
       new NodeElement("jetbrains"),
       new NodeElement("org"),
-      new NodeElement("xunit")
+      new NodeElement("xUnit")
     };
 
     final ActionCallback done = new ActionCallback();
@@ -147,7 +165,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
 
 
-    waitBuilderToCome(new Condition() {
+    waitBuilderToCome(new Condition<Object>() {
       @Override
       public boolean value(Object o) {
         return done.isProcessed();
@@ -165,14 +183,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +fabrique\n" +
                " -org\n" +
                "  +eclipse\n" +
-               " -xunit\n" +
+               " -xUnit\n" +
                "  runner\n");
 
     assertFalse(indicatorRef.get().isCanceled());
   }
 
 
-  public void testRenameCollpasedParentAlwaysShowsPlus() throws Exception {
+  public void testRenameCollapsedParentAlwaysShowsPlus() throws Exception {
     buildStructure(myRoot);
     myAlwaysShowPlus.add(myCom.getElement());
 
@@ -183,14 +201,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +intellij\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     collapsePath(getPath("com"));
     assertTree("-/\n" +
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     myCom.getElement().setPresentableName("com1");
     updateFrom(myCom.getElement());
@@ -199,7 +217,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com1\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
   }
 
 
@@ -281,6 +299,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
         if (element.equals(new NodeElement("ide"))) {
           disposeRequested.set(true);
+          //noinspection SSBasedInspection
           getBuilder().dispose();
         }
       }
@@ -314,29 +333,30 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
 
     final Ref<StringBuffer> updates = new Ref<StringBuffer>(new StringBuffer());
-    getMyBuilder().getTreeModel().addTreeModelListener(new TreeModelListener() {
+    notNull(getMyBuilder().getTreeModel()).addTreeModelListener(new TreeModelListener() {
       @Override
       public void treeNodesChanged(TreeModelEvent e) {
-        updates.get().append("changed parent" + e.getTreePath() + " children=" + Arrays.asList(e.getChildren())+ "\n");
+        updates.get().append("changed parent").append(e.getTreePath()).append(" children=").append(Arrays.asList(e.getChildren()))
+          .append("\n");
       }
 
       @Override
       public void treeNodesInserted(TreeModelEvent e) {
-        updates.get().append("inserted=" + e.getTreePath() + "\n");
+        updates.get().append("inserted=").append(e.getTreePath()).append("\n");
       }
 
       @Override
       public void treeNodesRemoved(TreeModelEvent e) {
-        updates.get().append("removed=" + e.getTreePath() + "\n");
+        updates.get().append("removed=").append(e.getTreePath()).append("\n");
       }
 
       @Override
       public void treeStructureChanged(TreeModelEvent e) {
-        updates.get().append("structureChanged=" + e.getTreePath() + "\n");
+        updates.get().append("structureChanged=").append(e.getTreePath()).append("\n");
       }
     });
 
@@ -353,7 +373,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
     updates.set(new StringBuffer());
 
 
@@ -377,7 +397,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     myAlwaysShowPlus.add(new NodeElement("com"));
     myAlwaysShowPlus.add(new NodeElement("jetbrains"));
     myAlwaysShowPlus.add(new NodeElement("org"));
-    myAlwaysShowPlus.add(new NodeElement("xunit"));
+    myAlwaysShowPlus.add(new NodeElement("xUnit"));
 
     final Ref<Boolean> cancelled = new Ref<Boolean>(false);
     myElementUpdateHook = new ElementUpdateHook() {
@@ -401,7 +421,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       new NodeElement("com"),
       new NodeElement("jetbrains"),
       new NodeElement("org"),
-      new NodeElement("xunit")
+      new NodeElement("xUnit")
     };
 
     final ActionCallback done = new ActionCallback();
@@ -421,7 +441,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     });
 
 
-    waitBuilderToCome(new Condition() {
+    waitBuilderToCome(new Condition<Object>() {
       @Override
       public boolean value(Object o) {
         return done.isProcessed() || myCancelRequest != null;
@@ -464,7 +484,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -org\n"
                + "  -eclipse\n"
                + "   rcp\n"
-               + " -xunit\n"
+               + " -xUnit\n"
                + "  runner\n");
   }
 
@@ -475,7 +495,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     collapsePath(new TreePath(myTreeModel.getRoot()));
     assertTree("+/\n");
@@ -485,14 +505,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     buildNode("com", true);
     assertTree("-/\n"
                + " +[com]\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     myRoot.removeAll();
     updateFromRoot();
@@ -512,7 +532,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
 
     myAutoExpand.add(new NodeElement("jetbrains"));
@@ -523,21 +543,21 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -jetbrains\n"
                + "  +fabrique\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     collapsePath(getPath("jetbrains"));
     assertTree("-/\n"
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     updateFrom(new NodeElement("org"));
     assertTree("-/\n"
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     updateFrom(new NodeElement("jetbrains"));
     assertTree("-/\n"
@@ -545,7 +565,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -jetbrains\n"
                + "  +fabrique\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
   }
 
   public void testAutoExpandDeep() throws Exception {
@@ -565,7 +585,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "  -fabrique\n"
                + "   ide\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     collapsePath(getPath("/"));
     assertTree("+/\n");
@@ -579,14 +599,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "  -fabrique\n"
                + "   ide\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     collapsePath(getPath("jetbrains"));
     assertTree("-/\n"
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     expand(getPath("jetbrains"));
     assertTree("-/\n"
@@ -595,14 +615,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "  -fabrique\n"
                + "   ide\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
   }
 
 
   public void testExpandEqualElements() throws Exception {
     buildStructure(myRoot, false);
-    myRoot.getChildNode("org").addChild("jetbrains").addChild("commuinity").addChild("ide");
+    notNull(myRoot.getChildNode("org")).addChild("jetbrains").addChild("community").addChild("ide");
 
     activate();
     expand(getPath("/"));
@@ -621,7 +641,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -org\n"
                + "  +eclipse\n"
                + "  +[jetbrains]\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     doAndWaitForBuilder(new Runnable() {
       @Override
@@ -636,8 +656,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -org\n"
                + "  +eclipse\n"
                + "  -[jetbrains]\n"
-               + "   +commuinity\n"
-               + " +xunit\n");
+               + "   +community\n"
+               + " +xUnit\n");
 
 
     doAndWaitForBuilder(new Runnable() {
@@ -653,9 +673,9 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -org\n"
                + "  +eclipse\n"
                + "  -[jetbrains]\n"
-               + "   -commuinity\n"
+               + "   -community\n"
                + "    ide\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
 
     doAndWaitForBuilder(new Runnable() {
@@ -671,7 +691,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -org\n"
                + "  +eclipse\n"
                + "  +[jetbrains]\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
 
     doAndWaitForBuilder(new Runnable() {
@@ -687,8 +707,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -org\n"
                + "  +eclipse\n"
                + "  -[jetbrains]\n"
-               + "   +commuinity\n"
-               + " +xunit\n");
+               + "   +community\n"
+               + " +xUnit\n");
 
   }
 
@@ -701,7 +721,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
   }
 
   public void testSmartExpand() throws Exception {
@@ -714,7 +734,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     expand(getPath("jetbrains"));
     assertTree("-/\n"
@@ -723,21 +743,21 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "  -fabrique\n"
                + "   ide\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     collapsePath(getPath("jetbrains"));
     assertTree("-/\n"
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     updateFromRoot();
     assertTree("-/\n"
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     mySmartExpand = false;
     collapsePath(getPath("jetbrains"));
@@ -745,7 +765,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " +com\n"
                + " +jetbrains\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
 
     expand(getPath("jetbrains"));
     assertTree("-/\n"
@@ -753,12 +773,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " -jetbrains\n"
                + "  +fabrique\n"
                + " +org\n"
-               + " +xunit\n");
+               + " +xUnit\n");
   }
 
 
   public void testClear() throws Exception {
-    getBuilder().getUi().setClearOnHideDelay(1 * Time.SECOND);
+    getBuilder().getUi().setClearOnHideDelay(Time.SECOND);
 
     buildStructure(myRoot);
 
@@ -796,7 +816,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -fabrique\n" +
                "   [ide]\n" +
                " +org\n" +
-               " -xunit\n" +
+               " -xUnit\n" +
                "  runner\n");
 
     getMyBuilder().myWasCleanedUp = false;
@@ -811,7 +831,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -fabrique\n" +
                "   [ide]\n" +
                " +org\n" +
-               " -xunit\n" +
+               " -xUnit\n" +
                "  runner\n");
 
 
@@ -824,7 +844,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -[fabrique]\n" +
                "   ide\n" +
                " +org\n" +
-               " -xunit\n" +
+               " -xUnit\n" +
                "  runner\n");
   }
 
@@ -845,7 +865,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -fabrique\n" +
                "   [ide]\n" +
                " +org\n" +
-               " -xunit\n" +
+               " -xUnit\n" +
                "  runner\n");
 
     myRoot.removeAll();
@@ -865,7 +885,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "   -fabrique\n" +
                "    [ide]\n" +
                "  +org\n" +
-               "  -xunit\n" +
+               "  -xUnit\n" +
                "   runner\n");
   }
 
@@ -884,7 +904,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "   [openapi]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
     buildNode("fabrique", true);
 
@@ -896,7 +916,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " -jetbrains\n" +
       "  +[fabrique]\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
   }
 
   public void testSelectWhileUpdating() throws Exception {
@@ -920,7 +940,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +[com]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
   }
 
   public void testCallbackOnceOnSelect() throws Exception {
@@ -940,7 +960,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " -jetbrains\n" +
       "  +[fabrique]\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
   }
 
@@ -963,7 +983,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "  -fabrique\n" +
       "   ide\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
   }
 
@@ -1102,7 +1122,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " -jetbrains\n" +
       "  +[fabrique]\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
   }
 
   public void testUnsuccessfulSelect() throws Exception {
@@ -1117,7 +1137,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " -jetbrains\n" +
       "  +[fabrique]\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
     select(new Object[] {new NodeElement("whatever1"), new NodeElement("whatever2")}, false);
 
@@ -1129,7 +1149,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " -jetbrains\n" +
       "  +[fabrique]\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
   }
 
 
@@ -1137,7 +1157,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildStructure(myRoot);
     assertTree("+/\n");
 
-    final Node refactoring = myCom.getChildNode("intellij").addChild("refactoring");
+    final Node refactoring = notNull(myCom.getChildNode("intellij")).addChild("refactoring");
 
     buildNode("refactoring", true);
 
@@ -1149,10 +1169,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "   [refactoring]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
     refactoring.delete();
-    myCom.getChildNode("intellij").getChildNode("openapi").addChild("refactoring");
+    notNull(notNull(myCom.getChildNode("intellij")).getChildNode("openapi")).addChild("refactoring");
 
     updateFromRoot();
 
@@ -1164,7 +1184,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "    [refactoring]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
   }
 
 
@@ -1179,9 +1199,9 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "   [openapi]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
-    myCom.getChildNode("intellij").getChildNode("openapi").delete();
+    notNull(notNull(myCom.getChildNode("intellij")).getChildNode("openapi")).delete();
 
     updateFromRoot();
 
@@ -1191,7 +1211,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "  [intellij]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
   }
 
   public void testCollapsedPathOnExpandedCallback() throws Exception {
@@ -1215,7 +1235,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
         getBuilder().expand(new NodeElement("com"), new Runnable() {
           @Override
           public void run() {
-            getBuilder().getTree().collapsePath(getPath("com"));
+            notNull(getBuilder().getTree()).collapsePath(getPath("com"));
             done.set(Boolean.TRUE);
           }
         });
@@ -1244,10 +1264,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "   [openapi]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
-    myCom.getChildNode("intellij").getChildNode("openapi").delete();
-    myRoot.getChildNode("xunit").addChild("openapi");
+    notNull(notNull(myCom.getChildNode("intellij")).getChildNode("openapi")).delete();
+    notNull(myRoot.getChildNode("xUnit")).addChild("openapi");
 
     updateFromRoot();
 
@@ -1257,7 +1277,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "  intellij\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " -xunit\n" +
+      " -xUnit\n" +
       "  [openapi]\n" +
       "  runner\n");
   }
@@ -1273,19 +1293,19 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "   [openapi]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
-    myCom.getChildNode("intellij").getChildNode("openapi").delete();
-    myRoot.getChildNode("xunit").addChild("openapi");
+    notNull(notNull(myCom.getChildNode("intellij")).getChildNode("openapi")).delete();
+    notNull(myRoot.getChildNode("xUnit")).addChild("openapi");
 
     getBuilder().addSubtreeToUpdateByElement(new NodeElement("intellij"));
-    getBuilder().addSubtreeToUpdateByElement(new NodeElement("xunit"));
+    getBuilder().addSubtreeToUpdateByElement(new NodeElement("xUnit"));
 
 
     doAndWaitForBuilder(new Runnable() {
       @Override
       public void run() {
-        getBuilder().getUpdater().performUpdate();
+        notNull(getBuilder().getUpdater()).performUpdate();
       }
     });
 
@@ -1295,7 +1315,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "  intellij\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " -xunit\n" +
+      " -xUnit\n" +
       "  [openapi]\n" +
       "  runner\n");
   }
@@ -1311,11 +1331,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "   [openapi]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
 
-    final DefaultMutableTreeNode node = findNode("intellij", false);
-    collapsePath(new TreePath(node.getPath()));
+    collapsePath(new TreePath(notNull(findNode("intellij", false)).getPath()));
 
     assertTree(
       "-/\n" +
@@ -1323,7 +1342,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "  +[intellij]\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
   }
 
 
@@ -1337,7 +1356,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +com\n" +
       " +jetbrains\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
 
     Node google = myStructure.getNodeFor(new NodeElement("jetbrains"));
     google.myElement.myName = "google";
@@ -1349,7 +1368,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +com\n" +
       " +google\n" +
       " +org\n" +
-      " +xunit\n");
+      " +xUnit\n");
   }
 
   public void testDeferredSelection() throws Exception {
@@ -1386,7 +1405,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     assertTrue(getBuilder().getUi().isIdle());
     assertTreeNow("+null\n");
-    assertNull(((DefaultMutableTreeNode)getBuilder().getTreeModel().getRoot()).getUserObject());
+    assertNull(((DefaultMutableTreeNode)notNull(getBuilder().getTreeModel()).getRoot()).getUserObject());
 
     invokeLaterIfNeeded(new Runnable() {
       @Override
@@ -1413,7 +1432,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +[intellij]\n" +
                " +[jetbrains]\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
   }
 
   private void expandNext(final NodeElement[] elements, final int index, final ProgressIndicator indicator, final ActionCallback callback) {
@@ -1477,7 +1496,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     expand(getPath("com"));
     expand(getPath("jetbrains"));
     expand(getPath("org"));
-    expand(getPath("xunit"));
+    expand(getPath("xUnit"));
 
     assertTree("-/\n" +
                " -com\n" +
@@ -1486,7 +1505,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +fabrique\n" +
                " -org\n" +
                "  +eclipse\n" +
-               " -xunit\n" +
+               " -xUnit\n" +
                "  runner\n");
 
     runAndInterrupt(new MyRunnable() {
@@ -1539,7 +1558,11 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     waitBuilderToCome();
   }
 
-  private void buildSiblings(final Node node, final int start, final int end, final Runnable eachRunnable, final Runnable endRunnable) throws InvocationTargetException, InterruptedException {
+  private void buildSiblings(final Node node,
+                             final int start,
+                             final int end,
+                             @Nullable final Runnable eachRunnable,
+                             @Nullable final Runnable endRunnable) throws InvocationTargetException, InterruptedException {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -1583,8 +1606,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
         if (wasInterrupted[0]) {
           if (myCancelRequest == null) {
-            String status = getBuilder().getUi().getStatus();
-            myCancelRequest = new AssertionError("Not supposed to be update after interruption request: action=" + action + " element=" + element + " interruptAction=" + interruptAction + " interruptElement=" + interruptElement);
+            getBuilder().getUi().getStatus();
+            final String message = "Not supposed to be update after interruption request: action=" + action + " element=" + element +
+                                   " interruptAction=" + interruptAction + " interruptElement=" + interruptElement;
+            myCancelRequest = new AssertionError(message);
           }
         } else {
           if (toInterrupt) {
@@ -1618,7 +1643,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
     assertUpdates("/: update getChildren\n" +
                   "com: update getChildren\n" +
                   "eclipse: update\n" +
@@ -1627,7 +1652,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "jetbrains: update getChildren\n" +
                   "org: update getChildren\n" +
                   "runner: update\n" +
-                  "xunit: update getChildren");
+                  "xUnit: update getChildren");
 
     collapsePath(getPath("/"));
     assertTree("+/\n");
@@ -1638,7 +1663,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
     assertUpdates("/: update getChildren\n" +
                   "com: update getChildren\n" +
                   "eclipse: update\n" +
@@ -1647,14 +1672,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "jetbrains: update getChildren\n" +
                   "org: update getChildren\n" +
                   "runner: update\n" +
-                  "xunit: update getChildren");
+                  "xUnit: update getChildren");
 
     updateFromRoot();
     assertTree("-/\n" +
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     assertUpdates("/: update getChildren\n" +
                   "com: update getChildren\n" +
@@ -1664,7 +1689,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "jetbrains: update getChildren\n" +
                   "org: update getChildren\n" +
                   "runner: update\n" +
-                  "xunit: update getChildren");
+                  "xUnit: update getChildren");
 
   }
 
@@ -1675,7 +1700,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     myElementUpdate.clear();
 
@@ -1686,13 +1711,13 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "com: update\n" +
                   "jetbrains: update\n" +
                   "org: update\n" +
-                  "xunit: update");
+                  "xUnit: update");
   }
 
 
-  public void testInfiniteUpdatingWhenRequeueingUpdates() throws Exception {
+  public void testInfiniteUpdatingWhenReQueueingUpdates() throws Exception {
     buildStructure(myRoot, false);
-    myCom.addChild("ibm").addChild("alphaworks");
+    myCom.addChild("ibm").addChild("alphaWorks");
     myCom.addChild("apple").addChild("cocoa");
 
     doAndWaitForBuilder(new Runnable() {
@@ -1707,15 +1732,16 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
 
     myElementUpdateHook = new ElementUpdateHook() {
+      @SuppressWarnings("deprecation")
       @Override
       public void onElementAction(String action, Object element) {
         if (new NodeElement("apple").equals(element) && "getChildren".equals(action)) {
-          getBuilder().getUpdater().addSubtreeToUpdate(new TreeUpdatePass(findNode("ibm", false)).setUpdateStamp(1));
-          getBuilder().getUpdater().addSubtreeToUpdate(new TreeUpdatePass(findNode("intellij", false)).setUpdateStamp(1));
+          notNull(getBuilder().getUpdater()).addSubtreeToUpdate(new TreeUpdatePass(notNull(findNode("ibm", false))).setUpdateStamp(1));
+          notNull(getBuilder().getUpdater()).addSubtreeToUpdate(new TreeUpdatePass(notNull(findNode("intellij", false))).setUpdateStamp(1));
         }
       }
     };
@@ -1727,7 +1753,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
 
-
     assertTree("-/\n" +
                " -com\n" +
                "  +apple\n" +
@@ -1735,9 +1760,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +intellij\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
-
-
+               " +xUnit\n");
   }
 
   public void testQueryStructureWhenExpand() throws Exception {
@@ -1753,7 +1776,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -fabrique\n" +
                "   ide\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     assertUpdates("/: update getChildren\n" +
                   "com: update getChildren\n" +
@@ -1764,7 +1787,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "jetbrains: update getChildren\n" +
                   "org: update getChildren\n" +
                   "runner: update\n" +
-                  "xunit: update getChildren");
+                  "xUnit: update getChildren");
 
   }
 
@@ -1778,7 +1801,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     assertUpdates("/: update (2) getChildren\n" +
                   "com: update getChildren\n" +
@@ -1787,7 +1810,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "jetbrains: update\n" +
                   "org: update getChildren\n" +
                   "runner: update\n" +
-                  "xunit: update getChildren");
+                  "xUnit: update getChildren");
 
     expand(getPath("jetbrains"));
     expand(getPath("fabrique"));
@@ -1798,7 +1821,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -fabrique\n" +
                "   +ide\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     assertUpdates("fabrique: update getChildren\n" +
                   "ide: update\n" +
@@ -1812,7 +1835,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -fabrique\n" +
                "   ide\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     assertUpdates("ide: update getChildren");
   }
@@ -1827,7 +1850,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " -jetbrains\n" +
                "  +fabrique\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     assertUpdates("/: update (2) getChildren\n" +
                   "com: update getChildren\n" +
@@ -1838,7 +1861,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "jetbrains: update getChildren\n" +
                   "org: update getChildren\n" +
                   "runner: update\n" +
-                  "xunit: update getChildren");
+                  "xUnit: update getChildren");
 
     expand(getPath("fabrique"));
     assertTree("-/\n" +
@@ -1847,7 +1870,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -fabrique\n" +
                "   ide\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
     assertUpdates("ide: update getChildren");
 
 
@@ -1859,7 +1882,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -fabrique\n" +
                "   ide\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     myElementUpdate.clear();
 
@@ -1872,7 +1895,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -fabrique\n" +
                "   ide\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     assertUpdates("openapi: update");
   }
@@ -1888,7 +1911,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "   [openapi]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     myStructure.addLeaf(new NodeElement("intellij"));
 
@@ -1899,7 +1922,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  [intellij]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     myStructure.removeLeaf(new NodeElement("intellij"));
     updateFrom(new NodeElement("com"));
@@ -1909,7 +1932,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +[intellij]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     expand(getPath("intellij"));
 
@@ -1919,7 +1942,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "   openapi\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
   }
 
@@ -1933,32 +1956,32 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     assertSorted("/\n" +
                  "com\n" +
                  "jetbrains\n" +
                  "org\n" +
-                 "xunit");
+                 "xUnit");
 
     updateFromRoot();
     assertTree("-/\n" +
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
     assertSorted("/\n" +
                  "com\n" +
                  "jetbrains\n" +
                  "org\n" +
-                 "xunit");
+                 "xUnit");
 
     updateFrom(new NodeElement("/"), false);
     assertTree("-/\n" +
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
     assertSorted("");
 
 
@@ -1968,12 +1991,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +intellij\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
     assertSorted("intellij");
   }
 
   public void testResorting() throws Exception {
-    final boolean invert[] = new boolean[] {false};
+    final boolean[] invert = new boolean[]{false};
     NodeDescriptor.NodeComparator<NodeDescriptor> c = new NodeDescriptor.NodeComparator<NodeDescriptor>() {
       @Override
       public int compare(NodeDescriptor o1, NodeDescriptor o2) {
@@ -1990,7 +2013,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     updateFromRoot();
     updateFromRoot();
@@ -2002,7 +2025,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     updateFrom(new NodeElement("/"), false);
     assertTree("-/\n" +
-               " +xunit\n" +
+               " +xUnit\n" +
                " +org\n" +
                " +jetbrains\n" +
                " +com\n");
@@ -2017,7 +2040,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "   [openapi]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
 
     removeFromParentButKeepRef(new NodeElement("openapi"));
@@ -2029,25 +2052,27 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  [intellij]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
   }
 
   public void testElementMove1() throws Exception {
     assertMove(new Runnable() {
+      @SuppressWarnings("deprecation")
       @Override
       public void run() {
-        getBuilder().getUpdater().addSubtreeToUpdateByElement(new NodeElement("com"));
-        getBuilder().getUpdater().addSubtreeToUpdateByElement(new NodeElement("jetbrains"));
+        notNull(getBuilder().getUpdater()).addSubtreeToUpdateByElement(new NodeElement("com"));
+        notNull(getBuilder().getUpdater()).addSubtreeToUpdateByElement(new NodeElement("jetbrains"));
       }
     });
   }
 
   public void testElementMove2() throws Exception {
     assertMove(new Runnable() {
+      @SuppressWarnings("deprecation")
       @Override
       public void run() {
-        getBuilder().getUpdater().addSubtreeToUpdateByElement(new NodeElement("jetbrains"));
-        getBuilder().getUpdater().addSubtreeToUpdateByElement(new NodeElement("com"));
+        notNull(getBuilder().getUpdater()).addSubtreeToUpdateByElement(new NodeElement("jetbrains"));
+        notNull(getBuilder().getUpdater()).addSubtreeToUpdateByElement(new NodeElement("com"));
       }
     });
   }
@@ -2075,7 +2100,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "  +[fabrique]\n" +
                   " -org\n" +
                   "  +[eclipse]\n" +
-                  " -xunit\n" +
+                  " -xUnit\n" +
                   "  [runner]\n");
 
     myStructure.getNodeFor(new NodeElement("runner")).delete();
@@ -2090,7 +2115,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   " -jetbrains\n" +
                   "  +[fabrique]\n" +
                   " org\n" +
-                  " xunit\n");
+                  " xUnit\n");
 
     myStructure.getNodeFor(new NodeElement("fabrique")).delete();
 
@@ -2100,7 +2125,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                       "  intellij\n" +
                       " [jetbrains]\n" +
                       " org\n" +
-                      " xunit\n");
+                      " xUnit\n");
   }
 
 
@@ -2147,12 +2172,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     assertSame(myRoot.getElement(), myStructure.getParentElement(fabrique));
 
-    myStructure.setRevalidator(new Revalidator() {
+    myStructure.setReValidator(new ReValidator() {
+      @Nullable
       @Override
       public AsyncResult<Object> revalidate(NodeElement element) {
         if (element == actionSystem) {
           return new AsyncResult.Done<Object>(newActionSystem);
-        } else if (element == fabrique) {
+        }
+        else if (element == fabrique) {
           return new AsyncResult.Done<Object>(newFabrique);
         }
         return null;
@@ -2172,13 +2199,13 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "    ide\n");
   }
 
-  public void testNoRevalidationIfInvalid() throws Exception {
+  public void testNoReValidationIfInvalid() throws Exception {
     buildStructure(myRoot);
 
     final NodeElement intellij = new NodeElement("intellij");
     buildNode(intellij, true);
 
-    assertTree("-/\n" + " -com\n" + "  +[intellij]\n" + " +jetbrains\n" + " +org\n" + " +xunit\n");
+    assertTree("-/\n" + " -com\n" + "  +[intellij]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
 
 
     removeFromParentButKeepRef(new NodeElement("intellij"));
@@ -2188,11 +2215,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
         return !element.equals(intellij);
       }
     };
-    final Ref<Object> revalidatedElement = new Ref<Object>();
-    myStructure.setRevalidator(new Revalidator() {
+    final Ref<Object> reValidatedElement = new Ref<Object>();
+    myStructure.setReValidator(new ReValidator() {
+      @Nullable
       @Override
       public AsyncResult<Object> revalidate(NodeElement element) {
-        revalidatedElement.set(element);
+        reValidatedElement.set(element);
         return null;
       }
     });
@@ -2203,8 +2231,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " [com]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
-    assertNull(revalidatedElement.get() != null ? revalidatedElement.get().toString() : null, revalidatedElement.get());
+               " +xUnit\n");
+    assertNull(reValidatedElement.get() != null ? reValidatedElement.get().toString() : null, reValidatedElement.get());
   }
 
 
@@ -2237,7 +2265,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n" +
+               " +xUnit\n" +
                " [toDelete]\n");
 
     if (keepRef) {
@@ -2248,16 +2276,17 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     getMyBuilder().addSubtreeToUpdateByElement(new NodeElement("/"));
 
-    assertTree("-/\n" + " +com\n" + " +jetbrains\n" + " +org\n" + " +[xunit]\n");
+    assertTree("-/\n" + " +com\n" + " +jetbrains\n" + " +org\n" + " +[xUnit]\n");
   }
+
 
   public void testGetChildrenOnInvalidNode() throws Exception {
     buildStructure(myRoot);
 
     final Set<NodeElement> invalid = new HashSet<NodeElement>();
-    myValidator = new Validator() {
+    myValidator = new Validator<NodeElement>() {
       @Override
-      public boolean isValid(Object element) {
+      public boolean isValid(NodeElement element) {
         return !invalid.contains(element);
       }
     };
@@ -2267,7 +2296,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
 
     invalid.add(new NodeElement("com"));
@@ -2277,37 +2306,38 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     updateFromRoot();
     assertTree("-/\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
-
+               " +xUnit\n");
   }
 
 
   public void testSelectWhenUpdatesArePending() throws Exception {
-    getBuilder().getUpdater().setDelay(1000);
+    notNull(getBuilder().getUpdater()).setDelay(1000);
 
     buildStructure(myRoot);
 
     buildNode("intellij", false);
     select(new Object[]{new NodeElement("intellij")}, false);
-    assertTree("-/\n" + " -com\n" + "  -[intellij]\n" + "   openapi\n" + " +jetbrains\n" + " +org\n" + " +xunit\n");
+    assertTree("-/\n" + " -com\n" + "  -[intellij]\n" + "   openapi\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
 
 
     myIntellij.addChild("ui");
 
     DefaultMutableTreeNode intellijNode = findNode("intellij", false);
+    assertNotNull(intellijNode);
     assertTrue(myTree.isExpanded(new TreePath(intellijNode.getPath())));
     getMyBuilder().addSubtreeToUpdate(intellijNode);
     assertFalse(getMyBuilder().getUi().isReady());
 
     select(new Object[]{new NodeElement("ui")}, false);
-    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   openapi\n" + "   [ui]\n" + " +jetbrains\n" + " +org\n" + " +xunit\n");
+    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   openapi\n" + "   [ui]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
   }
+
 
   public void testAddNewElementToLeafElementAlwaysShowPlus() throws Exception {
     myAlwaysShowPlus.add(new NodeElement("openapi"));
@@ -2315,7 +2345,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildStructure(myRoot);
     select(new Object[]{new NodeElement("openapi")}, false);
 
-    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   +[openapi]\n" + " +jetbrains\n" + " +org\n" + " +xunit\n");
+    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   +[openapi]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
 
     expand(getPath("openapi"));
     assertTree("-/\n" +
@@ -2324,7 +2354,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "   [openapi]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
 
     myOpenApi.addChild("ui");
@@ -2337,24 +2367,24 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "   +[openapi]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
   }
 
   public void testAddNewElementToLeafElement() throws Exception {
     buildStructure(myRoot);
     select(new Object[]{new NodeElement("openapi")}, false);
 
-    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   [openapi]\n" + " +jetbrains\n" + " +org\n" + " +xunit\n");
+    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   [openapi]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
 
     expand(getPath("openapi"));
-    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   [openapi]\n" + " +jetbrains\n" + " +org\n" + " +xunit\n");
+    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   [openapi]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
 
 
     myOpenApi.addChild("ui");
 
     getMyBuilder().addSubtreeToUpdate(findNode("openapi", false));
 
-    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   +[openapi]\n" + " +jetbrains\n" + " +org\n" + " +xunit\n");
+    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   +[openapi]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
   }
 
 
@@ -2365,7 +2395,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildNode(new NodeElement("intellij"), false);
     expand(getPath("intellij"));
 
-    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   openapi\n" + " +jetbrains\n" + " +org\n" + " +xunit\n");
+    assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   openapi\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
 
 
     myElementUpdate.clear();
@@ -2390,10 +2420,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +[intellij]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     AbstractTreeBuilderTest.Node intellij = removeFromParentButKeepRef(new NodeElement("intellij"));
-    myRoot.getChildNode("jetbrains").addChild(intellij);
+    notNull(myRoot.getChildNode("jetbrains")).addChild(intellij);
 
     updateRoutine.run();
 
@@ -2403,7 +2433,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +fabrique\n" +
                "  +[intellij]\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
   }
 
@@ -2417,10 +2447,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +[com]\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     myRoot = new Node(null, "root");
-    myStructure.reinitRoot(myRoot);
+    myStructure.reInitRoot(myRoot);
 
     myRoot.addChild("com");
 
@@ -2438,10 +2468,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +intellij\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
 
-    Node ibm = myCom.addChild("ibm");
+    myCom.addChild("ibm");
 
     getBuilder().queueUpdateFrom(new NodeElement("com"), false, true);
     getBuilder().queueUpdateFrom(new NodeElement("/"), false, false);
@@ -2452,8 +2482,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +intellij\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
-
+               " +xUnit\n");
   }
 
   public void testReleaseBuilderDuringUpdate() throws Exception {
@@ -2491,14 +2520,14 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
 
-    waitBuilderToCome(new Condition() {
+    waitBuilderToCome(new Condition<Object>() {
       @Override
       public boolean value(Object o) {
         return done[0];
       }
     });
 
-    assertTree("-/\n" + " +com\n" + " -[jetbrains]\n" + "  -fabrique\n" + "   ide\n" + " +org\n" + " +xunit\n");
+    assertTree("-/\n" + " +com\n" + " -[jetbrains]\n" + "  -fabrique\n" + "   ide\n" + " +org\n" + " +xUnit\n");
   }
 
 
@@ -2515,9 +2544,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
     final DefaultMutableTreeNode com = findNode("com", false);
+    assertNotNull(com);
     assertEquals(1, com.getChildCount());
     assertEquals(LoadingNode.getText(), com.getChildAt(0).toString());
 
@@ -2526,7 +2556,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
 
 
     myCom.addChild(myIntellij);
@@ -2535,7 +2565,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
     assertEquals(1, com.getChildCount());
     assertEquals("intellij", com.getChildAt(0).toString());
 
@@ -2548,7 +2578,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " com\n" +
                " +jetbrains\n" +
                " +org\n" +
-               " +xunit\n");
+               " +xUnit\n");
   }
 
   public void testReleaseBuilderDuringGetChildren() throws Exception {
@@ -2609,6 +2639,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
           if (getBuilder().getUi().isPassthroughMode()) {
             runnable.run();
           } else {
+            //noinspection SSBasedInspection
             SwingUtilities.invokeLater(runnable);
           }
         }
@@ -2633,8 +2664,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
   }
 
-  public static class Passthrough extends TreeUiTest {
-    public Passthrough() {
+  public static class PassThrough extends TreeUiTest {
+    public PassThrough() {
       super(true);
     }
 
@@ -2650,7 +2681,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     @Override
     public void testMoveElementToAdjacentEmptyParentWithSmartExpandAndSerialUpdateSubtrees() throws Exception {
-      // doesn't make sense since passthrough mode is always serial, it doesn't queue for updates
+      // doesn't make sense since pass-through mode is always serial, it doesn't queue for updates
     }
 
     @Override
@@ -2680,7 +2711,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     @Override
     public void testBigTreeUpdate() throws Exception {
-      // doesn't make sense in pass-thorught mode
+      // doesn't make sense in pass-through mode
     }
   }
 
@@ -2783,14 +2814,16 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   public static TestSuite suite() {
     TestSuite suite = new TestSuite();
-    suite.addTestSuite(Passthrough.class);
+
+    suite.addTestSuite(PassThrough.class);
     suite.addTestSuite(SyncUpdate.class);
     suite.addTestSuite(YieldingUpdate.class);
     suite.addTestSuite(BgLoadingSyncUpdate.class);
 
-    //to run on suspecting of race conditions in background loading
+    // to run on suspecting of race conditions in background loading
     //suite.addTestSuite(VeryQuickBgLoadingSyncUpdate.class);
     //suite.addTestSuite(QuickBgLoadingSyncUpdate.class);
+
     return suite;
   }
 
@@ -2810,7 +2843,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     super.tearDown();
   }
 
-  abstract class MyRunnable implements Runnable {
+  abstract static class MyRunnable implements Runnable {
     @Override
     public final void run() {
       try {
