@@ -24,7 +24,9 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ComparatorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.TIntObjectHashMap;
@@ -36,6 +38,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GrTypeConverter;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
@@ -752,4 +757,36 @@ public class TypesUtil {
     return factory.createType(collection, item);
   }
 
+  @Nullable
+  public static PsiType inferAnnotationMemberValueType(GrAnnotationMemberValue value) {
+    if (value instanceof GrExpression) {
+      return ((GrExpression)value).getType();
+    }
+
+    else if (value instanceof GrAnnotation) {
+      final PsiElement resolved = ((GrAnnotation)value).getClassReference().resolve();
+      if (resolved instanceof PsiClass) {
+        return JavaPsiFacade.getElementFactory(value.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
+      }
+
+      return null;
+    }
+
+    else if (value instanceof GrAnnotationArrayInitializer) {
+      return getTupleByAnnotationArrayInitializer((GrAnnotationArrayInitializer)value);
+    }
+
+    return null;
+  }
+
+  public static PsiType getTupleByAnnotationArrayInitializer(GrAnnotationArrayInitializer value) {
+    final GrAnnotationMemberValue[] initializers = value.getInitializers();
+    PsiType[] types = ContainerUtil.map(initializers, new Function<GrAnnotationMemberValue, PsiType>() {
+      @Override
+      public PsiType fun(GrAnnotationMemberValue value) {
+        return inferAnnotationMemberValueType(value);
+      }
+    }, new PsiType[initializers.length]);
+    return new GrTupleType(types, JavaPsiFacade.getInstance(value.getProject()), value.getResolveScope());
+  }
 }

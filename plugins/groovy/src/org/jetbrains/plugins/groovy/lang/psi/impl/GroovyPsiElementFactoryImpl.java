@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -690,6 +691,18 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrModifierList createModifierList(String text) {
     final GrMethod method = createMethodFromText(text + " void foo()");
     return method.getModifierList();
+  }
+
+  @Override
+  public GrCaseSection createSwitchSection(String text) {
+    final GrStatement statement = createStatementFromText("switch (a) {\n" + text + "\n}");
+    if (!(statement instanceof GrSwitchStatement)) {
+      throw new IncorrectOperationException("Cannot create switch section from text: " + text);
+    }
+
+    final GrCaseSection[] sections = ((GrSwitchStatement)statement).getCaseSections();
+    if (sections.length != 1) throw new IncorrectOperationException("Cannot create switch section from text: " + text);
+    return sections[0];
   }
 
   public GrImportStatement createImportStatementFromText(String qName, boolean isStatic, boolean isOnDemand, String alias) {

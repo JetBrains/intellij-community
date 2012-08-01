@@ -732,7 +732,7 @@
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GroovyNegatedConditionalInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyInArgumentCheck" displayName="Incompatible 'in' argument types"
-                     enabledByDefault="false" groupName="Probable bugs" level="WARNING"
+                     enabledByDefault="true" groupName="Probable bugs" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyInArgumentCheckInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyNegatedIf" displayName="Negated if condition expression"
                      groupName="Potentially confusing code constructs" enabledByDefault="false" level="WARNING"
@@ -1012,6 +1012,7 @@
     </intentionAction>
     -->
 
+
     <!-- comments -->
     <intentionAction>
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
@@ -1202,6 +1203,13 @@
       <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
       <categoryKey>intention.category.groovy/intention.category.groovy.declaration</categoryKey>
       <className>org.jetbrains.plugins.groovy.intentions.declaration.GrCreateFieldForParameterIntention</className>
+    </intentionAction>
+
+    <!--other-->
+    <intentionAction>
+      <bundleName>org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle</bundleName>
+      <categoryKey>intention.category.groovy/intention.category.groovy.other</categoryKey>
+      <className>org.jetbrains.plugins.groovy.intentions.other.GrCreateMissingSwitchBranchesIntention</className>
     </intentionAction>
 
     <projectService serviceInterface="org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicToolWindowWrapper"

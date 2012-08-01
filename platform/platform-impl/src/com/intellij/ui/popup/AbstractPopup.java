@@ -485,10 +485,30 @@ public class AbstractPopup implements JBPopup {
       show(relativePointWithDominantRectangle(layeredPane, dominantArea));
     }
     else {
-      show(JBPopupFactory.getInstance().guessBestPopupLocation(editor));
+      show(guessBestPopupLocation(editor));
     }
   }
 
+  @NotNull
+  private RelativePoint guessBestPopupLocation(@NotNull Editor editor) {
+    RelativePoint preferredLocation = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
+    if (myDimensionServiceKey == null) {
+      return preferredLocation;
+    }
+    Dimension preferredSize = DimensionService.getInstance().getSize(myDimensionServiceKey, myProject);
+    if (preferredSize == null) {
+      return preferredLocation;
+    }
+    Rectangle preferredBounds = new Rectangle(preferredLocation.getScreenPoint(), preferredSize);
+    Rectangle adjustedBounds = new Rectangle(preferredBounds);
+    ScreenUtil.moveRectangleToFitTheScreen(adjustedBounds);
+    if (preferredBounds.y - adjustedBounds.y <= 0) {
+      return preferredLocation;
+    }
+    int adjustedY = preferredBounds.y - (editor.getLineHeight() * 3 / 2) - preferredSize.height;
+    return adjustedY >= 0 ? RelativePoint.fromScreen(new Point(preferredBounds.x, adjustedY)) : preferredLocation;
+  }
+  
   public void addPopupListener(JBPopupListener listener) {
     myListeners.add(listener);
   }

@@ -93,7 +93,7 @@ public class Declaration implements GroovyElementTypes {
       } else {
         checkMarker.drop();
       }
-      IElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, true, modifiersParsed, false, parser);
+      IElementType decl = VariableDefinitions.parseDefinitions(builder, isInClass, isInAnnotation, true, modifiersParsed, false, parser);
 
       if (WRONGWAY.equals(decl)) {
         return WRONGWAY;
@@ -115,7 +115,7 @@ public class Declaration implements GroovyElementTypes {
         }
 
         //current token isn't identifier
-        IElementType varDecl = VariableDefinitions.parse(builder, isInClass, modifiersParsed, parser);
+        IElementType varDecl = VariableDefinitions.parseDefinitions(builder, isInClass, isInAnnotation, false, modifiersParsed, true, parser);
 
         if (WRONGWAY.equals(varDecl)) {
           return WRONGWAY;
@@ -123,7 +123,8 @@ public class Declaration implements GroovyElementTypes {
         return varDecl;
       } else {  //type was recognized, identifier here
         //starts after type
-        IElementType varDeclarationTop = VariableDefinitions.parse(builder, isInClass, modifiersParsed, false, parser);
+        IElementType varDeclarationTop =
+          VariableDefinitions.parseDefinitions(builder, isInClass, isInAnnotation, false, modifiersParsed, false, parser);
 
         if (WRONGWAY.equals(varDeclarationTop)) {
           if (typeResult == mustBeType) {
@@ -138,7 +139,7 @@ public class Declaration implements GroovyElementTypes {
           }
 
           //starts before "type" identifier, here can't be tuple, because next token is identifier (we are in "type recognized" branch)
-          return VariableDefinitions.parse(builder, isInClass, modifiersParsed, false, parser);
+          return VariableDefinitions.parseDefinitions(builder, isInClass, isInAnnotation, false, modifiersParsed, false, parser);
         } else {
           checkMarker.drop();
           return varDeclarationTop;
@@ -168,7 +169,7 @@ public class Declaration implements GroovyElementTypes {
         }
       }
 
-      IElementType varDef = VariableDefinitions.parseDefinitions(builder, isInClass, false, false, false, typeParsed, false, parser);
+      IElementType varDef = VariableDefinitions.parseDefinitions(builder, isInClass, isInAnnotation, false, typeParsed, false, parser);
       if (varDef != WRONGWAY) {
         return varDef;
       }

@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 public interface JavaStubElementTypes {
   JavaModifierListElementType MODIFIER_LIST = new JavaModifierListElementType();
   JavaAnnotationElementType ANNOTATION = new JavaAnnotationElementType();
+  JavaAnnotationParameterListType ANNOTATION_PARAMETER_LIST = new JavaAnnotationParameterListType();
+  JavaNameValuePairType NAME_VALUE_PAIR = new JavaNameValuePairType();
   JavaParameterElementType PARAMETER = new JavaParameterElementType();
   JavaParameterListElementType PARAMETER_LIST = new JavaParameterListElementType();
   JavaTypeParameterElementType TYPE_PARAMETER = new JavaTypeParameterElementType();

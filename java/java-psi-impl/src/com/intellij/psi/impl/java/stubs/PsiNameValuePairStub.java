@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.statements;
+package com.intellij.psi.impl.java.stubs;
 
-import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 
 /**
- * User: Dmitry.Krasilschikov
- * Date: 04.06.2007
+ * @author Dmitry Avdeev
+ *         Date: 7/27/12
  */
-public interface GrDefaultAnnotationValue extends GroovyPsiElement, PsiAnnotationMemberValue {
+public interface PsiNameValuePairStub extends StubElement<PsiNameValuePair> {
+
+  String getName();
+
   @Nullable
-  GrAnnotationMemberValue getDefaultValue();
+  String getValue();
 }

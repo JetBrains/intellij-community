@@ -200,7 +200,7 @@ public class BuildFSState extends FSState {
         }
         else {
           marked = true;
-          storage.update(descriptor.getRootId().getArtifactId(), path, stamp);
+          storage.update(descriptor.getArtifactId(), path, stamp);
         }
       }
     }

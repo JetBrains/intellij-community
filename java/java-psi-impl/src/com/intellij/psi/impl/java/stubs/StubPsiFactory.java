@@ -47,4 +47,8 @@ public abstract class StubPsiFactory {
   public abstract PsiTypeParameter createTypeParameter(PsiTypeParameterStub stub);
 
   public abstract PsiTypeParameterList createTypeParameterList(PsiTypeParameterListStub stub);
+
+  public abstract PsiAnnotationParameterList createAnnotationParameterList(PsiAnnotationParameterListStub stub);
+
+  public abstract PsiNameValuePair createNameValuePair(PsiNameValuePairStub stub);
 }

@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
+import org.jetbrains.plugins.groovy.lang.psi.impl.types.GrDisjunctionTypeElementImpl;
 
 /**
  * @author ven
@@ -244,16 +245,24 @@ public abstract class GroovyElementVisitor {
     visitExpression(listOrMap);
   }
 
-  public void visitArrayTypeElement(GrArrayTypeElement typeElement) {
+  public void visitTypeElement(GrTypeElement typeElement) {
     visitElement(typeElement);
+  }
+
+  public void visitArrayTypeElement(GrArrayTypeElement typeElement) {
+    visitTypeElement(typeElement);
   }
 
   public void visitBuiltinTypeElement(GrBuiltInTypeElement typeElement) {
-    visitElement(typeElement);
+    visitTypeElement(typeElement);
   }
 
   public void visitClassTypeElement(GrClassTypeElement typeElement) {
-    visitElement(typeElement);
+    visitTypeElement(typeElement);
+  }
+
+  public void visitDisjunctionTypeElement(GrDisjunctionTypeElement disjunctionTypeElement) {
+    visitTypeElement(disjunctionTypeElement);
   }
 
   public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {

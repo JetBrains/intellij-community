@@ -236,6 +236,8 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static String getStringAttribute(final PsiAnnotation annotation,
                                            final String name,
                                            final PsiConstantEvaluationHelper evalHelper) {
+    String value = getAttributeValue(annotation, name);
+    if (value != null) return value;
     final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
     return o instanceof String && StringUtil.isNotEmpty((String)o)? (String)o : null;
   }
@@ -243,8 +245,20 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   private static boolean getBooleanAttribute(final PsiAnnotation annotation,
                                            final String name,
                                            final PsiConstantEvaluationHelper evalHelper) {
+    String value = getAttributeValue(annotation, name);
+    if (value != null) return Boolean.parseBoolean(value);
     final Object o = evalHelper.computeConstantExpression(annotation.findAttributeValue(name), false);
-    return o instanceof Boolean? ((Boolean)o).booleanValue() : false;
+    return o instanceof Boolean && ((Boolean)o).booleanValue();
+  }
+
+  @Nullable
+  private static String getAttributeValue(PsiAnnotation annotation, String name) {
+    for (PsiNameValuePair attribute : annotation.getParameterList().getAttributes()) {
+      if (name.equals(attribute.getName())) {
+        return attribute.getLiteralValue();
+      }
+    }
+    return null;
   }
 
   @Nullable

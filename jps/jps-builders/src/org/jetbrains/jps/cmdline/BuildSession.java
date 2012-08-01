@@ -354,7 +354,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             LOG.info("Applying deleted path from fs event to artifacts: " + file.getPath());
           }
           for (ArtifactRootDescriptor rootDescriptor : descriptor)
-            pd.fsState.registerDeleted(rootDescriptor.getArtifactName(), rootDescriptor.getRootId().getArtifactId(), deleted,
+            pd.fsState.registerDeleted(rootDescriptor.getArtifactName(), rootDescriptor.getArtifactId(), deleted,
                                        artifactTimestamps);
         }
       }

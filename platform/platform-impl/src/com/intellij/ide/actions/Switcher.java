@@ -584,6 +584,7 @@ public class Switcher extends AnAction implements DumbAware {
           break;
         case VK_DELETE:
         case VK_BACK_SPACE: // Mac users
+        case VK_Q:
           closeTabOrToolWindow();
           break;
       }
