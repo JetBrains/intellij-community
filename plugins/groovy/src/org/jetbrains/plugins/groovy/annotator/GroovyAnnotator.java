@@ -110,6 +110,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProc
 
 import java.util.*;
 
+import static com.intellij.psi.PsiModifier.*;
+
 /**
  * @author ven
  */
@@ -325,7 +327,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
     if (resolved != null) {
       if (!resolveResult.isStaticsOK() && resolved instanceof PsiModifierListOwner) {
-        if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+        if (!((PsiModifierListOwner)resolved).hasModifierProperty(STATIC)) {
           Annotation annotation = myHolder.createInfoAnnotation(referenceExpression, GroovyBundle.message("cannot.reference.nonstatic", referenceExpression.getReferenceName()));
           annotation.setTextAttributes(PsiUtil.isCompileStatic(referenceExpression) ? DefaultHighlighter.BAD_CHARACTER : DefaultHighlighter.UNRESOLVED_ACCESS);
         }
@@ -401,7 +403,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   private static boolean isInStaticMethod(GrReferenceExpression referenceExpression) {
     PsiMember context = PsiTreeUtil.getParentOfType(referenceExpression, PsiMember.class, true, GrClosableBlock.class);
-    return context instanceof PsiMethod && context.hasModifierProperty(PsiModifier.STATIC);
+    return context instanceof PsiMethod && context.hasModifierProperty(STATIC);
   }
 
   private void checkStringNameIdentifier(GrReferenceExpression ref) {
@@ -437,7 +439,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       errorAnnotation.registerFix(new GrMoveClassToCorrectPlaceFix(typeDefinition));
     }
     checkTypeDefinition(myHolder, typeDefinition);
-    checkTypeDefinitionModifiers(myHolder, typeDefinition);
 
     checkDuplicateMethod(typeDefinition.getMethods(), myHolder);
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
@@ -560,17 +561,22 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitMethod(GrMethod method) {
-
-
-    checkMethodDefinitionModifiers(myHolder, method);
     checkMethodWithTypeParamsShouldHaveReturnType(myHolder, method);
     checkInnerMethod(myHolder, method);
     checkMethodParameters(myHolder, method);
 
     GrOpenBlock block = method.getBlock();
     if (block != null && TypeInferenceHelper.isTooComplexTooAnalyze(block)) {
-      myHolder.createWeakWarningAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("method.0.is.too.complex.too.analyze",
-                                                                                                  method.getName()));
+      myHolder.createWeakWarningAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("method.0.is.too.complex.too.analyze", method.getName()));
+    }
+
+    if (method.isConstructor() && method.getContainingClass() instanceof GrAnonymousClassDefinition) {
+      myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("constructors.are.not.allowed.in.anonymous.class"));
+    }
+
+    if (!method.hasModifierProperty(ABSTRACT) && method.getBlock() == null) {
+      final Annotation annotation = myHolder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("not.abstract.method.should.have.body"));
+      annotation.registerFix(new AddMethodBodyFix(method));
     }
   }
 
@@ -587,7 +593,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static void checkMethodParameters(AnnotationHolder holder, GrMethod method) {
-    if (!method.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+    if (!method.hasModifierProperty(ABSTRACT)) return;
 
     for (GrParameter parameter : method.getParameters()) {
       GrExpression initializerGroovy = parameter.getInitializerGroovy();
@@ -618,40 +624,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       return method;
     }
     return null;
-  }
-
-  @Override
-  public void visitVariableDeclaration(GrVariableDeclaration variableDeclaration) {
-
-    PsiElement parent = variableDeclaration.getParent();
-    assert parent != null;
-
-    PsiElement typeDef = parent.getParent();
-    if (typeDef != null && typeDef instanceof GrTypeDefinition) {
-      GrModifierList modifiersList = variableDeclaration.getModifierList();
-      final GrMember[] members = variableDeclaration.getMembers();
-      if (members.length == 0) return;
-      final GrMember member = members[0];
-      checkAccessModifiers(myHolder, modifiersList, member);
-      checkDuplicateModifiers(myHolder, variableDeclaration.getModifierList(), member);
-
-      if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE) && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
-        final Annotation annotation =
-          myHolder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.volatile.and.final"));
-        annotation.registerFix(new GrModifierFix(member, modifiersList, PsiModifier.VOLATILE, true, false));
-        annotation.registerFix(new GrModifierFix(member, modifiersList, PsiModifier.FINAL, true, false));
-      }
-
-      if (modifiersList.hasExplicitModifier(PsiModifier.NATIVE)) {
-        final Annotation annotation = myHolder.createErrorAnnotation(modifiersList, GroovyBundle.message("variable.cannot.be.native"));
-        annotation.registerFix(new GrModifierFix(member, modifiersList, PsiModifier.NATIVE, true, false));
-      }
-
-      if (modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)) {
-        final Annotation annotation = myHolder.createErrorAnnotation(modifiersList, GroovyBundle.message("variable.cannot.be.abstract"));
-        annotation.registerFix(new GrModifierFix(member, modifiersList, PsiModifier.ABSTRACT, true, false));
-      }
-    }
   }
 
   private void checkScriptField(GrAnnotation annotation) {
@@ -808,6 +780,51 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
     else {
       checkMethodReturnType(((GrMethod)parent), typeElement, myHolder);
+    }
+  }
+
+  @Override
+  public void visitModifierList(GrModifierList modifierList) {
+    final PsiElement parent = modifierList.getParent();
+    if (parent instanceof GrMethod) {
+      checkMethodDefinitionModifiers(myHolder, (GrMethod)parent);
+    }
+    else if (parent instanceof GrTypeDefinition) {
+      checkTypeDefinitionModifiers(myHolder, (GrTypeDefinition)parent);
+    }
+    else if (parent instanceof GrVariableDeclaration && parent.getParent() instanceof GrTypeDefinition) {
+      checkFieldModifiers(myHolder, (GrVariableDeclaration)parent);
+    }
+  }
+
+  private static void checkFieldModifiers(AnnotationHolder holder, GrVariableDeclaration fieldDeclaration) {
+    final GrModifierList modifierList = fieldDeclaration.getModifierList();
+    final GrField member = (GrField)fieldDeclaration.getVariables()[0];
+
+    checkAccessModifiers(holder, modifierList, member);
+    checkDuplicateModifiers(holder, modifierList, member);
+
+    if (modifierList.hasExplicitModifier(VOLATILE) && modifierList.hasExplicitModifier(FINAL)) {
+      final Annotation annotation = holder.createErrorAnnotation(modifierList, GroovyBundle.message("illegal.combination.of.modifiers.volatile.and.final"));
+      annotation.registerFix(new GrModifierFix(member, modifierList, VOLATILE, true, false));
+      annotation.registerFix(new GrModifierFix(member, modifierList, FINAL, true, false));
+    }
+
+    checkModifierIsNotAllowed(modifierList, NATIVE, GroovyBundle.message("variable.cannot.be.native"), holder);
+    checkModifierIsNotAllowed(modifierList, ABSTRACT, GroovyBundle.message("variable.cannot.be.abstract"), holder);
+
+    if (member.getContainingClass() instanceof GrInterfaceDefinition) {
+      checkModifierIsNotAllowed(modifierList, PRIVATE, GroovyBundle.message("interface.members.are.not.allowed.to.be", PRIVATE), holder);
+      checkModifierIsNotAllowed(modifierList, PROTECTED, GroovyBundle.message("interface.members.are.not.allowed.to.be", PROTECTED), holder);
+    }
+  }
+
+  private static void checkModifierIsNotAllowed(GrModifierList modifierList, @PsiModifier.ModifierConstant String modifier, String message, AnnotationHolder holder) {
+    if (modifierList.hasModifierProperty(modifier)) {
+      PsiElement toHighlight = PsiUtil.findModifierInList(modifierList, modifier);
+      if (toHighlight == null) toHighlight = modifierList;
+      final Annotation annotation = holder.createErrorAnnotation(toHighlight, message);
+      annotation.registerFix(new GrModifierFix((PsiMember)modifierList.getParent(), modifierList, modifier, true, false));
     }
   }
 
@@ -979,7 +996,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final PsiElement element = refElement.resolve();
     if (element instanceof PsiClass) {
       PsiClass clazz = (PsiClass)element;
-      if (clazz.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (clazz.hasModifierProperty(ABSTRACT)) {
         if (newExpression.getAnonymousClassDefinition() == null) {
           String message = clazz.isInterface()
                            ? GroovyBundle.message("cannot.instantiate.interface", clazz.getName())
@@ -989,7 +1006,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         return;
       }
       if (newExpression.getQualifier() != null) {
-        if (clazz.hasModifierProperty(PsiModifier.STATIC)) {
+        if (clazz.hasModifierProperty(STATIC)) {
           myHolder.createErrorAnnotation(newExpression, GroovyBundle.message("qualified.new.of.static.class"));
         }
       }
@@ -1224,7 +1241,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     for (PsiElement modifier : modifiers) {
       if (modifier instanceof PsiAnnotation) continue;
       final String modifierText = modifier.getText();
-      if (PsiModifier.FINAL.equals(modifierText)) continue;
+      if (FINAL.equals(modifierText)) continue;
       if (GrModifier.DEF.equals(modifierText)) continue;
       myHolder.createErrorAnnotation(modifier, GroovyBundle.message("not.allowed.modifier.in.forin", modifierText));
     }
@@ -1433,7 +1450,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (qualifier == null) {
       if (expression instanceof GrSuperReferenceExpression) { //'this' refers to java.lang.Class<ThisClass> in static context
         final GrMethod method = PsiTreeUtil.getParentOfType(expression, GrMethod.class);
-        if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
+        if (method != null && method.hasModifierProperty(STATIC)) {
           Annotation annotation =
             holder.createInfoAnnotation(expression, GroovyBundle.message("cannot.reference.nonstatic", expression.getText()));
           annotation.setTextAttributes(DefaultHighlighter.UNRESOLVED_ACCESS);
@@ -1479,7 +1496,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static void checkImplementedMethodsOfClass(AnnotationHolder holder, GrTypeDefinition typeDefinition) {
-    if (typeDefinition.hasModifierProperty(PsiModifier.ABSTRACT)) return;
+    if (typeDefinition.hasModifierProperty(ABSTRACT)) return;
     if (typeDefinition.isAnnotationType()) return;
     if (typeDefinition instanceof GrTypeParameter) return;
 
@@ -1533,14 +1550,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       annotation.registerFix(new AddMethodBodyFix(method));
     }
     else {
-      annotation.registerFix(new GrModifierFix(method, method.getModifierList(), PsiModifier.ABSTRACT, false, false));
+      annotation.registerFix(new GrModifierFix(method, method.getModifierList(), ABSTRACT, false, false));
     }
     if (makeClassAbstract) {
       final PsiClass containingClass = method.getContainingClass();
       LOG.assertTrue(containingClass != null);
       final GrModifierList list = (GrModifierList)containingClass.getModifierList();
       LOG.assertTrue(list != null);
-      annotation.registerFix(new GrModifierFix(containingClass, list, PsiModifier.ABSTRACT, false, true));
+      annotation.registerFix(new GrModifierFix(containingClass, list, ABSTRACT, false, true));
     }
   }
 
@@ -1550,76 +1567,49 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     checkDuplicateModifiers(holder, modifiersList, method);
     checkOverrideAnnotation(holder, modifiersList, method);
 
+    if (method.hasModifierProperty(FINAL) && method.hasModifierProperty(ABSTRACT)) {
+      final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
+      annotation.registerFix(new GrModifierFix(method, modifiersList, FINAL, false, false));
+      annotation.registerFix(new GrModifierFix(method, modifiersList, ABSTRACT, false, false));
+    }
+
     //script methods
-    boolean isMethodAbstract = modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT);
-    final boolean isMethodStatic = modifiersList.hasExplicitModifier(PsiModifier.STATIC);
+    boolean isMethodAbstract = modifiersList.hasExplicitModifier(ABSTRACT);
     if (method.getParent() instanceof GroovyFileBase) {
       if (isMethodAbstract) {
-        final Annotation annotation =
-          holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.abstract"));
+        final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.method.cannot.have.modifier.abstract"));
         registerAbstractMethodFix(annotation, method, false);
       }
 
-      if (modifiersList.hasExplicitModifier(PsiModifier.NATIVE)) {
-        final Annotation annotation =
-          holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.cannot.have.modifier.native"));
-        annotation.registerFix(new GrModifierFix(method, modifiersList, PsiModifier.NATIVE, false, false));
-      }
+      checkModifierIsNotAllowed(modifiersList, NATIVE, GroovyBundle.message("script.cannot.have.modifier.native"), holder);
     }
-    else  //type definition methods
-      if (method.getParent() != null && method.getParent().getParent() instanceof GrTypeDefinition) {
+    //type definition methods
+    else if (method.getParent() != null && method.getParent().getParent() instanceof GrTypeDefinition) {
         GrTypeDefinition containingTypeDef = ((GrTypeDefinition)method.getParent().getParent());
 
         //interface
         if (containingTypeDef.isInterface()) {
-          if (isMethodStatic) {
-            final Annotation annotation =
-              holder.createErrorAnnotation(modifiersList, GroovyBundle.message("interface.must.have.no.static.method"));
-            annotation.registerFix(new GrModifierFix(method, modifiersList, PsiModifier.STATIC, true, false));
-          }
-
-          if (modifiersList.hasExplicitModifier(PsiModifier.PRIVATE)) {
-            final Annotation annotation =
-              holder.createErrorAnnotation(modifiersList, GroovyBundle.message("interface.must.have.no.private.method"));
-            annotation.registerFix(new GrModifierFix(method, modifiersList, PsiModifier.PRIVATE, true, false));
-          }
+          checkModifierIsNotAllowed(modifiersList, STATIC, GroovyBundle.message("interface.must.have.no.static.method"), holder);
+          checkModifierIsNotAllowed(modifiersList, PRIVATE, GroovyBundle.message("interface.members.are.not.allowed.to.be", PRIVATE), holder);
+          checkModifierIsNotAllowed(modifiersList, PROTECTED, GroovyBundle.message("interface.members.are.not.allowed.to.be", PROTECTED), holder);
         }
         else if (containingTypeDef.isAnonymous()) {
           //anonymous class
-          if (isMethodStatic) {
-            final Annotation annotation =
-              holder.createErrorAnnotation(modifiersList, GroovyBundle.message("static.declaration.in.inner.class"));
-            annotation.registerFix(new GrModifierFix(method, modifiersList, PsiModifier.STATIC, false, false));
-          }
-          if (method.isConstructor()) {
-            holder.createErrorAnnotation(method.getNameIdentifierGroovy(),
-                                         GroovyBundle.message("constructors.are.not.allowed.in.anonymous.class"));
-          }
+          checkModifierIsNotAllowed(modifiersList, STATIC, GroovyBundle.message("static.declaration.in.inner.class"), holder);
+
           if (isMethodAbstract) {
-            final Annotation annotation =
-              holder.createErrorAnnotation(modifiersList, GroovyBundle.message("anonymous.class.cannot.have.abstract.method"));
+            final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("anonymous.class.cannot.have.abstract.method"));
             registerAbstractMethodFix(annotation, method, false);
           }
         }
+        //class
         else {
-          //class
           PsiModifierList typeDefModifiersList = containingTypeDef.getModifierList();
           LOG.assertTrue(typeDefModifiersList != null, "modifiers list must be not null");
 
-          if (!typeDefModifiersList.hasExplicitModifier(PsiModifier.ABSTRACT)) {
-            if (isMethodAbstract) {
-              final Annotation annotation =
-                holder.createErrorAnnotation(modifiersList, GroovyBundle.message("only.abstract.class.can.have.abstract.method"));
-              registerAbstractMethodFix(annotation, method, true);
-            }
-          }
-
-          if (!isMethodAbstract) {
-            if (method.getBlock() == null) {
-              final Annotation annotation = holder
-                .createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("not.abstract.method.should.have.body"));
-              annotation.registerFix(new AddMethodBodyFix(method));
-            }
+          if (!typeDefModifiersList.hasExplicitModifier(ABSTRACT) && isMethodAbstract) {
+            final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("only.abstract.class.can.have.abstract.method"));
+            registerAbstractMethodFix(annotation, method, true);
           }
         }
       }
@@ -1655,42 +1645,24 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     for (PsiClassType classType : extendsListTypes) {
       PsiClass psiClass = classType.resolve();
 
-      if (psiClass != null) {
-        PsiModifierList modifierList = psiClass.getModifierList();
-        if (modifierList != null) {
-          if (modifierList.hasExplicitModifier(PsiModifier.FINAL)) {
-            final Annotation annotation = holder
-              .createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("final.class.cannot.be.extended"));
-            annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, PsiModifier.FINAL, false, false));
-          }
-        }
+      if (psiClass != null && psiClass.hasModifierProperty(FINAL)) {
+        final Annotation annotation = holder.createErrorAnnotation(typeDefinition.getNameIdentifierGroovy(), GroovyBundle.message("final.class.cannot.be.extended"));
+        annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, FINAL, false, false));
       }
     }
 
-    if (modifiersList.hasExplicitModifier(PsiModifier.ABSTRACT) && modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
-      final Annotation annotation =
-        holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
-      annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, PsiModifier.FINAL, false, false));
-      annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, PsiModifier.ABSTRACT, false, false));
+    if (modifiersList.hasModifierProperty(ABSTRACT) && modifiersList.hasModifierProperty(FINAL)) {
+      final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
+      annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, FINAL, false, false));
+      annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, ABSTRACT, false, false));
     }
 
-    if (modifiersList.hasExplicitModifier(PsiModifier.TRANSIENT)) {
-      final Annotation annotation =
-        holder.createErrorAnnotation(modifiersList, GroovyBundle.message("modifier.transient.not.allowed.here"));
-      annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, PsiModifier.TRANSIENT, false, false));
-    }
-    if (modifiersList.hasExplicitModifier(PsiModifier.VOLATILE)) {
-      final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("modifier.volatile.not.allowed.here"));
-      annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, PsiModifier.VOLATILE, false, false));
-    }
+    checkModifierIsNotAllowed(modifiersList, TRANSIENT, GroovyBundle.message("modifier.transient.not.allowed.here"), holder);
+    checkModifierIsNotAllowed(modifiersList, VOLATILE, GroovyBundle.message("modifier.volatile.not.allowed.here"), holder);
 
     /**** interface ****/
     if (typeDefinition.isInterface()) {
-      if (modifiersList.hasExplicitModifier(PsiModifier.FINAL)) {
-        final Annotation annotation =
-          holder.createErrorAnnotation(modifiersList, GroovyBundle.message("intarface.cannot.have.modifier.final"));
-        annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, PsiModifier.FINAL, false, false));
-      }
+      checkModifierIsNotAllowed(modifiersList, FINAL, GroovyBundle.message("intarface.cannot.have.modifier.final"), holder);
     }
   }
 
@@ -1710,29 +1682,29 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   }
 
   private static void checkAccessModifiers(AnnotationHolder holder, @NotNull GrModifierList modifierList, PsiMember member) {
-    boolean hasPrivate = modifierList.hasExplicitModifier(PsiModifier.PRIVATE);
-    boolean hasPublic = modifierList.hasExplicitModifier(PsiModifier.PUBLIC);
-    boolean hasProtected = modifierList.hasExplicitModifier(PsiModifier.PROTECTED);
+    boolean hasPrivate = modifierList.hasExplicitModifier(PRIVATE);
+    boolean hasPublic = modifierList.hasExplicitModifier(PUBLIC);
+    boolean hasProtected = modifierList.hasExplicitModifier(PROTECTED);
 
     if (hasPrivate && hasPublic || hasPrivate && hasProtected || hasPublic && hasProtected) {
       final Annotation annotation = holder.createErrorAnnotation(modifierList, GroovyBundle.message("illegal.combination.of.modifiers"));
       if (hasPrivate) {
-        annotation.registerFix(new GrModifierFix(member, modifierList, PsiModifier.PRIVATE, false, false));
+        annotation.registerFix(new GrModifierFix(member, modifierList, PRIVATE, false, false));
       }
       if (hasProtected) {
-        annotation.registerFix(new GrModifierFix(member, modifierList, PsiModifier.PROTECTED, false, false));
+        annotation.registerFix(new GrModifierFix(member, modifierList, PROTECTED, false, false));
       }
       if (hasPublic) {
-        annotation.registerFix(new GrModifierFix(member, modifierList, PsiModifier.PUBLIC, false, false));
+        annotation.registerFix(new GrModifierFix(member, modifierList, PUBLIC, false, false));
       }
     }
     else if (member instanceof PsiMethod &&
              member.getContainingClass() instanceof GrInterfaceDefinition &&
              hasPublic &&
              !GroovyConfigUtils.getInstance().isVersionAtLeast(member, "1.8.4")) {
-      final PsiElement publicModifier = ObjectUtils.assertNotNull(PsiUtil.findModifierInList(modifierList, PsiModifier.PUBLIC));
+      final PsiElement publicModifier = ObjectUtils.assertNotNull(PsiUtil.findModifierInList(modifierList, PUBLIC));
       holder.createErrorAnnotation(publicModifier, GroovyBundle.message("public.modifier.is.not.allowed.in.interfaces"))
-        .registerFix(new GrModifierFix(member, modifierList, PsiModifier.PUBLIC, false, false));
+        .registerFix(new GrModifierFix(member, modifierList, PUBLIC, false, false));
     }
   }
 
@@ -2064,9 +2036,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       final PsiModifierList modifierList = variable.getModifierList();
       if (modifierList instanceof GrModifierList) return ((GrModifierList)modifierList).hasExplicitVisibilityModifiers();
       if (modifierList == null) return false;
-      return modifierList.hasExplicitModifier(PsiModifier.PUBLIC) ||
-             modifierList.hasExplicitModifier(PsiModifier.PROTECTED) ||
-             modifierList.hasExplicitModifier(PsiModifier.PRIVATE);
+      return modifierList.hasExplicitModifier(PUBLIC) ||
+             modifierList.hasExplicitModifier(PROTECTED) ||
+             modifierList.hasExplicitModifier(PRIVATE);
     }
 
     @Override
