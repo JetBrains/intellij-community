@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -89,7 +90,30 @@ public class TypeAssertionIntention implements IntentionAction {
         element = parent.addAfter(assertStatement, parentStatement);
       }
       else {
-        element = parent.addBefore(assertStatement, parentStatement);
+        PyStatementList statementList = PsiTreeUtil.getParentOfType(parentStatement, PyStatementList.class);
+        final Document document = editor.getDocument();
+
+        if (statementList != null) {
+          PsiElement statementListParent = statementList.getParent();
+          if (document.getLineNumber(statementList.getTextOffset()) ==
+              document.getLineNumber(statementListParent.getTextOffset())) {
+            final String substring =
+              TextRange.create(statementListParent.getTextOffset(), statementList.getTextOffset()).substring(document.getText());
+            final PyStatement foo =
+              elementGenerator.createFromText(LanguageLevel.forElement(problemElement), PyStatement.class, substring + "\n\t" +
+                                             text + "\n\t" + statementList.getText());
+
+            statementListParent = statementListParent.replace(foo);
+            statementListParent = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(statementListParent);
+            statementList = PsiTreeUtil.findChildOfType(statementListParent, PyStatementList.class);
+            element = statementList.getStatements()[0];
+          }
+          else
+            element = parent.addBefore(assertStatement, parentStatement);
+        }
+        else {
+          element = parent.addBefore(assertStatement, parentStatement);
+        }
       }
 
       int textOffSet = element.getTextOffset();

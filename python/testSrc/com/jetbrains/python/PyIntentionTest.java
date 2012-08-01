@@ -32,6 +32,13 @@ public class PyIntentionTest extends PyTestCase {
     }
   }
 
+  private void doTest(String hint, boolean ignoreWhiteSpaces) {
+    myFixture.configureByFile("intentions/before" + getTestName(false) + ".py");
+    final IntentionAction action = myFixture.findSingleIntention(hint);
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile("intentions/after" + getTestName(false) + ".py", ignoreWhiteSpaces);
+  }
+
   /**
    * Ensures that intention with given hint <i>is not</i> active.
    * @param hint
@@ -244,7 +251,7 @@ public class PyIntentionTest extends PyTestCase {
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());
     documentationSettings.setFormat(DocStringFormat.REST);
     try {
-      doTest(PyBundle.message("INTN.doc.string.stub"));
+      doTest(PyBundle.message("INTN.doc.string.stub"), true);
     }
     finally {
       documentationSettings.setFormat(DocStringFormat.PLAIN);
