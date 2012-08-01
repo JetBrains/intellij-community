@@ -126,7 +126,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    return path.replace(File.separatorChar, '/');
+    return FileUtil.normalize(path);
   }
 
   @NotNull

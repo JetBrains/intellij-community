@@ -21,13 +21,12 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URL;
 import java.util.Locale;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 import static org.junit.Assert.*;
 
@@ -196,5 +195,19 @@ public class IoTestUtil {
     final long roundedActual = (actual / 1000) * 1000;
     assertTrue("(un)expected: " + expected + ", actual: " + actual,
                roundedExpected != roundedActual);
+  }
+
+  public static File createTestJar() throws IOException {
+    final File jarFile = FileUtil.createTempFile("test.", ".jar");
+    final JarOutputStream stream = new JarOutputStream(new FileOutputStream(jarFile));
+    try {
+      stream.putNextEntry(new JarEntry("entry.txt"));
+      stream.write("test".getBytes());
+      stream.closeEntry();
+    }
+    finally {
+      stream.close();
+    }
+    return jarFile;
   }
 }

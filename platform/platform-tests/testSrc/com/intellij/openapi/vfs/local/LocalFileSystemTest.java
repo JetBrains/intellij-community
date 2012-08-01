@@ -20,10 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
@@ -35,6 +32,7 @@ import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 
 public class LocalFileSystemTest extends PlatformLangTestCase {
@@ -138,7 +136,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir, null);
   }
 
-  public void testGermanLetters() throws Exception {
+  public void testUnicodeNames() throws Exception {
     final File dirFile = createTempDirectory();
     final String name = "te\u00dft123123123.txt";
     final File childFile = new File(dirFile, name);
@@ -153,7 +151,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertTrue(childFile.delete());
   }
 
-  public void testFindRoot() {
+  public void testFindRoot() throws IOException {
     VirtualFile root;
 
     root = LocalFileSystem.getInstance().findFileByPath("wrong_path");
@@ -171,6 +169,9 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       if (new File("c:").exists()) {
         root = LocalFileSystem.getInstance().findFileByPath("c:");
         assertNotNull(root);
+
+        VirtualFile root2 = LocalFileSystem.getInstance().findFileByPath("C:\\");
+        assertTrue(String.valueOf(root2), root == root2);
       }
     }
     else if (SystemInfo.isUnix) {
@@ -180,6 +181,13 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
     root = LocalFileSystem.getInstance().findFileByPath("");
     assertNotNull(root);
+
+    File jarFile = IoTestUtil.createTestJar();
+    root = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath() + "!/");
+    assertNotNull(root);
+
+    VirtualFile root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().replace(File.separator, "//") + "!/");
+    assertTrue(String.valueOf(root2), root == root2);
   }
 
   public void testFileLength() throws Exception {
