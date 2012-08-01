@@ -101,7 +101,8 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
         String initialText = document.getText(TextRange.create(0, bounds.getStartOffset())) +
                    document.getText(TextRange.create(bounds.getEndOffset(), document.getTextLength()));
         final DocumentImpl initialDocument = new DocumentImpl(initialText);
-        final int lineNumber = initialDocument.getLineNumber(caretOffset);
+        int lineNumber = initialDocument.getTextLength() > caretOffset? initialDocument.getLineNumber(caretOffset)
+                                                                      : initialDocument.getLineCount() - 1;
         final int offset = getLineStartSafeOffset(initialDocument, lineNumber);
         final int caretColumn = caretOffset - offset;
 
