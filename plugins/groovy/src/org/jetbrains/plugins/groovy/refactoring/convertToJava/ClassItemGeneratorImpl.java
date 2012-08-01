@@ -131,7 +131,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     GenerationUtil.writeParameterList(builder, method.getParameterList().getParameters(), classNameProvider, context);
 
     if (method instanceof GrAnnotationMethod) {
-      GrDefaultAnnotationValue defaultAnnotationValue = ((GrAnnotationMethod)method).getDefaultAnnotationValue();
+      GrDefaultAnnotationValue defaultAnnotationValue = ((GrAnnotationMethod)method).getDefaultValue();
       if (defaultAnnotationValue!=null) {
         builder.append("default ");
         GrAnnotationMemberValue defaultValue = defaultAnnotationValue.getDefaultValue();
