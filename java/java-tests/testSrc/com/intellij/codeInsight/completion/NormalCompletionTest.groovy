@@ -38,54 +38,6 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("_local1", "_local2", "_field", "_method", "_baseField", "_baseMethod");
   }
 
-  public void testDontCompleteFieldsAndMethodsInReferenceCodeFragment() throws Throwable {
-    final String text = CommonClassNames.JAVA_LANG_OBJECT + ".<caret>";
-    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment(text, null, true, true);
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-    complete();
-    myFixture.checkResult(text);
-    assertEmpty(myItems);
-  }
-
-  public void testNoPackagesInExpressionCodeFragment() throws Throwable {
-    final String text = "jav<caret>";
-    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment(text, null, null, true);
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-    complete();
-    myFixture.checkResult(text);
-    assertEmpty(myItems);
-  }
-
-  public void testSubPackagesInExpressionCodeFragment() throws Throwable {
-    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("java.la<caret>", null, null, true);
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-    complete();
-    myFixture.checkResult("java.lang.<caret>");
-    assertNull(myItems);
-  }
-
-  public void testPrimitivesInTypeCodeFragmentWithParameterListContext() throws Throwable {
-    def clazz = myFixture.addClass("class Foo { void foo(int a) {} }")
-
-    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createTypeCodeFragment("b<caret>", clazz.methods[0].parameterList, true);
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-    complete();
-    assertFirstStringItems('boolean', 'byte')
-  }
-
-  public void testQualifierCastingInExpressionCodeFragment() throws Throwable {
-    final ctxText = "class Bar {{ Object o; o=null }}"
-    final ctxFile = createLightFile(StdFileTypes.JAVA, ctxText)
-    final context = ctxFile.findElementAt(ctxText.indexOf("o="))
-    assert context
-
-    PsiFile file = JavaCodeFragmentFactory.getInstance(project).createExpressionCodeFragment("o instanceof String && o.subst<caret>", context, null, true);
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-    complete();
-    myFixture.checkResult("o instanceof String && ((String) o).substring(<caret>)");
-    assertNull(myItems);
-  }
-
   public void testCastToPrimitive1() throws Exception {
     configureByFile("CastToPrimitive1.java");
 
