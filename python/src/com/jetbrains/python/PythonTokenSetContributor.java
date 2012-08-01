@@ -59,4 +59,9 @@ public class PythonTokenSetContributor implements PythonDialectsTokenSetContribu
   public TokenSet getParameterTokens() {
     return TokenSet.create(NAMED_PARAMETER, TUPLE_PARAMETER, SINGLE_STAR_PARAMETER);
   }
+
+  @Override
+  public TokenSet getFunctionDeclarationTokens() {
+    return TokenSet.create(FUNCTION_DECLARATION);
+  }
 }

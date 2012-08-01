@@ -215,7 +215,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
       for (PyRequirement req : requirements) {
         final PyPackage pkg = req.match(packages);
-        if (pkg != null) {
+        if (pkg != null && !visited.contains(pkg)) {
           visited.add(pkg);
           results.addAll(getTransitiveRequirements(sdk, pkg.getRequirements(), visited));
         }

@@ -14,4 +14,5 @@ public interface PythonDialectsTokenSetContributor {
   TokenSet getNameDefinerTokens();
   TokenSet getKeywordTokens();
   TokenSet getParameterTokens();
+  TokenSet getFunctionDeclarationTokens();
 }

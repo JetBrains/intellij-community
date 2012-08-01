@@ -389,6 +389,11 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo");
   }
 
+  // PY-6289
+  public void testCythonIndirectStarImport() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
   private void prepareTestDirectory() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");

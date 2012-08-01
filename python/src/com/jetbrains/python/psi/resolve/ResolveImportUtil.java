@@ -151,6 +151,7 @@ public class ResolveImportUtil {
     return ResolveResultList.to(result);
   }
 
+  @NotNull
   public static List<PsiElement> resolveFromOrForeignImport(PyFromImportStatement fromImportStatement, PyQualifiedName qname) {
     final List<PsiFileSystemItem> results = resolveFromImportStatementSource(fromImportStatement, qname);
     if (results.isEmpty() && qname != null && qname.getComponentCount() > 0) {
@@ -167,6 +168,18 @@ public class ResolveImportUtil {
     boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
     return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
+  }
+
+  @NotNull
+  public static List<PsiFileSystemItem> resolveFromOrForeignImportStatementSource(@NotNull PyFromImportStatement fromImportStatement,
+                                                                                  @Nullable PyQualifiedName qName) {
+    final List<PsiFileSystemItem> results = resolveFromImportStatementSource(fromImportStatement, qName);
+    if (!results.isEmpty()) {
+      return results;
+    }
+    final PsiElement result = qName != null ? resolveForeignImport(fromImportStatement, qName, null) : null;
+    return result instanceof PsiFileSystemItem ? Collections.singletonList((PsiFileSystemItem)result)
+                                               : Collections.<PsiFileSystemItem>emptyList();
   }
 
   /**
