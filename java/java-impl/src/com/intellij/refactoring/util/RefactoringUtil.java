@@ -325,6 +325,7 @@ public class RefactoringUtil {
 
 
   public static boolean isExpressionAnchorElement(PsiElement element) {
+    if (element instanceof PsiDeclarationStatement && element.getParent() instanceof PsiForStatement) return false;
     return element instanceof PsiStatement || element instanceof PsiClassInitializer || element instanceof PsiField ||
            element instanceof PsiMethod;
   }
