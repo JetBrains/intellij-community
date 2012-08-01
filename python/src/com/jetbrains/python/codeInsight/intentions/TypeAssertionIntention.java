@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
@@ -48,7 +49,9 @@ public class TypeAssertionIntention implements IntentionAction {
         problemElement = qualifier;
       }
     }
-    if (problemElement.getParent() instanceof PyCallExpression) return false;
+    final PsiReference reference = problemElement.getReference();
+    if (problemElement.getParent() instanceof PyCallExpression ||
+        (reference != null && reference.resolve() == null)) return false;
     final PyType type = problemElement.getType(TypeEvalContext.fast());
     return (type == null || type instanceof PyReturnTypeReference);
   }
