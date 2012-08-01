@@ -107,6 +107,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.noncode.GrInheritConstructorContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.PropertyResolverProcessor;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.*;
 
@@ -1265,16 +1266,29 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (resolved == null) return;
     assert resolved instanceof PsiClass;
 
-    PsiClass anno = (PsiClass) resolved;
+    PsiClass anno = (PsiClass)resolved;
     if (!anno.isAnnotationType()) {
       myHolder.createErrorAnnotation(ref, GroovyBundle.message("class.is.not.annotation", ((PsiClass)resolved).getQualifiedName()));
       return;
     }
     PsiElement parent = annotation.getParent();
     PsiElement owner = parent.getParent();
-    String[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(parent instanceof PsiModifierList ? owner : parent);
+
+    final PsiElement ownerToUse = parent instanceof PsiModifierList ? owner : parent;
+
+    String[] elementTypeFields;
+    //hack for @Field: Field accepts local vars but our type inferrer thinks that lcoal var with @Field is field itself.
+    if (GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD.equals(anno.getQualifiedName()) &&
+        ownerToUse instanceof GrVariableDeclaration &&
+        GroovyRefactoringUtil.isLocalVariable(((GrVariableDeclaration)ownerToUse).getVariables()[0])) {
+      elementTypeFields = new String[]{"LOCAL_VARIABLE"};
+    }
+    else {
+      elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(ownerToUse);
+    }
     if (elementTypeFields != null && !GrAnnotationImpl.isAnnotationApplicableTo(annotation, false, elementTypeFields)) {
-      String description = JavaErrorMessages.message("annotation.not.applicable", ref.getText(), JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
+      String description = JavaErrorMessages
+        .message("annotation.not.applicable", ref.getText(), JavaErrorMessages.message("annotation.target." + elementTypeFields[0]));
       myHolder.createErrorAnnotation(ref, description);
     }
 
