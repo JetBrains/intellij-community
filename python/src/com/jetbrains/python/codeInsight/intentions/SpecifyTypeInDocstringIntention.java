@@ -54,7 +54,10 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
         problemElement = qualifier;
       }
     }
-    if (problemElement.getParent() instanceof PyCallExpression) return false;
+    if (problemElement.getParent() instanceof PyCallExpression
+        || PsiTreeUtil.getParentOfType(problemElement, PyLambdaExpression.class) != null) {
+      return false;
+    }
     final PyType type = problemElement.getType(TypeEvalContext.fast());
     if (type == null || type instanceof PyReturnTypeReference) {
       PyFunction pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
