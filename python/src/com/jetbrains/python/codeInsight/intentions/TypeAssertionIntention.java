@@ -56,7 +56,7 @@ public class TypeAssertionIntention implements IntentionAction {
         (reference != null && reference.resolve() == null)) {
       return false;
     }
-    final PyType type = problemElement.getType(TypeEvalContext.fast());
+    final PyType type = problemElement.getType(TypeEvalContext.slow());
     return (type == null || type instanceof PyReturnTypeReference);
   }
 

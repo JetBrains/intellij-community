@@ -58,7 +58,7 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
         || PsiTreeUtil.getParentOfType(problemElement, PyLambdaExpression.class) != null) {
       return false;
     }
-    final PyType type = problemElement.getType(TypeEvalContext.fast());
+    final PyType type = problemElement.getType(TypeEvalContext.slow());
     if (type == null || type instanceof PyReturnTypeReference) {
       PyFunction pyFunction = PsiTreeUtil.getParentOfType(problemElement, PyFunction.class);
       PsiReference reference = problemElement.getReference();
