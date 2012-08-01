@@ -18,11 +18,11 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 
 public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
@@ -132,6 +132,13 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
       final int offsetAfterEQ = variable.getInitializer().getTextRange().getStartOffset() + 1;
       newDecl = (PsiDeclarationStatement)CodeStyleManager.getInstance(psiManager).reformatRange(newDecl, offsetBeforeEQ, offsetAfterEQ);
 
+      PsiElement child = statement.getLastChild();
+      while (child instanceof PsiComment || child instanceof PsiWhiteSpace) {
+        child = child.getPrevSibling();
+      }
+      if (child != null && child.getNextSibling() != null) {
+        newDecl.addRangeBefore(child.getNextSibling(), statement.getLastChild(), null);
+      }
 
       decl.replace(newDecl);
       statement.delete();
