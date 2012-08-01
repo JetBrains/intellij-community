@@ -71,7 +71,8 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
           parameter = (PyParameter)problemElement;
         else if (reference != null && reference.resolve() instanceof PyParameter)
           parameter = (PyParameter)reference.resolve();
-        if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).getAnnotation() != null) return false;
+        if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null ||
+          parameter.getDefaultValue() != null)) return false;
         return true;
       }
     }
