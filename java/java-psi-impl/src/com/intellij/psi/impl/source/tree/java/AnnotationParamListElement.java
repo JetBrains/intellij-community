@@ -28,11 +28,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class PsiAnnotationParameterListImpl extends PsiCommaSeparatedListImpl implements PsiAnnotationParameterList {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiAnnotationParameterListImpl");
+public class AnnotationParamListElement extends PsiCommaSeparatedListImpl implements PsiAnnotationParameterList {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.AnnotationParamListElement");
   private volatile PsiNameValuePair[] myCachedMembers = null;
 
-  public PsiAnnotationParameterListImpl() {
+  public AnnotationParamListElement() {
     super(ANNOTATION_PARAMETER_LIST, NAME_VALUE_PAIR_BIT_SET);
   }
 

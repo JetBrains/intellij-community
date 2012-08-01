@@ -21,10 +21,7 @@ package com.intellij.psi.impl.java.stubs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.*;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterExtendsBoundsListImpl;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterImpl;
-import com.intellij.psi.impl.source.tree.java.PsiTypeParameterListImpl;
+import com.intellij.psi.impl.source.tree.java.*;
 
 public class SourceStubPsiFactory extends StubPsiFactory {
   @Override
@@ -105,5 +102,15 @@ public class SourceStubPsiFactory extends StubPsiFactory {
   @Override
   public PsiTypeParameterList createTypeParameterList(PsiTypeParameterListStub stub) {
     return new PsiTypeParameterListImpl(stub);
+  }
+
+  @Override
+  public PsiAnnotationParameterList createAnnotationParameterList(PsiAnnotationParameterListStub stub) {
+    return new PsiAnnotationParamListImpl(stub);
+  }
+
+  @Override
+  public PsiNameValuePair createNameValuePair(PsiNameValuePairStub stub) {
+    return new PsiNameValuePairImpl(stub);
   }
 }

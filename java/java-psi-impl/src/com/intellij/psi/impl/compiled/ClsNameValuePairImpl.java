@@ -90,6 +90,11 @@ public class ClsNameValuePairImpl extends ClsElementImpl implements PsiNameValue
   }
 
   @Override
+  public String getLiteralValue() {
+    return null;
+  }
+
+  @Override
   public PsiAnnotationMemberValue getValue() {
     return myMemberValue;
   }

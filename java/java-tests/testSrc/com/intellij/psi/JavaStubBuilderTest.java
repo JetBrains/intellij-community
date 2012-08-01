@@ -92,6 +92,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "  CLASS:PsiClassStub[interface deprecatedA name=I fqn=p.I]\n" +
            "    MODIFIER_LIST:PsiModifierListStub[mask=5120]\n" +
            "      ANNOTATION:PsiAnnotationStub[@java.lang.Deprecated]\n" +
+           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
            "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n" +
@@ -308,6 +309,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        METHOD:PsiMethodStub[close:void]\n" +
            "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
            "            ANNOTATION:PsiAnnotationStub[@Override]\n" +
+           "              ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "          TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "          PARAMETER_LIST:PsiParameterListStub\n" +
            "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
@@ -339,9 +341,43 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "        METHOD:PsiMethodStub[iterator:Iterator<String>]\n" +
            "          MODIFIER_LIST:PsiModifierListStub[mask=1]\n" +
            "            ANNOTATION:PsiAnnotationStub[@Override]\n" +
+           "              ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "          TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
            "          PARAMETER_LIST:PsiParameterListStub\n" +
            "          THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
+  }
+
+  public void testAnnotationParameters() throws Exception {
+    doTest("@Deprecated(\"bar\")\n" +
+           "class Foo  {\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[deprecatedA name=Foo fqn=Foo]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      ANNOTATION:PsiAnnotationStub[@Deprecated(\"bar\")]\n" +
+           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "          NAME_VALUE_PAIR:PsiNameValuePairStubImpl\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
+  }
+
+  public void testAnnotation() throws Exception {
+    doTest("@Deprecated\n" +
+           "class Foo  {\n" +
+           "}",
+
+           "PsiJavaFileStub []\n" +
+           "  IMPORT_LIST:PsiImportListStub\n" +
+           "  CLASS:PsiClassStub[deprecatedA name=Foo fqn=Foo]\n" +
+           "    MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      ANNOTATION:PsiAnnotationStub[@Deprecated]\n" +
+           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "    TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "    EXTENDS_LIST:PsiRefListStub[EXTENDS_LIST:]\n" +
+           "    IMPLEMENTS_LIST:PsiRefListStub[IMPLEMENTS_LIST:]\n");
   }
 
   public void testSOEProof() {

@@ -56,6 +56,11 @@ public class GrAnnotationNameValuePairImpl extends GroovyPsiElementImpl implemen
     return nameId != null ? nameId.getText() : null;
   }
 
+  @Override
+  public String getLiteralValue() {
+    return null;
+  }
+
   @Nullable
   public PsiElement getNameIdentifierGroovy() {
     return findChildByType(GroovyTokenTypes.mIDENT);
