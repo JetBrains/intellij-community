@@ -51,7 +51,10 @@ public class TypeAssertionIntention implements IntentionAction {
     }
     final PsiReference reference = problemElement.getReference();
     if (problemElement.getParent() instanceof PyCallExpression ||
-        (reference != null && reference.resolve() == null)) return false;
+        PsiTreeUtil.getParentOfType(problemElement, PyListCompExpression.class) != null ||
+        (reference != null && reference.resolve() == null)) {
+      return false;
+    }
     final PyType type = problemElement.getType(TypeEvalContext.fast());
     return (type == null || type instanceof PyReturnTypeReference);
   }
