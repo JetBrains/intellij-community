@@ -144,7 +144,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       else if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the nullity annotations" +
                                                     " be available in all your project sources.\n\nYou will need to add annotations.jar as a library. " +
                                                     "It is possible to configure custom jar in e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
-                                                    " The IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license. Would you like to do it now?",
+                                                    " IntelliJ IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license. Would you like to do it now?",
                                            INFER_NULLITY_ANNOTATIONS, Messages.getErrorIcon()) == DialogWrapper.OK_EXIT_CODE) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
