@@ -5,7 +5,9 @@ import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -39,6 +41,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -52,6 +55,8 @@ import java.util.Set;
  * @author Eugene.Kudelevsky
  */
 public class AndroidExtractStyleAction extends BaseRefactoringAction {
+  @NonNls public static final String ACTION_ID = "AndroidExtractStyleAction";
+
   private static String[] NON_EXTRACTABLE_ATTRIBUTES =
     new String[]{AndroidDomUtil.ATTR_ID, AndroidDomUtil.ATTR_TEXT, AndroidDomUtil.ATTR_HINT, AndroidDomUtil.ATTR_SRC,
       AndroidDomUtil.ATTR_ON_CLICK};
@@ -109,7 +114,45 @@ public class AndroidExtractStyleAction extends BaseRefactoringAction {
 
   @Override
   protected RefactoringActionHandler getHandler(DataContext dataContext) {
-    return new MyHandler(myTestConfig);
+    final XmlTag componentTag = getComponentTag(dataContext);
+    return new MyHandler(myTestConfig, componentTag);
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    final DataContext context = e.getDataContext();
+
+    final DataContext patchedContext = new DataContext() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        final Object data = context.getData(dataId);
+        if (data != null) {
+          return data;
+        }
+        if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+          return getComponentTag(context);
+        }
+        return null;
+      }
+    };
+    super.update(new AnActionEvent(e.getInputEvent(), patchedContext, e.getPlace(), e.getPresentation(),
+                                   e.getActionManager(), e.getModifiers()));
+  }
+
+  @Nullable
+  private static XmlTag getComponentTag(DataContext dataContext) {
+    if (dataContext == null) {
+      return null;
+    }
+
+    for (AndroidRefactoringContextProvider provider : AndroidRefactoringContextProvider.EP_NAME.getExtensions()) {
+      final XmlTag componentTag = provider.getComponentTag(dataContext);
+
+      if (componentTag != null) {
+        return componentTag;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -293,13 +336,19 @@ public class AndroidExtractStyleAction extends BaseRefactoringAction {
 
   private static class MyHandler implements RefactoringActionHandler {
     private final MyTestConfig myTestConfig;
+    private final XmlTag myTag;
 
-    private MyHandler(@Nullable MyTestConfig testConfig) {
+    private MyHandler(@Nullable MyTestConfig testConfig, @Nullable XmlTag tag) {
       myTestConfig = testConfig;
+      myTag = tag;
     }
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
+      if (myTag != null) {
+        doExtractStyle(myTag, myTestConfig);
+        return;
+      }
       final PsiElement element = getElementAtCaret(editor, file);
       if (element == null) {
         return;
@@ -313,6 +362,10 @@ public class AndroidExtractStyleAction extends BaseRefactoringAction {
 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
+      if (myTag != null) {
+        doExtractStyle(myTag, myTestConfig);
+        return;
+      }
       if (elements.length != 1) {
         return;
       }

@@ -38,9 +38,7 @@ import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
 import com.intellij.designer.palette.PaletteItem;
 import com.intellij.designer.palette.PaletteToolWindowManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
@@ -62,6 +60,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
+import org.jetbrains.android.refactoring.AndroidExtractStyleAction;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.uipreview.*;
@@ -137,6 +136,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
 
     myActionPanel.getPopupGroup().addSeparator();
+    myActionPanel.getPopupGroup().add(buildRefactorActionGroup());
+
     AnAction gotoDeclaration = new AnAction("Go To Declaration") {
       @Override
       public void update(AnActionEvent e) {
@@ -153,6 +154,15 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     };
     myActionPanel.registerAction(gotoDeclaration, IdeActions.ACTION_GOTO_DECLARATION);
     myActionPanel.getPopupGroup().add(gotoDeclaration);
+  }
+
+  @NotNull
+  private static ActionGroup buildRefactorActionGroup() {
+    final DefaultActionGroup group = new DefaultActionGroup("_Refactor", true);
+    final ActionManager manager = ActionManager.getInstance();
+    final AnAction action = manager.getAction(AndroidExtractStyleAction.ACTION_ID);
+    group.add(new AndroidRefactoringActionWrapper("_Extract style", action));
+    return group;
   }
 
   private void reparseFile() {
