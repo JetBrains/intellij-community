@@ -353,16 +353,16 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
                                        PsiElement resolved,
                                        HashMap<PsiElement, HashSet<PsiElement>> reported, MultiMap<PsiElement, String> conflicts) {
     final PsiElement container = ConflictsUtil.getContainer(reference);
-    HashSet<PsiElement> containerSet = reported.get(resolved);
+    HashSet<PsiElement> containerSet = reported.get(container);
     if (containerSet == null) {
       containerSet = new HashSet<PsiElement>();
-      reported.put(resolved, containerSet);
+      reported.put(container, containerSet);
     }
-    if (!containerSet.contains(container)) {
-      containerSet.add(container);
+    if (!containerSet.contains(resolved)) {
+      containerSet.add(resolved);
       String placesDescription;
       if (containerSet.size() == 1) {
-        placesDescription = RefactoringUIUtil.getDescription(container, true);
+        placesDescription = RefactoringUIUtil.getDescription(resolved, true);
       } else {
         placesDescription = "<ol><li>" + StringUtil.join(containerSet, new Function<PsiElement, String>() {
           @Override
@@ -372,9 +372,9 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
         }, "</li><li>") + "</li></ol>";
       }
       String message = RefactoringBundle.message("0.will.become.inaccessible.from.1",
-                                                 RefactoringUIUtil.getDescription(resolved, true),
-                                                 placesDescription);
-      conflicts.put(resolved, Collections.singletonList(message));
+                                                 placesDescription,
+                                                 RefactoringUIUtil.getDescription(container, true));
+      conflicts.put(container, Collections.singletonList(message));
     }
   }
 
