@@ -450,6 +450,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
 
     initInputMapDefaults(uiDefaults);
 
+    if (UIUtil.isUnderJGoodiesLookAndFeel()) {
+      UIManager.put("Menu.opaque", true);
+      UIManager.put("MenuItem.opaque", true);
+    }
+
     UIManager.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
     UIManager.put("MenuItem.background", UIManager.getColor("Menu.background"));
 
@@ -474,7 +479,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void fixTreeWideSelection(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAlloyIDEALookAndFeel()) {
+    if (UIUtil.isUnderAlloyIDEALookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
       final Color bg = new ColorUIResource(56, 117, 215);
       final Color fg = new ColorUIResource(Color.WHITE);
       uiDefaults.put("info", bg);

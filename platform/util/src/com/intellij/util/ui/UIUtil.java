@@ -876,6 +876,11 @@ public class UIUtil {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
+  public static boolean isUnderJGoodiesLookAndFeel() {
+    return UIManager.getLookAndFeel().getName().contains("JGoodies");
+  }
+
+  @SuppressWarnings({"HardCodedStringLiteral"})
   public static boolean isUnderAquaBasedLookAndFeel() {
     return SystemInfo.isMac && (isUnderAquaLookAndFeel() || isUnderDarcula());
   }
