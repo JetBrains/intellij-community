@@ -13,19 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.actions;
+package com.intellij.xdebugger.impl.ui.tree.actions;
 
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
 import com.intellij.openapi.diff.DiffManager;
 import com.intellij.openapi.diff.actions.ClipboardVsValueContents;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ui.UIUtil;
 
 /**
- * @author Jeka
+ * User: ksafonov
  */
-public class CompareValueWithClipboardAction extends BaseValueAction {
-  protected void processText(final Project project, final String text, DebuggerTreeNodeImpl node, DebuggerContextImpl debuggerContext) {
-    DiffManager.getInstance().getDiffTool().show(new ClipboardVsValueContents(text, project));
+public class XCompareWithClipboardAction extends XFetchValueActionBase {
+
+  @Override
+  protected void handle(final Project project, final String value) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        DiffManager.getInstance().getDiffTool().show(new ClipboardVsValueContents(value, project));
+      }
+    });
   }
+
 }

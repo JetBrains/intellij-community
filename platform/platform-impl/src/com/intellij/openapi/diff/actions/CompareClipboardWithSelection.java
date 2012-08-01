@@ -22,15 +22,11 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.datatransfer.DataFlavor;
-import java.awt.datatransfer.Transferable;
 
 public class CompareClipboardWithSelection extends BaseDiffAction {
   @Nullable
@@ -68,7 +64,7 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
     @NotNull
     public DiffContent[] getContents() {
       if (myContents != null) return myContents;
-      DiffContent clipboardContent = createClipboardContent();
+      DiffContent clipboardContent = ClipboardVsValueContents.createClipboardContent();
       if (clipboardContent == null) clipboardContent = new SimpleContent("");
       myContents = new DiffContent[2];
       myContents[0] = clipboardContent;
@@ -97,16 +93,5 @@ public class CompareClipboardWithSelection extends BaseDiffAction {
       }
     }
 
-    @Nullable
-    private static DiffContent createClipboardContent() {
-      Transferable content = CopyPasteManager.getInstance().getContents();
-      if (content != null) {
-        try {
-          String text = (String) (content.getTransferData(DataFlavor.stringFlavor));
-          return text != null ? new SimpleContent(text) : null;
-        } catch (Exception ignored) { }
-      }
-      return null;
-    }
   }
 }
