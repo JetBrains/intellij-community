@@ -125,7 +125,7 @@ public class GitVcsPanel {
    */
   public void load(@NotNull GitVcsSettings settings) {
     myGitField.setText(settings.getAppSettings().getPathToGit());
-    mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
+    mySSHExecutableComboBox.setSelectedItem(settings.getAppSettings().isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
     myConvertTextFilesComboBox.setSelectedItem(crlfPolicyItem(settings));
     myAutoUpdateIfPushRejected.setSelected(settings.autoUpdateIfPushRejected());
     mySyncBranchControl.setSelected(settings.getSyncSetting() == GitBranchSyncSetting.SYNC);
@@ -164,7 +164,7 @@ public class GitVcsPanel {
    */
   public boolean isModified(@NotNull GitVcsSettings settings) {
     return !settings.getAppSettings().getPathToGit().equals(getCurrentExecutablePath()) ||
-           (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
+           (settings.getAppSettings().isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
            !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((settings.getSyncSetting() == GitBranchSyncSetting.SYNC) != mySyncBranchControl.isSelected() ||
@@ -179,7 +179,7 @@ public class GitVcsPanel {
   public void save(@NotNull GitVcsSettings settings) {
     settings.getAppSettings().setPathToGit(getCurrentExecutablePath());
     myVcs.checkVersion();
-    settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
+    settings.getAppSettings().setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
     settings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
 
     Object policyItem = myConvertTextFilesComboBox.getSelectedItem();

@@ -403,7 +403,7 @@ public abstract class GitHandler {
       }
 
       // setup environment
-      if (!myNoSSHFlag && myProjectSettings.isIdeaSsh()) {
+      if (!myNoSSHFlag && myAppSettings.isIdeaSsh()) {
         GitSSHService ssh = GitSSHIdeaService.getInstance();
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject));
