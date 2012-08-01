@@ -306,7 +306,11 @@ public class GroovyExpectedTypesProvider {
 
             if (canHaveSimpleExpr) {
               final PsiType type = valueAttr[0].getReturnType();
-              if (type != null && (type instanceof PsiPrimitiveType || type.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
+              if (type != null &&
+                  (type instanceof PsiPrimitiveType ||
+                   type.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+                   type.equalsToText(CommonClassNames.JAVA_LANG_CLASS) ||
+                   type instanceof PsiClassType && ((PsiClassType)type).resolve() != null && ((PsiClassType)type).resolve().isEnum())) {
                 myResult = createSimpleSubTypeResult(type);
               }
             }

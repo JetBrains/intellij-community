@@ -839,7 +839,9 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       final PsiElement resolved = ((GrClassTypeElement)element).getReferenceElement().resolve();
       if (resolved instanceof PsiClass) {
         if (CommonClassNames.JAVA_LANG_STRING.equals(((PsiClass)resolved).getQualifiedName())) return;
+        if (CommonClassNames.JAVA_LANG_CLASS.equals(((PsiClass)resolved).getQualifiedName())) return;
         if (((PsiClass)resolved).isAnnotationType()) return;
+        if (((PsiClass)resolved).isEnum()) return;
       }
     }
 
