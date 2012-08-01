@@ -800,14 +800,33 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
   @Override
   public void visitTypeElement(GrTypeElement typeElement) {
-    super.visitTypeElement(typeElement);
-
     final PsiElement parent = typeElement.getParent();
     if (!(parent instanceof GrMethod)) return;
 
-    checkMethodReturnType(((GrMethod)parent), typeElement, myHolder);
+    if (parent instanceof GrAnnotationMethod) {
+      checkAnnotationAttributeType(typeElement, myHolder);
+    }
+    else {
+      checkMethodReturnType(((GrMethod)parent), typeElement, myHolder);
+    }
+  }
 
+  private static void checkAnnotationAttributeType(GrTypeElement element, AnnotationHolder holder) {
+    if (element instanceof GrBuiltInTypeElement) return;
 
+    if (element instanceof GrArrayTypeElement) {
+      checkAnnotationAttributeType(((GrArrayTypeElement)element).getComponentTypeElement(), holder);
+      return;
+    }
+    else if (element instanceof GrClassTypeElement) {
+      final PsiElement resolved = ((GrClassTypeElement)element).getReferenceElement().resolve();
+      if (resolved instanceof PsiClass) {
+        if (CommonClassNames.JAVA_LANG_STRING.equals(((PsiClass)resolved).getQualifiedName())) return;
+        if (((PsiClass)resolved).isAnnotationType()) return;
+      }
+    }
+
+    holder.createErrorAnnotation(element, GroovyBundle.message("unexpected.attribute.type.0", element.getType()));
   }
 
   private static void checkMethodReturnType(PsiMethod method, PsiElement toHighlight, AnnotationHolder holder) {
@@ -1280,7 +1299,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     if (!missedAttrs.isEmpty()) {
-      myHolder.createErrorAnnotation(annotation.getClassReference(), GroovyBundle.message("missed.attributes", StringUtil.join(missedAttrs, ", ")));
+      myHolder.createErrorAnnotation(annotation.getClassReference(),
+                                     GroovyBundle.message("missed.attributes", StringUtil.join(missedAttrs, ", ")));
     }
   }
 
