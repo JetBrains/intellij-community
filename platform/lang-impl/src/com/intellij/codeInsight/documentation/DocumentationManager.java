@@ -174,7 +174,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
   
   public void setAllowContentUpdateFromContext(boolean allow) {
-    restartAutoUpdate(allow);
+    if (hasActiveDockedDocWindow()) {
+      restartAutoUpdate(allow);
+    }
   }
 
   public void showJavaDocInfoAtToolWindow(@NotNull PsiElement element, @NotNull PsiElement original) {
