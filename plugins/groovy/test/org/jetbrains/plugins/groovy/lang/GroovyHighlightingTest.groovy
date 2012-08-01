@@ -1288,4 +1288,33 @@ new Base() {
     <error descr="The return type of java.lang.Object getFoo() in anonymous class derived from Base is incompatible with java.lang.String getFoo() in Base">Object</error> getFoo() {''}
 }''')
   }
+
+  void testAnnotationArgs() {
+    testHighlighting('''\
+@interface Int {
+  int value()
+  String s() default 'a'
+}
+
+@Int(<error descr="Cannot assign 'String' to 'int'">'a'</error>) def foo(){}
+
+@Int(2) def bar(){}
+
+@Int(value = 2) def c(){}
+
+@Int(value = 3, s = <error descr="Cannot assign 'Integer' to 'String'">4</error>) def x(){}
+
+@Int(value = 3, s = '4') def y(){}
+''')
+  }
+
+  void testDefaultAttributeValue() {
+    testHighlighting('''\
+@interface Int {
+  int value1() default 2
+  String value2() default <error descr="Cannot assign 'Integer' to 'String'">2</error>
+  String value3()
+}
+''')
+  }
 }
