@@ -9,12 +9,16 @@ import org.jetbrains.jps.model.JpsElementKind;
 public class JpsElementKindBase<E extends JpsElement> extends JpsElementKind<E> {
   private String myDebugName;
 
-  public JpsElementKindBase(String debugName) {
+  protected JpsElementKindBase(String debugName) {
     myDebugName = debugName;
   }
 
   @Override
   public String toString() {
     return myDebugName;
+  }
+
+  public static <E extends JpsElement> JpsElementKindBase<E> create(String debugName) {
+    return new JpsElementKindBase<E>(debugName);
   }
 }

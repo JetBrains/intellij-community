@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class JpsArtifactOutputPackagingElementImpl extends JpsComplexPackagingElementBase<JpsArtifactOutputPackagingElementImpl>
   implements JpsArtifactOutputPackagingElement {
-  private static final JpsElementKind<JpsArtifactReference> ARTIFACT_REFERENCE_KIND = new JpsElementKindBase<JpsArtifactReference>("artifact reference");
+  private static final JpsElementKind<JpsArtifactReference> ARTIFACT_REFERENCE_KIND = JpsElementKindBase.create("artifact reference");
 
   public JpsArtifactOutputPackagingElementImpl(@NotNull JpsArtifactReference reference) {
     myContainer.setChild(ARTIFACT_REFERENCE_KIND, reference);

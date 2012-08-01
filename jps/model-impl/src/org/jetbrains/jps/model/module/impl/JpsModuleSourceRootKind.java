@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootListener;
  */
 public class JpsModuleSourceRootKind extends JpsElementKindBase<JpsModuleSourceRoot> {
   public static final JpsModuleSourceRootKind INSTANCE = new JpsModuleSourceRootKind();
-  public static final JpsElementCollectionKind<JpsModuleSourceRoot> ROOT_COLLECTION_KIND = new JpsElementCollectionKind<JpsModuleSourceRoot>(INSTANCE);
+  public static final JpsElementCollectionKind<JpsModuleSourceRoot> ROOT_COLLECTION_KIND = JpsElementCollectionKind.create(INSTANCE);
 
   public JpsModuleSourceRootKind() {
     super("module source root");

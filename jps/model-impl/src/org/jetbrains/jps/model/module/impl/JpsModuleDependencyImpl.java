@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
  * @author nik
  */
 public class JpsModuleDependencyImpl extends JpsDependencyElementBase<JpsModuleDependencyImpl> implements JpsModuleDependency {
-  private static final JpsElementKind<JpsModuleReference> MODULE_REFERENCE_KIND = new JpsElementKindBase<JpsModuleReference>("module reference");
+  private static final JpsElementKind<JpsModuleReference> MODULE_REFERENCE_KIND = JpsElementKindBase.create("module reference");
 
   public JpsModuleDependencyImpl(final JpsModuleReference moduleReference) {
     super();

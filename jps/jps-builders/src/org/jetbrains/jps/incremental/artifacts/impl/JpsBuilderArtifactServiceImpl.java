@@ -19,7 +19,8 @@ import java.util.List;
  * @author nik
  */
 public class JpsBuilderArtifactServiceImpl extends JpsBuilderArtifactService {
-  private static final JpsElementCollectionKind<JpsArtifact> SYNTHETIC_ARTIFACTS = new JpsElementCollectionKind<JpsArtifact>(JpsArtifactKind.INSTANCE);
+  private static final JpsElementCollectionKind<JpsArtifact> SYNTHETIC_ARTIFACTS =
+    JpsElementCollectionKind.create(JpsArtifactKind.INSTANCE);
 
   @Override
   public Collection<JpsArtifact> getArtifacts(JpsModel model, boolean includeSynthetic) {

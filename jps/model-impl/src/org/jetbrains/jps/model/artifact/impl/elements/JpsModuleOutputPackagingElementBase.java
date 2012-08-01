@@ -14,7 +14,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
  */
 public abstract class JpsModuleOutputPackagingElementBase<Self extends JpsModuleOutputPackagingElementBase<Self>> extends JpsCompositeElementBase<Self> implements
                                                                                                                                                         JpsModuleOutputPackagingElement {
-  private static final JpsElementKind<JpsModuleReference> MODULE_REFERENCE_KIND = new JpsElementKindBase<JpsModuleReference>("module reference");
+  private static final JpsElementKind<JpsModuleReference> MODULE_REFERENCE_KIND = JpsElementKindBase.create("module reference");
 
   public JpsModuleOutputPackagingElementBase(JpsModuleReference moduleReference) {
     myContainer.setChild(MODULE_REFERENCE_KIND, moduleReference);

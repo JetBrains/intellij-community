@@ -11,7 +11,7 @@ import java.util.List;
 public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Self extends JpsNamedElementReferenceBase<T, Self>>
   extends JpsCompositeElementBase<Self> implements JpsElementReference<T> {
   private static final JpsElementKind<JpsElementReference<? extends JpsCompositeElement>> PARENT_REFERENCE_KIND =
-    new JpsElementKindBase<JpsElementReference<? extends JpsCompositeElement>>("parent");
+    JpsElementKindBase.create("parent");
   private final JpsElementCollectionKind<? extends T> myCollectionKind;
   protected final String myElementName;
 

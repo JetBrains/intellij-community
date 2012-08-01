@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.module.JpsModuleListener;
  */
 public class JpsModuleKind extends JpsElementKindBase<JpsModule> {
   public static final JpsElementKind<JpsModule> INSTANCE = new JpsModuleKind();
-  public static final JpsElementCollectionKind<JpsModule> MODULE_COLLECTION_KIND = new JpsElementCollectionKind<JpsModule>(INSTANCE);
+  public static final JpsElementCollectionKind<JpsModule> MODULE_COLLECTION_KIND = JpsElementCollectionKind.create(INSTANCE);
 
   public JpsModuleKind() {
     super("module");

@@ -14,7 +14,8 @@ import java.util.List;
  */
 public abstract class JpsCompositePackagingElementBase<Self extends JpsCompositePackagingElementBase<Self>> extends JpsCompositeElementBase<Self>
   implements JpsCompositePackagingElement {
-  private static final JpsElementCollectionKind<JpsPackagingElement> CHILDREN_KIND = new JpsElementCollectionKind<JpsPackagingElement>(new JpsElementKindBase<JpsPackagingElement>("child"));
+  private static final JpsElementCollectionKind<JpsPackagingElement> CHILDREN_KIND =
+    JpsElementCollectionKind.create(JpsElementKindBase.create("child"));
 
   protected JpsCompositePackagingElementBase() {
     myContainer.setChild(CHILDREN_KIND);

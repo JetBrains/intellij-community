@@ -20,7 +20,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsLibraryFilesPackagingElementImpl extends JpsComplexPackagingElementBase<JpsLibraryFilesPackagingElementImpl> implements JpsLibraryFilesPackagingElement {
-  private static final JpsElementKind<JpsLibraryReference> LIBRARY_REFERENCE_KIND = new JpsElementKindBase<JpsLibraryReference>("library reference");
+  private static final JpsElementKind<JpsLibraryReference> LIBRARY_REFERENCE_KIND = JpsElementKindBase.create("library reference");
 
   public JpsLibraryFilesPackagingElementImpl(@NotNull JpsLibraryReference reference) {
     myContainer.setChild(LIBRARY_REFERENCE_KIND, reference);

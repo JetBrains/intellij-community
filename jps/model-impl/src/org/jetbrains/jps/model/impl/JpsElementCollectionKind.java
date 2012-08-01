@@ -10,7 +10,7 @@ public class JpsElementCollectionKind<E extends JpsElement> extends JpsElementKi
                                                             implements JpsElementCreator<JpsElementCollectionImpl<E>> {
   private final JpsElementKind<E> myElementKind;
 
-  public JpsElementCollectionKind(@NotNull JpsElementKind<E> elementKind) {
+  private JpsElementCollectionKind(@NotNull JpsElementKind<E> elementKind) {
     super("collection of " + elementKind);
     myElementKind = elementKind;
   }
@@ -32,5 +32,9 @@ public class JpsElementCollectionKind<E extends JpsElement> extends JpsElementKi
   @Override
   public int hashCode() {
     return myElementKind.hashCode();
+  }
+
+  public static <E extends JpsElement> JpsElementCollectionKind<E> create(@NotNull JpsElementKind<E> elementKind) {
+    return new JpsElementCollectionKind<E>(elementKind);
   }
 }

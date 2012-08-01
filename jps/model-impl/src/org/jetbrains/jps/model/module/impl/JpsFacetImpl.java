@@ -19,7 +19,7 @@ import org.jetbrains.jps.model.module.JpsModule;
  */
 public class JpsFacetImpl extends JpsNamedCompositeElementBase<JpsFacetImpl> implements JpsFacet {
   private static final JpsTypedDataKind<JpsFacetType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsFacetType<?>>();
-  private static final JpsElementKind<JpsFacetReference> PARENT_FACET_REFERENCE = new JpsElementKindBase<JpsFacetReference>("parent facet");
+  private static final JpsElementKind<JpsFacetReference> PARENT_FACET_REFERENCE = JpsElementKindBase.create("parent facet");
 
   public <P extends JpsElementProperties>JpsFacetImpl(JpsFacetType<?> facetType, @NotNull String name, @NotNull P properties) {
     super(name);

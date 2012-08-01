@@ -35,7 +35,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModuleExtensionImpl> implements JpsAndroidModuleExtension {
-  public static final JpsElementKindBase<JpsAndroidModuleExtension> KIND = new JpsElementKindBase<JpsAndroidModuleExtension>("android extension");
+  public static final JpsElementKindBase<JpsAndroidModuleExtension> KIND = JpsElementKindBase.create("android extension");
   private final JpsAndroidModuleProperties myProperties;
   private final String myBaseModulePath;
 

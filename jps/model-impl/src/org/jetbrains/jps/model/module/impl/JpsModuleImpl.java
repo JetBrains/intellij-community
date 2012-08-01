@@ -18,7 +18,7 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl> i
   private static final JpsTypedDataKind<JpsModuleType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleType<?>>();
   private static final JpsUrlListKind CONTENT_ROOTS_KIND = new JpsUrlListKind("content roots");
   private static final JpsUrlListKind EXCLUDED_ROOTS_KIND = new JpsUrlListKind("excluded roots");
-  public static final JpsElementKind<JpsDependenciesListImpl> DEPENDENCIES_LIST_KIND = new JpsElementKindBase<JpsDependenciesListImpl>("dependencies");
+  public static final JpsElementKind<JpsDependenciesListImpl> DEPENDENCIES_LIST_KIND = JpsElementKindBase.create("dependencies");
   private final JpsLibraryCollection myLibraryCollection;
 
   public <P extends JpsElementProperties> JpsModuleImpl(JpsModuleType<P> type, @NotNull String name, @NotNull P properties) {

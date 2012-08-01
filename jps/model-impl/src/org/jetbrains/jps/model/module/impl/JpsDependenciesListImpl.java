@@ -16,7 +16,7 @@ import java.util.List;
  */
 public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependenciesListImpl> implements JpsDependenciesList {
   public static final JpsElementCollectionKind<JpsDependencyElement> DEPENDENCY_COLLECTION_KIND =
-    new JpsElementCollectionKind<JpsDependencyElement>(new JpsElementKindBase<JpsDependencyElement>("dependency"));
+    JpsElementCollectionKind.create(JpsElementKindBase.create("dependency"));
 
   public JpsDependenciesListImpl() {
     super();

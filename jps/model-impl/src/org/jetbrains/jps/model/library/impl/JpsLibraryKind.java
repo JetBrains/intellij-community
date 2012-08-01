@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.library.JpsLibraryListener;
  */
 public class JpsLibraryKind extends JpsElementKindBase<JpsLibrary> {
   public static final JpsLibraryKind INSTANCE = new JpsLibraryKind();
-  public static final JpsElementCollectionKind<JpsLibrary> LIBRARIES_COLLECTION_KIND = new JpsElementCollectionKind<JpsLibrary>(INSTANCE);
+  public static final JpsElementCollectionKind<JpsLibrary> LIBRARIES_COLLECTION_KIND = JpsElementCollectionKind.create(INSTANCE);
 
   private JpsLibraryKind() {
     super("library");

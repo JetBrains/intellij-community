@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension;
 public class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<ExplodedDirectoryModuleExtensionImpl> implements
                                                                                                                ExplodedDirectoryModuleExtension {
   public static final JpsElementKindBase<ExplodedDirectoryModuleExtension> KIND =
-    new JpsElementKindBase<ExplodedDirectoryModuleExtension>("exploded directory");
+    JpsElementKindBase.create("exploded directory");
 
   private String myExplodedUrl;
   private boolean myExcludeExploded;

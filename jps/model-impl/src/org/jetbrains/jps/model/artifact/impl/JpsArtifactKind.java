@@ -9,7 +9,7 @@ import org.jetbrains.jps.model.impl.JpsElementKindBase;
 */
 public class JpsArtifactKind extends JpsElementKindBase<JpsArtifact> {
   public static final JpsArtifactKind INSTANCE = new JpsArtifactKind();
-  public static final JpsElementCollectionKind<JpsArtifact> ARTIFACT_COLLECTION_KIND = new JpsElementCollectionKind<JpsArtifact>(INSTANCE);
+  public static final JpsElementCollectionKind<JpsArtifact> ARTIFACT_COLLECTION_KIND = JpsElementCollectionKind.create(INSTANCE);
 
   public JpsArtifactKind() {
     super("artifact");

@@ -72,7 +72,7 @@ public class JpsLibraryImpl<P extends JpsElementProperties> extends JpsNamedComp
   }
 
   private static JpsElementCollectionKind<JpsLibraryRoot> getKind(JpsOrderRootType type) {
-    return new JpsElementCollectionKind<JpsLibraryRoot>(new JpsLibraryRootKind(type));
+    return JpsElementCollectionKind.create(new JpsLibraryRootKind(type));
   }
 
   @Override

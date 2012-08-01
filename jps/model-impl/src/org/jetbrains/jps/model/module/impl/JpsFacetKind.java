@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.module.JpsFacetListener;
  */
 public class JpsFacetKind extends JpsElementKindBase<JpsFacet> {
   public static final JpsFacetKind INSTANCE = new JpsFacetKind();
-  public static final JpsElementCollectionKind<JpsFacet> COLLECTION_KIND = new JpsElementCollectionKind<JpsFacet>(INSTANCE);
+  public static final JpsElementCollectionKind<JpsFacet> COLLECTION_KIND = JpsElementCollectionKind.create(INSTANCE);
 
   public JpsFacetKind() {
     super("facet");

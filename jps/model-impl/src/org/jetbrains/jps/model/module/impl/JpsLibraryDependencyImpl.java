@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.module.JpsLibraryDependency;
  * @author nik
  */
 public class JpsLibraryDependencyImpl extends JpsDependencyElementBase<JpsLibraryDependencyImpl> implements JpsLibraryDependency {
-  public static final JpsElementKind<JpsLibraryReference> LIBRARY_REFERENCE_KIND = new JpsElementKindBase<JpsLibraryReference>("library reference");
+  public static final JpsElementKind<JpsLibraryReference> LIBRARY_REFERENCE_KIND = JpsElementKindBase.create("library reference");
 
   public JpsLibraryDependencyImpl(final JpsLibraryReference reference) {
     super();

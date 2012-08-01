@@ -17,7 +17,7 @@ import org.jetbrains.jps.model.impl.JpsTypedDataKind;
  * @author nik
  */
 public class JpsArtifactImpl extends JpsNamedCompositeElementBase<JpsArtifactImpl> implements JpsArtifact {
-  private static final JpsElementKind<JpsCompositePackagingElement> ROOT_ELEMENT_KIND = new JpsElementKindBase<JpsCompositePackagingElement>("root element");
+  private static final JpsElementKind<JpsCompositePackagingElement> ROOT_ELEMENT_KIND = JpsElementKindBase.create("root element");
   private static final JpsTypedDataKind<JpsArtifactType> TYPED_DATA_KIND = new JpsTypedDataKind<JpsArtifactType>();
   private String myOutputPath;
 
