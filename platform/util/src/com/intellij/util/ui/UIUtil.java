@@ -2329,21 +2329,24 @@ public class UIUtil {
   
   @Nullable
   public static JComponent mergeComponentsWithAnchor(Collection<? extends PanelWithAnchor> panels) {
-    JComponent tempAnchor = null;
+    JComponent maxWidthAnchor = null;
     int maxWidth = 0;
     for (PanelWithAnchor panel : panels) {
-      if (panel == null) continue;
-      if (panel.getAnchor() == null) continue;
-      if (maxWidth < panel.getAnchor().getPreferredSize().width) {
-        maxWidth = panel.getAnchor().getPreferredSize().width;
-        tempAnchor = panel.getAnchor();
+      JComponent anchor = panel != null ? panel.getAnchor() : null;
+      if (anchor != null) {
+        int anchorWidth = anchor.getPreferredSize().width;
+        if (maxWidth < anchorWidth) {
+          maxWidth = anchorWidth;
+          maxWidthAnchor = anchor;
+        }
       }
     }
     for (PanelWithAnchor panel : panels) {
-      if (panel == null) continue;
-      panel.setAnchor(tempAnchor);
+      if (panel != null) {
+        panel.setAnchor(maxWidthAnchor);
+      }
     }
-    return tempAnchor;
+    return maxWidthAnchor;
   }
 
   public static void setNotOpaqueRecursively(@NotNull Component component) {
