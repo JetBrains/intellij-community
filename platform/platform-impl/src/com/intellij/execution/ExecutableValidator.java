@@ -15,6 +15,7 @@
  */
 package com.intellij.execution;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
@@ -24,11 +25,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.wm.ToolWindowId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 
 /**
  * Validates the given external executable.
@@ -125,23 +130,29 @@ public abstract class ExecutableValidator {
   private String prepareDescription() {
     String executable = getCurrentExecutable();
     if (executable.isEmpty()) {
-      return String.format("<b>%s</b>%s", myNotificationErrorTitle, myNotificationErrorDescription);
+      return String.format("<b>%s</b>%s <a href=''>Fix it.</a>", myNotificationErrorTitle, myNotificationErrorDescription);
     } else {
-      return String.format("<b>%s:</b> <code>%s</code><br/>%s", myNotificationErrorTitle, executable, myNotificationErrorDescription);
+      return String.format("<b>%s:</b> <code>%s</code><br/>%s <a href=''>Fix it.</a>",
+                           myNotificationErrorTitle, executable, myNotificationErrorDescription);
     }
   }
 
   private void showSettingsAndExpireIfFixed(@NotNull Notification notification) {
-    Configurable configurable = getConfigurable();
-    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable.getDisplayName());
+    showSettings();
     if (isExecutableValid(getCurrentExecutable())) {
       notification.expire();
     }
   }
 
+  private void showSettings() {
+    Configurable configurable = getConfigurable();
+    ShowSettingsUtil.getInstance().showSettingsDialog(myProject, configurable.getDisplayName());
+  }
+
   /**
    * Checks if executable is valid and displays the notification if not.
    * @return true if executable was valid, false - if not valid (and notification was shown in that case).
+   * @see #checkExecutableAndShowMessageIfNeeded(java.awt.Component)
    */
   public boolean checkExecutableAndNotifyIfNeeded() {
     if (myProject.isDisposed()) {
@@ -153,7 +164,44 @@ public abstract class ExecutableValidator {
     }
     return true;
   }
-  
+
+  /**
+   * Checks if executable is valid and shows the message if not.
+   * This method is to be used instead of {@link #checkExecutableAndNotifyIfNeeded()} when Git fails to start from a modal dialog:
+   * in that case user won't be able to click "Fix it".
+   * @return true if executable was valid, false - if not valid (and a message is shown in that case).
+   * @see #checkExecutableAndNotifyIfNeeded()
+   */
+  public boolean checkExecutableAndShowMessageIfNeeded(@Nullable Component parentComponent) {
+    if (myProject.isDisposed()) {
+      return false;
+    }
+
+    if (!isExecutableValid(getCurrentExecutable())) {
+      if (Messages.OK == showMessage(parentComponent)) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            showSettings();
+          }
+        });
+      }
+      return false;
+    }
+    return true;
+  }
+
+  private int showMessage(@Nullable Component parentComponent) {
+    String okText = "Fix it";
+    String cancelText = CommonBundle.getCancelButtonText();
+    Icon icon = Messages.getErrorIcon();
+    String title = myNotificationErrorTitle;
+    String description = myNotificationErrorDescription;
+    return parentComponent != null
+           ? Messages.showOkCancelDialog(parentComponent, description, title, okText, cancelText, icon)
+           : Messages.showOkCancelDialog(myProject, description, title, okText, cancelText, icon);
+  }
+
   public boolean isExecutableValid() {
     return isExecutableValid(getCurrentExecutable());
   }
