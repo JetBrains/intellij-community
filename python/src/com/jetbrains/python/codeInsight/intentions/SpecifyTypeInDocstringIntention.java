@@ -66,8 +66,19 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
         final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
         if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) reference = qualifier.getReference();
       }
-      if (pyFunction != null && (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter))
+      if (pyFunction != null && (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter)) {
+        final String docstring = pyFunction.getDocStringValue();
+        if (docstring != null) {
+          String name = problemElement.getName();
+          if (problemElement instanceof PyQualifiedExpression) {
+            final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
+            if (qualifier != null)
+              name = qualifier.getText();
+          }
+          if (docstring.contains("type " + name + ":")) return false;
+        }
         return true;
+      }
     }
     return false;
   }

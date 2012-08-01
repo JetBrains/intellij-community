@@ -65,8 +65,15 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
         final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
         if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) reference = qualifier.getReference();
       }
-      if (pyFunction != null && (problemElement instanceof PyParameter || reference != null && reference.resolve() instanceof PyParameter))
+      if (pyFunction != null) {
+        PyParameter parameter = null;
+        if (problemElement instanceof PyParameter)
+          parameter = (PyParameter)problemElement;
+        else if (reference != null && reference.resolve() instanceof PyParameter)
+          parameter = (PyParameter)reference.resolve();
+        if (parameter instanceof PyNamedParameter && ((PyNamedParameter)parameter).getAnnotation() != null) return false;
         return true;
+      }
     }
     return false;
   }
