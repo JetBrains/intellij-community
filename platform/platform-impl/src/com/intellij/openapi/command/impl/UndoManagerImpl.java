@@ -234,7 +234,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       myCurrentActionProject = project;
     }
 
-    commandStarted(undoConfirmationPolicy);
+    commandStarted(undoConfirmationPolicy, myProject == project);
 
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
@@ -250,11 +250,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
 
-  private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy) {
+  private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     if (myCommandLevel == 0) {
       myCurrentMerger = new CommandMerger(this, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
 
-      if (myProject != null) {
+      if (recordOriginalReference && myProject != null) {
         Editor editor = null;
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
@@ -349,7 +349,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myCommandLevel == 0) {
       LOG.assertTrue(action instanceof NonUndoableAction,
                      "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())");
-      commandStarted(UndoConfirmationPolicy.DEFAULT);
+      commandStarted(UndoConfirmationPolicy.DEFAULT, false);
       myCurrentMerger.addAction(action);
       commandFinished("", null);
       return;
