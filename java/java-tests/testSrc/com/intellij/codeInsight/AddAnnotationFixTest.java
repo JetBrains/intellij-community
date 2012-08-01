@@ -21,9 +21,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -175,5 +173,24 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     assertNotNull(fix);
 
     assertFalse(deannotateFix.isAvailable(project, editor, file));
+  }
+
+  public void testReadingOldPersistenceFormat() throws Throwable {
+    addLibrary();
+    myFixture.configureByFiles("content/anno/persistence/annotations.xml");
+    myFixture.configureByFiles("lib/persistence/Test.java");
+
+
+    ExternalAnnotationsManager manager = ExternalAnnotationsManager.getInstance(myFixture.getProject());
+    PsiMethod method = ((PsiJavaFile)myFixture.getFile()).getClasses()[0].getMethods()[0];
+    PsiParameter parameter = method.getParameterList().getParameters()[0];
+
+    assertNotNull(manager.findExternalAnnotation(method, AnnotationUtil.NULLABLE));
+    assertNotNull(manager.findExternalAnnotation(method, AnnotationUtil.NLS));
+    assertEquals(2, manager.findExternalAnnotations(method).length);
+
+    assertNotNull(manager.findExternalAnnotation(parameter, AnnotationUtil.NOT_NULL));
+    assertNotNull(manager.findExternalAnnotation(parameter, AnnotationUtil.NON_NLS));
+    assertEquals(2, manager.findExternalAnnotations(parameter).length);
   }
 }
