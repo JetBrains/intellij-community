@@ -46,6 +46,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
@@ -88,6 +89,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private int myCurrentOperationState = NONE;
 
   private DocumentReference myOriginatorReference;
+
+  public static boolean isRefresh() {
+    return ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class);
+  }
 
   public static int getGlobalUndoLimit() {
     return Registry.intValue("undo.globalUndoLimit", 10);
@@ -349,6 +354,8 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       commandFinished("", null);
       return;
     }
+
+    if (isRefresh()) myOriginatorReference = null;
 
     myCurrentMerger.addAction(action);
   }
