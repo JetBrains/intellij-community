@@ -278,6 +278,10 @@
       <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
+      <className>com.siyeh.ipp.forloop.ReplaceForEachLoopWithOptimizedIndexedForLoopIntention</className>
+      <categoryKey>intention.category.control.flow</categoryKey>
+    </intentionAction>
+    <intentionAction>
       <className>com.siyeh.ipp.forloop.ReplaceForEachLoopWithIteratorForLoopIntention</className>
       <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
