@@ -2,7 +2,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -898,27 +897,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           result.put(target.getName(), target);
         }
       }
-    }
-    else if (anchor != null) {
-      PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
-        @Override
-        public boolean execute(@NotNull PsiElement element, ResolveState state) {
-          if (element instanceof PyAssignmentStatement) {
-            collectNewTargets(result, (PyAssignmentStatement)element);
-          }
-          return true;
-        }
-
-        @Nullable
-        @Override
-        public <T> T getHint(@NotNull Key<T> hintKey) {
-          return null;
-        }
-
-        @Override
-        public void handleEvent(Event event, @Nullable Object associated) {
-        }
-      }, anchor, null, method);
     }
     else {
       final PyStatementList statementList = method.getStatementList();
