@@ -3,6 +3,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -131,15 +132,29 @@ public class SpecifyTypeInDocstringIntention implements IntentionAction {
           docStringExpression = pyFunction.getDocStringExpression();
         }
         else {
-          PyExpressionStatement str = elementGenerator.createDocstring(replacementToOffset.getFirst());
+
           final PyStatementList list = pyFunction.getStatementList();
+          final Document document = editor.getDocument();
+          startOffset = replacementToOffset.getSecond();
+
           if (list != null && list.getStatements().length != 0) {
-            list.addBefore(str, list.getStatements()[0]);
+            if (document.getLineNumber(list.getTextOffset()) == document.getLineNumber(pyFunction.getTextOffset())) {
+              PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(pyFunction),
+                                        PyFunction.class, "def " + pyFunction.getName() + pyFunction.getParameterList().getText()
+                                        +":\n\t"+replacementToOffset.getFirst() + "\n\t" + list.getText());
+
+              pyFunction = (PyFunction)pyFunction.replace(func);
+              startOffset = replacementToOffset.getSecond() + 2;
+            }
+            else {
+              PyExpressionStatement str = elementGenerator.createDocstring(replacementToOffset.getFirst());
+              list.addBefore(str, list.getStatements()[0]);
+            }
           }
 
           pyFunction = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(pyFunction);
           docStringExpression = pyFunction.getDocStringExpression();
-          startOffset = replacementToOffset.getSecond();
+
           endOffset = startOffset;
         }
         assert docStringExpression != null;

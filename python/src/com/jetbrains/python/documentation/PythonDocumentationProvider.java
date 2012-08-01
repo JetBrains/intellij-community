@@ -503,8 +503,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
     String docContent = ws + generateDocumentationContentStub(function, ws, true);
     PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
-    if (insertPlace.getStatements().length != 0)
-      insertPlace.addBefore(string, insertPlace.getStatements()[0]);
+    if (insertPlace.getStatements().length != 0) {
+      PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(function),
+                                                        PyFunction.class, "def " + function.getName() + function.getParameterList().getText()
+                                                        +":\n\t"+ string.getText() + "\n\t" + insertPlace.getText());
+      function.replace(func);
+    }
     PyStringLiteralExpression docstring = function.getDocStringExpression();
     if (editor != null && docstring != null) {
       int offset = docstring.getTextOffset();
@@ -603,8 +607,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   private static int addParamOrType(StringBuilder replacementText, PyDocStringOwner function, boolean addWS, String keyword,
                                      String paramName, String prefix) {
     PsiWhiteSpace whitespace = null;
-    if (function instanceof PyFunction)
+    if (function instanceof PyFunction) {
       whitespace = PsiTreeUtil.getPrevSiblingOfType(((PyFunction)function).getStatementList(), PsiWhiteSpace.class);
+    }
     String ws = "\n";
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
