@@ -48,6 +48,7 @@ public class TypeAssertionIntention implements IntentionAction {
         problemElement = qualifier;
       }
     }
+    if (problemElement.getParent() instanceof PyCallExpression) return false;
     final PyType type = problemElement.getType(TypeEvalContext.fast());
     return (type == null || type instanceof PyReturnTypeReference);
   }
