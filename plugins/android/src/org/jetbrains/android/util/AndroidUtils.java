@@ -20,6 +20,7 @@ import com.android.ddmlib.IDevice;
 import com.android.ddmlib.ShellCommandUnresponsiveException;
 import com.android.ddmlib.TimeoutException;
 import com.android.sdklib.SdkConstants;
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.execution.ExecutionException;
@@ -69,6 +70,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.impl.ContentImpl;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
@@ -721,8 +723,8 @@ public class AndroidUtils {
 
   public static void checkPassword(char[] password) throws CommitStepException {
     if (password.length == 0) {
-        throw new CommitStepException(AndroidBundle.message("android.export.package.specify.password.error"));
-      }
+      throw new CommitStepException(AndroidBundle.message("android.export.package.specify.password.error"));
+    }
   }
 
   public static void checkPassword(JPasswordField passwordField) throws CommitStepException {
@@ -743,4 +745,18 @@ public class AndroidUtils {
     }
     return result;
   }
+
+  public static void reportError(@NotNull Project project, @NotNull String message) {
+    reportError(project, message, CommonBundle.getErrorTitle());
+  }
+
+  public static void reportError(@NotNull Project project, @NotNull String message, @NotNull String title) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      throw new IncorrectOperationException(message);
+    }
+    else {
+      Messages.showErrorDialog(project, message, title);
+    }
+  }
+
 }

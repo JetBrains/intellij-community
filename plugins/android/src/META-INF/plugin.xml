@@ -82,6 +82,10 @@
             icon="/icons/attachDebugger.png">
       <add-to-group group-id="ToolbarRunGroup" anchor="after" relative-to-action="RunnerActions"/>
     </action>
+    <action id="AndroidExtractStyleAction" class="org.jetbrains.android.refactoring.AndroidExtractStyleAction" text="Android St_yle..."
+            description="Pull out style-related attributes from layout and extract them as a new style">
+      <add-to-group group-id="IntroduceActionsGroup" relative-to-action="ExtractSuperclass" anchor="after"/>
+    </action>
   </actions>
 
   <depends>JUnit</depends>

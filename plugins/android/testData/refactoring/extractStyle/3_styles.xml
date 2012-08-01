@@ -1,0 +1,5 @@
+<resources>
+    <style name="style1">
+        <item name="android:textColor">@android:color/white</item>
+    </style>
+</resources>

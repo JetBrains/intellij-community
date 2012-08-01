@@ -15,7 +15,6 @@
  */
 package com.intellij.android.designer.propertyTable.editors;
 
-import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
@@ -28,7 +27,6 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -38,7 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -50,7 +48,7 @@ import org.jetbrains.android.actions.CreateResourceFileAction;
 import org.jetbrains.android.actions.CreateXmlResourceDialog;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.facet.AndroidRootUtil;
+import org.jetbrains.android.refactoring.AndroidExtractStyleAction;
 import org.jetbrains.android.resourceManagers.FileResourceProcessor;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidResourceUtil;
@@ -205,15 +203,10 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       actionGroup.add(myNewResourceFileAction);
     }
     if (myComponent != null && ResourceType.STYLE.equals(resourceGroup.getType())) {
-      boolean enabled = false;
-      for (XmlAttribute attribute : myComponent.getTag().getAttributes()) {
-        if (attribute.getName().startsWith("android:")) {
-          enabled = true;
-          break;
-        }
-      }
+      final XmlTag componentTag = myComponent.getTag();
+      final boolean enabled = AndroidExtractStyleAction.isEnabled(componentTag);
       myExtractStyleAction.getTemplatePresentation().setEnabled(enabled);
-      //actionGroup.add(myExtractStyleAction); // XXX
+      actionGroup.add(myExtractStyleAction);
     }
 
     return actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, actionGroup);
@@ -263,45 +256,10 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
   }
 
   private void extractStyle() {
-    String fileName = AndroidResourceUtil.getDefaultResourceFileName(ResourceType.STYLE);
-
-    VirtualFile[] dirs = {AndroidRootUtil.getResourceDir(AndroidFacet.getInstance(myModule))};
-    List<VirtualFile> subDirs = AndroidResourceUtil.getResourceSubdirs(ResourceFolderType.VALUES.getName(), dirs);
-    List<String> dirNames = new ArrayList<String>();
-    for (VirtualFile dir : subDirs) {
-      dirNames.add(dir.getName());
-    }
-
-    ExtractStyleDialog dialog = new ExtractStyleDialog(myModule, fileName, dirNames, myComponent.getTag());
-    dialog.show();
-
-    if (!dialog.isOK()) {
+    final String resName = AndroidExtractStyleAction.doExtractStyle(myModule, myComponent.getTag(), false, null);
+    if (resName == null) {
       return;
     }
-
-    final List<XmlAttribute> attributes = dialog.getStyledAttributes();
-
-    StringBuilder value = new StringBuilder();
-    for (XmlAttribute attribute : attributes) {
-      value.append("<item name=\"").append(attribute.getName()).append("\">").append(attribute.getValue()).append("</item>\n");
-    }
-
-    String resName = dialog.getStyleName();
-    if (!AndroidResourceUtil.createValueResource(myModule, resName, ResourceType.STYLE, fileName, dirNames, value.toString())) {
-      return;
-    }
-
-    PsiDocumentManager.getInstance(myModule.getProject()).commitAllDocuments();
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        for (XmlAttribute attribute : attributes) {
-          attribute.delete();
-        }
-      }
-    });
-
     myResultResourceName = "@style/" + resName;
     close(OK_EXIT_CODE);
   }
