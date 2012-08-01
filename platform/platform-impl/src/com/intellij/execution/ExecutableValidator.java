@@ -144,6 +144,9 @@ public abstract class ExecutableValidator {
    * @return true if executable was valid, false - if not valid (and notification was shown in that case).
    */
   public boolean checkExecutableAndNotifyIfNeeded() {
+    if (myProject.isDisposed()) {
+      return false;
+    }
     if (!isExecutableValid(getCurrentExecutable())) {
       showExecutableNotConfiguredNotification();
       return false;
