@@ -78,7 +78,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
 
     if (myChild2 != null && StdTokenSets.COMMENT_BIT_SET.contains(myChild2.getElementType())) {
-      if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
+      if (myChild2.getElementType() == JavaTokenType.C_STYLE_COMMENT) {
+        myResult = Spacing.getReadOnlySpacing();
+      }
+      else if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
         myResult = Spacing
           .createKeepingFirstColumnSpacing(0, Integer.MAX_VALUE, true, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }

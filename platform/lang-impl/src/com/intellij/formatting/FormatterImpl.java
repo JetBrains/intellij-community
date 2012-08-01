@@ -700,10 +700,16 @@ public class FormatterImpl extends FormatterEx
   private final Map<SpacingImpl,SpacingImpl> ourSharedProperties = new HashMap<SpacingImpl,SpacingImpl>();
   private final SpacingImpl ourSharedSpacing = new SpacingImpl(-1,-1,-1,false,false,false,-1,false,0);
 
-  private SpacingImpl getSpacingImpl(final int minSpaces, final int maxSpaces, final int minLineFeeds, final boolean readOnly, final boolean safe,
+  private SpacingImpl getSpacingImpl(final int minSpaces,
+                                     final int maxSpaces,
+                                     final int minLineFeeds,
+                                     final boolean readOnly,
+                                     final boolean safe,
                                      final boolean keepLineBreaksFlag,
                                      final int keepLineBreaks,
-                                     final boolean keepFirstColumn, int prefLineFeeds) {
+                                     final boolean keepFirstColumn,
+                                     int prefLineFeeds)
+  {
     synchronized(ourSharedSpacing) {
       ourSharedSpacing.init(minSpaces, maxSpaces, minLineFeeds, readOnly, safe, keepLineBreaksFlag, keepLineBreaks, keepFirstColumn, prefLineFeeds);
       SpacingImpl spacing = ourSharedProperties.get(ourSharedSpacing);

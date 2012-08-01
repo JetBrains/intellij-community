@@ -489,4 +489,18 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
       ")"
     );
   }
+
+  public void testCStyleCommentIsNotMoved() throws Exception {
+    // IDEA-87087
+    doClassTest(
+      "                /*\n" +
+      "                   this is a c-style comment\n" +
+      "                 */\n" +
+      "           // This is a line comment",
+      "            /*\n" +
+      "               this is a c-style comment\n" +
+      "             */\n" +
+      "// This is a line comment"
+    );
+  }
 }
