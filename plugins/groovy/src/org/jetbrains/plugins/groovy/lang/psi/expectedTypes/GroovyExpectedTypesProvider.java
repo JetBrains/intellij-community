@@ -29,6 +29,9 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -42,7 +45,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -155,7 +160,7 @@ public class GroovyExpectedTypesProvider {
     public void visitVariable(GrVariable variable) {
       if (myExpression.equals(variable.getInitializerGroovy())) {
         PsiType type = variable.getType();
-        myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
+        myResult = createSimpleSubTypeResult(type);
       }
     }
 
@@ -168,11 +173,11 @@ public class GroovyExpectedTypesProvider {
           PsiElement resolved = label.resolve();
           if (resolved instanceof PsiField) {
             PsiType type = ((PsiField)resolved).getType();
-            myResult = new TypeConstraint[]{new SubtypeConstraint(type, type)};
+            myResult = createSimpleSubTypeResult(type);
           }
           else if (resolved instanceof PsiMethod && GroovyPropertyUtils.isSimplePropertySetter((PsiMethod)resolved)) {
             PsiType type = ((PsiMethod)resolved).getParameterList().getParameters()[0].getType();
-            myResult = new TypeConstraint[]{new SubtypeConstraint(type,type)};
+            myResult = createSimpleSubTypeResult(type);
           }
         }
       }
@@ -235,6 +240,85 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
+    @Override
+    public void visitAnnotationArgumentList(GrAnnotationArgumentList annotationArgumentList) {
+      final PsiClass resolved = resolveAnnotation(annotationArgumentList);
+
+      if (resolved == null) return;
+      assert resolved.isAnnotationType();
+
+      final PsiMethod[] valueAttr = resolved.findMethodsByName("value", false);
+      boolean canHaveSimpleExpr = valueAttr.length > 0;
+      final PsiMethod[] methods = resolved.getMethods();
+      for (PsiMethod method : methods) {
+        if (!("value".equals(method.getName()) ||
+              method instanceof GrAnnotationMethod && ((GrAnnotationMethod)method).getDefaultValue() != null)) {
+          canHaveSimpleExpr = false;
+        }
+      }
+
+      if (canHaveSimpleExpr) {
+        final PsiType type = valueAttr[0].getReturnType();
+        if (type != null && type instanceof PsiPrimitiveType) {
+          myResult = createSimpleSubTypeResult(type);
+        }
+      }
+    }
+
+    @Nullable
+    private static PsiClass resolveAnnotation(GrAnnotationArgumentList annotationArgumentList) {
+      final PsiElement parent = annotationArgumentList.getParent();
+      assert parent instanceof GrAnnotation;
+      final GrAnnotation annotation = (GrAnnotation)parent;
+
+      final GrCodeReferenceElement reference = annotation.getClassReference();
+      final GroovyResolveResult result = reference.advancedResolve();
+      final PsiElement element = result.getElement();
+      if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) return (PsiClass)element;
+      return null;
+    }
+
+    @Override
+    public void visitAnnotationNameValuePair(GrAnnotationNameValuePair nameValuePair) {
+      if (myExpression.equals(nameValuePair.getValue())) {
+        final PsiClass annot = resolveAnnotation(((GrAnnotationArgumentList)nameValuePair.getParent()));
+        if (annot != null) {
+          final String name = nameValuePair.getName();
+          if (name != null) {
+            final PsiMethod[] attrs = annot.findMethodsByName(name, false);
+            if (attrs.length > 0) {
+              final PsiType type = attrs[0].getReturnType();
+              if (type != null && type instanceof PsiPrimitiveType) {
+                myResult = createSimpleSubTypeResult(type);
+              }
+            }
+          }
+          else {
+            final PsiMethod[] valueAttr = annot.findMethodsByName("value", false);
+            boolean canHaveSimpleExpr = valueAttr.length > 0;
+            final PsiMethod[] methods = annot.getMethods();
+            for (PsiMethod method : methods) {
+              if (!("value".equals(method.getName()) ||
+                    method instanceof GrAnnotationMethod && ((GrAnnotationMethod)method).getDefaultValue() != null)) {
+                canHaveSimpleExpr = false;
+              }
+            }
+
+            if (canHaveSimpleExpr) {
+              final PsiType type = valueAttr[0].getReturnType();
+              if (type != null && (type instanceof PsiPrimitiveType || type.equalsToText(CommonClassNames.JAVA_LANG_STRING))) {
+                myResult = createSimpleSubTypeResult(type);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    private static TypeConstraint[] createSimpleSubTypeResult(PsiType type) {
+      return new TypeConstraint[]{new SubtypeConstraint(type, type)};
+    }
+
     private void checkExitPoint() {
       final PsiElement element = PsiTreeUtil.getParentOfType(myExpression, PsiMethod.class, GrClosableBlock.class);
       if (element instanceof GrMethod) {
@@ -245,7 +329,7 @@ public class GroovyExpectedTypesProvider {
             if (returnValue == myExpression) {
               final PsiType returnType = method.getReturnType();
               if (returnType != null) {
-                myResult = new TypeConstraint[]{new SubtypeConstraint(returnType, returnType)};
+                myResult = createSimpleSubTypeResult(returnType);
               }
               return false;
             }
@@ -293,7 +377,7 @@ public class GroovyExpectedTypesProvider {
 
       if (type == mREGEX_FIND || type == mREGEX_MATCH) {
         final PsiClassType string = TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, expression);
-        myResult = new TypeConstraint[]{new SubtypeConstraint(string, string)};
+        myResult = createSimpleSubTypeResult(string);
         return;
       }
 
@@ -304,11 +388,11 @@ public class GroovyExpectedTypesProvider {
 
       if (type== mPLUS && otherType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         final PsiClassType obj = TypesUtil.getJavaLangObject(expression);
-        myResult = new TypeConstraint[]{new SubtypeConstraint(obj, obj)};
+        myResult = createSimpleSubTypeResult(obj);
         return;
       }
 
-      myResult = new TypeConstraint[]{new SubtypeConstraint(otherType, otherType)};
+      myResult = createSimpleSubTypeResult(otherType);
     }
 
     @Override
