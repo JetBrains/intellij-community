@@ -47,6 +47,30 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testSelection1() { //PY-6994
+    doTest();
+  }
+
+  public void testSelection2() { //PY-6994
+    doTest();
+  }
+
+  public void testSelection3() { //PY-6994
+    doTest();
+  }
+
+  public void testSelectionReverse1() { //PY-6994
+    doTest();
+  }
+
+  public void testSelectionReverse2() { //PY-6994
+    doTest();
+  }
+
+  public void testSelectionReverse3() { //PY-6994
+    doTest();
+  }
+
   public void testIndent11() {
     doTestSingleLine();
   }
