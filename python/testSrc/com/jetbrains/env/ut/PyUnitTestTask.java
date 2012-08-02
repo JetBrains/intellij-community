@@ -90,7 +90,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
               myConsoleView = null;
             }
             if (myDescriptor != null) {
-              myDescriptor.dispose();
+              Disposer.dispose(myDescriptor);
               myDescriptor = null;
             }
 

@@ -86,7 +86,7 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
             myConsoleView = null;
           }
           if (myDescriptor != null) {
-            myDescriptor.dispose();
+            Disposer.dispose(myDescriptor);
             myDescriptor = null;
           }
           DjangoPathTestTask.super.tearDown();
