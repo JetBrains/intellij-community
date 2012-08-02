@@ -35,6 +35,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
@@ -362,8 +363,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ! myMappings.isEmpty();
   }
 
-public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
-    if (!Registry.is("vcs.showConsole")) return;
+  public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
+    if (!Registry.is("vcs.showConsole")) {
+      return;
+    }
+    if (StringUtil.isEmptyOrSpaces(message)) {
+      return;
+    }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
