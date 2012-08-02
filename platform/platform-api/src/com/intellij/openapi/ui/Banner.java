@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -55,7 +56,13 @@ public class Banner extends NonOpaquePanel implements PropertyChangeListener{
       public void linkSelected(final LinkLabel aSource, final Object aLinkData) {
         action.actionPerformed(new ActionEvent(Banner.this, ActionEvent.ACTION_PERFORMED, Action.ACTION_COMMAND_KEY));
       }
-    });
+    }) {
+      @Override
+      protected Color getTextColor() {
+        return UIUtil.isUnderDarcula() ? Color.WHITE : Color.BLUE;
+      }
+    };
+    label.setFont(label.getFont().deriveFont(Font.BOLD));
     myActions.put(action, label);
     myActionsPanel.add(label);
     updateAction(action);
