@@ -160,17 +160,8 @@ public class EquivalenceChecker {
     if (argumentList2 == null) {
       return false;
     }
-    final GrExpression[] args1 = argumentList1.getExpressionArguments();
-    final GrExpression[] args2 = argumentList2.getExpressionArguments();
-    if (!expressionListsAreEquivalent(args1, args2)) {
-      return false;
-    }
-    final GrNamedArgument[] namedArgs1 = argumentList1.getNamedArguments();
-    final GrNamedArgument[] namedArgs2 = argumentList2.getNamedArguments();
-    if (!namedArgumentListsAreEquivalent(namedArgs1, namedArgs2)) {
-      return false;
-    }
-    return true;
+
+    return argumentListsAreEquivalent(argumentList1, argumentList2);
   }
 
   private static boolean assertStatementsAreEquivalent(GrAssertStatement statement1, GrAssertStatement statement2) {
@@ -212,9 +203,6 @@ public class EquivalenceChecker {
     }
     final String name1 = var1.getName();
     final String name2 = var2.getName();
-    if (name1 == null) {
-      return name2 == null;
-    }
     return name1.equals(name2);
   }
 
@@ -264,9 +252,6 @@ public class EquivalenceChecker {
     }
     final String name1 = parameter1.getName();
     final String name2 = parameter2.getName();
-    if (name1 == null) {
-      return name2 == null;
-    }
     return name1.equals(name2);
   }
 
@@ -542,7 +527,9 @@ public class EquivalenceChecker {
                                                        GrIndexProperty expression2) {
     final GrExpression operand1 = expression1.getSelectedExpression();
     final GrExpression operand2 = expression2.getSelectedExpression();
-    return expressionsAreEquivalent(operand1, operand2);
+    final GrArgumentList list1 = expression1.getArgumentList();
+    final GrArgumentList list2 = expression2.getArgumentList();
+    return expressionsAreEquivalent(operand1, operand2) && argumentListsAreEquivalent(list1, list2);
   }
 
   private static boolean typecastExpressionsAreEquivalent(GrTypeCastExpression expression1,
@@ -586,6 +573,14 @@ public class EquivalenceChecker {
     if (argumentList2 == null) {
       return false;
     }
+    final GrClosableBlock[] closures1 = methodExp1.getClosureArguments();
+    final GrClosableBlock[] closures2 = methodExp2.getClosureArguments();
+    return argumentListsAreEquivalent(argumentList1, argumentList2) &&
+           expressionListsAreEquivalent(closures1, closures2);
+  }
+
+  private static boolean argumentListsAreEquivalent(GrArgumentList argumentList1,
+                                                    GrArgumentList argumentList2) {
     final GrExpression[] args1 = argumentList1.getExpressionArguments();
     final GrExpression[] args2 = argumentList2.getExpressionArguments();
     if (!expressionListsAreEquivalent(args1, args2)) {
@@ -596,9 +591,7 @@ public class EquivalenceChecker {
     if (!namedArgumentListsAreEquivalent(namedArgs1, namedArgs2)) {
       return false;
     }
-    final GrClosableBlock[] closures1 = methodExp1.getClosureArguments();
-    final GrClosableBlock[] closures2 = methodExp2.getClosureArguments();
-    return expressionListsAreEquivalent(closures1, closures2);
+    return true;
   }
 
   private static boolean namedArgumentListsAreEquivalent(GrNamedArgument[] namedArgs1, GrNamedArgument[] namedArgs2) {
@@ -653,13 +646,11 @@ public class EquivalenceChecker {
     if (argumentList1 == null) {
       return false;
     }
-    final GrExpression[] args1 = argumentList1.getExpressionArguments();
     final GrArgumentList argumentList2 = newExp2.getArgumentList();
     if (argumentList2 == null) {
       return false;
     }
-    final GrExpression[] args2 = argumentList2.getExpressionArguments();
-    return expressionListsAreEquivalent(args1, args2);
+    return argumentListsAreEquivalent(argumentList1, argumentList2);
   }
 
   private static boolean prefixExpressionsAreEquivalent(@NotNull GrUnaryExpression prefixExp1,
@@ -690,7 +681,7 @@ public class EquivalenceChecker {
                                                         @NotNull GrBinaryExpression binaryExp2) {
     final IElementType sign1 = binaryExp1.getOperationTokenType();
     final IElementType sign2 = binaryExp2.getOperationTokenType();
-    if (sign1 == null || sign2 == null || !sign1.equals(sign2)) {
+    if (!sign1.equals(sign2)) {
       return false;
     }
     final GrExpression lhs1 = binaryExp1.getLeftOperand();
