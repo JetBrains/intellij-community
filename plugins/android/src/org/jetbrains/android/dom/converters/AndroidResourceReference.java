@@ -190,6 +190,14 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
 
   @Override
   public boolean isReferenceTo(PsiElement element) {
+    if (element instanceof LazyValueResourceElementWrapper) {
+      element = ((LazyValueResourceElementWrapper)element).computeElement();
+
+      if (element == null) {
+        return false;
+      }
+    }
+
     final ResolveResult[] results = multiResolve(false);
     final PsiFile psiFile = element.getContainingFile();
     final VirtualFile vFile = psiFile != null ? psiFile.getVirtualFile() : null;
@@ -218,6 +226,9 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
 
         if (log) {
           System.out.println("lazy computed to " + info);
+          System.out.println(vFile + "; class: " + vFile.getClass().getCanonicalName());
+          System.out.println(info.getContainingFile() + "; class: " + info.getContainingFile().getClass().getCanonicalName());
+          System.out.println(vFile.equals(info.getContainingFile()));
         }
 
         if (info.getContainingFile().equals(vFile)) {
