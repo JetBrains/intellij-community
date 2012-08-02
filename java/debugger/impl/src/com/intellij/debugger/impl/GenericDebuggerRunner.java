@@ -34,7 +34,8 @@ import org.jetbrains.annotations.Nullable;
 
 public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDebuggerRunnerSettings> {
   public boolean canRun(@NotNull final String executorId, @NotNull final RunProfile profile) {
-    return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile;
+    return executorId.equals(DefaultDebugExecutor.EXECUTOR_ID) && profile instanceof ModuleRunProfile
+           && !(profile instanceof RunConfigurationWithSuppressedDefaultDebugAction);
   }
 
   @NotNull
