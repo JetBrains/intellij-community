@@ -17,6 +17,7 @@ package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
@@ -157,6 +158,8 @@ public class AbstractPopup implements JBPopup {
   private boolean myDisposed;
 
   private UiActivity myActivityKey;
+  private Disposable myProjectDisposable;
+
 
 
   AbstractPopup() {
@@ -608,6 +611,9 @@ public class AbstractPopup implements JBPopup {
     }
 
     Disposer.dispose(this, false);
+    if (myProjectDisposable != null) {
+      Disposer.dispose(myProjectDisposable);
+    }
   }
 
   public FocusTrackback getFocusTrackback() {
@@ -642,7 +648,10 @@ public class AbstractPopup implements JBPopup {
     assert ApplicationManager.getApplication().isDispatchThread();
 
     installWindowHook(this);
+    installProjectDisposer();
     addActivity();
+
+    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
 
     final boolean shouldShow = beforeShow();
     if (!shouldShow) {
@@ -893,6 +902,26 @@ public class AbstractPopup implements JBPopup {
           afterShow.run();
         }
       });
+    }
+  }
+
+  private void installProjectDisposer() {
+    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (c != null) {
+      final DataContext context = DataManager.getInstance().getDataContext(c);
+      final Project project = PlatformDataKeys.PROJECT.getData(context);
+      if (project != null) {
+        myProjectDisposable = new Disposable() {
+
+          @Override
+          public void dispose() {
+            if (!AbstractPopup.this.isDisposed()) {
+              Disposer.dispose(AbstractPopup.this);
+            }
+          }
+        };
+        Disposer.register(project, myProjectDisposable);
+      }
     }
   }
 
