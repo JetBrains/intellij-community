@@ -37,6 +37,7 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -330,7 +331,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   public static void addJarToRoots(String libPath, final Module module, @Nullable PsiElement location) {
-    String url = VfsUtil.getUrlForLibraryRoot(new File(libPath));
+    final File libraryRoot = new File(libPath);
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryRoot);
+    String url = VfsUtil.getUrlForLibraryRoot(libraryRoot);
     VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
     assert libVirtFile != null : libPath;
 
