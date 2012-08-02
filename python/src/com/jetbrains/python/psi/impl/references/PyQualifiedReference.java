@@ -241,6 +241,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   public Object[] getVariants() {
     PyExpression qualifier = myElement.getQualifier();
     assert qualifier != null;
+    final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
 
     PyType qualifierType = qualifier.getType(TypeEvalContext.slow());
     ProcessingContext ctx = new ProcessingContext();
@@ -270,11 +271,11 @@ public class PyQualifiedReference extends PyReferenceImpl {
             namesAlready.add(targetExpr.getName());
           }
         }
-        Collections.addAll(variants, qualifierType.getCompletionVariants(myElement.getName(), myElement, ctx));
+        Collections.addAll(variants, qualifierType.getCompletionVariants(element.getName(), element, ctx));
         return variants.toArray();
       }
       else {
-        return qualifierType.getCompletionVariants(myElement.getName(), myElement, ctx);
+        return qualifierType.getCompletionVariants(element.getName(), element, ctx);
       }
     }
     return getUntypedVariants();
