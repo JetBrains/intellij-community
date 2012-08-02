@@ -230,8 +230,9 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
 
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
-    return psi instanceof XmlTag && XmlFoldingSettings.getInstance().isCollapseXmlTags()
-           || psi instanceof XmlAttribute;
+    final XmlFoldingSettings foldingSettings = XmlFoldingSettings.getInstance();
+    return (psi instanceof XmlTag && foldingSettings.isCollapseXmlTags())
+           || (psi instanceof XmlAttribute && foldingSettings.isCollapseXmlAttributes());
   }
 
   private static boolean isAttributeShouldBeFolded(XmlAttribute child) {
