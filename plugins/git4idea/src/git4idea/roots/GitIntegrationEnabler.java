@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
+import git4idea.GitVcs;
 import git4idea.Notificator;
 import git4idea.PlatformFacade;
 import git4idea.commands.Git;
@@ -83,8 +84,10 @@ public class GitIntegrationEnabler {
       return true;
     }
     else {
-      notificator.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), result.getErrorOutputAsHtmlString());
-      LOG.info(result.getErrorOutputAsHtmlString());
+      if (((GitVcs)myPlatformFacade.getVcs(myProject)).getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
+        notificator.notifyError("Couldn't git init " + projectDir.getPresentableUrl(), result.getErrorOutputAsHtmlString());
+        LOG.info(result.getErrorOutputAsHtmlString());
+      }
       return false;
     }
   }

@@ -37,8 +37,17 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   
   private State myState = new State();
 
+  /**
+   * Kinds of SSH executable to be used with the git
+   */
+  public enum SshExecutable {
+    IDEA_SSH,
+    NATIVE_SSH,
+  }
+
   public static class State {
     public String myPathToGit = null;
+    public SshExecutable SSH_EXECUTABLE = SshExecutable.IDEA_SSH;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -91,6 +100,14 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
 
   public void setPathToGit(String pathToGit) {
     myState.myPathToGit = pathToGit;
+  }
+
+  public boolean isIdeaSsh() {
+    return myState.SSH_EXECUTABLE == SshExecutable.IDEA_SSH;
+  }
+
+  public void setIdeaSsh(boolean value) {
+    myState.SSH_EXECUTABLE = value ? SshExecutable.IDEA_SSH : SshExecutable.NATIVE_SSH;
   }
 
 }

@@ -2,7 +2,7 @@ package org.jetbrains.jps.model.library.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsEventDispatcher;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsLibraryRootListener;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -10,10 +10,10 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 /**
  * @author nik
  */
-public class JpsLibraryRootKind extends JpsElementKindBase<JpsLibraryRoot> {
+public class JpsLibraryRootRole extends JpsElementChildRoleBase<JpsLibraryRoot> {
   private final JpsOrderRootType myRootType;
 
-  public JpsLibraryRootKind(@NotNull JpsOrderRootType rootType) {
+  public JpsLibraryRootRole(@NotNull JpsOrderRootType rootType) {
     super("library root");
     myRootType = rootType;
   }
@@ -33,7 +33,7 @@ public class JpsLibraryRootKind extends JpsElementKindBase<JpsLibraryRoot> {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    return myRootType.equals(((JpsLibraryRootKind)o).myRootType);
+    return myRootType.equals(((JpsLibraryRootRole)o).myRootType);
   }
 
   @Override

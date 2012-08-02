@@ -127,6 +127,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA80386() throws Exception { doTest(false);}
 
   public void testIDEA66311() throws Exception { doTest17Incompatibility();}
+  public void testIDEA88895() throws Exception { doTest17Incompatibility();}
   public void testIDEA66311_16() throws Exception { doTest(false);}
   public void testIDEA76283() throws Exception {doTest(false);}
   public void testIDEA74899() throws Exception {doTest(false);}

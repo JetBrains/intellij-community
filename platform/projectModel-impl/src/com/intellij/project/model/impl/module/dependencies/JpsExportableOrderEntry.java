@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ExportableOrderEntry;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -50,8 +51,9 @@ public abstract class JpsExportableOrderEntry<E extends JpsDependencyElement> ex
     return extension != null ? DependencyScope.valueOf(extension.getScope().name()) : DependencyScope.COMPILE;
   }
 
+  @Nullable
   private JpsJavaDependencyExtension getExtension() {
-    return myDependencyElement.getContainer().getChild(JpsJavaExtensionService.getInstance().getDependencyExtensionKind());
+    return JpsJavaExtensionService.getInstance().getDependencyExtension(myDependencyElement);
   }
 
   @Override

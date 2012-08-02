@@ -680,6 +680,32 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
+  public static String normalize(@NotNull String path) {
+    final StringBuilder result = new StringBuilder(path.length());
+
+    int start = 0;
+    if (SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
+      start = 2;
+      result.append("//");
+    }
+
+    boolean separator = false;
+    for (int i = start; i < path.length(); ++i) {
+      final char c = path.charAt(i);
+      if (c == '/' || c == '\\') {
+        if (!separator) result.append('/');
+        separator = true;
+      }
+      else {
+        result.append(c);
+        separator = false;
+      }
+    }
+
+    return result.toString();
+  }
+
+  @NotNull
   public static String unquote(@NotNull String urlString) {
     urlString = urlString.replace('/', File.separatorChar);
     return URLUtil.unescapePercentSequences(urlString);

@@ -109,7 +109,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
               }
               return true;
             }
-          }, new TestNGSearchScope());
+          }, new TestNGSearchScope(project));
         if (found[0]) return null;
       }
       final PsiIdentifier nameIdentifier = aClass.getNameIdentifier();

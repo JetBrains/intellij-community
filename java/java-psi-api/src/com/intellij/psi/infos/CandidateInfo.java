@@ -15,6 +15,8 @@
  */
 package com.intellij.psi.infos;
 
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.psi.*;
 
 /**
@@ -99,10 +101,29 @@ public class CandidateInfo implements JavaResolveResult {
         final PsiMember member = (PsiMember)myCandidate;
         accessProblem = !JavaPsiFacade.getInstance(myPlace.getProject()).getResolveHelper()
           .isAccessible(member, member.getModifierList(), myPlace, myAccessClass, myCurrentFileResolveContext);
+        if (!accessProblem && member.hasModifierProperty(PsiModifier.PRIVATE) && myPlace instanceof PsiReferenceExpression && JavaVersionService.getInstance().isAtLeast(myPlace, JavaSdkVersion.JDK_1_7)) {
+          accessProblem = isAccessedThroughTypeParameterBound();
+        }
       }
       myAccessProblem = accessProblem ? Boolean.TRUE : Boolean.FALSE;
     }
     return !myAccessProblem.booleanValue();
+  }
+
+  private boolean isAccessedThroughTypeParameterBound() {
+    final PsiExpression qualifierExpression = ((PsiReferenceExpression)myPlace).getQualifierExpression();
+    if (qualifierExpression instanceof PsiMethodCallExpression) {
+      final JavaResolveResult resolveResult = ((PsiMethodCallExpression)qualifierExpression).resolveMethodGenerics();
+      final PsiElement element = resolveResult.getElement();
+      if (element instanceof PsiMethod) {
+        final PsiType returnType = ((PsiMethod)element).getReturnType();
+        final PsiType substitutedReturnType = resolveResult.getSubstitutor().substitute(returnType);
+        if (substitutedReturnType instanceof PsiCapturedWildcardType) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Override

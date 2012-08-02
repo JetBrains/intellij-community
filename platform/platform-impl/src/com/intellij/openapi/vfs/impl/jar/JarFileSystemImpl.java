@@ -355,6 +355,16 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
+  protected String normalize(@NotNull String path) {
+    final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
+    if (jarSeparatorIndex > 0) {
+      final String root = path.substring(0, jarSeparatorIndex);
+      return FileUtil.normalize(root) + path.substring(jarSeparatorIndex);
+    }
+    return super.normalize(path);
+  }
+
+  @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
     return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }

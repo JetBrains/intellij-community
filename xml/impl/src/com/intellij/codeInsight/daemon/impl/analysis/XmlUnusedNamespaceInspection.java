@@ -83,7 +83,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
                                      new RemoveNamespaceDeclarationFix(declaredPrefix, true));
             }
           }
-          else {
+          else if (!refCountHolder.isUsedNamespace(namespace)) {
             for (PsiReference reference : getLocationReferences(namespace, parent)) {
               if (!XmlHighlightVisitor.hasBadResolve(reference, false))
               holder.registerProblemForReference(reference, ProblemHighlightType.LIKE_UNUSED_SYMBOL, NAMESPACE_LOCATION_IS_NEVER_USED,

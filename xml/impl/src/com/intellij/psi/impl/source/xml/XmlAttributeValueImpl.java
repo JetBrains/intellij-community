@@ -16,6 +16,8 @@
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationWithSeparator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,6 +27,7 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.injected.XmlAttributeLiteralEscaper;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
@@ -32,6 +35,8 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author Mike
@@ -156,5 +161,25 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return new ItemPresentationWithSeparator() {
+      @Override
+      public String getPresentableText() {
+        return getText();
+      }
+
+      @Override
+      public String getLocationString() {
+        return SymbolPresentationUtil.getFilePathPresentation(getContainingFile());
+      }
+
+      @Override
+      public Icon getIcon(boolean open) {
+        return null;
+      }
+    };
   }
 }

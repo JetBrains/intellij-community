@@ -66,7 +66,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
   private final MessageBus myEventsBus;
 
-  @NotNull private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>();
+  @NotNull private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>(FileUtil.PATH_HASHING_STRATEGY);
   @NotNull private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
   @Nullable private VirtualFileSystemEntry myFakeRoot;
   @NotNull private final Object INPUT_LOCK = new Object();

@@ -107,12 +107,14 @@ public class PluginBuildParticipant extends BuildParticipant {
           if (domElement instanceof IdeaPlugin) {
             for(Dependency dependency: ((IdeaPlugin)domElement).getDependencies()) {
               final String file = dependency.getConfigFile().getValue();
-              final VirtualFile virtualFile = configFile.getVirtualFile();
-              assert virtualFile != null;
-              final VirtualFile parent = virtualFile.getParent();
-              assert parent != null;
-              final String url = parent.getUrl();
-              factory.addFileCopy(root, "META-INF/", VfsUtil.urlToPath(url) + "/" + file);
+              if (file != null) {
+                final VirtualFile virtualFile = configFile.getVirtualFile();
+                assert virtualFile != null;
+                final VirtualFile parent = virtualFile.getParent();
+                assert parent != null;
+                final String url = parent.getUrl();
+                factory.addFileCopy(root, "META-INF/", VfsUtil.urlToPath(url) + "/" + file);
+              }
             }
           }
         }

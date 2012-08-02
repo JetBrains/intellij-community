@@ -7,8 +7,8 @@ import org.jetbrains.jps.model.JpsUrlList;
 /**
  * @author nik
  */
-public class JpsUrlListKind extends JpsElementKindBase<JpsUrlList> implements JpsElementCreator<JpsUrlList> {
-  public JpsUrlListKind(String debugName) {
+public class JpsUrlListRole extends JpsElementChildRoleBase<JpsUrlList> implements JpsElementCreator<JpsUrlList> {
+  public JpsUrlListRole(String debugName) {
     super(debugName);
   }
 

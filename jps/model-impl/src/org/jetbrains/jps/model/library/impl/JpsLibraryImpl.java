@@ -17,11 +17,11 @@ import java.util.List;
  * @author nik
  */
 public class JpsLibraryImpl<P extends JpsElementProperties> extends JpsNamedCompositeElementBase<JpsLibraryImpl<P>> implements JpsTypedLibrary<P> {
-  private static final JpsTypedDataKind<JpsLibraryType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsLibraryType<?>>();
+  private static final JpsTypedDataRole<JpsLibraryType<?>> TYPED_DATA_ROLE = new JpsTypedDataRole<JpsLibraryType<?>>();
 
   public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties) {
     super(name);
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsLibraryType<?>>(type, properties));
+    myContainer.setChild(TYPED_DATA_ROLE, new JpsTypedDataImpl<JpsLibraryType<?>>(type, properties));
   }
 
   private JpsLibraryImpl(@NotNull JpsLibraryImpl<P> original) {
@@ -31,19 +31,19 @@ public class JpsLibraryImpl<P extends JpsElementProperties> extends JpsNamedComp
   @Override
   @NotNull
   public JpsLibraryType<?> getType() {
-    return myContainer.getChild(TYPED_DATA_KIND).getType();
+    return myContainer.getChild(TYPED_DATA_ROLE).getType();
   }
 
   @NotNull
   @Override
   public P getProperties() {
-    return (P)myContainer.getChild(TYPED_DATA_KIND).getProperties();
+    return (P)myContainer.getChild(TYPED_DATA_ROLE).getProperties();
   }
 
   @NotNull
   @Override
   public List<JpsLibraryRoot> getRoots(@NotNull JpsOrderRootType rootType) {
-    final JpsElementCollection<JpsLibraryRoot> rootsCollection = myContainer.getChild(getKind(rootType));
+    final JpsElementCollection<JpsLibraryRoot> rootsCollection = myContainer.getChild(getRole(rootType));
     return rootsCollection != null ? rootsCollection.getElements() : Collections.<JpsLibraryRoot>emptyList();
   }
 
@@ -55,12 +55,12 @@ public class JpsLibraryImpl<P extends JpsElementProperties> extends JpsNamedComp
   @Override
   public void addRoot(@NotNull final String url, @NotNull final JpsOrderRootType rootType,
                       @NotNull JpsLibraryRoot.InclusionOptions options) {
-    myContainer.getOrSetChild(getKind(rootType)).addChild(new JpsLibraryRootImpl(url, rootType, options));
+    myContainer.getOrSetChild(getRole(rootType)).addChild(new JpsLibraryRootImpl(url, rootType, options));
   }
 
   @Override
   public void removeUrl(@NotNull final String url, @NotNull final JpsOrderRootType rootType) {
-    final JpsElementCollection<JpsLibraryRoot> rootsCollection = myContainer.getChild(getKind(rootType));
+    final JpsElementCollection<JpsLibraryRoot> rootsCollection = myContainer.getChild(getRole(rootType));
     if (rootsCollection != null) {
       for (JpsLibraryRoot root : rootsCollection.getElements()) {
         if (root.getUrl().equals(url) && root.getRootType().equals(rootType)) {
@@ -71,8 +71,8 @@ public class JpsLibraryImpl<P extends JpsElementProperties> extends JpsNamedComp
     }
   }
 
-  private static JpsElementCollectionKind<JpsLibraryRoot> getKind(JpsOrderRootType type) {
-    return new JpsElementCollectionKind<JpsLibraryRoot>(new JpsLibraryRootKind(type));
+  private static JpsElementCollectionRole<JpsLibraryRoot> getRole(JpsOrderRootType type) {
+    return JpsElementCollectionRole.create(new JpsLibraryRootRole(type));
   }
 
   @Override

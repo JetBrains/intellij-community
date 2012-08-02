@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.commands.GitHandlerUtil;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
@@ -32,6 +33,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -57,7 +59,20 @@ public class GitMerge extends GitRepositoryAction {
                          @NotNull final VirtualFile defaultRoot,
                          final Set<VirtualFile> affectedRoots,
                          final List<VcsException> exceptions) throws VcsException {
+    GitVcs vcs = GitVcs.getInstance(project);
+    if (vcs == null) {
+      return;
+    }
     GitMergeDialog dialog = new GitMergeDialog(project, gitRoots, defaultRoot);
+    try {
+      dialog.updateBranches();
+    }
+    catch (VcsException e) {
+      if (vcs.getExecutableValidator().checkExecutableAndShowMessageIfNeeded(null)) {
+        vcs.showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
+      }
+      return;
+    }
     dialog.show();
     if (!dialog.isOK()) {
       return;
