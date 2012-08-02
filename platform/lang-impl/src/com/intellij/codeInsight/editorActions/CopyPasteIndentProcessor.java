@@ -77,7 +77,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
       return;
     }
-    if (value.getOffset() == editor.getCaretModel().getOffset()) return;
+    if (value.getOffset() == caretOffset) return;
 
     final Document document = editor.getDocument();
     final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -106,15 +106,22 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
         final int offset = getLineStartSafeOffset(initialDocument, lineNumber);
         final int caretColumn = caretOffset - offset;
 
-        String toString = initialDocument.getText(TextRange.create(offset, initialDocument.getLineEndOffset(lineNumber)));
-        int toIndent = StringUtil.findFirst(toString, new CharFilter() {
-          @Override
-          public boolean accept(char ch) {
-            return ch != ' ';
+        int toIndent;
+        if (bounds.getStartOffset() != offset) {         //selection
+          startLine += 1;
+          toIndent = Math.abs(bounds.getStartOffset() - offset);
+        }
+        else {
+          String toString = initialDocument.getText(TextRange.create(offset, initialDocument.getLineEndOffset(lineNumber)));
+          toIndent = StringUtil.findFirst(toString, new CharFilter() {
+            @Override
+            public boolean accept(char ch) {
+              return ch != ' ';
+            }
+          });
+          if (toIndent < 0 || toString.startsWith("\n")) {
+            toIndent = caretColumn;
           }
-        });
-        if (toIndent < 0 || toString.startsWith("\n")) {
-          toIndent = caretColumn;
         }
 
         // actual difference in indentation level
