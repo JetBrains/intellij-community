@@ -289,7 +289,9 @@ public class NotificationsManagerImpl extends NotificationsManager implements No
 
     content.setBorder(new EmptyBorder(2, 4, 2, 4));
 
-    Dimension preferredSize = pane.getPreferredSize();
+    Dimension preferredSize = text.getPreferredSize();
+    text.setSize(preferredSize);
+    preferredSize = text.getPreferredSize();
     int maxHeight = Math.min(400, window.getComponent().getHeight() - 20);
     if (preferredSize.height > maxHeight) {
       pane.setPreferredSize(new Dimension(preferredSize.width, maxHeight));

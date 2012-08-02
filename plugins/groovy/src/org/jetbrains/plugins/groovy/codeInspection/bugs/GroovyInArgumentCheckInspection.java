@@ -70,7 +70,7 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
 
       GrExpression leftOperand = expression.getLeftOperand();
       GrExpression rightOperand = expression.getRightOperand();
-      if (leftOperand == null || rightOperand == null) return;
+      if (rightOperand == null) return;
 
       PsiType ltype = leftOperand.getType();
       PsiType rtype = rightOperand.getType();
@@ -113,5 +113,10 @@ public class GroovyInArgumentCheckInspection extends BaseInspection {
 
       registerError(expression, ltype, rtype);
     }
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 public interface FileSystemInterface {
-  boolean exists(@NotNull VirtualFile fileOrDirectory);
+  // default values for missing files (same as in corresponding java.io.File methods)
+  long DEFAULT_LENGTH = 0;
+  long DEFAULT_TIMESTAMP = 0;
+
+  boolean exists(@NotNull VirtualFile file);
 
   @NotNull
   String[] list(@NotNull VirtualFile file);

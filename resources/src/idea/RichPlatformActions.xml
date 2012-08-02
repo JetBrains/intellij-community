@@ -109,7 +109,7 @@
 
     <!-- Tools -->
     <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis" text="Fold Lines Like This">
-      <add-to-group group-id="ConsoleView.PopupMenu" anchor="after" relative-to-action="ConsoleView.Copy"/>
+      <add-to-group group-id="ConsoleEditorPopupMenu" anchor="after" relative-to-action="$SearchWeb"/>
     </action>
 
 

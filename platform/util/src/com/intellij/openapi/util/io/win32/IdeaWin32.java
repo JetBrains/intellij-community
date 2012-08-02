@@ -21,6 +21,9 @@ import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+
 /**
  * Do not use this class directly.
  *
@@ -42,25 +45,22 @@ public class IdeaWin32 {
     if (SystemInfo.isWindows) {
       String libName = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
       try {
-        System.load(PathManager.getHomePath() + "/community/bin/win/" + libName + ".dll");
+        String path = PathManager.getBinPath() + "/" + libName + ".dll";
+        if (!new File(path).exists()) {
+          path = PathManager.getHomePath() + "/community/bin/win/" + libName + ".dll";
+          if (!new File(path).exists()) {
+            path = PathManager.getHomePath() + "/bin/win/" + libName + ".dll";
+            if (!new File(path).exists()) {
+              throw new FileNotFoundException("Native filesystem .dll is missing, home: " + PathManager.getHomePath());
+            }
+          }
+        }
+        LOG.debug("Loading " + path);
+        System.load(path);
         available = true;
       }
-      catch (Throwable t0) {
-        LOG.debug(t0);
-        try {
-          System.load(PathManager.getHomePath() + "/bin/win/" + libName + ".dll");
-          available = true;
-        }
-        catch (Throwable t1) {
-          LOG.debug(t1);
-          try {
-            System.loadLibrary(libName);
-            available = true;
-          }
-          catch (Throwable t2) {
-            LOG.warn("Failed to load native filesystem for Windows", t2);
-          }
-        }
+      catch (Throwable t) {
+        LOG.warn("Failed to load native filesystem for Windows", t);
       }
     }
 

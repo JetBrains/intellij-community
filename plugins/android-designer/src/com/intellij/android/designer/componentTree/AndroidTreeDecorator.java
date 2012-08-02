@@ -20,9 +20,9 @@ import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.MetaModel;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.DefaultPaletteItem;
-import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
@@ -37,7 +37,7 @@ public final class AndroidTreeDecorator implements TreeComponentDecorator {
   public void decorate(RadComponent component, SimpleColoredComponent renderer, AttributeWrapper wrapper, boolean full) {
     MetaModel metaModel = component.getMetaModel();
 
-    String id = getPropertyValue(component, "id");
+    String id = component.getPropertyValue("id");
     if (!StringUtil.isEmpty(id)) {
       id = id.substring(id.indexOf('/') + 1);
       if (!StringUtil.isEmpty(id)) {
@@ -58,15 +58,10 @@ public final class AndroidTreeDecorator implements TreeComponentDecorator {
         int end = title.indexOf('%', start + 1);
         if (end != -1) {
           String variable = title.substring(start + 1, end);
-          String value;
-          if ("tag".equals(variable)) {
-            value = ((RadViewComponent)component).getTag().getName();
-          }
-          else {
-            value = getPropertyValue(component, variable);
-            if (!StringUtil.isEmpty(value)) {
-              value = StringUtil.shortenTextWithEllipsis(value, 30, 5);
-            }
+
+          String value = component.getPropertyValue(variable);
+          if (!StringUtil.isEmpty(value)) {
+            value = StringUtil.shortenTextWithEllipsis(value, 30, 5);
           }
 
           if (!StringUtil.isEmpty(value)) {
@@ -87,30 +82,5 @@ public final class AndroidTreeDecorator implements TreeComponentDecorator {
         ((IComponentDecorator)component).decorateTree(renderer, wrapper);
       }
     }
-  }
-
-  @Nullable
-  private static String getPropertyValue(RadComponent component, String name) {
-    if (component.getProperties() == null) {
-      throw new NullPointerException("Component " +
-                                     component +
-                                     ", " +
-                                     component.getLayout() +
-                                     ", " +
-                                     component.getMetaModel().getTag() +
-                                     ", " +
-                                     component.getMetaModel().getTarget() +
-                                     " without properties");
-    }
-    Property property = PropertyTable.findProperty(component.getProperties(), name);
-    if (property != null) {
-      try {
-        return String.valueOf(property.getValue(component));
-      }
-      catch (Exception e) {
-        return null;
-      }
-    }
-    return null;
   }
 }

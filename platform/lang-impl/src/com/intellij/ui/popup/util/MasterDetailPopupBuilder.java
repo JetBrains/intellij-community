@@ -123,6 +123,8 @@ public class MasterDetailPopupBuilder {
     }
     else {
       myDetailView.clearEditor();
+      myDetailView.setDetailPanel(null);
+      myDetailView.setCurrentItem(null);
     }
   }
 

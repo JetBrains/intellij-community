@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.TextRange;
@@ -266,20 +267,29 @@ public class CompletionUtil {
     return element == null ? psi : element;
   }
 
-  public static LinkedHashSet<String> sortForCompletion(final PrefixMatcher matcher, List<String> _names) {
-    List<String> sorted = new ArrayList<String>(_names);
-    Collections.sort(sorted, new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        return o1.compareToIgnoreCase(o2);
+  public static LinkedHashSet<String> sortMatching(final PrefixMatcher matcher, Collection<String> _names) {
+    ProgressManager.checkCanceled();
+
+    List<String> sorted = new ArrayList<String>();
+    for (String name : _names) {
+      if (matcher.prefixMatches(name)) {
+        sorted.add(name);
       }
-    });
+    }
+
+    ProgressManager.checkCanceled();
+    Collections.sort(sorted, String.CASE_INSENSITIVE_ORDER);
+    ProgressManager.checkCanceled();
+
     LinkedHashSet<String> result = new LinkedHashSet<String>();
     for (String name : sorted) {
       if (matcher.isStartMatch(name)) {
         result.add(name);
       }
     }
+
+    ProgressManager.checkCanceled();
+
     result.addAll(sorted);
     return result;
   }

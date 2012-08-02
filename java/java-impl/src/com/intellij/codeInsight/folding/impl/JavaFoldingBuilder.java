@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -609,7 +610,7 @@ public class JavaFoldingBuilder extends CustomFoldingBuilder implements DumbAwar
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,
                                     @NotNull Set<PsiElement> processedComments, final boolean quick) {
-    if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas()) {
+    if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas() || DumbService.isDumb(aClass.getProject())) {
       return false;
     }
 

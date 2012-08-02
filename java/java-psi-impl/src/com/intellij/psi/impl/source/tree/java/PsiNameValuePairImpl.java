@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,115 +20,76 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiNameValuePairStub;
+import com.intellij.psi.impl.source.JavaStubPsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.impl.source.tree.ChildRole;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * @author ven
+ * @author Dmitry Avdeev
+ *         Date: 7/27/12
  */
+public class PsiNameValuePairImpl extends JavaStubPsiElement<PsiNameValuePairStub> implements PsiNameValuePair {
 
-//Retrieves method reference from this pair, do NOT reuse!!!
-public class PsiNameValuePairImpl extends CompositePsiElement implements PsiNameValuePair {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl");
-  private volatile String myCachedName = null;
-  private volatile PsiIdentifier myCachedNameIdentifier = null;
-  private volatile PsiAnnotationMemberValue myCachedValue = null;
-  private volatile boolean myNameCached = false;
-
-  @Override
-  public void clearCaches() {
-    myNameCached = false;
-    myCachedName = null;
-    myCachedNameIdentifier = null;
-    myCachedValue = null;
-    super.clearCaches();
+  public PsiNameValuePairImpl(@NotNull PsiNameValuePairStub stub) {
+    super(stub, JavaStubElementTypes.NAME_VALUE_PAIR);
   }
 
-  public PsiNameValuePairImpl() {
-    super(JavaElementType.NAME_VALUE_PAIR);
+  public PsiNameValuePairImpl(@NotNull ASTNode node) {
+    super(node);
   }
 
+  @NotNull
   @Override
-  public PsiIdentifier getNameIdentifier() {
-    PsiIdentifier cachedNameIdentifier = myCachedNameIdentifier;
-    if (!myNameCached) {
-      myCachedNameIdentifier = cachedNameIdentifier = (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.NAME);
-      myCachedName = cachedNameIdentifier == null ? null : cachedNameIdentifier.getText();
-      myNameCached = true;
-    }
-    return cachedNameIdentifier;
+  public NameValuePairElement getNode() {
+    return (NameValuePairElement)super.getNode();
   }
 
   @Override
   public String getName() {
-    String cachedName = myCachedName;
-    if (!myNameCached) {
-      PsiIdentifier identifier;
-      myCachedNameIdentifier = identifier = (PsiIdentifier)findChildByRoleAsPsiElement(ChildRole.NAME);
-      myCachedName = cachedName = identifier == null ? null : identifier.getText();
-      myNameCached = true;
+    PsiNameValuePairStub stub = getStub();
+    if (stub == null) {
+      PsiIdentifier nameIdentifier = getNameIdentifier();
+      return nameIdentifier == null ? null : nameIdentifier.getText();
     }
-    return cachedName;
+    else {
+      return stub.getName();
+    }
+  }
+
+  @Override
+  public String getLiteralValue() {
+    PsiNameValuePairStub stub = getStub();
+    return stub == null ? null : stub.getValue();
+  }
+
+  @Override
+  public PsiIdentifier getNameIdentifier() {
+    ASTNode node = getNode().findChildByRole(ChildRole.NAME);
+    return node == null ? null : (PsiIdentifier)node.getPsi();
   }
 
   @Override
   public PsiAnnotationMemberValue getValue() {
-    PsiAnnotationMemberValue cachedValue = myCachedValue;
-    if (cachedValue == null) {
-      myCachedValue = cachedValue = (PsiAnnotationMemberValue)findChildByRoleAsPsiElement(ChildRole.ANNOTATION_VALUE);
-    }
-
-    return cachedValue;
+    ASTNode node = getNode().findChildByRole(ChildRole.ANNOTATION_VALUE);
+    return node == null ? null : (PsiAnnotationMemberValue)node.getPsi();
   }
 
-  @Override
   @NotNull
+  @Override
   public PsiAnnotationMemberValue setValue(@NotNull PsiAnnotationMemberValue newValue) {
     getValue().replace(newValue);
     return getValue();
   }
 
-  @Override
-  public int getChildRole(ASTNode child) {
-    if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(child.getElementType())) {
-      return ChildRole.ANNOTATION_VALUE;
-    }
-    if (child.getElementType() == JavaTokenType.IDENTIFIER) {
-      return ChildRole.NAME;
-    }
-    if (child.getElementType() == JavaTokenType.EQ) {
-      return ChildRole.OPERATION_SIGN;
-    }
-
-    return ChildRoleBase.NONE;
-  }
-
-  @Override
-  public ASTNode findChildByRole(int role) {
-    if (role == ChildRole.NAME) {
-      return findChildByType(JavaTokenType.IDENTIFIER);
-    }
-    if (role == ChildRole.ANNOTATION_VALUE) {
-      return findChildByType(ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET);
-    }
-    if (role == ChildRole.OPERATION_SIGN) {
-      return findChildByType(JavaTokenType.EQ);
-    }
-
-    return null;
-  }
-
-  public String toString() {
-    return "PsiNameValuePair";
-  }
 
   @Override
   public PsiReference getReference() {
@@ -167,7 +128,8 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         if (refClass == null) return null;
         String name = getName();
         if (name == null) name = PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
-        MethodSignature signature = MethodSignatureUtil.createMethodSignature(name, PsiType.EMPTY_ARRAY, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
+        MethodSignature signature = MethodSignatureUtil
+          .createMethodSignature(name, PsiType.EMPTY_ARRAY, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY);
         return MethodSignatureUtil.findMethodBySignature(refClass, signature, false);
       }
 
@@ -184,10 +146,10 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
         if (nameIdentifier != null) {
           PsiImplUtil.setName(nameIdentifier, newElementName);
         }
-        else if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(getFirstChildNode().getElementType())) {
+        else if (ElementType.ANNOTATION_MEMBER_VALUE_BIT_SET.contains(getNode().getFirstChildNode().getElementType())) {
           PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
           nameIdentifier = factory.createIdentifier(newElementName);
-          addBefore(nameIdentifier, SourceTreeToPsiMap.treeElementToPsi(getFirstChildNode()));
+          addBefore(nameIdentifier, SourceTreeToPsiMap.treeElementToPsi(getNode().getFirstChildNode()));
         }
 
         return PsiNameValuePairImpl.this;
@@ -227,24 +189,10 @@ public class PsiNameValuePairImpl extends CompositePsiElement implements PsiName
   }
 
   @Override
-  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    final CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
-    final TreeElement treeElement = super.addInternal(first, last, anchor, before);
-    if (first == last && first.getElementType() == JavaTokenType.IDENTIFIER) {
-      LeafElement eq = Factory.createSingleLeafElement(JavaTokenType.EQ, "=", 0, 1, treeCharTab, getManager());
-      super.addInternal(eq, eq, first, Boolean.FALSE);
-    }
-    return treeElement;
+  public String toString() {
+    return "PsiNameValuePair";
   }
 
-  @Override
-  public void deleteChildInternal(@NotNull ASTNode child) {
-    super.deleteChildInternal(child);
-    if (child.getElementType() == JavaTokenType.IDENTIFIER) {
-      final ASTNode sign = findChildByRole(ChildRole.OPERATION_SIGN);
-      if (sign != null) {
-        super.deleteChildInternal(sign);
-      }
-    }
-  }
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNameValuePairImpl");
+
 }

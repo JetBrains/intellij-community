@@ -16,7 +16,7 @@
 package com.intellij.designer.propertyTable;
 
 import com.intellij.designer.inspection.AbstractQuickFixManager;
-import com.intellij.designer.inspection.ErrorInfo;
+import com.intellij.designer.model.ErrorInfo;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +45,7 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Li
   @NotNull
   @Override
   protected List<ErrorInfo> getErrorInfos() {
-    PropertyTable component = (PropertyTable)myComponent;
+    RadPropertyTable component = (RadPropertyTable)myComponent;
 
     int selectedRow = component.getSelectedRow();
     if (selectedRow < 0 || selectedRow >= component.getRowCount()) {
@@ -61,7 +61,7 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Li
 
   @Override
   protected Rectangle getErrorBounds() {
-    PropertyTable component = (PropertyTable)myComponent;
+    RadPropertyTable component = (RadPropertyTable)myComponent;
 
     int selectedRow = component.getSelectedRow();
     if (selectedRow < 0 || selectedRow >= component.getRowCount()) {

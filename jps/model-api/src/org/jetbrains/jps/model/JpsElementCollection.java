@@ -11,9 +11,6 @@ public interface JpsElementCollection<E extends JpsElement> extends JpsElement {
   List<E> getElements();
 
   @NotNull
-  <P> E addChild(@NotNull JpsElementParameterizedCreator<E,P> factory, @NotNull P param);
-
-  @NotNull
   E addChild(@NotNull JpsElementCreator<E> creator);
 
   <X extends E> X addChild(X element);

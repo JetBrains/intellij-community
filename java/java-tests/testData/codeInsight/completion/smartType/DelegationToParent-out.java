@@ -10,6 +10,6 @@ class Foo<B> {
     ExtensionPointName<B> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
 
     void f() {
-        final B[] extensions = getExtensions(<caret>XXX.EXTENSION_POINT_NAME);
+        final B[] extensions = getExtensions(EXTENSION_POINT_NAME)<caret>;
     }
 }

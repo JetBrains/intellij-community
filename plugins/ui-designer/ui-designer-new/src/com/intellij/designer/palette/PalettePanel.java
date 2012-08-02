@@ -166,6 +166,10 @@ public class PalettePanel extends JPanel implements DataProvider {
               itemsComponent.clearSelection();
             }
           }
+          PaletteItem paletteItem = (PaletteItem)sourceItemsComponent.getSelectedValue();
+          if (paletteItem != null && !paletteItem.isEnabled()) {
+            sourceItemsComponent.clearSelection();
+          }
           break;
         }
       }

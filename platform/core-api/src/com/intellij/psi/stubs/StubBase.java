@@ -226,4 +226,9 @@ public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase 
       ((StubBase)child).printTree(builder, nestingLevel + 1);
     }
   }
+
+  @Override
+  public String toString() {
+    return getClass().getSimpleName();
+  }
 }

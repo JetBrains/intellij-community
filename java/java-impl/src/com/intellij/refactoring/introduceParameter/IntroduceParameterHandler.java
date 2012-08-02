@@ -282,8 +282,8 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
     return new NameSuggestionsGenerator() {
       public SuggestedNameInfo getSuggestedNameInfo(PsiType type) {
         final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
-        SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr, type);
-        if (expr != null) {
+        SuggestedNameInfo info = codeStyleManager.suggestVariableName(VariableKind.PARAMETER, propName, expr != null && expr.isValid() ? expr : null, type);
+        if (expr != null && expr.isValid()) {
           info = codeStyleManager.suggestUniqueVariableName(info, expr, true);
         }
         final String[] strings = AbstractJavaInplaceIntroducer.appendUnresolvedExprName(JavaCompletionUtil

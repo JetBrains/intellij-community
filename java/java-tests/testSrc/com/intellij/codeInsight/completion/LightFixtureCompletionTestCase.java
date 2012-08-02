@@ -9,6 +9,8 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * @author peter
  */
@@ -63,6 +65,11 @@ public abstract class LightFixtureCompletionTestCase extends LightCodeInsightFix
     return (LookupImpl)LookupManager.getInstance(getProject()).getActiveLookup();
   }
 
+  protected void assertFirstStringItems(String... items) {
+    List<String> strings = myFixture.getLookupElementStrings();
+    assertNotNull(strings);
+    assertOrderedEquals(strings.subList(0, Math.min(items.length, strings.size())), items);
+  }
   protected void assertStringItems(String... items) {
     assertOrderedEquals(myFixture.getLookupElementStrings(), items);
   }

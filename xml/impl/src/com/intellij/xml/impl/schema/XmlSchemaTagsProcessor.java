@@ -43,7 +43,7 @@ public abstract class XmlSchemaTagsProcessor {
     processTag(tag, null);
   }
 
-  public void processTag(XmlTag tag, XmlTag context) {
+  public void processTag(XmlTag tag, @Nullable XmlTag context) {
 
     if (myVisited.contains(tag)) return;
     myVisited.add(tag);
@@ -99,7 +99,7 @@ public abstract class XmlSchemaTagsProcessor {
     }
   }
 
-  private void processTagWithSubTags(@Nullable XmlTag tag, XmlTag ctx, XmlTag ref) {
+  private void processTagWithSubTags(@Nullable XmlTag tag, XmlTag ctx, @Nullable XmlTag ref) {
     if (tag == null) return;
     tagStarted(tag, tag.getLocalName(), ctx, ref);
     XmlTag[] subTags = tag.getSubTags();
@@ -109,7 +109,7 @@ public abstract class XmlSchemaTagsProcessor {
     tagFinished(tag);
   }
 
-  protected abstract void tagStarted(XmlTag tag, String tagName, XmlTag context, XmlTag ref);
+  protected abstract void tagStarted(XmlTag tag, String tagName, XmlTag context, @Nullable XmlTag ref);
 
   protected void tagFinished(XmlTag tag) {}
 

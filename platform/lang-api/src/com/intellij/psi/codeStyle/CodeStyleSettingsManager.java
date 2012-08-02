@@ -58,7 +58,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public CodeStyleSettingsManager() {}
 
   public static CodeStyleSettings getSettings(final @Nullable Project project) {
-    final CodeStyleSettingsManager instance = project == null ? getInstance() : getInstance(project);
+    final CodeStyleSettingsManager instance = project == null || project.isDefault() ? getInstance() : getInstance(project);
     return instance.getCurrentSettings();
   }
 

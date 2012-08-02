@@ -158,7 +158,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
 
   @Override
   protected String[] suggestNames(PsiType defaultType, String propName) {
-    return IntroduceConstantDialog.createNameSuggestionGenerator(propName, myExpr, JavaCodeStyleManager.getInstance(myProject), null,
+    return IntroduceConstantDialog.createNameSuggestionGenerator(propName, myExpr != null && myExpr.isValid() ? myExpr : null, JavaCodeStyleManager.getInstance(myProject), null,
                                                                  myParentClass)
       .getSuggestedNameInfo(defaultType).names;
   }

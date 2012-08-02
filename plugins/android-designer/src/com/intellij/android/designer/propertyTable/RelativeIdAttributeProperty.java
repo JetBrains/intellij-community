@@ -19,6 +19,7 @@ import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.layout.relative.RadRelativeLayoutComponent;
 import com.intellij.android.designer.propertyTable.editors.ComponentEditor;
 import com.intellij.android.designer.propertyTable.renderers.ComponentRenderer;
+import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
@@ -76,7 +77,7 @@ public class RelativeIdAttributeProperty extends AttributeProperty {
   }
 
   @Override
-  public boolean availableFor(List<RadComponent> components) {
+  public boolean availableFor(List<PropertiesContainer> components) {
     return false;
   }
 }

@@ -34,7 +34,7 @@ import static com.intellij.psi.xml.XmlElementType.*;
 public class XmlParsing {
   private static final int BALANCING_DEPTH_THRESHOLD = 1000;
 
-  private final PsiBuilder myBuilder;
+  protected final PsiBuilder myBuilder;
   private final Stack<String> myTagNamesStack = new Stack<String>();
 
   public XmlParsing(final PsiBuilder builder) {
@@ -116,7 +116,7 @@ public class XmlParsing {
     doctype.done(XML_DOCTYPE);
   }
 
-  private void parseTag(boolean multipleRootTagError) {
+  protected void parseTag(boolean multipleRootTagError) {
     assert token() == XML_START_TAG_START : "Tag start expected";
     final PsiBuilder.Marker tag = mark();
 

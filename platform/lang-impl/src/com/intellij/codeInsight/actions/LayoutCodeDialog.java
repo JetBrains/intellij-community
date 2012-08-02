@@ -221,7 +221,7 @@ public class LayoutCodeDialog extends DialogWrapper {
     return myCbOnlyVcsChangedRegions.isEnabled() && myCbOnlyVcsChangedRegions.isSelected();
   }
 
-  boolean isDoNotAskMe() {
+  public boolean isDoNotAskMe() {
     return myDoNotAskMeCheckBox.isEnabled() && myDoNotAskMeCheckBox.isSelected();
   }
 

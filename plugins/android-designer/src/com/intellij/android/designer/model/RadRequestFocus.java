@@ -15,7 +15,7 @@
  */
 package com.intellij.android.designer.model;
 
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.Property;
 
 import java.util.Collections;
 import java.util.List;

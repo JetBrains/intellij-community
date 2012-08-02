@@ -17,9 +17,9 @@ package com.intellij.designer.designSurface;
 
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.feedbacks.LineMarginBorder;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.propertyTable.InplaceContext;
-import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyEditorListener;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -151,8 +151,7 @@ public class InplaceEditingLayer extends JComponent {
         PropertyEditor editor = property.getEditor();
         myEditors.add(editor);
 
-        JComponent component =
-          editor.getComponent(myRadComponent.getRoot(), myRadComponent, property.getValue(myRadComponent), inplaceContext);
+        JComponent component = editor.getComponent(myRadComponent, myDesigner, property.getValue(myRadComponent), inplaceContext);
 
         myInplaceComponent.add(component,
                                new GridConstraints(row++, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,

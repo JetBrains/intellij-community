@@ -117,7 +117,7 @@ public class FSState {
 
   public void markDirty(ArtifactRootDescriptor descriptor, String filePath, ArtifactSourceTimestampStorage timestamps) throws IOException {
     markRecompile(descriptor, filePath);
-    timestamps.removeTimestamp(filePath, descriptor.getRootId().getArtifactId());
+    timestamps.removeTimestamp(filePath, descriptor.getArtifactId());
   }
 
   public void markRecompile(ArtifactRootDescriptor descriptor, String filePath) {

@@ -19,8 +19,9 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.IXmlAttributeLocator;
+import com.intellij.android.designer.propertyTable.JavadocParser;
 import com.intellij.android.designer.propertyTable.editors.StringsComboEditor;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
@@ -28,7 +29,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.android.designer.propertyTable.JavadocParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

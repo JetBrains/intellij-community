@@ -21,6 +21,7 @@ import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
+import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -31,7 +32,6 @@ import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -354,7 +354,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             LOG.info("Applying deleted path from fs event to artifacts: " + file.getPath());
           }
           for (ArtifactRootDescriptor rootDescriptor : descriptor)
-            pd.fsState.registerDeleted(rootDescriptor.getArtifactName(), rootDescriptor.getRootId().getArtifactId(), deleted,
+            pd.fsState.registerDeleted(rootDescriptor.getArtifactName(), rootDescriptor.getArtifactId(), deleted,
                                        artifactTimestamps);
         }
       }
@@ -618,10 +618,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     final Timestamps timestamps = pd.timestamps.getStorage();
     Set<JpsArtifact> artifacts = new HashSet<JpsArtifact>();
     if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
-      artifacts.addAll(JpsArtifactService.getInstance().getArtifacts(pd.jpsProject));
+      artifacts.addAll(JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false));
     }
     else {
-      for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(pd.jpsProject)) {
+      for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false)) {
         if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
           artifacts.add(artifact);
         }

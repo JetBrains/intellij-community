@@ -33,6 +33,8 @@ import java.util.List;
 public interface Style extends ResourceElement {
   List<StyleItem> getItems();
 
+  StyleItem addItem();
+
   @Attribute("parent")
   @Convert(ParentStyleConverter.class)
   GenericAttributeValue<ResourceValue> getParentStyle();

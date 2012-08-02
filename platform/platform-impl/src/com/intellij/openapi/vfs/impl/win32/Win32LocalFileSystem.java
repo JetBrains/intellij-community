@@ -66,9 +66,9 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   }
 
   @Override
-  public boolean exists(@NotNull VirtualFile fileOrDirectory) {
-    if (fileOrDirectory.getParent() == null) return true;
-    return myFsCache.getInfo(fileOrDirectory) != null;
+  public boolean exists(@NotNull VirtualFile file) {
+    if (file.getParent() == null) return true;
+    return myFsCache.getInfo(file) != null;
   }
 
   @Override
@@ -81,6 +81,18 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   public boolean isWritable(@NotNull VirtualFile file) {
     final FileInfo fileInfo = myFsCache.getInfo(file);
     return fileInfo != null && notSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_READONLY);
+  }
+
+  @Override
+  public boolean isSymLink(@NotNull VirtualFile file) {
+    final FileInfo fileInfo = myFsCache.getInfo(file);
+    return fileInfo != null && isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_REPARSE_POINT);
+  }
+
+  @Override
+  public boolean isSpecialFile(@NotNull VirtualFile file) {
+    final FileInfo fileInfo = myFsCache.getInfo(file);
+    return fileInfo != null && isSet(fileInfo.attributes, FileInfo.FILE_ATTRIBUTE_DEVICE);
   }
 
   @Override
@@ -111,10 +123,5 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
                                                @Nullable Collection<String> recursiveRoots,
                                                @Nullable Collection<String> flatRoots) {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
-    return myFsCache.getBooleanAttributes(file, flags);
   }
 }

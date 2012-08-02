@@ -50,7 +50,7 @@ public abstract class StaticMemberProcessor {
     final GlobalSearchScope scope = myPosition.getResolveScope();
     final PsiShortNamesCache namesCache = PsiShortNamesCache.getInstance(myProject);
     String[] methodNames = namesCache.getAllMethodNames();
-    for (final String methodName : CompletionUtil.sortForCompletion(matcher, Arrays.asList(methodNames))) {
+    for (final String methodName : CompletionUtil.sortMatching(matcher, Arrays.asList(methodNames))) {
       if (matcher.prefixMatches(methodName)) {
         Set<PsiClass> classes = new THashSet<PsiClass>();
         for (final PsiMethod method : namesCache.getMethodsByName(methodName, scope)) {
@@ -86,7 +86,7 @@ public abstract class StaticMemberProcessor {
       }
     }
     String[] fieldNames = namesCache.getAllFieldNames();
-    for (final String fieldName : CompletionUtil.sortForCompletion(matcher, Arrays.asList(fieldNames))) {
+    for (final String fieldName : CompletionUtil.sortMatching(matcher, Arrays.asList(fieldNames))) {
       if (matcher.prefixMatches(fieldName)) {
         for (final PsiField field : namesCache.getFieldsByName(fieldName, scope)) {
           if (isStaticallyImportable(field)) {

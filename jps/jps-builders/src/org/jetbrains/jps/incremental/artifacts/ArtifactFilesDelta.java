@@ -1,6 +1,5 @@
 package org.jetbrains.jps.incremental.artifacts;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +13,7 @@ import java.util.*;
  * @author nik
  */
 public class ArtifactFilesDelta {
-  private final Set<String> myDeletedPaths = Collections.synchronizedSet(new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY));
+  private final Set<String> myDeletedPaths = Collections.synchronizedSet(createPathsSet());
   private final Map<Integer, Set<String>> myPathsToRecompile = Collections.synchronizedMap(new HashMap<Integer, Set<String>>());
 
   public void save(DataOutput out) throws IOException {
@@ -44,12 +43,16 @@ public class ArtifactFilesDelta {
     while (changedCount-- > 0) {
       int rootIndex = in.readInt();
       int filesCount = in.readInt();
-      Set<String> changed = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+      Set<String> changed = createPathsSet();
       while (filesCount-- > 0) {
         changed.add(IOUtil.readString(in));
       }
       myPathsToRecompile.put(rootIndex, changed);
     }
+  }
+
+  private static THashSet<String> createPathsSet() {
+    return new THashSet<String>();
   }
 
   public void clearDeletedPaths() {
@@ -77,7 +80,7 @@ public class ArtifactFilesDelta {
     synchronized (myPathsToRecompile) {
       Set<String> changed = myPathsToRecompile.get(rootIndex);
       if (changed == null) {
-        changed = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+        changed = createPathsSet();
         myPathsToRecompile.put(rootIndex, changed);
       }
       return changed.add(filePath);

@@ -21,7 +21,6 @@ import com.intellij.designer.designSurface.OperationContext;
 import com.intellij.designer.designSurface.StaticDecorator;
 import com.intellij.designer.designSurface.tools.DragTracker;
 import com.intellij.designer.designSurface.tools.InputTool;
-import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jdom.Element;
@@ -36,7 +35,9 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class RadComponent {
+public abstract class RadComponent extends PropertiesContainer {
+  private static final String ERROR_KEY = "Inspection.Errors";
+
   protected MetaModel myMetaModel;
   private RadComponent myParent;
   private RadLayout myLayout;
@@ -185,8 +186,34 @@ public abstract class RadComponent {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  @Override
   public List<Property> getProperties() {
     return Collections.emptyList();
+  }
+
+  @Nullable
+  public String getPropertyValue(String name) {
+    if (getProperties() == null) {
+      throw new NullPointerException("Component " +
+                                     this +
+                                     ", " +
+                                     myLayout +
+                                     ", " +
+                                     myMetaModel.getTag() +
+                                     ", " +
+                                     myMetaModel.getTarget() +
+                                     " without properties");
+    }
+    Property property = PropertyTable.findProperty(getProperties(), name);
+    if (property != null) {
+      try {
+        return String.valueOf(property.getValue(this));
+      }
+      catch (Exception e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   public List<Property> getInplaceProperties() throws Exception {
@@ -275,6 +302,31 @@ public abstract class RadComponent {
   // Utils
   //
   //////////////////////////////////////////////////////////////////////////////////////////
+
+
+  public static List<ErrorInfo> getError(RadComponent component) {
+    List<ErrorInfo> errorInfos = component.getClientProperty(ERROR_KEY);
+    return errorInfos == null ? Collections.<ErrorInfo>emptyList() : errorInfos;
+  }
+
+  public static void addError(RadComponent component, ErrorInfo errorInfo) {
+    List<ErrorInfo> errorInfos = component.getClientProperty(ERROR_KEY);
+    if (errorInfos == null) {
+      errorInfos = new ArrayList<ErrorInfo>();
+      component.setClientProperty(ERROR_KEY, errorInfos);
+    }
+    errorInfos.add(errorInfo);
+  }
+
+  public static void clearErrors(RadComponent component) {
+    component.accept(new RadComponentVisitor() {
+      @Override
+      public void endVisit(RadComponent component) {
+        component.extractClientProperty(ERROR_KEY);
+      }
+    }, true);
+  }
+
 
   public static Set<RadComponent> getParents(List<RadComponent> components) {
     Set<RadComponent> parents = new HashSet<RadComponent>();

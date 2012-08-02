@@ -10,23 +10,22 @@ import java.util.List;
  */
 public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Self extends JpsNamedElementReferenceBase<T, Self>>
   extends JpsCompositeElementBase<Self> implements JpsElementReference<T> {
-  private static final JpsElementKind<JpsElementReference<? extends JpsCompositeElement>> PARENT_REFERENCE_KIND =
-    new JpsElementKindBase<JpsElementReference<? extends JpsCompositeElement>>("parent");
-  private final JpsElementCollectionKind<? extends T> myCollectionKind;
+  private static final JpsElementChildRole<JpsElementReference<? extends JpsCompositeElement>> PARENT_REFERENCE_ROLE = JpsElementChildRoleBase.create("parent");
+  private final JpsElementCollectionRole<? extends T> myCollectionRole;
   protected final String myElementName;
 
-  protected JpsNamedElementReferenceBase(@NotNull JpsElementCollectionKind<? extends T> kind,
+  protected JpsNamedElementReferenceBase(@NotNull JpsElementCollectionRole<? extends T> role,
                                          @NotNull String elementName,
                                          @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference) {
     super();
-    myCollectionKind = kind;
+    myCollectionRole = role;
     myElementName = elementName;
-    myContainer.setChild(PARENT_REFERENCE_KIND, parentReference);
+    myContainer.setChild(PARENT_REFERENCE_ROLE, parentReference);
   }
 
   protected JpsNamedElementReferenceBase(JpsNamedElementReferenceBase<T, Self> original) {
     super(original);
-    myCollectionKind = original.myCollectionKind;
+    myCollectionRole = original.myCollectionRole;
     myElementName = original.myElementName;
   }
 
@@ -35,7 +34,7 @@ public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Se
     final JpsCompositeElement parent = getParentReference().resolve();
     if (parent == null) return null;
 
-    final List<? extends T> elements = parent.getContainer().getChild(myCollectionKind).getElements();
+    final List<? extends T> elements = parent.getContainer().getChild(myCollectionRole).getElements();
     for (T element : elements) {
       if (resolvesTo(element)) {
         return element;
@@ -49,6 +48,6 @@ public abstract class JpsNamedElementReferenceBase<T extends JpsNamedElement, Se
   }
 
   public JpsElementReference<? extends JpsCompositeElement> getParentReference() {
-    return myContainer.getChild(PARENT_REFERENCE_KIND);
+    return myContainer.getChild(PARENT_REFERENCE_ROLE);
   }
 }

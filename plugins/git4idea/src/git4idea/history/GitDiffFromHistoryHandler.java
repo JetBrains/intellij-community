@@ -205,7 +205,8 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
       @Override
       public void consume(MergeCommitPreCheckInfo info) {
         if (!info.wasFileTouched()) {
-          String message = filePath.getName() + " did not change in this merge commit";
+          String message = String.format("There were no changes in %s in this merge commit, besides those which were made in both branches",
+                                         filePath.getName());
           VcsBalloonProblemNotifier.showOverVersionControlView(GitDiffFromHistoryHandler.this.myProject, message, MessageType.INFO);
         }
         showPopup(event, rev, filePath, info.getParents());

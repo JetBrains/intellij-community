@@ -33,12 +33,10 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement implements Constants {
   private final TokenSet myTypesOfElements;
 
-
   protected PsiCommaSeparatedListImpl(IElementType type, final TokenSet typeOfElements) {
     super(type);
     myTypesOfElements = typeOfElements;
   }
-
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
@@ -67,7 +65,6 @@ public abstract class PsiCommaSeparatedListImpl extends CompositePsiElement impl
 
     return super.addInternal(first, last, anchor, before);
   }
-
 
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {

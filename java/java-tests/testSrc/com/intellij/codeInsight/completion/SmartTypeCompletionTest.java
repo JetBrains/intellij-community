@@ -2,7 +2,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -21,11 +20,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.containers.ContainerUtil;
 
 public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
-  }
 
   @Override
   protected String getBasePath() {
@@ -226,7 +220,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     String path = "/afterNew";
 
     configureByFile(path + "/before15.java");
-    //select();
+    select();
     checkResultByFile(path + "/after15.java");
   }
 
@@ -239,7 +233,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testCastInThrow() throws Exception { doTest(); }
-  public void testNonExistentGenericAfterNew() throws Exception { doTest(); }
+  public void testNonExistentGenericAfterNew() throws Exception { doTest('\n'); }
 
   public void testParenAfterNewWithinInnerExpr() throws Exception {
     String path = "/afterNew";
@@ -371,7 +365,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile("/Silly1.java");
   }
 
-  public void testVarargs1() throws Exception { doTest(); }
+  public void testVarargs1() throws Exception { doTest('\n'); }
 
   public void testEnumConstInSwitch() throws Exception { doTest(); }
 
@@ -413,7 +407,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testParameterizedConstructor() throws Throwable { doTest(); }
 
-  public void testNewInnerClassNameShortPrefix() throws Throwable { doTest(); }
+  public void testNewInnerClassNameShortPrefix() throws Throwable { doTest('\n'); }
 
   public void testNewInnerOfParameterizedClass() throws Throwable { doTest(); }
 
@@ -557,7 +551,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  public void testMethodCallDot() throws Throwable { doTest(); }
+  public void testMethodCallDot() throws Throwable { doTest('\n'); }
   public void testNegateVariable() throws Throwable { doTest(); }
 
   public void testExclamationMethodFinish() throws Throwable { doTest('!'); }
@@ -571,7 +565,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testIfConditionBinaryExpression() throws Throwable { doTest(); }
 
-  public void testDelegationToParent() throws Throwable { doTest(); }
+  public void testDelegationToParent() throws Throwable { doTest('\t'); }
 
   public void testBeforeBinaryExpressionInMethodCall() throws Throwable { doTest(); }
 
@@ -695,15 +689,15 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  public void testSuggestInstanceofedValueInComplexIf() throws Throwable { doTest(); }
+  public void testSuggestInstanceofedValueInComplexIf() throws Throwable { doTest('\n'); }
 
-  public void testSuggestInstanceofedValueInElseNegated() throws Throwable { doTest(); }
+  public void testSuggestInstanceofedValueInElseNegated() throws Throwable { doTest('\n'); }
 
-  public void testSuggestInstanceofedValueAfterReturn() throws Throwable { doTest(); }
+  public void testSuggestInstanceofedValueAfterReturn() throws Throwable { doTest('\n'); }
 
   public void testNoInstanceofedValueWhenBasicSuits() throws Throwable { doTest(); }
 
-  public void testSuggestCastedValueAfterCast() throws Throwable { doTest(); }
+  public void testSuggestCastedValueAfterCast() throws Throwable { doTest('\n'); }
 
   public void testNoInstanceofedValueInElse() throws Throwable { doAntiTest(); }
 
@@ -738,7 +732,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByTestName();
   }
 
-  public void testAutoCastWhenAlreadyCasted() throws Throwable { doTest(); }
+  public void testAutoCastWhenAlreadyCasted() throws Throwable { doTest('\n'); }
 
   public void testCommaDoublePenetration() throws Throwable {
     doFirstItemTest(',');
@@ -844,7 +838,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testClassLiteralInArrayAnnoInitializer2() throws Throwable { doTest(); }
 
   public void testAnnotation() throws Exception {
-    doTest();
+    configureByTestName();
+    checkResultByTestName();
     assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
                       "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
                       "ElementType.METHOD", "ElementType.PACKAGE", "ElementType.PARAMETER",
@@ -852,11 +847,13 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testAnnotation2() throws Exception {
-    doTest();
+    configureByTestName();
+    checkResultByTestName();
     assertStringItems("RetentionPolicy.CLASS", "RetentionPolicy.RUNTIME", "RetentionPolicy.SOURCE");
   }
   public void testAnnotation2_2() throws Exception {
-    doTest();
+    configureByTestName();
+    checkResultByTestName();
     assertSameElements(myFixture.getLookupElementStrings(), "RetentionPolicy.CLASS", "RetentionPolicy.SOURCE", "RetentionPolicy.RUNTIME");
   }
 
@@ -869,19 +866,22 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testAnnotation4() throws Exception {
-    doTest();
+    configureByTestName();
+    checkResultByTestName();
 
     assertStringItems("false", "true");
   }
 
   public void testAnnotation5() throws Exception {
-    doTest();
+    configureByTestName();
+    checkResultByTestName();
 
     assertStringItems("CONNECTION", "NO_CONNECTION");
   }
 
   public void testAnnotation6() throws Exception {
-    doTest();
+    configureByTestName();
+    checkResultByTestName();
 
     assertStringItems("ElementType.ANNOTATION_TYPE", "ElementType.CONSTRUCTOR",
                       "ElementType.FIELD", "ElementType.LOCAL_VARIABLE",
@@ -894,7 +894,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testIDEADEV5150() throws Exception {
-    doTest();
+    doTest('\n');
   }
 
   public void testIDEADEV7835() throws Exception {
@@ -958,11 +958,12 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   }
 
   public void testEnumField1() throws Exception {
-    doTest();
+    configureByTestName();
+    checkResultByTestName();
     assertEquals(4, myItems.length);
   }
 
-  public void testInsertTypeParametersOnImporting() throws Throwable { doTest(); }
+  public void testInsertTypeParametersOnImporting() throws Throwable { doTest('\n'); }
 
   public void testEmptyListInReturn() throws Throwable { doItemTest(); }
 
@@ -995,7 +996,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     doTest();
   }
 
-  public void testStaticallyImportedField() throws Throwable { doTest(); }
+  public void testStaticallyImportedField() throws Throwable { doTest('\n'); }
   public void testSiblingOfAStaticallyImportedField() throws Throwable { doTest(); }
   public void testPrimitiveArrayClassInMethod() throws Throwable { doTest(); }
   public void testPrimitiveClassInAnno() throws Throwable { doTest(); }
@@ -1160,7 +1161,7 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
     try {
       configureByTestName();
-      if (myItems != null && myItems.length == 1) {
+      if (myItems != null) {
         select(c);
       }
       checkResultByTestName();

@@ -16,7 +16,7 @@
 package com.intellij.android.designer.model.layout.relative;
 
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.Property;
 import org.jetbrains.annotations.NotNull;
 
 /**

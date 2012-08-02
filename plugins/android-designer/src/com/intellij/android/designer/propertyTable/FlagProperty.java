@@ -18,8 +18,8 @@ package com.intellij.android.designer.propertyTable;
 import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.MetaModel;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.IPropertyDecorator;
-import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.editors.BooleanEditor;
@@ -65,6 +65,7 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
     }
   }
 
+  @NotNull
   @Override
   public List<Property<RadViewComponent>> getChildren(@Nullable RadViewComponent component) {
     return myOptions;

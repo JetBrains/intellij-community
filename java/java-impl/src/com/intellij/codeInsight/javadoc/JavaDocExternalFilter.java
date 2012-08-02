@@ -19,15 +19,19 @@ import com.intellij.codeInsight.documentation.AbstractExternalFilter;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
@@ -43,7 +47,13 @@ import java.util.regex.Pattern;
 
 public class JavaDocExternalFilter extends AbstractExternalFilter {
   private final Project myProject;
-
+  
+  private static final Trinity<Pattern, Pattern, Boolean> ourPackageInfoSettings = Trinity.create(
+    Pattern.compile("package\\s+[^\\s]+\\s+description", Pattern.CASE_INSENSITIVE),
+    Pattern.compile("START OF BOTTOM NAVBAR", Pattern.CASE_INSENSITIVE),
+    Boolean.TRUE
+  );
+  
   protected static @NonNls final Pattern ourHTMLsuffix = Pattern.compile("[.][hH][tT][mM][lL]?");
   protected static @NonNls final Pattern ourParentFolderprefix = Pattern.compile("^[.][.]/");
   protected static @NonNls final Pattern ourAnchorsuffix = Pattern.compile("#(.*)$");
@@ -110,9 +120,11 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
      if (externalDoc != null) {
        if (element instanceof PsiMethod) {
          final String className = ApplicationManager.getApplication().runReadAction(
-             new Computable<String>() {
+             new NullableComputable<String>() {
+               @Nullable
                public String compute() {
-                 return ((PsiMethod) element).getContainingClass().getQualifiedName();
+                 PsiClass aClass = ((PsiMethod)element).getContainingClass();
+                 return aClass == null ? null : aClass.getQualifiedName();
                }
              }
          );
@@ -126,4 +138,9 @@ public class JavaDocExternalFilter extends AbstractExternalFilter {
     return externalDoc;
   }
 
+  @NotNull
+  @Override
+  protected Trinity<Pattern, Pattern, Boolean> getParseSettings(@NotNull String url) {
+    return url.endsWith(JavaDocumentationProvider.PACKAGE_SUMMARY_FILE) ? ourPackageInfoSettings : super.getParseSettings(url);
+  }
 }

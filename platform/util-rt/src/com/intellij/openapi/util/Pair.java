@@ -24,7 +24,7 @@ public class Pair<A, B> {
   public final B second;
 
   @NotNull
-  public static <A, B> Pair<A, B> create(A first, B second) {
+  public static <A, B> Pair<A, B> create(@Nullable A first, @Nullable B second) {
     return new Pair<A, B>(first, second);
   }
 

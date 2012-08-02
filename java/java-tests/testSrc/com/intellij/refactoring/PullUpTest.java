@@ -117,6 +117,10 @@ public class PullUpTest extends LightRefactoringTestCase {
 
   public void testTypeParamsConflictingNames() throws Exception {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  } 
+
+  public void testEscalateVisibility() throws Exception {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
   }
 
   private void doTest(RefactoringTestUtil.MemberDescriptor... membersToFind) throws Exception {

@@ -37,9 +37,8 @@ import com.intellij.designer.model.WrapInProvider;
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
 import com.intellij.designer.palette.PaletteItem;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.designer.palette.PaletteToolWindowManager;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.module.Module;
@@ -47,6 +46,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -60,6 +60,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
+import org.jetbrains.android.refactoring.AndroidExtractStyleAction;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.uipreview.*;
@@ -84,6 +85,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final ProfileAction myProfileAction;
   private final Alarm mySessionAlarm = new Alarm();
   private FolderConfiguration myLastRenderedConfiguration;
+  private IAndroidTarget myLastTarget;
   private volatile RenderSession mySession;
   private boolean myParseTime;
   private int myProfileLastVersion;
@@ -117,7 +119,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }
         myPSIChangeListener.setInitialize();
         myActionPanel.update();
-        if (myRootComponent == null) {
+        if (myRootComponent == null || !Comparing.equal(myProfileAction.getProfileManager().getSelectedTarget(), myLastTarget)) {
           myPSIChangeListener.activate();
           myPSIChangeListener.addRequest();
         }
@@ -134,6 +136,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     });
 
     myActionPanel.getPopupGroup().addSeparator();
+    myActionPanel.getPopupGroup().add(buildRefactorActionGroup());
+
     AnAction gotoDeclaration = new AnAction("Go To Declaration") {
       @Override
       public void update(AnActionEvent e) {
@@ -150,6 +154,15 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     };
     myActionPanel.registerAction(gotoDeclaration, IdeActions.ACTION_GOTO_DECLARATION);
     myActionPanel.getPopupGroup().add(gotoDeclaration);
+  }
+
+  @NotNull
+  private static ActionGroup buildRefactorActionGroup() {
+    final DefaultActionGroup group = new DefaultActionGroup("_Refactor", true);
+    final ActionManager manager = ActionManager.getInstance();
+    final AnAction action = manager.getAction(AndroidExtractStyleAction.ACTION_ID);
+    group.add(new AndroidRefactoringActionWrapper("_Extract style", action));
+    return group;
   }
 
   private void reparseFile() {
@@ -268,10 +281,11 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           float xdpi = deviceConfiguration.getDevice().getXDpi();
           float ydpi = deviceConfiguration.getDevice().getYDpi();
 
-          IAndroidTarget target = manager.getSelectedTarget();
+          final boolean updatePalette = !Comparing.equal(myProfileAction.getProfileManager().getSelectedTarget(), myLastTarget);
+          myLastTarget = manager.getSelectedTarget();
           ThemeData theme = manager.getSelectedTheme();
 
-          if (target == null || theme == null) {
+          if (myLastTarget == null || theme == null) {
             throw new RenderingException();
           }
 
@@ -279,7 +293,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                                                            layoutXmlText,
                                                            myFile,
                                                            null,
-                                                           target,
+                                                           myLastTarget,
                                                            facet,
                                                            myLastRenderedConfiguration,
                                                            xdpi,
@@ -306,6 +320,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                 if (!isProjectClosed()) {
                   hideProgress();
                   runnable.consume(session);
+                  if (updatePalette) {
+                    updatePalette(myLastTarget);
+                  }
                 }
               }
               catch (Throwable e) {
@@ -577,7 +594,38 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
   @Override
   public ComponentPasteFactory createPasteFactory(String xmlComponents) {
-    return new AndroidPasteFactory(getProject(), xmlComponents);
+    return new AndroidPasteFactory(getModule(), myLastTarget, xmlComponents);
+  }
+
+  private void updatePalette(IAndroidTarget target) {
+    try {
+      ClassLoader classLoader = ProjectClassLoader.create(target, getModule());
+
+      for (PaletteGroup group : getPaletteGroups()) {
+        for (PaletteItem item : group.getItems()) {
+          if (item.getVersion() != null) {
+            DefaultPaletteItem paletteItem = (DefaultPaletteItem)item;
+            try {
+              String className = paletteItem.getMetaModel().getTarget();
+              classLoader.loadClass(className);
+              paletteItem.setEnabled(true);
+            }
+            catch (Throwable e) {
+              paletteItem.setEnabled(false);
+            }
+          }
+        }
+      }
+
+      PaletteItem item = getActivePaletteItem();
+      if (item != null && !item.isEnabled()) {
+        activatePaletteItem(null);
+      }
+
+      PaletteToolWindowManager.getInstance(getProject()).refresh();
+    }
+    catch (Throwable e) {
+    }
   }
 
   @Override

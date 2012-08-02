@@ -143,11 +143,13 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   public String getResourceLocation(@NonNls String url, String version) {
     String result = getUserResource(url, version);
     if (result == null) {
-      result = getStdResource(url, version);
+      XMLCatalogManager manager = getCatalogManager();
+      if (manager != null) {
+        result = manager.resolve(url);
+      }
     }
-    XMLCatalogManager manager = getCatalogManager();
-    if (manager != null) {
-      result = manager.resolve(url);
+    if (result == null) {
+      result = getStdResource(url, version);
     }
     if (result == null) {
       result = url;

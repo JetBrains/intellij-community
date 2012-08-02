@@ -149,9 +149,8 @@ public class PlatformTestUtil {
       nodeText = toString(userObject, null);
     }
     else {
-      nodeText = String.valueOf(defaultMutableTreeNode);
+      nodeText = "null";
     }
-
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
 
@@ -799,4 +798,9 @@ public class PlatformTestUtil {
     }
   };
 
+  @NotNull
+  public static <T> T notNull(@Nullable T t) {
+    assertNotNull(t);
+    return t;
+  }
 }

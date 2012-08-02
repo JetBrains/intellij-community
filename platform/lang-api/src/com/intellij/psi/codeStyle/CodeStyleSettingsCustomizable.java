@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,7 +187,8 @@ public interface CodeStyleSettingsCustomizable {
     CATCH_ON_NEW_LINE,
     FINALLY_ON_NEW_LINE,
     INDENT_CASE_FROM_SWITCH,
-    SPECIAL_ELSE_IF_TREATMENT
+    SPECIAL_ELSE_IF_TREATMENT,
+    ENUM_CONSTANTS_WRAP
   }
   
   

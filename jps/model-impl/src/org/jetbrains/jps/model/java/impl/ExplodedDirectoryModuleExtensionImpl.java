@@ -3,7 +3,7 @@ package org.jetbrains.jps.model.java.impl;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.impl.JpsElementBase;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension;
 
 /**
@@ -11,8 +11,7 @@ import org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension;
  */
 public class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<ExplodedDirectoryModuleExtensionImpl> implements
                                                                                                                ExplodedDirectoryModuleExtension {
-  public static final JpsElementKindBase<ExplodedDirectoryModuleExtension> KIND =
-    new JpsElementKindBase<ExplodedDirectoryModuleExtension>("exploded directory");
+  public static final JpsElementChildRoleBase<ExplodedDirectoryModuleExtension> ROLE = JpsElementChildRoleBase.create("exploded directory");
 
   private String myExplodedUrl;
   private boolean myExcludeExploded;

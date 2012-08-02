@@ -18,11 +18,19 @@ package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.gotoByName.*;
+import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageStructureViewBuilder;
+import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.ChooseByNameRegistry;
+import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -30,12 +38,21 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +85,19 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
         try {
           if (element instanceof PsiElement) {
             final PsiElement psiElement = getElement(((PsiElement)element), popup);
+            final VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+            if (popup.getLinePosition() != -1 && file != null) {
+              Navigatable n = new OpenFileDescriptor(project, file, popup.getLinePosition(), popup.getColumnPosition()).setUseCurrentWindow(popup.isOpenInCurrentWindowRequested());
+              if (n.canNavigate()) {
+                n.navigate(true);
+                return;
+              }
+            }
+            if (psiElement != null && file != null && popup.getMemberPattern() != null) {
+              NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
+              findMember(popup.getMemberPattern(), psiElement, file);
+            }
+
             NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
           }
           else {
@@ -79,6 +109,59 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
         }
       }
     }, "Classes matching pattern", true);
+  }
+
+  private static void findMember(String pattern, PsiElement psiElement, VirtualFile file) {
+    final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
+    final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
+    final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
+
+    if (builder != null && editors.length > 0) {
+      final StructureView view = builder.createStructureView(editors[0], psiElement.getProject());
+      final StructureViewModel model = view.getTreeModel();
+      final StructureViewTreeElement root = model.getRoot();
+      final StructureViewTreeElement element = findElement(root, psiElement, 4);
+      if (element != null) {
+        final MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+        int max = Integer.MIN_VALUE;
+        Object target = null;
+        for (TreeElement treeElement : element.getChildren()) {
+          if (treeElement instanceof StructureViewTreeElement) {
+            final ItemPresentation presentation = treeElement.getPresentation();
+            if (presentation != null) {
+              final int degree = matcher.matchingDegree(presentation.getPresentableText());
+              if (degree > max) {
+                max = degree;
+                target = ((StructureViewTreeElement)treeElement).getValue();
+              }
+            }
+          }
+        }
+
+        if (target instanceof Navigatable) {
+          ((Navigatable)target).navigate(true);
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static StructureViewTreeElement findElement(StructureViewTreeElement node, PsiElement element, int hopes) {
+    final Object value = node.getValue();
+    if (value instanceof PsiElement) {
+      if (((PsiElement)value).isEquivalentTo(element)) return node;
+      if (hopes != 0) {
+        for (TreeElement child : node.getChildren()) {
+          if (child instanceof StructureViewTreeElement) {
+            final StructureViewTreeElement e = findElement((StructureViewTreeElement)child, element, hopes - 1);
+            if (e != null) {
+              return e;
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private static PsiElement getElement(PsiElement element, ChooseByNamePopup popup) {

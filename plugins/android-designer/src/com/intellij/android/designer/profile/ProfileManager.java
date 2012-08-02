@@ -120,6 +120,7 @@ public class ProfileManager {
         }
         else {
           updateDevice(item);
+          setSelection(item);
         }
 
         mySelectionRunnable.run();
@@ -138,6 +139,7 @@ public class ProfileManager {
       protected boolean selectionChanged(LayoutDeviceConfiguration item) {
         updateDeviceConfiguration(item);
         mySelectionRunnable.run();
+        setSelection(item);
         myRefreshAction.run();
         return true;
       }
@@ -147,8 +149,9 @@ public class ProfileManager {
       @Override
       protected boolean selectionChanged(IAndroidTarget item) {
         updateTarget(item);
-        updateThemes();
         mySelectionRunnable.run();
+        setSelection(item);
+        updateThemes();
         return true;
       }
     };
@@ -158,6 +161,7 @@ public class ProfileManager {
       protected boolean selectionChanged(LocaleData item) {
         updateLocale(item);
         mySelectionRunnable.run();
+        setSelection(item);
         myRefreshAction.run();
         return true;
       }
@@ -168,6 +172,7 @@ public class ProfileManager {
       protected boolean selectionChanged(UiMode item) {
         myProfile.setDockMode(item.getResourceValue());
         mySelectionRunnable.run();
+        setSelection(item);
         myRefreshAction.run();
         return true;
       }
@@ -178,6 +183,7 @@ public class ProfileManager {
       protected boolean selectionChanged(NightMode item) {
         myProfile.setNightMode(item.getResourceValue());
         mySelectionRunnable.run();
+        setSelection(item);
         myRefreshAction.run();
         return true;
       }
@@ -208,6 +214,7 @@ public class ProfileManager {
       protected boolean selectionChanged(ThemeData item) {
         updateTheme(item);
         mySelectionRunnable.run();
+        setSelection(item);
         myRefreshAction.run();
         return true;
       }

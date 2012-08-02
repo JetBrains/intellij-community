@@ -25,10 +25,11 @@ import javax.swing.*;
  */
 public class DefaultPaletteItem implements PaletteItem {
   private final String myTitle;
-  private final String myIconPath;
-  private Icon myIcon;
+  protected final String myIconPath;
+  protected Icon myIcon;
   private final String myTooltip;
   private final String myVersion;
+  private boolean myEnabled = true;
 
   protected MetaModel myMetaModel;
 
@@ -60,6 +61,15 @@ public class DefaultPaletteItem implements PaletteItem {
   @Override
   public String getVersion() {
     return myVersion;
+  }
+
+  @Override
+  public boolean isEnabled() {
+    return myEnabled;
+  }
+
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
   }
 
   public MetaModel getMetaModel() {

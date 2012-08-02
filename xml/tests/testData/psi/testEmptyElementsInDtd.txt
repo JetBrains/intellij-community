@@ -19,8 +19,8 @@ XmlFile:test.dtd
           XmlToken:XML_LEFT_PAREN('(')
           PsiErrorElement:Xml name or entity ref expected
             <empty list>
-    XmlToken:XML_COMMA(',')
-    XmlToken:XML_RIGHT_PAREN(')')
+      XmlToken:XML_COMMA(',')
+      XmlToken:XML_RIGHT_PAREN(')')
     PsiWhiteSpace('\n')
     PsiElement(XML_ATTLIST_DECL)
       XmlToken:XML_ATTLIST_DECL_START('<!ATTLIST')

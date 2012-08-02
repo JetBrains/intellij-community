@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,8 @@ import java.util.List;
 
 public abstract class TextEditorHighlightingPass implements HighlightingPass {
   public static final TextEditorHighlightingPass[] EMPTY_ARRAY = new TextEditorHighlightingPass[0];
-  protected final Document myDocument;
-  protected final Project myProject;
+  @Nullable protected final Document myDocument;
+  @NotNull protected final Project myProject;
   private final boolean myRunIntentionPassAfter;
   private final long myInitialStamp;
   private int[] myCompletionPredecessorIds = ArrayUtil.EMPTY_INT_ARRAY;
@@ -81,7 +81,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     }
 
     if (myDocument != null && myDocument.getModificationStamp() != myInitialStamp) return false;
-    if (myProject != null && myDocument != null) {
+    if (myDocument != null) {
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
       if (file == null || !file.isValid()) return false;
     }
@@ -128,6 +128,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     myCompletionPredecessorIds = completionPredecessorIds;
   }
 
+  @Nullable
   public Document getDocument() {
     return myDocument;
   }

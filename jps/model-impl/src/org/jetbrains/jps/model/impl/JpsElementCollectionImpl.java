@@ -12,16 +12,16 @@ import java.util.*;
 public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBase<JpsElementCollectionImpl<E>> implements JpsElementCollection<E> {
   private final List<E> myElements;
   private final Map<E, E> myCopyToOriginal;
-  private final JpsElementKind<E> myKind;
+  private final JpsElementChildRole<E> myChildRole;
 
-  public JpsElementCollectionImpl(JpsElementKind<E> kind) {
-    myKind = kind;
+  public JpsElementCollectionImpl(JpsElementChildRole<E> role) {
+    myChildRole = role;
     myElements = new SmartList<E>();
     myCopyToOriginal = null;
   }
 
   public JpsElementCollectionImpl(JpsElementCollectionImpl<E> original) {
-    myKind = original.myKind;
+    myChildRole = original.myChildRole;
     myElements = new SmartList<E>();
     myCopyToOriginal = new HashMap<E, E>();
     for (E e : original.myElements) {
@@ -40,12 +40,6 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
 
   @NotNull
   @Override
-  public <P> E addChild(@NotNull JpsElementParameterizedCreator<E, P> factory, @NotNull P param) {
-    return addChild(factory.create(param));
-  }
-
-  @NotNull
-  @Override
   public E addChild(@NotNull JpsElementCreator<E> creator) {
     return addChild(creator.create());
   }
@@ -56,7 +50,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     setParent(element, this);
     final JpsEventDispatcher eventDispatcher = getEventDispatcher();
     if (eventDispatcher != null) {
-      eventDispatcher.fireElementAdded(element, myKind);
+      eventDispatcher.fireElementAdded(element, myChildRole);
     }
     return element;
   }
@@ -67,7 +61,7 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     if (removed) {
       final JpsEventDispatcher eventDispatcher = getEventDispatcher();
       if (eventDispatcher != null) {
-        eventDispatcher.fireElementRemoved(element, myKind);
+        eventDispatcher.fireElementRemoved(element, myChildRole);
       }
       setParent(element, null);
     }

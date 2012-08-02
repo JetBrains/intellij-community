@@ -650,6 +650,7 @@
     <group id="XDebugger.Actions">
       <action id="XDebugger.SetValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XSetValueAction"/>
       <action id="XDebugger.CopyValue" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyValueAction"/>
+      <action id="XDebugger.CompareValueWithClipboard" class="com.intellij.xdebugger.impl.ui.tree.actions.XCompareWithClipboardAction"/>
       <action id="XDebugger.CopyName" class="com.intellij.xdebugger.impl.ui.tree.actions.XCopyNameAction"/>
       <action id="XDebugger.Inspect" class="com.intellij.xdebugger.impl.ui.tree.actions.XInspectAction"/>
       <action id="XDebugger.JumpToSource" class="com.intellij.xdebugger.impl.ui.tree.actions.XJumpToSourceAction"/>
@@ -690,6 +691,7 @@
       <reference ref="XDebugger.Inspect"/>
       <reference ref="XDebugger.SetValue"/>
       <reference ref="XDebugger.CopyValue"/>
+      <reference ref="XDebugger.CompareValueWithClipboard"/>
       <reference ref="XDebugger.CopyName"/>
       <reference ref="Debugger.MarkObject"/>
     </group>
@@ -775,8 +777,7 @@
     </group>
 
     <group id="ConsoleView.PopupMenu">
-      <action id="ConsoleView.Copy" class="com.intellij.execution.impl.ConsoleViewImpl$CopyAction"/>
-      <reference ref="CompareClipboardWithSelection"/>
+      <reference ref="ConsoleEditorPopupMenu"/>
       <separator/>
       <action id="ConsoleView.ClearAll" class="com.intellij.execution.impl.ConsoleViewImpl$ClearAllAction"/>
     </group>

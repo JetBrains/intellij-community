@@ -20,4 +20,8 @@
                     serviceImplementation="com.intellij.android.designer.model.ViewsMetaManager"/>
   </extensions>
 
+  <extensions defaultExtensionNs="org.jetbrains.android">
+    <refactoringContextProvider implementation="com.intellij.android.designer.AndroidDesignerRefactoringContextProvider"/>
+  </extensions>
+
 </idea-plugin>

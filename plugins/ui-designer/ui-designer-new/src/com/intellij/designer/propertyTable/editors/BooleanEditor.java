@@ -15,7 +15,8 @@
  */
 package com.intellij.designer.propertyTable.editors;
 
-import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.util.ui.UIUtil;
@@ -59,9 +60,8 @@ public class BooleanEditor extends PropertyEditor {
   }
 
   @NotNull
-  public JComponent getComponent(@NotNull RadComponent rootComponent,
-                                 @Nullable RadComponent component,
-                                 Object value,
+  public JComponent getComponent(@Nullable PropertiesContainer container,
+                                 @Nullable PropertyContext context, Object value,
                                  @Nullable InplaceContext inplaceContext) {
     try {
       myInsideChange = true;

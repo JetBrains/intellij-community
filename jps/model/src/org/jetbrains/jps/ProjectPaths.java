@@ -20,6 +20,7 @@ import java.util.*;
  * @author Eugene Zhuravlev
  *         Date: 9/30/11
  */
+//todo[nik] use JpsDependenciesEnumerator instead
 public class ProjectPaths {
   private static final String DEFAULT_GENERATED_DIR_NAME = "generated";
   @NotNull
@@ -28,12 +29,6 @@ public class ProjectPaths {
 
   public ProjectPaths(JpsProject project) {
     myProject = project;
-  }
-
-  public Collection<File> getClasspathFiles(JpsModule module, JpsJavaClasspathKind kind) {
-    final Set<File> files = new LinkedHashSet<File>();
-    collectClasspath(module, kind, files, new HashSet<JpsModule>(), false, !kind.isRuntime(), false, ACCEPT_ALL);
-    return files;
   }
 
   public Collection<File> getClasspathFiles(ModuleChunk chunk, JpsJavaClasspathKind kind) {
@@ -124,21 +119,6 @@ public class ProjectPaths {
       result.add(getCanonicalPath(file));
     }
     return result;
-  }
-
-  public static Collection<File> getSourcePathsWithDependents(ModuleChunk chunk, boolean includeTests) {
-    final Set<File> sourcePaths = new LinkedHashSet<File>();
-    collectPathsRecursively(chunk, JpsJavaClasspathKind.compile(includeTests), new PathsGetter() {
-      public void apply(JpsModule module, JpsJavaClasspathKind kind) {
-        for (JpsModuleSourceRoot root : module.getSourceRoots()) {
-          if (root.getRootType().equals(JavaSourceRootType.SOURCE) ||
-              kind.isTestsIncluded() && root.getRootType().equals(JavaSourceRootType.TEST_SOURCE)) {
-            addFile(sourcePaths, root.getUrl());
-          }
-        }
-      }
-    });
-    return sourcePaths;
   }
 
   /**

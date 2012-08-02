@@ -91,12 +91,7 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
   @Override
   @NotNull
   public PsiAnnotationParameterList getParameterList() {
-    final PsiAnnotationStub stub = getStub();
-    if (stub != null) {
-      return (PsiAnnotationParameterList)stub.getTreeElement().findChildByRoleAsPsiElement(ChildRole.PARAMETER_LIST);
-    }
-
-    return PsiTreeUtil.getRequiredChildOfType(this, PsiAnnotationParameterList.class);
+    return getRequiredStubOrPsiChild(JavaStubElementTypes.ANNOTATION_PARAMETER_LIST);
   }
 
   @Override
@@ -183,7 +178,6 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
     if (attributes.length == 0) {
       return !strict;
     }
-    PsiAnnotationMemberValue value = attributes[0].getValue();
     LOG.assertTrue(elementTypeFields.length > 0);
 
     PsiClass elementTypeClass =
@@ -194,10 +188,14 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       //return !ArrayUtil.contains("TYPE_USE", elementTypeFields);
     }
 
+    PsiAnnotationMemberValue value = null;
     for (String fieldName : elementTypeFields) {
       PsiField field = elementTypeClass.findFieldByName(fieldName, false);
       if (field == null) {
         continue;
+      }
+      if (value == null) {
+        value = attributes[0].getValue();
       }
       if (value instanceof PsiArrayInitializerMemberValue) {
         PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)value).getInitializers();

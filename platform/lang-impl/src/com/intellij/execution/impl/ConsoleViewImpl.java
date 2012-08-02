@@ -70,10 +70,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.EditorPopupHandler;
-import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.*;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -92,9 +89,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableConsoleView, DataProvider, OccurenceNavigator {
   @NonNls private static final String CONSOLE_VIEW_POPUP_MENU = "ConsoleView.PopupMenu";
-  private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
+  private static final         Logger LOG                     = Logger.getInstance("#com.intellij.execution.impl.ConsoleViewImpl");
 
-  private static final int FLUSH_DELAY = 200; //TODO : make it an option
+  private static final int DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200);
 
   public static final Key<ConsoleViewImpl> CONSOLE_VIEW_IN_EDITOR_VIEW = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW");
 
@@ -108,7 +105,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final CommandLineFolding myCommandLineFolding = new CommandLineFolding();
 
   private final DisposedPsiManagerCheck myPsiDisposedCheck;
-  private final boolean isViewer;
+  private final boolean                 isViewer;
 
   private ConsoleState myState;
 
@@ -117,17 +114,18 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   private final Alarm mySpareTimeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   @Nullable
   private final Alarm myHeavyAlarm;
-  private int myHeavyUpdateTicket;
+  private       int   myHeavyUpdateTicket;
 
-  private final CopyOnWriteArraySet<ChangeListener> myListeners = new CopyOnWriteArraySet<ChangeListener>();
-  private final ArrayList<AnAction> customActions = new ArrayList<AnAction>();
-  private final ConsoleBuffer myBuffer = new ConsoleBuffer();
-  private boolean myUpdateFoldingsEnabled = true;
-  private EditorHyperlinkSupport myHyperlinks;
-  private MyDiffContainer myJLayeredPane;
-  private JPanel myMainPanel;
-  private final Runnable myFinishProgress;
+  private final CopyOnWriteArraySet<ChangeListener> myListeners             = new CopyOnWriteArraySet<ChangeListener>();
+  private final ArrayList<AnAction>                 customActions           = new ArrayList<AnAction>();
+  private final ConsoleBuffer                       myBuffer                = new ConsoleBuffer();
+  private       boolean                             myUpdateFoldingsEnabled = true;
+  private       EditorHyperlinkSupport myHyperlinks;
+  private       MyDiffContainer        myJLayeredPane;
+  private       JPanel                 myMainPanel;
+  private final Runnable               myFinishProgress;
   private boolean myAllowHeavyFilters = false;
+  private int myFlushDelay = DEFAULT_FLUSH_DELAY;
 
   public Editor getEditor() {
     return myEditor;
@@ -535,8 +533,17 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       }
       if (myEditor != null && !myFlushAlarm.isDisposed()) {
         final boolean shouldFlushNow = myBuffer.isUseCyclicBuffer() && myBuffer.getLength() >= myBuffer.getCyclicBufferSize();
-        addFlushRequest(new MyFlushRunnable(), shouldFlushNow ? 0 : FLUSH_DELAY);
+        addFlushRequest(new MyFlushRunnable(), shouldFlushNow ? 0 : myFlushDelay);
       }
+    }
+  }
+
+  public void setFlushDelay(int flushDelay) throws IllegalArgumentException {
+    if (flushDelay < 0) {
+      throw new IllegalArgumentException("Can't accept negative flush delay value: " + flushDelay);
+    }
+    synchronized (LOCK) { // Ensure 'happens-before' condition with the variable read.
+      myFlushDelay = flushDelay;
     }
   }
 
@@ -894,7 +901,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     if (group == null) {
       group = (ActionGroup)actionManager.getAction(CONSOLE_VIEW_POPUP_MENU);
     }
-    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
+    final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_POPUP, group);
     menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
   }
 
@@ -1089,13 +1096,6 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (consoleView != null) {
         consoleView.clear();
       }
-    }
-  }
-
-  public static class CopyAction extends EditorCopyAction {
-    @Override
-    protected boolean isEnabled(AnActionEvent e) {
-      return super.isEnabled(e) && e.getData(LangDataKeys.CONSOLE_VIEW) != null;
     }
   }
 

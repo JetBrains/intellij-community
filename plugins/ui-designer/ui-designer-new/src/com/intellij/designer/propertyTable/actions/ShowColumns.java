@@ -16,7 +16,7 @@
 package com.intellij.designer.propertyTable.actions;
 
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -25,9 +25,9 @@ import com.intellij.openapi.actionSystem.ToggleAction;
  * @author Alexander Lobas
  */
 public class ShowColumns extends ToggleAction {
-  private final PropertyTable myTable;
+  private final RadPropertyTable myTable;
 
-  public ShowColumns(PropertyTable table) {
+  public ShowColumns(RadPropertyTable table) {
     myTable = table;
 
     Presentation presentation = getTemplatePresentation();

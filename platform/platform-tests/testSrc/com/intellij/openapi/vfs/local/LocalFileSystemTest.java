@@ -20,21 +20,21 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.SafeWriteRequestor;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.Locale;
 
 public class LocalFileSystemTest extends PlatformLangTestCase {
   public void testChildrenAccessedButNotCached() throws Exception {
@@ -137,7 +137,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir, null);
   }
 
-  public void testGermanLetters() throws Exception {
+  public void testUnicodeNames() throws Exception {
     final File dirFile = createTempDirectory();
     final String name = "te\u00dft123123123.txt";
     final File childFile = new File(dirFile, name);
@@ -152,8 +152,8 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertTrue(childFile.delete());
   }
 
-  public void testFindRoot() {
-    VirtualFile root;
+  public void testFindRoot() throws IOException {
+    VirtualFile root, root2;
 
     root = LocalFileSystem.getInstance().findFileByPath("wrong_path");
     assertNull(root);
@@ -161,6 +161,9 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     if (SystemInfo.isWindows) {
       root = LocalFileSystem.getInstance().findFileByPath("\\\\unit-133");
       assertNotNull(root);
+      root2 = LocalFileSystem.getInstance().findFileByPath("\\\\UNIT-133");
+      assertNotNull(root2);
+      assertTrue(String.valueOf(root2), root == root2);
       RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
 
       root = LocalFileSystem.getInstance().findFileByIoFile(new File("\\\\unit-133"));
@@ -170,6 +173,9 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       if (new File("c:").exists()) {
         root = LocalFileSystem.getInstance().findFileByPath("c:");
         assertNotNull(root);
+
+        root2 = LocalFileSystem.getInstance().findFileByPath("C:\\");
+        assertTrue(String.valueOf(root2), root == root2);
       }
     }
     else if (SystemInfo.isUnix) {
@@ -179,6 +185,18 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
     root = LocalFileSystem.getInstance().findFileByPath("");
     assertNotNull(root);
+
+    File jarFile = IoTestUtil.createTestJar();
+    root = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath() + "!/");
+    assertNotNull(root);
+
+    root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().replace(File.separator, "//") + "!/");
+    assertTrue(String.valueOf(root2), root == root2);
+
+    if (!SystemInfo.isFileSystemCaseSensitive) {
+      root2 = VirtualFileManager.getInstance().findFileByUrl("jar://" + jarFile.getPath().toUpperCase(Locale.US) + "!/");
+      assertTrue(String.valueOf(root2), root == root2);
+    }
   }
 
   public void testFileLength() throws Exception {
@@ -205,6 +223,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
     final boolean safeWrite = GeneralSettings.getInstance().isUseSafeWrite();
     final File dir = FileUtil.createTempDirectory("hardlinks.", ".dir", false);
+    final SafeWriteRequestor requestor = new SafeWriteRequestor() { };
     try {
       GeneralSettings.getInstance().setUseSafeWrite(false);
 
@@ -214,9 +233,9 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
       final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
-      file.setBinaryContent("hello".getBytes(), 0, 0, new SafeWriteRequestor() {});
+      file.setBinaryContent("hello".getBytes(), 0, 0, requestor);
 
-      final VirtualFile check = LocalFileSystem.getInstance().findFileByIoFile(hardLinkFile);
+      final VirtualFile check = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(hardLinkFile);
       assertNotNull(check);
       assertEquals("hello", VfsUtilCore.loadText(check));
     }
@@ -245,10 +264,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       assertNotNull(virtualFile);
 
       NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
-      fs = PersistentFS.replaceWithNativeFS(fs);
-
-      assertTrue(fs.exists(virtualFile));
-      final FileAttributes attributes = fs.getAttributes(virtualFile);
+      FileAttributes attributes = fs.getAttributes(virtualFile);
       assertNotNull(attributes);
       assertEquals(FileAttributes.Type.FILE, attributes.type);
       assertEquals(FileAttributes.HIDDEN, attributes.flags);
@@ -284,5 +300,22 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       }
     }
     assertEquals(expectedCount, children.length);
+  }
+
+  public void testSingleFileRootRefresh() throws Exception {
+    File file = FileUtil.createTempFile("test.", ".txt");
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNotNull(virtualFile);
+    assertTrue(virtualFile.exists());
+    assertTrue(virtualFile.isValid());
+
+    virtualFile.refresh(false, false);
+    assertFalse(((VirtualFileSystemEntry)virtualFile).isDirty());
+
+    FileUtil.delete(file);
+    assertFalse(file.exists());
+    virtualFile.refresh(false, false);
+    assertFalse(virtualFile.exists());
+    assertFalse(virtualFile.isValid());
   }
 }

@@ -41,11 +41,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.infos.CandidateInfo;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -71,7 +70,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -90,9 +89,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
@@ -100,6 +97,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner
 import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrScriptField;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -129,6 +127,29 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         GroovyAssignabilityCheckInspection.checkElement((GroovyPsiElement)element, holder);
       }
       myHolder = null;
+    }
+    else {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof GrMethod) {
+        if (element.equals(((GrMethod)parent).getNameIdentifierGroovy()) &&
+            ((GrMethod)parent).getReturnTypeElementGroovy() == null) {
+          checkMethodReturnType((GrMethod)parent, element, holder);
+        }
+      }
+      else if (parent instanceof GrField) {
+        final GrField field = (GrField)parent;
+        if (element.equals(field.getNameIdentifierGroovy())) {
+          final GrAccessorMethod[] getters = field.getGetters();
+          for (GrAccessorMethod getter : getters) {
+            checkMethodReturnType(getter, field.getNameIdentifierGroovy(), holder);
+          }
+
+          final GrAccessorMethod setter = field.getSetter();
+          if (setter != null) {
+            checkMethodReturnType(setter, field.getNameIdentifierGroovy(), holder);
+          }
+        }
+      }
     }
   }
 
@@ -777,6 +798,91 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
+  @Override
+  public void visitTypeElement(GrTypeElement typeElement) {
+    super.visitTypeElement(typeElement);
+
+    final PsiElement parent = typeElement.getParent();
+    if (!(parent instanceof GrMethod)) return;
+
+    checkMethodReturnType(((GrMethod)parent), typeElement, myHolder);
+
+
+  }
+
+  private static void checkMethodReturnType(PsiMethod method, PsiElement toHighlight, AnnotationHolder holder) {
+    final HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
+    final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
+
+    PsiType returnType = signature.getSubstitutor().substitute(method.getReturnType());
+
+    for (HierarchicalMethodSignature superMethodSignature : superSignatures) {
+      PsiMethod superMethod = superMethodSignature.getMethod();
+      PsiType declaredReturnType = superMethod.getReturnType();
+      PsiType superReturnType = superMethodSignature.getSubstitutor().substitute(declaredReturnType);
+      if (superReturnType == PsiType.VOID && method instanceof GrMethod && ((GrMethod)method).getReturnTypeElementGroovy() == null) return;
+      if (superMethodSignature.isRaw()) superReturnType = TypeConversionUtil.erasure(declaredReturnType);
+      if (returnType == null || superReturnType == null || method == superMethod) continue;
+      PsiClass superClass = superMethod.getContainingClass();
+      if (superClass == null) continue;
+      String highlightInfo = checkSuperMethodSignature(superMethod, superMethodSignature, superReturnType, method, signature, returnType);
+      if (highlightInfo != null) {
+        holder.createErrorAnnotation(toHighlight, highlightInfo);
+        return;
+      }
+    }
+  }
+
+  @Nullable
+  private static String checkSuperMethodSignature(PsiMethod superMethod,
+                                                  MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                  PsiType superReturnType,
+                                                  PsiMethod method,
+                                                  MethodSignatureBackedByPsiMethod methodSignature,
+                                                  PsiType returnType) {
+    if (superReturnType == null) return null;
+    PsiType substitutedSuperReturnType;
+    if (!superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
+      PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
+                                                                                                  superMethodSignature);
+      substitutedSuperReturnType = unifyingSubstitutor == null
+                                   ? superReturnType
+                                   : unifyingSubstitutor.substitute(superMethodSignature.getSubstitutor().substitute(superReturnType));
+    }
+    else {
+      substitutedSuperReturnType = TypeConversionUtil.erasure(superReturnType);
+    }
+
+    if (returnType.equals(substitutedSuperReturnType)) return null;
+    if (!(returnType instanceof PsiPrimitiveType) &&
+        substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType &&
+        TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
+      return null;
+    }
+
+    String qName = getQName(method);
+    String baseQName = getQName(superMethod);
+    final String presentation = returnType.getCanonicalText()+" "+GroovyPresentationUtil.getSignaturePresentation(methodSignature);
+    final String basePresentation = superReturnType.getCanonicalText()+" "+GroovyPresentationUtil.getSignaturePresentation(superMethodSignature);
+    return GroovyBundle.message("return.type.is.incompatible", presentation, qName, basePresentation, baseQName);
+  }
+
+  @NotNull
+  private static String getQName(PsiMethod method) {
+    final PsiClass aClass = method.getContainingClass();
+    if (aClass instanceof PsiAnonymousClass) {
+      return GroovyBundle.message("anonymous.class.derived.from") + " " + ((PsiAnonymousClass)aClass).getBaseClassType().getCanonicalText();
+    }
+    if (aClass != null) {
+      final String qname = aClass.getQualifiedName();
+      if (qname != null) {
+        return qname;
+      }
+    }
+    return "<null>";
+  }
+
+
   private void checkTypeArgForPrimitive(@Nullable GrTypeElement element, String message) {
     if (element == null || !(element.getType() instanceof PsiPrimitiveType)) return;
 
@@ -1115,7 +1221,6 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
 
   public void visitAnnotation(GrAnnotation annotation) {
-    super.visitAnnotation(annotation);
     final GrCodeReferenceElement ref = annotation.getClassReference();
     final PsiElement resolved = ref.resolve();
 
@@ -1138,6 +1243,131 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD.equals(((PsiClass)resolved).getQualifiedName())) {
       checkScriptField(annotation);
     }
+  }
+
+  @Override
+  public void visitAnnotationArgumentList(GrAnnotationArgumentList annotationArgumentList) {
+    final GrAnnotation annotation = (GrAnnotation)annotationArgumentList.getParent();
+
+    final PsiElement resolved = annotation.getClassReference().resolve();
+    if (resolved == null) return;
+    assert resolved instanceof PsiClass;
+    final PsiClass annot = (PsiClass)resolved;
+
+    final GrAnnotationNameValuePair[] attributes = annotationArgumentList.getAttributes();
+
+    Set<String> usedAttrs = new HashSet<String>();
+    if (attributes.length == 1 && attributes[0].getNameIdentifierGroovy() == null) {
+      checkAnnotationValue(annot, attributes[0], "value", usedAttrs, attributes[0].getValue());
+    }
+    else {
+      for (GrAnnotationNameValuePair attribute : attributes) {
+        final PsiElement identifier = attribute.getNameIdentifierGroovy();
+        final String name = identifier.getText();
+        checkAnnotationValue(annot, identifier, name, usedAttrs, attribute.getValue());
+      }
+    }
+
+    List<String> missedAttrs = new ArrayList<String>();
+    final PsiMethod[] methods = annot.getMethods();
+    for (PsiMethod method : methods) {
+      final String name = method.getName();
+      if (usedAttrs.contains(name) ||
+          method instanceof PsiAnnotationMethod && ((PsiAnnotationMethod)method).getDefaultValue() != null) {
+        continue;
+      }
+       missedAttrs.add(name);
+    }
+
+    if (!missedAttrs.isEmpty()) {
+      myHolder.createErrorAnnotation(annotation.getClassReference(), GroovyBundle.message("missed.attributes", StringUtil.join(missedAttrs, ", ")));
+    }
+  }
+
+  private void checkAnnotationValue(PsiClass annot,
+                                    PsiElement identifierToHighlight,
+                                    String name,
+                                    Set<String> usedAttrs,
+                                    GrAnnotationMemberValue value) {
+    if (usedAttrs.contains(name)) {
+      myHolder.createErrorAnnotation(identifierToHighlight, GroovyBundle.message("duplicate.attribute"));
+    }
+
+    usedAttrs.add(name);
+
+    final PsiMethod[] methods = annot.findMethodsByName(name, false);
+    if (methods.length == 0) {
+      myHolder.createErrorAnnotation(identifierToHighlight,
+                                     GroovyBundle.message("at.interface.0.does.not.contain.attribute", annot.getQualifiedName(), name));
+    }
+    else {
+      final PsiMethod method = methods[0];
+      final PsiType ltype = method.getReturnType();
+      if (ltype != null && value != null) {
+        checkAnnotationValueByType(value, ltype);
+      }
+    }
+  }
+
+  @Override
+  public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
+    final GrAnnotationMemberValue value = defaultAnnotationValue.getDefaultValue();
+
+    final PsiElement parent = defaultAnnotationValue.getParent();
+    assert parent instanceof GrAnnotationMethod;
+    final PsiType type = ((GrAnnotationMethod)parent).getReturnType();
+
+    checkAnnotationValueByType(value, type);
+  }
+
+  private void checkAnnotationValueByType(GrAnnotationMemberValue value, PsiType ltype) {
+    final GlobalSearchScope resolveScope = value.getResolveScope();
+    final PsiManager manager = value.getManager();
+
+    if (value instanceof GrExpression) {
+      final PsiType rtype = ((GrExpression)value).getType();
+
+      if (rtype != null && !checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype)) {
+        myHolder.createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
+      }
+    }
+
+    else if (value instanceof GrAnnotation) {
+      final PsiElement resolved = ((GrAnnotation)value).getClassReference().resolve();
+      if (resolved instanceof PsiClass) {
+        final PsiClassType rtype = JavaPsiFacade.getElementFactory(value.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
+        if (!checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype)) {
+          myHolder.createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
+        }
+      }
+    }
+
+    else if (value instanceof GrAnnotationArrayInitializer) {
+
+      if (ltype instanceof PsiArrayType) {
+        final PsiType componentType = ((PsiArrayType)ltype).getComponentType();
+        final GrAnnotationMemberValue[] initializers = ((GrAnnotationArrayInitializer)value).getInitializers();
+        for (GrAnnotationMemberValue initializer : initializers) {
+          checkAnnotationValueByType(initializer, componentType);
+        }
+      }
+      else {
+        final PsiType rtype = TypesUtil.getTupleByAnnotationArrayInitializer((GrAnnotationArrayInitializer)value);
+        if (!checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype)) {
+          myHolder.createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
+        }
+      }
+    }
+  }
+
+  private static boolean checkAnnoTypeAssignable(PsiType type, GlobalSearchScope resolveScope, PsiManager manager, PsiType rtype) {
+    rtype = TypesUtil.unboxPrimitiveTypeWrapper(rtype);
+    if (TypesUtil.isAssignableByMethodCallConversion(type, rtype, manager, resolveScope)) return true;
+
+    if (!(type instanceof PsiArrayType)) return false;
+
+    final PsiType componentType = ((PsiArrayType)type).getComponentType();
+    return TypesUtil.isAssignableByMethodCallConversion(componentType, rtype, manager, resolveScope);
   }
 
   @Override

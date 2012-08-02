@@ -153,13 +153,13 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     public void save(final DataOutput out, @NotNull final StubIdList value) throws IOException {
       int size = value.size();
       if (size == 0) {
-        DataInputOutputUtil.writeSINT(out, Integer.MAX_VALUE);
+        DataInputOutputUtil.writeINT(out, Integer.MAX_VALUE);
       }
       else if (size == 1) {
-        DataInputOutputUtil.writeSINT(out, -value.get(0)); // todo we can store it unsigned and have 3M indices benefit!
+        DataInputOutputUtil.writeINT(out, value.get(0)); // most often case
       }
       else {
-        DataInputOutputUtil.writeSINT(out, size);
+        DataInputOutputUtil.writeINT(out, -size);
         for(int i = 0; i < size; ++i) {
           DataInputOutputUtil.writeINT(out, value.get(i));
         }
@@ -169,14 +169,15 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     @NotNull
     @Override
     public StubIdList read(final DataInput in) throws IOException {
-      int size = DataInputOutputUtil.readSINT(in);
+      int size = DataInputOutputUtil.readINT(in);
       if (size == Integer.MAX_VALUE) {
         return new StubIdList();
       }
-      else if (size <= 0) {
-        return new StubIdList(-size);
+      else if (size >= 0) {
+        return new StubIdList(size);
       }
       else {
+        size = -size;
         int[] result = new int[size];
         for(int i = 0; i < size; ++i) {
           result[i] = DataInputOutputUtil.readINT(in);

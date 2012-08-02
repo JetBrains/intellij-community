@@ -19,7 +19,6 @@ package org.jetbrains.android.util;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
-import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -32,7 +31,6 @@ import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModulePackageIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,7 +42,6 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -266,6 +263,9 @@ public class AndroidResourceUtil {
 
   public static boolean isCorrectAndroidResourceName(@NotNull String resourceName) {
     if (resourceName.length() == 0) {
+      return false;
+    }
+    if (resourceName.startsWith(".") || resourceName.endsWith(".")) {
       return false;
     }
     final String[] identifiers = resourceName.split("\\.");
@@ -613,17 +613,17 @@ public class AndroidResourceUtil {
   }
 
   public static boolean createValueResource(@NotNull Module module,
-                                            @NotNull String resourceName,
-                                            @NotNull ResourceType resourceType,
-                                            @NotNull String fileName,
-                                            @NotNull List<String> dirNames,
-                                            @NotNull String value) {
+                                              @NotNull String resourceName,
+                                              @NotNull final ResourceType resourceType,
+                                              @NotNull String fileName,
+                                              @NotNull List<String> dirNames,
+                                              @NotNull Processor<ResourceElement> afterAddedProcessor) {
     final Project project = module.getProject();
     final AndroidFacet facet = AndroidFacet.getInstance(module);
     assert facet != null;
 
     try {
-      return addValueResource(facet, resourceName, resourceType, fileName, dirNames, value);
+      return addValueResource(facet, resourceName, resourceType, fileName, dirNames, afterAddedProcessor);
     }
     catch (Exception e) {
       final String message = CreateElementActionBase.filterMessage(e.getMessage());
@@ -633,10 +633,32 @@ public class AndroidResourceUtil {
       }
       else {
         LOG.info(e);
-        reportError(project, message);
+        AndroidUtils.reportError(project, message);
       }
       return false;
     }
+  }
+
+  public static boolean createValueResource(@NotNull Module module,
+                                            @NotNull String resourceName,
+                                            @NotNull final ResourceType resourceType,
+                                            @NotNull String fileName,
+                                            @NotNull List<String> dirNames,
+                                            @NotNull final String value) {
+    return createValueResource(module, resourceName, resourceType, fileName, dirNames, new Processor<ResourceElement>() {
+      @Override
+      public boolean process(ResourceElement element) {
+        if (value.length() > 0) {
+          element.setStringValue(value);
+        }
+        else if (resourceType == ResourceType.STYLEABLE ||
+                 resourceType == ResourceType.STYLE) {
+          element.setStringValue("value");
+          element.getXmlTag().getValue().setText("");
+        }
+        return true;
+      }
+    });
   }
 
   private static boolean addValueResource(@NotNull AndroidFacet facet,
@@ -644,7 +666,7 @@ public class AndroidResourceUtil {
                                           @NotNull final ResourceType resourceType,
                                           @NotNull String fileName,
                                           @NotNull List<String> dirNames,
-                                          @NotNull final String value) throws Exception {
+                                          @NotNull final Processor<ResourceElement> afterAddedProcessor) throws Exception {
     if (dirNames.size() == 0) {
       return false;
     }
@@ -666,7 +688,7 @@ public class AndroidResourceUtil {
     for (int i = 0; i < resFiles.length; i++) {
       final Resources resources = AndroidUtils.loadDomElement(facet.getModule(), resFiles[i], Resources.class);
       if (resources == null) {
-        reportError(facet.getModule().getProject(), AndroidBundle.message("not.resource.file.error", fileName));
+        AndroidUtils.reportError(facet.getModule().getProject(), AndroidBundle.message("not.resource.file.error", fileName));
         return false;
       }
       resourcesElements[i] = resources;
@@ -678,15 +700,7 @@ public class AndroidResourceUtil {
         for (Resources resources : resourcesElements) {
           final ResourceElement element = addValueResource(resourceType, resources);
           element.getName().setValue(resourceName);
-
-          if (value.length() > 0) {
-            element.setStringValue(value);
-          }
-          else if (resourceType == ResourceType.STYLEABLE ||
-                   resourceType == ResourceType.STYLE) {
-            element.setStringValue("value");
-            element.getXmlTag().getValue().setText("");
-          }
+          afterAddedProcessor.process(element);
         }
       }
     });
@@ -702,14 +716,14 @@ public class AndroidResourceUtil {
     final VirtualFile resDir = facet.getLocalResourceManager().getResourceDir();
 
     if (resDir == null) {
-      reportError(project, AndroidBundle.message("check.resource.dir.error", module.getName()));
+      AndroidUtils.reportError(project, AndroidBundle.message("check.resource.dir.error", module.getName()));
       return null;
     }
     final VirtualFile dir = AndroidUtils.createChildDirectoryIfNotExist(project, resDir, dirName);
     final String dirPath = FileUtil.toSystemDependentName(resDir.getPath() + '/' + dirName);
 
     if (dir == null) {
-      reportError(project, AndroidBundle.message("android.cannot.create.dir.error", dirPath));
+      AndroidUtils.reportError(project, AndroidBundle.message("android.cannot.create.dir.error", dirPath));
       return null;
     }
 
@@ -722,18 +736,9 @@ public class AndroidResourceUtil {
       .createFromTemplate(project, dir, AndroidFileTemplateProvider.VALUE_RESOURCE_FILE_TEMPLATE, fileName);
     final VirtualFile result = dir.findChild(fileName);
     if (result == null) {
-      reportError(project, AndroidBundle.message("android.cannot.create.file.error", dirPath + File.separatorChar + fileName));
+      AndroidUtils.reportError(project, AndroidBundle.message("android.cannot.create.file.error", dirPath + File.separatorChar + fileName));
     }
     return result;
-  }
-
-  private static void reportError(@NotNull Project project, @NotNull String message) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw new IncorrectOperationException(message);
-    }
-    else {
-      Messages.showErrorDialog(project, message, CommonBundle.getErrorTitle());
-    }
   }
 
   @Nullable

@@ -20,7 +20,10 @@ import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
 import com.intellij.designer.ModuleProvider;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.designer.model.RadPropertyContext;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
@@ -207,12 +210,13 @@ public class ResourceEditor extends PropertyEditor {
 
   @NotNull
   @Override
-  public JComponent getComponent(@NotNull RadComponent rootComponent,
-                                 @Nullable RadComponent component,
+  public JComponent getComponent(@Nullable PropertiesContainer container,
+                                 @Nullable PropertyContext context,
                                  Object object,
                                  @Nullable InplaceContext inplaceContext) {
-    myRootComponent = rootComponent;
-    myComponent = component;
+    myComponent = container instanceof RadComponent ? (RadComponent)container : null;
+    myRootComponent = context instanceof RadPropertyContext ? ((RadPropertyContext)context).getRootComponent() : null;
+
     String value = (String)object;
     JTextField text = getComboText();
 

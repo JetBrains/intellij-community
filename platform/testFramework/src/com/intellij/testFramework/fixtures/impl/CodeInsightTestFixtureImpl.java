@@ -548,10 +548,18 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void testCompletion(final String[] filesBefore, final String fileAfter) {
+  public void testCompletion(@NonNls String[] filesBefore, @TestDataFile @NonNls String fileAfter) {
+    testCompletionTyping(filesBefore, "", fileAfter);
+  }
+
+  @Override
+  public void testCompletionTyping(final String[] filesBefore, String toType, final String fileAfter) {
     assertInitialized();
     configureByFiles(filesBefore);
     complete(CompletionType.BASIC);
+    for (int i = 0; i < toType.length(); i++) {
+      type(toType.charAt(i));
+    }
     try {
       checkResultByFile(fileAfter);
     }
@@ -567,7 +575,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void testCompletion(String fileBefore, String fileAfter, final String... additionalFiles) {
-    testCompletion(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)), fileAfter);
+    testCompletionTyping(fileBefore, "", fileAfter, additionalFiles);
+  }
+
+  @Override
+  public void testCompletionTyping(@TestDataFile @NonNls String fileBefore,
+                                   String toType,
+                                   @TestDataFile @NonNls String fileAfter,
+                                   String... additionalFiles) {
+    testCompletionTyping(ArrayUtil.reverseArray(ArrayUtil.append(additionalFiles, fileBefore)), toType, fileAfter);
   }
 
   @Override

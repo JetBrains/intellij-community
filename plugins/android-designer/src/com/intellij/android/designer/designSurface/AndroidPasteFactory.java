@@ -15,6 +15,7 @@
  */
 package com.intellij.android.designer.designSurface;
 
+import com.android.sdklib.IAndroidTarget;
 import com.intellij.android.designer.model.ModelParser;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.model.ViewsMetaManager;
@@ -22,10 +23,11 @@ import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.designer.model.MetaModel;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.module.Module;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
+import org.jetbrains.android.uipreview.ProjectClassLoader;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.StringReader;
@@ -38,17 +40,24 @@ import java.util.List;
 public class AndroidPasteFactory implements ComponentPasteFactory {
   public static final String KEY = "PASTE_DATA";
 
+  private final Module myModule;
+  private final IAndroidTarget myTarget;
   private final MetaManager myMetaManager;
   private final String myXmlComponents;
+  private ClassLoader myClassLoader;
 
-  public AndroidPasteFactory(Project project, String xmlComponents) {
-    myMetaManager = ViewsMetaManager.getInstance(project);
+  public AndroidPasteFactory(Module module, IAndroidTarget target, String xmlComponents) {
+    myModule = module;
+    myTarget = target;
+    myMetaManager = ViewsMetaManager.getInstance(module.getProject());
     myXmlComponents = xmlComponents;
   }
 
   @NotNull
   @Override
   public List<RadComponent> create() throws Exception {
+    myClassLoader = ProjectClassLoader.create(myTarget, myModule);
+
     List<RadComponent> components = new ArrayList<RadComponent>();
 
     Document document = new SAXBuilder().build(new StringReader(myXmlComponents), "UTF-8");
@@ -61,6 +70,11 @@ public class AndroidPasteFactory implements ComponentPasteFactory {
 
   private RadComponent createComponent(Element element) throws Exception {
     MetaModel metaModel = myMetaManager.getModelByTag(element.getAttributeValue("tag"));
+
+    String target = metaModel.getTarget();
+    if (target != null) {
+      myClassLoader.loadClass(target);
+    }
 
     RadViewComponent component = ModelParser.createComponent(null, metaModel);
     component.setClientProperty(KEY, element.getChild("properties"));

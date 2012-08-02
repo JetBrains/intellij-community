@@ -513,7 +513,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         popup[0].cancel();
         FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
         FindUsagesManager.SearchData data = new FindUsagesManager.SearchData();
-        data.myOptions = handler.getFindUsagesOptions();
+        data.myOptions = options;
         SmartPsiElementPointer<PsiElement> pointer =
           SmartPointerManager.getInstance(project).createSmartPsiElementPointer(handler.getPsiElement());
         data.myElements = new SmartPsiElementPointer[]{pointer};

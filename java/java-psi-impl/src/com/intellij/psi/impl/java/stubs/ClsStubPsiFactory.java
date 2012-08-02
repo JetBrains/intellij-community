@@ -87,4 +87,14 @@ public class ClsStubPsiFactory extends StubPsiFactory {
   public PsiTypeParameterList createTypeParameterList(PsiTypeParameterListStub stub) {
     return new ClsTypeParametersListImpl(stub);
   }
+
+  @Override
+  public PsiAnnotationParameterList createAnnotationParameterList(PsiAnnotationParameterListStub stub) {
+    return null; // todo
+  }
+
+  @Override
+  public PsiNameValuePair createNameValuePair(PsiNameValuePairStub stub) {
+    return null; // todo
+  }
 }

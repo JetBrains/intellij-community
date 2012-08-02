@@ -38,7 +38,9 @@ public class DirDiffFrame extends FrameWrapper {
     myPanel = new DirDiffPanel(model, new DirDiffWindow(this));
     Disposer.register(this, myPanel);
     setComponent(myPanel.getPanel());
-    setProject(project);
+    if (project != null) {
+      setProject(project);
+    }
     closeOnEsc();
     DataManager.registerDataProvider(myPanel.getPanel(), new DataProvider() {
       @Override

@@ -340,6 +340,12 @@
           <action id="UnsplitAll" class="com.intellij.ide.actions.UnsplitAllAction"/>
           <action id="NextSplitter" class="com.intellij.ide.actions.NextSplitAction"/>
           <action id="PrevSplitter" class="com.intellij.ide.actions.PrevSplitAction"/>
+          <group id="TabsPlacementGroup" popup="true" text="Tabs Placement">
+            <action id="TabsPlacementTop"    text="Top"    class="com.intellij.ide.actions.TabsPlacementAction$Top" />
+            <action id="TabsPlacementBottom" text="Bottom" class="com.intellij.ide.actions.TabsPlacementAction$Bottom" />
+            <action id="TabsPlacementLeft"   text="Left"   class="com.intellij.ide.actions.TabsPlacementAction$Left" />
+            <action id="TabsPlacementRight"  text="Right"  class="com.intellij.ide.actions.TabsPlacementAction$Right" />
+          </group>
         </group>
 
         <group id="BackgroundTasks" popup="true">
@@ -406,9 +412,17 @@
       <reference ref="PasteMultiple"/>
       <reference ref="EditorPasteSimple"/>
       <reference ref="EditorToggleColumnMode"/>
+      <action id="$SearchWeb" class="com.intellij.ide.actions.SearchWebAction"/>
       <separator/>
       <reference ref="CompareClipboardWithSelection"/>
       <reference ref="ChangeFileEncodingGroup"/>
+    </group>
+
+    <group id="ConsoleEditorPopupMenu">
+      <reference ref="CutCopyPasteGroup"/>
+      <separator/>
+      <reference ref="CompareClipboardWithSelection"/>
+      <reference ref="$SearchWeb"/>
     </group>
 
     <group id="EditorTabPopupMenu">
@@ -421,6 +435,7 @@
       <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
       <reference ref="ChangeSplitOrientation"/>
       <reference ref="PinActiveTab"/>
+      <reference ref="TabsPlacementGroup"/>
       <separator/>
       <reference ref="NextTab"/>
       <reference ref="PreviousTab"/>

@@ -60,42 +60,9 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
       context = statement;
     }
     final String iteratedValueText = getReferenceToIterate(iteratedValue, context);
-    final String lengthText;
-    if (isArray) {
-      lengthText = createVariableName(iteratedValueText + "Length", PsiType.INT, statement);
-    }
-    else {
-      lengthText = createVariableName(iteratedValueText + "Size", PsiType.INT, statement);
-    }
     @NonNls final StringBuilder newStatement = new StringBuilder();
-    newStatement.append("for(int ");
-    final String indexText =
-      createVariableName("i", PsiType.INT, statement);
-    newStatement.append(indexText);
-    newStatement.append(" = 0, ");
-    newStatement.append(lengthText);
-    newStatement.append(" = ");
-    if (iteratedValue instanceof PsiTypeCastExpression) {
-      newStatement.append('(');
-      newStatement.append(iteratedValueText);
-      newStatement.append(')');
-    }
-    else {
-      newStatement.append(iteratedValueText);
-    }
-    if (isArray) {
-      newStatement.append(".length;");
-    }
-    else {
-      newStatement.append(".size();");
-    }
-    newStatement.append(indexText);
-    newStatement.append('<');
-    newStatement.append(lengthText);
-    newStatement.append(';');
-    newStatement.append(indexText);
-    newStatement.append("++)");
-    newStatement.append("{ ");
+    final String indexText = createVariableName("i", PsiType.INT, statement);
+    createForLoopDeclaration(statement, iteratedValue, isArray, iteratedValueText, newStatement, indexText);
     final Project project = statement.getProject();
     final CodeStyleSettings codeStyleSettings =
       CodeStyleSettingsManager.getSettings(project);
@@ -134,6 +101,36 @@ public class ReplaceForEachLoopWithIndexedForLoopIntention extends Intention {
     }
     newStatement.append('}');
     replaceStatementAndShorten(newStatement.toString(), statement);
+  }
+
+  protected void createForLoopDeclaration(PsiForeachStatement statement,
+                                            PsiExpression iteratedValue,
+                                            boolean array,
+                                            String iteratedValueText, StringBuilder newStatement, 
+                                            final String indexText) {
+    newStatement.append("for(int ");
+    newStatement.append(indexText);
+    newStatement.append(" = 0; ");
+    newStatement.append(indexText);
+    newStatement.append('<');
+    if (iteratedValue instanceof PsiTypeCastExpression) {
+      newStatement.append('(');
+      newStatement.append(iteratedValueText);
+      newStatement.append(')');
+    }
+    else {
+      newStatement.append(iteratedValueText);
+    }
+    if (array) {
+      newStatement.append(".length");
+    }
+    else {
+      newStatement.append(".size()");
+    }
+    newStatement.append(';');
+    newStatement.append(indexText);
+    newStatement.append("++)");
+    newStatement.append("{ ");
   }
 
   private static String getVariableName(PsiExpression expression) {

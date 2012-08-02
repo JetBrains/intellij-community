@@ -7,7 +7,7 @@ public class TestCase extends Zzz {
         Object ooo;
         if (ooo instanceof String) {
         } else {
-          foo(o<caret>)
+          foo(oo<caret>)
         }
     }
 }

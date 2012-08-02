@@ -16,7 +16,6 @@
 package com.intellij.designer.model;
 
 import com.intellij.designer.designSurface.*;
-import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import org.jetbrains.annotations.Nullable;
 

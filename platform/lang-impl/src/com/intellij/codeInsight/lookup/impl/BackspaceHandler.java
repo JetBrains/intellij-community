@@ -37,7 +37,12 @@ public class BackspaceHandler extends EditorActionHandler {
       return;
     }
 
-    truncatePrefix(dataContext, lookup, myOriginalHandler, lookup.getLookupStart());
+    int hideOffset = lookup.getLookupStart();
+    int originalStart = lookup.getLookupOriginalStart();
+    if (originalStart >= 0 && originalStart <= hideOffset) {
+      hideOffset = originalStart - 1;
+    }
+    truncatePrefix(dataContext, lookup, myOriginalHandler, hideOffset);
   }
 
   static void truncatePrefix(final DataContext dataContext, LookupImpl lookup, final EditorActionHandler handler, final int hideOffset) {

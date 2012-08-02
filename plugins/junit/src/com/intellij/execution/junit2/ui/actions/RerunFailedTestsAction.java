@@ -23,7 +23,6 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestMethods;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +34,7 @@ import javax.swing.*;
 public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
   public RerunFailedTestsAction(JComponent parent) {
-    copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
-    registerCustomShortcutSet(getShortcutSet(), parent);
+    super(parent);
   }
 
   @Override

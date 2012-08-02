@@ -174,7 +174,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
   
   public void setAllowContentUpdateFromContext(boolean allow) {
-    restartAutoUpdate(allow);
+    if (hasActiveDockedDocWindow()) {
+      restartAutoUpdate(allow);
+    }
   }
 
   public void showJavaDocInfoAtToolWindow(@NotNull PsiElement element, @NotNull PsiElement original) {
@@ -813,12 +815,23 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     final PsiManager manager = PsiManager.getInstance(getProject(psiElement));
     if (url.startsWith("open")) {
       final PsiFile containingFile = psiElement.getContainingFile();
+      OrderEntry libraryEntry = null;
       if (containingFile != null) {
         final VirtualFile virtualFile = containingFile.getVirtualFile();
-        final OrderEntry libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
-        if (libraryEntry != null) {
-          ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(libraryEntry);
+        libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
+      }
+      else if (psiElement instanceof PsiDirectoryContainer) {
+        PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories();
+        for (PsiDirectory directory : directories) {
+          final VirtualFile virtualFile = directory.getVirtualFile();
+          libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
+          if (libraryEntry != null) {
+            break;
+          }
         }
+      }
+      if (libraryEntry != null) {
+        ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(libraryEntry);
       }
     } else if (url.startsWith(PSI_ELEMENT_PROTOCOL)) {
       final String refText = url.substring(PSI_ELEMENT_PROTOCOL.length());

@@ -92,9 +92,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
           equalsToSchemaName(tag, IMPORT_TAG_NAME)
         ) {
-        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", null);
+        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation");
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(myFile, schemaLocation.getValue());
+          final XmlFile xmlFile = XmlUtil.findNamespace(myFile, schemaLocation.getValue());
           addDependency(xmlFile, visited);
         }
       } else if (equalsToSchemaName(tag, REDEFINE_TAG_NAME)) {
@@ -205,9 +205,9 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                 )
                )
         ) {
-        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", null);
+        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation");
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(rootTag.getContainingFile(), schemaLocation.getValue());
+          final XmlFile xmlFile = XmlUtil.findNamespace(rootTag.getContainingFile(), schemaLocation.getValue());
           if (xmlFile != null) {
             final XmlDocument includedDocument = xmlFile.getDocument();
             if (includedDocument != null) {
@@ -267,11 +267,11 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
   @Nullable
   public XmlAttributeDescriptor getAttribute(String localName, String namespace, final XmlTag context) {
-    return getAttributeImpl(localName, namespace,null);
+    return getAttributeImpl(localName, namespace, null);
   }
 
   @Nullable
-  private XmlAttributeDescriptor getAttributeImpl(String localName, String namespace, Set<XmlTag> visited) {
+  private XmlAttributeDescriptor getAttributeImpl(String localName, String namespace, @Nullable Set<XmlTag> visited) {
     if (myTag == null) return null;
 
     XmlNSDescriptorImpl nsDescriptor = (XmlNSDescriptorImpl)myTag.getNSDescriptor(namespace, true);
@@ -303,10 +303,10 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                   namespace.equals(tag.getAttributeValue("namespace"))
                  )
         ) {
-        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation", null);
+        final XmlAttribute schemaLocation = tag.getAttribute("schemaLocation");
 
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(myTag.getContainingFile(), schemaLocation.getValue());
+          final XmlFile xmlFile = XmlUtil.findNamespace(myTag.getContainingFile(), schemaLocation.getValue());
 
           if (xmlFile != null) {
 
@@ -510,7 +510,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
               ) {
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(rootTag.getContainingFile(), schemaLocation);
+          final XmlFile xmlFile = XmlUtil.findNamespace(rootTag.getContainingFile(), schemaLocation);
 
           if (xmlFile != null) {
             final XmlDocument document = xmlFile.getDocument();
@@ -738,7 +738,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
 
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(rootTag.getContainingFile(), schemaLocation);
+          final XmlFile xmlFile = XmlUtil.findNamespace(rootTag.getContainingFile(), schemaLocation);
 
           if (xmlFile != null) {
             final XmlDocument includedDocument = xmlFile.getDocument();
@@ -807,7 +807,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
         final String schemaLocation = tag.getAttributeValue("schemaLocation");
 
         if (schemaLocation != null) {
-          final XmlFile xmlFile = XmlUtil.findNamespaceByLocation(rootTag.getContainingFile(), schemaLocation);
+          final XmlFile xmlFile = XmlUtil.findNamespace(rootTag.getContainingFile(), schemaLocation);
 
           if (xmlFile != null) {
             final XmlDocument document = xmlFile.getDocument();

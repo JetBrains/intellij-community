@@ -28,6 +28,7 @@ import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -141,7 +142,10 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
   }
 
   @Override
-  protected JComponent getFromProviders(final Project project, DiffElement target) {
+  protected JComponent getFromProviders(Project project, DiffElement target) {
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
     final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, getValue());
     if (providers.length > 0) {
       myFileEditor = providers[0].createEditor(project, getValue());
@@ -189,6 +193,9 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
 
   @Override
   protected DiffRequest createRequestForBinaries(Project project, @NotNull VirtualFile src, @NotNull VirtualFile trg) {
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
     if (FileEditorProviderManager.getInstance().getProviders(project, src).length > 0
         && FileEditorProviderManager.getInstance().getProviders(project, trg).length > 0) {
       return super.createRequestForBinaries(project, src, trg);

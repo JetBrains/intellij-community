@@ -22,9 +22,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,9 +41,11 @@ public class ModuleDescriptor {
   private final MultiMap<File, DetectedProjectRoot> myContentToSourceRoots = new MultiMap<File, DetectedProjectRoot>();
   private final Set<File> myLibraryFiles = new HashSet<File>();
   private final Set<ModuleDescriptor> myDependencies = new HashSet<ModuleDescriptor>();
-  private static final String[] ourModuleNameStoplist = new String[] {
-      "java", "src", "source", "sources", "C:", "D:", "E:", "F:", "temp", "tmp"
-  };
+  private static final Set<String> ourModuleNameStopList = new THashSet<String>(
+    Arrays.asList("java", "src", "source", "sources", "C:", "D:", "E:", "F:", "temp", "tmp"),
+    CaseInsensitiveStringHashingStrategy.INSTANCE
+  );
+
   private boolean myReuseExistingElement;
   private List<ModuleBuilder.ModuleConfigurationUpdater> myConfigurationUpdaters = new SmartList<ModuleBuilder.ModuleConfigurationUpdater>();
   private ModuleType myModuleType;
@@ -83,19 +86,12 @@ public class ModuleDescriptor {
   private static String suggestModuleName(final File contentRoot) {
     for (File dir = contentRoot; dir != null; dir = dir.getParentFile()) {
       final String suggestion = dir.getName();
-      boolean belongsToStopList = false;
-      for (String undesirableName : ourModuleNameStoplist) {
-        if (suggestion.equalsIgnoreCase(undesirableName)) {
-          belongsToStopList = true;
-          break;
-        }
-      }
-      if (!belongsToStopList) {
-        return StringUtil.capitalize(suggestion);
+      if (!ourModuleNameStopList.contains(suggestion)) {
+        return suggestion;
       }
     }
     
-    return StringUtil.capitalize(contentRoot.getName());
+    return contentRoot.getName();
   }
 
   public String getName() {

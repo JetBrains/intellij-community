@@ -31,7 +31,7 @@ public interface PsiAnnotationMemberValue extends PsiElement {
   ArrayFactory<PsiAnnotationMemberValue> ARRAY_FACTORY = new ArrayFactory<PsiAnnotationMemberValue>() {
     @Override
     public PsiAnnotationMemberValue[] create(final int count) {
-      return count == 0 ? PsiAnnotationMemberValue.EMPTY_ARRAY : new PsiAnnotationMemberValue[count];
+      return count == 0 ? EMPTY_ARRAY : new PsiAnnotationMemberValue[count];
     }
   };
 }

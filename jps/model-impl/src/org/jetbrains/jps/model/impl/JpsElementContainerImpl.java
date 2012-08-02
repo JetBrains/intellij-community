@@ -11,7 +11,7 @@ import java.util.Map;
  * @author nik
  */
 public class JpsElementContainerImpl implements JpsElementContainer {
-  private final Map<JpsElementKind<?>, JpsElement> myElements = new HashMap<JpsElementKind<?>, JpsElement>();
+  private final Map<JpsElementChildRole<?>, JpsElement> myElements = new HashMap<JpsElementChildRole<?>, JpsElement>();
   private final @NotNull JpsCompositeElementBase<?> myParent;
 
   public JpsElementContainerImpl(@NotNull JpsCompositeElementBase<?> parent) {
@@ -20,92 +20,92 @@ public class JpsElementContainerImpl implements JpsElementContainer {
 
   public JpsElementContainerImpl(@NotNull JpsElementContainerImpl original, @NotNull JpsCompositeElementBase<?> parent) {
     myParent = parent;
-    for (Map.Entry<JpsElementKind<?>, JpsElement> entry : original.myElements.entrySet()) {
-      final JpsElementKind kind = entry.getKey();
+    for (Map.Entry<JpsElementChildRole<?>, JpsElement> entry : original.myElements.entrySet()) {
+      final JpsElementChildRole role = entry.getKey();
       final JpsElement copy = entry.getValue().getBulkModificationSupport().createCopy();
       JpsElementBase.setParent(copy, myParent);
-      myElements.put(kind, copy);
+      myElements.put(role, copy);
     }
   }
 
   @Override
-  public <T extends JpsElement> T getChild(@NotNull JpsElementKind<T> kind) {
+  public <T extends JpsElement> T getChild(@NotNull JpsElementChildRole<T> role) {
     //noinspection unchecked
-    return (T)myElements.get(kind);
+    return (T)myElements.get(role);
   }
 
   @NotNull
   @Override
-  public <T extends JpsElement, P, K extends JpsElementKind<T> & JpsElementParameterizedCreator<T, P>> T setChild(@NotNull K kind,
+  public <T extends JpsElement, P, K extends JpsElementChildRole<T> & JpsElementParameterizedCreator<T, P>> T setChild(@NotNull K role,
                                                                                                                   @NotNull P param) {
-    final T child = kind.create(param);
-    return setChild(kind, child);
+    final T child = role.create(param);
+    return setChild(role, child);
   }
 
   @NotNull
   @Override
-  public <T extends JpsElement, K extends JpsElementKind<T> & JpsElementCreator<T>> T setChild(@NotNull K kind) {
-    final T child = kind.create();
-    return setChild(kind, child);
+  public <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T setChild(@NotNull K role) {
+    final T child = role.create();
+    return setChild(role, child);
   }
 
   @NotNull
   @Override
-  public <T extends JpsElement, K extends JpsElementKind<T> & JpsElementCreator<T>> T getOrSetChild(@NotNull K kind) {
-    final T child = getChild(kind);
+  public <T extends JpsElement, K extends JpsElementChildRole<T> & JpsElementCreator<T>> T getOrSetChild(@NotNull K role) {
+    final T child = getChild(role);
     if (child == null) {
-      return setChild(kind);
+      return setChild(role);
     }
     return child;
   }
 
   @Override
-  public <T extends JpsElement> T setChild(JpsElementKind<T> kind, T child) {
-    myElements.put(kind, child);
+  public <T extends JpsElement> T setChild(JpsElementChildRole<T> role, T child) {
+    myElements.put(role, child);
     JpsElementBase.setParent(child, myParent);
     final JpsEventDispatcher eventDispatcher = getEventDispatcher();
     if (eventDispatcher != null) {
-      eventDispatcher.fireElementAdded(child, kind);
+      eventDispatcher.fireElementAdded(child, role);
     }
     return child;
   }
 
   @Override
-  public <T extends JpsElement> void removeChild(@NotNull JpsElementKind<T> kind) {
+  public <T extends JpsElement> void removeChild(@NotNull JpsElementChildRole<T> role) {
     //noinspection unchecked
-    final T removed = (T)myElements.remove(kind);
+    final T removed = (T)myElements.remove(role);
     final JpsEventDispatcher eventDispatcher = getEventDispatcher();
     if (eventDispatcher != null) {
-      eventDispatcher.fireElementRemoved(removed, kind);
+      eventDispatcher.fireElementRemoved(removed, role);
     }
     JpsElementBase.setParent(removed, null);
   }
 
   public void applyChanges(@NotNull JpsElementContainerImpl modified) {
-    for (JpsElementKind<?> kind : myElements.keySet()) {
-      applyChanges(kind, modified);
+    for (JpsElementChildRole<?> role : myElements.keySet()) {
+      applyChanges(role, modified);
     }
-    for (JpsElementKind<?> kind : modified.myElements.keySet()) {
-      if (!myElements.containsKey(kind)) {
-        applyChanges(kind, modified);
+    for (JpsElementChildRole<?> role : modified.myElements.keySet()) {
+      if (!myElements.containsKey(role)) {
+        applyChanges(role, modified);
       }
     }
   }
 
-  private <T extends JpsElement> void applyChanges(JpsElementKind<T> kind, JpsElementContainerImpl modified) {
-    final T child = getChild(kind);
-    final T modifiedChild = modified.getChild(kind);
+  private <T extends JpsElement> void applyChanges(JpsElementChildRole<T> role, JpsElementContainerImpl modified) {
+    final T child = getChild(role);
+    final T modifiedChild = modified.getChild(role);
     if (child != null && modifiedChild != null) {
       final JpsElement.BulkModificationSupport modificationSupport = child.getBulkModificationSupport();
       //noinspection unchecked
       modificationSupport.applyChanges(modifiedChild);
     }
     else if (modifiedChild == null) {
-      removeChild(kind);
+      removeChild(role);
     }
     else {
       //noinspection unchecked
-      setChild(kind, (T)modifiedChild.getBulkModificationSupport().createCopy());
+      setChild(role, (T)modifiedChild.getBulkModificationSupport().createCopy());
     }
   }
 

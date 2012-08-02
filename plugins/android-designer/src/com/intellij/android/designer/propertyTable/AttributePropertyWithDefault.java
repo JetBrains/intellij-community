@@ -16,7 +16,7 @@
 package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.Property;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.annotations.NotNull;

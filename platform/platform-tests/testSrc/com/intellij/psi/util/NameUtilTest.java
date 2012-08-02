@@ -228,7 +228,8 @@ public class NameUtilTest extends UsefulTestCase {
 
   public void testFileStructure() {
     assertDoesntMatch("hint", "height: int");
-    assertDoesntMatch("Hint", "Height:int");
+    assertMatches("Hint", "Height:int");
+    assertDoesntMatch("Hint", "Height: int");
 
     assertMatches("getColor", "getBackground(): Color");
     assertMatches("get color", "getBackground(): Color");
@@ -344,6 +345,8 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("WebLOgic", "WebLogic");
     assertMatches("WEbLogic", "WebLogic");
     assertDoesntMatch("WebLogic", "Webologic");
+
+    assertMatches("Wlo", "WebLogic");
   }
 
   public void testFinalSpace() {
@@ -372,11 +375,12 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   public void testMinusculeFirstLetter() {
-    assertTrue(new MinusculeMatcher("WebLogic", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("WebLogic"));
-    assertFalse(new MinusculeMatcher("webLogic", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("WebLogic"));
-    assertTrue(new MinusculeMatcher("cL", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("class"));
-    assertTrue(new MinusculeMatcher("CL", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("Class"));
-    assertFalse(new MinusculeMatcher("abc", NameUtil.MatchingCaseSensitivity.FIRST_LETTER).matches("_abc"));
+    assertTrue(firstLetterMatcher("WebLogic").matches("WebLogic"));
+    assertFalse(firstLetterMatcher("webLogic").matches("WebLogic"));
+    assertTrue(firstLetterMatcher("cL").matches("class"));
+    assertTrue(firstLetterMatcher("CL").matches("Class"));
+    assertTrue(firstLetterMatcher("Cl").matches("CoreLoader"));
+    assertFalse(firstLetterMatcher("abc").matches("_abc"));
   }
 
   public void testMinusculeAllImportant() {

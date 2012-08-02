@@ -94,7 +94,7 @@ class EventLogConsole {
     editor.addEditorMouseListener(new EditorPopupHandler() {
       public void invokePopup(final EditorMouseEvent event) {
         final ActionManager actionManager = ActionManager.getInstance();
-        final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, createPopupActions(actionManager, clearLog));
+        final ActionPopupMenu menu = actionManager.createActionPopupMenu(ActionPlaces.EDITOR_POPUP, createPopupActions(actionManager, clearLog));
         final MouseEvent mouseEvent = event.getMouseEvent();
         menu.getComponent().show(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
       }
@@ -103,9 +103,8 @@ class EventLogConsole {
   }
 
   private DefaultActionGroup createPopupActions(ActionManager actionManager, ClearLog action) {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new EditorCopyAction());
-    group.add(actionManager.getAction(IdeActions.ACTION_COMPARE_CLIPBOARD_WITH_SELECTION));
+    AnAction[] children = ((ActionGroup)actionManager.getAction(IdeActions.GROUP_CONSOLE_EDITOR_POPUP)).getChildren(null);
+    DefaultActionGroup group = new DefaultActionGroup(children);
     group.addSeparator();
     group.add(action);
     return group;

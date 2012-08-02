@@ -45,6 +45,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,11 +58,23 @@ import static org.jetbrains.android.util.AndroidUtils.SYSTEM_RESOURCE_PACKAGE;
  */
 @SuppressWarnings({"EnumSwitchStatementWhichMissesCases"})
 public class AndroidDomUtil {
+
+
   public static final StaticEnumConverter BOOLEAN_CONVERTER = new StaticEnumConverter("true", "false");
   public static final Map<String, String> SPECIAL_RESOURCE_TYPES = new HashMap<String, String>();
   private static final PackageClassConverter ACTIVITY_CONVERTER = new PackageClassConverter(AndroidUtils.ACTIVITY_BASE_CLASS_NAME);
   private static final OnClickConverter ON_CLICK_CONVERTER = new OnClickConverter();
   private static final FragmentClassConverter FRAGMENT_CLASS_CONVERTER = new FragmentClassConverter();
+
+  @NonNls public static final String ATTR_ID = "id";
+  @NonNls public static final String ATTR_STYLE = "style";
+  @NonNls public static final String ATTR_LAYOUT_PREFIX = "layout_";
+  @NonNls public static final String ATTR_LAYOUT_MARGIN = "layout_margin";
+  @NonNls public static final String ATTR_TEXT = "text";
+  @NonNls public static final String ATTR_HINT = "hint";
+  @NonNls public static final String ATTR_SRC = "src";
+  @NonNls public static final String ATTR_ON_CLICK = "onClick";
+
 
   static {
     addSpecialResourceType(ResourceType.STRING.getName(), "label", "description", "title");

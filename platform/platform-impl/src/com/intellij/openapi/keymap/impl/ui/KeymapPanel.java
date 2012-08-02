@@ -36,6 +36,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.openapi.ui.Messages;
@@ -428,7 +429,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     panel.add(myFilterComponent, new GridBagConstraints(1, 0, 1, 1, 0, 0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(8, 0, 0, 0), 0,0));
 
-    group.add(new AnAction(KeyMapBundle.message("filter.shortcut.action.text"),
+    group.add(new DumbAwareAction(KeyMapBundle.message("filter.shortcut.action.text"),
                            KeyMapBundle.message("filter.shortcut.action.text"),
                            AllIcons.Ant.ShortcutFilter) {
       public void actionPerformed(AnActionEvent e) {
@@ -443,7 +444,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         myPopup.showUnderneathOf(searchToolbar);
       }
     });
-    group.add(new AnAction(KeyMapBundle.message("filter.clear.action.text"),
+    group.add(new DumbAwareAction(KeyMapBundle.message("filter.clear.action.text"),
                            KeyMapBundle.message("filter.clear.action.text"), AllIcons.Actions.GC) {
       public void actionPerformed(AnActionEvent e) {
         myActionsTree.filter(null, getCurrentQuickListIds()); //clear filtering
@@ -947,7 +948,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     final Shortcut[] shortcuts = mySelectedKeymap.getShortcuts(actionId);
 
-    group.add(new AnAction("Add Keyboard Shortcut") {
+    group.add(new DumbAwareAction("Add Keyboard Shortcut") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         Shortcut firstKeyboard = null;
@@ -962,7 +963,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       }
     });
 
-    group.add(new AnAction("Add Mouse Shortcut") {
+    group.add(new DumbAwareAction("Add Mouse Shortcut") {
       @Override
       public void actionPerformed(AnActionEvent e) {
         Shortcut firstMouse = null;
@@ -979,7 +980,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.addSeparator();
 
     for (final Shortcut shortcut : shortcuts) {
-      group.add(new AnAction("Remove " + KeymapUtil.getShortcutText(shortcut)) {
+      group.add(new DumbAwareAction("Remove " + KeymapUtil.getShortcutText(shortcut)) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           removeShortcut(shortcut);

@@ -13,7 +13,6 @@ import org.jetbrains.jps.incremental.artifacts.instructions.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 
 import java.io.File;
@@ -24,15 +23,13 @@ import java.util.*;
  */
 public class ArtifactRootsIndex {
   private MultiMap<File, ArtifactRootDescriptor> myRootToDescriptorMap;
-  private Map<ArtifactRootId, ArtifactRootDescriptor> myIdToDescriptorMap;
   private Map<JpsArtifact, ArtifactInstructionsBuilder> myInstructions;
 
   public ArtifactRootsIndex(JpsModel model, Project project, BuildDataManager manager, ModuleRootsIndex rootsIndex) {
     myRootToDescriptorMap = new MultiMap<File, ArtifactRootDescriptor>();
     myInstructions = new HashMap<JpsArtifact, ArtifactInstructionsBuilder>();
-    myIdToDescriptorMap = new HashMap<ArtifactRootId, ArtifactRootDescriptor>();
     ArtifactsBuildData data = manager.getArtifactsBuildData();
-    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(model.getProject())) {
+    for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(model, true)) {
       int artifactId = data.getArtifactId(artifact);
       ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(rootsIndex, project.getIgnoredFilePatterns(), artifactId, artifact.getName());
       final JpsCompositePackagingElement rootElement = artifact.getRootElement();
@@ -44,7 +41,6 @@ public class ArtifactRootsIndex {
       for (Pair<ArtifactRootDescriptor, DestinationInfo> pair : builder.getInstructions()) {
         ArtifactRootDescriptor descriptor = pair.getFirst();
         myRootToDescriptorMap.putValue(descriptor.getRootFile(), descriptor);
-        myIdToDescriptorMap.put(descriptor.getRootId(), descriptor);
       }
     }
   }

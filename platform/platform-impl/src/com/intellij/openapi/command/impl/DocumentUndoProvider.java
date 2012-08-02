@@ -16,7 +16,6 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoConstants;
@@ -31,7 +30,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.ExternalChangeAction;
 import org.jetbrains.annotations.Nullable;
 
 public class DocumentUndoProvider implements Disposable {
@@ -115,8 +113,7 @@ public class DocumentUndoProvider implements Disposable {
     }
 
     private boolean isUndoable(Document document) {
-      boolean isFromRefresh = ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class);
-      if (!isFromRefresh) return true;
+      if (!UndoManagerImpl.isRefresh()) return true;
 
       return getUndoManager().isUndoOrRedoAvailable(DocumentReferenceManager.getInstance().create(document));
     }

@@ -242,11 +242,7 @@ public class FileAttributesReadingTest {
       FileUtil.createTempDirectory(
         FileUtil.createTempDirectory(
           FileUtil.createTempDirectory(
-            FileUtil.createTempDirectory(
-              FileUtil.createTempDirectory(
-                myTempDirectory, prefix, ".dir"),
-              prefix, ".dir"),
-            prefix, ".dir"),
+            myTempDirectory, prefix, ".dir"),
           prefix, ".dir"),
         prefix, ".dir"),
       prefix, ".dir");

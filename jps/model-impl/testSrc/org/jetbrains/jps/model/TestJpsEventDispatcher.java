@@ -16,14 +16,14 @@ class TestJpsEventDispatcher extends JpsEventDispatcherBase implements JpsEventD
   private List<JpsElement> myChanged = new ArrayList<JpsElement>();
 
   @Override
-  public <T extends JpsElement> void fireElementAdded(@NotNull T element, @NotNull JpsElementKind<T> kind) {
-    super.fireElementAdded(element, kind);
+  public <T extends JpsElement> void fireElementAdded(@NotNull T element, @NotNull JpsElementChildRole<T> role) {
+    super.fireElementAdded(element, role);
     myAdded.add(element);
   }
 
   @Override
-  public <T extends JpsElement> void fireElementRemoved(@NotNull T element, @NotNull JpsElementKind<T> kind) {
-    super.fireElementRemoved(element, kind);
+  public <T extends JpsElement> void fireElementRemoved(@NotNull T element, @NotNull JpsElementChildRole<T> role) {
+    super.fireElementRemoved(element, role);
     myRemoved.add(element);
   }
 
