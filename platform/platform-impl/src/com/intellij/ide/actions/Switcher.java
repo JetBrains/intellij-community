@@ -191,6 +191,7 @@ public class Switcher extends AnAction implements DumbAware {
     final ClickListener myClickListener = new ClickListener() {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
+        if (e.isAltDown() || e.isControlDown() || e.isMetaDown()) return false;
         final Object source = e.getSource();
         if (source instanceof JList) {
           JList jList = (JList)source;
