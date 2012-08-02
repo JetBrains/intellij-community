@@ -869,12 +869,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // __init__ takes priority over all other methods
     PyFunctionImpl initMethod = (PyFunctionImpl)findMethodByName(PyNames.INIT, false);
     if (initMethod != null) {
-      collectInstanceAttributes(initMethod, result, null);
+      collectInstanceAttributes(initMethod, result);
     }
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
       if (!PyNames.INIT.equals(method.getName())) {
-        collectInstanceAttributes(method, result, null);
+        collectInstanceAttributes(method, result);
       }
     }
 
@@ -882,9 +882,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return new ArrayList<PyTargetExpression>(expressions);
   }
 
-  private static void collectInstanceAttributes(@NotNull PyFunction method,
-                                                @NotNull final Map<String, PyTargetExpression> result,
-                                                @Nullable PsiElement anchor) {
+  private static void collectInstanceAttributes(@NotNull PyFunction method, @NotNull final Map<String, PyTargetExpression> result) {
     final PyParameter[] params = method.getParameterList().getParameters();
     if (params.length == 0) {
       return;
@@ -969,7 +967,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     processor.execute(this, ResolveState.initial());
   }
 
-  public boolean processClassLevelDeclarations(PsiScopeProcessor processor) {
+  public boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor) {
     final PyClassStub stub = getStub();
     if (stub != null) {
       final List<StubElement> children = stub.getChildrenStubs();
@@ -985,12 +983,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return true;
   }
 
-  public boolean processInstanceLevelDeclarations(PsiScopeProcessor processor, @Nullable PyExpression location) {
+  public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PyExpression location) {
     Map<String, PyTargetExpression> declarationsInMethod = new HashMap<String, PyTargetExpression>();
     PyFunction instanceMethod = PsiTreeUtil.getParentOfType(location, PyFunction.class);
     final PyClass containingClass = instanceMethod != null ? instanceMethod.getContainingClass() : null;
     if (instanceMethod != null && containingClass != null && CompletionUtil.getOriginalElement(containingClass) == this) {
-      collectInstanceAttributes(instanceMethod, declarationsInMethod, location);
+      collectInstanceAttributes(instanceMethod, declarationsInMethod);
       for (PyTargetExpression targetExpression : declarationsInMethod.values()) {
         if (!processor.execute(targetExpression, ResolveState.initial())) {
           return false;

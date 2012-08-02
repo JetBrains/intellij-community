@@ -112,10 +112,10 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   }
 
   @Nullable
-  private List<? extends RatedResolveResult> doResolveMember(String name,
-                                                             PyExpression location,
-                                                             AccessDirection direction,
-                                                             PyResolveContext resolveContext) {
+  private List<? extends RatedResolveResult> doResolveMember(@NotNull String name,
+                                                             @Nullable PyExpression location,
+                                                             @NotNull AccessDirection direction,
+                                                             @NotNull PyResolveContext resolveContext) {
     if (myClass == null) {
       return null;
     }
@@ -159,7 +159,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       }
     }
 
-    PsiElement classMember = resolveClassMember(this, name, location);
+    PsiElement classMember = resolveClassMember(myClass, name, location);
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -167,7 +167,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     for (PyClassRef superClass : myClass.iterateAncestors()) {
       final PyClass pyClass = superClass.getPyClass();
       if (pyClass != null) {
-        PsiElement superMember = resolveClassMember(new PyClassType(pyClass, isDefinition()), name, null);
+        PsiElement superMember = resolveClassMember(pyClass, name, null);
         if (superMember != null) {
           return ResolveResultList.to(superMember);
         }
@@ -243,8 +243,8 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   }
 
   @Nullable
-  private static PsiElement resolveClassMember(PyClassType aClass, String name, @Nullable PyExpression location) {
-    PsiElement result = resolveInner(aClass.getPyClass(), name, location);
+  private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name, @Nullable PyExpression location) {
+    PsiElement result = resolveInner(cls, name, location);
     if (result != null) {
       return result;
     }
@@ -263,12 +263,12 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   }
 
   @Nullable
-  private static PsiElement resolveInner(PyClass aClass, String name, @Nullable PyExpression location) {
+  private static PsiElement resolveInner(@NotNull PyClass cls, @NotNull String name, @Nullable PyExpression location) {
     ResolveProcessor processor = new ResolveProcessor(name);
-    ((PyClassImpl)aClass).processDeclarations(processor, location); // our members are strictly within us.
+    ((PyClassImpl)cls).processDeclarations(processor, location); // our members are strictly within us.
     final PsiElement resolveResult = processor.getResult();
     //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
-    if (resolveResult != null && resolveResult != aClass) {
+    if (resolveResult != null && resolveResult != cls) {
       return resolveResult;
     }
     return null;
@@ -476,9 +476,5 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
 
   public boolean isValid() {
     return myClass == null || myClass.isValid();
-  }
-
-  public static PyClassType fromClassName(String typeName, Project project) {
-    return new PyClassType(project, typeName, false);
   }
 }
