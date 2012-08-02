@@ -22,10 +22,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.editor.Document;
@@ -72,6 +69,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.jar.JarFile;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 /**
@@ -97,12 +95,16 @@ public class PlatformTestUtil {
     });
   }
 
-  protected static String toString(Object node, Queryable.PrintInfo printInfo) {
+  @Nullable
+  protected static String toString(Object node, @Nullable Queryable.PrintInfo printInfo) {
     if (node instanceof AbstractTreeNode) {
       if (printInfo != null) {
         return ((AbstractTreeNode)node).toTestString(printInfo);
-      } else {
-        return ((AbstractTreeNode)node).getTestPresentation();
+      }
+      else {
+        @SuppressWarnings({"deprecation", "UnnecessaryLocalVariable"})
+        final String presentation = ((AbstractTreeNode)node).getTestPresentation();
+        return presentation;
       }
     }
     else if (node == null) {
@@ -117,9 +119,8 @@ public class PlatformTestUtil {
     return print(tree, withSelection, null);
   }
 
-  public static String print(JTree tree, boolean withSelection, Condition<String> nodePrintCondition) {
+  public static String print(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
     StringBuilder buffer = new StringBuilder();
-    
     final Collection<String> strings = printAsList(tree, withSelection, nodePrintCondition);
     for (String string : strings) {
       buffer.append(string).append("\n");  
@@ -127,7 +128,7 @@ public class PlatformTestUtil {
     return buffer.toString();
   }
 
-  public static Collection<String> printAsList(JTree tree, boolean withSelection, Condition<String> nodePrintCondition) {
+  public static Collection<String> printAsList(JTree tree, boolean withSelection, @Nullable Condition<String> nodePrintCondition) {
     Collection<String> strings = new ArrayList<String>();
     Object root = tree.getModel().getRoot();
     printImpl(tree, root, strings, 0, withSelection, nodePrintCondition);
@@ -142,7 +143,6 @@ public class PlatformTestUtil {
                                 @Nullable Condition<String> nodePrintCondition) {
     DefaultMutableTreeNode defaultMutableTreeNode = (DefaultMutableTreeNode)root;
 
-
     final Object userObject = defaultMutableTreeNode.getUserObject();
     String nodeText;
     if (userObject != null) {
@@ -154,25 +154,19 @@ public class PlatformTestUtil {
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
 
-    boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
-
     final StringBuilder buff = StringBuilderSpinAllocator.alloc();
     try {
       StringUtil.repeatSymbol(buff, ' ', level);
-      if (expanded && !defaultMutableTreeNode.isLeaf()) {
-        buff.append("-");
-      }
 
-      if (!expanded && !defaultMutableTreeNode.isLeaf()) {
-        buff.append("+");
+      final boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
+      if (!defaultMutableTreeNode.isLeaf()) {
+        buff.append(expanded ? "-" : "+");
       }
 
       final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
-
       if (withSelection && selected) {
         buff.append("[");
       }
-
 
       buff.append(nodeText);
 
@@ -180,7 +174,6 @@ public class PlatformTestUtil {
         buff.append("]");
       }
 
-      //buff.append("\n");
       strings.add(buff.toString());
 
       int childCount = tree.getModel().getChildCount(root);
@@ -189,7 +182,8 @@ public class PlatformTestUtil {
           printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, nodePrintCondition);
         }
       }
-    } finally {
+    }
+    finally {
       StringBuilderSpinAllocator.dispose(buff);
     }
   }
@@ -204,7 +198,7 @@ public class PlatformTestUtil {
 
   public static void assertTreeEqual(JTree tree, String expected, boolean checkSelected) {
     String treeStringPresentation = print(tree, checkSelected);
-    Assert.assertEquals(expected, treeStringPresentation);
+    assertEquals(expected, treeStringPresentation);
   }
 
   public static void assertTreeEqualIgnoringNodesOrder(JTree tree, String expected, boolean checkSelected) {
@@ -214,7 +208,7 @@ public class PlatformTestUtil {
   }
 
   @TestOnly
-  public static void waitForAlarm(final int delay) throws InterruptedException {
+  public static void waitForAlarm(final int delay) {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed(): "It's a bad idea to wait for an alarm under the write action. Somebody creates an alarm which requires read action and you are deadlocked.";
     assert ApplicationManager.getApplication().isDispatchThread();
 
@@ -242,7 +236,7 @@ public class PlatformTestUtil {
     boolean sleptAlready = false;
     while (!invoked.get()) {
       UIUtil.dispatchAllInvocationEvents();
-      Thread.sleep(sleptAlready ? 10 : delay);
+      TimeoutUtil.sleep(sleptAlready ? 10 : delay);
       sleptAlready = true;
     }
     UIUtil.dispatchAllInvocationEvents();
@@ -278,61 +272,32 @@ public class PlatformTestUtil {
     return now.after(raidDate(bombedAnnotation));
   }
 
-  public static boolean bombExplodes(int year, int month, int day, int h, int m, String who, String message) {
-    final Calendar instance = Calendar.getInstance();
-    instance.set(Calendar.YEAR, year);
-    instance.set(Calendar.MONTH, month);
-    instance.set(Calendar.DAY_OF_MONTH, day);
-    instance.set(Calendar.HOUR_OF_DAY, h);
-    instance.set(Calendar.MINUTE, m);
-    Date time = instance.getTime();
-    return isItMe(who) || new Date().after(time);
-  }
-
   public static boolean isRotten(Bombed bomb) {
     long bombRotPeriod = 30L * 24 * 60 * 60 * 1000; // month
     return new Date().after(new Date(raidDate(bomb).getTime() + bombRotPeriod));
   }
 
-  private static boolean isItMe(final String who) {
-    return Comparing.equal(who, SystemProperties.getUserName(), false);
-  }
-
-  /**
-   * @deprecated use {@link #print(com.intellij.ide.util.treeView.AbstractTreeStructure, Object, int, java.util.Comparator, int, char,
-   *                               com.intellij.openapi.ui.Queryable.PrintInfo)}
-   */
-  public static StringBuffer print(AbstractTreeStructure structure,
-                                   Object node,
-                                   int currentLevel,
-                                   Comparator comparator,
-                                   int maxRowCount,
-                                   char paddingChar) {
-
-    return print(structure, node, currentLevel, comparator, maxRowCount, paddingChar, null);
-  }
-
-  public static StringBuffer print(AbstractTreeStructure structure,
-                                   Object node,
-                                   int currentLevel,
-                                   Comparator comparator,
-                                   int maxRowCount,
-                                   char paddingChar,
-                                   Queryable.PrintInfo printInfo) {
-    StringBuffer buffer = new StringBuffer();
+  public static StringBuilder print(AbstractTreeStructure structure,
+                                    Object node,
+                                    int currentLevel,
+                                    @Nullable Comparator comparator,
+                                    int maxRowCount,
+                                    char paddingChar,
+                                    @Nullable Queryable.PrintInfo printInfo) {
+    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
     doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, printInfo);
     return buffer;
   }
 
-  private static int doPrint(StringBuffer buffer,
+  private static int doPrint(StringBuilder buffer,
                              int currentLevel,
                              Object node,
                              AbstractTreeStructure structure,
-                             Comparator comparator,
+                             @Nullable Comparator comparator,
                              int maxRowCount,
                              int currentLine,
                              char paddingChar,
-                             Queryable.PrintInfo printInfo) {
+                             @Nullable Queryable.PrintInfo printInfo) {
     if (currentLine >= maxRowCount && maxRowCount != -1) return currentLine;
 
     StringUtil.repeatSymbol(buffer, paddingChar, currentLevel);
@@ -342,7 +307,8 @@ public class PlatformTestUtil {
 
     if (comparator != null) {
       ArrayList<?> list = new ArrayList<Object>(Arrays.asList(children));
-      Collections.sort(list, comparator);
+      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) Comparator<Object> c = comparator;
+      Collections.sort(list, c);
       children = ArrayUtil.toObjectArray(list);
     }
     for (Object child : children) {
@@ -383,15 +349,15 @@ public class PlatformTestUtil {
   }
 
   public static void assertTreeStructureEquals(final AbstractTreeStructure treeStructure, final String expected) {
-    Assert.assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ').toString());
+    assertEquals(expected, print(treeStructure, treeStructure.getRootElement(), 0, null, -1, ' ', null).toString());
   }
 
   public static void invokeNamedAction(final String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
-    Assert.assertNotNull(action);
+    assertNotNull(action);
     final Presentation presentation = new Presentation();
-    final AnActionEvent event =
-        new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", presentation, ActionManager.getInstance(), 0);
+    @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
+    final AnActionEvent event = new AnActionEvent(null, context, "", presentation, ActionManager.getInstance(), 0);
     action.update(event);
     Assert.assertTrue(presentation.isEnabled());
     action.actionPerformed(event);
@@ -411,11 +377,11 @@ public class PlatformTestUtil {
     }
     logMessage += ". Expected on my machine: " + expectedOnMyMachine + "." +
                   " Actual: " + actual + "." +
-                  " Expected on Etalon machine: " + expected + ";" +
-                  " Actual on Etalon: " + actual * Timings.ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
+                  " Expected on Standard machine: " + expected + ";" +
+                  " Actual on Standard: " + actual * Timings.ETALON_TIMING / Timings.MACHINE_TIMING + ";" +
                   " Timings: CPU=" + Timings.CPU_TIMING +
                   ", I/O=" + Timings.IO_TIMING + "." +
-                  " (" + (int)(Timings.MACHINE_TIMING*1.0/Timings.ETALON_TIMING*100) + "% of the etalon)" +
+                  " (" + (int)(Timings.MACHINE_TIMING*1.0/Timings.ETALON_TIMING*100) + "% of the Standard)" +
                   ".";
     if (actual < expectedOnMyMachine) {
       System.out.println(logMessage);
@@ -465,11 +431,11 @@ public class PlatformTestUtil {
     private final ThrowableRunnable test; // runnable to measure
     private final int expected;           // millis the test is expected to run
     private ThrowableRunnable setup;      // to run before each test
-    private boolean usesAllCPUCores;      // true if the test runs faster on multicore
+    private boolean usesAllCPUCores;      // true if the test runs faster on multi-core
     private int attempts = 4;             // number of retries if performance failed
     private final String message;         // to print on fail
-    private boolean adjustForIO = true;   // true if test uses IO, timings need to be recalibrated according to this agent disk performance
-    private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be recalibrated according to this agent CPU speed
+    private boolean adjustForIO = true;   // true if test uses IO, timings need to be re-calibrated according to this agent disk performance
+    private boolean adjustForCPU = true;  // true if test uses CPU, timings need to be re-calibrated according to this agent CPU speed
 
     private TestInfo(@NotNull ThrowableRunnable test, int expected, String message) {
       this.test = test;
@@ -637,7 +603,7 @@ public class PlatformTestUtil {
 
     Set<String> keySetAfter = mapAfter.keySet();
     Set<String> keySetBefore = mapBefore.keySet();
-    Assert.assertEquals(keySetAfter, keySetBefore);
+    assertEquals(keySetAfter, keySetBefore);
 
     for (String name : keySetAfter) {
       VirtualFile fileAfter = mapAfter.get(name);
@@ -662,7 +628,7 @@ public class PlatformTestUtil {
       ioPaths.add(file.getPath().replace(File.separatorChar, '/'));
     }
 
-    Assert.assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
+    assertEquals(sortAndJoin(vfsPaths), sortAndJoin(ioPaths));
   }
 
   private static String sortAndJoin(List<String> strings) {
@@ -699,7 +665,7 @@ public class PlatformTestUtil {
                        : LoadTextUtil.getTextByBinaryPresentation(fileAfter.contentsToByteArray(false), fileAfter).toString();
 
       if (textA != null && textB != null) {
-        Assert.assertEquals(fileAfter.getPath(), textA, textB);
+        assertEquals(fileAfter.getPath(), textA, textB);
       }
       else {
         Assert.assertArrayEquals(fileAfter.getPath(), fileAfter.contentsToByteArray(), fileBefore.contentsToByteArray());
@@ -780,23 +746,10 @@ public class PlatformTestUtil {
       public int compare(final AbstractTreeNode o1, final AbstractTreeNode o2) {
         String displayText1 = o1.toTestString(printInfo);
         String displayText2 = o2.toTestString(printInfo);
-        return displayText1.compareTo(displayText2);
+        return Comparing.compare(displayText1, displayText2);
       }
     };
   }
-
-  /**
-   * Use {@link #createComparator(com.intellij.openapi.ui.Queryable.PrintInfo)} instead.
-   */
-  @Deprecated
-  public static final Comparator<AbstractTreeNode> DEFAULT_COMPARATOR = new Comparator<AbstractTreeNode>() {
-    @Override
-    public int compare(AbstractTreeNode o1, AbstractTreeNode o2) {
-      String displayText1 = o1.getTestPresentation();
-      String displayText2 = o2.getTestPresentation();
-      return displayText1.compareTo(displayText2);
-    }
-  };
 
   @NotNull
   public static <T> T notNull(@Nullable T t) {

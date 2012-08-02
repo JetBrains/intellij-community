@@ -54,7 +54,6 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   final Set<StructureElement> myAutoExpand = new HashSet<StructureElement>();
   final Set<StructureElement> myAlwaysShowPlus = new HashSet<StructureElement>();
   boolean mySmartExpand;
-  private Thread myTestThread;
   protected Validator myValidator;
 
   protected BaseTreeTestCase(boolean passThrough) {
@@ -95,7 +94,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void waitBuilderToCome(final Condition<Object> condition) throws Exception {
-    boolean success = new WaitFor(600000) {
+    boolean success = new WaitFor(60000) {
       @Override
       protected boolean condition() {
         final boolean[] ready = new boolean[]{false};
@@ -120,7 +119,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       throw new Exception(myCancelRequest);
     }
 
-    if (myCancelRequest == null && !myReadyRequest) {
+    if (!myReadyRequest) {
       if (!getBuilder().isDisposed()) {
         Assert.assertTrue(getBuilder().getUi().getNodeActions().isEmpty());
       }
@@ -256,7 +255,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void _runBackgroundLoading(Runnable runnable) {
     try {
-      Thread.currentThread().sleep(getChildrenLoadingDelay());
+      Thread.sleep(getChildrenLoadingDelay());
       runnable.run();
     }
     catch (InterruptedException e) {
@@ -284,7 +283,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     };
   }
 
-  AbstractTreeUpdater _createUpdater(AbstractTreeBuilder builder) {
+  static AbstractTreeUpdater _createUpdater(AbstractTreeBuilder builder) {
     final AbstractTreeUpdater updater = new AbstractTreeUpdater(builder) {
       @Override
       protected void invokeLater(Runnable runnable) {
@@ -352,7 +351,6 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     myAutoExpand.clear();
     myAlwaysShowPlus.clear();
     myForegroundLoadingNodes.clear();
-    myTestThread = Thread.currentThread();
   }
 
   @Override

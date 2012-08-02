@@ -59,7 +59,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     updateFromRoot();
     assertTree("+/\n");
 
-
     buildNode("/", false);
     assertTree("+/\n");
 
@@ -119,9 +118,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "  +[fabrique]\n"
                + " +org\n"
                + " +xUnit\n");
-
   }
-
 
   public void testBatchUpdate() throws Exception {
     buildStructure(myRoot);
@@ -164,7 +161,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
 
-
     waitBuilderToCome(new Condition<Object>() {
       @Override
       public boolean value(Object o) {
@@ -188,7 +184,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     assertFalse(indicatorRef.get().isCanceled());
   }
-
 
   public void testRenameCollapsedParentAlwaysShowsPlus() throws Exception {
     buildStructure(myRoot);
@@ -219,7 +214,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " +xUnit\n");
   }
-
 
   public void testMoveElementToAdjacentEmptyParentWithSmartExpandAndSerialUpdateSubtrees() throws Exception {
     Node com = myRoot.addChild("com");
@@ -253,7 +247,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "   [file21]\n" +
                "  -folder2\n" +
                "   file22\n");
-
   }
 
   public void testReadyCallbackWhenReleased() throws Exception {
@@ -287,7 +280,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
 
-
     final Ref<Boolean> disposeRequested = new Ref<Boolean>(false);
     myElementUpdateHook = new ElementUpdateHook() {
       @Override
@@ -304,7 +296,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
         }
       }
     };
-
 
     invokeLaterIfNeeded(new Runnable() {
       @Override
@@ -335,7 +326,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " +xUnit\n");
 
-
     final Ref<StringBuffer> updates = new Ref<StringBuffer>(new StringBuffer());
     notNull(getMyBuilder().getTreeModel()).addTreeModelListener(new TreeModelListener() {
       @Override
@@ -365,7 +355,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     updateFromRoot();
     assertEquals("", updates.get().toString());
 
-
     myChanges.add(new NodeElement("com"));
     updateFromRoot();
     assertEquals("changed parent[/] children=[com]\n", updates.get().toString());
@@ -376,7 +365,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +xUnit\n");
     updates.set(new StringBuffer());
 
-
     updateFrom(new NodeElement("org"));
     assertEquals("", updates.get().toString());
 
@@ -384,7 +372,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     updateFrom(new NodeElement("org"));
     assertEquals("changed parent[/] children=[org]\n", updates.get().toString());
     updates.set(new StringBuffer());
-
 
     myChanges.add(new NodeElement("intellij"));
     updateFromRoot();
@@ -440,14 +427,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
 
-
     waitBuilderToCome(new Condition<Object>() {
       @Override
       public boolean value(Object o) {
         return done.isProcessed() || myCancelRequest != null;
       }
     });
-
 
     assertNull(myCancelRequest);
     assertTrue(done.isRejected());
@@ -518,7 +503,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     updateFromRoot();
 
     assertTree("+/\n");
-
   }
 
   public void testAutoExpand() throws Exception {
@@ -533,7 +517,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " +jetbrains\n"
                + " +org\n"
                + " +xUnit\n");
-
 
     myAutoExpand.add(new NodeElement("jetbrains"));
     updateFromRoot();
@@ -572,7 +555,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     myTree.setRootVisible(false);
     //myAutoExpand.add(new NodeElement("jetbrains"));
     myAutoExpand.add(new NodeElement("fabrique"));
-
 
     buildStructure(myRoot);
     //assertTree("+/\n");
@@ -616,9 +598,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "   ide\n"
                + " +org\n"
                + " +xUnit\n");
-
   }
-
 
   public void testExpandEqualElements() throws Exception {
     buildStructure(myRoot, false);
@@ -659,7 +639,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "   +community\n"
                + " +xUnit\n");
 
-
     doAndWaitForBuilder(new Runnable() {
       @Override
       public void run() {
@@ -677,7 +656,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "    ide\n"
                + " +xUnit\n");
 
-
     doAndWaitForBuilder(new Runnable() {
       @Override
       public void run() {
@@ -692,7 +670,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "  +eclipse\n"
                + "  +[jetbrains]\n"
                + " +xUnit\n");
-
 
     doAndWaitForBuilder(new Runnable() {
       @Override
@@ -709,7 +686,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + "  -[jetbrains]\n"
                + "   +community\n"
                + " +xUnit\n");
-
   }
 
   public void testAutoExpandInNonVisibleNode() throws Exception {
@@ -776,7 +752,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                + " +xUnit\n");
   }
 
-
   public void testClear() throws Exception {
     getBuilder().getUi().setClearOnHideDelay(Time.SECOND);
 
@@ -805,7 +780,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertNull(findNode("runner", false));
     assertNull(findNode("rcp", false));
 
-
     showTree();
 
     assertTree("-/\n" +
@@ -833,7 +807,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " -xUnit\n" +
                "  runner\n");
-
 
     buildNode(myFabrique.myElement, true, false);
     assertTree("-/\n" +
@@ -889,12 +862,10 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "   runner\n");
   }
 
-
   public void testSelect() throws Exception {
     buildStructure(myRoot);
     assertTree(
       "+/\n");
-
 
     buildNode(myOpenApi, true);
     assertTree(
@@ -961,7 +932,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "  +[fabrique]\n" +
       " +org\n" +
       " +xUnit\n");
-
   }
 
   public void testCallbackOnceOnExpand() throws Exception {
@@ -984,9 +954,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       "   ide\n" +
       " +org\n" +
       " +xUnit\n");
-
   }
-
 
   public void testNoInfiniteAutoExpand() throws Exception {
     mySmartExpand = false;
@@ -1025,7 +993,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
   private void assertNoInfiniteAutoExpand(final Runnable enableExpand) throws Exception {
     class Level extends Node {
-
       int myLevel;
 
       Level(Node parent, int level) {
@@ -1152,7 +1119,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +xUnit\n");
   }
 
-
   public void testSelectionWhenChildMoved() throws Exception {
     buildStructure(myRoot);
     assertTree("+/\n");
@@ -1186,7 +1152,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +org\n" +
       " +xUnit\n");
   }
-
 
   public void testSelectionGoesToParentWhenOnlyChildRemove() throws Exception {
     buildStructure(myRoot);
@@ -1301,7 +1266,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     getBuilder().addSubtreeToUpdateByElement(new NodeElement("intellij"));
     getBuilder().addSubtreeToUpdateByElement(new NodeElement("xUnit"));
 
-
     doAndWaitForBuilder(new Runnable() {
       @Override
       public void run() {
@@ -1333,7 +1297,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +org\n" +
       " +xUnit\n");
 
-
     collapsePath(new TreePath(notNull(findNode("intellij", false)).getPath()));
 
     assertTree(
@@ -1344,7 +1307,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       " +org\n" +
       " +xUnit\n");
   }
-
 
   public void testUpdateWithNewDescriptor() throws Exception {
     buildStructure(myRoot);
@@ -1465,7 +1427,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  intellij\n" +
                " jetbrains\n");
 
-
     intellij.addChild("ide");
 
     runAndInterrupt(new MyRunnable() {
@@ -1523,7 +1484,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }, "getChildren", new NodeElement("jetbrains"), cancelled);
   }
 
-
   public void testBigTreeUpdate() throws Exception {
     Node msg = myRoot.addChild("Messages");
 
@@ -1546,7 +1506,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  -File 1\n" +
                "   message 1 for 1\n" +
                "   message 2 for 1\n");
-
 
     buildSiblings(msg, 2, 1000, new Runnable() {
       @Override
@@ -1588,20 +1547,16 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     throwProcessCancelled, invokeCancel
   }
 
-  private void runAndInterrupt(final Runnable action, final String interruptAction, final Object interruptElement, final Interruption interruption) throws Exception {
+  private void runAndInterrupt(final Runnable action,
+                               final String interruptAction,
+                               final Object interruptElement,
+                               final Interruption interruption) throws Exception {
     myElementUpdate.clear();
 
-    final Ref<Thread> thread = new Ref<Thread>();
-
-    final boolean[] wasInterrupted = new boolean[] {false};
+    final boolean[] wasInterrupted = new boolean[]{false};
     myElementUpdateHook = new ElementUpdateHook() {
       @Override
       public void onElementAction(String action, Object element) {
-        if (thread.get() == null) {
-          thread.set(Thread.currentThread());
-        }
-
-
         boolean toInterrupt = element.equals(interruptElement) && action.equals(interruptAction);
 
         if (wasInterrupted[0]) {
@@ -1611,16 +1566,15 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                                    " interruptAction=" + interruptAction + " interruptElement=" + interruptElement;
             myCancelRequest = new AssertionError(message);
           }
-        } else {
-          if (toInterrupt) {
-            wasInterrupted[0] = true;
-            switch (interruption) {
-              case throwProcessCancelled:
-                throw new ProcessCanceledException();
-              case invokeCancel:
-                getBuilder().cancelUpdate();
-                break;
-            }
+        }
+        else if (toInterrupt) {
+          wasInterrupted[0] = true;
+          switch (interruption) {
+            case throwProcessCancelled:
+              throw new ProcessCanceledException();
+            case invokeCancel:
+              getBuilder().cancelUpdate();
+              break;
           }
         }
       }
@@ -1690,7 +1644,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "org: update getChildren\n" +
                   "runner: update\n" +
                   "xUnit: update getChildren");
-
   }
 
   public void testQueryWhenUpdatingPresentation() throws Exception {
@@ -1704,7 +1657,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     myElementUpdate.clear();
 
-
     updateFromRoot(false);
 
     assertUpdates("/: update\n" +
@@ -1713,7 +1665,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "org: update\n" +
                   "xUnit: update");
   }
-
 
   public void testInfiniteUpdatingWhenReQueueingUpdates() throws Exception {
     buildStructure(myRoot, false);
@@ -1733,7 +1684,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +jetbrains\n" +
                " +org\n" +
                " +xUnit\n");
-
 
     myElementUpdateHook = new ElementUpdateHook() {
       @SuppressWarnings("deprecation")
@@ -1788,7 +1738,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                   "org: update getChildren\n" +
                   "runner: update\n" +
                   "xUnit: update getChildren");
-
   }
 
   public void testQueryStructureIsAlwaysShowsPlus() throws Exception {
@@ -1826,7 +1775,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertUpdates("fabrique: update getChildren\n" +
                   "ide: update\n" +
                   "jetbrains: update getChildren");
-
 
     expand(getPath("ide"));
     assertTree("-/\n" +
@@ -1872,7 +1820,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " +xUnit\n");
     assertUpdates("ide: update getChildren");
-
 
     buildNode("com", false);
     assertTree("-/\n" +
@@ -1943,9 +1890,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +jetbrains\n" +
                " +org\n" +
                " +xUnit\n");
-
   }
-
 
   public void testSorting() throws Exception {
     buildStructure(myRoot);
@@ -1983,7 +1928,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " +xUnit\n");
     assertSorted("");
-
 
     expand(getPath("com"));
     assertTree("-/\n" +
@@ -2041,7 +1985,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +jetbrains\n" +
                " +org\n" +
                " +xUnit\n");
-
 
     removeFromParentButKeepRef(new NodeElement("openapi"));
 
@@ -2128,7 +2071,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                       " xUnit\n");
   }
 
-
   public void testRevalidateStructure() throws Exception {
     final NodeElement com = new NodeElement("com");
     final NodeElement actionSystem = new NodeElement("actionSystem");
@@ -2155,7 +2097,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  [actionSystem]\n" +
                " -fabrique\n" +
                "  ide\n");
-
 
     removeFromParentButKeepRef(actionSystem);
     removeFromParentButKeepRef(fabrique);
@@ -2207,7 +2148,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
 
     assertTree("-/\n" + " -com\n" + "  +[intellij]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
 
-
     removeFromParentButKeepRef(new NodeElement("intellij"));
     myValidator = new Validator() {
       @Override
@@ -2234,7 +2174,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +xUnit\n");
     assertNull(reValidatedElement.get() != null ? reValidatedElement.get().toString() : null, reValidatedElement.get());
   }
-
 
   private void doTestSelectionOnDelete(boolean keepRef) throws Exception {
     myComparator.setDelegate(new NodeDescriptor.NodeComparator<NodeDescriptor>() {
@@ -2279,7 +2218,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTree("-/\n" + " +com\n" + " +jetbrains\n" + " +org\n" + " +[xUnit]\n");
   }
 
-
   public void testGetChildrenOnInvalidNode() throws Exception {
     buildStructure(myRoot);
 
@@ -2298,7 +2236,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " +xUnit\n");
 
-
     invalid.add(new NodeElement("com"));
 
     updateFrom(new NodeElement("com"));
@@ -2315,7 +2252,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +xUnit\n");
   }
 
-
   public void testSelectWhenUpdatesArePending() throws Exception {
     notNull(getBuilder().getUpdater()).setDelay(1000);
 
@@ -2324,7 +2260,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     buildNode("intellij", false);
     select(new Object[]{new NodeElement("intellij")}, false);
     assertTree("-/\n" + " -com\n" + "  -[intellij]\n" + "   openapi\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
-
 
     myIntellij.addChild("ui");
 
@@ -2337,7 +2272,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     select(new Object[]{new NodeElement("ui")}, false);
     assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   openapi\n" + "   [ui]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
   }
-
 
   public void testAddNewElementToLeafElementAlwaysShowPlus() throws Exception {
     myAlwaysShowPlus.add(new NodeElement("openapi"));
@@ -2355,7 +2289,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +jetbrains\n" +
                " +org\n" +
                " +xUnit\n");
-
 
     myOpenApi.addChild("ui");
 
@@ -2379,14 +2312,12 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     expand(getPath("openapi"));
     assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   [openapi]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
 
-
     myOpenApi.addChild("ui");
 
     getMyBuilder().addSubtreeToUpdate(findNode("openapi", false));
 
     assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   +[openapi]\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
   }
-
 
   public void testUpdateAlwaysLeaf() throws Exception {
     myStructure.addLeaf(new NodeElement("openapi"));
@@ -2396,7 +2327,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     expand(getPath("intellij"));
 
     assertTree("-/\n" + " -com\n" + "  -intellij\n" + "   openapi\n" + " +jetbrains\n" + " +org\n" + " +xUnit\n");
-
 
     myElementUpdate.clear();
 
@@ -2434,9 +2364,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                "  +[intellij]\n" +
                " +org\n" +
                " +xUnit\n");
-
   }
-
 
   public void testChangeRootElement() throws Exception {
     buildStructure(myRoot);
@@ -2469,7 +2397,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +jetbrains\n" +
                " +org\n" +
                " +xUnit\n");
-
 
     myCom.addChild("ibm");
 
@@ -2530,7 +2457,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTree("-/\n" + " +com\n" + " -[jetbrains]\n" + "  -fabrique\n" + "   ide\n" + " +org\n" + " +xUnit\n");
   }
 
-
   public void testUpdateCollapsedBuiltNode() throws Exception {
     buildStructure(myRoot, false);
 
@@ -2558,7 +2484,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +org\n" +
                " +xUnit\n");
 
-
     myCom.addChild(myIntellij);
     updateFrom(new NodeElement("com"));
     assertTree("-/\n" +
@@ -2568,7 +2493,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
                " +xUnit\n");
     assertEquals(1, com.getChildCount());
     assertEquals("intellij", com.getChildAt(0).toString());
-
 
     myCom.removeAll();
     updateFrom(new NodeElement("com"));
@@ -2594,7 +2518,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       }
     });
   }
-
 
   public void testAssertionOnInfiniteTree() throws Exception {
     final Node com = myRoot.addChild("com");
@@ -2658,11 +2581,13 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     assertTrue(released);
   }
 
+
   public static class SyncUpdate extends TreeUiTest {
     public SyncUpdate() {
       super(false, false);
     }
   }
+
 
   public static class PassThrough extends TreeUiTest {
     public PassThrough() {
@@ -2715,17 +2640,18 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
   }
 
+
   public static class YieldingUpdate extends TreeUiTest {
     public YieldingUpdate() {
       super(true, false);
     }
   }
 
+
   public static class BgLoadingSyncUpdate extends TreeUiTest {
     public BgLoadingSyncUpdate() {
       super(false, true);
     }
-
 
     @Override
     protected int getChildrenLoadingDelay() {
@@ -2753,7 +2679,6 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
       super(false, true);
     }
 
-
     @Override
     public void testQueryStructure() throws Exception {
       super.testQueryStructure();
@@ -2773,8 +2698,8 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     public void testBigTreeUpdate() throws Exception {
       //to slow, tested the same in VeryQuickBgLoadingTest
     }
-
   }
+
 
   public static class VeryQuickBgLoadingSyncUpdate extends TreeUiTest {
     public VeryQuickBgLoadingSyncUpdate() {
@@ -2812,6 +2737,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     }
   }
 
+
   public static TestSuite suite() {
     TestSuite suite = new TestSuite();
 
@@ -2843,7 +2769,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     super.tearDown();
   }
 
-  abstract static class MyRunnable implements Runnable {
+  private abstract static class MyRunnable implements Runnable {
     @Override
     public final void run() {
       try {

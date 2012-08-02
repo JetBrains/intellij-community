@@ -124,8 +124,8 @@ public abstract class BaseProjectViewTestCase extends TestSourceBasedTestCase {
 
   private void assertStructureEqual(Object rootNode, String expected, int maxRowCount, Comparator comparator) {
     checkGetParentConsistency(rootNode);
-    StringBuffer actual = PlatformTestUtil.print(myStructure, rootNode, 0, comparator, maxRowCount, ' ', myPrintInfo);
-    assertEquals(expected, actual.toString());
+    String actual = PlatformTestUtil.print(myStructure, rootNode, 0, comparator, maxRowCount, ' ', myPrintInfo).toString();
+    assertEquals(expected, actual);
   }
 
   private void checkGetParentConsistency(Object from) {
