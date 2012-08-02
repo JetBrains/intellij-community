@@ -59,6 +59,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   public static class State {
     // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
     public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<String>();
+    public GitVcsApplicationSettings.SshExecutable SSH_EXECUTABLE = GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
     // The policy that specifies how files are saved before update or rebase
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
@@ -183,6 +184,18 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public boolean isAutoCommitOnCherryPick() {
     return myState.AUTO_COMMIT_ON_CHERRY_PICK;
+  }
+
+  /**
+   * Provides migration from project settings.
+   * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
+   */
+  @Deprecated
+  public boolean isIdeaSsh() {
+    if (getAppSettings().getIdeaSsh() == null) { // app setting has not been initialized yet => migrate the project setting there
+      getAppSettings().setIdeaSsh(myState.SSH_EXECUTABLE);
+    }
+    return getAppSettings().getIdeaSsh() == GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
   }
 
 }

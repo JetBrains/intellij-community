@@ -19,6 +19,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -47,7 +48,7 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
 
   public static class State {
     public String myPathToGit = null;
-    public SshExecutable SSH_EXECUTABLE = SshExecutable.IDEA_SSH;
+    public SshExecutable SSH_EXECUTABLE = null;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -102,12 +103,13 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
     myState.myPathToGit = pathToGit;
   }
 
-  public boolean isIdeaSsh() {
-    return myState.SSH_EXECUTABLE == SshExecutable.IDEA_SSH;
+  public void setIdeaSsh(@NotNull SshExecutable executable) {
+    myState.SSH_EXECUTABLE = executable;
   }
 
-  public void setIdeaSsh(boolean value) {
-    myState.SSH_EXECUTABLE = value ? SshExecutable.IDEA_SSH : SshExecutable.NATIVE_SSH;
+  @Nullable
+  SshExecutable getIdeaSsh() {
+    return myState.SSH_EXECUTABLE;
   }
 
 }
