@@ -64,4 +64,9 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   void delete();
 
   JpsProject getProject();
+
+  JpsModuleType<?> getModuleType();
+
+  @NotNull
+  JpsElementProperties getProperties();
 }

@@ -43,6 +43,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.DoubleClickListener;
@@ -51,6 +52,8 @@ import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -69,10 +72,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -91,6 +92,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
   private final boolean myDisableStructureProviders;
   private final boolean myShowLibraryContents;
+  private boolean mySelectSearchByNameTab = false;
 
   public TreeFileChooserDialog(final Project project,
                                String title,
@@ -228,6 +230,9 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         super.initUI(callback, modalityState, allowMultipleSelection);
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
         //IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()).requestFocus();
+        if (mySelectSearchByNameTab) {
+          myTabbedPane.setSelectedIndex(1);
+        }
       }
 
       @Override
@@ -257,6 +262,10 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     );
 
     return myTabbedPane.getComponent();
+  }
+
+  public void selectSearchByNameTab() {
+    mySelectSearchByNameTab = true;
   }
 
   private void handleSelectionChanged(){
@@ -371,16 +380,22 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     public String[] getNames(final boolean checkBoxState) {
-      final String[] fileNames = FilenameIndex.getAllFilenames(myProject);
-
+      final String[] fileNames;
+      if (myFileType != null && myProject != null) {
+        GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
+        Collection<VirtualFile> virtualFiles = FileTypeIndex.getFiles(myFileType, scope);
+        fileNames = ContainerUtil.map2Array(virtualFiles, String.class, new Function<VirtualFile, String>() {
+          @Override
+          public String fun(VirtualFile file) {
+            return file.getName();
+          }
+        });
+      }
+      else {
+        fileNames = FilenameIndex.getAllFilenames(myProject);
+      }
       final Set<String> array = new THashSet<String>();
-      FileTypeManager fileTypeManager = FileTypeManager.getInstance();
       for (String fileName : fileNames) {
-
-        if (myFileType != null && fileTypeManager.getFileTypeByFileName(fileName) != myFileType) {
-          continue;
-        }
-
         if (!array.contains(fileName)) {
           array.add(fileName);
         }
@@ -439,7 +454,12 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         if (myFilter != null && !myFilter.accept(psiFile)) {
           return false;
         }
-        return myFileType == null || psiFile.getFileType() == myFileType;
+        boolean accepted = myFileType == null || psiFile.getFileType() == myFileType;
+        VirtualFile virtualFile = psiFile.getVirtualFile();
+        if (virtualFile != null && !accepted) {
+          accepted = virtualFile.getFileType() == myFileType;
+        }
+        return accepted;
       }
     };
     final List<Object> result = new ArrayList<Object>(list.length);

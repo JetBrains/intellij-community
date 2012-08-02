@@ -6,8 +6,8 @@ import org.jetbrains.jps.model.SimpleJpsElement;
 /**
  * @author nik
  */
-public class SimpleJpsElementKind<P extends JpsElementProperties> extends JpsElementKindBase<SimpleJpsElement<P>> {
-  public SimpleJpsElementKind(String debugName) {
+public class SimpleJpsElementRole<P extends JpsElementProperties> extends JpsElementChildRoleBase<SimpleJpsElement<P>> {
+  public SimpleJpsElementRole(String debugName) {
     super(debugName);
   }
 }

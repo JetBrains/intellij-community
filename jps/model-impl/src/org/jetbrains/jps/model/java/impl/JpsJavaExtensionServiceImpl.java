@@ -2,7 +2,6 @@ package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElementKind;
 import org.jetbrains.jps.model.JpsElementProperties;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.*;
@@ -12,6 +11,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -21,56 +21,44 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @NotNull
   @Override
   public JpsJavaProjectExtension getOrCreateProjectExtension(@NotNull JpsProject project) {
-    return project.getContainer().getOrSetChild(JavaProjectExtensionKind.INSTANCE);
+    return project.getContainer().getOrSetChild(JavaProjectExtensionRole.INSTANCE);
   }
 
   @Nullable
   @Override
   public JpsJavaProjectExtension getProjectExtension(@NotNull JpsProject project) {
-    return project.getContainer().getChild(JavaProjectExtensionKind.INSTANCE);
+    return project.getContainer().getChild(JavaProjectExtensionRole.INSTANCE);
   }
 
   @NotNull
   @Override
   public JpsJavaModuleExtension getOrCreateModuleExtension(@NotNull JpsModule module) {
-    return module.getContainer().getOrSetChild(JavaModuleExtensionKind.INSTANCE);
+    return module.getContainer().getOrSetChild(JavaModuleExtensionRole.INSTANCE);
   }
 
   @NotNull
   @Override
   public JpsJavaDependencyExtension getOrCreateDependencyExtension(@NotNull JpsDependencyElement dependency) {
-    return dependency.getContainer().getOrSetChild(JpsJavaDependencyExtensionKind.INSTANCE);
+    return dependency.getContainer().getOrSetChild(JpsJavaDependencyExtensionRole.INSTANCE);
   }
 
   @Override
   public JpsJavaDependencyExtension getDependencyExtension(@NotNull JpsDependencyElement dependency) {
-    return dependency.getContainer().getChild(getDependencyExtensionKind());
+    return dependency.getContainer().getChild(JpsJavaDependencyExtensionRole.INSTANCE);
   }
 
   @Override
   @Nullable
   public JpsJavaModuleExtension getModuleExtension(@NotNull JpsModule module) {
-    return module.getContainer().getChild(getModuleExtensionKind());
-  }
-
-  @NotNull
-  @Override
-  public JpsElementKind<JpsJavaModuleExtension> getModuleExtensionKind() {
-    return JavaModuleExtensionKind.INSTANCE;
-  }
-
-  @NotNull
-  @Override
-  public JpsElementKind<JpsJavaDependencyExtension> getDependencyExtensionKind() {
-    return JpsJavaDependencyExtensionKind.INSTANCE;
+    return module.getContainer().getChild(JavaModuleExtensionRole.INSTANCE);
   }
 
   @Override
   @NotNull
   public ExplodedDirectoryModuleExtension getOrCreateExplodedDirectoryExtension(@NotNull JpsModule module) {
-    ExplodedDirectoryModuleExtension extension = module.getContainer().getChild(ExplodedDirectoryModuleExtensionImpl.KIND);
+    ExplodedDirectoryModuleExtension extension = module.getContainer().getChild(ExplodedDirectoryModuleExtensionImpl.ROLE);
     if (extension == null) {
-      extension = module.getContainer().setChild(ExplodedDirectoryModuleExtensionImpl.KIND, new ExplodedDirectoryModuleExtensionImpl());
+      extension = module.getContainer().setChild(ExplodedDirectoryModuleExtensionImpl.ROLE, new ExplodedDirectoryModuleExtensionImpl());
     }
     return extension;
   }
@@ -135,5 +123,10 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @NotNull
   public JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference) {
     return new JpsTestModuleOutputPackagingElementImpl(moduleReference);
+  }
+
+  @Override
+  protected JpsJavaDependenciesEnumerator enumerateDependencies(JpsModule module) {
+    return new JpsJavaDependenciesEnumeratorImpl(Collections.singletonList(module));
   }
 }

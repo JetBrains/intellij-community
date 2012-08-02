@@ -16,7 +16,7 @@ public class JpsSdkReferenceImpl extends JpsNamedElementReferenceBase<JpsLibrary
   @NotNull private final JpsSdkType<?> mySdkType;
 
   public JpsSdkReferenceImpl(@NotNull String elementName, @NotNull JpsSdkType<?> sdkType, @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference) {
-    super(JpsLibraryKind.LIBRARIES_COLLECTION_KIND, elementName, parentReference);
+    super(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE, elementName, parentReference);
     mySdkType = sdkType;
   }
 

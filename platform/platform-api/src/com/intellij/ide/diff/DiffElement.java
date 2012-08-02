@@ -26,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -155,7 +156,7 @@ public abstract class DiffElement<T> /*implements Disposable */{
         if (((VirtualFile)trg).getFileType().isBinary()) return null;
         final FileDocumentManager mgr = FileDocumentManager.getInstance();
         if (mgr.getDocument((VirtualFile)src) != null && mgr.getDocument((VirtualFile)trg) != null) {
-          return SimpleDiffRequest.compareFiles((VirtualFile)src, (VirtualFile)trg, project);
+          return SimpleDiffRequest.compareFiles((VirtualFile)src, (VirtualFile)trg, project == null ? ProjectManager.getInstance().getDefaultProject() : project);
         }
       }
     }

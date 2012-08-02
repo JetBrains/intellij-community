@@ -292,7 +292,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             myPanel.update(true);
           }
         };
-        if (myProject.isDefault()) {
+        if (myProject == null || myProject.isDefault()) {
           SwingUtilities.invokeLater(uiThread);
         } else {
           app.invokeLater(uiThread, ModalityState.any());

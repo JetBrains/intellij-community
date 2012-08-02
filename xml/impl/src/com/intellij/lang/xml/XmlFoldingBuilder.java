@@ -46,6 +46,7 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.xml.XmlFoldingBuilder");
   private static final TokenSet XML_ATTRIBUTE_SET = TokenSet.create(XmlElementType.XML_ATTRIBUTE);
   private static final String[] XML_FOLDING_ATTRIBUTE_NAMES = new String[] {"style"};
+  private static final int MIN_TEXT_RANGE_LENGTH = 3;
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
@@ -169,8 +170,8 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
       final XmlConditionalSection conditionalSection = (XmlConditionalSection)element;
       final TextRange textRange = element.getTextRange();
       final PsiElement bodyStart = conditionalSection.getBodyStart();
-      int startOffset = bodyStart != null ? bodyStart.getStartOffsetInParent() : 3;
-      int endOffset = 3;
+      int startOffset = bodyStart != null ? bodyStart.getStartOffsetInParent() : MIN_TEXT_RANGE_LENGTH;
+      int endOffset = MIN_TEXT_RANGE_LENGTH;
 
       if (textRange.getEndOffset() - textRange.getStartOffset() > startOffset + endOffset) {
         return new TextRange(textRange.getStartOffset() + startOffset, textRange.getEndOffset() - endOffset);
@@ -192,7 +193,7 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
   }
 
   protected int getCommentStartEnd(final XmlComment element) {
-    return 3;
+    return MIN_TEXT_RANGE_LENGTH;
   }
 
   protected boolean addToFold(List<FoldingDescriptor> foldings, PsiElement elementToFold, Document document) {
@@ -205,7 +206,7 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
        range.getEndOffset() <= document.getTextLength() // psi and document maybe not in sync after error
       ) {
 
-      if (range.getStartOffset() + 1 < range.getEndOffset()) {
+      if (range.getStartOffset() + MIN_TEXT_RANGE_LENGTH < range.getEndOffset()) {
         foldings.add(new FoldingDescriptor(elementToFold.getNode(), range));
         return true;
       }

@@ -10,6 +10,10 @@ import org.jetbrains.jps.service.JpsServiceManager;
  * @author nik
  */
 public abstract class JpsPackagingElementFactory {
+  public abstract JpsCompositePackagingElement getOrCreateDirectory(@NotNull JpsCompositePackagingElement root, @NotNull String path);
+
+  public abstract JpsCompositePackagingElement getOrCreateArchive(@NotNull JpsCompositePackagingElement root, @NotNull String path);
+
   public static JpsPackagingElementFactory getInstance() {
     return JpsServiceManager.getInstance().getService(JpsPackagingElementFactory.class);
   }

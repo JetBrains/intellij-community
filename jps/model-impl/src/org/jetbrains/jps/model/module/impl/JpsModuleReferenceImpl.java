@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
  */
 public class JpsModuleReferenceImpl extends JpsNamedElementReferenceBase<JpsModule, JpsModuleReferenceImpl> implements JpsModuleReference {
   public JpsModuleReferenceImpl(String elementName) {
-    super(JpsModuleKind.MODULE_COLLECTION_KIND, elementName, new JpsProjectElementReference());
+    super(JpsModuleRole.MODULE_COLLECTION_ROLE, elementName, new JpsProjectElementReference());
   }
 
   @NotNull

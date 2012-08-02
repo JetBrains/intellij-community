@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
 import org.jetbrains.jps.model.impl.JpsTypedDataImpl;
-import org.jetbrains.jps.model.impl.JpsTypedDataKind;
+import org.jetbrains.jps.model.impl.JpsTypedDataRole;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -12,12 +12,12 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
  * @author nik
  */
 public class JpsModuleSourceRootImpl extends JpsCompositeElementBase<JpsModuleSourceRootImpl> implements JpsModuleSourceRoot {
-  private static final JpsTypedDataKind<JpsModuleSourceRootType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsModuleSourceRootType<?>>();
+  private static final JpsTypedDataRole<JpsModuleSourceRootType<?>> TYPED_DATA_ROLE = new JpsTypedDataRole<JpsModuleSourceRootType<?>>();
   private String myUrl;
 
   public <P extends JpsElementProperties> JpsModuleSourceRootImpl(String url, JpsModuleSourceRootType<P> type, P properties) {
     super();
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsModuleSourceRootType<?>>(type, properties));
+    myContainer.setChild(TYPED_DATA_ROLE, new JpsTypedDataImpl<JpsModuleSourceRootType<?>>(type, properties));
     myUrl = url;
   }
 
@@ -28,24 +28,24 @@ public class JpsModuleSourceRootImpl extends JpsCompositeElementBase<JpsModuleSo
 
   @Override
   public <P extends JpsElementProperties> P getProperties(@NotNull JpsModuleSourceRootType<P> type) {
-    return myContainer.getChild(TYPED_DATA_KIND).getProperties(type);
+    return myContainer.getChild(TYPED_DATA_ROLE).getProperties(type);
   }
 
   @NotNull
   @Override
   public JpsElementProperties getProperties() {
-    return myContainer.getChild(TYPED_DATA_KIND).getProperties();
+    return myContainer.getChild(TYPED_DATA_ROLE).getProperties();
   }
 
   @Override
   public <P extends JpsElementProperties> void setProperties(JpsModuleSourceRootType<P> type, P properties) {
-    myContainer.getChild(TYPED_DATA_KIND).setProperties(properties);
+    myContainer.getChild(TYPED_DATA_ROLE).setProperties(properties);
   }
 
   @NotNull
   @Override
   public JpsModuleSourceRootType<?> getRootType() {
-    return myContainer.getChild(TYPED_DATA_KIND).getType();
+    return myContainer.getChild(TYPED_DATA_ROLE).getType();
   }
 
   @NotNull

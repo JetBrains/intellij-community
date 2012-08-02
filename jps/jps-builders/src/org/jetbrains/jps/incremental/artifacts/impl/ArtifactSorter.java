@@ -24,10 +24,9 @@ import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
@@ -147,7 +146,7 @@ public class ArtifactSorter {
   }
 
   private GraphGenerator<JpsArtifact> createArtifactsGraph() {
-    return GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(myModel.getProject())));
+    return GraphGenerator.create(CachingSemiGraph.create(new ArtifactsGraph(myModel)));
   }
 
   private static void processIncludedArtifacts(JpsArtifact artifact, final Consumer<JpsArtifact> consumer) {
@@ -169,8 +168,8 @@ public class ArtifactSorter {
   private static class ArtifactsGraph implements GraphGenerator.SemiGraph<JpsArtifact> {
     private final Set<JpsArtifact> myArtifactNodes;
 
-    public ArtifactsGraph(final JpsProject project) {
-      myArtifactNodes = new LinkedHashSet<JpsArtifact>(JpsArtifactService.getInstance().getArtifacts(project));
+    public ArtifactsGraph(final JpsModel model) {
+      myArtifactNodes = new LinkedHashSet<JpsArtifact>(JpsBuilderArtifactService.getInstance().getArtifacts(model, true));
     }
 
     @Override

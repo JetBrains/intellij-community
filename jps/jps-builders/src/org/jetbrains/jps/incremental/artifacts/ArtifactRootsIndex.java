@@ -13,7 +13,6 @@ import org.jetbrains.jps.incremental.artifacts.instructions.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 
 import java.io.File;
@@ -30,7 +29,7 @@ public class ArtifactRootsIndex {
     myRootToDescriptorMap = new MultiMap<File, ArtifactRootDescriptor>();
     myInstructions = new HashMap<JpsArtifact, ArtifactInstructionsBuilder>();
     ArtifactsBuildData data = manager.getArtifactsBuildData();
-    for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(model.getProject())) {
+    for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(model, true)) {
       int artifactId = data.getArtifactId(artifact);
       ArtifactInstructionsBuilderImpl builder = new ArtifactInstructionsBuilderImpl(rootsIndex, project.getIgnoredFilePatterns(), artifactId, artifact.getName());
       final JpsCompositePackagingElement rootElement = artifact.getRootElement();

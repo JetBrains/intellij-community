@@ -7,23 +7,23 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface JpsElementContainer {
   <T extends JpsElement>
-  T getChild(@NotNull JpsElementKind<T> kind);
+  T getChild(@NotNull JpsElementChildRole<T> role);
 
   @NotNull
-  <T extends JpsElement, K extends JpsElementKind<T>&JpsElementCreator<T>>
-  T setChild(@NotNull K kind);
+  <T extends JpsElement, K extends JpsElementChildRole<T> &JpsElementCreator<T>>
+  T setChild(@NotNull K role);
 
   @NotNull
-  <T extends JpsElement, K extends JpsElementKind<T>&JpsElementCreator<T>>
-  T getOrSetChild(@NotNull K kind);
+  <T extends JpsElement, K extends JpsElementChildRole<T> &JpsElementCreator<T>>
+  T getOrSetChild(@NotNull K role);
 
   @NotNull
-  <T extends JpsElement, P, K extends JpsElementKind<T>&JpsElementParameterizedCreator<T, P>>
-  T setChild(@NotNull K kind, @NotNull P param);
+  <T extends JpsElement, P, K extends JpsElementChildRole<T> &JpsElementParameterizedCreator<T, P>>
+  T setChild(@NotNull K role, @NotNull P param);
 
   <T extends JpsElement>
-  T setChild(JpsElementKind<T> kind, T child);
+  T setChild(JpsElementChildRole<T> role, T child);
 
   <T extends JpsElement>
-  void removeChild(@NotNull JpsElementKind<T> kind);
+  void removeChild(@NotNull JpsElementChildRole<T> role);
 }
