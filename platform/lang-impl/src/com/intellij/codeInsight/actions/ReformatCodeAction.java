@@ -150,13 +150,13 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
                                                            hasSelection ? Boolean.TRUE : Boolean.FALSE, HELP_ID);
       dialog.show();
       if (!dialog.isOK()) return;
-      final boolean showDialogAtFuture = dir == null ? !dialog.isDoNotAskMe() : processChangedTextOnly;
+      final boolean showDialogAtFuture = !dialog.isDoNotAskMe();
       EditorSettingsExternalizable.getInstance().getOptions().SHOW_REFORMAT_DIALOG = showDialogAtFuture;
       updateShowDialogSetting(dialog, "\"Reformat Code\" dialog disabled");
       optimizeImports = dialog.isOptimizeImports();
       processWholeFile = dialog.isProcessWholeFile();
       processChangedTextOnly = dialog.isProcessOnlyChangedText();
-      
+
       if (dialog.isProcessDirectory()){
         if (optimizeImports) {
           new ReformatAndOptimizeImportsProcessor(project, dir, dialog.isIncludeSubdirectories(), processChangedTextOnly).run();
@@ -194,14 +194,14 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
       Notifications.Bus.notify(new Notification("Reformat Code", title,
                                                 "<html>You can re-enable the dialog on the <a href=''>IDE Settings -> Editor</a> pane</html>",
                                                 NotificationType.INFORMATION, new NotificationListener() {
-          public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-            if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-              final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
-              IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
-              util.editConfigurable((JFrame)ideFrame, new EditorOptions());
-            }
+        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+          if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
+            IdeFrame ideFrame = WindowManagerEx.getInstanceEx().findFrameFor(null);
+            util.editConfigurable((JFrame)ideFrame, new EditorOptions());
           }
-        }));
+        }
+      }));
     }
   }
 

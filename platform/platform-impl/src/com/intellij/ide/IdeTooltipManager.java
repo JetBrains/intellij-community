@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,11 +50,14 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 
 public class IdeTooltipManager implements ApplicationComponent, AWTEventListener {
+
+  public static final String IDE_TOOLTIP_PLACE = "IdeTooltip";
 
   public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
   private RegistryValue myIsEnabled;
@@ -63,25 +66,24 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private Component myQueuedComponent;
 
   private BalloonImpl myCurrentTipUi;
-  private MouseEvent myCurrentEvent;
-  private boolean myCurrentTipIsCentered;
+  private MouseEvent  myCurrentEvent;
+  private boolean     myCurrentTipIsCentered;
 
   private Runnable myHideRunnable;
 
-  private JBPopupFactory myPopupFactory;
+  private final JBPopupFactory myPopupFactory;
 
   private boolean myShowDelay = true;
 
-  private Alarm myAlarm = new Alarm();
+  private final Alarm myAlarm = new Alarm();
 
-  private int myX;
-  private int myY;
+  private int           myX;
+  private int           myY;
   private RegistryValue myMode;
 
   private IdeTooltip myCurrentTooltip;
-  private Runnable myShowRequest;
+  private Runnable   myShowRequest;
   private IdeTooltip myQueuedTooltip;
-
 
   public IdeTooltipManager(JBPopupFactory popupFactory) {
     myPopupFactory = popupFactory;
@@ -99,7 +101,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }, ApplicationManager.getApplication());
 
-    Toolkit.getDefaultToolkit().addAWTEventListener(this, MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
+    Toolkit.getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
 
     ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
       @Override
@@ -125,17 +127,20 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       if (canShow) {
         maybeShowFor(c, me);
       }
-    } else if (me.getID() == MouseEvent.MOUSE_EXITED) {
+    }
+    else if (me.getID() == MouseEvent.MOUSE_EXITED) {
       if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
         hideCurrent(me, null, null);
       }
-    } else if (me.getID() == MouseEvent.MOUSE_MOVED) {
+    }
+    else if (me.getID() == MouseEvent.MOUSE_MOVED) {
       if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
         if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
           if (hideCurrent(me, null, null)) {
             maybeShowFor(c, me);
           }
-        } else {
+        }
+        else {
           if (!myCurrentTipIsCentered) {
             myX = me.getX();
             myY = me.getY();
@@ -147,14 +152,17 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
             }
           }
         }
-      } else if (myCurrentComponent == null && myQueuedComponent == null) {
+      }
+      else if (myCurrentComponent == null && myQueuedComponent == null) {
         maybeShowFor(c, me);
       }
-    } else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
+    }
+    else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
       if (me.getComponent() == myCurrentComponent) {
         hideCurrent(me, null, null);
       }
-    } else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
+    }
+    else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
       hideCurrent(me, null, null);
     }
   }
@@ -171,17 +179,16 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }
 
     String tooltipText = comp.getToolTipText(me);
-    if (tooltipText == null || tooltipText.trim().length() == 0) return;
-
+    if (tooltipText == null || tooltipText.trim().isEmpty()) return;
 
 
     boolean centerDefault = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT));
     boolean centerStrict = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT));
-    int shift = centerStrict ? 0 : (centerDefault ? 4 : 0);
+    int shift = centerStrict ? 0 : centerDefault ? 4 : 0;
 
     // Balloon may appear exactly above useful content, such behavior is rather annoying.
     if (c instanceof JTree) {
-      javax.swing.tree.TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
+      TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
       if (path != null) {
         Rectangle pathBounds = ((JTree)c).getPathBounds(path);
         if (pathBounds != null && pathBounds.y + 4 < me.getY()) {
@@ -202,7 +209,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
         if (!c.isShowing()) return false;
 
         String text = c.getToolTipText(myCurrentEvent);
-        if (text == null || text.trim().length() == 0) return false;
+        if (text == null || text.trim().isEmpty()) return false;
 
         JLayeredPane layeredPane = IJSwingUtilities.findParentOfType(c, JLayeredPane.class);
 
@@ -251,14 +258,15 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     if (now) {
       myShowRequest.run();
-    } else {
+    }
+    else {
       myAlarm.addRequest(myShowRequest, myShowDelay ? tooltip.getShowDelay() : tooltip.getInitialReshowDelay());
     }
 
     return tooltip;
   }
 
-  private void show(final IdeTooltip tooltip, Runnable beforeShow, boolean animationEnabled) {
+  private void show(final IdeTooltip tooltip, @Nullable Runnable beforeShow, boolean animationEnabled) {
     boolean toCenterX;
     boolean toCenterY;
 
@@ -270,7 +278,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       toCenterY = size.height < 64;
       toCenter = toCenterX || toCenterY;
       small = true;
-    } else {
+    }
+    else {
       toCenterX = true;
       toCenterY = true;
     }
@@ -279,7 +288,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     if (toCenter) {
       Rectangle bounds = tooltip.getComponent().getBounds();
       effectivePoint.x = toCenterX ? bounds.width / 2 : effectivePoint.x;
-      effectivePoint.y = toCenterY ? (bounds.height / 2) : effectivePoint.y;
+      effectivePoint.y = toCenterY ? bounds.height / 2 : effectivePoint.y;
     }
 
 
@@ -297,7 +306,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       .setBorderColor(border)
       .setAnimationCycle(animationEnabled ? Registry.intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
-      .setCalloutShift((small && tooltip.getCalloutShift() == 0) ? 2 : tooltip.getCalloutShift())
+      .setCalloutShift(small && tooltip.getCalloutShift() == 0 ? 2 : tooltip.getCalloutShift())
       .setPositionChangeXShift(tooltip.getPositionChangeX())
       .setPositionChangeYShift(tooltip.getPositionChangeY())
       .setHideOnKeyOutside(!tooltip.isExplicitClose())
@@ -334,6 +343,10 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     }, tooltip.getDismissDelay());
   }
 
+  @Nullable
+  public IdeTooltip getCurrentTooltip() {
+    return myCurrentTooltip;
+  }
 
   public Color getTextForeground(boolean awtTooltip) {
     return useGraphite(awtTooltip) ? Color.white : UIUtil.getToolTipForeground();
@@ -372,21 +385,27 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     if ("default".equalsIgnoreCase(myMode.asString())) {
       useSystem = true;
-    } else if ("system".equalsIgnoreCase(myMode.asString())) {
+    }
+    else if ("system".equalsIgnoreCase(myMode.asString())) {
       useSystem = true;
-    } else if ("graphite".equalsIgnoreCase(myMode.asString())) {
+    }
+    else if ("graphite".equalsIgnoreCase(myMode.asString())) {
       useSystem = false;
-    } else {
+    }
+    else {
       useSystem = false;
     }
     return useSystem;
   }
 
-  public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event) {
+  public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
     return hideCurrent(me, action, event, true);
   }
 
-  public boolean hideCurrent(@Nullable MouseEvent me, AnAction action, AnActionEvent event, final boolean animationEnabled) {
+  public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
+    if (myCurrentTooltip != null && me != null && myCurrentTooltip.isInside(RelativePoint.fromScreen(me.getLocationOnScreen()))) {
+      return false;
+    }
     myShowRequest = null;
     myQueuedComponent = null;
     myQueuedTooltip = null;
@@ -396,9 +415,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     if (myCurrentTipUi != null) {
       boolean isInside = me != null && myCurrentTipUi.isInsideBalloon(me);
       boolean canAutoHide = myCurrentTooltip.canAutohideOn(new TooltipEvent(me, isInside, action, event));
-      boolean implicitMouseMove = me != null && (me.getID() == MouseEvent.MOUSE_MOVED || me.getID() == MouseEvent.MOUSE_EXITED || me.getID() == MouseEvent.MOUSE_ENTERED);
+      boolean implicitMouseMove = me != null &&
+                                  (me.getID() == MouseEvent.MOUSE_MOVED ||
+                                   me.getID() == MouseEvent.MOUSE_EXITED ||
+                                   me.getID() == MouseEvent.MOUSE_ENTERED);
 
-      if (!canAutoHide || (myCurrentTooltip.isExplicitClose() && implicitMouseMove)) {
+      if (!canAutoHide || myCurrentTooltip.isExplicitClose() && implicitMouseMove) {
         if (myHideRunnable != null) {
           myHideRunnable = null;
         }
@@ -418,7 +440,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
     if (me != null) {
       myAlarm.addRequest(myHideRunnable, Registry.intValue("ide.tooltip.autoDismissDeadZone"));
-    } else {
+    }
+    else {
       myHideRunnable.run();
       myHideRunnable = null;
     }
@@ -426,7 +449,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return true;
   }
 
-  private void hideCurrentNow(boolean animationEnabled) {
+  public void hideCurrentNow(boolean animationEnabled) {
     if (myCurrentTipUi != null) {
       myCurrentTipUi.setAnimationEnabled(animationEnabled);
       myCurrentTipUi.hide();
@@ -455,7 +478,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   private void processEnabled() {
     if (myIsEnabled.asBoolean()) {
       ToolTipManager.sharedInstance().setEnabled(false);
-    } else {
+    }
+    else {
       ToolTipManager.sharedInstance().setEnabled(true);
     }
   }
@@ -472,7 +496,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return false;
   }
 
-  public void hide(IdeTooltip tooltip) {
+  public void hide(@Nullable IdeTooltip tooltip) {
     if (myCurrentTooltip == tooltip || tooltip == null || tooltip == myQueuedTooltip) {
       hideCurrent(null, null, null);
     }
@@ -483,7 +507,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
 
-
   public static JEditorPane initPane(@NonNls String text, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
     return initPane(new Html(text), hintHint, layeredPane);
   }
@@ -491,13 +514,14 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   public static JEditorPane initPane(@NonNls Html html, final HintHint hintHint, @Nullable final JLayeredPane layeredPane) {
     final Ref<Dimension> prefSize = new Ref<Dimension>(null);
     String htmlBody = UIUtil.getHtmlBody(html);
-    String text = "<html><head>" +
-           UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()) +
-           "</head><body>" +
-           htmlBody +
-           "</body></html>";
+    @NonNls String text = "<html><head>" +
+                          UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(),
+                                                       hintHint.getUlImg()) +
+                          "</head><body>" +
+                          htmlBody +
+                          "</body></html>";
 
-    final boolean[] prefSizeWasComputed = new boolean[] {false};
+    final boolean[] prefSizeWasComputed = {false};
     final JEditorPane pane = new JEditorPane() {
       @Override
       public Dimension getPreferredSize() {
@@ -514,7 +538,8 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
           if (lp != null) {
             size = lp.getSize();
             prefSizeWasComputed[0] = true;
-          } else {
+          }
+          else {
             size = ScreenUtil.getScreenRectangle(0, 0).getSize();
           }
           int fitWidth = (int)(size.width * 0.8);
@@ -548,7 +573,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       public View create(Element elem) {
         AttributeSet attrs = elem.getAttributes();
         Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
-        Object o = (elementName != null) ? null : attrs.getAttribute(StyleConstants.NameAttribute);
+        Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
         if (o instanceof HTML.Tag) {
           HTML.Tag kind = (HTML.Tag)o;
           if (kind == HTML.Tag.HR) {
@@ -595,7 +620,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     return pane;
   }
 
-  public static String formatHtml(String text, HintHint hintHint) {
+  public static String formatHtml(@NonNls String text, HintHint hintHint) {
     String htmlBody = UIUtil.getHtmlBody(text);
     text = "<html><head>" +
            UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(),

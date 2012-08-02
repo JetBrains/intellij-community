@@ -204,7 +204,13 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         for (Map.Entry<String, String> each : defs.entrySet()) {
           params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
         }
-        params.getVMParametersList().addParametersString("-Xmx512m");
+
+        String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
+        if (embedderXmx == null) {
+          embedderXmx = "512m";
+        }
+
+        params.getVMParametersList().addParametersString("-Xmx" + embedderXmx);
 
         //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5009");
 
