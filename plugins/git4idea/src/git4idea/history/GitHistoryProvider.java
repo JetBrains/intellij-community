@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
@@ -160,7 +161,7 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
     partner.reportCreatedEmptySession(emptySession);
     final GitExecutableValidator validator = GitVcs.getInstance(myProject).getExecutableValidator();
     try {
-      GitHistoryUtils.history(myProject, path, null, new Consumer<GitFileRevision>() {
+      GitHistoryUtils.history(myProject, refreshPath(path), null, new Consumer<GitFileRevision>() {
         public void consume(GitFileRevision gitFileRevision) {
           partner.acceptRevision(gitFileRevision);
         }
@@ -177,8 +178,17 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   /**
-   * {@inheritDoc}
+   * Refreshes the IO File inside this FilePath to let it survive moves.
    */
+  @NotNull
+  private static FilePath refreshPath(@NotNull FilePath path) {
+    VirtualFile virtualFile = path.getVirtualFile();
+    if (virtualFile == null) {
+      return path;
+    }
+    return new FilePathImpl(virtualFile);
+  }
+
   public boolean supportsHistoryForDirectories() {
     return true;
   }
