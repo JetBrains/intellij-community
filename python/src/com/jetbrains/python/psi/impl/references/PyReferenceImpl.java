@@ -402,35 +402,45 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
     if (element instanceof PsiNamedElement) {
       final String elementName = ((PsiNamedElement)element).getName();
-      if ((Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName)) && !haveQualifiers(element)) {
-        // Global elements may in fact be resolved to their outer declarations
-        if (isGlobal(element, elementName)) {
-          element = transitiveResolve(element);
-        }
-        final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
-        final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
-        // TODO: Cython-dependent code without CythonLanguageDialect.isInsideCythonFile() check
-        if (element instanceof PyParameter || element instanceof PyTargetExpression || element instanceof CythonVariable) {
-          // Check if the reference is in the same or inner scope of the element scope, not shadowed by an intermediate declaration
-          if (resolvesToSameLocal(element, elementName, ourScopeOwner, theirScopeOwner)) {
+      if ((Comparing.equal(myElement.getReferencedName(), elementName) || PyNames.INIT.equals(elementName))) {
+        if (!haveQualifiers(element)) {
+          // Global elements may in fact be resolved to their outer declarations
+          if (isGlobal(element, elementName)) {
+            element = transitiveResolve(element);
+          }
+          final ScopeOwner ourScopeOwner = ScopeUtil.getScopeOwner(getElement());
+          final ScopeOwner theirScopeOwner = ScopeUtil.getScopeOwner(element);
+          // TODO: Cython-dependent code without CythonLanguageDialect.isInsideCythonFile() check
+          if (element instanceof PyParameter || element instanceof PyTargetExpression || element instanceof CythonVariable) {
+            // Check if the reference is in the same or inner scope of the element scope, not shadowed by an intermediate declaration
+            if (resolvesToSameLocal(element, elementName, ourScopeOwner, theirScopeOwner)) {
+              return true;
+            }
+          }
+
+          final PsiElement resolveResult = (isGlobal(getElement(), elementName)) ? transitiveResolve(getElement()) : resolve();
+          if (resolveResult == element) {
+            return true;
+          }
+
+          if (!haveQualifiers(element) && ourScopeOwner != null && theirScopeOwner != null) {
+            if (resolvesToSameGlobal(element, elementName, ourScopeOwner, theirScopeOwner, resolveResult)) return true;
+          }
+
+          if (resolvesToWrapper(element, resolveResult)) {
             return true;
           }
         }
-
-        final PsiElement resolveResult = (isGlobal(getElement(), elementName)) ? transitiveResolve(getElement()) : resolve();
-        if (resolveResult == element) {
-          return true;
+        if (element instanceof PyExpression) {
+          final PyExpression expr = (PyExpression)element;
+          if (PyUtil.isClassAttribute(myElement) && (PyUtil.isClassAttribute(expr) || PyUtil.isInstanceAttribute(expr))) {
+            final PyClass c1 = PsiTreeUtil.getParentOfType(element, PyClass.class);
+            final PyClass c2 = PsiTreeUtil.getParentOfType(myElement, PyClass.class);
+            if (c1 != null && c2 != null && (c1.isSubclass(c2) || c2.isSubclass(c1))) {
+              return true;
+            }
+          }
         }
-
-        if (!haveQualifiers(element) && ourScopeOwner != null && theirScopeOwner != null) {
-          if (resolvesToSameGlobal(element, elementName, ourScopeOwner, theirScopeOwner, resolveResult)) return true;
-        }
-
-        if (resolvesToWrapper(element, resolveResult)) {
-          return true;
-        }
-
-        return false; // TODO: handle multi-resolve
       }
     }
     return false;

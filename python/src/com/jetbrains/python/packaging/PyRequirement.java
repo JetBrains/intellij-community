@@ -23,7 +23,6 @@ public class PyRequirement {
   private static final Pattern VERSION_SPEC = Pattern.compile("\\s*(<=?|>=?|==|!=)\\s*((\\w|[-.])+)");
   private static final Pattern EDITABLE_EGG = Pattern.compile("\\s*(-e)?\\s*([^#]*)#egg=(.*)");
   private static final Pattern RECURSIVE_REQUIREMENT = Pattern.compile("\\s*-r\\s+(.*)");
-  private static final Pattern NAME_VERSION = Pattern.compile("\\s*(\\w(\\w|[.])*)-((\\w|[-.])+)");
 
   public enum Relation {
     LT("<"),
@@ -392,20 +391,23 @@ public class PyRequirement {
     if (url == null) {
       return null;
     }
-    final Matcher nameVersionMatcher = NAME_VERSION.matcher(egg);
-    if (nameVersionMatcher.matches()) {
-      final String name = normalizeName(nameVersionMatcher.group(1));
-      final String version = normalizeVersion(nameVersionMatcher.group(3));
-      return new PyRequirement(name, version, url, editable);
-    }
-    else {
-      final Matcher nameMatcher = NAME.matcher(egg);
-      if (!nameMatcher.matches()) {
-        return null;
+    boolean isName = true;
+    final List<String> nameParts = new ArrayList<String>();
+    final List<String> versionParts = new ArrayList<String>();
+    for (String part : StringUtil.split(egg, "-")) {
+      if (part.matches("[0-9].*") || "dev".equals(part)) {
+        isName = false;
       }
-      final String name = normalizeName(nameMatcher.group(1));
-      return new PyRequirement(name, null, url, editable);
+      if (isName) {
+        nameParts.add(part);
+      }
+      else {
+        versionParts.add(part);
+      }
     }
+    final String name = normalizeName(StringUtil.join(nameParts, "-"));
+    final String version = !versionParts.isEmpty() ? normalizeVersion(StringUtil.join(versionParts, "-")) : null;
+    return new PyRequirement(name, version, url, editable);
   }
 
   @NotNull

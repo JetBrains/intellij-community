@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.StubBasedPsiElement;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -161,4 +162,7 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   @Nullable
   String getDocStringValue();
+
+  boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor);
+  boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PyExpression location);
 }
