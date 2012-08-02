@@ -62,13 +62,13 @@ public class CustomViewProperty extends Property<RadCustomViewComponent> impleme
   }
 
   @Override
-  public Object getValue(RadCustomViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadCustomViewComponent component) throws Exception {
     String viewClass = component.getViewClass();
     return viewClass == null ? "" : viewClass;
   }
 
   @Override
-  public void setValue(final RadCustomViewComponent component, final Object value) throws Exception {
+  public void setValue(@NotNull final RadCustomViewComponent component, final Object value) throws Exception {
     if (StringUtil.isEmpty((String)value)) {
       return;
     }
@@ -94,12 +94,12 @@ public class CustomViewProperty extends Property<RadCustomViewComponent> impleme
   }
 
   @Override
-  public boolean isDefaultValue(RadCustomViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadCustomViewComponent component) throws Exception {
     return false;
   }
 
   @Override
-  public void setDefaultValue(RadCustomViewComponent component) throws Exception {
+  public void setDefaultValue(@NotNull RadCustomViewComponent component) throws Exception {
   }
 
   @Override

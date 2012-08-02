@@ -70,7 +70,7 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     StringBuilder value = new StringBuilder();
     int index = 0;
     int empty = 0;
@@ -94,7 +94,7 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
   }
 
   @Override
-  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
     for (Property<RadViewComponent> childProperty : myChildren) {
       if (!childProperty.isDefaultValue(component)) {
         return false;
@@ -104,7 +104,7 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
   }
 
   @Override
-  public void setDefaultValue(RadViewComponent component) throws Exception {
+  public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
     for (Property<RadViewComponent> childProperty : myChildren) {
       childProperty.setDefaultValue(component);
     }

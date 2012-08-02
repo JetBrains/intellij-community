@@ -327,7 +327,7 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private void fillProperties(PropertiesContainer component, List<Property> properties) {
+  private void fillProperties(PropertiesContainer<?> component, List<Property> properties) {
     for (Property property : component.getProperties()) {
       addProperty(property, properties);
     }

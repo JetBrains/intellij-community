@@ -54,7 +54,7 @@ public class IdProperty extends AttributeProperty {
   }
 
   @Override
-  public void setValue(final RadViewComponent component, final Object value) throws Exception {
+  public void setValue(@NotNull final RadViewComponent component, final Object value) throws Exception {
     IdManager idManager = IdManager.get(component);
     final String oldId = component.getId();
 

@@ -54,13 +54,13 @@ public class FragmentProperty extends Property<RadViewComponent> implements IXml
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     String value = component.getTag().getAttributeValue(myAttribute, SdkConstants.NS_RESOURCES);
     return value == null ? "" : value;
   }
 
   @Override
-  public void setValue(final RadViewComponent component, final Object value) throws Exception {
+  public void setValue(@NotNull final RadViewComponent component, final Object value) throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -75,12 +75,12 @@ public class FragmentProperty extends Property<RadViewComponent> implements IXml
   }
 
   @Override
-  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
     return component.getTag().getAttribute(myAttribute, SdkConstants.NS_RESOURCES) == null;
   }
 
   @Override
-  public void setDefaultValue(RadViewComponent component) throws Exception {
+  public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
     if (component.getTag().getAttribute(myAttribute, SdkConstants.NS_RESOURCES) != null) {
       setValue(component, null);
     }

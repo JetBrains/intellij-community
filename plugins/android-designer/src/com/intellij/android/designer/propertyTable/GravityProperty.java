@@ -109,7 +109,7 @@ public class GravityProperty extends FlagProperty {
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     StringBuilder value = new StringBuilder("[");
     Set<String> options = getOptions(component);
     int index = 0;
@@ -188,7 +188,7 @@ public class GravityProperty extends FlagProperty {
     }
 
     @Override
-    public Object getValue(RadViewComponent component) throws Exception {
+    public Object getValue(@NotNull RadViewComponent component) throws Exception {
       Set<String> options = getOptions(component);
       int lastIndex = -1;
       for (int i = 0; i < myValues.length; i++) {
@@ -200,7 +200,7 @@ public class GravityProperty extends FlagProperty {
     }
 
     @Override
-    public void setValue(RadViewComponent component, Object value) throws Exception {
+    public void setValue(@NotNull RadViewComponent component, Object value) throws Exception {
       int index = ArrayUtil.indexOf(COMBO_ITEMS, value);
       if (index == -1) {
         setOptions(component, null, myValues);
@@ -213,7 +213,7 @@ public class GravityProperty extends FlagProperty {
     protected abstract void setValue(RadViewComponent component, int index) throws Exception;
 
     @Override
-    public boolean isDefaultValue(RadViewComponent component) throws Exception {
+    public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
       Set<String> options = getOptions(component);
       for (String value : myValues) {
         if (options.contains(value)) {
@@ -224,7 +224,7 @@ public class GravityProperty extends FlagProperty {
     }
 
     @Override
-    public void setDefaultValue(RadViewComponent component) throws Exception {
+    public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
       setValue(component, null);
     }
 

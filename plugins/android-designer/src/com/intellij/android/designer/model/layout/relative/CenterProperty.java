@@ -50,7 +50,7 @@ public class CenterProperty extends Property<RadViewComponent> implements IXmlAt
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     XmlTag tag = component.getTag();
     boolean[] values = new boolean[3];
     for (int i = 0; i < ATTR_ITEMS.length; i++) {
@@ -69,7 +69,7 @@ public class CenterProperty extends Property<RadViewComponent> implements IXmlAt
   }
 
   @Override
-  public void setValue(final RadViewComponent component, Object value) throws Exception {
+  public void setValue(@NotNull final RadViewComponent component, Object value) throws Exception {
     final int index = ArrayUtil.indexOf(COMBO_ITEMS, value);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -88,7 +88,7 @@ public class CenterProperty extends Property<RadViewComponent> implements IXmlAt
   }
 
   @Override
-  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
     XmlTag tag = component.getTag();
     for (String attribute : ATTR_ITEMS) {
       if (tag.getAttribute(attribute, SdkConstants.NS_RESOURCES) != null) {
@@ -99,7 +99,7 @@ public class CenterProperty extends Property<RadViewComponent> implements IXmlAt
   }
 
   @Override
-  public void setDefaultValue(RadViewComponent component) throws Exception {
+  public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
     setValue(component, null);
   }
 

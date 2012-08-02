@@ -17,6 +17,6 @@ package com.intellij.designer.model;
 
 import java.util.List;
 
-public abstract class PropertiesContainer {
-  public abstract List<Property> getProperties();
+public abstract class PropertiesContainer<T extends Property> {
+  public abstract List<T> getProperties();
 }

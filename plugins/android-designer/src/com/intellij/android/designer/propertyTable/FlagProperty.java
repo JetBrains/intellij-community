@@ -72,7 +72,7 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     StringBuilder value = new StringBuilder("[");
     Set<String> options = getOptions(component);
     int index = 0;
@@ -88,12 +88,12 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
   }
 
   @Override
-  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
     return getAttribute(component) == null;
   }
 
   @Override
-  public void setDefaultValue(RadViewComponent component) throws Exception {
+  public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
     final XmlAttribute attribute = getAttribute(component);
     if (attribute != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -206,22 +206,22 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
     }
 
     @Override
-    public Object getValue(RadViewComponent component) throws Exception {
+    public Object getValue(@NotNull RadViewComponent component) throws Exception {
       return isOption(component, myValueName);
     }
 
     @Override
-    public void setValue(RadViewComponent component, Object value) throws Exception {
+    public void setValue(@NotNull RadViewComponent component, Object value) throws Exception {
       setOption(component, myValueName, (Boolean)value);
     }
 
     @Override
-    public boolean isDefaultValue(RadViewComponent component) throws Exception {
+    public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
       return !isOption(component, myValueName);
     }
 
     @Override
-    public void setDefaultValue(RadViewComponent component) throws Exception {
+    public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
       setValue(component, Boolean.FALSE);
     }
 

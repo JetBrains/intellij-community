@@ -59,13 +59,13 @@ public class IncludeLayoutProperty extends Property<RadViewComponent> implements
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     String layout = component.getTag().getAttributeValue("layout");
     return layout == null ? "" : layout;
   }
 
   @Override
-  public void setValue(final RadViewComponent component, final Object value) throws Exception {
+  public void setValue(@NotNull final RadViewComponent component, final Object value) throws Exception {
     if (!StringUtil.isEmpty((String)value)) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override

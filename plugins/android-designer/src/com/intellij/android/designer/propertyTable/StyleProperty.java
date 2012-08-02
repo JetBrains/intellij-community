@@ -63,7 +63,7 @@ public class StyleProperty extends Property<RadViewComponent> implements IXmlAtt
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     Object value = null;
 
     XmlAttribute attribute = getAttribute(component);
@@ -75,7 +75,7 @@ public class StyleProperty extends Property<RadViewComponent> implements IXmlAtt
   }
 
   @Override
-  public void setValue(final RadViewComponent component, final Object value) throws Exception {
+  public void setValue(@NotNull final RadViewComponent component, final Object value) throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
@@ -93,12 +93,12 @@ public class StyleProperty extends Property<RadViewComponent> implements IXmlAtt
   }
 
   @Override
-  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
     return getAttribute(component) == null;
   }
 
   @Override
-  public void setDefaultValue(RadViewComponent component) throws Exception {
+  public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
     if (getAttribute(component) != null) {
       setValue(component, null);
     }

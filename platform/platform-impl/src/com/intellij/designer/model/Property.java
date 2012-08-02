@@ -61,7 +61,7 @@ public abstract class Property<T extends PropertiesContainer> {
   }
 
   @NotNull
-  public List<Property<T>> getChildren(@Nullable T component) {
+  public List<? extends Property<T>> getChildren(@Nullable T container) {
     return Collections.emptyList();
   }
 
@@ -83,18 +83,18 @@ public abstract class Property<T extends PropertiesContainer> {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Nullable
-  public Object getValue(T component) throws Exception {
+  public Object getValue(@NotNull T container) throws Exception {
     return null;
   }
 
-  public void setValue(T component, @Nullable Object value) throws Exception {
+  public void setValue(@NotNull T container, @Nullable Object value) throws Exception {
   }
 
-  public boolean isDefaultValue(T component) throws Exception {
+  public boolean isDefaultValue(@NotNull T container) throws Exception {
     return false;
   }
 
-  public void setDefaultValue(T component) throws Exception {
+  public void setDefaultValue(@NotNull T container) throws Exception {
   }
 
   public boolean availableFor(List<PropertiesContainer> components) {
