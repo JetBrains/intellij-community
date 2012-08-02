@@ -22,21 +22,18 @@ import com.intellij.execution.junit2.events.StateChangedEvent;
 import com.intellij.execution.junit2.events.TestEvent;
 import com.intellij.execution.junit2.ui.model.JUnitAdapter;
 import com.intellij.execution.junit2.ui.model.JUnitRunningModel;
-import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.Filter;
+import com.intellij.execution.testframework.TestsUIUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 
-import com.intellij.ui.AppIcon;
-import com.intellij.openapi.wm.AppIconScheme;
-import org.jetbrains.annotations.NonNls;
-
 public class TestProgress extends DefaultBoundedRangeModel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.TestProgress");
-  private static final String TESTS = "tests";
   private int myProblemsCounter = 0;
   private TestProxy myCurrentState = null;
   private final MyJUnitListener myListener = new MyJUnitListener();
@@ -128,28 +125,10 @@ public class TestProgress extends DefaultBoundedRangeModel implements Disposable
   @Override
   public void setValue(int n) {
     super.setValue(n);
-    AppIcon icon = AppIcon.getInstance();
-    if (n < getMaximum()) {
-      if (icon.setProgress(TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)getMaximum(), myProblemsCounter == 0)) {
-        if (myProblemsCounter > 0) {
-          icon.setErrorBadge(String.valueOf(myProblemsCounter));
-        }
-      }
-    } else {
-      if (icon.hideProgress(TESTS)) {
-        if (myProblemsCounter > 0) {
-          icon.setErrorBadge(String.valueOf(myProblemsCounter));
-          icon.requestAttention(true);
-        } else {
-          icon.setOkBadge(true);
-          icon.requestAttention(false);
-        }
-      }
-    }
+    TestsUIUtil.showIconProgress(n, getMaximum(), myProblemsCounter);
   }
 
   public void dispose() {
-    AppIcon.getInstance().hideProgress(TESTS);
-    AppIcon.getInstance().setErrorBadge(null);
+    TestsUIUtil.clearIconProgress();
   }
 }

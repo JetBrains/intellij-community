@@ -272,6 +272,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   public void onTestFailed(@NotNull final SMTestProxy test) {
     updateCountersAndProgressOnTestFailed(false);
+    updateIconProgress();
   }
 
   public void onTestIgnored(@NotNull final SMTestProxy test) {
@@ -304,6 +305,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   public void onTestFinished(@NotNull final SMTestProxy test) {
     //Do nothing
+    updateIconProgress();
   }
 
   public void onSuiteFinished(@NotNull final SMTestProxy suite) {
@@ -508,6 +510,13 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
    */
   public void performUpdate() {
     myTreeBuilder.performUpdate();
+  }
+
+  private void updateIconProgress() {
+    final boolean isIndeterminate = myTestsTotal == 0;
+    final int total = isIndeterminate ? 2 : myTestsTotal;
+    final int count = isIndeterminate ? 1 : myTestsCurrentCount;
+    TestsUIUtil.showIconProgress(count, total, myTestsFailuresCount);
   }
 
   /**
