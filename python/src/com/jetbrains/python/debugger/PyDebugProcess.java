@@ -335,7 +335,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void stop() {
-    myDebugger.disconnect();
+    myDebugger.close();
   }
 
   @Override

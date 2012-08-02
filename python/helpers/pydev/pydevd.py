@@ -153,6 +153,23 @@ class PyDBCommandThread(PyDBDaemonThread):
             #only got this error in interpreter shutdown
             #PydevdLog(0, 'Finishing debug communication...(3)')
 
+
+#=======================================================================================================================
+# PyDBCheckAliveThread
+#=======================================================================================================================
+class PyDBCheckAliveThread(PyDBDaemonThread):
+
+    def __init__(self, pyDb):
+        PyDBDaemonThread.__init__(self)
+        self.pyDb = pyDb
+        self.setName('pydevd.CheckAliveThread')
+
+    def OnRun(self):
+            while not self.killReceived:
+                if not self.pyDb.haveAliveThreads():
+                    self.pyDb.FinishDebuggingSession()
+                time.sleep(0.1)
+
 if USE_LIB_COPY:
     import _pydev_thread as thread
 else:
@@ -339,6 +356,13 @@ class PyDB:
         except:
             traceback.print_exc()
 
+
+        def haveAliveThreads(self):
+            for t in threadingEnumerate():
+                if not isinstance(t, PyDBDaemonThread) and t.isAlive():
+                    return True
+
+            return False
 
     def processInternalCommands(self):
         '''This function processes internal commands
@@ -1062,6 +1086,7 @@ class PyDB:
             time.sleep(0.1) # busy wait until we receive run command
 
         PyDBCommandThread(debugger).start()
+        PyDBCheckAliveThread(debugger).start()
 
         pydev_imports.execfile(file, globals, locals) #execute the script
 
@@ -1241,6 +1266,7 @@ def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_
         sys.exitfunc = exit_hook
 
         PyDBCommandThread(debugger).start()
+        PyDBCheckAliveThread(debugger).start()
 
     else:
         #ok, we're already in debug mode, with all set, so, let's just set the break
