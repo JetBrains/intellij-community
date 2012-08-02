@@ -2,18 +2,17 @@ package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RawText;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 
@@ -52,7 +51,18 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       if (StringUtil.countChars(text, '\n') > 0 || StringUtil.startsWithWhitespace(text)) { //2, 3, 4 case from doc
         final PsiElement element = PsiUtilCore.getElementAtOffset(file, caretOffset - 1);
         if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
-        caretModel.moveToOffset(lineStartOffset);
+
+        final SelectionModel selectionModel = editor.getSelectionModel();
+        if (selectionModel.getSelectionStart() != selectionModel.getSelectionEnd()) {
+          final int line = document.getLineNumber(selectionModel.getSelectionStart());
+          final int lineOffset = getLineStartSafeOffset(document, line);
+          final PsiElement ws = file.findElementAt(lineOffset);
+          int offset = ws instanceof PsiWhiteSpace? ws.getTextRange().getEndOffset() : lineOffset;
+          caretModel.moveToOffset(offset);
+          selectionModel.setSelection(offset, selectionModel.getSelectionEnd());
+        }
+        else
+          caretModel.moveToOffset(lineStartOffset);
         String spaceString;
         int indent = 0;
 
@@ -69,12 +79,17 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
             if (indent < 0)
               indent = StringUtil.isEmptyOrSpaces(spaceString) ? spaceString.length() : 0;
 
-            final String trimmed = StringUtil.trimLeading(strings.get(0));    //decrease indent if needed
-            if (trimmed.startsWith("def ") || trimmed.startsWith("if ") || trimmed.startsWith("try:") ||
-                trimmed.startsWith("class ") || trimmed.startsWith("for ") || trimmed.startsWith("elif ") ||
-                trimmed.startsWith("else:") || trimmed.startsWith("except") || trimmed.startsWith("while ")) {
-              indent = StringUtil.findFirst(spaceString, CharFilter.NOT_WHITESPACE_FILTER) / 2;
-              if (indent < 0) indent = 0;
+            if (indent == CodeStyleSettingsManager.getSettings(project).getIndentSize(PythonFileType.INSTANCE)) {
+              indent = 0;
+            }
+            else {
+              final String trimmed = StringUtil.trimLeading(strings.get(0));    //decrease indent if needed
+              if (trimmed.startsWith("def ") || trimmed.startsWith("if ") || trimmed.startsWith("try:") ||
+                  trimmed.startsWith("class ") || trimmed.startsWith("for ") || trimmed.startsWith("elif ") ||
+                  trimmed.startsWith("else:") || trimmed.startsWith("except") || trimmed.startsWith("while ")) {
+                indent = StringUtil.findFirst(spaceString, CharFilter.NOT_WHITESPACE_FILTER) / 2;
+                if (indent < 0) indent = 0;
+              }
             }
           }
         }
