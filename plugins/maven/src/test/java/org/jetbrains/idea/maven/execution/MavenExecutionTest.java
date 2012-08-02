@@ -21,6 +21,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
@@ -122,7 +123,7 @@ public class MavenExecutionTest extends MavenImportingTestCase {
                   UIUtil.invokeLaterIfNeeded(new Runnable() {
                     @Override
                     public void run() {
-                      descriptor.dispose();
+                      Disposer.dispose(descriptor);
                     }
                   });
                 }

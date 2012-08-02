@@ -277,7 +277,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     if (oldDescriptor != null) {
       content = oldDescriptor.getAttachedContent();
       getSyncPublisher().contentRemoved(oldDescriptor, executor);
-      oldDescriptor.dispose(); // is of the same category, can be reused
+      Disposer.dispose(oldDescriptor); // is of the same category, can be reused
     }
     else if (descriptor.getAttachedContent() == null || !descriptor.getAttachedContent().isValid() ) {
       content = createNewContent(contentManager, descriptor, executor);
@@ -553,7 +553,8 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
 
         getSyncPublisher().contentRemoved(descriptor, myExecutor);
 
-        descriptor.dispose();
+        if (descriptor != null)
+          Disposer.dispose(descriptor);
       }
       finally {
         content.getManager().removeContentManagerListener(this);

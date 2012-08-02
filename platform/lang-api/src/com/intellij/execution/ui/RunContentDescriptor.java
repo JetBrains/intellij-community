@@ -17,6 +17,7 @@ package com.intellij.execution.ui;
 
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class RunContentDescriptor {
+public class RunContentDescriptor implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ui.RunContentDescriptor");
 
   private final ExecutionConsole myExecutionConsole;
