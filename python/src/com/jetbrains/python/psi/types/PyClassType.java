@@ -19,7 +19,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
@@ -159,7 +158,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       }
     }
 
-    PsiElement classMember = resolveClassMember(myClass, name, location);
+    PsiElement classMember = resolveClassMember(myClass, myIsDefinition, name, location);
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -167,7 +166,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     for (PyClassRef superClass : myClass.iterateAncestors()) {
       final PyClass pyClass = superClass.getPyClass();
       if (pyClass != null) {
-        PsiElement superMember = resolveClassMember(pyClass, name, null);
+        PsiElement superMember = resolveClassMember(pyClass, myIsDefinition, name, null);
         if (superMember != null) {
           return ResolveResultList.to(superMember);
         }
@@ -243,14 +242,16 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   }
 
   @Nullable
-  private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name, @Nullable PyExpression location) {
-    PsiElement result = resolveInner(cls, name, location);
+  private static PsiElement resolveClassMember(@NotNull PyClass cls,
+                                               boolean isDefinition,
+                                               @NotNull String name,
+                                               @Nullable PyExpression location) {
+    PsiElement result = resolveInner(cls, isDefinition, name, location);
     if (result != null) {
       return result;
     }
     return null;
   }
-
 
   @Nullable
   private static PsiElement resolveByMembersProviders(PyClassType aClass, String name) {
@@ -263,15 +264,15 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   }
 
   @Nullable
-  private static PsiElement resolveInner(@NotNull PyClass cls, @NotNull String name, @Nullable PyExpression location) {
-    ResolveProcessor processor = new ResolveProcessor(name);
-    ((PyClassImpl)cls).processDeclarations(processor, location); // our members are strictly within us.
-    final PsiElement resolveResult = processor.getResult();
-    //final PsiElement resolveResult = PyResolveUtil.treeWalkUp(new PyResolveUtil.ResolveProcessor(name), myClass, null, null);
-    if (resolveResult != null && resolveResult != cls) {
-      return resolveResult;
+  private static PsiElement resolveInner(@NotNull PyClass cls, boolean isDefinition, @NotNull String name, @Nullable PyExpression location) {
+    final ResolveProcessor processor = new ResolveProcessor(name);
+    if (!isDefinition) {
+      if (!cls.processInstanceLevelDeclarations(processor, location)) {
+        return processor.getResult();
+      }
     }
-    return null;
+    cls.processClassLevelDeclarations(processor);
+    return processor.getResult();
   }
 
   private static Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
@@ -350,13 +351,13 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     if (suppressParentheses) {
       processor.suppressParentheses();
     }
-    ((PyClassImpl)myClass).processClassLevelDeclarations(processor);
+    myClass.processClassLevelDeclarations(processor);
 
     List<String> slots = myClass.isNewStyleClass() ? myClass.getSlots() : null;
     if (slots != null) {
       processor.setAllowedNames(slots);
     }
-    ((PyClassImpl)myClass).processInstanceLevelDeclarations(processor, expressionHook);
+    myClass.processInstanceLevelDeclarations(processor, expressionHook);
 
     for (LookupElement le : processor.getResultList()) {
       String name = le.getLookupString();

@@ -961,12 +961,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return false;
   }
 
-  public void processDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PyExpression location) {
-    if (!processClassLevelDeclarations(processor)) return;
-    if (!processInstanceLevelDeclarations(processor, location)) return;
-    processor.execute(this, ResolveState.initial());
-  }
-
+  @Override
   public boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor) {
     final PyClassStub stub = getStub();
     if (stub != null) {
@@ -983,6 +978,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return true;
   }
 
+  @Override
   public boolean processInstanceLevelDeclarations(@NotNull PsiScopeProcessor processor, @Nullable PyExpression location) {
     Map<String, PyTargetExpression> declarationsInMethod = new HashMap<String, PyTargetExpression>();
     PyFunction instanceMethod = PsiTreeUtil.getParentOfType(location, PyFunction.class);

@@ -419,6 +419,17 @@ public class PyTypeTest extends PyTestCase {
     assertNull(type);
   }
 
+  // PY-7040
+  public void testInstanceAndClassAttribute() {
+    doTest("int",
+           "class C(object):\n" +
+           "    foo = 'str1'\n" +
+           "\n" +
+           "    def __init__(self):\n" +
+           "        self.foo = 3\n" +
+           "        expr = self.foo\n");
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
