@@ -17,7 +17,7 @@ public abstract class JpsDependencyElementBase<Self extends JpsDependencyElement
 
   @Override
   public void remove() {
-    ((JpsDependenciesListImpl)myParent.getParent()).getContainer().getChild(JpsDependenciesListImpl.DEPENDENCY_COLLECTION_KIND).removeChild(this);
+    ((JpsDependenciesListImpl)myParent.getParent()).getContainer().getChild(JpsDependenciesListImpl.DEPENDENCY_COLLECTION_ROLE).removeChild(this);
   }
 
   public JpsDependenciesListImpl getDependenciesList() {

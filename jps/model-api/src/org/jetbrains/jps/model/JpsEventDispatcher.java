@@ -16,8 +16,8 @@ public interface JpsEventDispatcher {
   void fireElementChanged(@NotNull JpsElement element);
 
   <T extends JpsElement>
-  void fireElementAdded(@NotNull T element, @NotNull JpsElementKind<T> kind);
+  void fireElementAdded(@NotNull T element, @NotNull JpsElementChildRole<T> role);
 
   <T extends JpsElement>
-  void fireElementRemoved(@NotNull T element, @NotNull JpsElementKind<T> kind);
+  void fireElementRemoved(@NotNull T element, @NotNull JpsElementChildRole<T> role);
 }

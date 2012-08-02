@@ -12,7 +12,7 @@ import org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase;
  */
 public class JpsArtifactReferenceImpl extends JpsNamedElementReferenceBase<JpsArtifact,JpsArtifactReferenceImpl> implements JpsArtifactReference {
   public JpsArtifactReferenceImpl(@NotNull String artifactName) {
-    super(JpsArtifactKind.ARTIFACT_COLLECTION_KIND, artifactName, JpsElementFactory.getInstance().createProjectReference());
+    super(JpsArtifactRole.ARTIFACT_COLLECTION_ROLE, artifactName, JpsElementFactory.getInstance().createProjectReference());
   }
 
   private JpsArtifactReferenceImpl(JpsArtifactReferenceImpl original) {

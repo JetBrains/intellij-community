@@ -2,10 +2,10 @@ package org.jetbrains.jps.model.artifact.impl.elements;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElementKind;
+import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.artifact.elements.JpsModuleOutputPackagingElement;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
@@ -14,10 +14,11 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
  */
 public abstract class JpsModuleOutputPackagingElementBase<Self extends JpsModuleOutputPackagingElementBase<Self>> extends JpsCompositeElementBase<Self> implements
                                                                                                                                                         JpsModuleOutputPackagingElement {
-  private static final JpsElementKind<JpsModuleReference> MODULE_REFERENCE_KIND = JpsElementKindBase.create("module reference");
+  private static final JpsElementChildRole<JpsModuleReference>
+    MODULE_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("module reference");
 
   public JpsModuleOutputPackagingElementBase(JpsModuleReference moduleReference) {
-    myContainer.setChild(MODULE_REFERENCE_KIND, moduleReference);
+    myContainer.setChild(MODULE_REFERENCE_CHILD_ROLE, moduleReference);
   }
 
   public JpsModuleOutputPackagingElementBase(JpsModuleOutputPackagingElementBase<Self> original) {
@@ -27,7 +28,7 @@ public abstract class JpsModuleOutputPackagingElementBase<Self extends JpsModule
   @Override
   @NotNull
   public JpsModuleReference getModuleReference() {
-    return myContainer.getChild(MODULE_REFERENCE_KIND);
+    return myContainer.getChild(MODULE_REFERENCE_CHILD_ROLE);
   }
 
   @Override

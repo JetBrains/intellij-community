@@ -4,7 +4,7 @@ import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsUrlList;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
-import org.jetbrains.jps.model.impl.JpsUrlListKind;
+import org.jetbrains.jps.model.impl.JpsUrlListRole;
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension;
 import org.jetbrains.jps.model.java.LanguageLevel;
 
@@ -12,8 +12,8 @@ import org.jetbrains.jps.model.java.LanguageLevel;
  * @author nik
  */
 public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaModuleExtensionImpl> implements JpsJavaModuleExtension {
-  private static final JpsUrlListKind JAVADOC_ROOTS_KIND = new JpsUrlListKind("javadoc roots");
-  private static final JpsUrlListKind ANNOTATIONS_ROOTS_KIND = new JpsUrlListKind("annotation roots");
+  private static final JpsUrlListRole JAVADOC_ROOTS_ROLE = new JpsUrlListRole("javadoc roots");
+  private static final JpsUrlListRole ANNOTATIONS_ROOTS_ROLE = new JpsUrlListRole("annotation roots");
   private String myOutputUrl;
   private String myTestOutputUrl;
   private boolean myInheritOutput;
@@ -21,8 +21,8 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
   private LanguageLevel myLanguageLevel;
 
   public JpsJavaModuleExtensionImpl() {
-    myContainer.setChild(JAVADOC_ROOTS_KIND);
-    myContainer.setChild(ANNOTATIONS_ROOTS_KIND);
+    myContainer.setChild(JAVADOC_ROOTS_ROLE);
+    myContainer.setChild(ANNOTATIONS_ROOTS_ROLE);
   }
 
   private JpsJavaModuleExtensionImpl(JpsJavaModuleExtensionImpl original) {
@@ -40,12 +40,12 @@ public class JpsJavaModuleExtensionImpl extends JpsCompositeElementBase<JpsJavaM
 
   @Override
   public JpsUrlList getAnnotationRoots() {
-    return myContainer.getChild(ANNOTATIONS_ROOTS_KIND);
+    return myContainer.getChild(ANNOTATIONS_ROOTS_ROLE);
   }
 
   @Override
   public JpsUrlList getJavadocRoots() {
-    return myContainer.getChild(JAVADOC_ROOTS_KIND);
+    return myContainer.getChild(JAVADOC_ROOTS_ROLE);
   }
 
   @Override

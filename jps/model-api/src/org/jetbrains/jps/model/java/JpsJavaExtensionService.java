@@ -2,7 +2,6 @@ package org.jetbrains.jps.model.java;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElementKind;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -49,12 +48,6 @@ public abstract class JpsJavaExtensionService {
 
   @Nullable
   public abstract JpsJavaDependencyExtension getDependencyExtension(@NotNull JpsDependencyElement dependency);
-
-  @NotNull
-  public abstract JpsElementKind<JpsJavaModuleExtension> getModuleExtensionKind();
-
-  @NotNull
-  public abstract JpsElementKind<JpsJavaDependencyExtension> getDependencyExtensionKind();
 
   @NotNull
   public abstract ExplodedDirectoryModuleExtension getOrCreateExplodedDirectoryExtension(@NotNull JpsModule module);

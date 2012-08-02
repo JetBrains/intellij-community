@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.library.JpsLibraryReference;
  */
 public class JpsLibraryReferenceImpl extends JpsNamedElementReferenceBase<JpsLibrary, JpsLibraryReferenceImpl> implements JpsLibraryReference {
   public JpsLibraryReferenceImpl(String elementName, JpsElementReference<? extends JpsCompositeElement> parentReference) {
-    super(JpsLibraryKind.LIBRARIES_COLLECTION_KIND, elementName, parentReference);
+    super(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE, elementName, parentReference);
   }
 
   private JpsLibraryReferenceImpl(JpsLibraryReferenceImpl original) {

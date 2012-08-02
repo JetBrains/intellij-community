@@ -2,16 +2,16 @@ package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementCreator;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 
 /**
  * @author nik
  */
-public class JavaProjectExtensionKind extends JpsElementKindBase<JpsJavaProjectExtension> implements JpsElementCreator<JpsJavaProjectExtension> {
-  public static final JavaProjectExtensionKind INSTANCE = new JavaProjectExtensionKind();
+public class JavaProjectExtensionRole extends JpsElementChildRoleBase<JpsJavaProjectExtension> implements JpsElementCreator<JpsJavaProjectExtension> {
+  public static final JavaProjectExtensionRole INSTANCE = new JavaProjectExtensionRole();
 
-  public JavaProjectExtensionKind() {
+  public JavaProjectExtensionRole() {
     super("java project extension");
   }
 

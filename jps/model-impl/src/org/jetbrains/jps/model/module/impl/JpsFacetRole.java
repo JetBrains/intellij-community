@@ -2,19 +2,19 @@ package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsEventDispatcher;
-import org.jetbrains.jps.model.impl.JpsElementCollectionKind;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.impl.JpsElementCollectionRole;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.module.JpsFacet;
 import org.jetbrains.jps.model.module.JpsFacetListener;
 
 /**
  * @author nik
  */
-public class JpsFacetKind extends JpsElementKindBase<JpsFacet> {
-  public static final JpsFacetKind INSTANCE = new JpsFacetKind();
-  public static final JpsElementCollectionKind<JpsFacet> COLLECTION_KIND = JpsElementCollectionKind.create(INSTANCE);
+public class JpsFacetRole extends JpsElementChildRoleBase<JpsFacet> {
+  public static final JpsFacetRole INSTANCE = new JpsFacetRole();
+  public static final JpsElementCollectionRole<JpsFacet> COLLECTION_ROLE = JpsElementCollectionRole.create(INSTANCE);
 
-  public JpsFacetKind() {
+  public JpsFacetRole() {
     super("facet");
   }
 
