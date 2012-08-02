@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.tabs.impl.singleRow;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.tabs.JBTabsPosition;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tabs.TabsUtil;
@@ -25,6 +26,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class SingleRowLayout extends TabLayout {
@@ -140,6 +143,15 @@ public class SingleRowLayout extends TabLayout {
   }
 
   public LayoutPassInfo layoutSingleRow(List<TabInfo> visibleInfos)  {
+    if (JBEditorTabs.isAlphabeticalMode()) {
+      Collections.sort(visibleInfos, new Comparator<TabInfo>() {
+        @Override
+        public int compare(TabInfo o1, TabInfo o2) {
+          return StringUtil.naturalCompare(o1.getText(), o2.getText());
+        }
+      });
+    }
+
     SingleRowPassInfo data = new SingleRowPassInfo(this, visibleInfos);
 
     final boolean layoutLabels = checkLayoutLabels(data);
@@ -147,12 +159,10 @@ public class SingleRowLayout extends TabLayout {
       data = myLastSingRowLayout;
     }
 
-
     final TabInfo selected = myTabs.getSelectedInfo();
     prepareLayoutPassInfo(data, selected);
 
     myTabs.resetLayout(layoutLabels || myTabs.isHideTabs());
-
 
     if (layoutLabels && !myTabs.isHideTabs()) {
       data.position = getStrategy().getStartPosition(data) - getScrollOffset();

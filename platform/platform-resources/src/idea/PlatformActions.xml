@@ -346,6 +346,7 @@
             <action id="TabsPlacementLeft"   text="Left"   class="com.intellij.ide.actions.TabsPlacementAction$Left" />
             <action id="TabsPlacementRight"  text="Right"  class="com.intellij.ide.actions.TabsPlacementAction$Right" />
           </group>
+          <action id="TabsAlphabeticalMode" class="com.intellij.ide.actions.TabsAlphabeticalModeSwitcher" text="Alphabetical Mode"/>
         </group>
 
         <group id="BackgroundTasks" popup="true">
@@ -436,6 +437,7 @@
       <reference ref="ChangeSplitOrientation"/>
       <reference ref="PinActiveTab"/>
       <reference ref="TabsPlacementGroup"/>
+      <reference ref="TabsAlphabeticalMode"/>
       <separator/>
       <reference ref="NextTab"/>
       <reference ref="PreviousTab"/>
