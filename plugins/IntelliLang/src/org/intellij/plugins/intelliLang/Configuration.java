@@ -178,6 +178,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
   @NonNls private static final String LOOK_FOR_VAR_ASSIGNMENTS = "LOOK_FOR_VAR_ASSIGNMENTS";
   @NonNls private static final String USE_DFA_IF_AVAILABLE = "USE_DFA_IF_AVAILABLE";
   @NonNls private static final String INCLUDE_UNCOMPUTABLES_AS_LITERALS = "INCLUDE_UNCOMPUTABLES_AS_LITERALS";
+  @NonNls private static final String SOURCE_MODIFICATION_ALLOWED = "SOURCE_MODIFICATION_ALLOWED";
 
   private final Map<String, List<BaseInjection>> myInjections = new ConcurrentFactoryMap<String, List<BaseInjection>>() {
     @Override
@@ -566,6 +567,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
 
     private boolean myIncludeUncomputablesAsLiterals;
     private DfaOption myDfaOption = DfaOption.RESOLVE;
+    private boolean mySourceModificationAllowed;
 
     // cached annotation name pairs
     private Pair<String, ? extends Set<String>> myLanguageAnnotationPair;
@@ -648,6 +650,13 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       myDfaOption = dfaOption;
     }
 
+    public boolean isSourceModificationAllowed() {
+      return mySourceModificationAllowed;
+    }
+
+    public void setSourceModificationAllowed(boolean sourceModificationAllowed) {
+      mySourceModificationAllowed = sourceModificationAllowed;
+    }
 
     public InstrumentationType getInstrumentation() {
       return myInstrumentationType;
@@ -658,6 +667,12 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
       JDOMExternalizerUtil.writeField(element, LANGUAGE_ANNOTATION_NAME, myLanguageAnnotation);
       JDOMExternalizerUtil.writeField(element, PATTERN_ANNOTATION_NAME, myPatternAnnotation);
       JDOMExternalizerUtil.writeField(element, SUBST_ANNOTATION_NAME, mySubstAnnotation);
+      if (myIncludeUncomputablesAsLiterals) {
+        JDOMExternalizerUtil.writeField(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, "true");
+      }
+      if (mySourceModificationAllowed) {
+        JDOMExternalizerUtil.writeField(element, SOURCE_MODIFICATION_ALLOWED, "true");
+      }
       switch (myDfaOption) {
         case OFF:
           break;
@@ -688,6 +703,7 @@ public class Configuration implements PersistentStateComponent<Element>, Modific
         setDfaOption(DfaOption.DFA);
       }
       setIncludeUncomputablesAsLiterals(readBoolean(element, INCLUDE_UNCOMPUTABLES_AS_LITERALS, false));
+      setSourceModificationAllowed(readBoolean(element, SOURCE_MODIFICATION_ALLOWED, false));
     }
   }
 }

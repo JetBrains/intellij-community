@@ -19,7 +19,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.*;
@@ -225,7 +227,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
               }
             });
           }
-          if (areThereInjectionsWithName(variable.getName(), false)) {
+          if (!processCommentInjections(variable) && areThereInjectionsWithName(variable.getName(), false)) {
             process(variable, null, -1);
           }
           return false;
@@ -270,6 +272,28 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         final PsiElement curPlace = places.removeFirst();
         AnnotationUtilEx.visitAnnotatedElements(curPlace, visitor);
       }
+    }
+
+    private boolean processCommentInjections(PsiVariable owner) {
+      PsiElement prev = owner.getFirstChild();
+      if (prev instanceof PsiComment) {
+        String text = ElementManipulators.getValueText(prev).trim();
+        Language language = null;
+        for (int idx = 0, len = text.length(); idx != -1 && language == null; idx = StringUtil.indexOfAny(text, " \t\r\n,", idx + 1, len)) {
+          String id = idx > 0 ? text.substring(0, idx).trim() : text;
+          language = Language.findLanguageByID(id);
+        }
+        if (language != null) {
+          final BaseInjection injection = new BaseInjection(LanguageInjectionSupport.JAVA_SUPPORT_ID);
+          //if (prefix != null) injection.setPrefix(prefix);
+          //if (suffix != null) injection.setSuffix(suffix);
+          injection.setInjectedLanguageId(language.getID());
+          processInjectionWithContext(myUnparsable, injection, false);
+          return true;
+        }
+
+      }
+      return false;
     }
 
     private void process(final PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
