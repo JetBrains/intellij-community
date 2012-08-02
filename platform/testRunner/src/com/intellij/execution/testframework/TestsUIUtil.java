@@ -122,6 +122,10 @@ public class TestsUIUtil {
     return new TestResultPresentation(proxy).getPresentation().getBalloonText();
   }
 
+  public static String getTestShortSummary(AbstractTestProxy proxy) {
+    return new TestResultPresentation(proxy).getPresentation().getText();
+  }
+
   private static class TestResultPresentation {
     private AbstractTestProxy myRoot;
     private String myTitle;

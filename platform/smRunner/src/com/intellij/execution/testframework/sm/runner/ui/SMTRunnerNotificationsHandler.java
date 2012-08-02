@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -98,7 +99,7 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
     }
 
     if (msg != null) {
-      notify(msg, type);
+      notify(msg, type, testsRoot);
     }
   }
 
@@ -122,7 +123,7 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
     //}
   }
 
-  private void notify(final String msg, final MessageType type) {
+  private void notify(final String msg, final MessageType type, final SMTestProxy.SMRootTestProxy testsRoot) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
         final Project project = myConsoleProperties.getProject();
@@ -139,6 +140,7 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
           toolWindowManager.notifyByBalloon(testRunDebugId, type, msg, null, null);
         }
         TestsUIUtil.NOTIFICATION_GROUP.createNotification(msg, type).notify(project);
+        SystemNotifications.getInstance().notify("TestRunner", msg, TestsUIUtil.getTestShortSummary(testsRoot));
       }
     });
   }
