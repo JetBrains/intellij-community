@@ -58,6 +58,7 @@ public class EditorAdapter {
   private final Alarm myFlushAlarm = new Alarm();
   private final Collection<Line> myLines = new ArrayList<Line>();
   private final Project myProject;
+  private final boolean myScrollToTheEndOnAppend;
 
   private final Runnable myFlushDeferredRunnable = new Runnable() {
     public void run() {
@@ -75,9 +76,10 @@ public class EditorAdapter {
   }
 
 
-  public EditorAdapter(Editor editor, Project project) {
+  public EditorAdapter(Editor editor, Project project, boolean scrollToTheEndOnAppend) {
     myEditor = editor;
     myProject = project;
+    myScrollToTheEndOnAppend = scrollToTheEndOnAppend;
     LOG.assertTrue(myEditor.isViewer());
   }
 
@@ -126,8 +128,10 @@ public class EditorAdapter {
   }
 
   private void shiftCursorToTheEndOfDocument() {
-    myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
-    myEditor.getSelectionModel().removeSelection();
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    if (myScrollToTheEndOnAppend) {
+      myEditor.getCaretModel().moveToOffset(myEditor.getDocument().getTextLength());
+      myEditor.getSelectionModel().removeSelection();
+      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
   }
 }

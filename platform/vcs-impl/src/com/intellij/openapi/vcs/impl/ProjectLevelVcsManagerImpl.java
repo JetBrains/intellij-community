@@ -400,7 +400,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
       editorSettings.setFoldingOutlineShown(false);
 
       ((EditorImpl)editor).getScrollPane().setBorder(null);
-      myEditorAdapter = new EditorAdapter(editor, myProject);
+      myEditorAdapter = new EditorAdapter(editor, myProject, false);
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(editor.getComponent(), BorderLayout.CENTER);
 
