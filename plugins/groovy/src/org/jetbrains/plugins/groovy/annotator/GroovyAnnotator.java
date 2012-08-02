@@ -1357,7 +1357,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       final PsiMethod method = methods[0];
       final PsiType ltype = method.getReturnType();
       if (ltype != null && value != null) {
-        checkAnnotationValueByType(value, ltype);
+        checkAnnotationValueByType(value, ltype, true);
       }
     }
   }
@@ -1370,17 +1370,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     assert parent instanceof GrAnnotationMethod;
     final PsiType type = ((GrAnnotationMethod)parent).getReturnType();
 
-    checkAnnotationValueByType(value, type);
+    checkAnnotationValueByType(value, type, false);
   }
 
-  private void checkAnnotationValueByType(GrAnnotationMemberValue value, PsiType ltype) {
+  private void checkAnnotationValueByType(GrAnnotationMemberValue value, PsiType ltype, boolean skipArrays) {
     final GlobalSearchScope resolveScope = value.getResolveScope();
     final PsiManager manager = value.getManager();
 
     if (value instanceof GrExpression) {
       final PsiType rtype = ((GrExpression)value).getType();
 
-      if (rtype != null && !checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype)) {
+      if (rtype != null && !checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype, skipArrays)) {
         myHolder.createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
       }
     }
@@ -1389,7 +1389,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       final PsiElement resolved = ((GrAnnotation)value).getClassReference().resolve();
       if (resolved instanceof PsiClass) {
         final PsiClassType rtype = JavaPsiFacade.getElementFactory(value.getProject()).createType((PsiClass)resolved, PsiSubstitutor.EMPTY);
-        if (!checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype)) {
+        if (!checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype, skipArrays)) {
           myHolder.createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
         }
       }
@@ -1401,26 +1401,26 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         final PsiType componentType = ((PsiArrayType)ltype).getComponentType();
         final GrAnnotationMemberValue[] initializers = ((GrAnnotationArrayInitializer)value).getInitializers();
         for (GrAnnotationMemberValue initializer : initializers) {
-          checkAnnotationValueByType(initializer, componentType);
+          checkAnnotationValueByType(initializer, componentType, false);
         }
       }
       else {
         final PsiType rtype = TypesUtil.getTupleByAnnotationArrayInitializer((GrAnnotationArrayInitializer)value);
-        if (!checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype)) {
+        if (!checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype, skipArrays)) {
           myHolder.createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));
         }
       }
     }
   }
 
-  private static boolean checkAnnoTypeAssignable(PsiType type, GlobalSearchScope resolveScope, PsiManager manager, PsiType rtype) {
+  private static boolean checkAnnoTypeAssignable(PsiType type, GlobalSearchScope resolveScope, PsiManager manager, PsiType rtype, boolean skipArrays) {
     rtype = TypesUtil.unboxPrimitiveTypeWrapper(rtype);
     if (TypesUtil.isAssignableByMethodCallConversion(type, rtype, manager, resolveScope)) return true;
 
-    if (!(type instanceof PsiArrayType)) return false;
+    if (!(type instanceof PsiArrayType && skipArrays)) return false;
 
     final PsiType componentType = ((PsiArrayType)type).getComponentType();
-    return TypesUtil.isAssignableByMethodCallConversion(componentType, rtype, manager, resolveScope);
+    return checkAnnoTypeAssignable(componentType, resolveScope, manager, rtype, skipArrays);
   }
 
   @Override

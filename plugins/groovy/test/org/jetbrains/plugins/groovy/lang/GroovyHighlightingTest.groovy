@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang;
-
+package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.codeInspection.LocalInspectionTool
@@ -27,6 +26,8 @@ import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspec
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyResultOfAssignmentUsedInspection
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyUncheckedAssignmentOfMemberOfRawTypeInspection
+import org.jetbrains.plugins.groovy.codeInspection.bugs.*
+import org.jetbrains.plugins.groovy.codeInspection.confusing.*
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialConditionalInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyTrivialIfInspection
 import org.jetbrains.plugins.groovy.codeInspection.control.GroovyUnnecessaryReturnInspection
@@ -37,9 +38,6 @@ import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.Groov
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GroovyUntypedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
 import org.jetbrains.plugins.groovy.util.TestUtils
-import org.jetbrains.plugins.groovy.codeInspection.bugs.*
-import org.jetbrains.plugins.groovy.codeInspection.confusing.*
-
 /**
  * @author peter
  */
@@ -1330,6 +1328,18 @@ new Base() {
   boolean[][] g()
   <error descr="Unexpected attribute type: 'PsiType:Boolean'">Boolean</error>[] h()
   Int[][][][] i()
+}
+''')
+  }
+
+  void testDefaultAnnotationValue() {
+    testHighlighting('''\
+@interface A {
+  int a() default 2
+  String b() default <error descr="Cannot assign 'ArrayList<String>' to 'String'">['a']</error>
+  String[][] c() default <error descr="Cannot assign 'String' to 'String[][]'">'f'</error>
+  String[][] d() default [['f']]
+  String[][] e() default [[<error descr="Cannot assign 'ArrayList<String>' to 'String'">['f']</error>]]
 }
 ''')
   }
