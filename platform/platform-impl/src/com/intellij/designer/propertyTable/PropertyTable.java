@@ -119,11 +119,19 @@ public abstract class PropertyTable extends JBTable {
 
     actionMap.put("expandCurrent", new MyExpandCurrentAction(true));
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0), "expandCurrent");
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0), "expandCurrent");
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_KP_RIGHT, 0), "expandCurrent");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_ADD, 0));
+    ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, 0));
+    ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_KP_RIGHT, 0));
 
     actionMap.put("collapseCurrent", new MyExpandCurrentAction(false));
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0), "collapseCurrent");
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), "collapseCurrent");
+    focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_KP_LEFT, 0), "collapseCurrent");
     ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_SUBTRACT, 0));
+    ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0));
+    ancestorInputMap.remove(KeyStroke.getKeyStroke(KeyEvent.VK_KP_LEFT, 0));
   }
 
   public TableCellRenderer getCellRenderer(int row, int column) {
