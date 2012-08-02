@@ -1,6 +1,6 @@
 <component>
-  <version codename="Community Edition" major="12" minor="0" eap="true" update-channel="IDEA11dot1EAP"/>
-
+  <version codename="Community Edition" major="12" minor="0" eap="true" update-channel="ledaEAP"/>
+  <company name="JetBrains s.r.o." url="http://www.jetbrains.com/"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <install-over minbuild="0" maxbuild="0" version="10.5"/>
   <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffaa16" progressY="265" progressTailIcon="/community_progress_tail.png"/>
