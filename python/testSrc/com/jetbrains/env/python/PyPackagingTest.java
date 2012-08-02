@@ -146,9 +146,6 @@ public class PyPackagingTest extends PyTestCase {
                                      "django==1.3\n" +
                                      "--index-url http://example.com/\n" +
                                      "foo\n"));
-    // PY-6328
-    assertEquals(new PyRequirement("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git@4fb267623b58", false),
-                 PyRequirement.fromString("git://github.com/toastdriven/django-haystack.git@4fb267623b58#egg=django_haystack-dev"));
   }
 
   // PY-6355
@@ -165,6 +162,20 @@ public class PyPackagingTest extends PyTestCase {
     final PyPackage pkg = new PyPackage("pyramid-zcml", "0.1", null, Collections.<PyRequirement>emptyList());
     assertNotNull(req);
     assertTrue(req.match(list(pkg)) != null);
+  }
+
+  // PY-6328
+  public void testNotEditableGitRequirement() {
+    assertEquals(new PyRequirement("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git@4fb267623b58", false),
+                 PyRequirement.fromString("git://github.com/toastdriven/django-haystack.git@4fb267623b58#egg=django_haystack-dev"));
+  }
+
+  // PY-7034
+  public void testMinusInRequirementEggName() {
+    assertEquals(new PyRequirement("django-haystack", null, "git://github.com/toastdriven/django-haystack.git", true),
+                 PyRequirement.fromString("-e git://github.com/toastdriven/django-haystack.git#egg=django-haystack"));
+    assertEquals(new PyRequirement("django-haystack", "dev", "git://github.com/toastdriven/django-haystack.git", true),
+                 PyRequirement.fromString("-e git://github.com/toastdriven/django-haystack.git#egg=django-haystack-dev"));
   }
 
   @Nullable
