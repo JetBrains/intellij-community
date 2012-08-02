@@ -15,18 +15,16 @@
  */
 package com.intellij.psi.stubs;
 
+import java.util.List;
+
 /**
- * Author: dmitrylomov
+ * @author Dmitry Avdeev
+ *         Date: 8/2/12
  */
-public abstract class StubSerializationUtil {
-  private StubSerializationUtil() {}
+public interface Stub {
 
-  public static ObjectStubSerializer getSerializer(Stub rootStub) {
-    if (rootStub instanceof PsiFileStub) {
-      final PsiFileStub fileStub = (PsiFileStub)rootStub;
-      return fileStub.getType();
-    }
+  Stub getParentStub();
+  List<? extends Stub> getChildrenStubs();
+  ObjectStubSerializer getStubType();
 
-    return rootStub.getStubType();
-  }
 }

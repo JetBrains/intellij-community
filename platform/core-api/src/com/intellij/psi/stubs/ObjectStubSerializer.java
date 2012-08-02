@@ -15,18 +15,21 @@
  */
 package com.intellij.psi.stubs;
 
+import org.jetbrains.annotations.NonNls;
+
+import java.io.IOException;
+
 /**
- * Author: dmitrylomov
+ * @author Dmitry Avdeev
+ *         Date: 8/2/12
  */
-public abstract class StubSerializationUtil {
-  private StubSerializationUtil() {}
+public interface ObjectStubSerializer<T extends Stub, P extends Stub> {
+  @NonNls
+  String getExternalId();
 
-  public static ObjectStubSerializer getSerializer(Stub rootStub) {
-    if (rootStub instanceof PsiFileStub) {
-      final PsiFileStub fileStub = (PsiFileStub)rootStub;
-      return fileStub.getType();
-    }
+  void serialize(T stub, StubOutputStream dataStream) throws IOException;
+  T deserialize(StubInputStream dataStream, final P parentStub) throws IOException;
 
-    return rootStub.getStubType();
-  }
+  void indexStub(T stub, IndexSink sink);
+
 }

@@ -29,14 +29,14 @@ import com.intellij.util.indexing.SubstitutedFileType;
 import org.jetbrains.annotations.Nullable;
 
 public class StubTreeBuilder {
-  private static final Key<StubElement> stubElementKey = Key.create("stub.tree.for.file.content");
+  private static final Key<Stub> stubElementKey = Key.create("stub.tree.for.file.content");
 
   private StubTreeBuilder() {
   }
 
   @Nullable
-  public static StubElement buildStubTree(final FileContent inputData) {
-    StubElement data = inputData.getUserData(stubElementKey);
+  public static Stub buildStubTree(final FileContent inputData) {
+    Stub data = inputData.getUserData(stubElementKey);
     if (data != null) return data;
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter

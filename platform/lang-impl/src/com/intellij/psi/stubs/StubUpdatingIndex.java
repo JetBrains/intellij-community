@@ -118,7 +118,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           @Override
           public void run() {
-            final StubElement rootStub = StubTreeBuilder.buildStubTree(inputData);
+            final Stub rootStub = StubTreeBuilder.buildStubTree(inputData);
             if (rootStub == null) return;
 
             final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();

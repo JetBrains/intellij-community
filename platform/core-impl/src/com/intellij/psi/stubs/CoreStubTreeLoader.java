@@ -45,7 +45,7 @@ public class CoreStubTreeLoader extends StubTreeLoader {
     try {
       final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
       fc.putUserData(IndexingDataKeys.PROJECT, project);
-      final StubElement element = StubTreeBuilder.buildStubTree(fc);
+      final Stub element = StubTreeBuilder.buildStubTree(fc);
       if (element instanceof PsiFileStub) {
         return new StubTree((PsiFileStub)element);
       }

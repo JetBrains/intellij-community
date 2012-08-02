@@ -13,20 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.stubs;
+package com.intellij.util.xml.stubs;
 
 /**
- * Author: dmitrylomov
+ * @author Dmitry Avdeev
+ *         Date: 8/2/12
  */
-public abstract class StubSerializationUtil {
-  private StubSerializationUtil() {}
-
-  public static ObjectStubSerializer getSerializer(Stub rootStub) {
-    if (rootStub instanceof PsiFileStub) {
-      final PsiFileStub fileStub = (PsiFileStub)rootStub;
-      return fileStub.getType();
-    }
-
-    return rootStub.getStubType();
-  }
+public class DomStubElement {
 }

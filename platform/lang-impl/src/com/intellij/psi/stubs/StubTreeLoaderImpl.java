@@ -60,7 +60,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
         }
         psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
       }
-      StubElement element;
+      Stub element;
       try {
         element = StubTreeBuilder.buildStubTree(fc);
       }
@@ -94,7 +94,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
       final int size = datas.size();
 
       if (size == 1) {
-        StubElement stub = datas.get(0).getStub(false);
+        Stub stub = datas.get(0).getStub(false);
         return new StubTree((PsiFileStub)stub);
       }
       else if (size != 0) {

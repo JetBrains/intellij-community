@@ -30,9 +30,9 @@ import java.io.IOException;
 public class SerializedStubTree {
   private final byte[] myBytes;
   private final int myLength;
-  private StubElement myStubElement;
+  private Stub myStubElement;
 
-  public SerializedStubTree(final byte[] bytes, int length, @Nullable StubElement stubElement) {
+  public SerializedStubTree(final byte[] bytes, int length, @Nullable Stub stubElement) {
     myBytes = bytes;
     myLength = length;
     myStubElement = stubElement;
@@ -48,8 +48,8 @@ public class SerializedStubTree {
   }
 
   // willIndexStub is one time optimization hint, once can safely pass false
-  public StubElement getStub(boolean willIndexStub) {
-    StubElement stubElement = myStubElement;
+  public Stub getStub(boolean willIndexStub) {
+    Stub stubElement = myStubElement;
     if (stubElement != null) {
       // not null myStubElement means we just built SerializedStubTree for indexing,
       // if we request stub for indexing we can safely use it
