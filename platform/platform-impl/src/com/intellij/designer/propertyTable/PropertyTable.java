@@ -528,6 +528,11 @@ public abstract class PropertyTable extends JBTable {
 
       getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
     }
+
+    Rectangle rectStart = getCellRect(selectedRow, 0, true);
+    Rectangle rectEnd = getCellRect(selectedRow + properties.size(), 0, true);
+    scrollRectToVisible(
+      new Rectangle(rectStart.x, rectStart.y, rectEnd.x + rectEnd.width - rectStart.x, rectEnd.y + rectEnd.height - rectStart.y));
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -917,7 +922,7 @@ public abstract class PropertyTable extends JBTable {
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       try {
-        JComponent component = myEditor.getComponent(getCurrentComponent(), getPropertyContext() , getValue((Property)value), null);
+        JComponent component = myEditor.getComponent(getCurrentComponent(), getPropertyContext(), getValue((Property)value), null);
 
         if (component instanceof JComboBox) {
           component.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
