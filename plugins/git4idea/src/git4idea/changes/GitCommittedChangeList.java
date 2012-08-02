@@ -27,18 +27,17 @@ import java.util.Date;
  *         Time: 4:03 PM
  */
 public class GitCommittedChangeList extends CommittedChangeListImpl {
-  private final String myFullHash;
 
-  public GitCommittedChangeList(String name,
-                                String comment,
-                                String committerName,
-                                long number,
-                                Date commitDate, Collection<Change> changes, String fullHash) {
+  private final boolean myModifiable;
+
+  public GitCommittedChangeList(String name, String comment, String committerName, long number, Date commitDate, Collection<Change> changes,
+                                boolean isModifiable) {
     super(name, comment, committerName, number, commitDate, changes);
-    myFullHash = fullHash;
+    myModifiable = isModifiable;
   }
 
-  public String getFullHash() {
-    return myFullHash;
+  @Override
+  public boolean isModifiable() {
+    return myModifiable;
   }
 }

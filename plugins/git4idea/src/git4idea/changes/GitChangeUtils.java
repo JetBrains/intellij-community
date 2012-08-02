@@ -231,11 +231,13 @@ public class GitChangeUtils {
    * listed on the the merge that has at least some changes.
    *
    *
+   *
    * @param project      the project file
    * @param root         the git root
    * @param revisionName the name of revision (might be tag)
    * @param skipDiffsForMerge
    * @param local
+   * @param revertable
    * @return change list for the respective revision
    * @throws VcsException in case of problem with running git
    */
@@ -243,7 +245,7 @@ public class GitChangeUtils {
                                                           VirtualFile root,
                                                           String revisionName,
                                                           boolean skipDiffsForMerge,
-                                                          boolean local) throws VcsException {
+                                                          boolean local, boolean revertable) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
     h.setNoSSH(true);
     h.setSilent(true);
@@ -251,7 +253,7 @@ public class GitChangeUtils {
                     revisionName, "--");
     String output = h.run();
     StringScanner s = new StringScanner(output);
-    return parseChangeList(project, root, s, skipDiffsForMerge, h, local);
+    return parseChangeList(project, root, s, skipDiffsForMerge, h, local, revertable);
   }
 
   @Nullable
@@ -335,6 +337,7 @@ public class GitChangeUtils {
    * Parse changelist
    *
    *
+   *
    * @param project the project
    * @param root    the git root
    * @param s       the scanner for log or show command output
@@ -343,6 +346,7 @@ public class GitChangeUtils {
    * @param local   pass {@code true} to indicate that this revision should be an editable
    *                {@link com.intellij.openapi.vcs.changes.CurrentContentRevision}.
    *                Pass {@code false} for
+   * @param revertable
    * @return the parsed changelist
    * @throws VcsException if there is a problem with running git
    */
@@ -351,7 +355,7 @@ public class GitChangeUtils {
                                                        StringScanner s,
                                                        boolean skipDiffsForMerge,
                                                        GitHandler handler,
-                                                       boolean local) throws VcsException {
+                                                       boolean local, boolean revertable) throws VcsException {
     ArrayList<Change> changes = new ArrayList<Change>();
     // parse commit information
     final Date commitDate = GitUtil.parseTimestampWithNFEReport(s.line(), handler, s.getAllText());
@@ -403,8 +407,8 @@ public class GitChangeUtils {
         }
       }
     }
-    return new GitCommittedChangeList(commentSubject + "(" + revisionNumber + ")", fullComment, committerName, number, commitDate,
-                                       changes, revisionNumber);
+    String changeListName = String.format("%s(%s)", commentSubject, revisionNumber);
+    return new GitCommittedChangeList(changeListName, fullComment, committerName, number, commitDate, changes, revertable);
   }
 
   public static long longForSHAHash(String revisionNumber) {

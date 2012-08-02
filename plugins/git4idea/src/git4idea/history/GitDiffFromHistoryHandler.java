@@ -159,7 +159,7 @@ public class GitDiffFromHistoryHandler implements DiffFromHistoryHandler {
           else {
             // show the initial commit
             myChanges = new ArrayList<Change>(GitChangeUtils.getRevisionChanges(repository.getProject(), repository.getRoot(), hash2, false,
-                                                                                true).getChanges());
+                                                                                true, true).getChanges());
           }
         }
         catch (VcsException e) {

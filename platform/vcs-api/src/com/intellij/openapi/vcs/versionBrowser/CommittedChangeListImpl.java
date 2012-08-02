@@ -68,6 +68,11 @@ public class CommittedChangeListImpl implements CommittedChangeList {
     return getChangesWithMovedTreesImpl(this);
   }
 
+  @Override
+  public boolean isModifiable() {
+    return true;
+  }
+
   public static Collection<Change> getChangesWithMovedTreesImpl(final CommittedChangeList list) {
     return list.getChanges();
   }
