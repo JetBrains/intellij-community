@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.IdeFrame;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -271,28 +272,24 @@ public abstract class AppIcon {
       if (Math.abs(myLastValue - value) < 0.02d) return true;
 
       try {
-        int progressHeight = (int)(myAppImage.getHeight() * 0.15);
+        int progressHeight = (int)(myAppImage.getHeight() * 0.13);
         int xInset = (int)(myAppImage.getWidth() * 0.05);
         int yInset = (int)(myAppImage.getHeight() * 0.15);
-        int bound = (int)(myAppImage.getWidth() * 0.03);
 
-        Rectangle progressRec = new Rectangle(new Point(xInset, myAppImage.getHeight() - progressHeight - yInset),
-                                              new Dimension(myAppImage.getWidth() - xInset * 2, progressHeight));
-
+        final int width = myAppImage.getWidth() - xInset * 2;
+        final int y = myAppImage.getHeight() - progressHeight - yInset;
+        Shape rect = new RoundRectangle2D.Double(xInset, y, width, progressHeight, progressHeight, progressHeight);
+        Shape border = new RoundRectangle2D.Double(xInset - 1, y - 1, width + 2, progressHeight + 2, (progressHeight + 2), (progressHeight + 2));
+        Shape progress = new RoundRectangle2D.Double(xInset + 1, y + 1, (width - 2)  * value, progressHeight - 3, (progressHeight - 2), (progressHeight - 2));
         AppImage appImg = createAppImage();
 
-        Rectangle bgRec = new Rectangle(progressRec.x - bound, progressRec.y - bound, progressRec.width + bound * 2, progressRec.height + bound * 2);
-        appImg.myG2d.setColor(Color.white);
-        appImg.myG2d.fillRect(bgRec.x, bgRec.y, bgRec.width, bgRec.height);
-        
+        appImg.myG2d.setColor(Color.GRAY.brighter().brighter());
+        appImg.myG2d.fill(rect);
         appImg.myG2d.setColor(isOk ? scheme.getOkColor() : scheme.getErrorColor());
-
-        int currentWidth = (int)Math.ceil(progressRec.width * value);
-        appImg.myG2d.fillRect(progressRec.x, progressRec.y, currentWidth, progressRec.height);
-
-        appImg.myG2d.setColor(Color.black);
-        appImg.myG2d.drawRect(bgRec.x, bgRec.y, bgRec.width - 1, bgRec.height - 1);
-
+        appImg.myG2d.fill(progress);
+        appImg.myG2d.setColor(Color.GRAY.darker().darker());
+        appImg.myG2d.draw(rect);
+        appImg.myG2d.draw(border);
 
         setDockIcon(appImg.myImg);
 
