@@ -144,7 +144,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
   }
 
   public static int getLineStartSafeOffset(final Document document, int line) {
-    if (line == document.getLineCount()) return document.getTextLength();
+    if (line >= document.getLineCount()) return document.getTextLength();
     return document.getLineStartOffset(line);
   }
 
