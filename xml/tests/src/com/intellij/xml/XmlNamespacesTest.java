@@ -178,6 +178,18 @@ public class XmlNamespacesTest extends CodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  public void testLocallyUsedNamespaceWithPrefix() throws Exception {
+    myFixture.configureByText("a.xml", "<s:foo xmlns:s=\"<error descr=\"URI is not registered (Settings | Project Settings | Schemas and DTDs)\">http://foo</error>\"\n" +
+                                       "       <warning descr=\"Namespace declaration is never used\">xmlns:bar=\"<error descr=\"URI is not registered (Settings | Project Settings | Schemas and DTDs)\">http://bar</error>\"</warning>\n" +
+                                       "       xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                                       "       xsi:schemaLocation=\"http://bar <error descr=\"Cannot resolve file 'bar.xsd'\">bar.xsd</error> http://foo <error descr=\"Cannot resolve file 'foo.xsd'\">foo.xsd</error>\">\n" +
+                                       "\n" +
+                                       "    <bar xmlns=\"<error descr=\"URI is not registered (Settings | Project Settings | Schemas and DTDs)\">http://bar</error>\"/>\n" +
+                                       "\n" +
+                                       "</s:foo>");
+    myFixture.testHighlighting();
+  }
+
   public void testSubDirectory() throws Exception {
     myFixture.testHighlighting("moved.xml", "trg/move-def.xsd");
   }
