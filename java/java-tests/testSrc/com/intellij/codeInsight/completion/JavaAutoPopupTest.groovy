@@ -44,6 +44,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 /**
  * @author peter
  */
@@ -1307,6 +1309,18 @@ class Foo {
     assert lookup
     type '\b'
     assert !lookup
+  }
+
+  public void testReplaceTypedPrefixPart() {
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(getTestRootDisposable());
+    myFixture.configureByText 'a.java', 'class Foo{ { <caret> }}'
+    for (i in 0..StatisticsManager.OBLIVION_THRESHOLD) {
+      type 'System.out.printl\n\n'
+    }
+    type 'System.out.pr'
+    assert lookup.currentItem.lookupString == 'println'
+    type '\n2'
+    assert myFixture.file.text.contains('.println();2')
   }
 
 }

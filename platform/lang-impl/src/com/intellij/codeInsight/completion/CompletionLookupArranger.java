@@ -165,7 +165,7 @@ public class CompletionLookupArranger extends LookupArranger {
         model.add(byRelevance.get(i));
       }
       LookupElement lastSelection = lookup.getCurrentItem();
-      if (items.contains(lastSelection)) {
+      if (ContainerUtil.indexOfIdentity(items, lastSelection) >= 0) {
         model.add(lastSelection);
       }
     }
@@ -207,8 +207,8 @@ public class CompletionLookupArranger extends LookupArranger {
     }
 
     if (lookup.isSelectionTouched() || !onExplicitAction) {
-      LookupElement lastSelection = lookup.getCurrentItem();
-      int old = items.indexOf(lastSelection);
+      final LookupElement lastSelection = lookup.getCurrentItem();
+      int old = ContainerUtil.indexOfIdentity(items, lastSelection);
       if (old >= 0) {
         return old;
       }
