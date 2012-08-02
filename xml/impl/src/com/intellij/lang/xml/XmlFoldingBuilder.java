@@ -77,9 +77,8 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
   }
 
   protected void addElementsToFold(List<FoldingDescriptor> foldings, XmlElement tag, Document document) {
-    if (addToFold(foldings, tag, document)) {
-      doAddForChildren(tag, foldings, document);
-    }
+    addToFold(foldings, tag, document);
+    doAddForChildren(tag, foldings, document);
   }
 
   protected void doAddForChildren(final XmlElement tag, final List<FoldingDescriptor> foldings, final Document document) {
