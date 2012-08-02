@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.model.impl.JpsElementBase;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -35,7 +35,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModuleExtensionImpl> implements JpsAndroidModuleExtension {
-  public static final JpsElementKindBase<JpsAndroidModuleExtension> KIND = new JpsElementKindBase<JpsAndroidModuleExtension>("android extension");
+  public static final JpsElementChildRoleBase<JpsAndroidModuleExtension> KIND = JpsElementChildRoleBase.create("android extension");
   private final JpsAndroidModuleProperties myProperties;
   private final String myBaseModulePath;
 

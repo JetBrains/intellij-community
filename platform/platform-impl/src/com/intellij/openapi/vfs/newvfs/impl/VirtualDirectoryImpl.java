@@ -25,6 +25,7 @@ import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -311,12 +312,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Nullable
   private VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name) {
     final NewVirtualFileSystem delegate = getFileSystem();
-    VirtualFile fake = new FakeVirtualFile(this, name);
-    int attributes = delegate.getBooleanAttributes(fake, FileUtil.BA_EXISTS | FileUtil.BA_DIRECTORY);
-    if ((attributes & FileUtil.BA_EXISTS) != 0) {
+    final VirtualFile fake = new FakeVirtualFile(this, name);
+    final FileAttributes attributes = delegate.getAttributes(fake);
+    if (attributes != null) {
       final String realName = delegate.getCanonicallyCasedName(fake);
-      boolean isDir = (attributes & FileUtil.BA_DIRECTORY) != 0;
-      VFileCreateEvent event = new VFileCreateEvent(null, this, realName, isDir, true);
+      final VFileCreateEvent event = new VFileCreateEvent(null, this, realName, attributes.isDirectory(), true);
       RefreshQueue.getInstance().processSingleEvent(event);
       return findChild(realName);
     }

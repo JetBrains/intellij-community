@@ -17,7 +17,6 @@ package com.intellij.designer.model;
 
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.propertyTable.IPropertyDecorator;
-import com.intellij.designer.propertyTable.Property;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,8 +34,8 @@ public class MetaModel {
   private final String myTag;
   private DefaultPaletteItem myPaletteItem;
   private String myTitle;
-  protected String myIconPath;
-  protected Icon myIcon;
+  private String myIconPath;
+  private Icon myIcon;
   private String myCreation;
   private boolean myDelete = true;
   private List<String> myInplaceProperties = Collections.emptyList();

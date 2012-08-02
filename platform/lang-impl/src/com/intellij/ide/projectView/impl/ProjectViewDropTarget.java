@@ -105,7 +105,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       }
     }
 
-    final Rectangle pathBounds = myTree.getPathBounds(myTree.getPathForLocation(point.x, point.y));
+    final Rectangle pathBounds = myTree.getPathBounds(myTree.getClosestPathForLocation(point.x, point.y));
     event.setHighlighting(new RelativeRectangle(myTree, pathBounds), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     event.setDropPossible(true);
     return false;
@@ -160,7 +160,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
 
   @Nullable
   private TreeNode getTargetNode(final Point location) {
-    final TreePath path = myTree.getPathForLocation(location.x, location.y);
+    final TreePath path = myTree.getClosestPathForLocation(location.x, location.y);
     return path == null ? null : (TreeNode)path.getLastPathComponent();
   }
 

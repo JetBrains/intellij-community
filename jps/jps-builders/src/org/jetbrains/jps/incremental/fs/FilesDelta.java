@@ -64,6 +64,10 @@ final class FilesDelta {
     }
   }
 
+  public boolean hasChanges() {
+    return hasPathsToDelete() || hasSourcesToRecompile();
+  }
+
 
   private static Set<File> createSetOfFiles() {
     return new THashSet<File>(new TObjectHashingStrategy<File>() {
@@ -151,7 +155,7 @@ final class FilesDelta {
     return myFilesToRecompile;
   }
 
-  public boolean hasSourcesToRecompile() {
+  private boolean hasSourcesToRecompile() {
     synchronized (myFilesToRecompile) {
       if(!myFilesToRecompile.isEmpty()) {
         for (Set<File> files : myFilesToRecompile.values()) {
@@ -164,14 +168,8 @@ final class FilesDelta {
     return false;
   }
 
-  public boolean hasPathsToDelete() {
+  private boolean hasPathsToDelete() {
     return !myDeletedPaths.isEmpty();
-  }
-
-  public Set<String> getDeletedPaths() {
-    synchronized (myDeletedPaths) {
-      return myDeletedPaths.isEmpty()? Collections.<String>emptySet() : new HashSet<String>(myDeletedPaths);
-    }
   }
 
   @Nullable

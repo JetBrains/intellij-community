@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
@@ -71,12 +70,8 @@ public class InheritanceImplUtil {
       final boolean bInt = baseClass.isInterface();
 
       if (candidateClass instanceof PsiCompiledElement) {
-        String baseQName = baseClass.getQualifiedName();
-        if (baseQName == null) return false;
-
-        GlobalSearchScope scope = candidateClass.getResolveScope();
-        if (cInt == bInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getExtendsList(), manager, scope)) return true;
-        return bInt && !cInt && checkReferenceListWithQualifiedNames(baseQName, candidateClass.getImplementsList(), manager, scope);
+        if (cInt == bInt && checkReferenceListWithQualifiedNames(candidateClass.getExtendsList(), baseClass)) return true;
+        return bInt && !cInt && checkReferenceListWithQualifiedNames(candidateClass.getImplementsList(), baseClass);
       }
       if (cInt == bInt) {
         for (PsiClassType type : candidateClass.getExtendsListTypes()) {
@@ -103,14 +98,16 @@ public class InheritanceImplUtil {
     return isInheritorWithoutCaching(candidateClass, baseClass, checkDeep, checkedClasses);
   }
 
-  private static boolean checkReferenceListWithQualifiedNames(final String baseQName, final PsiReferenceList extList, final PsiManager manager,
-                                                              final GlobalSearchScope scope) {
+  private static boolean checkReferenceListWithQualifiedNames(final PsiReferenceList extList, PsiClass baseClass) {
     if (extList != null) {
-      final PsiJavaCodeReferenceElement[] refs = extList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), baseQName) && JavaPsiFacade
-          .getInstance(manager.getProject()).findClass(baseQName, scope) != null)
-          return true;
+      String qname = baseClass.getQualifiedName();
+      if (qname != null) {
+        for (PsiJavaCodeReferenceElement ref : extList.getReferenceElements()) {
+          if (Comparing.equal(PsiNameHelper.getQualifiedClassName(ref.getQualifiedName(), false), qname) &&
+              baseClass.isEquivalentTo(ref.resolve())) {
+            return true;
+          }
+        }
       }
     }
     return false;

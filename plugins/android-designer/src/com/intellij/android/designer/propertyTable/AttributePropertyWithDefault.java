@@ -16,7 +16,7 @@
 package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.Property;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.annotations.NotNull;
@@ -46,12 +46,12 @@ public class AttributePropertyWithDefault extends AttributeProperty {
   }
 
   @Override
-  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
     return myDefaultValue.equals(getValue(component));
   }
 
   @Override
-  public void setValue(RadViewComponent component, Object value) throws Exception {
+  public void setValue(@NotNull RadViewComponent component, Object value) throws Exception {
     if (StringUtil.isEmpty((String)value)) {
       value = myDefaultValue;
     }

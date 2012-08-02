@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrDisjunctionTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
@@ -42,6 +43,11 @@ public class GrDisjunctionTypeElementImpl extends GroovyPsiElementImpl implement
   @Override
   public GrTypeElement[] getTypeElements() {
     return findChildrenByClass(GrTypeElement.class);
+  }
+
+  @Override
+  public void accept(GroovyElementVisitor visitor) {
+    visitor.visitDisjunctionTypeElement(this);
   }
 
   @NotNull

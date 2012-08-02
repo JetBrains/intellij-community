@@ -16,7 +16,7 @@
 package com.intellij.android.designer.model.layout.relative;
 
 import com.intellij.android.designer.model.RadViewComponent;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.Property;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,7 +32,7 @@ public class CompoundProperty extends com.intellij.android.designer.propertyTabl
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     StringBuilder value = new StringBuilder("[");
     int index = 0;
     for (Property<RadViewComponent> child : getChildren(component)) {

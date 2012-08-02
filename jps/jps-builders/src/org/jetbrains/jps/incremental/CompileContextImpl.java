@@ -9,6 +9,7 @@ import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -208,6 +209,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
       if (!paths.isEmpty()) {
         myListeners.getMulticaster().filesGenerated(paths);
       }
+    }
+    else if (msg instanceof FileDeletedEvent) {
+      Collection<String> paths = ((FileDeletedEvent)msg).getFilePaths();
+      myListeners.getMulticaster().filesDeleted(paths);
     }
   }
 

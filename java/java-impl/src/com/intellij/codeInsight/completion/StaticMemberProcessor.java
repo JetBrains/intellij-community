@@ -47,20 +47,10 @@ public abstract class StaticMemberProcessor {
   public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
 
-    Comparator<String> comparator = new Comparator<String>() {
-      @Override
-      public int compare(String o1, String o2) {
-        boolean start1 = matcher.isStartMatch(o1);
-        boolean start2 = matcher.isStartMatch(o1);
-        return start1 == start2 ? 0 : start2 ? -1 : 1;
-      }
-    };
-
     final GlobalSearchScope scope = myPosition.getResolveScope();
     final PsiShortNamesCache namesCache = PsiShortNamesCache.getInstance(myProject);
     String[] methodNames = namesCache.getAllMethodNames();
-    Arrays.sort(methodNames, comparator);
-    for (final String methodName : methodNames) {
+    for (final String methodName : CompletionUtil.sortMatching(matcher, Arrays.asList(methodNames))) {
       if (matcher.prefixMatches(methodName)) {
         Set<PsiClass> classes = new THashSet<PsiClass>();
         for (final PsiMethod method : namesCache.getMethodsByName(methodName, scope)) {
@@ -96,8 +86,7 @@ public abstract class StaticMemberProcessor {
       }
     }
     String[] fieldNames = namesCache.getAllFieldNames();
-    Arrays.sort(fieldNames, comparator);
-    for (final String fieldName : fieldNames) {
+    for (final String fieldName : CompletionUtil.sortMatching(matcher, Arrays.asList(fieldNames))) {
       if (matcher.prefixMatches(fieldName)) {
         for (final PsiField field : namesCache.getFieldsByName(fieldName, scope)) {
           if (isStaticallyImportable(field)) {

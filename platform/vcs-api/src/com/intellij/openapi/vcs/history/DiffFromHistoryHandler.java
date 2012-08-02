@@ -32,11 +32,15 @@ public interface DiffFromHistoryHandler {
   /**
    * Show diff when a single revision is selected in the file history panel.
    *
-   * @param e        AnActionEvent which happened, when user invoked "Show Diff".
-   * @param filePath the file which history is shown.
-   * @param revision the revision selected in the file history panel.
+   * @param e                AnActionEvent which happened, when user invoked "Show Diff".
+   * @param filePath         the file which history is shown.
+   * @param previousRevision the previous revision in the list displayed file history panel, may be {@link VcsFileRevision#NULL}.
+   * @param revision         the revision selected in the file history panel.
    */
-  void showDiff(@NotNull AnActionEvent e, @NotNull FilePath filePath, @NotNull VcsFileRevision revision);
+  void showDiffForOne(@NotNull AnActionEvent e,
+                      @NotNull FilePath filePath,
+                      @NotNull VcsFileRevision previousRevision,
+                      @NotNull VcsFileRevision revision);
 
   /**
    * Show diff for 2 revisions selected from the file history panel,
@@ -47,6 +51,6 @@ public interface DiffFromHistoryHandler {
    * @param revision1 one of the selected revisions.
    * @param revision2 another selected revision.
    */
-  void showDiff(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2);
+  void showDiffForTwo(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2);
 
 }

@@ -81,12 +81,14 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
 
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
+    System.out.println("Handle element rename to " + newElementName);
     if (newElementName.startsWith(AndroidResourceUtil.NEW_ID_PREFIX)) {
       newElementName = AndroidResourceUtil.getResourceNameByReferenceText(newElementName);
     }
     ResourceValue value = myValue.getValue();
     assert value != null;
     String resType = value.getResourceType();
+    System.out.println("Restype: " + resType);
 
     if (resType != null && newElementName != null) {
       // todo: do not allow new value resource name to contain dot, because it is impossible to check if it file or value otherwise
@@ -94,6 +96,7 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
       final String newResName = newElementName.contains(".") // it is file
                                 ? AndroidCommonUtils.getResourceName(resType, newElementName)
                                 : newElementName;
+      System.out.println("New res name: " + newResName);
       myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType, newResName));
     }
     return myValue.getXmlTag();
@@ -187,25 +190,62 @@ public class AndroidResourceReference extends PsiReferenceBase.Poly<XmlElement> 
 
   @Override
   public boolean isReferenceTo(PsiElement element) {
+    if (element instanceof LazyValueResourceElementWrapper) {
+      element = ((LazyValueResourceElementWrapper)element).computeElement();
+
+      if (element == null) {
+        return false;
+      }
+    }
+
     final ResolveResult[] results = multiResolve(false);
     final PsiFile psiFile = element.getContainingFile();
     final VirtualFile vFile = psiFile != null ? psiFile.getVirtualFile() : null;
 
+    boolean log = element instanceof XmlAttributeValue || element instanceof LazyValueResourceElementWrapper;
+
     for (ResolveResult result : results) {
       final PsiElement target = result.getElement();
 
+      if (log) {
+        System.out.println("resolved to " + target);
+      }
+
       if (element.getManager().areElementsEquivalent(target, element)) {
+        if (log) {
+          System.out.println("equivalent");
+        }
         return true;
+      }
+      else if (log) {
+        System.out.println("non-equivalent");
       }
 
       if (target instanceof LazyValueResourceElementWrapper && vFile != null) {
         final ValueResourceInfo info = ((LazyValueResourceElementWrapper)target).getResourceInfo();
 
+        if (log) {
+          System.out.println("lazy computed to " + info);
+          System.out.println(vFile + "; class: " + vFile.getClass().getCanonicalName());
+          System.out.println(info.getContainingFile() + "; class: " + info.getContainingFile().getClass().getCanonicalName());
+          System.out.println(vFile.equals(info.getContainingFile()));
+        }
+
         if (info.getContainingFile().equals(vFile)) {
           final XmlAttributeValue realTarget = info.computeXmlElement();
 
+          if (log) {
+            System.out.println("computed element " + element + "; text: " + element.getText());
+          }
+
           if (element.getManager().areElementsEquivalent(realTarget, element)) {
+            if (log) {
+              System.out.println("equivalent");
+            }
             return true;
+          }
+          else if (log) {
+            System.out.println("non-equivalent");
           }
         }
       }

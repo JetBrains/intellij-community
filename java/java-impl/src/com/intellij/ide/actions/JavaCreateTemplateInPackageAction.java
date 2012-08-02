@@ -15,9 +15,8 @@
  */
 package com.intellij.ide.actions;
 
-import com.intellij.psi.JavaDirectoryService;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.*;
 
 import javax.swing.*;
 
@@ -29,6 +28,12 @@ public abstract class JavaCreateTemplateInPackageAction<T extends PsiElement> ex
 
   @Override
   protected boolean checkPackageExists(PsiDirectory directory) {
-    return JavaDirectoryService.getInstance().getPackage(directory) != null;
+    PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(directory);
+    if (pkg == null) {
+      return false;
+    }
+
+    String name = pkg.getQualifiedName();
+    return StringUtil.isEmpty(name) || JavaPsiFacade.getInstance(directory.getProject()).getNameHelper().isQualifiedName(name);
   }
 }

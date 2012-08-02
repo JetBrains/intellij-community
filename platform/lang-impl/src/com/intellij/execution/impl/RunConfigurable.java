@@ -417,9 +417,26 @@ class RunConfigurable extends BaseConfigurable {
 
   private JPanel createLeftPanel() {
     initTree();
-    DefaultActionGroup actionsGroup = createActionsGroup();
-    PopupHandler.installFollowingSelectionTreePopup(myTree, actionsGroup, ActionPlaces.UNKNOWN, ActionManager.getInstance());
-    myToolbarDecorator = ToolbarDecorator.createDecorator(myTree).setAsUsualTopToolbar().setActionGroup(actionsGroup).setForcedDnD();
+    MyRemoveAction removeAction = new MyRemoveAction();
+    MyMoveAction moveUpAction = new MyMoveAction(ExecutionBundle.message("move.up.action.name"), null, IconUtil.getMoveUpIcon(), -1);
+    MyMoveAction moveDownAction = new MyMoveAction(ExecutionBundle.message("move.down.action.name"), null, IconUtil.getMoveDownIcon(), 1);
+    MyEditDefaultsAction editDefaultsAction = new MyEditDefaultsAction();
+    myToolbarDecorator = ToolbarDecorator.createDecorator(myTree).setAsUsualTopToolbar()
+      .setAddAction(new MyToolbarAddAction()).setAddActionName(ExecutionBundle.message("add.new.run.configuration.acrtion.name"))
+      .setRemoveAction(removeAction).setRemoveActionUpdater(removeAction).setRemoveActionName(removeAction.getTemplatePresentation().getText())
+      .setMoveUpAction(moveUpAction).setMoveUpActionUpdater(moveUpAction)
+      .setMoveDownAction(moveDownAction).setMoveDownActionUpdater(moveDownAction)
+      .addExtraAction(AnActionButton.fromAction(new MyCopyAction()))
+      .addExtraAction(AnActionButton.fromAction(new MySaveAction()))
+      .addExtraAction(AnActionButton.fromAction(editDefaultsAction))
+      .setButtonComparator(ExecutionBundle.message("add.new.run.configuration.acrtion.name"),
+                           removeAction.getTemplatePresentation().getText(),
+                           ExecutionBundle.message("copy.configuration.action.name"),
+                           ExecutionBundle.message("action.name.save.configuration"),
+                           editDefaultsAction.getTemplatePresentation().getText(),
+                           ExecutionBundle.message("move.up.action.name"),
+                           ExecutionBundle.message("move.down.action.name")
+      ).setForcedDnD();
     return myToolbarDecorator.createPanel();
   }
 
@@ -444,39 +461,6 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     return bottomPanel;
-  }
-
-  private DefaultActionGroup createActionsGroup() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new MyToolbarAddAction());
-    group.add(new MyRemoveAction());
-    group.add(new MyCopyAction());
-    group.add(new MySaveAction());
-    group.add(new AnAction(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
-                           "Edit default settings", AllIcons.General.IdeOptions) {
-      public void actionPerformed(final AnActionEvent e) {
-        TreeNode defaults = TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot);
-        if (defaults != null) {
-          final ConfigurationType configurationType = getSelectedConfigurationType();
-          if (configurationType != null) {
-            defaults = TreeUtil.findNodeWithObject(configurationType, myTree.getModel(), defaults);
-          }
-          final DefaultMutableTreeNode defaultsNode = (DefaultMutableTreeNode)defaults;
-          final TreePath path = TreeUtil.getPath(myRoot, defaultsNode);
-          myTree.expandPath(path);
-          TreeUtil.selectInTree(defaultsNode, true, myTree);
-          myTree.scrollPathToVisible(path);
-        }
-      }
-
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot) != null);
-      }
-    });
-    group.add(new MyMoveAction(ExecutionBundle.message("move.up.action.name"), null, IconUtil.getMoveUpIcon(), -1));
-    group.add(new MyMoveAction(ExecutionBundle.message("move.down.action.name"), null, IconUtil.getMoveDownIcon(), 1));
-    return group;
   }
 
   @Nullable
@@ -884,7 +868,7 @@ class RunConfigurable extends BaseConfigurable {
     createNewConfiguration(settings, node);
   }
 
-  private class MyToolbarAddAction extends AnAction {
+  private class MyToolbarAddAction extends AnAction implements AnActionButtonRunnable {
     public MyToolbarAddAction() {
       super(ExecutionBundle.message("add.new.run.configuration.acrtion.name"),
             ExecutionBundle.message("add.new.run.configuration.acrtion.name"), ADD_ICON);
@@ -892,6 +876,15 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     public void actionPerformed(AnActionEvent e) {
+      showAddPopup();
+    }
+
+    @Override
+    public void run(AnActionButton button) {
+      showAddPopup();
+    }
+
+    private void showAddPopup() {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       final ConfigurationType[] configurationTypes = getRunManager().getConfigurationFactories(false);
       Arrays.sort(configurationTypes, new Comparator<ConfigurationType>() {
@@ -989,7 +982,7 @@ class RunConfigurable extends BaseConfigurable {
   }
 
 
-  private class MyRemoveAction extends AnAction {
+  private class MyRemoveAction extends AnAction implements AnActionButtonRunnable, AnActionButtonUpdater{
 
     public MyRemoveAction() {
       super(ExecutionBundle.message("remove.run.configuration.action.name"),
@@ -998,6 +991,15 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     public void actionPerformed(AnActionEvent e) {
+      doRemove();
+    }
+
+    @Override
+    public void run(AnActionButton button) {
+      doRemove();
+    }
+
+    private void doRemove() {
       TreePath[] selections = myTree.getSelectionPaths();
       myTree.clearSelection();
 
@@ -1055,6 +1057,11 @@ class RunConfigurable extends BaseConfigurable {
 
 
     public void update(AnActionEvent e) {
+      boolean enabled = isEnabled(e);
+      e.getPresentation().setEnabled(enabled);
+    }
+
+    public boolean isEnabled(AnActionEvent e) {
       boolean enabled = false;
       TreePath[] selections = myTree.getSelectionPaths();
       if (selections != null) {
@@ -1067,7 +1074,7 @@ class RunConfigurable extends BaseConfigurable {
           }
         }
       }
-      e.getPresentation().setEnabled(enabled);
+      return enabled;
     }
   }
 
@@ -1158,7 +1165,7 @@ class RunConfigurable extends BaseConfigurable {
     }
   }
 
-  private class MyMoveAction extends AnAction {
+  private class MyMoveAction extends AnAction implements AnActionButtonRunnable, AnActionButtonUpdater {
     private final int myDirection;
 
     protected MyMoveAction(String text, String description, Icon icon, int direction) {
@@ -1167,30 +1174,68 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     public void actionPerformed(final AnActionEvent e) {
+      doMove();
+    }
+
+    private void doMove() {
       TreeUtil.moveSelectedRow(myTree, myDirection);
     }
 
+    @Override
+    public void run(AnActionButton button) {
+      doMove();
+    }
+
     public void update(final AnActionEvent e) {
-      final Presentation presentation = e.getPresentation();
-      presentation.setEnabled(false);
+      e.getPresentation().setEnabled(isEnabled(e));
+    }
+
+    @Override
+    public boolean isEnabled(AnActionEvent e) {
       final TreePath selectionPath = myTree.getSelectionPath();
       if (selectionPath != null) {
         final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
         if (!(treeNode.getUserObject() instanceof ConfigurationType) && !(treeNode.getUserObject() instanceof String)) {
           RunnerAndConfigurationSettings selectedSettings = getSettings(treeNode);
           if (selectedSettings == null)
-            return;
+            return false;
           RunnerAndConfigurationSettings siblingSettings;
           if (myDirection < 0) {
             siblingSettings = getSettings(treeNode.getPreviousSibling());
           } else {
             siblingSettings = getSettings(treeNode.getNextSibling());
           }
-          if (siblingSettings != null) {
-            presentation.setEnabled(siblingSettings.isTemporary() == selectedSettings.isTemporary());
+            return siblingSettings != null && siblingSettings.isTemporary() == selectedSettings.isTemporary();
           }
         }
+      return false;
+    }
+  }
+
+  private class MyEditDefaultsAction extends AnAction {
+    public MyEditDefaultsAction() {
+      super(ExecutionBundle.message("run.configuration.edit.default.configuration.settings.button"),
+            "Edit default settings", AllIcons.General.IdeOptions);
+    }
+
+    public void actionPerformed(final AnActionEvent e) {
+      TreeNode defaults = TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot);
+      if (defaults != null) {
+        final ConfigurationType configurationType = getSelectedConfigurationType();
+        if (configurationType != null) {
+          defaults = TreeUtil.findNodeWithObject(configurationType, myTree.getModel(), defaults);
+        }
+        final DefaultMutableTreeNode defaultsNode = (DefaultMutableTreeNode)defaults;
+        final TreePath path = TreeUtil.getPath(myRoot, defaultsNode);
+        myTree.expandPath(path);
+        TreeUtil.selectInTree(defaultsNode, true, myTree);
+        myTree.scrollPathToVisible(path);
       }
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      e.getPresentation().setEnabled(TreeUtil.findNodeWithObject("Defaults", myTree.getModel(), myRoot) != null);
     }
   }
 

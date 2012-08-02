@@ -104,7 +104,7 @@ public class PullUpConflictsUtil {
         }
       }
     }
-    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, null, targetRepresentativeElement, abstrMethods);
+    RefactoringConflictsUtil.analyzeAccessibilityConflicts(movedMembers, superClass, conflicts, VisibilityUtil.ESCALATE_VISIBILITY, targetRepresentativeElement, abstrMethods);
     if (superClass != null) {
       if (movedMembers2Super) {
         checkSuperclassMembers(superClass, infos, conflicts);

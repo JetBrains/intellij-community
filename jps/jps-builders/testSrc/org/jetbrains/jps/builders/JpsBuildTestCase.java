@@ -61,7 +61,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   }
 
   protected JpsTypedLibrary<JpsSdkProperties> initJdk(final String name, final String path) {
-    JpsSdkProperties properties = new JpsSdkProperties(System.getProperty("java.home"), "1.6");
+    JpsSdkProperties properties = new JpsSdkProperties(System.getProperty("java.home"), System.getProperty("java.version"));
     JpsTypedLibrary<JpsSdkProperties> jdk = myModel.getGlobal().getLibraryCollection().addLibrary(name, JpsJavaSdkType.INSTANCE,
                                                                                                   properties);
     jdk.addRoot(JpsPathUtil.pathToUrl(path), JpsOrderRootType.COMPILED);

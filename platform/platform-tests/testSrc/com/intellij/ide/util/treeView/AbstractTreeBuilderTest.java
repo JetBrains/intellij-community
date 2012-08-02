@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -11,6 +26,7 @@ import com.intellij.util.WaitFor;
 import com.intellij.util.containers.HashMap;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -18,6 +34,8 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
+
+import static com.intellij.testFramework.PlatformTestUtil.notNull;
 
 abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase.NodeElement> {
   protected MyStructure myStructure;
@@ -46,8 +64,8 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
   protected final Set<NodeElement> myChanges = new HashSet<NodeElement>();
 
-  protected AbstractTreeBuilderTest(boolean passthrougth) {
-    super(passthrougth);
+  protected AbstractTreeBuilderTest(boolean passThrough) {
+    super(passThrough);
   }
 
   protected AbstractTreeBuilderTest(boolean yieldingUiBuild, boolean bgStructureBuilding) {
@@ -121,11 +139,11 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   protected void tearDown() throws Exception {
     myElementUpdate.clear();
     myElementUpdateHook = null;
-    myStructure.setRevalidator(null);
+    myStructure.setReValidator(null);
     super.tearDown();
   }
 
-
+  @Nullable
   Node removeFromParentButKeepRef(NodeElement child) {
     NodeElement parent = (NodeElement)myStructure.getParentElement(child);
     AbstractTreeBuilderTest.Node node = myStructure.getNodeFor(parent).remove(child, false);
@@ -137,13 +155,13 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
   void assertSorted(String expected) {
     Iterator<String> keys = mySortedParent.keySet().iterator();
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     while (keys.hasNext()) {
       String each = keys.next();
       result.append(each);
       int count = mySortedParent.get(each);
       if (count > 1) {
-        result.append(" (" + count + ")");
+        result.append(" (").append(count).append(")");
       }
 
       if (keys.hasNext()) {
@@ -151,7 +169,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       }
     }
 
-    Assert.assertEquals(expected + "\n", result + "\n");
+    Assert.assertEquals(expected, result.toString());
     mySortedParent.clear();
   }
 
@@ -169,78 +187,6 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     myElementUpdate.clear();
   }
 
-  public void _testNoUpdateIfHidden() throws Exception {
-    final ArrayList processedNodes = new ArrayList();
-    final boolean[] toHide = new boolean[] {false};
-
-    myElementUpdateHook = new ElementUpdateHook() {
-      @Override
-      public void onElementAction(String action, Object element) {
-        if (toHide[0]) {
-          if ("jetbrains".equals(element.toString())) {
-            getBuilder().getUi().deactivate();
-          }
-        }
-      }
-    };
-    buildStructure(myRoot);
-
-    waitBuilderToCome();
-    processedNodes.clear();
-
-
-    buildNode("/", false);
-    assertTree(
-      "-/\n" +
-      " +com\n" +
-      " +jetbrains\n" +
-      " +org\n" +
-      " +xunit\n");
-    Assert.assertEquals("/\n" +
-                 "com\n" +
-                 "jetbrains\n" +
-                 "xunit\n" +
-                 "org\n" +
-                 "intellij\n" +
-                 "fabrique\n" +
-                 "runner\n" + 
-                 "eclipse", PlatformTestUtil.print(processedNodes));
-
-
-    processedNodes.clear();
-    toHide[0] = true;
-    updateFromRoot();
-
-    Assert.assertEquals("/\n" +
-                 "com\n" +
-                 "intellij\n" +
-                 "jetbrains", PlatformTestUtil.print(processedNodes));
-
-    processedNodes.clear();
-    toHide[0] = false;
-
-
-    showTree();
-
-    assertTree(
-      "-/\n" +
-      " +com\n" +
-      " +jetbrains\n" +
-      " +org\n" +
-      " +xunit\n");
-    Assert.assertEquals("/\n" +
-                 "com\n" +
-                 "intellij\n" +
-                 "jetbrains\n" +
-                 "fabrique\n" +
-                 "org\n" +
-                 "eclipse\n" +
-                 "xunit\n" +
-                 "runner", PlatformTestUtil.print(processedNodes));
-
-  }
-
-
   void buildStructure(final Node root) throws Exception {
     buildStructure(root, true);
   }
@@ -254,7 +200,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
         myOpenApi = myIntellij.addChild("openapi");
         myFabrique = root.addChild("jetbrains").addChild("fabrique");
         myIde = myFabrique.addChild("ide");
-        myRunner = root.addChild("xunit").addChild("runner");
+        myRunner = root.addChild("xUnit").addChild("runner");
         myRcp = root.addChild("org").addChild("eclipse").addChild("rcp");
 
         if (activate) {
@@ -346,14 +292,17 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
 
+  @Nullable
   DefaultMutableTreeNode findNode(String elementText, boolean shouldBeSelected) {
     return findNode(new NodeElement(elementText), shouldBeSelected);
   }
 
+  @Nullable
   DefaultMutableTreeNode findNode(NodeElement element, boolean shouldBeSelected) {
     return findNode((DefaultMutableTreeNode)myTree.getModel().getRoot(), element, shouldBeSelected);
   }
 
+  @Nullable
   private DefaultMutableTreeNode findNode(DefaultMutableTreeNode treeNode, NodeElement toFind, boolean shouldBeSelected) {
     final Object object = treeNode.getUserObject();
     Assert.assertNotNull(object);
@@ -425,6 +374,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       myChildElements.clear();
     }
 
+    @Nullable
     public Node getChildNode(String name) {
       for (Node each : myChildElements) {
         if (name.equals(each.myElement.myName)) return each;
@@ -448,6 +398,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       myStructure.getNodeFor(parent).remove(myElement, true);
     }
 
+    @Nullable
     private Node remove(final NodeElement name, boolean removeRefToParent) {
       final Iterator<Node> kids = myChildElements.iterator();
       Node removed = null;
@@ -469,18 +420,17 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   class MyStructure extends BaseStructure {
-
     private final Map<NodeElement, NodeElement> myChild2Parent = new HashMap<NodeElement, NodeElement>();
     private final Map<NodeElement, Node> myElement2Node = new HashMap<NodeElement, Node>();
     private final Set<NodeElement> myLeaves = new HashSet<NodeElement>();
-    private Revalidator myRevalidator;
+    private ReValidator myReValidator;
 
     @Override
     public Object getRootElement() {
       return myRoot.myElement;
     }
 
-    public void reinitRoot(Node root) {
+    public void reInitRoot(Node root) {
       myRoot = root;
       myElement2Node.clear();
       myLeaves.clear();
@@ -496,19 +446,15 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
       return node.getChildElements();
     }
 
-    private Node getNodeFor(Object element) {
-      return myElement2Node.get(element);
-    }
-
     @Override
     public Object getParentElement(final Object element) {
       NodeElement nodeElement = (NodeElement)element;
       return nodeElement.getForcedParent() != null ? nodeElement.getForcedParent() : myChild2Parent.get(nodeElement);
     }
 
-
     @Override
     public boolean isAlwaysLeaf(Object element) {
+      //noinspection SuspiciousMethodCalls
       return myLeaves.contains(element);
     }
 
@@ -536,6 +482,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
           }
         }
 
+        @Nullable
         @Override
         public PresentableNodeDescriptor getChildToHighlightAt(int index) {
           return null;
@@ -549,7 +496,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
         @Override
         public String toString() {
           List<ColoredFragment> coloredText = getPresentation().getColoredText();
-          StringBuffer result = new StringBuffer();
+          StringBuilder result = new StringBuilder();
           for (ColoredFragment each : coloredText) {
             result.append(each.getText());
           }
@@ -575,15 +522,15 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
     @Override
     public AsyncResult<Object> revalidateElement(Object element) {
-      return myRevalidator != null ? myRevalidator.revalidate((NodeElement)element) : super.revalidateElement(element);
+      return myReValidator != null ? myReValidator.revalidate((NodeElement)element) : super.revalidateElement(element);
     }
 
-    public void setRevalidator(Revalidator revalidator) {
-      myRevalidator = revalidator;
+    public void setReValidator(@Nullable ReValidator reValidator) {
+      myReValidator = reValidator;
     }
   }
 
-  interface Revalidator {
+  interface ReValidator {
     AsyncResult<Object> revalidate(NodeElement element);
   }
 
@@ -624,12 +571,11 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     }
   }
 
-  static interface ElementUpdateHook {
+  interface ElementUpdateHook {
     void onElementAction(String action, Object element);
   }
 
   private class ElementEntry {
-
     NodeElement myElement;
 
     int myUpdateCount;
@@ -675,8 +621,6 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   TreePath getPath(String s) {
-    return new TreePath(findNode(s, false).getPath());
+    return new TreePath(notNull(findNode(s, false)).getPath());
   }
-
 }
-  

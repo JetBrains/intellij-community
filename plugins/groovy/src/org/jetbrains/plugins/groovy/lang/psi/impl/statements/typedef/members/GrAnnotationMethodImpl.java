@@ -54,7 +54,7 @@ public class GrAnnotationMethodImpl extends GrMethodBaseImpl implements GrAnnota
   }
 
   @Override
-  public GrDefaultAnnotationValue getDefaultAnnotationValue() {
+  public GrDefaultAnnotationValue getDefaultValue() {
     return findChildByClass(GrDefaultAnnotationValue.class);
   }
 }

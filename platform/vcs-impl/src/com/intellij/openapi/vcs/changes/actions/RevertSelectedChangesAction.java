@@ -21,6 +21,8 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.Convertor;
 
 import javax.swing.*;
@@ -36,6 +38,22 @@ public class RevertSelectedChangesAction extends RevertCommittedStuffAbstractAct
     presentation.setIcon(ourIcon);
     presentation.setText(ourText);
     super.update(e);
+    presentation.setEnabled(allSelectedChangeListsAreRevertable(e));
+  }
+
+  private static boolean allSelectedChangeListsAreRevertable(AnActionEvent e) {
+    ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
+    if (changeLists == null) {
+      return true;
+    }
+    for (ChangeList list : changeLists) {
+      if (list instanceof CommittedChangeList) {
+        if (!((CommittedChangeList)list).isModifiable()) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   private static void initPresentation() {

@@ -50,14 +50,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     SHELVE,
   }
 
-  /**
-   * Kinds of SSH executable to be used with the git
-   */
-  public enum SshExecutable {
-    IDEA_SSH,
-    NATIVE_SSH,
-  }
-
   public enum ConversionPolicy {
     NONE, // No conversion is performed
     CONVERT, // The files are converted to project line separators
@@ -65,9 +57,11 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   }
 
   public static class State {
-    public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<String>(); // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
-    public SshExecutable SSH_EXECUTABLE = SshExecutable.IDEA_SSH;
-    public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH; // The policy that specifies how files are saved before update or rebase
+    // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
+    public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<String>();
+    public GitVcsApplicationSettings.SshExecutable SSH_EXECUTABLE = GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
+    // The policy that specifies how files are saved before update or rebase
+    public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
     public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.ASK;
     public boolean PUSH_AUTO_UPDATE = false;
@@ -140,14 +134,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState = state;
   }
 
-  public boolean isIdeaSsh() {
-    return myState.SSH_EXECUTABLE == SshExecutable.IDEA_SSH;
-  }
-
-  public void setIdeaSsh(boolean value) {
-    myState.SSH_EXECUTABLE = value ? SshExecutable.IDEA_SSH : SshExecutable.NATIVE_SSH;
-  }
-
   public boolean autoUpdateIfPushRejected() {
     return myState.PUSH_AUTO_UPDATE;
   }
@@ -198,6 +184,18 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public boolean isAutoCommitOnCherryPick() {
     return myState.AUTO_COMMIT_ON_CHERRY_PICK;
+  }
+
+  /**
+   * Provides migration from project settings.
+   * This method is to be removed in IDEA 13: it should be moved to {@link GitVcsApplicationSettings}
+   */
+  @Deprecated
+  public boolean isIdeaSsh() {
+    if (getAppSettings().getIdeaSsh() == null) { // app setting has not been initialized yet => migrate the project setting there
+      getAppSettings().setIdeaSsh(myState.SSH_EXECUTABLE);
+    }
+    return getAppSettings().getIdeaSsh() == GitVcsApplicationSettings.SshExecutable.IDEA_SSH;
   }
 
 }

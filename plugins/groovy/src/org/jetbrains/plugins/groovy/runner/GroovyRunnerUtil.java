@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -30,12 +31,18 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
  */
 public class GroovyRunnerUtil {
   @Nullable
-  public static PsiClass getRunningClass(PsiElement element) {
+  public static PsiClass getRunningClass(@Nullable PsiElement element) {
     if (element == null) return null;
 
     final PsiFile file = element.getContainingFile();
-
     if (!(file instanceof GroovyFile)) return null;
+
+    for (PsiClass clazz = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+         clazz != null;
+         clazz = PsiTreeUtil.getParentOfType(clazz, PsiClass.class)) {
+      if (canBeRunByGroovy(clazz)) return clazz;
+    }
+
     if (((GroovyFile)file).isScript()) return ((GroovyFile)file).getScriptClass();
 
     final PsiClass[] classes = ((GroovyFile)file).getClasses();

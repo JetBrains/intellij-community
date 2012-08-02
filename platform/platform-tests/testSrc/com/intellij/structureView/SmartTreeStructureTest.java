@@ -1,17 +1,36 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.*;
+import com.intellij.openapi.ui.Queryable;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 
 public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestCase {
+  private final Queryable.PrintInfo myPrintInfo = new Queryable.PrintInfo();
   private TestTreeModel myModel;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public SmartTreeStructureTest() {
     PlatformTestCase.initPlatformLangPrefix();
   }
@@ -21,14 +40,13 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
     super.setUp();
     TestTreeModel.StringTreeElement root = new TestTreeModel.StringTreeElement("root");
     myModel = new TestTreeModel(root);
-    root.addChild("abc").addChild("abcde");
-    root.addChild("bcd").addChild("bhgyt");
+    root.addChild("abc").addChild("abc_de");
+    root.addChild("bcd").addChild("bhg_yt");
     root.addChild("ade").addChild("aed");
     root.addChild("bft").addChild("ttt");
     root.addChild("xxx");
     root.addChild("eed").addChild("zzz");
     root.addChild("xxx").addChild("aaa").addChild("bbb");
-
   }
 
   public void testGrouping() throws Exception {
@@ -42,12 +60,12 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                          "..abc\n" +
                          "...Group:a\n" +
                          "....Group:d\n" +
-                         ".....abcde\n" +
+                         ".....abc_de\n" +
                          ".Group:b\n" +
                          "..Group:d\n" +
                          "...bcd\n" +
                          "....Group:b\n" +
-                         ".....bhgyt\n" +
+                         ".....bhg_yt\n" +
                          "..Group:f\n" +
                          "...bft\n" +
                          "....ttt\n" +
@@ -59,13 +77,11 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                          "..Group:a\n" +
                          "...aaa\n" +
                          "....Group:b\n" +
-                         ".....bbb\n", PlatformTestUtil.DEFAULT_COMPARATOR);
-
-
+                         ".....bbb\n", PlatformTestUtil.createComparator(myPrintInfo));
   }
 
   public void testFiltering() throws Exception {
-    myModel.addFlter(new Filter(){
+    myModel.addFlter(new Filter() {
       @Override
       @NotNull
       public ActionPresentation getPresentation() {
@@ -87,14 +103,14 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
       public boolean isReverted() {
         return false;
       }
-                     });
+    });
 
     assertStructureEqual("root\n" +
                          ".Group:b\n" +
                          "..Group:d\n" +
                          "...bcd\n" +
                          "....Group:b\n" +
-                         ".....bhgyt\n" +
+                         ".....bhg_yt\n" +
                          "..Group:f\n" +
                          "...bft\n" +
                          "....ttt\n" +
@@ -102,13 +118,10 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                          "..eed\n" +
                          "...zzz\n" +
                          ".xxx\n" +
-                         ".xxx\n", PlatformTestUtil.DEFAULT_COMPARATOR);
-
+                         ".xxx\n", PlatformTestUtil.createComparator(myPrintInfo));
   }
 
   public void testSorting() throws Exception {
-
-
     myModel.addSorter(new Sorter() {
       @Override
       public Comparator getComparator() {
@@ -179,12 +192,12 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                      "..abc\n" +
                      "...Group:a\n" +
                      "....Group:d\n" +
-                     ".....abcde\n" +
+                     ".....abc_de\n" +
                      ".Group:b\n" +
                      "..Group:d\n" +
                      "...bcd\n" +
                      "....Group:b\n" +
-                     ".....bhgyt\n" +
+                     ".....bhg_yt\n" +
                      "..Group:f\n" +
                      "...bft\n" +
                      "....ttt\n" +
@@ -196,9 +209,7 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                      "..Group:a\n" +
                      "...aaa\n" +
                      "....Group:b\n" +
-                     ".....bbb\n"
-                         , null);
-
+                     ".....bbb\n", null);
   }
 
   public void testUnsorted(){
@@ -223,16 +234,11 @@ public class SmartTreeStructureTest extends LightPlatformCodeInsightFixtureTestC
                          "..aaa\n" +
                          "...zzz\n" +
                          ".xxx\n", null);
-
   }
 
-  private void assertStructureEqual(@NonNls String expected, Comparator comparator) {
+  private void assertStructureEqual(@NonNls String expected, @Nullable Comparator comparator) {
     SmartTreeStructure structure = new SmartTreeStructure(myFixture.getProject(), myModel);
-
     String actual = PlatformTestUtil.print(structure, structure.getRootElement(), 0, comparator, -1, '.', null).toString();
-
-
     assertEquals(expected, actual);
   }
-
 }

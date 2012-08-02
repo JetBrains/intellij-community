@@ -18,8 +18,8 @@ package com.intellij.android.designer.propertyTable;
 import com.android.sdklib.SdkConstants;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.MetaModel;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.IPropertyDecorator;
-import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.editors.BooleanEditor;
@@ -65,13 +65,14 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
     }
   }
 
+  @NotNull
   @Override
   public List<Property<RadViewComponent>> getChildren(@Nullable RadViewComponent component) {
     return myOptions;
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     StringBuilder value = new StringBuilder("[");
     Set<String> options = getOptions(component);
     int index = 0;
@@ -87,12 +88,12 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
   }
 
   @Override
-  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
     return getAttribute(component) == null;
   }
 
   @Override
-  public void setDefaultValue(RadViewComponent component) throws Exception {
+  public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
     final XmlAttribute attribute = getAttribute(component);
     if (attribute != null) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -205,22 +206,22 @@ public class FlagProperty extends Property<RadViewComponent> implements IPropert
     }
 
     @Override
-    public Object getValue(RadViewComponent component) throws Exception {
+    public Object getValue(@NotNull RadViewComponent component) throws Exception {
       return isOption(component, myValueName);
     }
 
     @Override
-    public void setValue(RadViewComponent component, Object value) throws Exception {
+    public void setValue(@NotNull RadViewComponent component, Object value) throws Exception {
       setOption(component, myValueName, (Boolean)value);
     }
 
     @Override
-    public boolean isDefaultValue(RadViewComponent component) throws Exception {
+    public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
       return !isOption(component, myValueName);
     }
 
     @Override
-    public void setDefaultValue(RadViewComponent component) throws Exception {
+    public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
       setValue(component, Boolean.FALSE);
     }
 

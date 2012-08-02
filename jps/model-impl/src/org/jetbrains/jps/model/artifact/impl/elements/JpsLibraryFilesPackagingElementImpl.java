@@ -2,11 +2,11 @@ package org.jetbrains.jps.model.artifact.impl.elements;
 
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElementKind;
+import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.artifact.elements.JpsLibraryFilesPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -20,10 +20,11 @@ import java.util.List;
  * @author nik
  */
 public class JpsLibraryFilesPackagingElementImpl extends JpsComplexPackagingElementBase<JpsLibraryFilesPackagingElementImpl> implements JpsLibraryFilesPackagingElement {
-  private static final JpsElementKind<JpsLibraryReference> LIBRARY_REFERENCE_KIND = new JpsElementKindBase<JpsLibraryReference>("library reference");
+  private static final JpsElementChildRole<JpsLibraryReference>
+    LIBRARY_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("library reference");
 
   public JpsLibraryFilesPackagingElementImpl(@NotNull JpsLibraryReference reference) {
-    myContainer.setChild(LIBRARY_REFERENCE_KIND, reference);
+    myContainer.setChild(LIBRARY_REFERENCE_CHILD_ROLE, reference);
   }
 
   private JpsLibraryFilesPackagingElementImpl(JpsLibraryFilesPackagingElementImpl original) {
@@ -39,7 +40,7 @@ public class JpsLibraryFilesPackagingElementImpl extends JpsComplexPackagingElem
   @Override
   @NotNull
   public JpsLibraryReference getLibraryReference() {
-    return myContainer.getChild(LIBRARY_REFERENCE_KIND);
+    return myContainer.getChild(LIBRARY_REFERENCE_CHILD_ROLE);
   }
 
   @Override

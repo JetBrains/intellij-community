@@ -35,6 +35,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
@@ -317,6 +318,9 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ApplicationManager.getApplication().runReadAction(new Computable<VcsRoot>() {
       @Nullable
       public VcsRoot compute() {
+        if (myProject.isDisposed()) {
+          return null;
+        }
         VirtualFile vFile = ChangesUtil.findValidParent(file);
         if (vFile != null) {
           return getVcsRootObjectFor(vFile);
@@ -359,8 +363,13 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     return ! myMappings.isEmpty();
   }
 
-public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
-    if (!Registry.is("vcs.showConsole")) return;
+  public void addMessageToConsoleWindow(final String message, final TextAttributes attributes) {
+    if (!Registry.is("vcs.showConsole")) {
+      return;
+    }
+    if (StringUtil.isEmptyOrSpaces(message)) {
+      return;
+    }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
@@ -397,7 +406,7 @@ public void addMessageToConsoleWindow(final String message, final TextAttributes
       editorSettings.setFoldingOutlineShown(false);
 
       ((EditorImpl)editor).getScrollPane().setBorder(null);
-      myEditorAdapter = new EditorAdapter(editor, myProject);
+      myEditorAdapter = new EditorAdapter(editor, myProject, false);
       final JPanel panel = new JPanel(new BorderLayout());
       panel.add(editor.getComponent(), BorderLayout.CENTER);
 

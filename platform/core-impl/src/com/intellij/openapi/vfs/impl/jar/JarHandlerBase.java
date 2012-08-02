@@ -38,6 +38,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JarHandlerBase {
+  private static final long DEFAULT_LENGTH = 0L;
+  private static final long DEFAULT_TIMESTAMP = -1L;
+
   protected final TimedReference<JarFile> myJarFile = new TimedReference<JarFile>(null);
   protected SoftReference<Map<String, EntryInfo>> myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(null);
   protected final Object lock = new Object();
@@ -246,7 +249,7 @@ public class JarHandlerBase {
   public long getLength(@NotNull final VirtualFile file) {
     synchronized (lock) {
       final JarFile.JarEntry entry = convertToEntry(file);
-      return entry != null ? entry.getSize() : 0;
+      return entry != null ? entry.getSize() : DEFAULT_LENGTH;
     }
   }
 
@@ -282,7 +285,7 @@ public class JarHandlerBase {
     if (file.getParent() == null) return getOriginalFile().lastModified(); // Optimization
     synchronized (lock) {
       final JarFile.JarEntry entry = convertToEntry(file);
-      return entry != null ? entry.getTime() : -1L;
+      return entry != null ? entry.getTime() : DEFAULT_TIMESTAMP;
     }
   }
 
@@ -307,8 +310,12 @@ public class JarHandlerBase {
   @Nullable
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
     synchronized (lock) {
+      final EntryInfo entryInfo = getEntryInfo(getRelativePath(file));
+      if (entryInfo == null) return null;
       final JarFile.JarEntry entry = convertToEntry(file);
-      return entry != null ? new FileAttributes(entry.isDirectory(), false, false, false, entry.getSize(), entry.getTime(), false) : null;
+      final long length = entry != null ? entry.getSize() : DEFAULT_LENGTH;
+      final long timeStamp = entry != null ? entry.getTime() : DEFAULT_TIMESTAMP;
+      return new FileAttributes(entryInfo.isDirectory, false, false, false, length, timeStamp, false);
     }
   }
 }

@@ -179,7 +179,9 @@ public class GitVcsPanel {
   public void save(@NotNull GitVcsSettings settings) {
     settings.getAppSettings().setPathToGit(getCurrentExecutablePath());
     myVcs.checkVersion();
-    settings.setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()));
+    settings.getAppSettings().setIdeaSsh(IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem()) ?
+                                         GitVcsApplicationSettings.SshExecutable.IDEA_SSH :
+                                         GitVcsApplicationSettings.SshExecutable.NATIVE_SSH);
     settings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
 
     Object policyItem = myConvertTextFilesComboBox.getSelectedItem();

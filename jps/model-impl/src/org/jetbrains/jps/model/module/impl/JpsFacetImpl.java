@@ -2,13 +2,12 @@ package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementCollection;
-import org.jetbrains.jps.model.JpsElementKind;
 import org.jetbrains.jps.model.JpsElementProperties;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
-import org.jetbrains.jps.model.impl.JpsNamedCompositeElementBase;
-import org.jetbrains.jps.model.impl.JpsTypedDataImpl;
-import org.jetbrains.jps.model.impl.JpsTypedDataKind;
+import org.jetbrains.jps.model.impl.*;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.impl.JpsTypedDataRole;
 import org.jetbrains.jps.model.module.JpsFacet;
 import org.jetbrains.jps.model.module.JpsFacetReference;
 import org.jetbrains.jps.model.module.JpsFacetType;
@@ -18,13 +17,13 @@ import org.jetbrains.jps.model.module.JpsModule;
  * @author nik
  */
 public class JpsFacetImpl extends JpsNamedCompositeElementBase<JpsFacetImpl> implements JpsFacet {
-  private static final JpsTypedDataKind<JpsFacetType<?>> TYPED_DATA_KIND = new JpsTypedDataKind<JpsFacetType<?>>();
-  private static final JpsElementKind<JpsFacetReference> PARENT_FACET_REFERENCE = new JpsElementKindBase<JpsFacetReference>("parent facet");
+  private static final JpsTypedDataRole<JpsFacetType<?>> TYPED_DATA_ROLE = new JpsTypedDataRole<JpsFacetType<?>>();
+  private static final JpsElementChildRole<JpsFacetReference> PARENT_FACET_REFERENCE = JpsElementChildRoleBase.create("parent facet");
 
   public <P extends JpsElementProperties>JpsFacetImpl(JpsFacetType<?> facetType, @NotNull String name, @NotNull P properties) {
     super(name);
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsFacetType<?>>(facetType, properties));
-    myContainer.setChild(JpsFacetKind.COLLECTION_KIND);
+    myContainer.setChild(TYPED_DATA_ROLE, new JpsTypedDataImpl<JpsFacetType<?>>(facetType, properties));
+    myContainer.setChild(JpsFacetRole.COLLECTION_ROLE);
   }
 
   private JpsFacetImpl(JpsNamedCompositeElementBase<JpsFacetImpl> original) {
@@ -40,11 +39,11 @@ public class JpsFacetImpl extends JpsNamedCompositeElementBase<JpsFacetImpl> imp
   @Override
   @NotNull
   public JpsFacetType<?> getType() {
-    return myContainer.getChild(TYPED_DATA_KIND).getType();
+    return myContainer.getChild(TYPED_DATA_ROLE).getType();
   }
 
   public <P extends JpsElementProperties> P getProperties(@NotNull JpsFacetType<P> type) {
-    return myContainer.getChild(TYPED_DATA_KIND).getProperties(type);
+    return myContainer.getChild(TYPED_DATA_ROLE).getProperties(type);
   }
 
   @Override

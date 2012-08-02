@@ -129,7 +129,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     treeScrollPane.setPreferredSize(new Dimension(250, -1));
     myComponentTree.initQuickFixManager(treeScrollPane.getViewport());
 
-    myPropertyTablePanel = new PropertyTablePanel();
+    myPropertyTablePanel = new PropertyTablePanel(myProject);
 
     myToolWindowPanel = new Splitter(true, 0.42f);
     myToolWindowPanel.setFirstComponent(treeScrollPane);

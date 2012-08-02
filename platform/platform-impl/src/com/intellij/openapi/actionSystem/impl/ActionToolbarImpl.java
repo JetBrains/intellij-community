@@ -55,10 +55,19 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.impl.ActionToolbarImpl");
+
+  private static List<ActionToolbarImpl> ourToolbars = new LinkedList<ActionToolbarImpl>();
+
+  public static void updateAllToolbarsImmediately() {
+    for (ActionToolbarImpl toolbar : ourToolbars) {
+      toolbar.updateActionsImmediately();
+    }
+  }
 
   /**
    * This array contains Rectangles which define bounds of the corresponding
@@ -164,6 +173,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   @Override
   public void addNotify() {
     super.addNotify();
+    ourToolbars.add(this);
     myActionManager.addTimerListener(500, myWeakTimerListener);
     myActionManager.addTransparentTimerListener(500, myWeakTimerListener);
   }
@@ -183,6 +193,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   @Override
   public void removeNotify() {
     super.removeNotify();
+    ourToolbars.remove(this);
     myActionManager.removeTimerListener(myWeakTimerListener);
     myActionManager.removeTransparentTimerListener(myWeakTimerListener);
   }

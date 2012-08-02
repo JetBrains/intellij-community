@@ -1344,6 +1344,16 @@ public class ContainerUtil extends ContainerUtilRt {
     return to;
   }
 
+  public static <T> int indexOfIdentity(List<T> list, T element) {
+    for (int i = 0, listSize = list.size(); i < listSize; i++) {
+      if (list.get(i) == element) {
+        return i;
+      }
+    }
+    return -1;
+
+  }
+
   public static <T> int indexOf(List<T> list, Condition<T> condition) {
     for (int i = 0, listSize = list.size(); i < listSize; i++) {
       T t = list.get(i);

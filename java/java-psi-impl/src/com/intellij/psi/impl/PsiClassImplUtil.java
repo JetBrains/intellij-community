@@ -992,8 +992,16 @@ public class PsiClassImplUtil {
     final FileIndexFacade fileIndex = ServiceManager.getService(file1.getProject(), FileIndexFacade.class);
     final VirtualFile vfile1 = file1.getViewProvider().getVirtualFile();
     final VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
-    return (fileIndex.isInSource(vfile1) || fileIndex.isInLibraryClasses(vfile1)) &&
-           (fileIndex.isInSource(vfile2) || fileIndex.isInLibraryClasses(vfile2));
+    boolean lib1 = fileIndex.isInLibraryClasses(vfile1);
+    boolean lib2 = fileIndex.isInLibraryClasses(vfile2);
+    if (aClass instanceof PsiCompiledElement && another instanceof PsiCompiledElement && lib1 && lib2) {
+      if (fileIndex.isInSdkClasses(vfile1) && fileIndex.isInSdkClasses(vfile2)) {
+        return true;
+      }
+      return vfile1.equals(vfile2);
+    }
+
+    return (fileIndex.isInSource(vfile1) || lib1) && (fileIndex.isInSource(vfile2) || lib2);
   }
 
   private static boolean compareClassSeqNumber(@NotNull PsiClass aClass, @NotNull PsiClass another) {

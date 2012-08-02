@@ -4611,6 +4611,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean isCutVisible(@NotNull DataContext dataContext) {
+      if (!isCutEnabled(dataContext)) return false;
       return getSelectionModel().hasSelection() || getSelectionModel().hasBlockSelection();
     }
 

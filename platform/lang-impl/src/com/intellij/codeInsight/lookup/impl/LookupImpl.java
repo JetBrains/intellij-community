@@ -47,7 +47,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -98,6 +97,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private boolean myStableStart;
   private RangeMarker myLookupStartMarker;
+  private RangeMarker myLookupOriginalStartMarker;
   private final JBList myList = new JBList(new CollectionListModel<LookupElement>()) {
     @Override
     protected void processKeyEvent(final KeyEvent e) {
@@ -211,6 +211,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myIconPanel.add(myProcessIcon);
 
     updateLookupStart(0);
+
+    int caret = myEditor.getCaretModel().getOffset();
+    myLookupOriginalStartMarker = myEditor.getDocument().createRangeMarker(caret, caret);
+    myLookupOriginalStartMarker.setGreedyToLeft(true);
 
     final CollectionListModel<LookupElement> model = getListModel();
     addEmptyItem(model);
@@ -358,7 +362,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     for (LookupActionProvider provider : LookupActionProvider.EP_NAME.getExtensions()) {
       provider.fillActions(element, this, consumer);
     }
-    consumer.consume(new ShowHideIntentionIconLookupAction());
+    if (!consumer.getResult().isEmpty()) {
+      consumer.consume(new ShowHideIntentionIconLookupAction());
+    }
     return consumer.getResult();
   }
 
@@ -741,6 +747,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return myLookupStartMarker.getStartOffset();
   }
 
+  public int getLookupOriginalStart() {
+    return myLookupOriginalStartMarker.isValid() ? myLookupOriginalStartMarker.getStartOffset() : -1;
+  }
+
   public boolean performGuardedChange(Runnable change) {
     return performGuardedChange(change, null);
   }
@@ -939,7 +949,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         @Override
         public void run() {
           assert !myDisposed;
-          if (!Registry.is("completion.show.intention.icon") || ((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) {
+          if (!ShowHideIntentionIconLookupAction.shouldShowLookupHint() ||
+              ((CompletionExtender)myList.getExpandableItemsHandler()).isShowing()) {
             return;
           }
           myElementHint = new LookupHint();
@@ -1235,6 +1246,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       myLookupStartMarker.dispose();
       myLookupStartMarker = null;
     }
+    myLookupOriginalStartMarker.dispose();
     Disposer.dispose(myProcessIcon);
     Disposer.dispose(myHintAlarm);
     myDisposed = true;
@@ -1363,12 +1375,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
           int maxCellWidth = myLookupTextWidth + myCellRenderer.getIconIndent();
           int scrollBarWidth = myScrollPane.getPreferredSize().width - myScrollPane.getViewport().getPreferredSize().width;
           int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().MAX_LOOKUP_WIDTH2);
-          int adWidth = myAdComponent.getAdComponent().getPreferredSize().width;
-          int panelHeight = mainPanel.getPreferredSize().height;
+
+          Dimension adSize = myAdComponent.getAdComponent().getPreferredSize();
+
+          int panelHeight = myList.getPreferredScrollableViewportSize().height + adSize.height;
           if (getListModel().getSize() > myList.getVisibleRowCount() && myList.getVisibleRowCount() >= 5) {
             panelHeight -= myList.getFixedCellHeight() / 2;
           }
-          return new Dimension(Math.max(listWidth, adWidth), Math.min(panelHeight, myMaximumHeight));
+          return new Dimension(Math.max(listWidth, adSize.width), Math.min(panelHeight, myMaximumHeight));
         }
 
         @Override
@@ -1420,7 +1434,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       if (myElementHint != null && getCurrentItem() != null) {
         final Rectangle bounds = getCurrentItemBounds();
         myElementHint.setSize(myElementHint.getPreferredSize());
-        myElementHint.setLocation(new Point(bounds.x + bounds.width - myElementHint.getWidth() + myScrollPane.getVerticalScrollBar().getWidth(), bounds.y));
+        JScrollBar sb = myScrollPane.getVerticalScrollBar();
+        myElementHint.setLocation(new Point(bounds.x + bounds.width - myElementHint.getWidth() + (sb.isVisible() ? sb.getWidth() : 0), bounds.y));
       }
     }
 

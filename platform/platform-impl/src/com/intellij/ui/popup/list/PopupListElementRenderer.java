@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,15 @@
  */
 package com.intellij.ui.popup.list;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
 import com.intellij.openapi.ui.popup.ListPopupStep;
-import com.intellij.ui.popup.PopupIcons;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 
 public class PopupListElementRenderer extends GroupedItemsListRenderer {
-
   private final ListPopupImpl myPopup;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
@@ -71,8 +71,10 @@ public class PopupListElementRenderer extends GroupedItemsListRenderer {
 
     if (step.hasSubstep(value) && isSelectable) {
       myNextStepLabel.setVisible(true);
-      myNextStepLabel.setIcon(isSelected ? (UIUtil.isUnderAquaLookAndFeel() ? PopupIcons.HAS_NEXT_ICON_INVERTED : PopupIcons.HAS_NEXT_ICON) 
-                                         : PopupIcons.HAS_NEXT_ICON_GRAYED);
+      final boolean isDark = ColorUtil.isDark(UIUtil.getListSelectionBackground());
+      myNextStepLabel.setIcon(isSelected ? isDark ? AllIcons.Icons.Ide.NextStepInverted
+                                                  : AllIcons.Icons.Ide.NextStep
+                                         : AllIcons.Icons.Ide.NextStepGrayed);
     }
     else {
       myNextStepLabel.setVisible(false);

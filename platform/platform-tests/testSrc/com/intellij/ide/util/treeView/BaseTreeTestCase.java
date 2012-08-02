@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.*;
@@ -21,6 +36,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
 abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   private BaseTreeBuilder myBuilder;
@@ -33,17 +49,16 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   private boolean myBgStructureBuilding;
   protected Set<Object> myForegroundLoadingNodes = new HashSet<Object>();
 
-  private boolean myPassthroughMode;
+  private boolean myPassThroughMode;
 
   final Set<StructureElement> myAutoExpand = new HashSet<StructureElement>();
   final Set<StructureElement> myAlwaysShowPlus = new HashSet<StructureElement>();
   boolean mySmartExpand;
-  private Thread myTestThread;
   protected Validator myValidator;
 
-  protected BaseTreeTestCase(boolean passthrougth) {
+  protected BaseTreeTestCase(boolean passThrough) {
     this(false, false);
-    myPassthroughMode = passthrougth;
+    myPassThroughMode = passThrough;
   }
 
   protected BaseTreeTestCase(boolean yieldingUiBuild, boolean bgStructureBuilding) {
@@ -79,7 +94,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void waitBuilderToCome(final Condition<Object> condition) throws Exception {
-    boolean success = new WaitFor(600000) {
+    boolean success = new WaitFor(60000) {
       @Override
       protected boolean condition() {
         final boolean[] ready = new boolean[]{false};
@@ -104,7 +119,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       throw new Exception(myCancelRequest);
     }
 
-    if (myCancelRequest == null && !myReadyRequest) {
+    if (!myReadyRequest) {
       if (!getBuilder().isDisposed()) {
         Assert.assertTrue(getBuilder().getUi().getNodeActions().isEmpty());
       }
@@ -140,7 +155,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   protected void initBuilder(BaseTreeBuilder builder) {
     myBuilder = builder;
     myBuilder.setCanYieldUpdate(myYieldingUiBuild);
-    myBuilder.setPassthroughMode(myPassthroughMode);
+    myBuilder.setPassthroughMode(myPassThroughMode);
   }
 
 
@@ -240,7 +255,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
 
   void _runBackgroundLoading(Runnable runnable) {
     try {
-      Thread.currentThread().sleep(getChildrenLoadingDelay());
+      Thread.sleep(getChildrenLoadingDelay());
       runnable.run();
     }
     catch (InterruptedException e) {
@@ -268,7 +283,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     };
   }
 
-  AbstractTreeUpdater _createUpdater(AbstractTreeBuilder builder) {
+  static AbstractTreeUpdater _createUpdater(AbstractTreeBuilder builder) {
     final AbstractTreeUpdater updater = new AbstractTreeUpdater(builder) {
       @Override
       protected void invokeLater(Runnable runnable) {
@@ -336,7 +351,6 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     myAutoExpand.clear();
     myAlwaysShowPlus.clear();
     myForegroundLoadingNodes.clear();
-    myTestThread = Thread.currentThread();
   }
 
   @Override
@@ -456,7 +470,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   private void checkThread(@Nullable Object element) {
     String message = "Wrong thread used for query structure, thread=" + Thread.currentThread() + " element=" + element;
 
-    if (!myPassthroughMode) {
+    if (!myPassThroughMode) {
       if (isBgStructureBuilding()) {
         if (myForegroundLoadingNodes.contains(element)) {
           Assert.assertTrue(message, EventQueue.isDispatchThread());
@@ -471,7 +485,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   protected final void invokeLaterIfNeeded(Runnable runnable) {
-    if (myPassthroughMode) {
+    if (myPassThroughMode) {
       runnable.run();
     } else {
       UIUtil.invokeLaterIfNeeded(runnable);
@@ -479,7 +493,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   protected final void invokeAndWaitIfNeeded(Runnable runnable) {
-    if (myPassthroughMode) {
+    if (myPassThroughMode) {
       runnable.run();
     } else {
       UIUtil.invokeAndWaitIfNeeded(runnable);
@@ -487,7 +501,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   protected final void assertEdt() {
-    if (myPassthroughMode) {
+    if (myPassThroughMode) {
       checkThread(null);
     } else if (!EventQueue.isDispatchThread()) {
       myCancelRequest = new AssertionFailedError("Must be event dispatch thread");
@@ -532,8 +546,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }
   }
 
-  protected interface Validator {
-    boolean isValid(Object element);
+  protected interface Validator<T> {
+    boolean isValid(T element);
   }
-
 }

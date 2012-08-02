@@ -57,7 +57,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       modifiedNamePattern = "*" + namePattern + (namePattern.endsWith(" ") ? "" : "*");
     }
 
-    boolean empty = namePattern.isEmpty() || namePattern.equals("@");    // TODO[yole]: remove implicit dependency
+    boolean empty = namePattern.isEmpty() ||
+                    namePattern.equals("@") && base.getModel() instanceof GotoClassModel2;    // TODO[yole]: remove implicit dependency
     if (empty && !base.canShowListForEmptyPattern()) return;
 
     List<String> namesList = new ArrayList<String>();
@@ -240,7 +241,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       LOG.assertTrue(!pattern.isEmpty(), base);
     }
 
-    if (pattern.startsWith("@")) {
+    if (pattern.startsWith("@") && base.getModel() instanceof GotoClassModel2) {
       pattern = pattern.substring(1);
     }
 

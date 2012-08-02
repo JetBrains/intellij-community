@@ -19,8 +19,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.CharTableImpl;
-import com.intellij.psi.impl.source.parsing.xml.OldXmlParser;
+import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeUtil;
@@ -405,7 +404,7 @@ public class XmlParsingTest extends ParsingTestCase {
   }
 
   private CompositeElement parseManually(final String value, final IElementType xmlElementDecl, XmlEntityDecl.EntityContextType parseType) {
-    return (CompositeElement)new OldXmlParser(value, xmlElementDecl, parseType, new CharTableImpl(), getPsiManager()).parse();
+    return (CompositeElement)new DtdParsing(value, xmlElementDecl, parseType, null).parse();
   }
 
   public void testCharacters1() throws Exception {

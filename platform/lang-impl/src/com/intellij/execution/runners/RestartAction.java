@@ -33,7 +33,7 @@ import javax.swing.*;
 /**
  * @author dyoma
  */
-public class RestartAction extends AnAction implements DumbAware {
+public class RestartAction extends AnAction implements DumbAware, AnAction.TransparentUpdate {
   private static final Icon STOP_AND_START_ICON = AllIcons.Actions.Restart;
 
   private ProcessHandler myProcessHandler;

@@ -19,8 +19,8 @@ import com.intellij.android.designer.model.PropertyParser;
 import com.intellij.android.designer.model.RadCustomViewComponent;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
@@ -62,13 +62,13 @@ public class CustomViewProperty extends Property<RadCustomViewComponent> impleme
   }
 
   @Override
-  public Object getValue(RadCustomViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadCustomViewComponent component) throws Exception {
     String viewClass = component.getViewClass();
     return viewClass == null ? "" : viewClass;
   }
 
   @Override
-  public void setValue(final RadCustomViewComponent component, final Object value) throws Exception {
+  public void setValue(@NotNull final RadCustomViewComponent component, final Object value) throws Exception {
     if (StringUtil.isEmpty((String)value)) {
       return;
     }
@@ -94,16 +94,16 @@ public class CustomViewProperty extends Property<RadCustomViewComponent> impleme
   }
 
   @Override
-  public boolean isDefaultValue(RadCustomViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadCustomViewComponent component) throws Exception {
     return false;
   }
 
   @Override
-  public void setDefaultValue(RadCustomViewComponent component) throws Exception {
+  public void setDefaultValue(@NotNull RadCustomViewComponent component) throws Exception {
   }
 
   @Override
-  public boolean availableFor(List<RadComponent> components) {
+  public boolean availableFor(List<PropertiesContainer> components) {
     return false;
   }
 

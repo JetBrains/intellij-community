@@ -16,7 +16,9 @@
 package git4idea.history;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -24,6 +26,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
@@ -32,6 +35,7 @@ import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.CommitHashPlusParents;
 import git4idea.tests.GitTest;
+import org.jetbrains.annotations.NotNull;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -40,6 +44,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import static git4idea.GitUtil.getShortHash;
+import static git4idea.tests.GitTestRepository.createFile;
 import static org.testng.Assert.*;
 
 /**
@@ -116,7 +122,7 @@ public class GitHistoryUtilsTest extends GitTest {
 
     // Retrieve hashes and timestamps
     String[] revisions = myRepo.log("--pretty=format:%H#%at#%P", "-M").split("\n");
-    // later revisions to the first in the log output
+    // newer revisions go first in the log output
     for (int i = revisions.length - 1, j = 0; i >= 0; i--, j++) {
       String[] details = revisions[j].trim().split("#");
       String[] parents;
@@ -135,6 +141,137 @@ public class GitHistoryUtilsTest extends GitTest {
     }
 
     assertEquals(myRevisionsAfterRename.size(), 5);
+  }
+
+  // Inspired by IDEA-89347
+  @Test
+  void testCyclicRename() throws Exception {
+    List<TestCommit> commits = new ArrayList<TestCommit>();
+
+    File source = myRepo.createDir("source");
+    File initialFile = createFile(source, "PostHighlightingPass.java", "Initial content");
+    String initMessage = "Created PostHighlightingPass.java in source";
+    String hash = myRepo.addCommit(initMessage);
+    commits.add(new TestCommit(hash, initMessage, initialFile.getPath()));
+
+    String filePath = initialFile.getPath();
+
+    commits.add(modify(filePath));
+
+    TestCommit commit = move(filePath, myRepo.createDir("codeInside-impl"), "Moved from source to codeInside-impl");
+    filePath = commit.myPath;
+    commits.add(commit);
+    commits.add(modify(filePath));
+
+    commit = move(filePath, myRepo.createDir("codeInside"), "Moved from codeInside-impl to codeInside");
+    filePath = commit.myPath;
+    commits.add(commit);
+    commits.add(modify(filePath));
+
+    commit = move(filePath, myRepo.createDir("lang-impl"), "Moved from codeInside to lang-impl");
+    filePath = commit.myPath;
+    commits.add(commit);
+    commits.add(modify(filePath));
+
+    commit = move(filePath, source, "Moved from lang-impl back to source");
+    filePath = commit.myPath;
+    commits.add(commit);
+    commits.add(modify(filePath));
+
+    commit = move(filePath, myRepo.createDir("java"), "Moved from source to java");
+    filePath = commit.myPath;
+    commits.add(commit);
+    commits.add(modify(filePath));
+
+    Collections.reverse(commits);
+    myRepo.refresh();
+    VirtualFile vFile = VcsUtil.getVirtualFile(filePath);
+    assertNotNull(vFile);
+    List<VcsFileRevision> history = GitHistoryUtils.history(myProject, new FilePathImpl(vFile));
+    assertEquals(history.size(), commits.size(), "History size doesn't match. Actual history: \n" + toReadable(history));
+    assertEquals(toReadable(history), toReadable(commits), "History is different.");
+  }
+
+  private static class TestCommit {
+    private final String myHash;
+    private final String myMessage;
+    private final String myPath;
+
+    public TestCommit(String hash, String message, String path) {
+      myHash = hash;
+      myMessage = message;
+      myPath = path;
+    }
+
+    public String getHash() {
+      return myHash;
+    }
+
+    public String getCommitMessage() {
+      return myMessage;
+    }
+  }
+
+  private TestCommit move(String file, File dir, String message) throws Exception {
+    final String NAME = "PostHighlightingPass.java";
+    myRepo.mv(file, dir.getPath());
+    file = new File(dir, NAME).getPath();
+    String hash = myRepo.addCommit(message);
+    return new TestCommit(hash, message, file);
+  }
+
+  private TestCommit modify(String file) throws IOException {
+    editAppend(file, "Modified");
+    String message = "Modified PostHighlightingPass";
+    String hash = myRepo.addCommit(message);
+    return new TestCommit(hash, message, file);
+  }
+
+  private static void editAppend(String file, String content) throws IOException {
+    FileUtil.appendToFile(new File(file), content);
+  }
+
+  @NotNull
+  private String toReadable(@NotNull Collection<VcsFileRevision> history) {
+    int maxSubjectLength = findMaxLength(history, new Function<VcsFileRevision, String>() {
+      @Override
+      public String fun(VcsFileRevision revision) {
+        return revision.getCommitMessage();
+      }
+    });
+    StringBuilder sb = new StringBuilder();
+    for (VcsFileRevision revision : history) {
+      GitFileRevision rev = (GitFileRevision)revision;
+      String relPath = FileUtil.getRelativePath(myRepo.getRootDir().getPath(), rev.getPath().getPath(), '/');
+      sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(rev.getHash()), rev.getCommitMessage(), relPath));
+    }
+    return sb.toString();
+  }
+
+  private String toReadable(List<TestCommit> commits) {
+    int maxSubjectLength = findMaxLength(commits, new Function<TestCommit, String>() {
+      @Override
+      public String fun(TestCommit revision) {
+        return revision.getCommitMessage();
+      }
+    });
+    StringBuilder sb = new StringBuilder();
+    for (TestCommit commit : commits) {
+      String relPath = FileUtil.getRelativePath(myRepo.getRootDir().getPath(), commit.myPath, '/');
+      sb.append(String.format("%s  %-" + maxSubjectLength + "s  %s%n", getShortHash(commit.getHash()), commit.getCommitMessage(), relPath));
+    }
+    return sb.toString();
+  }
+
+  private static <T> int findMaxLength(@NotNull Collection<T> list, @NotNull Function<T, String> convertor) {
+    int max = 0;
+    for (T element : list) {
+      int length = convertor.fun(element).length();
+      if (length > max) {
+        max = length;
+      }
+    }
+    return max;
   }
 
   @Test

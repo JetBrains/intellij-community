@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.palette;
 
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
@@ -59,7 +60,15 @@ public class PaletteItemsComponent extends JBList {
         clear();
         PaletteItem item = (PaletteItem)value;
 
-        setIcon(item.getIcon());
+        boolean enabled = item.isEnabled();
+        setEnabled(enabled);
+
+        if (enabled) {
+          setIcon(item.getIcon());
+        }
+        else {
+          setIcon(IconLoader.getDisabledIcon(item.getIcon()));
+        }
 
         String title = item.getTitle();
         append(title, SimpleTextAttributes.REGULAR_ATTRIBUTES);

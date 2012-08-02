@@ -4,27 +4,28 @@ import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.DummyJpsElementProperties;
-import org.jetbrains.jps.model.JpsElementKind;
+import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactType;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
-import org.jetbrains.jps.model.impl.JpsElementKindBase;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.impl.JpsNamedCompositeElementBase;
 import org.jetbrains.jps.model.impl.JpsTypedDataImpl;
-import org.jetbrains.jps.model.impl.JpsTypedDataKind;
+import org.jetbrains.jps.model.impl.JpsTypedDataRole;
 
 /**
  * @author nik
  */
 public class JpsArtifactImpl extends JpsNamedCompositeElementBase<JpsArtifactImpl> implements JpsArtifact {
-  private static final JpsElementKind<JpsCompositePackagingElement> ROOT_ELEMENT_KIND = new JpsElementKindBase<JpsCompositePackagingElement>("root element");
-  private static final JpsTypedDataKind<JpsArtifactType> TYPED_DATA_KIND = new JpsTypedDataKind<JpsArtifactType>();
+  private static final JpsElementChildRole<JpsCompositePackagingElement>
+    ROOT_ELEMENT_CHILD_ROLE = JpsElementChildRoleBase.create("root element");
+  private static final JpsTypedDataRole<JpsArtifactType> TYPED_DATA_ROLE = new JpsTypedDataRole<JpsArtifactType>();
   private String myOutputPath;
 
   public JpsArtifactImpl(@NotNull String name, @NotNull JpsCompositePackagingElement rootElement, @NotNull JpsArtifactType type) {
     super(name);
-    myContainer.setChild(ROOT_ELEMENT_KIND, rootElement);
-    myContainer.setChild(TYPED_DATA_KIND, new JpsTypedDataImpl<JpsArtifactType>(type, DummyJpsElementProperties.INSTANCE));
+    myContainer.setChild(ROOT_ELEMENT_CHILD_ROLE, rootElement);
+    myContainer.setChild(TYPED_DATA_ROLE, new JpsTypedDataImpl<JpsArtifactType>(type, DummyJpsElementProperties.INSTANCE));
   }
 
   private JpsArtifactImpl(JpsArtifactImpl original) {
@@ -52,7 +53,7 @@ public class JpsArtifactImpl extends JpsNamedCompositeElementBase<JpsArtifactImp
   @NotNull
   @Override
   public JpsArtifactType getArtifactType() {
-    return myContainer.getChild(TYPED_DATA_KIND).getType();
+    return myContainer.getChild(TYPED_DATA_ROLE).getType();
   }
 
   @NotNull
@@ -64,11 +65,11 @@ public class JpsArtifactImpl extends JpsNamedCompositeElementBase<JpsArtifactImp
   @NotNull
   @Override
   public JpsCompositePackagingElement getRootElement() {
-    return myContainer.getChild(ROOT_ELEMENT_KIND);
+    return myContainer.getChild(ROOT_ELEMENT_CHILD_ROLE);
   }
 
   @Override
   public void setRootElement(@NotNull JpsCompositePackagingElement rootElement) {
-    myContainer.setChild(ROOT_ELEMENT_KIND, rootElement);
+    myContainer.setChild(ROOT_ELEMENT_CHILD_ROLE, rootElement);
   }
 }

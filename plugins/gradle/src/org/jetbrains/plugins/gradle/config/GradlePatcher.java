@@ -1,9 +1,15 @@
 package org.jetbrains.plugins.gradle.config;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleLibraryManager;
+
+import java.io.File;
 
 /**
  * Encapsulates functionality of patching problems from the previous gradle integration releases.
@@ -28,15 +34,19 @@ public class GradlePatcher {
       return;
     }
 
+    // Propagate gradle settings from the current project to the default project if necessary.
     final GradleSettings defaultProjectSettings = GradleSettings.getInstance(defaultProject);
     final GradleSettings currentProjectSettings = GradleSettings.getInstance(project);
-    if (!StringUtil.isEmpty(currentProjectSettings.getGradleHome()) && StringUtil.isEmpty(defaultProjectSettings.getGradleHome())) {
-      GradleSettings.applyGradleHome(currentProjectSettings.getGradleHome(), defaultProject);
+    String projectGradleHome = currentProjectSettings.getGradleHome();
+    String defaultGradleHome = defaultProjectSettings.getGradleHome();
+    if (StringUtil.isEmpty(projectGradleHome) || !StringUtil.isEmpty(defaultGradleHome)) {
+      return;
     }
-    else if (!StringUtil.isEmpty(defaultProjectSettings.getGradleHome())
-             && StringUtil.isEmpty(currentProjectSettings.getGradleHome()))
-    {
-      GradleSettings.applyGradleHome(defaultProjectSettings.getGradleHome(), project);
+    GradleLibraryManager libraryManager = ServiceManager.getService(GradleLibraryManager.class);
+    File autodetectedGradleHome = libraryManager.getAutodetectedGradleHome();
+    // We don't want to store auto-detected value at the settings.
+    if (autodetectedGradleHome == null || !FileUtil.filesEqual(autodetectedGradleHome, new File(projectGradleHome))) {
+      GradleSettings.applyGradleHome(projectGradleHome, defaultProject);
     }
   }
 }

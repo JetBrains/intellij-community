@@ -324,8 +324,18 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       public String convert(TreePath path) {
         final ElementNode lastPathComponent = (ElementNode)path.getLastPathComponent();
         if (lastPathComponent == null) return null;
-        final MemberChooserObject delegate = lastPathComponent.getDelegate();
-        return delegate.getText();
+        String text = lastPathComponent.getDelegate().getText();
+        if (text != null) {
+          int i = text.indexOf(':');
+          if (i >= 0) {
+            text = text.substring(0, i);
+          }
+          i = text.indexOf('(');
+          if (i >= 0) {
+            text = text.substring(0, i);
+          }
+        }
+        return text;
       }
     });
     treeSpeedSearch.setComparator(new SpeedSearchComparator(false));

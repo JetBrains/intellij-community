@@ -665,11 +665,21 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
               return;
             }
             
-            // We're assuming here that there are two possible hint representation modes: popup and layered pane. So, we update
-            // component size and pack the popup in the first case and set new content bounds at the second one.
+            // We're assuming here that there are two possible hint representation modes: popup and layered pane.
             if (hint.isRealPopup()) {
-              hint.getComponent().setPreferredSize(new Dimension(newSize.width, oldSize.height));
-              hint.pack();
+              
+              TooltipProvider tooltipProvider = myTooltipProvider;
+              if (tooltipProvider != null) {
+                // There is a possible case that 'raw' control was rather wide but the 'rich' one is narrower. That's why we try to
+                // re-show the hint here. Benefits: there is a possible case that we'll be able to show nice layered pane-based balloon;
+                // the popup will be re-positioned according to the new width.
+                hint.hide();
+                tooltipProvider.showHint(new LightweightHint(hint.getComponent()));
+              }
+              else {
+                hint.getComponent().setPreferredSize(new Dimension(newSize.width, oldSize.height));
+                hint.pack();
+              }
               return;
             }
 
@@ -835,6 +845,10 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer, docInfo.documentationAnchor, newTextConsumer, hint);
       }
 
+      showHint(hint);
+    }
+
+    public void showHint(LightweightHint hint) {
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, HintManager.ABOVE);
       hintManager.showEditorHint(hint, myEditor, p,

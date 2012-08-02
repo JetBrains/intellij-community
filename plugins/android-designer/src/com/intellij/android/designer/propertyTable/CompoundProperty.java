@@ -17,8 +17,8 @@ package com.intellij.android.designer.propertyTable;
 
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.model.MetaModel;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.IPropertyDecorator;
-import com.intellij.designer.propertyTable.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
@@ -59,6 +59,7 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
     }
   }
 
+  @NotNull
   @Override
   public List<Property<RadViewComponent>> getChildren(@Nullable RadViewComponent component) {
     return myChildren;
@@ -69,7 +70,7 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     StringBuilder value = new StringBuilder();
     int index = 0;
     int empty = 0;
@@ -93,7 +94,7 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
   }
 
   @Override
-  public boolean isDefaultValue(RadViewComponent component) throws Exception {
+  public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
     for (Property<RadViewComponent> childProperty : myChildren) {
       if (!childProperty.isDefaultValue(component)) {
         return false;
@@ -103,7 +104,7 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
   }
 
   @Override
-  public void setDefaultValue(RadViewComponent component) throws Exception {
+  public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
     for (Property<RadViewComponent> childProperty : myChildren) {
       childProperty.setDefaultValue(component);
     }

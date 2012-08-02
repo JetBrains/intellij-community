@@ -46,6 +46,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
@@ -88,6 +89,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private int myCurrentOperationState = NONE;
 
   private DocumentReference myOriginatorReference;
+
+  public static boolean isRefresh() {
+    return ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class);
+  }
 
   public static int getGlobalUndoLimit() {
     return Registry.intValue("undo.globalUndoLimit", 10);
@@ -229,7 +234,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       myCurrentActionProject = project;
     }
 
-    commandStarted(undoConfirmationPolicy);
+    commandStarted(undoConfirmationPolicy, myProject == project);
 
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
@@ -245,11 +250,11 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
 
-  private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy) {
+  private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     if (myCommandLevel == 0) {
       myCurrentMerger = new CommandMerger(this, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
 
-      if (myProject != null) {
+      if (recordOriginalReference && myProject != null) {
         Editor editor = null;
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
@@ -344,11 +349,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myCommandLevel == 0) {
       LOG.assertTrue(action instanceof NonUndoableAction,
                      "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())");
-      commandStarted(UndoConfirmationPolicy.DEFAULT);
+      commandStarted(UndoConfirmationPolicy.DEFAULT, false);
       myCurrentMerger.addAction(action);
       commandFinished("", null);
       return;
     }
+
+    if (isRefresh()) myOriginatorReference = null;
 
     myCurrentMerger.addAction(action);
   }

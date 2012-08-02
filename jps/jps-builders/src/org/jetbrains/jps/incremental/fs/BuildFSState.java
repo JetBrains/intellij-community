@@ -11,6 +11,9 @@ import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.FileProcessor;
 import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.artifacts.ArtifactFilesDelta;
+import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -46,12 +49,21 @@ public class BuildFSState extends FSState {
   }
 
   @Override
+  public boolean markInitialScanPerformed(String artifactName) {
+    return myAlwaysScanFS || super.markInitialScanPerformed(artifactName);
+  }
+
+  @Override
   public Map<File, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, final String moduleName, boolean forTests) {
     final FilesDelta lastRoundDelta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
     if (lastRoundDelta != null) {
       return lastRoundDelta.getSourcesToRecompile();
     }
     return super.getSourcesToRecompile(context, moduleName, forTests);
+  }
+
+  public Map<Integer, Set<String>> getFilesToRecompile(String artifactName) {
+    return getDelta(artifactName).getFilesToRecompile();
   }
 
   @Override
@@ -168,6 +180,27 @@ public class BuildFSState extends FSState {
         }
         else {
           stamps.removeStamp(file);
+        }
+      }
+    }
+    return marked;
+  }
+
+  public boolean markAllUpToDate(ArtifactRootDescriptor descriptor, ArtifactSourceTimestampStorage storage, long compilationStartStamp)
+    throws IOException {
+    boolean marked = false;
+    ArtifactFilesDelta delta = getDelta(descriptor.getArtifactName());
+    Set<String> paths = delta.clearRecompile(descriptor.getRootIndex());
+    if (paths != null) {
+      for (String path : paths) {
+        File file = new File(FileUtil.toSystemDependentName(path));
+        long stamp = file.lastModified();
+        if (stamp > compilationStartStamp + 1000) {//todo[nik] this is added to fix tests on Linux
+          delta.markRecompile(descriptor.getRootIndex(), path);
+        }
+        else {
+          marked = true;
+          storage.update(descriptor.getArtifactId(), path, stamp);
         }
       }
     }

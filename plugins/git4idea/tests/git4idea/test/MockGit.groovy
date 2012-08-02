@@ -161,7 +161,7 @@ class MockGit implements Git {
 
   @NotNull
   @Override
-  GitCommandResult show(@NotNull GitRepository repository, @NotNull String revision) {
+  GitCommandResult show(@NotNull GitRepository repository, @NotNull String... params) {
     throw new UnsupportedOperationException()
   }
 

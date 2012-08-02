@@ -522,7 +522,7 @@ public class GitUtil {
       if ((!firstStep) && lineIsAStart) {
         final StringScanner innerScanner = new StringScanner(sb.toString());
         sb.setLength(0);
-        consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge, h, false));
+        consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge, h, false, false));
       }
       sb.append(lineIsAStart ? line.substring(2) : line).append('\n');
       firstStep = false;
@@ -530,7 +530,7 @@ public class GitUtil {
     if (sb.length() > 0) {
       final StringScanner innerScanner = new StringScanner(sb.toString());
       sb.setLength(0);
-      consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge, h, false));
+      consumer.consume(GitChangeUtils.parseChangeList(project, root, innerScanner, skipDiffsForMerge, h, false, false));
     }
     if (s.hasMoreData()) {
       throw new IllegalStateException("More input is avaialble: " + s.line());
@@ -854,5 +854,15 @@ public class GitUtil {
       return hash.substring(hash.indexOf("[") + 1, SHORT_HASH_LENGTH);
     }
     return hash;
+  }
+
+  @NotNull
+  public static String fileOrFolder(@NotNull VirtualFile file) {
+    if (file.isDirectory()) {
+      return "Folder";
+    }
+    else {
+      return "File";
+    }
   }
 }

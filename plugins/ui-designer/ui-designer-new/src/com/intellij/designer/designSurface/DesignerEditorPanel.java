@@ -22,14 +22,11 @@ import com.intellij.designer.ModuleProvider;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.designSurface.tools.*;
-import com.intellij.designer.model.FindComponentVisitor;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.model.WrapInProvider;
+import com.intellij.designer.model.*;
 import com.intellij.designer.palette.PaletteGroup;
 import com.intellij.designer.palette.PaletteItem;
 import com.intellij.designer.palette.PaletteToolWindowManager;
 import com.intellij.designer.propertyTable.InplaceContext;
-import com.intellij.designer.propertyTable.Property;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -72,7 +69,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public abstract class DesignerEditorPanel extends JPanel implements DataProvider, ModuleProvider {
+public abstract class DesignerEditorPanel extends JPanel implements DataProvider, ModuleProvider, RadPropertyContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.designSurface.DesignerEditorPanel");
 
   protected static final Integer LAYER_COMPONENT = JLayeredPane.DEFAULT_LAYER;
@@ -363,7 +360,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   public final void showError(@NotNull String message, @NotNull Throwable e) {
-    if (getProject().isDisposed()) {
+    if (isProjectClosed()) {
       return;
     }
 
@@ -538,6 +535,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   @Override
   public final Project getProject() {
     return myProject;
+  }
+
+  public final boolean isProjectClosed() {
+    return myProject.isDisposed() || !myProject.isOpen();
   }
 
   public EditableArea getSurfaceArea() {
@@ -740,6 +741,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return null;
   }
 
+  @Nullable
   public RadComponent getRootComponent() {
     return myRootComponent;
   }

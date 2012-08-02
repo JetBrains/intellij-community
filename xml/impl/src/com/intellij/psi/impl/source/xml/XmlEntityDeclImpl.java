@@ -23,18 +23,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.parsing.xml.OldXmlParser;
+import com.intellij.psi.impl.source.parsing.xml.DtdParsing;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.tree.xml.IXmlLeafElementType;
 import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * @author mike
@@ -93,7 +89,7 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     return null;
   }
 
-  public PsiElement parse(PsiFile baseFile, EntityContextType context, final XmlEntityRef originalElement) {
+  public PsiElement parse(PsiFile baseFile, EntityContextType contextType, final XmlEntityRef originalElement) {
     PsiElement dep = XmlElement.DEPENDING_ELEMENT.get(getParent());
     PsiElement dependsOnElement = getValueElement(dep instanceof PsiFile ? (PsiFile)dep : baseFile);
     String value = null;
@@ -108,25 +104,9 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
 
     if (value == null) return null;
 
-
-    Set<String> names = null;
-
-    if (context == EntityContextType.GENERIC_XML) {
-      names = new HashSet<String>();
-      // calculating parent names
-      PsiElement parent = originalElement;
-      while(parent != null){
-        if(parent instanceof XmlTag){
-          names.add(((XmlTag)parent).getName());
-        }
-        parent = parent.getParent();
-      }
-    }
-
-    OldXmlParser oldXmlParser = new OldXmlParser(value, XML_ELEMENT_DECL, context, SharedImplUtil.findCharTableByTree(this), getManager(), names,
-                                                 originalElement);
-    PsiElement generated = oldXmlParser.parse().getPsi().getFirstChild();
-    if (context == EntityContextType.ELEMENT_CONTENT_SPEC) {
+    DtdParsing dtdParsing = new DtdParsing(value, XML_ELEMENT_DECL, contextType, baseFile);
+    PsiElement generated = dtdParsing.parse().getPsi().getFirstChild();
+    if (contextType == EntityContextType.ELEMENT_CONTENT_SPEC && generated instanceof XmlElementContentSpec) {
       generated = generated.getFirstChild();
     }
     setDependsOnElement(generated, dependsOnElement);
@@ -178,7 +158,8 @@ public class XmlEntityDeclImpl extends XmlElementImpl implements XmlEntityDecl, 
     for (ASTNode e = getFirstChildNode(); e != null; e = e.getTreeNext()) {
       if (e.getElementType() instanceof IXmlLeafElementType) {
         XmlToken token = (XmlToken)SourceTreeToPsiMap.treeElementToPsi(e);
-        if (token.getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC || token.getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM) {
+        if (token.getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC ||
+            token.getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM) {
           return false;
         }
       }

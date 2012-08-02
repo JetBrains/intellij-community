@@ -26,10 +26,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagChild;
-import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.psi.xml.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
@@ -38,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -49,7 +47,7 @@ public class EmptyXmlTag implements XmlTag {
   @NotNull
   @Override
   public String getName() {
-    return null;
+    return "";
   }
 
   @Override
@@ -60,13 +58,13 @@ public class EmptyXmlTag implements XmlTag {
   @NotNull
   @Override
   public String getNamespace() {
-    return null;
+    return "";
   }
 
   @NotNull
   @Override
   public String getLocalName() {
-    return null;
+    return "";
   }
 
   @Override
@@ -149,13 +147,13 @@ public class EmptyXmlTag implements XmlTag {
   @NotNull
   @Override
   public String getNamespacePrefix() {
-    return null;
+    return "";
   }
 
   @NotNull
   @Override
   public String getNamespaceByPrefix(@NonNls String prefix) {
-    return null;
+    return "";
   }
 
   @Override
@@ -176,13 +174,51 @@ public class EmptyXmlTag implements XmlTag {
   @NotNull
   @Override
   public Map<String, String> getLocalNamespaceDeclarations() {
-    return null;
+    return Collections.emptyMap();
   }
 
   @NotNull
   @Override
   public XmlTagValue getValue() {
-    return null;
+    return new XmlTagValue() {
+      @NotNull
+      @Override
+      public XmlTagChild[] getChildren() {
+        return new XmlTagChild[0];
+      }
+
+      @NotNull
+      @Override
+      public XmlText[] getTextElements() {
+        return new XmlText[0];
+      }
+
+      @NotNull
+      @Override
+      public String getText() {
+        return "";
+      }
+
+      @Override
+      public TextRange getTextRange() {
+        return null;
+      }
+
+      @NotNull
+      @Override
+      public String getTrimmedText() {
+        return "";
+      }
+
+      @Override
+      public void setText(String value) {
+      }
+
+      @Override
+      public boolean hasCDATA() {
+        return false;
+      }
+    };
   }
 
   @Override
@@ -225,13 +261,11 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
   public Project getProject() throws PsiInvalidElementAccessException {
     return null;
   }
 
-  @NotNull
   @Override
   public Language getLanguage() {
     return null;
@@ -464,13 +498,11 @@ public class EmptyXmlTag implements XmlTag {
     return false;
   }
 
-  @NotNull
   @Override
   public GlobalSearchScope getResolveScope() {
     return null;
   }
 
-  @NotNull
   @Override
   public SearchScope getUseScope() {
     return null;

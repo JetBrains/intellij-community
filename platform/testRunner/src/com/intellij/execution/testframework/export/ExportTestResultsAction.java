@@ -35,7 +35,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -106,17 +108,27 @@ public class ExportTestResultsAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    final ExportTestResultsConfiguration config = ExportTestResultsConfiguration.getInstance(project);
     LOG.assertTrue(project != null);
+    final ExportTestResultsConfiguration config = ExportTestResultsConfiguration.getInstance(project);
 
-    String name = ExecutionBundle.message("export.test.results.filename", PathUtil.suggestFileName(myRunConfiguration.getName()));
+    final String name = ExecutionBundle.message("export.test.results.filename", PathUtil.suggestFileName(myRunConfiguration.getName()));
     String filename = name + "." + config.getExportFormat().getDefaultExtension();
-    ExportTestResultsDialog d = new ExportTestResultsDialog(project, config, filename);
-    d.show();
-    if (!d.isOK()) {
-      return;
+    boolean showDialog = true;
+    while (showDialog) {
+      final ExportTestResultsDialog d = new ExportTestResultsDialog(project, config, filename);
+      d.show();
+      if (!d.isOK()) {
+        return;
+      }
+      filename = d.getFileName();
+      showDialog = getOutputFile(config, project, filename).exists()
+          && Messages.showOkCancelDialog(
+               project,
+               ExecutionBundle.message("export.test.results.file.exists.message", filename),
+               ExecutionBundle.message("export.test.results.file.exists.title"),
+               Messages.getQuestionIcon()
+             ) != DialogWrapper.OK_EXIT_CODE;
     }
-    filename = d.getFileName();
 
     final String filename_ = filename;
     ProgressManager.getInstance().run(
@@ -134,24 +146,10 @@ public class ExportTestResultsAction extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           indicator.setIndeterminate(true);
 
-          final File outputFolder;
-          final String outputFolderPath = config.getOutputFolder();
-          if (!StringUtil.isEmptyOrSpaces(outputFolderPath)) {
-            if (FileUtil.isAbsolute(outputFolderPath)) {
-              outputFolder = new File(outputFolderPath);
-            }
-            else {
-              outputFolder = new File(new File(project.getBasePath()), config.getOutputFolder());
-            }
-          }
-          else {
-            outputFolder = new File(project.getBasePath());
-          }
-
-          final File outputFile = new File(outputFolder, filename_);
+          final File outputFile = getOutputFile(config, project, filename_);
           final String outputText;
           try {
-            outputText = getOutputText(ExportTestResultsConfiguration.getInstance(project));
+            outputText = getOutputText(config);
             if (outputText == null) {
               return;
             }
@@ -238,6 +236,29 @@ public class ExportTestResultsAction extends DumbAwareAction {
           }
         }
       });
+  }
+
+  @NotNull
+  private static File getOutputFile(
+    final @NotNull ExportTestResultsConfiguration config,
+    final @NotNull Project project,
+    final @NotNull String filename)
+  {
+    final File outputFolder;
+    final String outputFolderPath = config.getOutputFolder();
+    if (!StringUtil.isEmptyOrSpaces(outputFolderPath)) {
+      if (FileUtil.isAbsolute(outputFolderPath)) {
+        outputFolder = new File(outputFolderPath);
+      }
+      else {
+        outputFolder = new File(new File(project.getBasePath()), config.getOutputFolder());
+      }
+    }
+    else {
+      outputFolder = new File(project.getBasePath());
+    }
+
+    return new File(outputFolder, filename);
   }
 
   private static void openEditorOrBrowser(final VirtualFile result, final Project project, final boolean editor) {

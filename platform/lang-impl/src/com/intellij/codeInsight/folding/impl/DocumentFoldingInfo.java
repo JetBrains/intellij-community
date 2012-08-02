@@ -84,9 +84,10 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
           myPsiElementsOrRangeMarkers.add(element);
         }
         else if (region.isValid()) {
-          myPsiElementsOrRangeMarkers.add(region);
+          RangeMarker marker = editor.getDocument().createRangeMarker(region.getStartOffset(), region.getEndOffset());
+          myPsiElementsOrRangeMarkers.add(marker);
           String placeholderText = region.getPlaceholderText();
-          myPlaceholderTexts.put(region, placeholderText);
+          myPlaceholderTexts.put(marker, placeholderText);
         }
         myExpandedStates.add(expanded ? Boolean.TRUE : Boolean.FALSE);
       }
@@ -268,5 +269,48 @@ public class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState
   private String getTimeStamp() {
     if (!myFile.isValid()) return "";
     return Long.toString(myFile.getTimeStamp());
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myProject != null ? myProject.hashCode() : 0;
+    result = 31 * result + (myFile != null ? myFile.hashCode() : 0);
+    result = 31 * result + (myPsiElementsOrRangeMarkers != null ? myPsiElementsOrRangeMarkers.hashCode() : 0);
+    result = 31 * result + (myExpandedStates != null ? myExpandedStates.hashCode() : 0);
+    result = 31 * result + (myPlaceholderTexts != null ? myPlaceholderTexts.hashCode() : 0);
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    DocumentFoldingInfo info = (DocumentFoldingInfo)o;
+
+    if (myExpandedStates != null ? !myExpandedStates.equals(info.myExpandedStates) : info.myExpandedStates != null) {
+      return false;
+    }
+    if (myFile != null ? !myFile.equals(info.myFile) : info.myFile != null) {
+      return false;
+    }
+    if (myPlaceholderTexts != null ? !myPlaceholderTexts.equals(info.myPlaceholderTexts) : info.myPlaceholderTexts != null) {
+      return false;
+    }
+    if (myProject != null ? !myProject.equals(info.myProject) : info.myProject != null) {
+      return false;
+    }
+    if (myPsiElementsOrRangeMarkers != null
+        ? !myPsiElementsOrRangeMarkers.equals(info.myPsiElementsOrRangeMarkers)
+        : info.myPsiElementsOrRangeMarkers != null)
+    {
+      return false;
+    }
+
+    return true;
   }
 }

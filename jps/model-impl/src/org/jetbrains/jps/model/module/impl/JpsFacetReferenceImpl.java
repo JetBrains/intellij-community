@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
  */
 public class JpsFacetReferenceImpl extends JpsNamedElementReferenceBase<JpsFacet, JpsFacetReferenceImpl> implements JpsFacetReference {
   public JpsFacetReferenceImpl(String facetName, JpsModuleReference moduleReference) {
-    super(JpsFacetKind.COLLECTION_KIND, facetName, moduleReference);
+    super(JpsFacetRole.COLLECTION_ROLE, facetName, moduleReference);
   }
 
   private JpsFacetReferenceImpl(JpsFacetReferenceImpl original) {

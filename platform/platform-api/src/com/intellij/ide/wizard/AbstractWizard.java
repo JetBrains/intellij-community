@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -434,12 +435,13 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     if (SystemInfo.isMac && isLastStep()) {
       myFinishButton.setVisible(false);
-      myNextButton.setText(IdeBundle.message("button.finish"));
+      myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.finish")));
       myNextButton.setVisible(true);
       myNextButton.setEnabled(myFinishButton.isEnabled());
+      myNextButton.setMnemonic('F');
     }
     else {
-      myNextButton.setText(IdeBundle.message("button.wizard.next"));
+      myNextButton.setText(UIUtil.removeMnemonic(IdeBundle.message("button.wizard.next")));
       myFinishButton.setVisible(true);
       myNextButton.setEnabled(mySteps.size() == 1 || !isLastStep());
       myNextButton.setMnemonic('N');

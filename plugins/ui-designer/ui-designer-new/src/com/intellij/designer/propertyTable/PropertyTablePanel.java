@@ -19,6 +19,7 @@ import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.propertyTable.actions.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -33,10 +34,12 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public final class PropertyTablePanel extends JPanel implements ListSelectionListener {
-  private final PropertyTable myPropertyTable = new PropertyTable();
+  private final RadPropertyTable myPropertyTable;
   private final AnAction[] myActions;
 
-  public PropertyTablePanel() {
+  public PropertyTablePanel(Project project) {
+    myPropertyTable = new RadPropertyTable(project);
+
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
@@ -86,7 +89,7 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
     myPropertyTable.setPropertyTablePanel(this);
   }
 
-  public PropertyTable getPropertyTable() {
+  public RadPropertyTable getPropertyTable() {
     return myPropertyTable;
   }
 

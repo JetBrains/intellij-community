@@ -36,7 +36,7 @@ public class CvsMessagesConsole extends CvsMessagesAdapter {
   public static final TextAttributes COMMAND = new TextAttributes(null, null, null, EffectType.LINE_UNDERSCORE, Font.BOLD);
 
   public void connectToOutputView(Editor editor, Project project) {
-    myOutput = new EditorAdapter(editor, project);
+    myOutput = new EditorAdapter(editor, project, true);
   }
 
   public void addMessage(final MessageEvent event) {

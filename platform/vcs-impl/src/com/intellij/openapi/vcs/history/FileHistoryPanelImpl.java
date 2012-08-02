@@ -139,7 +139,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   };
 
-  private final VcsColumnInfo<VcsRevisionNumber> REVISION =
+  private final DualViewColumnInfo REVISION =
     new VcsColumnInfo<VcsRevisionNumber>(VcsBundle.message("column.name.revision.version")) {
       protected VcsRevisionNumber getDataOf(VcsFileRevision object) {
         return object.getRevisionNumber();
@@ -162,7 +162,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     };
 
-  private final VcsColumnInfo<String> DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
+  private final DualViewColumnInfo DATE = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.date")) {
     protected String getDataOf(VcsFileRevision object) {
       Date date = object.getRevisionDate();
       if (date == null) return "";
@@ -216,7 +216,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private static final TableCellRenderer AUTHOR_RENDERER = new AuthorCellRenderer();
 
-  private final VcsColumnInfo<String> AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
+  private final DualViewColumnInfo AUTHOR = new VcsColumnInfo<String>(VcsBundle.message("column.name.revision.list.author")) {
     protected String getDataOf(VcsFileRevision object) {
       VcsFileRevision rev = object;
       if (object instanceof TreeNodeOnVcsRevision) {
@@ -540,48 +540,18 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     refreshRevisionsOrder();
     HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
 
-    List<VcsFileRevision> revisionList = myHistorySession.getRevisionList();
-    updateMaxStringValues(revisionList);
     if (treeHistoryProvider != null) {
       myDualView.setRoot(new TreeNodeOnVcsRevision(null,
-        treeHistoryProvider.createTreeOn(revisionList)), myTargetSelection);
+        treeHistoryProvider.createTreeOn(myHistorySession.getRevisionList())), myTargetSelection);
     }
     else {
       myDualView.setRoot(new TreeNodeOnVcsRevision(null,
-        wrapWithTreeElements(revisionList)), myTargetSelection);
+        wrapWithTreeElements(myHistorySession.getRevisionList())), myTargetSelection);
     }
 
-    updateMaxStringValues(revisionList);
     myDualView.getFlatView().updateColumnSizes();
     myDualView.expandAll();
     myDualView.repaint();
-  }
-
-  private void updateMaxStringValues(@NotNull List<VcsFileRevision> list) {
-    int maxAuthorWidth = getStringWidth(AUTHOR.getMaxStringValue());
-    int maxRevisionWidth = getStringWidth(REVISION.getMaxStringValue());
-    int maxDateWidth = getStringWidth(DATE.getMaxStringValue());
-    for (VcsFileRevision revision : list) {
-      int authorWidth = getStringWidth(revision.getAuthor());
-      int revWidth = getStringWidth(REVISION.valueOf(revision));
-      int dateWidth = getStringWidth(DATE.getDataOf(revision));
-      if (authorWidth > maxAuthorWidth) {
-        AUTHOR.setMaxStringValue(revision.getAuthor());
-      }
-      if (revWidth > maxRevisionWidth) {
-        REVISION.setMaxStringValue(REVISION.valueOf(revision));
-      }
-      if (dateWidth > maxDateWidth) {
-        DATE.setMaxStringValue(DATE.getDataOf(revision));
-      }
-    }
-  }
-
-  private int getStringWidth(@Nullable String string) {
-    if (string == null) {
-      return 0;
-    }
-    return myDualView.getFontMetrics(myDualView.getFont()).stringWidth(string);
   }
 
   protected void addActionsTo(DefaultActionGroup group) {
@@ -859,12 +829,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
       int selectionSize = sel.size();
       if (selectionSize > 1) {
-        myDiffHandler.showDiff(e, myFilePath, sel.get(0).getRevision());
+        myDiffHandler.showDiffForTwo(myFilePath, sel.get(0), sel.get(sel.size() - 1));
       }
       else if (selectionSize == 1) {
+        final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
+        final int selectedRow = flatView.getSelectedRow();
         VcsFileRevision revision = getFirstSelectedRevision();
+
+        VcsFileRevision previousRevision;
+        if (selectedRow == (flatView.getRowCount() - 1)) {
+          // no previous
+          previousRevision = myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL;
+        } else {
+          previousRevision = flatView.getRow(selectedRow + 1).getRevision();
+        }
+
         if (revision != null) {
-          myDiffHandler.showDiff(e, myFilePath, revision);
+          myDiffHandler.showDiffForOne(e, myFilePath, previousRevision, revision);
         }
       }
     }
@@ -907,7 +888,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       final VcsRevisionNumber currentRevisionNumber = myHistorySession.getCurrentRevisionNumber();
       VcsFileRevision selectedRevision = getFirstSelectedRevision();
       if (currentRevisionNumber != null && selectedRevision != null) {
-        myDiffHandler.showDiff(myFilePath, selectedRevision, new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
+        myDiffHandler.showDiffForTwo(myFilePath, selectedRevision, new CurrentRevision(myFilePath.getVirtualFile(), currentRevisionNumber));
       }
     }
 
@@ -931,20 +912,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
             VcsBundle.message("action.description.get.file.content.from.repository"), "get", 1, FileHistoryPanelImpl.this);
     }
 
-    public void update(AnActionEvent e) {
-      if (getVirtualParent() == null) {
-        Presentation presentation = e.getPresentation();
-        presentation.setVisible(false);
-        presentation.setEnabled(false);
-      }
-      else {
-        super.update(e);
-      }
-    }
-
     @Override
     public boolean isEnabled() {
-      return super.isEnabled() && myHistorySession.isContentAvailable(getFirstSelectedRevision()) && !myFilePath.isDirectory();
+      return super.isEnabled() && getVirtualParent() != null &&
+             myHistorySession.isContentAvailable(getFirstSelectedRevision()) && !myFilePath.isDirectory();
     }
 
     protected void executeAction(AnActionEvent e) {
@@ -1443,13 +1414,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     }
   }
 
-  private abstract static class VcsColumnInfo<T extends Comparable>
-    extends DualViewColumnInfo<VcsFileRevision, String>
-    implements Comparator<VcsFileRevision>
-  {
-
-    @Nullable private String myMaxStringValue;
-
+  abstract static class VcsColumnInfo<T extends Comparable> extends DualViewColumnInfo<VcsFileRevision, String>
+    implements Comparator<VcsFileRevision> {
     public VcsColumnInfo(String name) {
       super(name);
     }
@@ -1482,16 +1448,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
     public boolean shouldBeShownIsTheTable() {
       return true;
-    }
-
-    @Nullable
-    @Override
-    public String getMaxStringValue() {
-      return myMaxStringValue;
-    }
-
-    public void setMaxStringValue(@Nullable String maxStringValue) {
-      myMaxStringValue = maxStringValue;
     }
 
   }
@@ -1814,21 +1770,13 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
   private class StandardDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
     @Override
-    public void showDiff(@NotNull AnActionEvent e, @NotNull FilePath filePath, @NotNull VcsFileRevision revision) {
-      final TableView<TreeNodeOnVcsRevision> flatView = myDualView.getFlatView();
-      final int selectedRow = flatView.getSelectedRow();
-      if (selectedRow == (flatView.getRowCount() - 1)) {
-        // no previous
-        VcsHistoryUtil.showDifferencesInBackground(myVcs.getProject(), filePath,
-                                                   myBottomRevisionForShowDiff != null ? myBottomRevisionForShowDiff : VcsFileRevision.NULL,
-                                                   revision, true);
-      } else {
-        VcsHistoryUtil.showDifferencesInBackground(myVcs.getProject(), myFilePath, flatView.getRow(selectedRow + 1), revision, true);
-      }
+    public void showDiffForOne(@NotNull AnActionEvent e, @NotNull FilePath filePath,
+                               @NotNull VcsFileRevision previousRevision, @NotNull VcsFileRevision revision) {
+      VcsHistoryUtil.showDifferencesInBackground(myVcs.getProject(), myFilePath, previousRevision, revision, true);
     }
 
     @Override
-    public void showDiff(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2) {
+    public void showDiffForTwo(@NotNull FilePath filePath, @NotNull VcsFileRevision revision1, @NotNull VcsFileRevision revision2) {
       VcsHistoryUtil.showDifferencesInBackground(myProject, myFilePath, revision1, revision2, true);
     }
   }

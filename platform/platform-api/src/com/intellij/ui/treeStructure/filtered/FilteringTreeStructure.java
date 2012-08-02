@@ -67,15 +67,17 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
     } else {
       ArrayList<FilteringNode> nodes = new ArrayList<FilteringNode>(delegates.length);
       for (Object d : delegates) {
-        FilteringNode n = new FilteringNode(node, d);
         boolean isDuplicate = myDescriptors2Nodes.containsKey(d);
         if (!isDuplicate) {
+          FilteringNode n = new FilteringNode(node, d);
           myDescriptors2Nodes.put(d, n);
           nodes.add(n);
-          addToCache(n, isDuplicate);
         }
       }
       myNodesCache.put(node, nodes);
+      for (FilteringNode n : nodes) {
+        addToCache(n, false);
+      }
     }
   }
 

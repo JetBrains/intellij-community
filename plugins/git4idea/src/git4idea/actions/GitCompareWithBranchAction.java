@@ -206,12 +206,13 @@ public class GitCompareWithBranchAction extends DumbAwareAction {
       final VcsFileRevision compareRevision =
         new GitFileRevision(project, filePath, new GitRevisionNumber(branchToCompare, compareRevisionNumber.getTimestamp()), false);
       CurrentRevision currentRevision = new CurrentRevision(file, new GitRevisionNumber(head, currentRevisionNumber.getTimestamp()));
-      new GitDiffFromHistoryHandler(project).showDiff(new FilePathImpl(file), compareRevision, currentRevision);
+      new GitDiffFromHistoryHandler(project).showDiffForTwo(new FilePathImpl(file), compareRevision, currentRevision);
     }
 
-    private static void fileDoesntExistInBranchError(Project project, VirtualFile file, String branchToCompare) {
-      GitUIUtil.notifyMessage(project, "File doesn't exist in branch",
-                              String.format("File <code>%s</code> doesn't exist in branch <code>%s</code>", file.getPresentableUrl(), branchToCompare),
+    private static void fileDoesntExistInBranchError(@NotNull Project project, @NotNull VirtualFile file, @NotNull String branchToCompare) {
+      GitUIUtil.notifyMessage(project, GitUtil.fileOrFolder(file) + " doesn't exist in branch",
+                              String.format("%s <code>%s</code> doesn't exist in branch <code>%s</code>",
+                                            GitUtil.fileOrFolder(file), file.getPresentableUrl(), branchToCompare),
                               NotificationType.WARNING, true, null);
     }
   }

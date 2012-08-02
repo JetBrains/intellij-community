@@ -31,7 +31,7 @@ public class SkipAllInstructionCreator extends ArtifactCompilerInstructionCreato
   }
 
   @Override
-  protected void addDirectoryCopyInstructions(ArtifactSourceRoot root) {
+  protected void addDirectoryCopyInstructions(ArtifactRootDescriptor descriptor) {
   }
 
   public SkipAllInstructionCreator subFolder(@NotNull String directoryName) {

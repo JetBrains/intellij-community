@@ -53,9 +53,9 @@ XmlFile:test.dtd
       XmlToken:XML_ELEMENT_DECL_START('<!ELEMENT')
       PsiWhiteSpace(' ')
       XmlToken:XML_NAME('xxx4')
-      PsiErrorElement:( or entity ref or EMPTY or ANY expected
-        <empty list>
+      PsiWhiteSpace(' ')
       PsiElement(XML_ELEMENT_CONTENT_SPEC)
         <empty list>
-      PsiWhiteSpace(' ')
+      PsiErrorElement:( or entity ref or EMPTY or ANY expected
+        <empty list>
       XmlToken:XML_TAG_END('>')

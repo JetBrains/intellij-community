@@ -20,6 +20,9 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.idea.SystemOutErrorReporter;
 import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
+import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
+import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
@@ -29,7 +32,6 @@ import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -180,9 +182,7 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     try {
       final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta);
-      if (shouldApplyEvent && buildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()
-          && artifacts.isEmpty()//todo[nik] currently changes in artifacts source files aren't registered in the delta
-        ) {
+      if (shouldApplyEvent && buildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
         applyFSEvent(null, myInitialFSDelta);
         return;
       }
@@ -333,6 +333,7 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     if (pd != null) {
       final Timestamps timestamps = pd.timestamps.getStorage();
+      ArtifactSourceTimestampStorage artifactTimestamps = pd.dataManager.getArtifactsBuildData().getTimestampStorage();
 
       for (String deleted : event.getDeletedPathsList()) {
         final File file = new File(deleted);
@@ -343,10 +344,18 @@ final class BuildSession implements Runnable, CanceledStatus {
           }
           pd.fsState.registerDeleted(rd.module, file, rd.isTestRoot, timestamps);
         }
-        else {
+        else if (Utils.IS_TEST_MODE) {
+          LOG.info("Skipping deleted path: " + file.getPath());
+        }
+
+        Collection<ArtifactRootDescriptor> descriptor = pd.getArtifactRootsIndex().getDescriptors(file);
+        if (!descriptor.isEmpty()) {
           if (Utils.IS_TEST_MODE) {
-            LOG.info("Skipping deleted path: " + file.getPath());
+            LOG.info("Applying deleted path from fs event to artifacts: " + file.getPath());
           }
+          for (ArtifactRootDescriptor rootDescriptor : descriptor)
+            pd.fsState.registerDeleted(rootDescriptor.getArtifactName(), rootDescriptor.getArtifactId(), deleted,
+                                       artifactTimestamps);
         }
       }
       for (String changed : event.getChangedPathsList()) {
@@ -358,9 +367,17 @@ final class BuildSession implements Runnable, CanceledStatus {
           }
           pd.fsState.markDirty(null, file, rd, timestamps);
         }
-        else {
+        else if (Utils.IS_TEST_MODE) {
+          LOG.info("Skipping dirty path: " + file.getPath());
+        }
+
+        Collection<ArtifactRootDescriptor> descriptors = pd.getArtifactRootsIndex().getDescriptors(file);
+        if (!descriptors.isEmpty()) {
           if (Utils.IS_TEST_MODE) {
-            LOG.info("Skipping dirty path: " + file.getPath());
+            LOG.info("Applying dirty path from fs event to artifacts: " + file.getPath());
+          }
+          for (ArtifactRootDescriptor descriptor : descriptors) {
+            pd.fsState.markDirty(descriptor, changed, artifactTimestamps);
           }
         }
       }
@@ -601,10 +618,10 @@ final class BuildSession implements Runnable, CanceledStatus {
     final Timestamps timestamps = pd.timestamps.getStorage();
     Set<JpsArtifact> artifacts = new HashSet<JpsArtifact>();
     if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
-      artifacts.addAll(JpsArtifactService.getInstance().getArtifacts(pd.jpsProject));
+      artifacts.addAll(JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false));
     }
     else {
-      for (JpsArtifact artifact : JpsArtifactService.getInstance().getArtifacts(pd.jpsProject)) {
+      for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false)) {
         if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
           artifacts.add(artifact);
         }

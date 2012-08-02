@@ -1,8 +1,10 @@
 package org.jetbrains.jps.incremental.artifacts;
 
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage;
 
 import java.io.DataInput;
@@ -45,6 +47,40 @@ public class ArtifactSourceTimestampStorage extends AbstractStateStorage<String,
 
   public void markDirty(String filePath) throws IOException {
     update(filePath, null);
+  }
+
+  public void removeTimestamp(String filePath, final int artifactId) throws IOException {
+    final PerArtifactTimestamp[] state = getState(filePath);
+    if (state == null) return;
+    for (int i = 0, length = state.length; i < length; i++) {
+      if (state[i].myArtifactId == artifactId) {
+        final PerArtifactTimestamp[] newState = ArrayUtil.remove(state, i);
+        update(filePath, newState.length > 0 ? newState : null);
+        break;
+      }
+    }
+  }
+
+  public void update(final int artifactId, String filePath, long timestamp) throws IOException {
+    PerArtifactTimestamp[] oldState = getState(filePath);
+    update(filePath, updateTimestamp(oldState, timestamp, artifactId));
+  }
+
+  @NotNull
+  private static PerArtifactTimestamp[] updateTimestamp(PerArtifactTimestamp[] oldState,
+                                                long timestamp, final int artifactId) {
+    final PerArtifactTimestamp newItem = new PerArtifactTimestamp(
+      artifactId, timestamp);
+    if (oldState == null) {
+      return new PerArtifactTimestamp[]{newItem};
+    }
+    for (int i = 0, length = oldState.length; i < length; i++) {
+      if (oldState[i].myArtifactId == artifactId) {
+        oldState[i] = newItem;
+        return oldState;
+      }
+    }
+    return ArrayUtil.append(oldState, newItem);
   }
 
   public static class PerArtifactTimestamp {

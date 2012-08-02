@@ -173,7 +173,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           return true;
         }
       };
-      deps.add(targetElement);
+      FileViewProvider provider = targetElement.getContainingFile().getViewProvider();
+      deps.add(provider.getPsi(provider.getBaseLanguage()));
 
       boolean notfound = PsiTreeUtil.processElements(targetElement, processor);
       if (notfound) {

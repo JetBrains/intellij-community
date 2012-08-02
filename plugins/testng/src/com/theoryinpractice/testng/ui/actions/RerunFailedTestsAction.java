@@ -9,7 +9,6 @@ import com.intellij.execution.actions.AbstractRerunFailedTestsAction;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
-import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -29,8 +28,7 @@ import java.util.Map;
 
 public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   public RerunFailedTestsAction(JComponent parent) {
-    copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
-    registerCustomShortcutSet(getShortcutSet(), parent);
+    super(parent);
   }
 
   @Override

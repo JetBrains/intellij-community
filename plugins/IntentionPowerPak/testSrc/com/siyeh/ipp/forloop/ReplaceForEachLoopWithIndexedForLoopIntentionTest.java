@@ -25,7 +25,7 @@ public class ReplaceForEachLoopWithIndexedForLoopIntentionTest extends IPPTestCa
 
   @Override
   protected String getIntentionName() {
-    return IntentionPowerPackBundle.message("replace.for.each.loop.with.indexed.for.loop.intention.name");
+    return IntentionPowerPackBundle.message("replace.for.each.loop.with.optimized.indexed.for.loop.intention.name");
   }
 
   @Override

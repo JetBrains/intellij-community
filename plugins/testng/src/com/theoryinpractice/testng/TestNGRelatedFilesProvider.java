@@ -80,7 +80,7 @@ public class TestNGRelatedFilesProvider extends GotoRelatedProvider {
                   }
                   return true;
                 }
-              }, new TestNGSearchScope());
+              }, new TestNGSearchScope(project));
           }
 
           if (!tags.isEmpty()) {

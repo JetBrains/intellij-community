@@ -339,7 +339,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                                                    final Collection<String> suggestions,
                                                    final boolean correctKeywords) {
     PsiType componentType = PsiUtil.extractIterableTypeParameter(type, false);
-    if (componentType == null) {
+    if (componentType == null || componentType.equals(type)) {
       return;
     }
     String typeName = normalizeTypeName(getTypeName(componentType));

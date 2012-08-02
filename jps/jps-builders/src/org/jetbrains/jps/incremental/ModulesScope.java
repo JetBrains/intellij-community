@@ -15,17 +15,14 @@ import java.util.Set;
  *         Date: 9/17/11
  */
 public class ModulesScope extends CompileScope {
-
   private final Set<String> myModules;
-  private final boolean myForcedCompilation;
 
   public ModulesScope(Project project, JpsProject jpsProject, Set<JpsModule> modules, Set<JpsArtifact> artifacts, boolean isForcedCompilation) {
-    super(project, jpsProject, artifacts);
+    super(project, jpsProject, artifacts, isForcedCompilation);
     myModules = new HashSet<String>();
     for (JpsModule module : modules) {
       myModules.add(module.getName());
     }
-    myForcedCompilation = isForcedCompilation;
   }
 
   public boolean isRecompilationForced(@NotNull String moduleName) {

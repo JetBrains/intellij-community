@@ -4,6 +4,7 @@ import org.jetbrains.jps.Project;
 import org.jetbrains.jps.incremental.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompilerEncodingConfiguration;
 import org.jetbrains.jps.incremental.ModuleRootsIndex;
+import org.jetbrains.jps.incremental.artifacts.ArtifactRootsIndex;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
@@ -31,6 +32,7 @@ public final class ProjectDescriptor {
   public final BuildDataManager dataManager;
   private final BuildLoggingManager myLoggingManager;
   public ModuleRootsIndex rootsIndex;
+  private final ArtifactRootsIndex myArtifactRootsIndex;
   private int myUseCounter = 1;
   private Set<JpsTypedLibrary<JpsSdkProperties>> myProjectJavaSdks;
   private CompilerEncodingConfiguration myEncodingConfiguration;
@@ -48,7 +50,8 @@ public final class ProjectDescriptor {
     this.timestamps = timestamps;
     this.dataManager = dataManager;
     myLoggingManager = loggingManager;
-    this.rootsIndex = new ModuleRootsIndex(jpsProject, dataManager);
+    rootsIndex = new ModuleRootsIndex(jpsProject, dataManager);
+    myArtifactRootsIndex = new ArtifactRootsIndex(jpsModel, project, dataManager, rootsIndex);
     myProjectJavaSdks = new HashSet<JpsTypedLibrary<JpsSdkProperties>>();
     myEncodingConfiguration = new CompilerEncodingConfiguration(project.getFilePathToCharset(), project.getProjectCharset(), rootsIndex);
     for (JpsModule module : jpsProject.getModules()) {
@@ -71,6 +74,10 @@ public final class ProjectDescriptor {
 
   public BuildLoggingManager getLoggingManager() {
     return myLoggingManager;
+  }
+
+  public ArtifactRootsIndex getArtifactRootsIndex() {
+    return myArtifactRootsIndex;
   }
 
   public synchronized void incUsageCounter() {

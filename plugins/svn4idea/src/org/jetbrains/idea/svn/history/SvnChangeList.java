@@ -594,6 +594,11 @@ public class SvnChangeList implements CommittedChangeList {
     return myListsHolder.getDetailedList();
   }
 
+  @Override
+  public boolean isModifiable() {
+    return true;
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

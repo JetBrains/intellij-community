@@ -19,10 +19,7 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.CommandLineState;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.configurations.RunProfileState;
-import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.rmi.RemoteProcessSupport;
@@ -198,7 +195,34 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> {
         for (Map.Entry<String, String> each : defs.entrySet()) {
           params.getVMParametersList().defineProperty(each.getKey(), each.getValue());
         }
-        params.getVMParametersList().addParametersString("-Xmx512m");
+
+        boolean xmxSet = false;
+
+        String mavenOpts = System.getenv("MAVEN_OPTS");
+        if (mavenOpts != null) {
+          ParametersList mavenOptsList = new ParametersList();
+          mavenOptsList.addParametersString(mavenOpts);
+
+          for (String param : mavenOptsList.getParameters()) {
+            if (param.startsWith("-Xmx")) {
+              params.getVMParametersList().add(param);
+              xmxSet = true;
+            }
+            else if (param.startsWith("-Xms") || param.startsWith("-XX:MaxPermSize") || param.startsWith("-XX:PermSize")) {
+              params.getVMParametersList().add(param);
+            }
+          }
+        }
+
+        String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
+        if (embedderXmx != null) {
+          params.getVMParametersList().add("-Xmx" + embedderXmx);
+        }
+        else {
+          if (!xmxSet) {
+            params.getVMParametersList().add("-Xmx512m");
+          }
+        }
 
         //params.getVMParametersList().addParametersString("-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5009");
 

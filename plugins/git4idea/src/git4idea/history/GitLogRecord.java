@@ -63,6 +63,11 @@ class GitLogRecord {
   }
 
   @NotNull
+  List<GitLogStatusInfo> getStatusInfos() {
+    return myStatusInfo;
+  }
+
+  @NotNull
   public List<FilePath> getFilePaths(VirtualFile root) throws VcsException {
     List<FilePath> res = new ArrayList<FilePath>();
     String prefix = root.getPath() + "/";
@@ -230,7 +235,9 @@ class GitLogRecord {
         break;
       case RENAMED:
         status = FileStatus.MODIFIED;
-        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, statusInfo.getSecondPath(), false, false, true);
+        String secondPath = statusInfo.getSecondPath();
+        final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, secondPath == null ? path : secondPath,
+                                                                           false, false, true);
         after = GitContentRevision.createMultipleParentsRevision(project, filePathAfterRename, parentRevisions);
         before = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, true, true, true);
         break;
@@ -251,5 +258,11 @@ class GitLogRecord {
    */
   public void setUsedHandler(GitHandler handler) {
     myHandler = handler;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("GitLogRecord{myOptions=%s, myPaths=%s, myStatusInfo=%s, mySupportsRawBody=%s, myHandler=%s}",
+                         myOptions, myPaths, myStatusInfo, mySupportsRawBody, myHandler);
   }
 }

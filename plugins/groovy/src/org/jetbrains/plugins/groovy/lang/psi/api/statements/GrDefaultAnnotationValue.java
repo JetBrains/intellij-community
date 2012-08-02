@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.api.statements;
 
+import com.intellij.psi.PsiAnnotationMemberValue;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
@@ -23,7 +24,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
  * User: Dmitry.Krasilschikov
  * Date: 04.06.2007
  */
-public interface GrDefaultAnnotationValue extends GroovyPsiElement {
+public interface GrDefaultAnnotationValue extends GroovyPsiElement, PsiAnnotationMemberValue {
   @Nullable
   GrAnnotationMemberValue getDefaultValue();
 }

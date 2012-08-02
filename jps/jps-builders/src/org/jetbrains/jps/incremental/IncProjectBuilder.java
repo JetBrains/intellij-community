@@ -21,10 +21,7 @@ import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.ExternalJavacDescriptor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.incremental.messages.CompilerMessage;
-import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.messages.UptoDateFilesSavedEvent;
+import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -300,10 +297,11 @@ public class IncProjectBuilder {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(moduleName, forTests);
     for (String srcPath : map.getKeys()) {
       final Collection<String> outs = map.getState(srcPath);
-      if (outs != null) {
+      if (outs != null && !outs.isEmpty()) {
         for (String out : outs) {
           new File(out).delete();
         }
+        context.processMessage(new FileDeletedEvent(outs));
       }
     }
   }
@@ -655,27 +653,26 @@ public class IncProjectBuilder {
           // deleting outputs corresponding to non-existing source
           final Collection<String> outputs = sourceToOutputStorage.getState(deletedSource);
 
-          if (outputs != null) {
+          if (outputs != null && !outputs.isEmpty()) {
             final JavaBuilderLogger logger = context.getLoggingManager().getJavaBuilderLogger();
             if (logger.isEnabled()) {
-              if (outputs.size() > 0) {
-                final String[] buffer = new String[outputs.size()];
-                int i = 0;
-                for (final String o : outputs) {
-                  buffer[i++] = o;
-                }
-                Arrays.sort(buffer);
-                logger.log("Cleaning output files:");
-                for (final String o : buffer) {
-                  logger.log(o);
-                }
-                logger.log("End of files");
+              final String[] buffer = new String[outputs.size()];
+              int i = 0;
+              for (final String o : outputs) {
+                buffer[i++] = o;
               }
+              Arrays.sort(buffer);
+              logger.log("Cleaning output files:");
+              for (final String o : buffer) {
+                logger.log(o);
+              }
+              logger.log("End of files");
             }
 
             for (String output : outputs) {
               new File(output).delete();
             }
+            context.processMessage(new FileDeletedEvent(outputs));
           }
 
           // check if deleted source was associated with a form
@@ -824,6 +821,9 @@ public class IncProjectBuilder {
                 allOutputs.add(output);
               }
               new File(output).delete();
+            }
+            if (!outputs.isEmpty()) {
+              context.processMessage(new FileDeletedEvent(outputs));
             }
             srcToOut.remove(srcPath);
           }

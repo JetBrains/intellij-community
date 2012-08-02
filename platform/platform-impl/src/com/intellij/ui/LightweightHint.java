@@ -366,7 +366,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
               LayoutFocusTraversalPolicyExt.setOverridenDefaultComponent(null);
             }
 
-            layeredPane.repaint(bounds.x, bounds.y, bounds.width, bounds.height);
+            layeredPane.paintImmediately(bounds.x, bounds.y, bounds.width, bounds.height);
           }
         }
       }

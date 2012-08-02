@@ -33,6 +33,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.Producer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,14 +58,22 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     // Foldings
     Element child = element.getChild(FOLDING_ELEMENT);
     Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (child != null && document != null) {
-      //PsiDocumentManager.getInstance(project).commitDocument(document);
-      state.FOLDING_STATE = CodeFoldingManager.getInstance(project).readFoldingState(child, document);
+    if (child != null) {
+      if (document == null) {
+        final Element detachedStateCopy = (Element)child.clone();
+        state.setDelayedFoldState(new Producer<CodeFoldingState>() {
+          @Override
+          public CodeFoldingState produce() {
+            Document document = FileDocumentManager.getInstance().getCachedDocument(file);
+            return document == null ? null : CodeFoldingManager.getInstance(project).readFoldingState(detachedStateCopy, document);
+          }
+        });
+      }
+      else {
+        //PsiDocumentManager.getInstance(project).commitDocument(document);
+        state.setFoldingState(CodeFoldingManager.getInstance(project).readFoldingState(child, document));
+      }
     }
-    else {
-      state.FOLDING_STATE = null;
-    }
-
     return state;
   }
 
@@ -74,10 +83,11 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     TextEditorState state = (TextEditorState)_state;
 
     // Foldings
-    if (state.FOLDING_STATE != null) {
+    CodeFoldingState foldingState = state.getFoldingState();
+    if (foldingState != null) {
       Element e = new Element(FOLDING_ELEMENT);
       try {
-        CodeFoldingManager.getInstance(project).writeFoldingState(state.FOLDING_STATE, e);
+        CodeFoldingManager.getInstance(project).writeFoldingState(foldingState, e);
       }
       catch (WriteExternalException e1) {
         //ignore
@@ -94,10 +104,10 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
       // Folding
       if (project != null && !editor.isDisposed()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-        state.FOLDING_STATE = CodeFoldingManager.getInstance(project).saveFoldingState(editor);
+        state.setFoldingState(CodeFoldingManager.getInstance(project).saveFoldingState(editor));
       }
       else {
-        state.FOLDING_STATE = null;
+        state.setFoldingState(null);
       }
     }
 
@@ -107,12 +117,13 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state) {
     super.setStateImpl(project, editor, state);
     // Folding
-    if (project != null && state.FOLDING_STATE != null){
+    final CodeFoldingState foldState = state.getFoldingState();
+    if (project != null && foldState != null){
       PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
       editor.getFoldingModel().runBatchFoldingOperation(
         new Runnable() {
           public void run() {
-            CodeFoldingManager.getInstance(project).restoreFoldingState(editor, state.FOLDING_STATE);
+            CodeFoldingManager.getInstance(project).restoreFoldingState(editor, foldState);
           }
         }
       );

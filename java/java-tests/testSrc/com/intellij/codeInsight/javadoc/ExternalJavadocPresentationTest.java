@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-
   public void testStringClass() throws Exception {
     doTest("", "String/7/page.html", "String/7/expected.html");
     doTest("", "String/6/page.html", "String/6/expected.html");
@@ -48,7 +47,11 @@ public class ExternalJavadocPresentationTest extends LightCodeInsightTestCase {
   public void testToLowerCase() throws Exception {
       doTest("lang/String.html#toLowerCase()", "String/7/page.html", "String/7/expectedToLowerCase.html");
       doTest("lang/String.html#toLowerCase()", "String/6/page.html", "String/6/expectedToLowerCase.html");
-    }
+  }
+  
+  public void testPackageSummary() throws Exception {
+    doTest("java/lang/package-summary.html", "packageSummary/util/page.html", "packageSummary/util/expected.html");
+  }
 
   private void doTest(@NonNls String url, @NonNls String pageText, @NonNls String expected) throws Exception {
     final String basePath = getTestDataPath() + TEST_ROOT;

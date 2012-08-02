@@ -20,8 +20,8 @@ import com.intellij.android.designer.model.RadIncludeLayout;
 import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.android.designer.propertyTable.editors.ResourceEditor;
 import com.intellij.android.designer.propertyTable.renderers.ResourceRenderer;
-import com.intellij.designer.model.RadComponent;
-import com.intellij.designer.propertyTable.Property;
+import com.intellij.designer.model.PropertiesContainer;
+import com.intellij.designer.model.Property;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,13 +59,13 @@ public class IncludeLayoutProperty extends Property<RadViewComponent> implements
   }
 
   @Override
-  public Object getValue(RadViewComponent component) throws Exception {
+  public Object getValue(@NotNull RadViewComponent component) throws Exception {
     String layout = component.getTag().getAttributeValue("layout");
     return layout == null ? "" : layout;
   }
 
   @Override
-  public void setValue(final RadViewComponent component, final Object value) throws Exception {
+  public void setValue(@NotNull final RadViewComponent component, final Object value) throws Exception {
     if (!StringUtil.isEmpty((String)value)) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
         @Override
@@ -78,7 +78,7 @@ public class IncludeLayoutProperty extends Property<RadViewComponent> implements
   }
 
   @Override
-  public boolean availableFor(List<RadComponent> components) {
+  public boolean availableFor(List<PropertiesContainer> components) {
     return false;
   }
 

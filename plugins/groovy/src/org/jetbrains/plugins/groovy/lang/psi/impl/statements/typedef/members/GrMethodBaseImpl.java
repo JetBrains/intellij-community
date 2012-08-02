@@ -111,10 +111,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
 
   @Nullable
   public GrOpenBlock getBlock() {
-    for (PsiElement cur = this.getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrOpenBlock) return (GrOpenBlock)cur;
-    }
-    return null;
+    return findChildByClass(GrOpenBlock.class);
   }
 
   public void setBlock(GrCodeBlock newBlock) {

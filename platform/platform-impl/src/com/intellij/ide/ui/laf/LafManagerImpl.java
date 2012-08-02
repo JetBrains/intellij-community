@@ -84,21 +84,22 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String GNOME_THEME_PROPERTY_NAME = "gnome.Net/ThemeName";
 
-  @NonNls private static final String[] ourPatchableFontResources = new String[]{
-    "Button.font", "ToggleButton.font", "RadioButton.font", "CheckBox.font", "ColorChooser.font", "ComboBox.font",
-    "Label.font", "List.font", "MenuBar.font", "MenuItem.font", "MenuItem.acceleratorFont", "RadioButtonMenuItem.font",
-    "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font", "Panel.font", "ProgressBar.font",
-    "ScrollPane.font", "Viewport.font", "TabbedPane.font", "Table.font", "TableHeader.font", "TextField.font",
-    "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font", "TitledBorder.font", "ToolBar.font",
-    "ToolTip.font", "Tree.font"
-  };
-  @NonNls private static final String[] ourFileChooserTextKeys = new String[] {
-    "FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText", "FileChooser.listViewActionLabelText",
-    "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"
-  };
-  @NonNls private static final String[] ourOptionPaneIconKeys = {
-    "OptionPane.errorIcon", "OptionPane.informationIcon", "OptionPane.warningIcon", "OptionPane.questionIcon"
-  };
+  @NonNls private static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
+    "CheckBox.font", "ColorChooser.font", "ComboBox.font", "Label.font", "List.font", "MenuBar.font", "MenuItem.font",
+    "MenuItem.acceleratorFont", "RadioButtonMenuItem.font", "CheckBoxMenuItem.font", "Menu.font", "PopupMenu.font", "OptionPane.font",
+    "Panel.font", "ProgressBar.font", "ScrollPane.font", "Viewport.font", "TabbedPane.font", "Table.font", "TableHeader.font",
+    "TextField.font", "PasswordField.font", "TextArea.font", "TextPane.font", "EditorPane.font", "TitledBorder.font", "ToolBar.font",
+    "ToolTip.font", "Tree.font"};
+
+  @NonNls private static final String[] ourFileChooserTextKeys = {"FileChooser.viewMenuLabelText", "FileChooser.newFolderActionLabelText",
+    "FileChooser.listViewActionLabelText", "FileChooser.detailsViewActionLabelText", "FileChooser.refreshActionLabelText"};
+
+  @NonNls private static final String[] ourOptionPaneIconKeys = {"OptionPane.errorIcon", "OptionPane.informationIcon",
+    "OptionPane.warningIcon", "OptionPane.questionIcon"};
+
+  private static final String[] ourAlloyComponentsToPatchSelection = {"Tree", "MenuItem", "Menu", "List",
+    "ComboBox", "Table", "TextArea", "EditorPane", "TextPane", "FormattedTextField", "PasswordField",
+    "TextField", "RadioButtonMenuItem", "CheckBoxMenuItem"};
 
   private final EventListenerList myListenerList;
   private final UIManager.LookAndFeelInfo[] myLafs;
@@ -443,7 +444,16 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       uiDefaults.put("Menu.disabledArrowIcon", getAquaMenuDisabledIcon());
     }
 
+    if (UIUtil.isWinLafOnVista()) {
+      uiDefaults.put("ComboBox.border", null);
+    }
+
     initInputMapDefaults(uiDefaults);
+
+    if (UIUtil.isUnderJGoodiesLookAndFeel()) {
+      UIManager.put("Menu.opaque", true);
+      UIManager.put("MenuItem.opaque", true);
+    }
 
     UIManager.put("Button.defaultButtonFollowsFocus", Boolean.FALSE);
     UIManager.put("MenuItem.background", UIManager.getColor("Menu.background"));
@@ -469,24 +479,15 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static void fixTreeWideSelection(UIDefaults uiDefaults) {
-    if (UIUtil.isUnderAlloyIDEALookAndFeel()) {
+    if (UIUtil.isUnderAlloyIDEALookAndFeel() || UIUtil.isUnderJGoodiesLookAndFeel()) {
       final Color bg = new ColorUIResource(56, 117, 215);
-      uiDefaults.put("Tree.selectionBackground", bg);
-      uiDefaults.put("MenuItem.selectionBackground", bg);
-      uiDefaults.put("Menu.selectionBackground", bg);
-      uiDefaults.put("List.selectionBackground", bg);
-      uiDefaults.put("ComboBox.selectionBackground", bg);
-      uiDefaults.put("Table.selectionBackground", bg);
-      uiDefaults.put("TextArea.selectionBackground", bg);
-      uiDefaults.put("EditorPane.selectionBackground", bg);
-      uiDefaults.put("TextPane.selectionBackground", bg);
+      final Color fg = new ColorUIResource(Color.WHITE);
       uiDefaults.put("info", bg);
-      uiDefaults.put("FormattedTextField.selectionBackground", bg);
       uiDefaults.put("textHighlight", bg);
-      uiDefaults.put("PasswordField.selectionBackground", bg);
-      uiDefaults.put("TextField.selectionBackground", bg);
-      uiDefaults.put("RadioButtonMenuItem.selectionBackground", bg);
-      uiDefaults.put("CheckBoxMenuItem.selectionBackground", bg);
+      for (String key : ourAlloyComponentsToPatchSelection) {
+        uiDefaults.put(key + ".selectionBackground", bg);
+        uiDefaults.put(key + ".selectionForeground", fg);
+      }
     }
 
     if (UIUtil.isUnderMetalLookAndFeel()) {

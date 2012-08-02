@@ -331,7 +331,11 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
   }
 
   private boolean isBlankLine(int line, CharSequence chars) {
-    int startOffset = myDocument.getLineStartOffset(line);
+    Document document = myDocument;
+    if (document == null) {
+      return true;
+    }
+    int startOffset = document.getLineStartOffset(line);
     return CharArrayUtil.shiftForward(chars, startOffset, " \t") >= myDocument.getLineEndOffset(line);
   }
 
@@ -339,6 +343,7 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
     final Document doc = myDocument;
     CharSequence chars = doc.getCharsSequence();
     int[] lineIndents = new int[doc.getLineCount()];
+    boolean[] indentStartedInComment = new boolean[lineIndents.length];
     TokenSet comments = LanguageParserDefinitions.INSTANCE.forLanguage(myFile.getLanguage()).getCommentTokens();
 
     int prevColumn = -1;
@@ -353,11 +358,24 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
       int nonWhitespaceOffset = CharArrayUtil.shiftForward(chars, lineStart, " \t");
       if (nonWhitespaceOffset < lineEnd) {
         final int column = myEditor.calcColumnNumber(nonWhitespaceOffset, line);
-        if (column < prevColumn) {
+        if (column != prevColumn) {
           final HighlighterIterator it = highlighter.createIterator(nonWhitespaceOffset);
-          if (comments.contains(it.getTokenType())) {
-            lineIndents[line] = -1;
-            continue;
+          boolean comment = comments.contains(it.getTokenType());
+          if (column > prevColumn && comment) {
+            indentStartedInComment[line] = true;
+          }
+          else if (column < prevColumn && comment) {
+            boolean startInComment = false;
+            for (int i = line - 1; i >= 0 && (lineIndents[i] < 0 || lineIndents[i] >= column); i--) {
+              if (indentStartedInComment[i]) {
+                startInComment = true;
+                break;
+              }
+            }
+            if (!startInComment) {
+              lineIndents[line] = -1;
+              continue;
+            }
           }
         }
 

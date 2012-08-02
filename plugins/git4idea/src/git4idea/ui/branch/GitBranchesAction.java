@@ -38,9 +38,6 @@ public class GitBranchesAction extends DumbAwareAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-    if (repositoryManager == null) {
-      return;
-    }
     VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     GitRepository repository = (file == null ?
                                 GitBranchUiUtil.getCurrentRepository(project):

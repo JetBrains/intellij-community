@@ -28,7 +28,6 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.TObjectHashingStrategy;
-import org.intellij.lang.annotations.MagicConstant;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -396,20 +395,16 @@ public class FileUtil extends FileUtilRt {
 
   public static boolean createParentDirs(@NotNull File file) {
     if (!file.exists()) {
-      String parentDirPath = file.getParent();
-      if (parentDirPath != null) {
-        final File parentFile = new File(parentDirPath);
+      final File parentFile = file.getParentFile();
+      if (parentFile != null) {
         return createDirectory(parentFile);
       }
     }
     return true;
   }
 
-  public static boolean createDirectory(File parentFile) {
-    int parentAttributes = getBooleanAttributes(parentFile);
-    boolean ok = parentAttributes != -1 ? (parentAttributes & (BA_EXISTS | BA_DIRECTORY)) == (BA_EXISTS | BA_DIRECTORY)
-                                        : parentFile.exists() && parentFile.isDirectory();
-    return ok || parentFile.mkdirs();
+  public static boolean createDirectory(@NotNull File path) {
+    return path.isDirectory() || path.mkdirs();
   }
 
   public static boolean createIfDoesntExist(@NotNull File file) {
@@ -681,6 +676,32 @@ public class FileUtil extends FileUtilRt {
       }
       result.append(str);
     }
+    return result.toString();
+  }
+
+  @NotNull
+  public static String normalize(@NotNull String path) {
+    final StringBuilder result = new StringBuilder(path.length());
+
+    int start = 0;
+    if (SystemInfo.isWindows && (path.startsWith("//") || path.startsWith("\\\\"))) {
+      start = 2;
+      result.append("//");
+    }
+
+    boolean separator = false;
+    for (int i = start; i < path.length(); ++i) {
+      final char c = path.charAt(i);
+      if (c == '/' || c == '\\') {
+        if (!separator) result.append('/');
+        separator = true;
+      }
+      else {
+        result.append(c);
+        separator = false;
+      }
+    }
+
     return result.toString();
   }
 
@@ -1008,12 +1029,13 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static List<File> findFilesByMask(@NotNull Pattern pattern, @NotNull File dir) {
     final ArrayList<File> found = new ArrayList<File>();
-    for (File file : dir.listFiles()) {
-      if (file.isDirectory()) {
-        found.addAll(findFilesByMask(pattern, file));
-      }
-      else {
-        if (pattern.matcher(file.getName()).matches()) {
+    final File[] files = dir.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.isDirectory()) {
+          found.addAll(findFilesByMask(pattern, file));
+        }
+        else if (pattern.matcher(file.getName()).matches()) {
           found.add(file);
         }
       }
@@ -1024,13 +1046,15 @@ public class FileUtil extends FileUtilRt {
   @NotNull
   public static List<File> findFilesOrDirsByMask(@NotNull Pattern pattern, @NotNull File dir) {
     final ArrayList<File> found = new ArrayList<File>();
-    for (File file : dir.listFiles()) {
-      if (file.isDirectory()) {
-        found.addAll(findFilesOrDirsByMask(pattern, file));
-      }
-
-      if (pattern.matcher(file.getName()).matches()) {
-        found.add(file);
+    final File[] files = dir.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (pattern.matcher(file.getName()).matches()) {
+          found.add(file);
+        }
+        if (file.isDirectory()) {
+          found.addAll(findFilesOrDirsByMask(pattern, file));
+        }
       }
     }
     return found;
@@ -1039,7 +1063,7 @@ public class FileUtil extends FileUtilRt {
   /**
    * Returns empty string for empty path.
    * First checks whether provided path is a path of a file with sought-for name.
-   * Unless found, checks if provided file was a directory. In this case checks existance
+   * Unless found, checks if provided file was a directory. In this case checks existence
    * of child files with given names in order "as provided". Finally checks filename among
    * brother-files of provided. Returns null if nothing found.
    *
@@ -1152,7 +1176,7 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static File createTempDirectory(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit) throws IOException {
-    return FileUtilRt.createTempDirectory(dir, prefix, suffix,deleteOnExit);
+    return FileUtilRt.createTempDirectory(dir, prefix, suffix, deleteOnExit);
   }
 
   @NotNull
@@ -1243,58 +1267,6 @@ public class FileUtil extends FileUtilRt {
     return FileUtilRt.loadBytes(stream, length);
   }
 
-  // copied from FileSystem: they are package local there
-  public static final int BA_EXISTS    = 0x01;
-  public static final int BA_REGULAR   = 0x02;
-  public static final int BA_DIRECTORY = 0x04;
-  public static final int BA_HIDDEN    = 0x08;
-
-  @MagicConstant(flags = {BA_EXISTS, BA_REGULAR, BA_DIRECTORY, BA_HIDDEN})
-  public @interface FileBooleanAttributes {}
-
-  private static final Method JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD;
-  private static final Object JAVA_IO_FILESYSTEM;
-
-  // todo[r.sh] use NIO2 API after migration to JDK 7
-  // returns -1 if could not get attributes
-  @FileBooleanAttributes
-  public static int getBooleanAttributes(@NotNull File f) {
-    if (JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD != null) {
-      try {
-        Object flags = JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD.invoke(JAVA_IO_FILESYSTEM, f);
-        //noinspection MagicConstant
-        return ((Integer)flags).intValue();
-      }
-      catch (Exception ignored) { }
-    }
-    return -1;
-  }
-
-  static {
-    Object fs;
-    Method getBooleanAttributes;
-    try {
-      Class<?> fsClass = Class.forName("java.io.FileSystem");
-      Method getFileSystem = fsClass.getMethod("getFileSystem");
-      getFileSystem.setAccessible(true);
-      fs = getFileSystem.invoke(null);
-      getBooleanAttributes = fsClass.getDeclaredMethod("getBooleanAttributes", File.class);
-      if (fs == null || getBooleanAttributes == null) {
-        fs = null;
-        getBooleanAttributes = null;
-      }
-      else {
-        getBooleanAttributes.setAccessible(true);
-      }
-    }
-    catch (Exception e) {
-      fs = null;
-      getBooleanAttributes = null;
-    }
-    JAVA_IO_FILESYSTEM = fs;
-    JAVA_IO_FILESYSTEM_GET_BOOLEAN_ATTRIBUTES_METHOD = getBooleanAttributes;
-  }
-
   private static final class CompletedFuture<T> implements Future<T> {
     public boolean cancel(boolean mayInterruptIfRunning) {
       return false;
@@ -1305,9 +1277,11 @@ public class FileUtil extends FileUtilRt {
     public boolean isDone() {
       return true;
     }
+    @Nullable
     public T get() throws InterruptedException, ExecutionException {
       return null;
     }
+    @Nullable
     public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
       return null;
     }

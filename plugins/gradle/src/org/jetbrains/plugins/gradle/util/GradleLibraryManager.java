@@ -104,7 +104,17 @@ public class GradleLibraryManager {
     if (result != null) {
       return result;
     }
-    result = getGradleHomeFromPath();
+    return getAutodetectedGradleHome();
+  }
+
+  /**
+   * Tries to deduce gradle location from current environment.
+   * 
+   * @return    gradle home deduced from the current environment (if any); <code>null</code> otherwise
+   */
+  @Nullable
+  public File getAutodetectedGradleHome() {
+    File result = getGradleHomeFromPath();
     return result == null ? getGradleHomeFromEnvProperty() : result;
   }
 

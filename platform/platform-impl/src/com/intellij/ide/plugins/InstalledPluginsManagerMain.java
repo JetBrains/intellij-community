@@ -108,11 +108,14 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
                 StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(oldFile));
               }
             }
-            PluginDownloader.install(file, file.getName(), false);
-            ((InstalledPluginsTableModel)pluginsModel).appendOrUpdateDescriptor(pluginDescriptor);
-            select(pluginDescriptor);
-            checkInstalledPluginDependencies(pluginDescriptor);
-            setRequireShutdown(true);
+            if (((InstalledPluginsTableModel)pluginsModel).appendOrUpdateDescriptor(pluginDescriptor)) {
+              PluginDownloader.install(file, file.getName(), false);
+              select(pluginDescriptor);
+              checkInstalledPluginDependencies(pluginDescriptor);
+              setRequireShutdown(true);
+            } else {
+              Messages.showInfoMessage(myActionsPanel, "Plugin " + pluginDescriptor.getName() + " was already installed", CommonBundle.getWarningTitle());
+            }
           }
           catch (IOException ex) {
             Messages.showErrorDialog(ex.getMessage(), CommonBundle.getErrorTitle());
@@ -139,7 +142,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       }
     }
     if (!notInstalled.isEmpty()) {
-      Messages.showErrorDialog("Plugin " +
+      Messages.showWarningDialog("Plugin " +
                                pluginDescriptor.getName() +
                                " depends on unknown plugin" +
                                (notInstalled.size() > 1 ? "s " : " ") +

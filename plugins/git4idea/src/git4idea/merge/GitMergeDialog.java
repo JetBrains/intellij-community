@@ -26,6 +26,7 @@ import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.util.GitUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -83,10 +84,10 @@ public class GitMergeDialog extends DialogWrapper {
    * The log information checkbox
    */
   private JCheckBox myAddLogInformationCheckBox;
-  /**
-   * The current project
-   */
-  private final Project myProject;
+
+  @NotNull private final Project myProject;
+  private final GitVcs myVcs;
+
 
 
   /**
@@ -96,10 +97,11 @@ public class GitMergeDialog extends DialogWrapper {
    * @param roots       a git repository roots for the project
    * @param defaultRoot a guessed default root
    */
-  public GitMergeDialog(Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
+  public GitMergeDialog(@NotNull Project project, List<VirtualFile> roots, VirtualFile defaultRoot) {
     super(project, true);
     setTitle(GitBundle.getString("merge.branch.title"));
     myProject = project;
+    myVcs = GitVcs.getInstance(project);
     initBranchChooser();
     setOKActionEnabled(false);
     setOKButtonText(GitBundle.getString("merge.branch.button"));
@@ -109,11 +111,17 @@ public class GitMergeDialog extends DialogWrapper {
     GitUIUtil.implyDisabled(mySquashCommitCheckBox, true, myCommitMessage);
     GitUIUtil.exclusive(mySquashCommitCheckBox, true, myNoFastForwardCheckBox, true);
     myGitRoot.addActionListener(new ActionListener() {
-      public void actionPerformed(final ActionEvent e) {
-        updateBranches();
+      public void actionPerformed(final ActionEvent event) {
+        try {
+          updateBranches();
+        }
+        catch (VcsException ex) {
+          if (myVcs.getExecutableValidator().checkExecutableAndShowMessageIfNeeded(getRootPane())) {
+            myVcs.showErrors(Collections.singletonList(ex), GitBundle.getString("merge.retrieving.branches"));
+          }
+        }
       }
     });
-    updateBranches();
     init();
   }
 
@@ -145,22 +153,17 @@ public class GitMergeDialog extends DialogWrapper {
   /**
    * Setup branches for git root, this method should be called when root is changed.
    */
-  private void updateBranches() {
-    try {
-      VirtualFile root = getSelectedRoot();
-      GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.BRANCH);
-      handler.setNoSSH(true);
-      handler.setSilent(true);
-      handler.addParameters("--no-color", "-a", "--no-merged");
-      String output = handler.run();
-      myBranchChooser.clear();
-      for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens();) {
-        String branch = lines.nextToken().substring(2);
-        myBranchChooser.addElement(branch, false);
-      }
-    }
-    catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.getString("merge.retrieving.branches"));
+  public void updateBranches() throws VcsException {
+    VirtualFile root = getSelectedRoot();
+    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.BRANCH);
+    handler.setNoSSH(true);
+    handler.setSilent(true);
+    handler.addParameters("--no-color", "-a", "--no-merged");
+    String output = handler.run();
+    myBranchChooser.clear();
+    for (StringTokenizer lines = new StringTokenizer(output, "\n", false); lines.hasMoreTokens();) {
+      String branch = lines.nextToken().substring(2);
+      myBranchChooser.addElement(branch, false);
     }
   }
 

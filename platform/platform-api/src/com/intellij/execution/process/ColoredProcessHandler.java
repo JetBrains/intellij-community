@@ -22,7 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
@@ -49,12 +49,12 @@ public class ColoredProcessHandler extends OSProcessHandler {
   }
 
   public ColoredProcessHandler(Process process, String commandLine) {
-    this(process, commandLine, null);
+    super(process, commandLine);
   }
 
   public ColoredProcessHandler(final Process process,
                                final String commandLine,
-                               @Nullable final Charset charset) {
+                               @NotNull final Charset charset) {
     super(process, commandLine, charset);
   }
 

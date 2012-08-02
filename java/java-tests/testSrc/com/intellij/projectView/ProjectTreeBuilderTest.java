@@ -102,15 +102,15 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
                   "    -InnerClass23\n" +
                   "     -InnerClass24\n" +
                   "      +InnerClass25\n" +
-                  "      myFieldToSelect:int\n" +
-                  "     myInnerClassField:int\n" +
-                  "    myInnerClassField:int\n" +
-                  "   myInnerClassField:int\n" +
-                  "  getValue():int\n" +
-                  "  myField1:boolean\n" +
-                  "  myField2:boolean\n" +
-                  "  myField3:boolean\n" +
-                  "  myField4:boolean\n";
+                  "      myFieldToSelect: int\n" +
+                  "     myInnerClassField: int\n" +
+                  "    myInnerClassField: int\n" +
+                  "   myInnerClassField: int\n" +
+                  "  getValue(): int\n" +
+                  "  myField1: boolean\n" +
+                  "  myField2: boolean\n" +
+                  "  myField3: boolean\n" +
+                  "  myField4: boolean\n";
 
       IdeaTestUtil.assertTreeEqual(structureViewComponent.getTree(),
                                    expected);

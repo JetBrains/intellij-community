@@ -14,8 +14,9 @@ public class JpsJavaExtensionTest extends JpsModelTestCase {
     final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     final JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module);
     extension.setOutputUrl("file://path");
-    assertEquals("file://path",
-                 module.getContainer().getChild(JpsJavaExtensionService.getInstance().getModuleExtensionKind()).getOutputUrl());
+    JpsJavaModuleExtension moduleExtension = JpsJavaExtensionService.getInstance().getModuleExtension(module);
+    assertNotNull(moduleExtension);
+    assertEquals("file://path", moduleExtension.getOutputUrl());
   }
 
   public void testDependency() {
@@ -29,8 +30,8 @@ public class JpsJavaExtensionTest extends JpsModelTestCase {
 
     final JpsDependencyElement dep =
       assertOneElement(assertOneElement(myModel.getProject().getModules()).getDependenciesList().getDependencies());
-    final JpsJavaDependencyExtension extension =
-      dep.getContainer().getChild(JpsJavaExtensionService.getInstance().getDependencyExtensionKind());
+    final JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dep);
+    assertNotNull(extension);
     assertTrue(extension.isExported());
     assertSame(JpsJavaDependencyScope.TEST, extension.getScope());
   }

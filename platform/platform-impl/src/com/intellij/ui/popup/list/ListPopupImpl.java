@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.popup.list;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -28,7 +29,6 @@ import com.intellij.ui.ListScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.ClosableByLeftArrow;
-import com.intellij.ui.popup.PopupIcons;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.UIUtil;
 
@@ -410,7 +410,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup {
       final int index = myList.getSelectedIndex();
       final Rectangle bounds = myList.getCellBounds(index, index);
       final Point point = e.getPoint();
-      if (point.getX() > bounds.width + bounds.getX() - PopupIcons.HAS_NEXT_ICON.getIconWidth()) { //press on handle icon
+      if (point.getX() > bounds.width + bounds.getX() - AllIcons.Icons.Ide.NextStep.getIconWidth()) { //press on handle icon
         handleFinalChoices = false;
       }
     }

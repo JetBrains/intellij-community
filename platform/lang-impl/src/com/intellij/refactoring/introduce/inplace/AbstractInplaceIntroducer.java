@@ -310,6 +310,15 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
         if (templateState != null) {
           myEditor.putUserData(INTRODUCE_RESTART, true);
           try {
+            final TextRange range = templateState.getCurrentVariableRange();
+            if (range != null && range.isEmpty()) {
+              final String[] names = suggestNames(isReplaceAllOccurrences(), getLocalVariable());
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                public void run() {
+                  myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), names[0]);
+                }
+              });
+            }
             templateState.gotoEnd(true);
             try {
               myShouldSelect = false;

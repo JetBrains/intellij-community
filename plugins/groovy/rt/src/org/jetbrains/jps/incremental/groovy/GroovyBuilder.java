@@ -8,6 +8,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import groovy.util.CharsetToolkit;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.ether.dependencyView.Callbacks;
 import org.jetbrains.ether.dependencyView.Mappings;
@@ -18,6 +19,7 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.java.ClassPostProcessor;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.FileGeneratedEvent;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -68,6 +70,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
       }
 
       Map<JpsModule, String> finalOutputs = getCanonicalModuleOutputs(context, chunk);
+      if (finalOutputs == null) {
+        return ExitCode.ABORT;
+      }
       Map<JpsModule, String> generationOutputs = getGenerationOutputs(chunk, finalOutputs);
 
       final Set<String> toCompilePaths = new LinkedHashSet<String>();
@@ -165,11 +170,14 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     return generationOutputs;
   }
 
-  private static Map<JpsModule, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
+  @Nullable private static Map<JpsModule, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
     Map<JpsModule, String> finalOutputs = new HashMap<JpsModule, String>();
     for (JpsModule module : chunk.getModules()) {
       File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(module, context.isCompilingTests());
-      assert moduleOutputDir != null;
+      if (moduleOutputDir == null) {
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory not specified for module " + module.getName()));
+        return null;
+      }
       String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());
       assert moduleOutputPath != null;
       finalOutputs.put(module, moduleOutputPath.endsWith("/") ? moduleOutputPath : moduleOutputPath + "/");

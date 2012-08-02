@@ -286,6 +286,10 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
           dirtyOutputDirs.add(path.first);
         }
       }
+
+      @Override
+      public void filesDeleted(Collection<String> paths) {
+      }
     };
     context.putUserData(DIRTY_OUTPUT_DIRS, dirtyOutputDirs);
     context.putUserData(BUILD_LISTENER_KEY, listener);

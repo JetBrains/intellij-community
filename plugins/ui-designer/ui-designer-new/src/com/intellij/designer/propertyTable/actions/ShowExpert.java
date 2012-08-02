@@ -16,7 +16,7 @@
 package com.intellij.designer.propertyTable.actions;
 
 import com.intellij.designer.DesignerBundle;
-import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.designer.propertyTable.RadPropertyTable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -31,9 +31,9 @@ import javax.swing.*;
 public class ShowExpert extends ToggleAction {
   private static final Icon ICON = IconLoader.getIcon("/com/intellij/designer/icons/filter.png");
 
-  private final PropertyTable myTable;
+  private final RadPropertyTable myTable;
 
-  public ShowExpert(PropertyTable table) {
+  public ShowExpert(RadPropertyTable table) {
     myTable = table;
 
     Presentation presentation = getTemplatePresentation();

@@ -120,6 +120,11 @@ public class CvsChangeList implements CommittedChangeList {
     return CommittedChangeListImpl.getChangesWithMovedTreesImpl(this);
   }
 
+  @Override
+  public boolean isModifiable() {
+    return true;
+  }
+
   @Nullable
   public String getBranch() {
     if (myRevisions.size() > 0) {

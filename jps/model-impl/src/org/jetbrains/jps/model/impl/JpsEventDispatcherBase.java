@@ -3,7 +3,7 @@ package org.jetbrains.jps.model.impl;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementKind;
+import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsEventDispatcher;
 
 import java.util.EventListener;
@@ -29,12 +29,12 @@ public abstract class JpsEventDispatcherBase implements JpsEventDispatcher {
   }
 
   @Override
-  public <T extends JpsElement> void fireElementAdded(@NotNull T element, @NotNull JpsElementKind<T> kind) {
-    kind.fireElementAdded(this, element);
+  public <T extends JpsElement> void fireElementAdded(@NotNull T element, @NotNull JpsElementChildRole<T> role) {
+    role.fireElementAdded(this, element);
   }
 
   @Override
-  public <T extends JpsElement> void fireElementRemoved(@NotNull T element, @NotNull JpsElementKind<T> kind) {
-    kind.fireElementRemoved(this, element);
+  public <T extends JpsElement> void fireElementRemoved(@NotNull T element, @NotNull JpsElementChildRole<T> role) {
+    role.fireElementRemoved(this, element);
   }
 }

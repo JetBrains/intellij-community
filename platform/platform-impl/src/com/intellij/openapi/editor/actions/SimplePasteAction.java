@@ -64,5 +64,10 @@ public class SimplePasteAction extends EditorAction {
         
       }
     }
+
+    @Override
+    public boolean isEnabled(Editor editor, DataContext dataContext) {
+      return !editor.isViewer();
+    }
   }
 }

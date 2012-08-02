@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -57,23 +56,13 @@ public class AndroidFinalPackageElementType extends PackagingElementType<Android
   }
 
   @NotNull
-  private static List<Module> facetsToModules(@NotNull Collection<AndroidFacet> facets) {
-    final List<Module> result = new ArrayList<Module>(facets.size());
-    for (AndroidFacet facet : facets) {
-      result.add(facet.getModule());
-    }
-    return result;
-  }
-
-  @NotNull
   @Override
   public List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context,
                                                              @NotNull Artifact artifact,
                                                              @NotNull CompositePackagingElement<?> parent) {
     final List<AndroidFacet> facets = getAndroidApplicationFacets(context, context.getModulesProvider().getModules());
-    final List<Module> modules = facetsToModules(facets);
 
-    final AndroidFacet facet = AndroidArtifactUtil.chooseAndroidApplicationModule(context.getProject(), modules);
+    final AndroidFacet facet = AndroidArtifactUtil.chooseAndroidApplicationModule(context.getProject(), facets);
     if (facet == null) {
       return Collections.emptyList();
     }

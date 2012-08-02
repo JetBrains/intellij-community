@@ -102,7 +102,7 @@ public class ExternalPSIChangeListener extends PsiTreeChangeAdapter {
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        if (myRunState && myInitialize && !myDesigner.getProject().isDisposed()) {
+        if (myRunState && myInitialize && !myDesigner.isProjectClosed()) {
           runnable.run();
         }
       }

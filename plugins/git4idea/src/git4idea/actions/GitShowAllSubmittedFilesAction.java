@@ -86,7 +86,7 @@ public class GitShowAllSubmittedFilesAction extends AnAction implements DumbAwar
    * @param file     file affected by the revision
    */
   public static void showSubmittedFiles(final Project project, final VcsFileRevision revision, final VirtualFile file) {
-    showSubmittedFiles(project, revision.getRevisionNumber().asString(), file, false);
+    showSubmittedFiles(project, revision.getRevisionNumber().asString(), file, false, true);
   }
 
   /**
@@ -96,14 +96,16 @@ public class GitShowAllSubmittedFilesAction extends AnAction implements DumbAwar
    * @param revision a revision number
    * @param file     file affected by the revision
    * @param local
+   * @param revertable
    */
-  public static void showSubmittedFiles(final Project project, final String revision, final VirtualFile file, final boolean local) {
+  public static void showSubmittedFiles(final Project project, final String revision, final VirtualFile file,
+                                        final boolean local, final boolean revertable) {
     new Task.Backgroundable(project, GitBundle.message("changes.retrieving", revision)) {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         try {
           VirtualFile vcsRoot = GitUtil.getGitRoot(file);
-          final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision, true, local);
+          final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision, true, local, revertable);
           if (changeList != null) {
             UIUtil.invokeLaterIfNeeded(new Runnable() {
               public void run() {

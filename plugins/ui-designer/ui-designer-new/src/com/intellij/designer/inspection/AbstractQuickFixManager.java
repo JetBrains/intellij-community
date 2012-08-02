@@ -18,6 +18,8 @@ package com.intellij.designer.inspection;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.designer.DesignerBundle;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.designer.model.ErrorInfo;
+import com.intellij.designer.model.QuickFix;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;

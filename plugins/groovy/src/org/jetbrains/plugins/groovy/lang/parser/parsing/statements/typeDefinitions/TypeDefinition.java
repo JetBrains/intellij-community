@@ -200,7 +200,10 @@ public class TypeDefinition implements GroovyElementTypes {
 
     while (!builder.eof() && builder.getTokenType() != mRCURLY) {
       if (!parseAnnotationMember(builder, parser)) builder.advanceLexer();
-      Separators.parse(builder);
+      if (builder.getTokenType() == mRCURLY) break;
+      if (!Separators.parse(builder)) {
+        builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
+      }
     }
 
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));
@@ -313,7 +316,10 @@ public class TypeDefinition implements GroovyElementTypes {
 
     while (!builder.eof() && builder.getTokenType() != mRCURLY) {
       if (!InterfaceMember.parse(builder, interfaceName, parser)) builder.advanceLexer();
-      Separators.parse(builder);
+      if (builder.getTokenType() == mRCURLY) break;
+      if (!Separators.parse(builder)) {
+        builder.error(GroovyBundle.message("separator.or.rcurly.expected"));
+      }
     }
 
     ParserUtils.getToken(builder, mRCURLY, GroovyBundle.message("rcurly.expected"));

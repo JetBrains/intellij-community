@@ -133,7 +133,7 @@ public class GitRebaseEditor extends DialogWrapper {
           return;
         }
         GitRebaseEntry entry = myTableModel.myEntries.get(row);
-        GitShowAllSubmittedFilesAction.showSubmittedFiles(project, entry.getCommit(), gitRoot, false);
+        GitShowAllSubmittedFilesAction.showSubmittedFiles(project, entry.getCommit(), gitRoot, false, false);
       }
     });
 

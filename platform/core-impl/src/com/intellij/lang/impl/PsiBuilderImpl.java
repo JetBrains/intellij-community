@@ -1681,6 +1681,10 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
 
   @Override
   public <T> void putUserDataUnprotected(@NotNull final Key<T> key, @Nullable final T value) {
+    if (key == FileContextUtil.CONTAINING_FILE_KEY) {
+      myFile = (PsiFile)value;
+      return;
+    }
     if (myUserData == null) myUserData = CollectionFactory.hashMap();
     myUserData.put(key, value);
   }

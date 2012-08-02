@@ -36,7 +36,7 @@ public interface PsiNameValuePair extends PsiElement {
   ArrayFactory<PsiNameValuePair> ARRAY_FACTORY = new ArrayFactory<PsiNameValuePair>() {
     @Override
     public PsiNameValuePair[] create(final int count) {
-      return count == 0 ? PsiNameValuePair.EMPTY_ARRAY : new PsiNameValuePair[count];
+      return count == 0 ? EMPTY_ARRAY : new PsiNameValuePair[count];
     }
   };
 
@@ -55,6 +55,9 @@ public interface PsiNameValuePair extends PsiElement {
    */
   @Nullable @NonNls
   String getName();
+
+  @Nullable
+  String getLiteralValue();
 
   /**
    * Returns the value for the element.

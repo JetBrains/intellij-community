@@ -40,4 +40,9 @@ public interface CommittedChangeList extends ChangeList {
   AbstractVcs getVcs();
 
   Collection<Change> getChangesWithMovedTrees();
+
+  /**
+   * @return true if this change list can be modified, for example, by reverting some of the changes.
+   */
+  boolean isModifiable();
 }

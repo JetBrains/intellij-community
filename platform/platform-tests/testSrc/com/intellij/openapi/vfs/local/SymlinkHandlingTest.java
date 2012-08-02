@@ -54,21 +54,33 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     }
   }
 
-  public void testBadLinksAreIgnored() throws Exception {
+  public void testBadLinks() throws Exception {
     final File missingFile = new File(FileUtil.getTempDirectory(), "missing_file");
     assertTrue(missingFile.getAbsolutePath(), !missingFile.exists() || missingFile.delete());
     final File missingLinkFile = createTempLink(missingFile.getAbsolutePath(), "missing_link");
     final VirtualFile missingLinkVFile = refreshAndFind(missingLinkFile);
-    assertNull(missingLinkVFile);
+    assertBrokenLink(missingLinkVFile);
 
     final File selfLinkFile = createTempLink("self_link", "self_link");
     final VirtualFile selfLinkVFile = refreshAndFind(selfLinkFile);
-    assertNull(selfLinkVFile);
+    assertBrokenLink(selfLinkVFile);
 
     final File pointLinkFile = createTempLink(".", "point_link");
     final VirtualFile pointLinkVFile = refreshAndFind(pointLinkFile);
     assertNotNull(pointLinkVFile);
+    assertTrue(pointLinkVFile.isSymLink());
+    assertTrue(pointLinkVFile.isDirectory());
     assertEquals(0, pointLinkVFile.getChildren().length);
+    System.out.println(pointLinkVFile.getCanonicalPath());
+
+    final File upLinkDir = FileUtil.createTempDirectory("dir1.", null);
+    final File upLinkFile = createTempLink(upLinkDir.getAbsolutePath(), new File(upLinkDir, "up_link").getAbsolutePath());
+    final VirtualFile upLinkVFile = refreshAndFind(upLinkFile);
+    assertNotNull(upLinkVFile);
+    assertTrue(upLinkVFile.isSymLink());
+    assertTrue(upLinkVFile.isDirectory());
+    assertEquals(0, upLinkVFile.getChildren().length);
+    System.out.println(upLinkVFile.getCanonicalPath());
 
     final File circularDir1 = FileUtil.createTempDirectory("dir1.", null);
     final File circularDir2 = FileUtil.createTempDirectory("dir2.", null);
@@ -82,6 +94,13 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertEquals(1, circularLink2VFile.getChildren().length);
     assertEquals(0, circularLink1VFile.getChildren()[0].getChildren().length);
     assertEquals(0, circularLink2VFile.getChildren()[0].getChildren().length);
+  }
+
+  private static void assertBrokenLink(@Nullable VirtualFile link) {
+    assertNotNull(link);
+    assertTrue(link.isSymLink());
+    assertEquals(0, link.getLength());
+    assertNull(link.getCanonicalPath(), link.getCanonicalPath());
   }
 
   public void testTargetIsWritable() throws Exception {

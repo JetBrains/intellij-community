@@ -28,4 +28,6 @@ public interface PaletteItem {
   String getTooltip();
 
   String getVersion();
+
+  boolean isEnabled();
 }

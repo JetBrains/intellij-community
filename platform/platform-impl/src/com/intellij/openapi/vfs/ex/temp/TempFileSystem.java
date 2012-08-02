@@ -19,7 +19,6 @@ package com.intellij.openapi.vfs.ex.temp;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -366,15 +365,6 @@ public class TempFileSystem extends NewVirtualFileSystem {
     public boolean isDirectory() {
       return false;
     }
-  }
-
-  @Override
-  public int getBooleanAttributes(@NotNull VirtualFile file, int flags) {
-    FSItem item = convert(file);
-    int isDir = item instanceof FSDir ? FileUtil.BA_DIRECTORY : 0;
-    int exists = item == null ? 0 : FileUtil.BA_EXISTS;
-    int regular = isDir == 0 ? FileUtil.BA_REGULAR : 0;
-    return isDir | exists | regular;
   }
 
   @Override

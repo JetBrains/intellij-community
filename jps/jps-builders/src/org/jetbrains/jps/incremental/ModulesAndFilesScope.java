@@ -20,13 +20,11 @@ public class ModulesAndFilesScope extends CompileScope {
 
   private final Set<String> myModules;
   private final Map<String, Set<File>> myFiles;
-  private final boolean myForcedCompilation;
 
   public ModulesAndFilesScope(Project project, JpsProject jpsProject, Collection<JpsModule> modules, Map<String, Set<File>> files,
                               Set<JpsArtifact> artifacts, boolean isForcedCompilation) {
-    super(project, jpsProject, artifacts);
+    super(project, jpsProject, artifacts, isForcedCompilation);
     myFiles = files;
-    myForcedCompilation = isForcedCompilation;
     myModules = new HashSet<String>();
     for (JpsModule module : modules) {
       myModules.add(module.getName());
