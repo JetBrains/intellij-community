@@ -19,6 +19,7 @@ import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.model.PropertyContext;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -26,7 +27,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
@@ -988,8 +988,8 @@ public abstract class PropertyTable extends JBTable {
         }
       };
 
-      myExpandIcon = IconLoader.getIcon("/com/intellij/designer/icons/expandNode.png");
-      myCollapseIcon = IconLoader.getIcon("/com/intellij/designer/icons/collapseNode.png");
+      myExpandIcon = AllIcons.Nodes.ExpandNode;
+      myCollapseIcon = AllIcons.Nodes.CollapseNode;
       for (int i = 0; i < myIndentIcons.length; i++) {
         myIndentIcons[i] = new EmptyIcon(9 + 11 * i, 9);
       }
