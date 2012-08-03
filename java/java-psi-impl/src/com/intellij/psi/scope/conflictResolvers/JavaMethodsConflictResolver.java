@@ -163,7 +163,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  private static void checkSameSignatures(final List<CandidateInfo> conflicts) {
+  private void checkSameSignatures(final List<CandidateInfo> conflicts) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new HashMap<MethodSignature, CandidateInfo>();
@@ -253,6 +253,27 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
 
         // prefer derived class
         signatures.put(signature, info);
+      } else {
+        final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(myArgumentsList, PsiMethodCallExpression.class);
+        if (methodCallExpression != null) {
+          final PsiReferenceExpression expression = methodCallExpression.getMethodExpression();
+          final PsiExpression qualifierExpression = expression.getQualifierExpression();
+          PsiClass currentClass;
+          if (qualifierExpression != null) {
+            currentClass = PsiUtil.resolveClassInClassTypeOnly(qualifierExpression.getType());
+          } else {
+            currentClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+          }
+
+          if (currentClass != null && InheritanceUtil.isInheritorOrSelf(currentClass, class1, true) && InheritanceUtil.isInheritorOrSelf(currentClass, existingClass, true)) {
+            if (MethodSignatureUtil.areSignaturesEqual(existingMethod.getSignature(TypeConversionUtil.getSuperClassSubstitutor(existingClass, currentClass, PsiSubstitutor.EMPTY)), 
+                                                       method.getSignature(TypeConversionUtil.getSuperClassSubstitutor(class1, currentClass, PsiSubstitutor.EMPTY)))) {
+              conflicts.remove(i);
+              i--;
+              break;
+            }
+          }
+        }
       }
     }
   }

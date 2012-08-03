@@ -53,4 +53,8 @@ public class AmbiguousMethodCallTest extends LightDaemonAnalyzerTestCase {
   public void testBoxingAndStaticMethods() throws Exception {
     doTest(false, false);
   }
+
+  public void testMultipleInheritance() throws Exception {
+    doTest(false, false);
+  }
 }
