@@ -452,7 +452,7 @@ public class VcsUtil {
   public static boolean runVcsProcessWithProgress(final VcsRunnable runnable, String progressTitle, boolean canBeCanceled, Project project)
     throws VcsException {
     final Ref<VcsException> ex = new Ref<VcsException>();
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(CancelHelper.getInstance(project).proxyRunnable(new Runnable() {
       public void run() {
         try {
           runnable.run();
@@ -461,7 +461,7 @@ public class VcsUtil {
           ex.set(e);
         }
       }
-    }, progressTitle, canBeCanceled, project);
+    }), progressTitle, canBeCanceled, project);
     if (!ex.isNull()) {
       throw ex.get();
     }

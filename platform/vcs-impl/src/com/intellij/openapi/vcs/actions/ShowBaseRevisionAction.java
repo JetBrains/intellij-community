@@ -24,6 +24,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.diff.DiffMixin;
@@ -47,13 +48,13 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
   @Override
   protected void actionPerformed(VcsContext vcsContext) {
     final AbstractVcs vcs = AbstractShowDiffAction.isEnabled(vcsContext, null);
-
+    if (vcs == null) return;
     final VirtualFile[] selectedFilePaths = vcsContext.getSelectedFiles();
     if (selectedFilePaths == null || selectedFilePaths.length != 1) return;
     final VirtualFile selectedFile = selectedFilePaths[0];
     if (selectedFile.isDirectory()) return;
 
-    ProgressManager.getInstance().run(new MyTask(selectedFile, vcs, vcsContext));
+    ProgressManager.getInstance().run(CancelHelper.getInstance(vcs.getProject()).proxyTask(new MyTask(selectedFile, vcs, vcsContext)));
   }
 
   private static class MyTask extends Task.Backgroundable {

@@ -78,17 +78,18 @@ public class ShowAllAffectedGenericAction extends AnAction {
                                                :  revision.asString());
     final CommittedChangeList[] list = new CommittedChangeList[1];
     final VcsException[] exc = new VcsException[1];
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {
+    Task.Backgroundable task = new Task.Backgroundable(project, title, true, BackgroundFromStartOption.getInstance()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
           final CommittedChangesProvider provider = vcs.getCommittedChangesProvider();
-          if (! isNonLocal) {
+          if (!isNonLocal) {
             final Pair<CommittedChangeList, FilePath> pair = provider.getOneList(virtualFile, revision);
             if (pair != null) {
               list[0] = pair.getFirst();
             }
-          } else {
+          }
+          else {
             if (location != null) {
               final ChangeBrowserSettings settings = provider.createDefaultSettings();
               settings.USE_CHANGE_BEFORE_FILTER = true;
@@ -98,7 +99,8 @@ public class ShowAllAffectedGenericAction extends AnAction {
                 list[0] = changes.get(0);
               }
               return;
-            } else {
+            }
+            else {
               list[0] = getRemoteList(vcs, revision, virtualFile);
               /*final RepositoryLocation local = provider.getForNonLocal(virtualFile);
               if (local != null) {
@@ -126,13 +128,16 @@ public class ShowAllAffectedGenericAction extends AnAction {
         final AbstractVcsHelper instance = AbstractVcsHelper.getInstance(project);
         if (exc[0] != null) {
           instance.showError(exc[0], failedText(virtualFile, revision));
-        } else if (list[0] == null) {
+        }
+        else if (list[0] == null) {
           Messages.showErrorDialog(project, failedText(virtualFile, revision), getTitle());
-        } else {
+        }
+        else {
           instance.showChangesListBrowser(list[0], virtualFile, title);
         }
       }
-    });
+    };
+    ProgressManager.getInstance().run(CancelHelper.getInstance(project).proxyTask(task));
   }
 
   public static CommittedChangeList getRemoteList(final AbstractVcs vcs, final VcsRevisionNumber revision, final VirtualFile nonLocal)

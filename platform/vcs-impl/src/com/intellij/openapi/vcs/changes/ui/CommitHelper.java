@@ -110,7 +110,7 @@ public class CommitHelper {
     };
 
     if (myForceSyncCommit) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(action, myActionName, true, myProject);
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(CancelHelper.getInstance(myProject).proxyRunnable(action), myActionName, true, myProject);
       boolean success = doesntContainErrors(processor.getVcsExceptions());
       if (success) {
         reportSuccess(processor);
@@ -137,7 +137,7 @@ public class CommitHelper {
             return new NotificationInfo("VCS Commit", "VCS Commit Finished", text, true);
           }
         };
-      ProgressManager.getInstance().run(task);
+      ProgressManager.getInstance().run(CancelHelper.getInstance(myProject).proxyTask(task));
       return false;
     }
   }

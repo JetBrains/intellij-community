@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -96,7 +97,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
 
   private static void preloadContent(final Project project, final List<Change> changes) {
     // to avoid multiple progress dialogs, preload content under one progress
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(CancelHelper.getInstance(project).proxyRunnable(new Runnable() {
       public void run() {
         for(Change change: changes) {
           checkLoadContent(change.getBeforeRevision());
@@ -115,7 +116,7 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
           }
         }
       }
-    }, VcsBundle.message("create.patch.loading.content.progress"), true, project);
+    }), VcsBundle.message("create.patch.loading.content.progress"), true, project);
   }
 
   public void update(final AnActionEvent e) {

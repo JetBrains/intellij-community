@@ -24,7 +24,10 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -101,6 +104,12 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   public static void canceled() {
     ourNeedToCheckCancel = true;
     ProgressIndicatorProvider.ourNeedToCheckCancel = true;
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(CANCEL_CALLED).run();
+      }
+    });
   }
 
   private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {

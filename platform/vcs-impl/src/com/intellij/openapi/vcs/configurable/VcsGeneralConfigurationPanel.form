@@ -221,7 +221,7 @@
                 <constraints/>
                 <properties>
                   <labelFor value="aec57"/>
-                  <text value="Show patch in explorer after creation:"/>
+                  <text value="Show patch in Explorer after creation:"/>
                 </properties>
               </component>
               <component id="aec57" class="javax.swing.JComboBox" binding="myOnPatchCreation">

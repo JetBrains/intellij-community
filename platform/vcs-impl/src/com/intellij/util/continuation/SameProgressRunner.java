@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.concurrency.Semaphore;
 
@@ -54,7 +55,12 @@ public class SameProgressRunner extends GeneralRunner {
   public void ping() {
     clearSuspend();
     if (Thread.currentThread().equals(myInitThread)) {
-      pingInSourceThread();
+      CancelHelper.getInstance(myProject).proxyRunnable(new Runnable() {
+        @Override
+        public void run() {
+          pingInSourceThread();
+        }
+      }).run();
     } else {
       mySemaphore.up();
     }

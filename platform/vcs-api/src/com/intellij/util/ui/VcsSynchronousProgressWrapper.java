@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThrowableRunnable;
 
@@ -46,7 +47,7 @@ public class VcsSynchronousProgressWrapper {
     };
     final boolean notCanceled;
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      notCanceled = ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, true, project);
+      notCanceled = ProgressManager.getInstance().runProcessWithProgressSynchronously(CancelHelper.getInstance(project).proxyRunnable(process), title, true, project);
     } else {
       process.run();
       notCanceled = true;

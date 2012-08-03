@@ -21,14 +21,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.HashMap;
 
 import java.io.IOException;
@@ -134,8 +133,9 @@ public class CachedRevisionsContents {
     };
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(process,
-                                                                        VcsBundle.message("progress.title.loading.contents"), false, myProject);
+      boolean loaded = ProgressManager.getInstance().runProcessWithProgressSynchronously(
+        CancelHelper.getInstance(myProject).proxyRunnable(process), VcsBundle.message("progress.title.loading.contents"), true, myProject);
+      if (! loaded) throw new VcsException("Load of revision contents canceled");
     } else {
       process.run();
     }

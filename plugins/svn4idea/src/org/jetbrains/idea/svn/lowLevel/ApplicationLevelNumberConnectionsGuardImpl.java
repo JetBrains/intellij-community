@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.lowLevel;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.hash.HashSet;
 import org.tmatesoft.svn.core.SVNErrorCode;
@@ -46,8 +47,10 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
   private final ScheduledExecutorService myService;
   private ScheduledFuture<?> myFuture;
   private final Runnable myRecheck;
+  private int myDelay;
 
   public ApplicationLevelNumberConnectionsGuardImpl() {
+    myDelay = DELAY;
     mySet = new HashSet<CachingSvnRepositoryPool>();
     myService = Executors.newSingleThreadScheduledExecutor();
     myLock = new Object();
@@ -55,13 +58,32 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
     myRecheck = new Runnable() {
       @Override
       public void run() {
+        HashSet<CachingSvnRepositoryPool> pools = new HashSet<CachingSvnRepositoryPool>();
         synchronized (myLock) {
-          for (CachingSvnRepositoryPool pool : mySet) {
-            pool.check();
-          }
+          pools.addAll(mySet);
+        }
+        for (CachingSvnRepositoryPool pool : pools) {
+          pool.check();
         }
       }
     };
+  }
+
+  public void setDelay(int delay) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    myDelay = delay;
+  }
+
+  public int getCurrentlyActiveConnections() {
+    synchronized (myLock) {
+      assert ApplicationManager.getApplication().isUnitTestMode();
+      return myCurrentlyActiveConnections;
+    }
+  }
+
+  public int getInstanceCount() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myInstanceCount;
   }
 
   public void addRepositoryPool(final CachingSvnRepositoryPool pool) {
@@ -69,7 +91,7 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
       mySet.add(pool);
       ++ myInstanceCount;
       if (myFuture == null) {
-        myFuture = myService.scheduleWithFixedDelay(myRecheck, DELAY, DELAY, TimeUnit.MILLISECONDS);
+        myFuture = myService.scheduleWithFixedDelay(myRecheck, myDelay, myDelay, TimeUnit.MILLISECONDS);
       }
     }
   }

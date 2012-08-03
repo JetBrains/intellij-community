@@ -1128,7 +1128,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       final Ref<FileAnnotation> fileAnnotationRef = new Ref<FileAnnotation>();
       final Ref<VcsException> exceptionRef = new Ref<VcsException>();
 
-      ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(), VcsBundle.message("retrieving.annotations"), true,
+      ProgressManager.getInstance().run(CancelHelper.getInstance(myProject).proxyTask(new Task.Backgroundable(myVcs.getProject(), VcsBundle.message("retrieving.annotations"), true,
           BackgroundFromStartOption.getInstance()) {
         public void run(@NotNull ProgressIndicator indicator) {
           try {
@@ -1155,7 +1155,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
           AbstractVcsHelper.getInstance(myProject).showAnnotation(fileAnnotationRef.get(), revisionVirtualFile, myVcs);
         }
-      });
+      }));
     }
   }
 
@@ -1739,7 +1739,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
       if (myFilePath.isDirectory()) {
         final List<TreeNodeOnVcsRevision> selection = getSelection();
         if (selection.size() != 1) return;
-        ProgressManager.getInstance().run(new FolderPatchCreationTask(myVcs, selection.get(0)));
+        ProgressManager.getInstance().run(CancelHelper.getInstance(myProject).proxyTask(new FolderPatchCreationTask(myVcs, selection.get(0))));
       } else {
         myUsualDelegate.actionPerformed(e);
       }

@@ -29,6 +29,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -106,7 +107,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     }
     request.setWindowTitle(title);
 
-    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    boolean result = ProgressManager.getInstance().runProcessWithProgressSynchronously(CancelHelper.getInstance(myProject).proxyRunnable(new Runnable() {
       public void run() {
         final ProgressIndicator pi = ProgressManager.getInstance().getProgressIndicator();
         if (pi != null) {
@@ -114,7 +115,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
         }
         request.setContents(createContent(bRev), createContent(aRev));
       }
-    }, VcsBundle.message("progress.loading.diff.revisions"), true, myProject);
+    }), VcsBundle.message("progress.loading.diff.revisions"), true, myProject);
     if (! result) return false;
 
     String beforeRevisionTitle = (bRev != null) ? bRev.getRevisionNumber().asString() : "";

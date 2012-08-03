@@ -70,6 +70,7 @@ import org.jetbrains.idea.svn.history.LoadedRevisionsCache;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
+import org.jetbrains.idea.svn.lowLevel.SvnIdeaRepositoryPoolManager;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -117,7 +118,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private final Map<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>> myPropertyCache =
     new SoftHashMap<String, Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>>>();
 
-  private DefaultSVNRepositoryPool myPool;
+  private SvnIdeaRepositoryPoolManager myPool;
   private final SvnConfiguration myConfiguration;
   private final SvnEntriesFileListener myEntriesFileListener;
 
@@ -159,6 +160,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
   private final SvnExecutableChecker myChecker;
+  private CancelHelper myProgressProxy;
 
   public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
     @Override
@@ -582,8 +584,14 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     mySvnBranchPointsCalculator = null;
     myWorkingCopiesContent.deactivate();
     myLoadedBranchesStorage.deactivate();
+    myProgressProxy.dispose();
+    myProgressProxy = null;
     myPool.dispose();
     myPool = null;
+  }
+
+  public CancelHelper getProgressProxy() {
+    return myProgressProxy;
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
@@ -631,9 +639,19 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   private void createPool() {
     if (myPool != null) return;
-    boolean keep = !ApplicationManager.getApplication().isUnitTestMode() && Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
-    myPool =
-      new DefaultSVNRepositoryPool(myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject), 60 * 1000, keep);
+    final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
+    final boolean keep;
+    boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
+    // this commented since not everything is tested with the new pool. simple variant to be used right now
+    //if (StringUtil.isEmptyOrSpaces(property) || unitTestMode) {
+    if (unitTestMode) {
+      keep = ! unitTestMode;  // default
+    } else {
+      keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
+    }
+    myProgressProxy = new CancelHelper(myProject);
+    myPool = new SvnIdeaRepositoryPoolManager(keep, myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject),
+                                              myProgressProxy);
   }
 
   @NotNull

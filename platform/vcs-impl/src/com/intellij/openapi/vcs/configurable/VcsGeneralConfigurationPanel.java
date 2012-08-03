@@ -94,7 +94,7 @@ public class VcsGeneralConfigurationPanel implements SearchableConfigurable {
       }
     }
 
-    myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());
+    myPromptsPanel.setSize(myPromptsPanel.getPreferredSize());                           // todo check text!
     myOnPatchCreation.setName((SystemInfo.isMac ? "Reveal patch in" : "Show patch in ") +
                               SystemInfo.getFileManagerName() + " after creation:");
   }

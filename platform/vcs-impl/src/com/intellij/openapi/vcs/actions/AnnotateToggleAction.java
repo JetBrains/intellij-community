@@ -177,7 +177,7 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware, Ann
         }
       }
     };
-    ProgressManager.getInstance().run(annotateTask);
+    ProgressManager.getInstance().run(CancelHelper.getInstance(vcs.getProject()).proxyTask(annotateTask));
   }
 
   public static void doAnnotate(final Editor editor,

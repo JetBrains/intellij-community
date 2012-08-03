@@ -19,6 +19,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public abstract class ProgressManager {
+  public static Topic<Runnable> CANCEL_CALLED = new Topic<Runnable>("ProgressManager.CANCEL_CALLED", Runnable.class);
   private static final ProgressManager ourInstance = ServiceManager.getService(ProgressManager.class);
 
   static {

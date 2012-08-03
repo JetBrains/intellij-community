@@ -504,7 +504,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
           @Override
           public void consume(ChangesBrowserDialog changesBrowserDialog) {
             task[0] = new AsynchronousListsLoader(myProject, provider, location, finalSettings, changesBrowserDialog);
-            ProgressManager.getInstance().run(task[0]);
+            ProgressManager.getInstance().run(CancelHelper.getInstance(myProject).proxyTask(task[0]));
           }
         });
 

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.lowLevel;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Processor;
@@ -101,8 +102,9 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       final String host = url.getHost();
       RepoGroup group = myGroups.get(host);
       if (group == null) {
-        group = new RepoGroup(myCreator, myMaxCached, myMaxConcurrent, myAdjuster, myGuard, myCancelChecker);
+        group = new RepoGroup(myCreator, myMaxCached, myMaxConcurrent, myAdjuster, myGuard, myCancelChecker, myLock);
       }
+      myGroups.put(host, group);
       return group.getRepo(url, mayReuse);
     }
   }
@@ -150,7 +152,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
   }
 
   // per host
-  private static class RepoGroup implements SvnRepositoryPool {
+  public static class RepoGroup implements SvnRepositoryPool {
     private final ThrowableConvertor<SVNURL, SVNRepository, SVNException> myCreator;
 
     private final int myMaxCached;      // per host
@@ -166,7 +168,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
 
     private RepoGroup(ThrowableConvertor<SVNURL, SVNRepository, SVNException> creator, int cached, int concurrent,
                       final ThrowableConsumer<Pair<SVNURL, SVNRepository>, SVNException> adjuster,
-                      final ApplicationLevelNumberConnectionsGuard guard, final Processor<Thread> cancelChecker) {
+                      final ApplicationLevelNumberConnectionsGuard guard, final Processor<Thread> cancelChecker, final Object waitObj) {
       myCreator = creator;
       myMaxCached = cached;
       myMaxConcurrent = concurrent;
@@ -178,7 +180,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       myUsed = new HashSet<SVNRepository>();
 
       myDisposed = false;
-      myWait = new Object();
+      myWait = waitObj;
     }
 
     public void dispose() {
@@ -259,6 +261,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
 
     @Override
     public void returnRepo(SVNRepository repo) {
+      myUsed.remove(repo);
       if (myGuard.shouldKeepConnectionLocally(myCancelChecker) && myInactive.size() < myMaxCached) {
         long time = System.currentTimeMillis();
         if (myInactive.containsKey(time)) {
@@ -303,5 +306,10 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
 
   Processor<Thread> getCancelChecker() {
     return myCancelChecker;
+  }
+
+  public Map<String, RepoGroup> getGroups() {
+    assert ApplicationManager.getApplication().isUnitTestMode();
+    return myGroups;
   }
 }
