@@ -15,7 +15,6 @@
  */
 package com.intellij.util.ui.tree;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -39,16 +38,6 @@ import java.awt.event.MouseListener;
 public class WideSelectionTreeUI extends BasicTreeUI {
   @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
   @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
-
-  private static Icon getTreeSelectedCollapsedIcon() {
-    return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()
-           ? AllIcons.Mac.Tree_white_right_arrow : UIUtil.getTreeCollapsedIcon();
-  }
-
-  private static Icon getTreeSelectedExpandedIcon() {
-    return UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()
-           ? AllIcons.Mac.Tree_white_down_arrow : UIUtil.getTreeExpandedIcon();
-  }
 
   private static final Border LIST_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
@@ -315,7 +304,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
       }
       else {
         if (UIUtil.isUnderAquaBasedLookAndFeel()) {
-          Color bg = tree.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
+          Color bg = UIUtil.getTreeSelectionBackground(tree.hasFocus());
           if (!selected) {
             bg = background;
           }
@@ -370,7 +359,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
       if (tr.getSelectionModel().isRowSelected(row)) {
           final Rectangle bounds = tr.getRowBounds(row);
-          Color color = tr.hasFocus() ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeUnfocusedSelectionBackground();
+          Color color = UIUtil.getTreeSelectionBackground(tr.hasFocus());
           if (color != null) {
             g.setColor(color);
             g.fillRect(0, bounds.y, tr.getWidth(), bounds.height);
@@ -404,17 +393,9 @@ public class WideSelectionTreeUI extends BasicTreeUI {
                                     boolean hasBeenExpanded,
                                     boolean isLeaf) {
     boolean isPathSelected = tree.getSelectionModel().isPathSelected(path);
-    boolean dark = UIUtil.isUnderDarcula();
-
-    Icon expandIcon = (isPathSelected && tree.hasFocus()) || dark ? getTreeSelectedExpandedIcon()
-                                                        : UIUtil.getTreeExpandedIcon();
-    Icon collapseIcon = (isPathSelected && tree.hasFocus()) || dark? getTreeSelectedCollapsedIcon()
-                                                          : UIUtil.getTreeCollapsedIcon();
-
-
     if (!isLeaf(row)) {
-      setExpandedIcon(expandIcon);
-      setCollapsedIcon(collapseIcon);
+      setExpandedIcon(UIUtil.getTreeNodeIcon(true, isPathSelected, tree.hasFocus()));
+      setCollapsedIcon(UIUtil.getTreeNodeIcon(false, isPathSelected, tree.hasFocus()));
     }
 
     super.paintExpandControl(g, clipBounds, insets, bounds, path, row, isExpanded, hasBeenExpanded, isLeaf);
