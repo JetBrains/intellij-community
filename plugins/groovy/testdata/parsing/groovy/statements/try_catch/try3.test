@@ -27,13 +27,20 @@ Groovy script
       PsiErrorElement:')' expected
         <empty list>
   PsiWhiteSpace(' ')
-  PsiErrorElement:';' or new line expected
+  Closable block
     PsiElement({)('{')
+    Parameter list
+      <empty list>
     PsiElement(})('}')
-    PsiWhiteSpace('\n')
+  PsiWhiteSpace('\n')
+  PsiErrorElement:';' or new line expected
     PsiElement(finally)('finally')
+  Closable block
     PsiElement({)('{')
     PsiWhiteSpace(' ')
-    PsiElement(identifier)('doNothing')
+    Parameter list
+      <empty list>
+    Reference expression
+      PsiElement(identifier)('doNothing')
     PsiWhiteSpace(' ')
     PsiElement(})('}')

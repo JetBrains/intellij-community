@@ -8,9 +8,15 @@ Groovy script
   PsiWhiteSpace(' ')
   PsiErrorElement:';' or new line expected
     PsiElement(true)('true')
-    PsiWhiteSpace(' ')
+  PsiWhiteSpace(' ')
+  Closable block
     PsiElement({)('{')
-    PsiElement(identifier)('doSomething')
-    PsiElement(()('(')
-    PsiElement())(')')
+    Parameter list
+      <empty list>
+    Method call
+      Reference expression
+        PsiElement(identifier)('doSomething')
+      Arguments
+        PsiElement(()('(')
+        PsiElement())(')')
     PsiElement(})('}')

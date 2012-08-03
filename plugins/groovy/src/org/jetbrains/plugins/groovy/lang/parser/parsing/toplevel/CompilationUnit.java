@@ -41,7 +41,7 @@ public class CompilationUnit implements GroovyElementTypes {
     }
     cleanAfterError(builder);
 
-    while (Separators.parse(builder)) {
+    while (Separators.parse(builder) || builder.getTokenType() == mLCURLY) {
       parser.parseStatementWithImports(builder);
       cleanAfterError(builder);
     }
@@ -55,16 +55,14 @@ public class CompilationUnit implements GroovyElementTypes {
   private static void cleanAfterError(PsiBuilder builder) {
     int i = 0;
     PsiBuilder.Marker em = builder.mark();
-    while (!builder.eof() &&
-            !(mNLS.equals(builder.getTokenType()) ||
-                    mSEMI.equals(builder.getTokenType()))
-            ) {
+    while (!builder.eof() && mNLS != builder.getTokenType() && mSEMI != builder.getTokenType() && mLCURLY != builder.getTokenType()) {
       builder.advanceLexer();
       i++;
     }
     if (i > 0) {
       em.error(GroovyBundle.message("separator.expected"));
-    } else {
+    }
+    else {
       em.drop();
     }
   }
