@@ -68,6 +68,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.TableViewModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -540,6 +541,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     refreshRevisionsOrder();
     HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
 
+    if (myHistorySession.getRevisionList().isEmpty()) {
+      adjustEmptyText();
+    }
+
     if (treeHistoryProvider != null) {
       myDualView.setRoot(new TreeNodeOnVcsRevision(null,
         treeHistoryProvider.createTreeOn(myHistorySession.getRevisionList())), myTargetSelection);
@@ -552,6 +557,23 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     myDualView.getFlatView().updateColumnSizes();
     myDualView.expandAll();
     myDualView.repaint();
+  }
+
+  private void adjustEmptyText() {
+    VirtualFile virtualFile = myFilePath.getVirtualFile();
+    if (virtualFile == null || !virtualFile.isValid()) {
+      if (!myFilePath.getIOFile().exists()) {
+        String emptyText = "File " + myFilePath.getName() + " not found";
+        setEmptyText(emptyText);
+        return;
+      }
+    }
+    setEmptyText(StatusText.DEFAULT_EMPTY_TEXT);
+  }
+
+  private void setEmptyText(String emptyText) {
+    myDualView.getFlatView().getEmptyText().setText(emptyText);
+    myDualView.getTreeView().getEmptyText().setText(emptyText);
   }
 
   protected void addActionsTo(DefaultActionGroup group) {
@@ -1277,7 +1299,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private VirtualFile createVirtualFileForRevision(VcsFileRevision revision) {
     if (!myRevisionToVirtualFile.containsKey(revision)) {
-      myRevisionToVirtualFile.put(revision, new VcsVirtualFile(myFilePath.getPath(), revision, VcsFileSystem.getInstance()));
+      FilePath filePath = (revision instanceof VcsFileRevisionEx ? ((VcsFileRevisionEx)revision).getPath() : myFilePath);
+      myRevisionToVirtualFile.put(revision, new VcsVirtualFile(filePath.getPath(), revision, VcsFileSystem.getInstance()));
     }
     return myRevisionToVirtualFile.get(revision);
   }

@@ -36,7 +36,6 @@ import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Iterator;
@@ -136,7 +135,6 @@ public class ITNProxy {
     params.add(Pair.create("app.version.minor", appInfo.getMinorVersion()));
     params.add(Pair.create("app.build.date", format(appInfo.getBuildDate())));
     params.add(Pair.create("app.build.date.release", format(appInfo.getMajorReleaseBuildDate())));
-    params.add(Pair.create("app.update.channel", appInfo.getDefaultUpdateChannel()));
     params.add(Pair.create("app.compilation.timestamp", compilationTimestamp));
 
     params.add(Pair.create("update.channel.status", updateSettings.getSelectedChannelStatus().getCode()));

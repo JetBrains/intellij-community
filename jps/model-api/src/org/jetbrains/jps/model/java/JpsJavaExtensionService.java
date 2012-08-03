@@ -33,9 +33,9 @@ public abstract class JpsJavaExtensionService {
   @NotNull
   public abstract JpsJavaProjectExtension getOrCreateProjectExtension(@NotNull JpsProject project);
 
-
   @Nullable
   public abstract JpsJavaProjectExtension getProjectExtension(@NotNull JpsProject project);
+
 
   @NotNull
   public abstract JpsJavaModuleExtension getOrCreateModuleExtension(@NotNull JpsModule module);
@@ -48,6 +48,9 @@ public abstract class JpsJavaExtensionService {
 
   @Nullable
   public abstract JpsJavaDependencyExtension getDependencyExtension(@NotNull JpsDependencyElement dependency);
+
+  @Nullable
+  public abstract ExplodedDirectoryModuleExtension getExplodedDirectoryExtension(@NotNull JpsModule module);
 
   @NotNull
   public abstract ExplodedDirectoryModuleExtension getOrCreateExplodedDirectoryExtension(@NotNull JpsModule module);

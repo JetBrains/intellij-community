@@ -17,9 +17,6 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.codeInsight.generation.ClassMember;
-import com.intellij.codeInsight.generation.MemberChooserObject;
-import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.java.JavaLanguage;
@@ -35,15 +32,11 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -299,33 +292,5 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   @Override
   public boolean startInWriteAction() {
     return false;
-  }
-
-  private static class ParameterClassMember implements ClassMember {
-    private PsiParameter myParameter;
-
-    private ParameterClassMember(PsiParameter parameter) {
-      myParameter = parameter;
-    }
-
-    @Override
-    public MemberChooserObject getParentNodeDelegate() {
-      return new PsiMethodMember((PsiMethod)myParameter.getDeclarationScope());
-    }
-
-    @Override
-    public void renderTreeNode(SimpleColoredComponent component, JTree tree) {
-      SpeedSearchUtil.appendFragmentsForSpeedSearch(tree, getText(), SimpleTextAttributes.REGULAR_ATTRIBUTES, false, component);
-      component.setIcon(myParameter.getIcon(0));
-    }
-
-    @Override
-    public String getText() {
-      return myParameter.getName();
-    }
-
-    public PsiParameter getParameter() {
-      return myParameter;
-    }
   }
 }

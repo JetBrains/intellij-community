@@ -59,6 +59,7 @@ public class AdvancedSettingsUI implements Configurable {
   private JRadioButton myUseDfa;
   private JRadioButton myLookForAssignments;
   private JCheckBox myIncludeUncomputableOperandsAsCheckBox;
+  private JCheckBox mySourceModificationAllowedCheckBox;
 
   private final ReferenceEditorWithBrowseButton myAnnotationField;
   private final ReferenceEditorWithBrowseButton myPatternField;
@@ -138,6 +139,9 @@ public class AdvancedSettingsUI implements Configurable {
     if (myConfiguration.isIncludeUncomputablesAsLiterals() != myIncludeUncomputableOperandsAsCheckBox.isSelected()) {
       return true;
     }
+    if (myConfiguration.isSourceModificationAllowed() != mySourceModificationAllowedCheckBox.isSelected()) {
+      return true;
+    }
     return false;
   }
 
@@ -159,6 +163,7 @@ public class AdvancedSettingsUI implements Configurable {
 
     myConfiguration.setDfaOption(getDfaOption());
     myConfiguration.setIncludeUncomputablesAsLiterals(myIncludeUncomputableOperandsAsCheckBox.isSelected());
+    myConfiguration.setSourceModificationAllowed(mySourceModificationAllowedCheckBox.isSelected());
   }
 
   @NotNull
@@ -181,6 +186,7 @@ public class AdvancedSettingsUI implements Configurable {
 
     setDfaOption(myConfiguration.getDfaOption());
     myIncludeUncomputableOperandsAsCheckBox.setSelected(myConfiguration.isIncludeUncomputablesAsLiterals());
+    mySourceModificationAllowedCheckBox.setSelected(myConfiguration.isSourceModificationAllowed());
   }
 
   private void setDfaOption(@NotNull final Configuration.DfaOption dfaOption) {

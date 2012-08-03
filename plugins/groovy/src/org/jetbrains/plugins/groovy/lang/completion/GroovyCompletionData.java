@@ -570,8 +570,8 @@ public class GroovyCompletionData {
       return true;
     }
     if (context.getParent() instanceof GrReferenceExpression &&
-        GroovyCompletionUtil.nearestLeftSibling(context.getParent()) instanceof PsiErrorElement &&
-        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftSibling(context.getParent()).getPrevSibling())) {
+        GroovyCompletionUtil.nearestLeftLeaf(context) instanceof PsiErrorElement &&
+        GroovyCompletionUtil.endsWithExpression(GroovyCompletionUtil.nearestLeftLeaf(context).getPrevSibling())) {
       return true;
     }
     if (context.getParent() instanceof PsiErrorElement &&

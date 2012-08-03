@@ -8,5 +8,9 @@ import org.jetbrains.jps.model.JpsElementProperties;
  */
 public interface JpsTypedLibrary<P extends JpsElementProperties> extends JpsLibrary {
   @NotNull
+  @Override
+  JpsLibraryType<P> getType();
+
+  @NotNull
   P getProperties();
 }

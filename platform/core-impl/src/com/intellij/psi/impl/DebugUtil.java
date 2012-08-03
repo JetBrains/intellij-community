@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.lang.LighterASTTokenNode;
 import com.intellij.lang.impl.PsiBuilderImpl;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -76,7 +77,11 @@ public class DebugUtil {
   }
 
   public static /*final*/ boolean CHECK = false;
-  public static final boolean DO_EXPENSIVE_CHECKS = ApplicationManager.getApplication().isUnitTestMode();
+  public static final boolean DO_EXPENSIVE_CHECKS;
+  static {
+    Application application = ApplicationManager.getApplication();
+    DO_EXPENSIVE_CHECKS = application != null && application.isUnitTestMode();
+  }
   public static final boolean CHECK_INSIDE_ATOMIC_ACTION_ENABLED = DO_EXPENSIVE_CHECKS;
 
   public static String psiTreeToString(@NotNull final PsiElement element, final boolean skipWhitespaces) {

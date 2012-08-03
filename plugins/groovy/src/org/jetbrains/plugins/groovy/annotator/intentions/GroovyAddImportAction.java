@@ -18,14 +18,17 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMember;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -74,6 +77,25 @@ public class GroovyAddImportAction extends ImportClassFixBase<GrReferenceElement
       }
     }
     return false;
+  }
+
+  @Override
+  protected List<PsiClass> filterByContext(List<PsiClass> candidates, GrReferenceElement ref) {
+    PsiElement typeElement = ref.getParent();
+    if (typeElement instanceof GrTypeElement) {
+      PsiElement decl = typeElement.getParent();
+      if (decl instanceof GrVariableDeclaration) {
+        GrVariable[] vars = ((GrVariableDeclaration)decl).getVariables();
+        if (vars.length == 1) {
+          PsiExpression initializer = vars[0].getInitializer();
+          if (initializer != null) {
+            return filterAssignableFrom(initializer.getType(), candidates);
+          }
+        }
+      }
+    }
+
+    return super.filterByContext(candidates, ref);
   }
 
   @Override

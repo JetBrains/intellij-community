@@ -1,0 +1,5 @@
+class Test {
+  void foo(int a, int <spot>b</spot>){
+    //do smth
+  }
+}

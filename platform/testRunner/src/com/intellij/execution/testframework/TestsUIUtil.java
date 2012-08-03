@@ -25,10 +25,12 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.AppIcon;
 import com.intellij.ui.SystemNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +42,7 @@ public class TestsUIUtil {
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Test Runner");
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
+  private static final String TESTS = "tests";
 
   private TestsUIUtil() {
   }
@@ -120,6 +123,36 @@ public class TestsUIUtil {
 
   public static String getTestSummary(AbstractTestProxy proxy) {
     return new TestResultPresentation(proxy).getPresentation().getBalloonText();
+  }
+
+  public static String getTestShortSummary(AbstractTestProxy proxy) {
+    return new TestResultPresentation(proxy).getPresentation().getText();
+  }
+
+  public static void showIconProgress(int n, final int maximum, final int problemsCounter) {
+    AppIcon icon = AppIcon.getInstance();
+    if (n < maximum) {
+      if (icon.setProgress(TESTS, AppIconScheme.Progress.TESTS, (double)n / (double)maximum, problemsCounter == 0)) {
+        if (problemsCounter > 0) {
+          icon.setErrorBadge(String.valueOf(problemsCounter));
+        }
+      }
+    } else {
+      if (icon.hideProgress(TESTS)) {
+        if (problemsCounter > 0) {
+          icon.setErrorBadge(String.valueOf(problemsCounter));
+          icon.requestAttention(true);
+        } else {
+          icon.setOkBadge(true);
+          icon.requestAttention(false);
+        }
+      }
+    }
+  }
+
+  public static void clearIconProgress() {
+    AppIcon.getInstance().hideProgress(TESTS);
+    AppIcon.getInstance().setErrorBadge(null);
   }
 
   private static class TestResultPresentation {

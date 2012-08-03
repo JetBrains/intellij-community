@@ -19,7 +19,8 @@ public class AndroidExtractStyleTest extends AndroidTestCase {
   private static final String BASE_PATH = "refactoring/extractStyle/";
 
   public void test1() {
-    doTest("myStyle", new String[]{"android:textColor", "android:background"}, false);
+    doTest("myStyle", new String[]{"android:textColor", "android:background"},
+           new String[]{"android:layout_width", "android:layout_height", "android:textColor", "android:background"}, false);
   }
 
   public void test2() {

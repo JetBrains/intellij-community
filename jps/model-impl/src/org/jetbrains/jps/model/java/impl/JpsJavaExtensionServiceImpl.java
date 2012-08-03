@@ -56,11 +56,13 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @Override
   @NotNull
   public ExplodedDirectoryModuleExtension getOrCreateExplodedDirectoryExtension(@NotNull JpsModule module) {
-    ExplodedDirectoryModuleExtension extension = module.getContainer().getChild(ExplodedDirectoryModuleExtensionImpl.ROLE);
-    if (extension == null) {
-      extension = module.getContainer().setChild(ExplodedDirectoryModuleExtensionImpl.ROLE, new ExplodedDirectoryModuleExtensionImpl());
-    }
-    return extension;
+    return module.getContainer().getOrSetChild(ExplodedDirectoryModuleExtensionImpl.ExplodedDirectoryModuleExtensionRole.INSTANCE);
+  }
+
+  @Override
+  @Nullable
+  public ExplodedDirectoryModuleExtension getExplodedDirectoryExtension(@NotNull JpsModule module) {
+    return module.getContainer().getChild(ExplodedDirectoryModuleExtensionImpl.ExplodedDirectoryModuleExtensionRole.INSTANCE);
   }
 
   @NotNull

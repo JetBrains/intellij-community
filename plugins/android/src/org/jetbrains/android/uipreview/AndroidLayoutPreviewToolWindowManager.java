@@ -56,6 +56,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -96,6 +97,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
   private final MergingUpdateQueue myToolWindowUpdateQueue;
 
   private final MergingUpdateQueue myRenderingQueue;
+  private final MergingUpdateQueue mySaveAndRenderQueue;
 
   private final Project myProject;
   private final FileEditorManager myFileEditorManager;
@@ -114,6 +116,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
 
     myToolWindowUpdateQueue = new MergingUpdateQueue("android.layout.preview", 300, true, null, project);
     myRenderingQueue = new MergingUpdateQueue("android.layout.rendering", 300, true, null, project, null, false);
+    mySaveAndRenderQueue = new MergingUpdateQueue("android.layout.preview.save.and.render", 1000, true, null, project, null, true);
 
     final MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyFileEditorManagerListener());
@@ -163,10 +166,41 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
   }
 
   private void update(PsiTreeChangeEvent event) {
-    if (myToolWindowForm != null) {
-      final PsiFile file = event.getFile();
-      if (file != null && myToolWindowForm.getFile() == file) {
-        render();
+    if (myToolWindowForm == null || !myToolWindowReady || myToolWindowDisposed) {
+      return;
+    }
+    final PsiFile fileInPreview = myToolWindowForm.getFile();
+    final PsiFile file = event.getFile();
+
+    if (fileInPreview == null || file == null) {
+      return;
+    }
+
+    if (fileInPreview == file) {
+      render();
+      return;
+    }
+    final AndroidFacet facet = AndroidFacet.getInstance(file);
+
+    if (facet != null) {
+      VirtualFile vFile = file.getVirtualFile();
+      vFile = vFile != null ? vFile.getParent() : null;
+      vFile = vFile != null ? vFile.getParent() : null;
+
+      if (vFile != null) {
+        final VirtualFile finalVFile = vFile;
+
+        mySaveAndRenderQueue.queue(new Update("saveAndRender") {
+          @Override
+          public void run() {
+            final VirtualFile[] resDirs = facet.getLocalResourceManager().getAllResourceDirs();
+
+            if (ArrayUtil.find(resDirs, finalVFile) >= 0) {
+              ApplicationManager.getApplication().saveAll();
+              render();
+            }
+          }
+        });
       }
     }
   }

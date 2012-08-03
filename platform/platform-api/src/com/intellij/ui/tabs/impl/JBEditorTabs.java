@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.tabs.JBTabsPosition;
@@ -39,6 +40,7 @@ import java.util.List;
  * @author pegov
  */
 public class JBEditorTabs extends JBTabsImpl {
+  private static final String TABS_ALPHABETICAL_KEY = "tabs.alphabetical";
 
   public JBEditorTabs(@Nullable Project project, ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
     super(project, actionManager, focusManager, parent);
@@ -113,7 +115,15 @@ public class JBEditorTabs extends JBTabsImpl {
     g2d.setColor(new Color(255, 255, 255, 100));
     g2d.drawRect(_x, _y, _width - 1, _height - 1);
   }
-  
+
+  public static boolean isAlphabeticalMode() {
+    return Registry.is(TABS_ALPHABETICAL_KEY);
+  }
+
+  public static void setAlphabeticalMode(boolean on) {
+    Registry.get(TABS_ALPHABETICAL_KEY).setValue(on);
+  }
+
   private static Color multiplyColor(Color c) {
     return new Color(c.getRed() * c.getRed() / 255, c.getGreen() * c.getGreen() / 255, c.getBlue() * c.getBlue() / 255);
   }

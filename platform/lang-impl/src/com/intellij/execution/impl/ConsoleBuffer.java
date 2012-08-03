@@ -119,12 +119,12 @@ public class ConsoleBuffer {
     myContentTypesToNotStripOnCycling.add(ConsoleViewContentType.USER_INPUT);
   }
 
-  private static boolean useCycleBuffer() {
+  public static boolean useCycleBuffer() {
     final String useCycleBufferProperty = System.getProperty("idea.cycle.buffer.size");
     return useCycleBufferProperty == null || !"disabled".equalsIgnoreCase(useCycleBufferProperty);
   }
 
-  private static int getCycleBufferSize() {
+  public static int getCycleBufferSize() {
     final String cycleBufferSizeProperty = System.getProperty("idea.cycle.buffer.size");
     if (cycleBufferSizeProperty == null) return 1024 * 1024;
     try {

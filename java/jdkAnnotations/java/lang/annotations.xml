@@ -84,4 +84,12 @@
       <val name="valuesFromClass" val="java.lang.reflect.Member.class"/>
     </annotation>
   </item>
+  <item name='java.lang.Thread java.lang.Thread currentThread()'>
+    <annotation name='org.jetbrains.annotations.NotNull'>
+    </annotation>
+  </item>
+  <item name='java.lang.CharSequence java.lang.String toString()'>
+    <annotation name='org.jetbrains.annotations.NotNull'>
+    </annotation>
+  </item>
 </root>

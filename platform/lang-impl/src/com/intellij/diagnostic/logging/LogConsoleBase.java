@@ -18,6 +18,7 @@ package com.intellij.diagnostic.logging;
 
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
@@ -369,6 +370,13 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       final Editor editor = getEditor();
       if (editor != null) {
         myOriginalDocument = new StringBuffer(editor.getDocument().getText());
+      }
+    } else {
+      if (ConsoleBuffer.useCycleBuffer()) {
+        final int toRemove = myOriginalDocument.length() - ConsoleBuffer.getCycleBufferSize();
+        if (toRemove > 0) {
+          myOriginalDocument.delete(0, toRemove);
+        }
       }
     }
     return myOriginalDocument;

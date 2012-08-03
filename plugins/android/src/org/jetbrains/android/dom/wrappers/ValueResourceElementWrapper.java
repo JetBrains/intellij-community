@@ -340,7 +340,6 @@ public class ValueResourceElementWrapper implements XmlAttributeValue, ResourceE
 
   @Nullable
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    System.out.println("Wrapper;set name: " + name);
     if (AndroidResourceUtil.isIdDeclaration(myWrappee)) {
       XmlAttribute attribute = (XmlAttribute)myWrappee.getParent();
       attribute.setValue(name);
@@ -351,9 +350,7 @@ public class ValueResourceElementWrapper implements XmlAttributeValue, ResourceE
       DomElement domElement = DomManager.getDomManager(getProject()).getDomElement(tag);
       assert domElement instanceof ResourceElement;
       ResourceElement resElement = (ResourceElement)domElement;
-      System.out.println("resElement: " + resElement + ", name to set: " + name);
       resElement.getName().setValue(name);
-      System.out.println("setted: " + resElement.getName().getStringValue());
     }
     return null;
   }

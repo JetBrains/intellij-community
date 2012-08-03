@@ -188,7 +188,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         if (rectangle.contains(eventPoint)) {
           MouseEvent event = SwingUtilities.convertMouseEvent(e.getComponent(), e, myPopup.getContent());
           Component component = SwingUtilities.getDeepestComponentAt(content, event.getX(), event.getY());
-          component.dispatchEvent(event);
+          if (component != null)
+            component.dispatchEvent(event);
         }
       }
     }

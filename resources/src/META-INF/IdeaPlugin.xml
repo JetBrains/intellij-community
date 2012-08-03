@@ -654,6 +654,10 @@
       <className>com.intellij.codeInsight.daemon.impl.quickfix.DelegateWithDefaultParamValueIntentionAction</className>
       <category>Declaration</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.daemon.impl.quickfix.DefineParamsDefaultValueAction</className>
+      <category>Declaration</category>
+    </intentionAction>
 
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.IntroduceVariableIntentionAction</className>
@@ -940,6 +944,7 @@
     <preFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.FieldInColumnsPreFormatProcessor"/>
     <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.BracePostFormatProcessor"/>
     <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.ImportPostFormatProcessor"/>
+    <postFormatProcessor implementation="com.intellij.psi.impl.source.codeStyle.TabPostFormatProcessor"/>
     <codeInspection.InspectionExtension implementation="com.intellij.codeInspection.ex.JavaInspectionExtensionsFactory"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ArrayVariableMacro"/>

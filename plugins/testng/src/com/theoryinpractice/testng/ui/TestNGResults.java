@@ -221,7 +221,7 @@ public class TestNGResults extends TestResultsPanel implements TestFrameworkRunn
     }
     animator.setCurrentTestCase(proxy);
     treeBuilder.addItem(classNode, proxy);
-    treeBuilder.repaintWithParents(proxy);
+    //treeBuilder.repaintWithParents(proxy);
     count++;
     if (count > total) total = count;
     if (myLastSelected == proxy) {

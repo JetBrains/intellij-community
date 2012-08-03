@@ -479,7 +479,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
         LOG.error(e);
         message = "Unknown error";
       }
-      Messages.showErrorDialog(myProject, message, "Error");
+      Messages.showErrorDialog(myProject, StringUtil.capitalize(message), "Error");
     }
     return e == null;
   }

@@ -43,6 +43,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -359,7 +360,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         disposeOnTearDown(new Disposable() {
           @Override
           public void dispose() {
-            descriptor.dispose();
+            Disposer.dispose(descriptor);
           }
         });
         final ProcessHandler handler = descriptor.getProcessHandler();

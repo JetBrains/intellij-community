@@ -19,21 +19,20 @@ import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.model.PropertyContext;
-import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredTableCellRenderer;
+import com.intellij.ui.SimpleColoredComponent;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IndentedIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +78,13 @@ public abstract class PropertyTable extends JBTable {
     setModel(myModel);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     showColumns(false);
+
+    setShowVerticalLines(false);
+    setIntercellSpacing(new Dimension(0, 1));
+    setGridColor(UIUtil.getSlightlyDarkerColor(getBackground()));
+
+    setRowSelectionAllowed(true);
+    setColumnSelectionAllowed(false);
 
     addMouseListener(new MouseTableListener());
 
@@ -874,6 +880,14 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
+  private static int getDepth(@NotNull Property property) {
+    int result = 0;
+    for (Property each = property.getParent(); each != null; each = each.getParent(), result++) {
+      // empty
+    }
+    return result;
+  }
+
   private class PropertyCellEditorListener implements PropertyEditorListener {
     @Override
     public void valueCommitted(PropertyEditor source, boolean continueEditing, boolean closeEditorOnError) {
@@ -969,161 +983,100 @@ public abstract class PropertyTable extends JBTable {
   protected abstract TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity);
 
   private class PropertyCellRenderer implements TableCellRenderer {
-    private final Map<HighlightSeverity, SimpleTextAttributes> myRegularAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
-    private final Map<HighlightSeverity, SimpleTextAttributes> myBoldAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
-    private final Map<HighlightSeverity, SimpleTextAttributes> myItalicAttributes = new HashMap<HighlightSeverity, SimpleTextAttributes>();
-    private final ColoredTableCellRenderer myPropertyNameRenderer;
-    private final ColoredTableCellRenderer myErrorRenderer;
-    private final Icon myExpandIcon;
-    private final Icon myCollapseIcon;
-    private final Icon myIndentedExpandIcon;
-    private final Icon myIndentedCollapseIcon;
-    private final Icon[] myIndentIcons = new Icon[3];
+    private final ColoredTableCellRenderer myRenderer;
 
     private PropertyCellRenderer() {
-      myPropertyNameRenderer = new ColoredTableCellRenderer() {
-        protected void customizeCellRenderer(
-          JTable table,
-          Object value,
-          boolean selected,
-          boolean hasFocus,
-          int row,
-          int column
-        ) {
+      myRenderer = new ColoredTableCellRenderer() {
+        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setPaintFocusBorder(false);
           setFocusBorderAroundIcon(true);
         }
       };
-
-      myErrorRenderer = new ColoredTableCellRenderer() {
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-          setPaintFocusBorder(false);
-        }
-      };
-
-      myExpandIcon = AllIcons.Nodes.ExpandNode;
-      myCollapseIcon = AllIcons.Nodes.CollapseNode;
-      for (int i = 0; i < myIndentIcons.length; i++) {
-        myIndentIcons[i] = new EmptyIcon(9 + 11 * i, 9);
-      }
-      myIndentedExpandIcon = new IndentedIcon(myExpandIcon, 11);
-      myIndentedCollapseIcon = new IndentedIcon(myCollapseIcon, 11);
     }
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+    public Component getTableCellRendererComponent(JTable table,
+                                                   Object value,
+                                                   boolean selected,
+                                                   boolean cellHasFocus,
+                                                   int row,
+                                                   int column) {
       column = table.convertColumnIndexToModel(column);
       Property property = (Property)value;
       Color background = table.getBackground();
       boolean isDefault = true;
 
+      Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      boolean tableHasFocus = focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, table);
+
       try {
         isDefault = isDefault(property);
       }
-      catch (Throwable e) {
+      catch (Exception e) {
         LOG.debug(e);
       }
 
-      if (isDefault) {
-        background = Gray._240;
-      }
+      myRenderer.clear();
 
       if (column == 0) {
-        myPropertyNameRenderer.getTableCellRendererComponent(table, value, selected, hasFocus, row, column);
+        myRenderer.getTableCellRendererComponent(table, value, selected, cellHasFocus, row, column);
 
-        if (!selected) {
-          myPropertyNameRenderer.setBackground(background);
+        myRenderer.setBackground(selected ? UIUtil.getTreeSelectionBackground(tableHasFocus) : background);
+
+        SimpleTextAttributes attr = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+
+        if (!selected && !isDefault) {
+          attr = attr.derive(-1, FileStatus.MODIFIED.getColor(), null, null);
         }
-
-        SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
         if (property.isImportant()) {
-          attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+          attr = attr.derive(attr.getStyle() | SimpleTextAttributes.STYLE_BOLD, null, null, null);
         }
-        else if (property.isExpert()) {
-          attributes = SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES;
+        if (property.isExpert()) {
+          attr = attr.derive(attr.getStyle() | SimpleTextAttributes.STYLE_ITALIC, null, null, null);
+        }
+        if (property.isDeprecated()) {
+          attr = attr.derive(attr.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT, null, null, null);
         }
 
         ErrorInfo errorInfo = getErrorInfoForRow(row);
         if (errorInfo != null) {
-          Map<HighlightSeverity, SimpleTextAttributes> cache = myRegularAttributes;
-          if (property.isImportant()) {
-            cache = myBoldAttributes;
-          }
-          else if (property.isExpert()) {
-            cache = myItalicAttributes;
-          }
+          SimpleTextAttributes template = SimpleTextAttributes.fromTextAttributes(
+            EditorColorsManager.getInstance().getGlobalScheme().getAttributes(getErrorAttributes(errorInfo.getLevel().getSeverity())));
 
-          HighlightSeverity severity = errorInfo.getLevel().getSeverity();
-          SimpleTextAttributes errorAttributes = cache.get(severity);
-
-          if (errorAttributes == null) {
-            TextAttributesKey attributesKey = getErrorAttributes(severity);
-            TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
-
-            if (property.isImportant()) {
-              textAttributes = textAttributes.clone();
-              textAttributes.setFontType(textAttributes.getFontType() | Font.BOLD);
-            }
-            else if (property.isExpert()) {
-              textAttributes = textAttributes.clone();
-              textAttributes.setFontType(textAttributes.getFontType() | Font.ITALIC);
-            }
-
-            errorAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
-            cache.put(severity, errorAttributes);
-          }
-
-          attributes = errorAttributes;
+          int style = ((template.getStyle() & SimpleTextAttributes.STYLE_WAVED) != 0 ? SimpleTextAttributes.STYLE_WAVED : 0)
+                      | ((template.getStyle() & SimpleTextAttributes.STYLE_UNDERLINE) != 0 ? SimpleTextAttributes.STYLE_UNDERLINE : 0);
+          attr = attr.derive(attr.getStyle() | style, template.getFgColor(), template.getBgColor(), template.getWaveColor());
         }
 
-        if (property.isDeprecated()) {
-          attributes = new SimpleTextAttributes(attributes.getBgColor(), attributes.getFgColor(), attributes.getWaveColor(),
-                                                attributes.getStyle() | SimpleTextAttributes.STYLE_STRIKEOUT);
+        myRenderer.append(property.getName(), attr);
+
+        Icon icon = UIUtil.getTreeNodeIcon(isExpanded(property), selected, tableHasFocus);
+        boolean hasChildren = !getChildren(property).isEmpty();
+
+        myRenderer.setIcon(hasChildren ? icon : null);
+
+        int nodeIndent = UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent();
+        int totalIndent = nodeIndent * getDepth(property);
+
+        if (hasChildren) {
+          int leftIconOffset = Math.max(0, UIUtil.getTreeLeftChildIndent() - (icon.getIconWidth() / 2));
+          totalIndent += leftIconOffset;
+          myRenderer.setIconTextGap(Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth()));
+        } else {
+          totalIndent += nodeIndent;
         }
 
-        myPropertyNameRenderer.append(property.getName(), attributes);
+        myRenderer.setIpad(new Insets(0, totalIndent, 0, 0));
 
-        if (!getChildren(property).isEmpty()) {
-          if (property.getParent() == null) {
-            if (isExpanded(property)) {
-              myPropertyNameRenderer.setIcon(myCollapseIcon);
-            }
-            else {
-              myPropertyNameRenderer.setIcon(myExpandIcon);
-            }
-          }
-          else {
-            if (isExpanded(property)) {
-              myPropertyNameRenderer.setIcon(myIndentedCollapseIcon);
-            }
-            else {
-              myPropertyNameRenderer.setIcon(myIndentedExpandIcon);
-            }
-          }
-        }
-        else {
-          myPropertyNameRenderer.setIcon(myIndentIcons[property.getIndent()]);
-        }
-
-        if (!selected) {
-          if (isDefault) {
-            myPropertyNameRenderer.setForeground(property.isExpert() ? Color.LIGHT_GRAY : table.getForeground());
-          }
-          else {
-            myPropertyNameRenderer.setForeground(FileStatus.MODIFIED.getColor());
-          }
-        }
-        return myPropertyNameRenderer;
+        return myRenderer;
       }
       else {
         try {
           PropertyRenderer renderer = property.getRenderer();
-          JComponent component = renderer.getComponent(getCurrentComponent(), getPropertyContext(), getValue(property), selected, hasFocus);
+          JComponent component =
+            renderer.getComponent(getCurrentComponent(), getPropertyContext(), getValue(property), selected, tableHasFocus);
 
-          if (!selected) {
-            component.setBackground(background);
-          }
-
+          component.setBackground(selected ? UIUtil.getTreeSelectionBackground(tableHasFocus) : background);
           component.setFont(table.getFont());
 
           if (component instanceof JCheckBox) {
@@ -1132,11 +1085,11 @@ public abstract class PropertyTable extends JBTable {
 
           return component;
         }
-        catch (Throwable e) {
+        catch (Exception e) {
           LOG.debug(e);
-          myErrorRenderer.clear();
-          myErrorRenderer.append(formatErrorGettingValueMesage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
-          return myErrorRenderer;
+          myRenderer.getTableCellRendererComponent(table, value, selected, cellHasFocus, row, column);
+          myRenderer.append(formatErrorGettingValueMesage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          return myRenderer;
         }
       }
     }

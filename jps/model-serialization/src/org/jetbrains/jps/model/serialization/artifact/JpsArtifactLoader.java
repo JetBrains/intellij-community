@@ -13,9 +13,8 @@ import org.jetbrains.jps.model.artifact.*;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElementFactory;
-import org.jetbrains.jps.model.serialization.JpsModelLoaderExtension;
-import org.jetbrains.jps.model.serialization.JpsModuleLoader;
-import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsModuleSerializer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -87,7 +86,7 @@ public class JpsArtifactLoader {
         parentReference = JpsElementFactory.getInstance().createModuleReference(moduleName);
       }
       else {
-        parentReference = JpsModuleLoader.createLibraryTableReference(level);
+        parentReference = JpsModuleSerializer.createLibraryTableReference(level);
       }
       return factory.createLibraryElement(JpsElementFactory.getInstance().createLibraryReference(libraryName, parentReference));
     }
@@ -108,7 +107,7 @@ public class JpsArtifactLoader {
     if (typeId.equals("jar")) {
       return JarArtifactType.INSTANCE;
     }
-    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       JpsArtifactType type = extension.getArtifactType(typeId);
       if (type != null) {
         return type;
@@ -124,7 +123,7 @@ public class JpsArtifactLoader {
         return loader;
       }
     }
-    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsPackagingElementLoader<?> loader : extension.getPackagingElementLoaders()) {
         if (loader.getTypeId().equals(typeId)) {
           return loader;

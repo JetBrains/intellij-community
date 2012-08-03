@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,4 +31,10 @@ public abstract class VcsFileRevisionEx implements VcsFileRevision {
 
   @Nullable
   public abstract String getCommitterEmail();
+
+  /**
+   * Returns the path of the file as it were in this revision
+   */
+  @NotNull
+  public abstract FilePath getPath();
 }

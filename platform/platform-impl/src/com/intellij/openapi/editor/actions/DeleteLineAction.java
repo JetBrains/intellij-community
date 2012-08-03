@@ -46,7 +46,20 @@ public class DeleteLineAction extends TextComponentEditorAction {
         int selectionEnd = selectionModel.getSelectionEnd();
         selectionModel.removeSelection();
         int lineStartOffset = document.getLineStartOffset(document.getLineNumber(selectionStart));
-        final int nextLine = document.getLineNumber(selectionEnd) + 1;
+        int nextLine = document.getLineNumber(selectionEnd);
+        if (document.getLineStartOffset(nextLine) != selectionEnd) {
+          // There is a possible case that selection ends at the line start, i.e. something like below ([...] denotes selected text,
+          // '|' is a line start):
+          //   |line 1
+          //   |[line 2
+          //   |]line 3
+          // We don't want to delete line 3 here. However, the situation below is different:
+          //   |line 1
+          //   |[line 2
+          //   |line] 3
+          // Line 3 must be removed here.
+          nextLine++;
+        }
         int nextLineStartOffset = nextLine == document.getLineCount()
                                   ? document.getTextLength()
                                   : Math.min(document.getTextLength(), document.getLineStartOffset(nextLine));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,11 +57,13 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   }
   public CodeStyleSettingsManager() {}
 
+  @NotNull
   public static CodeStyleSettings getSettings(final @Nullable Project project) {
     final CodeStyleSettingsManager instance = project == null || project.isDefault() ? getInstance() : getInstance(project);
     return instance.getCurrentSettings();
   }
 
+  @NotNull
   public CodeStyleSettings getCurrentSettings() {
     if (myTemporarySettings != null) return myTemporarySettings;
     if (USE_PER_PROJECT_SETTINGS && PER_PROJECT_SETTINGS != null) return PER_PROJECT_SETTINGS;

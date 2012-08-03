@@ -446,6 +446,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
         return icon;
       }
+
+      @Override
+      public String toString() {
+        return "LazyIcon@ActionManagerImpl (path: " + iconPath + ", action class: " + actionClass + ")";
+      }
     };
 
     if (!Registry.is("ide.lazyIconLoading")) {

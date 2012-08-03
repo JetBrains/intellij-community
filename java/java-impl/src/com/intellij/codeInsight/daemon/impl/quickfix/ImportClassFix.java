@@ -30,6 +30,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement> {
   public ImportClassFix(@NotNull PsiJavaCodeReferenceElement element) {
     super(element);
@@ -103,6 +105,22 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
     }
 
     return super.getRequiredMemberName(reference);
+  }
+
+  @Override
+  protected List<PsiClass> filterByContext(List<PsiClass> candidates, PsiJavaCodeReferenceElement ref) {
+    PsiElement typeElement = ref.getParent();
+    if (typeElement instanceof PsiTypeElement) {
+      PsiElement var = typeElement.getParent();
+      if (var instanceof PsiVariable) {
+        PsiExpression initializer = ((PsiVariable)var).getInitializer();
+        if (initializer != null) {
+          return filterAssignableFrom(initializer.getType(), candidates);
+        }
+      }
+    }
+
+    return super.filterByContext(candidates, ref);
   }
 
   @Override

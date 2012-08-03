@@ -16,17 +16,40 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
+import com.android.sdklib.SdkConstants;
+import com.intellij.CommonBundle;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.RevealFileAction;
+import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.compiler.CompileContext;
+import com.intellij.openapi.compiler.CompileScope;
+import com.intellij.openapi.compiler.CompileStatusNotification;
+import com.intellij.openapi.compiler.CompilerManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.android.compiler.artifact.AndroidArtifactUtil;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.io.File;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.util.List;
@@ -42,6 +65,8 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
   private X509Certificate myCertificate;
 
   private boolean mySigned;
+  private CompileScope myCompileScope;
+  private String myApkPath;
 
   public ExportSignedPackageWizard(Project project, List<AndroidFacet> facets, boolean signed) {
     super(AndroidBundle.message("android.export.package.wizard.title"), project);
@@ -70,6 +95,21 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
   protected void doOKAction() {
     if (!commitCurrentStep()) return;
     super.doOKAction();
+
+    CompilerManager.getInstance(myProject).make(myCompileScope, new CompileStatusNotification() {
+      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        if (aborted || errors != 0) {
+          return;
+        }
+
+        final String title = AndroidBundle.message("android.extract.package.task.title");
+        ProgressManager.getInstance().run(new Task.Backgroundable(myProject, title, true, null) {
+          public void run(@NotNull ProgressIndicator indicator) {
+            createAndAlignApk(myApkPath);
+          }
+        });
+      }
+    });
   }
 
   @Override
@@ -166,5 +206,88 @@ public class ExportSignedPackageWizard extends AbstractWizard<ExportSignedPackag
 
   public X509Certificate getCertificate() {
     return myCertificate;
+  }
+
+  public void setCompileScope(@NotNull CompileScope compileScope) {
+    myCompileScope = compileScope;
+  }
+
+  public void setApkPath(@NotNull String apkPath) {
+    myApkPath = apkPath;
+  }
+
+  private void createAndAlignApk(final String apkPath) {
+    AndroidPlatform platform = getFacet().getConfiguration().getAndroidPlatform();
+    assert platform != null;
+    String sdkPath = platform.getSdkData().getLocation();
+    String zipAlignPath = sdkPath + File.separatorChar + AndroidCommonUtils.toolPath(SdkConstants.FN_ZIPALIGN);
+    File zipalign = new File(zipAlignPath);
+    final boolean runZipAlign = zipalign.isFile();
+    File destFile = null;
+    try {
+      destFile = runZipAlign ? FileUtil.createTempFile("android", ".apk") : new File(apkPath);
+      createApk(destFile);
+    }
+    catch (Exception e) {
+      showErrorInDispatchThread(e.getMessage());
+    }
+    if (destFile == null) return;
+
+    if (runZipAlign) {
+      File realDestFile = new File(apkPath);
+      final String message = AndroidArtifactUtil.executeZipAlign(zipAlignPath, destFile, realDestFile);
+      if (message != null) {
+        showErrorInDispatchThread(message);
+        return;
+      }
+    }
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        String title = AndroidBundle.message("android.export.package.wizard.title");
+        final Project project = getProject();
+        final File apkFile = new File(apkPath);
+
+        final VirtualFile vApkFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(apkFile);
+        if (vApkFile != null) {
+          vApkFile.refresh(true, false);
+        }
+
+        if (!runZipAlign) {
+          Messages.showWarningDialog(project, AndroidBundle.message("cannot.find.zip.align"), title);
+        }
+
+        if (ShowFilePathAction.isSupported()) {
+          if (Messages.showOkCancelDialog(project, AndroidBundle.message("android.export.package.success.message", apkFile.getName()),
+                                          title, RevealFileAction.getActionName(), IdeBundle.message("action.close"),
+                                          Messages.getInformationIcon()) == Messages.OK) {
+            ShowFilePathAction.openFile(apkFile);
+          }
+        }
+        else {
+          Messages.showInfoMessage(project, AndroidBundle.message("android.export.package.success.message", apkFile), title);
+        }
+      }
+    }, ModalityState.NON_MODAL);
+  }
+
+  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
+  private void createApk(File destFile) throws IOException, GeneralSecurityException {
+    final String srcApkPath = AndroidCompileUtil.getUnsignedApkPath(getFacet());
+    final File srcApk = new File(FileUtil.toSystemDependentName(srcApkPath));
+
+    if (isSigned()) {
+      AndroidCommonUtils.signApk(srcApk, destFile, getPrivateKey(), getCertificate());
+    }
+    else {
+      FileUtil.copy(srcApk, destFile);
+    }
+  }
+
+  private void showErrorInDispatchThread(final String message) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        Messages.showErrorDialog(getProject(), "Error: " + message, CommonBundle.getErrorTitle());
+      }
+    }, ModalityState.NON_MODAL);
   }
 }

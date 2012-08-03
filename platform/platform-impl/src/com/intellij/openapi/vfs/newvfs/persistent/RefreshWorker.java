@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -35,6 +36,8 @@ import java.util.*;
  * @author max
  */
 public class RefreshWorker {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.RefreshWorker");
+
   private final boolean myIsRecursive;
   private final Queue<VirtualFile> myRefreshQueue = new Queue<VirtualFile>(100);
   private final List<VFileEvent> myEvents = new ArrayList<VFileEvent>();
@@ -103,7 +106,13 @@ public class RefreshWorker {
 
           for (VirtualFile child : file.getChildren()) {
             if (!deletedNames.contains(child.getName())) {
-              checkAndScheduleChildRefresh(file, child, fs.getAttributes(child));
+              final FileAttributes childAttributes = fs.getAttributes(child);
+              if (attributes != null) {
+                checkAndScheduleChildRefresh(file, child, childAttributes);
+              }
+              else {
+                LOG.error(child + " on " + fs);
+              }
             }
           }
         }

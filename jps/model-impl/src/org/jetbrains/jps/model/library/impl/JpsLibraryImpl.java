@@ -30,8 +30,8 @@ public class JpsLibraryImpl<P extends JpsElementProperties> extends JpsNamedComp
 
   @Override
   @NotNull
-  public JpsLibraryType<?> getType() {
-    return myContainer.getChild(TYPED_DATA_ROLE).getType();
+  public JpsLibraryType<P> getType() {
+    return (JpsLibraryType<P>)myContainer.getChild(TYPED_DATA_ROLE).getType();
   }
 
   @NotNull

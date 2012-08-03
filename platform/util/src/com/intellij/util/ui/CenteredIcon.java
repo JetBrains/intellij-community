@@ -20,29 +20,44 @@ import javax.swing.*;
 import java.awt.*;
 
 public class CenteredIcon implements Icon {
+  private final Icon myIcon;
 
-  private Icon myIcon;
+  private final int myWidth;
+  private final int myHight;
 
-  private int myWidth;
-  private int myHight;
+  private final boolean myCenteredInComponent;
 
   public CenteredIcon(Icon icon) {
-    this(icon, icon.getIconWidth(), icon.getIconHeight());
+    this(icon, icon.getIconWidth(), icon.getIconHeight(), true);
   }
 
-  public CenteredIcon(Icon icon, int width, int hight) {
+  public CenteredIcon(Icon icon, int width, int height) {
+    this(icon, width, height, true);
+  }
+
+  public CenteredIcon(Icon icon, int width, int height, boolean centeredInComponent) {
     myIcon = icon;
     myWidth = width;
-    myHight = hight;
+    myHight = height;
+    myCenteredInComponent = centeredInComponent;
   }
 
   public void paintIcon(Component c, Graphics g, int x, int y) {
     final Dimension size = c.getSize();
 
-    int actualX = size.width / 2 - myIcon.getIconWidth() /2;
-    int actualY = size.height / 2 - myIcon.getIconHeight() /2;
+    int offsetX;
+    int offsetY;
 
-    myIcon.paintIcon(c, g, x + actualX, y + actualY);
+    if (myCenteredInComponent) {
+      offsetX = size.width / 2 - myIcon.getIconWidth() / 2;
+      offsetY = size.height / 2 - myIcon.getIconHeight() / 2;
+    }
+    else {
+      offsetX = (myWidth - myIcon.getIconWidth()) / 2;
+      offsetY = (myHight - myIcon.getIconHeight()) / 2;
+    }
+
+    myIcon.paintIcon(c, g, x + offsetX, y + offsetY);
   }
 
   public int getIconWidth() {

@@ -37,6 +37,7 @@ import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -330,7 +331,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
   }
 
   public static void addJarToRoots(String libPath, final Module module, @Nullable PsiElement location) {
-    String url = VfsUtil.getUrlForLibraryRoot(new File(libPath));
+    final File libraryRoot = new File(libPath);
+    LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryRoot);
+    String url = VfsUtil.getUrlForLibraryRoot(libraryRoot);
     VirtualFile libVirtFile = VirtualFileManager.getInstance().findFileByUrl(url);
     assert libVirtFile != null : libPath;
 
@@ -365,11 +368,9 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     });
   }
 
-  public static boolean ensureAnnotationsJarInPath(final Module module, String annotationName) {
+  public static boolean ensureAnnotationsJarInPath(final Module module) {
+    if (isAnnotationsJarInPath(module)) return true;
     if (module == null) return false;
-    final PsiClass psiClass = JavaPsiFacade.getInstance(module.getProject())
-      .findClass(annotationName, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
-    if (psiClass != null) return true;
     final LocateLibraryDialog dialog = new LocateLibraryDialog(
       module, PathManager.getLibPath(), "annotations.jar",
       QuickFixBundle.message("add.library.annotations.description"));
@@ -384,5 +385,11 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
       return true;
     }
     return false;
+  }
+
+  public static boolean isAnnotationsJarInPath(Module module) {
+    if (module == null) return false;
+    return JavaPsiFacade.getInstance(module.getProject())
+             .findClass(AnnotationUtil.LANGUAGE, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null;
   }
 }

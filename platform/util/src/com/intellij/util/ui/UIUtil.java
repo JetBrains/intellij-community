@@ -506,7 +506,7 @@ public class UIUtil {
   public static Color getInactiveTextColor() {
     return UIManager.getColor("textInactiveText");
   }
-  
+
   public static Color getSlightlyDarkerColor(Color c) {
     float[] hsl = Color.RGBtoHSB(c.getRed(), c.getGreen(), c.getBlue(), new float[3]);
     return new Color(Color.HSBtoRGB(hsl[0], hsl[1], hsl[2] - .08f > 0 ? hsl[2] - .08f : hsl[2]));
@@ -668,6 +668,10 @@ public class UIUtil {
     return isUnderDarcula() ? Gray._52 : UNFOCUSED_SELECTION_COLOR;
   }
 
+  public static Color getTreeSelectionBackground(boolean focused) {
+    return focused ? getTreeSelectionBackground() : getTreeUnfocusedSelectionBackground();
+  }
+
   public static Color getTreeUnfocusedSelectionBackground() {
     Color background = getTreeTextBackground();
     return ColorUtil.isDark(background) ? Gray._30 : UNFOCUSED_SELECTION_COLOR;
@@ -811,12 +815,36 @@ public class UIUtil {
     return UIManager.getIcon("RadioButton.icon");
   }
 
+  public static Icon getTreeNodeIcon(boolean expanded, boolean selected, boolean focused) {
+    boolean white = (selected && focused) || isUnderDarcula();
+
+    Icon selectedIcon = getTreeSelectedExpandedIcon();
+    Icon notSelectedIcon = getTreeExpandedIcon();
+
+    int width = Math.max(selectedIcon.getIconWidth(), notSelectedIcon.getIconWidth());
+    int height = Math.max(selectedIcon.getIconWidth(), notSelectedIcon.getIconWidth());
+
+    return new CenteredIcon(expanded ? (white ? getTreeSelectedExpandedIcon() : getTreeExpandedIcon())
+                                     : (white ? getTreeSelectedCollapsedIcon() : getTreeCollapsedIcon()),
+                            width, height, false);
+  }
+
   public static Icon getTreeCollapsedIcon() {
     return UIManager.getIcon("Tree.collapsedIcon");
   }
 
   public static Icon getTreeExpandedIcon() {
     return UIManager.getIcon("Tree.expandedIcon");
+  }
+
+  public static Icon getTreeSelectedCollapsedIcon() {
+    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel()
+           ? AllIcons.Mac.Tree_white_right_arrow : getTreeCollapsedIcon();
+  }
+
+  public static Icon getTreeSelectedExpandedIcon() {
+    return isUnderAquaBasedLookAndFeel() || isUnderNimbusLookAndFeel() || isUnderGTKLookAndFeel()
+           ? AllIcons.Mac.Tree_white_down_arrow : getTreeExpandedIcon();
   }
 
   public static Border getTableHeaderCellBorder() {
@@ -1362,7 +1390,7 @@ public class UIUtil {
    * <p/>
    * The whole idea is that <a href="http://en.wikipedia.org/wiki/X_Rendering_Extension">XRender-based</a> pipeline doesn't support
    * {@link AlphaComposite#SRC} and we should use {@link AlphaComposite#SRC_OVER} instead.
-   * 
+   *
    * @param g  target graphics container
    */
   public static void setupComposite(@NotNull Graphics2D g) {
@@ -1671,7 +1699,7 @@ public class UIUtil {
   public static Color getBorderColor() {
     return BORDER_COLOR;
   }
-  
+
   public static Font getTitledBorderFont() {
     Font defFont = getLabelFont();
     return defFont.deriveFont(Math.max(defFont.getSize() - 2f, 11f));
@@ -2331,7 +2359,7 @@ public class UIUtil {
   public static JComponent mergeComponentsWithAnchor(PanelWithAnchor...panels) {
     return mergeComponentsWithAnchor(Arrays.asList(panels));
   }
-  
+
   @Nullable
   public static JComponent mergeComponentsWithAnchor(Collection<? extends PanelWithAnchor> panels) {
     JComponent maxWidthAnchor = null;
@@ -2379,7 +2407,7 @@ public class UIUtil {
       component.setBorder(new EmptyBorder(insets));
     }
   }
-  
+
   public static Dimension addInsets(@NotNull Dimension dimension, @NotNull Insets insets) {
 
     Dimension ans = new Dimension(dimension);

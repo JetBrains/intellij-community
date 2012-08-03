@@ -263,5 +263,7 @@
 
   <iconLayerProvider implementation="com.intellij.ide.LockedIconLayerProvider"/>
 
+  <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
+
   <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
 </extensions>

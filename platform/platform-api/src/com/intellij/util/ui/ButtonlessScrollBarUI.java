@@ -97,6 +97,15 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     };
   }
 
+  @Override
+  public void layoutContainer(Container scrollbarContainer) {
+    try {
+      super.layoutContainer(scrollbarContainer);
+    } catch (NullPointerException ignore) {
+      //installUI is not performed yet or uninstallUI has set almost every field to null. Just ignore it //IDEA-89674
+    }
+  }
+
   public static Color getGradientLightColor() {
     return UIUtil.isUnderDarcula() ? GRADIENT_LIGHT_DARK_VARIANT : GRADIENT_LIGHT;
   }

@@ -16,29 +16,16 @@
 
 package org.jetbrains.android.exportSignedPackage;
 
-import com.android.sdklib.SdkConstants;
-import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.RevealFileAction;
-import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.wizard.CommitStepException;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompileStatusNotification;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -47,7 +34,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidProguardCompiler;
-import org.jetbrains.android.compiler.artifact.AndroidArtifactUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidRootUtil;
@@ -55,7 +41,6 @@ import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.SaveFileListener;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -63,8 +48,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 
 /**
  * @author Eugene.Kudelevsky
@@ -223,81 +206,6 @@ class ApkStep extends ExportSignedPackageWizardStep {
     return myContentPanel;
   }
 
-  private void createAndAlignApk(final String apkPath) {
-    AndroidPlatform platform = myWizard.getFacet().getConfiguration().getAndroidPlatform();
-    assert platform != null;
-    String sdkPath = platform.getSdkData().getLocation();
-    String zipAlignPath = sdkPath + File.separatorChar + AndroidCommonUtils.toolPath(SdkConstants.FN_ZIPALIGN);
-    File zipalign = new File(zipAlignPath);
-    final boolean runZipAlign = zipalign.isFile();
-    File destFile = null;
-    try {
-      destFile = runZipAlign ? FileUtil.createTempFile("android", ".apk") : new File(apkPath);
-      createApk(destFile);
-    }
-    catch (Exception e) {
-      showErrorInDispatchThread(e.getMessage());
-    }
-    if (destFile == null) return;
-
-    if (runZipAlign) {
-      File realDestFile = new File(apkPath);
-      final String message = AndroidArtifactUtil.executeZipAlign(zipAlignPath, destFile, realDestFile);
-      if (message != null) {
-        showErrorInDispatchThread(message);
-        return;
-      }
-    }
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        String title = AndroidBundle.message("android.export.package.wizard.title");
-        final Project project = myWizard.getProject();
-        final File apkFile = new File(apkPath);
-
-        final VirtualFile vApkFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(apkFile);
-        if (vApkFile != null) {
-          vApkFile.refresh(true, false);
-        }
-
-        if (!runZipAlign) {
-          Messages.showWarningDialog(project, AndroidBundle.message("cannot.find.zip.align"), title);
-        }
-
-        if (ShowFilePathAction.isSupported()) {
-          if (Messages.showOkCancelDialog(project, AndroidBundle.message("android.export.package.success.message", apkFile.getName()),
-                                          title, RevealFileAction.getActionName(), IdeBundle.message("action.close"),
-                                          Messages.getInformationIcon()) == Messages.OK) {
-            ShowFilePathAction.openFile(apkFile);
-          }
-        }
-        else {
-          Messages.showInfoMessage(project, AndroidBundle.message("android.export.package.success.message", apkFile), title);
-        }
-      }
-    }, ModalityState.NON_MODAL);
-  }
-
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  private void createApk(File destFile) throws IOException, GeneralSecurityException {
-    final String srcApkPath = AndroidCompileUtil.getUnsignedApkPath(myWizard.getFacet());
-    final File srcApk = new File(FileUtil.toSystemDependentName(srcApkPath));
-
-    if (myWizard.isSigned()) {
-      AndroidCommonUtils.signApk(srcApk, destFile, myWizard.getPrivateKey(), myWizard.getCertificate());
-    }
-    else {
-      FileUtil.copy(srcApk, destFile);
-    }
-  }
-
-  private void showErrorInDispatchThread(final String message) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      public void run() {
-        Messages.showErrorDialog(myWizard.getProject(), "Error: " + message, CommonBundle.getErrorTitle());
-      }
-    }, ModalityState.NON_MODAL);
-  }
-
   @Override
   protected boolean canFinish() {
     return true;
@@ -310,9 +218,6 @@ class ApkStep extends ExportSignedPackageWizardStep {
 
   @Override
   public void _commit(boolean finishChosen) throws CommitStepException {
-    if (!finishChosen) {
-      return;
-    }
     final String apkPath = myApkPathField.getText().trim();
     if (apkPath.length() == 0) {
       throw new CommitStepException(AndroidBundle.message("android.extract.package.specify.apk.path.error"));
@@ -336,8 +241,8 @@ class ApkStep extends ExportSignedPackageWizardStep {
       throw new CommitStepException(e.getMessage());
     }
 
-    final CompilerManager manager = CompilerManager.getInstance(myWizard.getProject());
-    final CompileScope compileScope = manager.createModuleCompileScope(facet.getModule(), true);
+    final CompileScope compileScope = CompilerManager.getInstance(myWizard.getProject()).
+      createModuleCompileScope(facet.getModule(), true);
     AndroidCompileUtil.setReleaseBuild(compileScope);
 
     properties.setValue(RUN_PROGUARD_PROPERTY, Boolean.toString(myProguardCheckBox.isSelected()));
@@ -357,21 +262,8 @@ class ApkStep extends ExportSignedPackageWizardStep {
       compileScope.putUserData(AndroidProguardCompiler.PROGUARD_CFG_PATH_KEY, proguardCfgPath);
       compileScope.putUserData(AndroidProguardCompiler.INCLUDE_SYSTEM_PROGUARD_FILE, myIncludeSystemProguardFileCheckBox.isSelected());
     }
-
-    manager.make(compileScope, new CompileStatusNotification() {
-      public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-        if (aborted || errors != 0) {
-          return;
-        }
-
-        final String title = AndroidBundle.message("android.extract.package.task.title");
-        ProgressManager.getInstance().run(new Task.Backgroundable(myWizard.getProject(), title, true, null) {
-          public void run(@NotNull ProgressIndicator indicator) {
-            createAndAlignApk(apkPath);
-          }
-        });
-      }
-    });
+    myWizard.setCompileScope(compileScope);
+    myWizard.setApkPath(apkPath);
   }
 
   @Override

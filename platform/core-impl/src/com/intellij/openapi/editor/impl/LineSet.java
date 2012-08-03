@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,13 +46,13 @@ public class LineSet{
     return new LineIteratorImpl(this);
   }
 
-  final int getLineStart(int index) {
+  public final int getLineStart(int index) {
     int lineStart = mySegments.getSegmentStart(index);
     assert lineStart >= 0;
     return lineStart;
   }
 
-  final int getLineEnd(int index) {
+  public final int getLineEnd(int index) {
     return mySegments.getSegmentEnd(index);
   }
 

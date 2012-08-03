@@ -30,6 +30,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -49,6 +50,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -63,7 +65,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private RunContentManagerImpl myContentManager;
   private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
-    new ArrayList<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>>();
+    Collections.synchronizedList(new ArrayList<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>>());
 
   /**
    * reflection
@@ -176,7 +178,15 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           final RunContentDescriptor descriptor = starter.execute(project, executor, state, reuseContent, env);
 
           if (descriptor != null) {
-            myRunningConfigurations.add(Trinity.create(descriptor, env.getRunnerAndConfigurationSettings(), executor));
+            final Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity =
+              Trinity.create(descriptor, env.getRunnerAndConfigurationSettings(), executor);
+            myRunningConfigurations.add(trinity);
+            Disposer.register(descriptor, new Disposable() {
+              @Override
+              public void dispose() {
+                myRunningConfigurations.remove(trinity);
+              }
+            });
             ExecutionManager.getInstance(project).getContentManager().showRunContent(executor, descriptor, reuseContent);
             final ProcessHandler processHandler = descriptor.getProcessHandler();
             if (processHandler != null) {

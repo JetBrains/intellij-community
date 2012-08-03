@@ -328,9 +328,6 @@ public class AndroidExtractStyleAction extends BaseRefactoringAction {
     if (name.startsWith(AndroidDomUtil.ATTR_STYLE)) {
       return false;
     }
-    if (name.startsWith(AndroidDomUtil.ATTR_LAYOUT_PREFIX) && !name.startsWith(AndroidDomUtil.ATTR_LAYOUT_MARGIN)) {
-      return false;
-    }
     return true;
   }
 

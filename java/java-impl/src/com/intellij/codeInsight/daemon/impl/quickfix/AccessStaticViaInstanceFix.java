@@ -118,6 +118,8 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     if (hasSideEffects && !ApplicationManager.getApplication().isUnitTestMode()) {
       final TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
       final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+      if (editor == null)
+        return false;
       HighlightManager.getInstance(project).addOccurrenceHighlights(editor, PsiUtilBase.toPsiElementArray(sideEffects), attributes, true,
                                                                     null);
       try {

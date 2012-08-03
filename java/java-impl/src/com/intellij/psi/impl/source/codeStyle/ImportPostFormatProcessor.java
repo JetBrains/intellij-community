@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,15 +19,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 
 public class ImportPostFormatProcessor implements PostFormatProcessor {
   @Override
-  public PsiElement processElement(PsiElement source, CodeStyleSettings settings) {
+  public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     return new ImportsFormatter(settings, source.getContainingFile()).process(source);
   }
 
   @Override
-  public TextRange processText(PsiFile source, TextRange rangeToReformat, CodeStyleSettings settings) {
+  public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     return new ImportsFormatter(settings, source.getContainingFile()).processText(source, rangeToReformat);
   }
 }

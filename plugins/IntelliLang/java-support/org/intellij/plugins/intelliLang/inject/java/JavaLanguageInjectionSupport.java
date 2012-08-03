@@ -201,13 +201,17 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
   }
 
   static boolean doAddLanguageAnnotation(final Project project, final PsiModifierListOwner modifierListOwner,
-                                                 final String languageId) {
+                                         final String languageId) {
+    if (!Configuration.getProjectInstance(project).getAdvancedConfiguration().isSourceModificationAllowed()) return false;
     if (modifierListOwner.getModifierList() == null || !PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)) return false;
-    if (!OrderEntryFix.ensureAnnotationsJarInPath(ModuleUtil.findModuleForPsiElement(modifierListOwner), AnnotationUtil.LANGUAGE)) return false;
+    if (!OrderEntryFix.isAnnotationsJarInPath(ModuleUtil.findModuleForPsiElement(modifierListOwner))) {
+      // todo add languageId comment
+      return false;
+    }
     new WriteCommandAction(project, modifierListOwner.getContainingFile()) {
       protected void run(final Result result) throws Throwable {
         final PsiAnnotation annotation = JavaPsiFacade.getInstance(project).getElementFactory()
-            .createAnnotationFromText("@" + AnnotationUtil.LANGUAGE + "(\"" + languageId + "\")", modifierListOwner);
+          .createAnnotationFromText("@" + AnnotationUtil.LANGUAGE + "(\"" + languageId + "\")", modifierListOwner);
         final PsiModifierList list = modifierListOwner.getModifierList();
         assert list != null;
         final PsiAnnotation existingAnnotation = list.findAnnotation(AnnotationUtil.LANGUAGE);

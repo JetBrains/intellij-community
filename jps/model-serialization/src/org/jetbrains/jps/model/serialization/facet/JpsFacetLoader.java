@@ -7,8 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.serialization.JpsModelLoaderExtension;
-import org.jetbrains.jps.service.JpsServiceManager;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 
 import java.util.List;
 
@@ -48,7 +47,7 @@ public class JpsFacetLoader {
 
   @Nullable
   private static JpsModuleExtensionLoader<?> getModuleExtensionLoader(@NotNull String typeId) {
-    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsModuleExtensionLoader<?> loader : extension.getModuleExtensionLoaders()) {
         if (loader.getFacetTypeId().equals(typeId)) {
           return loader;
