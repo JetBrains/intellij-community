@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -60,19 +61,22 @@ import java.util.List;
 public abstract class PropertyTable extends JBTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.propertyTable.PropertyTable");
 
+  private boolean mySorted;
+  private boolean myShowCategories;
+  private boolean myShowExpertProperties;
+
   private final AbstractTableModel myModel = new PropertyTableModel();
   private List<PropertiesContainer> myContainers = Collections.emptyList();
   private List<Property> myProperties = Collections.emptyList();
   private final Set<String> myExpandedProperties = new HashSet<String>();
 
+  private boolean mySkipUpdate;
   private boolean myStoppingEditing;
-  private final PropertyCellEditor myCellEditor = new PropertyCellEditor();
-  private final PropertyEditorListener myPropertyEditorListener = new PropertyCellEditorListener();
 
   private final TableCellRenderer myCellRenderer = new PropertyCellRenderer();
+  private final PropertyCellEditor myCellEditor = new PropertyCellEditor();
 
-  private boolean mySkipUpdate;
-  private boolean myShowExpert;
+  private final PropertyEditorListener myPropertyEditorListener = new PropertyCellEditorListener();
 
 
   public PropertyTable() {
@@ -96,6 +100,33 @@ public abstract class PropertyTable extends JBTable {
     JTableHeader tableHeader = getTableHeader();
     tableHeader.setVisible(value);
     tableHeader.setPreferredSize(value ? null : new Dimension());
+  }
+
+  public void setSorted(boolean sorted) {
+    mySorted = sorted;
+    update();
+  }
+
+  public boolean isSorted() {
+    return mySorted;
+  }
+
+  public boolean isShowCategories() {
+    return myShowCategories;
+  }
+
+  public void setShowCategories(boolean showCategories) {
+    myShowCategories = showCategories;
+    update();
+  }
+
+  public void showExpert(boolean showExpert) {
+    myShowExpertProperties = showExpert;
+    update();
+  }
+
+  public boolean isShowExpertProperties() {
+    return myShowExpertProperties;
   }
 
   public void setUI(TableUI ui) {
@@ -143,15 +174,6 @@ public abstract class PropertyTable extends JBTable {
 
   public TableCellRenderer getCellRenderer(int row, int column) {
     return myCellRenderer;
-  }
-
-  public boolean isShowExpert() {
-    return myShowExpert;
-  }
-
-  public void showExpert(boolean showExpert) {
-    myShowExpert = showExpert;
-    update();
   }
 
   public void restoreDefaultValue() {
@@ -248,6 +270,7 @@ public abstract class PropertyTable extends JBTable {
       Property selection = initialSelection != null ? initialSelection : getSelectionProperty();
       myContainers = new ArrayList<PropertiesContainer>(containers);
       fillProperties();
+      sortProperties();
       myModel.fireTableDataChanged();
 
       restoreSelection(selection);
@@ -255,6 +278,27 @@ public abstract class PropertyTable extends JBTable {
     finally {
       mySkipUpdate = false;
     }
+  }
+
+  private void sortProperties() {
+    if (!mySorted && !myShowCategories) return;
+
+    Collections.sort(myProperties, new Comparator<Property>() {
+      @Override
+      public int compare(Property o1, Property o2) {
+        if (myShowCategories) {
+          String c1 = o1.getCategory();
+          String c2 = o2.getCategory();
+          int result = StringUtil.compare(c1, c2, true);
+          if (result != 0) {
+            if (c1 == null) return 1;
+            if (c2 == null) return -1;
+            return result;
+          }
+        }
+        return mySorted ? StringUtil.compare(o1.getName(), o2.getName(), true) : 0;
+      }
+    });
   }
 
   private void restoreSelection(Property selection) {
@@ -349,7 +393,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private void addProperty(Property property, List<Property> properties) {
-    if (property.isExpert() && !myShowExpert) {
+    if (property.isExpert() && !myShowExpertProperties) {
       return;
     }
 
@@ -456,7 +500,7 @@ public abstract class PropertyTable extends JBTable {
     List<Property> properties = new ArrayList<Property>(getChildren(property));
     for (Iterator<Property> I = properties.iterator(); I.hasNext(); ) {
       Property child = I.next();
-      if (child.isExpert() && !myShowExpert) {
+      if (child.isExpert() && !myShowExpertProperties) {
         I.remove();
       }
     }
@@ -826,7 +870,10 @@ public abstract class PropertyTable extends JBTable {
 
       Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
       int indent = getBeforeIconAndAfterIndents(property, icon).first;
-      if (e.getX() < rect.x + indent || e.getX() > rect.x + indent + icon.getIconWidth() || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
+      if (e.getX() < rect.x + indent ||
+          e.getX() > rect.x + indent + icon.getIconWidth() ||
+          e.getY() < rect.y ||
+          e.getY() > rect.y + rect.height) {
         return;
       }
 

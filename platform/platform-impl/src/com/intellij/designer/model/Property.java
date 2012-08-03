@@ -56,6 +56,11 @@ public abstract class Property<T extends PropertiesContainer> {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Nullable
+  public String getCategory() {
+    return null;
+  }
+
+  @Nullable
   public final Property getParent() {
     return myParent;
   }
