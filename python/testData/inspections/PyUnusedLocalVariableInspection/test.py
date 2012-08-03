@@ -112,7 +112,7 @@ def test():
         print v
 
 def foo(<weak_warning descr="Parameter 'a' value is not used">a = 123</weak_warning>): # fail Do not use getText() as parameter name
-    pass
+    print('hello')
 
 def loopie():
     for x in range(5): pass
@@ -123,9 +123,9 @@ def locals_inside():
     do_smth_with(locals())
 
 class Stat(object):
-  @staticmethod
-  def woof(<weak_warning descr="Parameter 'dog' value is not used">dog="bark"</weak_warning>): # fail
-    pass
+    @staticmethod
+    def woof(<weak_warning descr="Parameter 'dog' value is not used">dog="bark"</weak_warning>): # fail
+        print('hello')
 
 class A:
     def __init__(self, *args): #pass
@@ -261,3 +261,25 @@ def test_only_name_in_local_class():
     class <weak_warning descr="Local class 'C' is not used">C</weak_warning>:
         pass
     return x
+
+
+# PY-7028
+def test_unused_params_in_empty_function_1(x, y, z):
+    pass
+
+
+# PY-7028
+def test_unused_params_in_empty_function_2(x, y, z):
+    raise Exception()
+
+
+# PY-7028
+def test_unused_params_in_empty_function_3(x, y, z):
+    """Docstring."""
+
+
+# PY-7028
+def test_unused_params_in_empty_function_4(x, y, z):
+    """Docstring."""
+    raise Exception()
+

@@ -29,9 +29,7 @@ import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author oleg
@@ -215,7 +213,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     final UnusedLocalFilter[] filters = Extensions.getExtensions(UnusedLocalFilter.EP_NAME);
     // Register problems
 
-    Set<PyFunction> functionsWithInheritors = new  HashSet<PyFunction>();
+    final Set<PyFunction> functionsWithInheritors = new HashSet<PyFunction>();
+    final Map<PyFunction, Boolean> emptyFunctions = new HashMap<PyFunction, Boolean>();
 
     for (PsiElement element : myUnusedElements) {
       boolean ignoreUnused = false;
@@ -273,6 +272,14 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               }
             }
             else if (ignoreUnusedParameters(func, functionsWithInheritors)) {
+              continue;
+            }
+            Boolean isEmpty = emptyFunctions.get(func);
+            if (isEmpty == null) {
+              isEmpty = isEmptyFunction(func);
+              emptyFunctions.put(func, isEmpty);
+            }
+            if (isEmpty) {
               continue;
             }
           }
@@ -392,5 +399,41 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     public String getFamilyName() {
       return getName();
     }
+  }
+
+  private static boolean isEmptyFunction(@NotNull PyFunction f) {
+    final PyStatementList statementList = f.getStatementList();
+    if (statementList == null) {
+      return true;
+    }
+    final PyStatement[] statements = statementList.getStatements();
+    if (statements.length == 0) {
+      return true;
+    }
+    else if (statements.length == 1) {
+      if (isStringLiteral(statements[0]) || isPassOrRaise(statements[0])) {
+        return true;
+      }
+    }
+    else if (statements.length == 2) {
+      if (isStringLiteral(statements[0]) && (isPassOrRaise(statements[1]))) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean isPassOrRaise(PyStatement stmt) {
+    return stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement;
+  }
+
+  private static boolean isStringLiteral(PyStatement stmt) {
+    if (stmt instanceof PyExpressionStatement) {
+      final PyExpression expr = ((PyExpressionStatement)stmt).getExpression();
+      if (expr instanceof PyStringLiteralExpression) {
+        return true;
+      }
+    }
+    return false;
   }
 }
