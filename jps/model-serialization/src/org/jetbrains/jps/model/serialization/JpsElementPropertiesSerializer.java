@@ -6,11 +6,11 @@ import org.jetbrains.jps.model.JpsElementType;
 /**
  * @author nik
  */
-public abstract class JpsElementPropertiesLoader<P extends JpsElementProperties, Type extends JpsElementType<P>> {
+public abstract class JpsElementPropertiesSerializer<P extends JpsElementProperties, Type extends JpsElementType<P>> {
   private final String myTypeId;
   private final Type myType;
 
-  public JpsElementPropertiesLoader(Type type, String typeId) {
+  public JpsElementPropertiesSerializer(Type type, String typeId) {
     myType = type;
     myTypeId = typeId;
   }

@@ -23,10 +23,9 @@ import org.jetbrains.jps.devkit.model.JpsIdeaSdkProperties;
 import org.jetbrains.jps.devkit.model.JpsIdeaSdkType;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleType;
-import org.jetbrains.jps.model.serialization.JpsLoaderBase;
-import org.jetbrains.jps.model.serialization.JpsModelLoaderExtension;
-import org.jetbrains.jps.model.serialization.JpsModulePropertiesLoader;
-import org.jetbrains.jps.model.serialization.JpsSdkPropertiesLoader;
+import org.jetbrains.jps.model.serialization.*;
+import org.jetbrains.jps.model.serialization.JpsModulePropertiesSerializer;
+import org.jetbrains.jps.model.serialization.JpsSdkPropertiesSerializer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -34,38 +33,48 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JpsDevKitModelLoaderExtension extends JpsModelLoaderExtension {
+public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtension {
   @NotNull
   @Override
-  public List<? extends JpsModulePropertiesLoader<?>> getModulePropertiesLoaders() {
-    return Arrays.asList(new JpsPluginModulePropertiesLoader());
+  public List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
+    return Arrays.asList(new JpsPluginModulePropertiesSerializer());
   }
 
   @NotNull
   @Override
-  public List<? extends JpsSdkPropertiesLoader<?>> getSdkPropertiesLoaders() {
-    return Arrays.asList(new JpsIdeaSdkPropertiesLoader());
+  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesLoaders() {
+    return Arrays.asList(new JpsIdeaSdkPropertiesSerializer());
   }
 
-  private static class JpsIdeaSdkPropertiesLoader extends JpsSdkPropertiesLoader<JpsIdeaSdkProperties> {
-    public JpsIdeaSdkPropertiesLoader() {
+  private static class JpsIdeaSdkPropertiesSerializer extends JpsSdkPropertiesSerializer<JpsIdeaSdkProperties> {
+    private static final String SANDBOX_HOME_FIELD = "mySandboxHome";
+    private static final String JDK_NAME_ATTRIBUTE = "sdk";
+
+    public JpsIdeaSdkPropertiesSerializer() {
       super("IDEA JDK", JpsIdeaSdkType.INSTANCE);
     }
 
+    @NotNull
     @Override
     public JpsIdeaSdkProperties loadProperties(String homePath, String version, @Nullable Element propertiesElement) {
       String sandboxHome = null;
       String jdkName = null;
       if (propertiesElement != null) {
-        sandboxHome = JDOMExternalizerUtil.readField(propertiesElement, "mySandboxHome");
-        jdkName = propertiesElement.getAttributeValue("sdk");
+        sandboxHome = JDOMExternalizerUtil.readField(propertiesElement, SANDBOX_HOME_FIELD);
+        jdkName = propertiesElement.getAttributeValue(JDK_NAME_ATTRIBUTE);
       }
       return new JpsIdeaSdkProperties(homePath, version, sandboxHome, jdkName);
     }
+
+    @Override
+    public void saveProperties(@NotNull JpsIdeaSdkProperties properties, @NotNull Element element) {
+      JDOMExternalizerUtil.writeField(element, SANDBOX_HOME_FIELD, properties.getSandboxHome());
+      element.setAttribute(JDK_NAME_ATTRIBUTE, properties.getJdkName());
+    }
   }
 
-  private static class JpsPluginModulePropertiesLoader extends JpsModulePropertiesLoader<JpsPluginModuleProperties> {
-    private JpsPluginModulePropertiesLoader() {
+  private static class JpsPluginModulePropertiesSerializer extends JpsModulePropertiesSerializer<JpsPluginModuleProperties> {
+    private JpsPluginModulePropertiesSerializer() {
       super(JpsPluginModuleType.INSTANCE, "PLUGIN_MODULE");
     }
 

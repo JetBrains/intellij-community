@@ -32,11 +32,11 @@ public class JpsGlobalLoader extends JpsLoaderBase {
 
   private void loadSdks(File optionsDir) {
     final Element root = loadRootElement(new File(optionsDir, "jdk.table.xml"));
-    JpsSdkTableLoader.loadSdks(findComponent(root, "ProjectJdkTable"), myGlobal.getLibraryCollection());
+    JpsSdkTableSerializer.loadSdks(findComponent(root, "ProjectJdkTable"), myGlobal.getLibraryCollection());
   }
 
   private void loadGlobalLibraries(File optionsDir) {
     final Element root = loadRootElement(new File(optionsDir, "applicationLibraries.xml"));
-    JpsLibraryTableLoader.loadLibraries(findComponent(root, "libraryTable"), myGlobal.getLibraryCollection());
+    JpsLibraryTableSerializer.loadLibraries(findComponent(root, "libraryTable"), myGlobal.getLibraryCollection());
   }
 }

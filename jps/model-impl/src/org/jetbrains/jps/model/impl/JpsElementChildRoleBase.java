@@ -9,7 +9,7 @@ import org.jetbrains.jps.model.JpsElementChildRole;
 public class JpsElementChildRoleBase<E extends JpsElement> extends JpsElementChildRole<E> {
   private String myDebugName;
 
-  protected JpsElementChildRoleBase(String debugName) {
+  public JpsElementChildRoleBase(String debugName) {
     myDebugName = debugName;
   }
 

@@ -38,8 +38,8 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsSdkProperties;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
-import org.jetbrains.jps.model.serialization.JpsSdkPropertiesLoader;
-import org.jetbrains.jps.model.serialization.JpsSdkTableLoader;
+import org.jetbrains.jps.model.serialization.JpsSdkPropertiesSerializer;
+import org.jetbrains.jps.model.serialization.JpsSdkTableSerializer;
 
 import java.io.*;
 import java.util.*;
@@ -536,7 +536,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           JpsLibrary jpsLibrary = null;
           if (library instanceof SdkLibrary) {
             final SdkLibrary sdkLibrary = (SdkLibrary)library;
-            final JpsSdkPropertiesLoader<?> loader = JpsSdkTableLoader.getSdkPropertiesLoader(sdkLibrary.getTypeName());
+            final JpsSdkPropertiesSerializer<?> loader = JpsSdkTableSerializer.getSdkPropertiesSerializer(sdkLibrary.getTypeName());
             if (loader != null) {
               jpsLibrary = addLibrary(model, sdkLibrary, loader);
             }
@@ -567,7 +567,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private static <P extends JpsSdkProperties> JpsLibrary addLibrary(JpsModel model, SdkLibrary sdkLibrary, JpsSdkPropertiesLoader<P> loader) {
+  private static <P extends JpsSdkProperties> JpsLibrary addLibrary(JpsModel model, SdkLibrary sdkLibrary, JpsSdkPropertiesSerializer<P> loader) {
     try {
       final String xml = sdkLibrary.getAdditionalDataXml();
       final Element element = xml != null ? JDOMUtil.loadDocument(xml).getRootElement() : null;

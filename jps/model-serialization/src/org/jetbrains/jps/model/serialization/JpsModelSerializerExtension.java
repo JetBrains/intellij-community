@@ -7,11 +7,11 @@ import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifactType;
-import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementLoader;
 import org.jetbrains.jps.model.serialization.facet.JpsModuleExtensionLoader;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,20 +19,36 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class JpsModelLoaderExtension {
+public abstract class JpsModelSerializerExtension {
+  public static Iterable<JpsModelSerializerExtension> getExtensions() {
+    return JpsServiceManager.getInstance().getExtensions(JpsModelSerializerExtension.class);
+  }
 
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
+  }
+
+  public void saveRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
   }
 
   public void loadProjectRoots(JpsProject project, Element rootManagerElement) {
   }
 
-  @Nullable
-  public JpsOrderRootType getRootType(@NotNull String typeId) {
-    return null;
+  public void saveProjectRoots(JpsProject project, Element rootManagerElement) {
+  }
+
+  public List<JpsLibraryRootTypeSerializer> getLibraryRootTypeSerializers() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  public List<JpsLibraryRootTypeSerializer> getSdkRootTypeSerializers() {
+    return Collections.emptyList();
   }
 
   public void loadModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
+  }
+
+  public void saveModuleDependencyProperties(JpsDependencyElement dependency, Element orderEntry) {
   }
 
   @Nullable
@@ -40,18 +56,22 @@ public abstract class JpsModelLoaderExtension {
     return null;
   }
 
+  public String getLibraryTableLevelId(JpsElementReference<? extends JpsCompositeElement> reference) {
+    return null;
+  }
+
   @NotNull
-  public List<? extends JpsModulePropertiesLoader<?>> getModulePropertiesLoaders() {
+  public List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
     return Collections.emptyList();
   }
 
   @NotNull
-  public List<JpsLibraryPropertiesLoader<?>> getLibraryPropertiesLoaders() {
+  public List<JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesLoaders() {
     return Collections.emptyList();
   }
 
   @NotNull
-  public List<? extends JpsSdkPropertiesLoader<?>> getSdkPropertiesLoaders() {
+  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesLoaders() {
     return Collections.emptyList();
   }
 
@@ -61,11 +81,6 @@ public abstract class JpsModelLoaderExtension {
 
   public List<? extends JpsPackagingElementLoader<?>> getPackagingElementLoaders() {
     return Collections.emptyList();
-  }
-
-  @Nullable
-  public JpsOrderRootType getSdkRootType(@NotNull String typeId) {
-    return null;
   }
 
   @Nullable

@@ -8,8 +8,9 @@ import org.jetbrains.jps.model.module.JpsModuleType;
 /**
  * @author nik
  */
-public abstract class JpsModulePropertiesLoader<P extends JpsElementProperties> extends JpsElementPropertiesLoader<P, JpsModuleType<P>> {
-  protected JpsModulePropertiesLoader(JpsModuleType<P> type, String typeId) {
+public abstract class JpsModulePropertiesSerializer<P extends JpsElementProperties> extends
+                                                                                    JpsElementPropertiesSerializer<P, JpsModuleType<P>> {
+  protected JpsModulePropertiesSerializer(JpsModuleType<P> type, String typeId) {
     super(type, typeId);
   }
 

@@ -2,6 +2,7 @@ package org.jetbrains.jps.model.java.impl;
 
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElementCreator;
 import org.jetbrains.jps.model.impl.JpsElementBase;
 import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension;
@@ -11,8 +12,6 @@ import org.jetbrains.jps.model.java.ExplodedDirectoryModuleExtension;
  */
 public class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<ExplodedDirectoryModuleExtensionImpl> implements
                                                                                                                ExplodedDirectoryModuleExtension {
-  public static final JpsElementChildRoleBase<ExplodedDirectoryModuleExtension> ROLE = JpsElementChildRoleBase.create("exploded directory");
-
   private String myExplodedUrl;
   private boolean myExcludeExploded;
 
@@ -60,5 +59,19 @@ public class ExplodedDirectoryModuleExtensionImpl extends JpsElementBase<Explode
   public void applyChanges(@NotNull ExplodedDirectoryModuleExtensionImpl modified) {
     setExcludeExploded(modified.myExcludeExploded);
     setExplodedUrl(modified.myExplodedUrl);
+  }
+
+  public static class ExplodedDirectoryModuleExtensionRole extends JpsElementChildRoleBase<ExplodedDirectoryModuleExtension> implements JpsElementCreator<ExplodedDirectoryModuleExtension> {
+    public static final ExplodedDirectoryModuleExtensionRole INSTANCE = new ExplodedDirectoryModuleExtensionRole();
+
+    public ExplodedDirectoryModuleExtensionRole() {
+      super("exploded directory");
+    }
+
+    @NotNull
+    @Override
+    public ExplodedDirectoryModuleExtension create() {
+      return new ExplodedDirectoryModuleExtensionImpl();
+    }
   }
 }

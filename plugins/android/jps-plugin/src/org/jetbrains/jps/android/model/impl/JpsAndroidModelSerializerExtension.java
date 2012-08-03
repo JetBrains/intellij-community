@@ -23,8 +23,8 @@ import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
 import org.jetbrains.jps.android.model.JpsAndroidSdkType;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.serialization.JpsModelLoaderExtension;
-import org.jetbrains.jps.model.serialization.JpsSdkPropertiesLoader;
+import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsSdkPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsModuleExtensionLoader;
 
 import java.util.Arrays;
@@ -33,7 +33,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JpsAndroidModelLoaderExtension extends JpsModelLoaderExtension {
+public class JpsAndroidModelSerializerExtension extends JpsModelSerializerExtension {
   private static final List<? extends JpsModuleExtensionLoader<JpsAndroidModuleExtension>> FACET_PROPERTIES_LOADERS =
     Arrays.asList(new JpsModuleExtensionLoader<JpsAndroidModuleExtension>(JpsAndroidModuleExtensionImpl.KIND, "android") {
       @Override
@@ -44,8 +44,9 @@ public class JpsAndroidModelLoaderExtension extends JpsModelLoaderExtension {
         return new JpsAndroidModuleExtensionImpl(XmlSerializer.deserialize(facetConfigurationElement, JpsAndroidModuleProperties.class), baseModulePath);
       }
     });
-  private static final JpsSdkPropertiesLoader<JpsAndroidSdkProperties> SDK_PROPERTIES_LOADER =
-    new JpsSdkPropertiesLoader<JpsAndroidSdkProperties>("Android SDK", JpsAndroidSdkType.INSTANCE) {
+  private static final JpsSdkPropertiesSerializer<JpsAndroidSdkProperties> SDK_PROPERTIES_LOADER =
+    new JpsSdkPropertiesSerializer<JpsAndroidSdkProperties>("Android SDK", JpsAndroidSdkType.INSTANCE) {
+      @NotNull
       @Override
       public JpsAndroidSdkProperties loadProperties(String homePath, String version, @Nullable Element propertiesElement) {
         String buildTarget;
@@ -60,6 +61,18 @@ public class JpsAndroidModelLoaderExtension extends JpsModelLoaderExtension {
         }
         return new JpsAndroidSdkProperties(homePath, version, buildTarget, jdkName);
       }
+
+      @Override
+      public void saveProperties(@NotNull JpsAndroidSdkProperties properties, @NotNull Element element) {
+        String jdkName = properties.getJdkName();
+        if (jdkName != null) {
+          element.setAttribute("jdk", jdkName);
+        }
+        String buildTarget = properties.getBuildTargetHashString();
+        if (buildTarget != null) {
+          element.setAttribute("sdk", buildTarget);
+        }
+      }
     };
 
   @Override
@@ -69,7 +82,7 @@ public class JpsAndroidModelLoaderExtension extends JpsModelLoaderExtension {
 
   @NotNull
   @Override
-  public List<? extends JpsSdkPropertiesLoader<?>> getSdkPropertiesLoaders() {
+  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesLoaders() {
     return Arrays.asList(SDK_PROPERTIES_LOADER);
   }
 }

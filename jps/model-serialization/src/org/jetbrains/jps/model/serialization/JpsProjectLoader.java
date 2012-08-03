@@ -15,7 +15,6 @@ import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactLoader;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetLoader;
-import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -32,17 +31,17 @@ import java.util.concurrent.Future;
  * @author nik
  */
 public class JpsProjectLoader extends JpsLoaderBase {
-  private static final ExecutorService ourThreadPool = Executors.newFixedThreadPool(2 * Runtime.getRuntime().availableProcessors());
+  private static final ExecutorService ourThreadPool = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
 
   public JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, File baseDir) {
-    super(createMacroExpander(pathVariables, baseDir));
+    super(createProjectMacroExpander(pathVariables, baseDir));
     myProject = project;
     myPathVariables = pathVariables;
   }
 
-  private static JpsMacroExpander createMacroExpander(Map<String, String> pathVariables, File baseDir) {
+  static JpsMacroExpander createProjectMacroExpander(Map<String, String> pathVariables, File baseDir) {
     final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
     expander.addFileHierarchyReplacements("PROJECT_DIR", baseDir);
     return expander;
@@ -110,10 +109,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
       String sdkName = rootManagerElement.getAttributeValue("project-jdk-name");
       String sdkTypeId = rootManagerElement.getAttributeValue("project-jdk-type");
       if (sdkName != null && sdkTypeId != null) {
-        sdkType = JpsSdkTableLoader.getSdkType(sdkTypeId);
-        JpsSdkTableLoader.setSdkReference(myProject.getSdkReferencesTable(), sdkName, sdkType);
+        sdkType = JpsSdkTableSerializer.getSdkType(sdkTypeId);
+        JpsSdkTableSerializer.setSdkReference(myProject.getSdkReferencesTable(), sdkName, sdkType);
       }
-      for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
+      for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
         extension.loadProjectRoots(myProject, rootManagerElement);
       }
     }
@@ -121,7 +120,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private void loadProjectLibraries(Element libraryTableElement) {
-    JpsLibraryTableLoader.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
+    JpsLibraryTableSerializer.loadLibraries(libraryTableElement, myProject.getLibraryCollection());
   }
 
   private void loadModules(Element root, final JpsSdkType<?> projectSdkType) {
@@ -151,30 +150,35 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private JpsModule loadModule(String path, JpsSdkType<?> projectSdkType) {
     final File file = new File(path);
     String name = FileUtil.getNameWithoutExtension(file);
-    final JpsMacroExpander expander = new JpsMacroExpander(myPathVariables);
-    expander.addFileHierarchyReplacements("MODULE_DIR", file.getParentFile());
+    final JpsMacroExpander expander = createModuleMacroExpander(myPathVariables, file);
     final Element moduleRoot = loadRootElement(file, expander);
     final String typeId = moduleRoot.getAttributeValue("type");
-    final JpsModulePropertiesLoader<?> loader = getModulePropertiesLoader(typeId);
+    final JpsModulePropertiesSerializer<?> loader = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, loader);
-    JpsModuleLoader.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
+    JpsModuleSerializer.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
     JpsFacetLoader.loadFacets(module, findComponent(moduleRoot, "FacetManager"), FileUtil.toSystemIndependentName(path));
     return module;
   }
 
-  private static <P extends JpsElementProperties> JpsModule createModule(String name, Element moduleRoot, JpsModulePropertiesLoader<P> loader) {
+  static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, File moduleFile) {
+    final JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
+    expander.addFileHierarchyReplacements("MODULE_DIR", moduleFile.getParentFile());
+    return expander;
+  }
+
+  private static <P extends JpsElementProperties> JpsModule createModule(String name, Element moduleRoot, JpsModulePropertiesSerializer<P> loader) {
     return JpsElementFactory.getInstance().createModule(name, loader.getType(), loader.loadProperties(moduleRoot));
   }
 
-  private static JpsModulePropertiesLoader<?> getModulePropertiesLoader(@NotNull String typeId) {
-    for (JpsModelLoaderExtension extension : JpsServiceManager.getInstance().getExtensions(JpsModelLoaderExtension.class)) {
-      for (JpsModulePropertiesLoader<?> loader : extension.getModulePropertiesLoaders()) {
+  private static JpsModulePropertiesSerializer<?> getModulePropertiesSerializer(@NotNull String typeId) {
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      for (JpsModulePropertiesSerializer<?> loader : extension.getModulePropertiesSerializers()) {
         if (loader.getTypeId().equals(typeId)) {
           return loader;
         }
       }
     }
-    return new JpsModulePropertiesLoader<DummyJpsElementProperties>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE") {
+    return new JpsModulePropertiesSerializer<DummyJpsElementProperties>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE") {
       @Override
       public DummyJpsElementProperties loadProperties(@Nullable Element moduleRootElement) {
         return DummyJpsElementProperties.INSTANCE;
