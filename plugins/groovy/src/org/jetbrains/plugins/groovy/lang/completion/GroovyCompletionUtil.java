@@ -39,10 +39,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.CollectionFactory;
@@ -91,7 +88,7 @@ public class GroovyCompletionUtil {
   }
 
   /**
-   * Return true if last element of curren statement is expression
+   * Return true if last element of current statement is expression
    *
    * @param statement
    * @return
@@ -115,6 +112,18 @@ public class GroovyCompletionUtil {
             elem instanceof PsiComment ||
             mNLS.equals(elem.getNode().getElementType()))) {
       elem = elem.getPrevSibling();
+    }
+    return elem;
+  }
+
+  @Nullable
+  public static PsiElement nearestLeftLeaf(PsiElement elem) {
+    elem = PsiTreeUtil.prevLeaf(elem);
+    while (elem != null &&
+           (elem instanceof PsiWhiteSpace ||
+            elem instanceof PsiComment ||
+            mNLS.equals(elem.getNode().getElementType()))) {
+      elem = PsiTreeUtil.prevLeaf(elem);
     }
     return elem;
   }
