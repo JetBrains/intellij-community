@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
@@ -28,7 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
  */
 public class GroovyBracePostFormatProcessor implements PostFormatProcessor {
   @Override
-  public PsiElement processElement(PsiElement source, CodeStyleSettings settings) {
+  public PsiElement processElement(@NotNull PsiElement source, @NotNull CodeStyleSettings settings) {
     if (source instanceof GroovyPsiElement) {
       return new GroovyBraceEnforcer(settings).process(((GroovyPsiElement)source));
     }
@@ -38,7 +39,7 @@ public class GroovyBracePostFormatProcessor implements PostFormatProcessor {
   }
 
   @Override
-  public TextRange processText(PsiFile source, TextRange rangeToReformat, CodeStyleSettings settings) {
+  public TextRange processText(@NotNull PsiFile source, @NotNull TextRange rangeToReformat, @NotNull CodeStyleSettings settings) {
     if (source instanceof GroovyFile) {
       return new GroovyBraceEnforcer(settings).processText(((GroovyFile)source), rangeToReformat);
     }

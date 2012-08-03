@@ -103,7 +103,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
   }
 
-  private PsiElement postProcessElement(final PsiElement formatted) {
+  private PsiElement postProcessElement(@NotNull final PsiElement formatted) {
     PsiElement result = formatted;
     for (PostFormatProcessor postFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
       result = postFormatProcessor.processElement(result, getSettings());
@@ -111,7 +111,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return result;
   }
 
-  private void postProcessText(final PsiFile file, final TextRange textRange) {
+  private void postProcessText(@NotNull final PsiFile file, @NotNull final TextRange textRange) {
     TextRange currentRange = textRange;
     for (final PostFormatProcessor myPostFormatProcessor : Extensions.getExtensions(PostFormatProcessor.EP_NAME)) {
       currentRange = myPostFormatProcessor.processText(file, currentRange, getSettings());
@@ -685,6 +685,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return space1;
   }
 
+  @NotNull
   private CodeStyleSettings getSettings() {
     return CodeStyleSettingsManager.getSettings(myProject);
   }
