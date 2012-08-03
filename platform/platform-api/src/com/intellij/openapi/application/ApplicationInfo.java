@@ -38,7 +38,6 @@ public abstract class ApplicationInfo {
   public abstract String getHelpURL();
   public abstract String getCompanyName();
   public abstract String getCompanyURL();
-  public abstract String getDefaultUpdateChannel();
   public abstract boolean hasContextHelp();
 
   public static ApplicationInfo getInstance() {

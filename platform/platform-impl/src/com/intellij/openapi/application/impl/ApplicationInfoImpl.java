@@ -74,7 +74,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myPluginManagerUrl;
   private String myPluginsListUrl;
   private String myPluginsDownloadUrl;
-  private String myDefaultUpdateChannel;
   private String myWhatsNewUrl;
   private String myWinKeymapUrl;
   private String myMacKeymapUrl;
@@ -257,10 +256,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     return myEAP;
   }
 
-  public String getDefaultUpdateChannel() {
-    return myDefaultUpdateChannel;
-  }
-
   public UpdateUrls getUpdateUrls() {
     return myUpdateUrls;
   }
@@ -362,7 +357,6 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       myMinorVersion = versionElement.getAttributeValue(ATTRIBUTE_MINOR);
       myCodeName = versionElement.getAttributeValue(ATTRIBUTE_CODENAME);
       myEAP = Boolean.parseBoolean(versionElement.getAttributeValue(ATTRIBUTE_EAP));
-      myDefaultUpdateChannel = versionElement.getAttributeValue("update-channel");
     }
 
     Element companyElement = parentNode.getChild(ELEMENT_COMPANY);
