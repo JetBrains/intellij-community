@@ -50,6 +50,7 @@ public class ProgramParametersConfigurator {
     }
   }
 
+  @Nullable
   public String getWorkingDir(CommonProgramRunConfigurationParameters configuration, Project project, Module module) {
     String workingDirectory = configuration.getWorkingDirectory();
     String defaultWorkingDir = getDefaultWorkingDir(project);
@@ -57,6 +58,8 @@ public class ProgramParametersConfigurator {
     if (workingDirectory == null || workingDirectory.trim().length() == 0) {
       workingDirectory = defaultWorkingDir;
     }
+    if (workingDirectory == null)
+      return null;
     workingDirectory = expandPath(workingDirectory, module, project);
     if (!FileUtil.isAbsolute(workingDirectory) && defaultWorkingDir != null) {
       workingDirectory = defaultWorkingDir + "/" + workingDirectory;
@@ -72,6 +75,11 @@ public class ProgramParametersConfigurator {
   public void checkWorkingDirectoryExist(CommonProgramRunConfigurationParameters configuration, Project project, Module module)
     throws RuntimeConfigurationWarning {
     final String workingDir = getWorkingDir(configuration, project, module);
+    if (workingDir == null) {
+      throw new RuntimeConfigurationWarning("Working directory is null for "+
+                                            "project '" + project.getName() + "' ("+project.getBasePath()+")"
+                                            + ", module '" + module.getName() + "' (" + module.getModuleFilePath() + ")");
+    }
     if (!new File(workingDir).exists()) {
       throw new RuntimeConfigurationWarning("Working directory '" + workingDir + "' doesn't exist");
     }
