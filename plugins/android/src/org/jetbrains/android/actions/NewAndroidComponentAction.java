@@ -16,13 +16,17 @@
 package org.jetbrains.android.actions;
 
 import com.intellij.ide.IdeView;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPackage;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -38,20 +42,29 @@ public class NewAndroidComponentAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    Module module = e.getData(LangDataKeys.MODULE);
-    PsiElement file = e.getData(LangDataKeys.PSI_ELEMENT);
-    boolean visible = false;
-    if (module != null && AndroidFacet.getInstance(module) != null) {
-      if (file instanceof PsiDirectory) {
-        PsiDirectory dir = (PsiDirectory)file;
-        JavaDirectoryService dirService = JavaDirectoryService.getInstance();
-        PsiPackage aPackage = dirService.getPackage(dir);
-        if (aPackage != null) {
-          visible = true;
-        }
+    e.getPresentation().setVisible(isAvailable(e.getDataContext()));
+  }
+
+  private static boolean isAvailable(DataContext dataContext) {
+    final Module module = LangDataKeys.MODULE.getData(dataContext);
+    final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
+
+    if (module == null ||
+        view == null ||
+        view.getDirectories().length == 0 ||
+        AndroidFacet.getInstance(module) == null) {
+      return false;
+    }
+    final ProjectFileIndex projectIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
+    final JavaDirectoryService dirService = JavaDirectoryService.getInstance();
+
+    for (PsiDirectory dir : view.getDirectories()) {
+      if (projectIndex.isInSourceContent(dir.getVirtualFile()) &&
+          dirService.getPackage(dir) != null) {
+        return true;
       }
     }
-    e.getPresentation().setVisible(visible);
+    return false;
   }
 
   @Override
