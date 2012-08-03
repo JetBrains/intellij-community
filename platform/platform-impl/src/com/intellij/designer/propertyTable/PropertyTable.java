@@ -105,8 +105,8 @@ public abstract class PropertyTable extends JBTable {
     InputMap focusedInputMap = getInputMap(JComponent.WHEN_FOCUSED);
     InputMap ancestorInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-    actionMap.put("selectPreviousRow", new MySelectPreviousRowAction());
-    actionMap.put("selectNextRow", new MySelectNextRowAction());
+    actionMap.put("selectPreviousRow", new MySelectNextPreviousRowAction(false));
+    actionMap.put("selectNextRow", new MySelectNextPreviousRowAction(true));
 
     actionMap.put("startEditing", new MyStartEditingAction());
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "startEditing");
@@ -693,44 +693,35 @@ public abstract class PropertyTable extends JBTable {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Reimplementation of LookAndFeel's SelectPreviousRowAction action.
-   * Standard implementation isn't smart enough.
-   *
-   * @see javax.swing.plaf.basic.BasicTableUI
-   */
-  private class MySelectPreviousRowAction extends AbstractAction {
-    public void actionPerformed(ActionEvent e) {
-      int rowCount = getRowCount();
-      LOG.assertTrue(rowCount > 0);
-      int selectedRow = getSelectedRow();
-      if (selectedRow != -1) {
-        selectedRow -= 1;
-      }
-      selectedRow = (selectedRow + rowCount) % rowCount;
-      if (isEditing()) {
-        finishEditing();
-        getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
-        scrollRectToVisible(getCellRect(selectedRow, 0, true));
-        startEditing(selectedRow);
-      }
-      else {
-        getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
-        scrollRectToVisible(getCellRect(selectedRow, 0, true));
-      }
-    }
-  }
-
-  /**
    * Reimplementation of LookAndFeel's SelectNextRowAction action.
    * Standard implementation isn't smart enough.
    *
    * @see javax.swing.plaf.basic.BasicTableUI
    */
-  private class MySelectNextRowAction extends AbstractAction {
+  private class MySelectNextPreviousRowAction extends AbstractAction {
+    private boolean selectNext;
+
+    private MySelectNextPreviousRowAction(boolean selectNext) {
+      this.selectNext = selectNext;
+    }
+
     public void actionPerformed(ActionEvent e) {
       int rowCount = getRowCount();
       LOG.assertTrue(rowCount > 0);
-      int selectedRow = (getSelectedRow() + 1) % rowCount;
+
+      int selectedRow = getSelectedRow();
+      if (selectedRow == -1) {
+        selectedRow = 0;
+      }
+      else {
+        if (selectNext) {
+          selectedRow = Math.min(rowCount - 1, getSelectedRow() + 1);
+        }
+        else {
+          selectedRow = Math.max(0, selectedRow - 1);
+        }
+      }
+
       if (isEditing()) {
         finishEditing();
         getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
@@ -1062,7 +1053,8 @@ public abstract class PropertyTable extends JBTable {
           int leftIconOffset = Math.max(0, UIUtil.getTreeLeftChildIndent() - (icon.getIconWidth() / 2));
           totalIndent += leftIconOffset;
           myRenderer.setIconTextGap(Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth()));
-        } else {
+        }
+        else {
           totalIndent += nodeIndent;
         }
 
