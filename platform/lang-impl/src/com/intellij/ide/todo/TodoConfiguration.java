@@ -63,7 +63,8 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
 
   public void resetToDefaultTodoPatterns() {
     myTodoPatterns = new TodoPattern[]{
-      new TodoPattern("\\btodo\\b.*", TodoAttributes.createDefault(), false)
+      new TodoPattern("\\btodo\\b.*", TodoAttributes.createDefault(), false),
+      new TodoPattern("\\bfixme\\b.*", TodoAttributes.createDefault(), false),
     };
     myTodoFilters = new TodoFilter[]{};
     buildIndexPatterns();
