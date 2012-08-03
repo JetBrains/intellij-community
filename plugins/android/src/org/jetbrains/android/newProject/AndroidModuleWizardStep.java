@@ -23,6 +23,7 @@ import com.android.sdklib.internal.avd.AvdManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
@@ -40,6 +41,7 @@ import org.jetbrains.android.actions.RunAndroidAvdManagerAction;
 import org.jetbrains.android.run.TargetSelectionMode;
 import org.jetbrains.android.sdk.*;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.ComponentBasedErrorReporter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +170,8 @@ public class AndroidModuleWizardStep extends ModuleWizardStep {
           return;
         }
 
-        RunAndroidAvdManagerAction.runAvdManager(platform.getSdkData().getLocation());
+        RunAndroidAvdManagerAction.runAvdManager(platform.getSdkData().getLocation(), new ComponentBasedErrorReporter(myPanel),
+                                                 ModalityState.stateForComponent(myPanel));
       }
     });
 

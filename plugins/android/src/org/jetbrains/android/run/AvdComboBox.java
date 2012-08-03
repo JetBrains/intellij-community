@@ -18,6 +18,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
+import org.jetbrains.android.util.ComponentBasedErrorReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +52,8 @@ public abstract class AvdComboBox extends ComboboxWithBrowseButton {
           return;
         }
 
-        RunAndroidAvdManagerAction.runAvdManager(platform.getSdkData().getLocation());
+        RunAndroidAvdManagerAction.runAvdManager(platform.getSdkData().getLocation(), new ComponentBasedErrorReporter(AvdComboBox.this),
+                                                 ModalityState.stateForComponent(AvdComboBox.this));
       }
     });
 

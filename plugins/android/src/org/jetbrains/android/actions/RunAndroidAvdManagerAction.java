@@ -19,6 +19,7 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.android.util.*;
@@ -33,15 +34,21 @@ public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.actions.RunAndroidAvdManagerAction");
 
   public RunAndroidAvdManagerAction() {
-    super(AndroidBundle.message("android.run.avd.manager.action.text"));
+    super(getName());
+  }
+
+  public static String getName() {
+    return AndroidBundle.message("android.run.avd.manager.action.text");
   }
 
   @Override
-  protected void doRunTool(@NotNull Project project, @NotNull String sdkPath) {
-    runAvdManager(sdkPath);
+  protected void doRunTool(@NotNull final Project project, @NotNull String sdkPath) {
+    runAvdManager(sdkPath, new ProjectBasedErrorReporter(project), ModalityState.defaultModalityState());
   }
 
-  public static void runAvdManager(@NotNull final String sdkPath) {
+  public static void runAvdManager(@NotNull final String sdkPath,
+                                   @NotNull final ErrorReporter errorReporter,
+                                   @NotNull final ModalityState modalityState) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -52,7 +59,7 @@ public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
 
         final StringBuildingOutputProcessor processor = new StringBuildingOutputProcessor();
         try {
-          if (AndroidUtils.executeCommand(commandLine, processor, WaitingStrategies.WaitForTime.getInstance(500)) ==
+          if (AndroidUtils.executeCommand(commandLine, processor, WaitingStrategies.WaitForTime.getInstance(1000)) ==
               ExecutionStatus.TIMEOUT) {
             return;
           }
@@ -61,17 +68,15 @@ public class RunAndroidAvdManagerAction extends AndroidRunSdkToolAction {
           LOG.error(e);
           return;
         }
-
         final String message = processor.getMessage();
-        if (message.contains("Error")) {
-          commandLine = new GeneralCommandLine();
-          commandLine.setExePath(toolPath);
-          try {
-            AndroidUtils.executeCommand(commandLine, null, WaitingStrategies.DoNotWait.getInstance());
-          }
-          catch (ExecutionException e) {
-            LOG.error(e);
-          }
+
+        if (message.toLowerCase().contains("error")) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              errorReporter.report("Cannot launch AVD manager.\nOutput:\n" + message, getName());
+            }
+          }, modalityState);
         }
       }
     });
