@@ -102,7 +102,7 @@ public class PyFindUsagesTest extends PyTestCase {
 
   public void testReassignedClassAttribute() {  // PY-4338
     final Collection<UsageInfo> usages = myFixture.testFindUsages("findUsages/ReassignedClassAttribute.py");
-    assertEquals(5, usages.size());
+    assertEquals(6, usages.size());
   }
   
   public void testWrappedMethod() { // PY-5458
