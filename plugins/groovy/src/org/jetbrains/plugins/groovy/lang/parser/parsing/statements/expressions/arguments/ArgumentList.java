@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -30,6 +31,13 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  * @author ilyas
  */
 public class ArgumentList implements GroovyElementTypes {
+  private static final TokenSet CONTROL_KEYWORDS = TokenSet.create(kASSERT, kBREAK, kCASE, kCLASS,
+                                                          kCONTINUE, kDEF, kDEFAULT, kDO, kELSE, kENUM, kFINAL,
+                                                          kFOR, kFINALLY, kIF, kIMPLEMENTS, kIMPORT,
+                                                          kINTERFACE, kNATIVE, kPACKAGE, kPRIVATE, kPROTECTED, kPUBLIC,
+                                                          kRETURN, kSTATIC, kSTRICTFP, kSWITCH, kSYNCHRONIZED,
+                                                          kTHROW, kTHROWS, kTRANSIENT, kTRY, kVOLATILE, kWHILE);
+
 
   public static void parseArgumentList(PsiBuilder builder, IElementType closingBrace, GroovyParser parser) {
     boolean hasFirstArg = argumentParse(builder, parser);
@@ -46,14 +54,20 @@ public class ArgumentList implements GroovyElementTypes {
     }
 
     ParserUtils.getToken(builder, mNLS);
+    boolean hasErrors = false;
     while (!builder.eof() && !closingBrace.equals(builder.getTokenType())) {
       if (!ParserUtils.getToken(builder, mCOMMA) && hasFirstArg) {
         builder.error("',' or '" + closingBrace + "' expected");
+        hasErrors = true;
       }
       ParserUtils.getToken(builder, mNLS);
+      if (hasErrors && CONTROL_KEYWORDS.contains(builder.getTokenType())) {
+        return;
+      }
       if (!argumentParse(builder, parser)) {
         if (!closingBrace.equals(builder.getTokenType())) {
           builder.error(GroovyBundle.message("expression.expected"));
+          hasErrors = true;
         }
         if (mRCURLY.equals(builder.getTokenType())) return;
 
