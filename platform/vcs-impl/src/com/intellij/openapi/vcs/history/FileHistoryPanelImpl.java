@@ -1299,7 +1299,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   private VirtualFile createVirtualFileForRevision(VcsFileRevision revision) {
     if (!myRevisionToVirtualFile.containsKey(revision)) {
-      myRevisionToVirtualFile.put(revision, new VcsVirtualFile(myFilePath.getPath(), revision, VcsFileSystem.getInstance()));
+      FilePath filePath = (revision instanceof VcsFileRevisionEx ? ((VcsFileRevisionEx)revision).getPath() : myFilePath);
+      myRevisionToVirtualFile.put(revision, new VcsVirtualFile(filePath.getPath(), revision, VcsFileSystem.getInstance()));
     }
     return myRevisionToVirtualFile.get(revision);
   }

@@ -77,9 +77,8 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     myParents = parents;
   }
 
-  /**
-   * @return file path
-   */
+  @Override
+  @NotNull
   public FilePath getPath() {
     return path;
   }
