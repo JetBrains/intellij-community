@@ -51,7 +51,6 @@ public class GitVcsPanel {
   private JComponent myRootPanel;
   private TextFieldWithBrowseButton myGitField;
   private JComboBox mySSHExecutableComboBox; // Type of SSH executable to use
-  private JComboBox myConvertTextFilesComboBox; // The conversion policy
   private JCheckBox myAutoUpdateIfPushRejected;
   private JBCheckBox mySyncBranchControl;
   private JCheckBox myAutoCommitOnCherryPick;
@@ -70,10 +69,6 @@ public class GitVcsPanel {
         testConnection();
       }
     });
-    myConvertTextFilesComboBox.addItem(CRLF_DO_NOT_CONVERT);
-    myConvertTextFilesComboBox.addItem(CRLF_CONVERT_TO_PROJECT);
-    myConvertTextFilesComboBox.addItem(CRLF_ASK);
-    myConvertTextFilesComboBox.setSelectedItem(CRLF_ASK);
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     final GitRepositoryManager repositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
@@ -126,35 +121,9 @@ public class GitVcsPanel {
   public void load(@NotNull GitVcsSettings settings) {
     myGitField.setText(settings.getAppSettings().getPathToGit());
     mySSHExecutableComboBox.setSelectedItem(settings.isIdeaSsh() ? IDEA_SSH : NATIVE_SSH);
-    myConvertTextFilesComboBox.setSelectedItem(crlfPolicyItem(settings));
     myAutoUpdateIfPushRejected.setSelected(settings.autoUpdateIfPushRejected());
     mySyncBranchControl.setSelected(settings.getSyncSetting() == GitBranchSyncSetting.SYNC);
     myAutoCommitOnCherryPick.setSelected(settings.isAutoCommitOnCherryPick());
-  }
-
-  /**
-   * Get crlf policy item from settings
-   *
-   * @param settings the settings object
-   * @return the item in crlf combobox
-   */
-  static private String crlfPolicyItem(GitVcsSettings settings) {
-    String crlf;
-    switch (settings.getLineSeparatorsConversion()) {
-      case NONE:
-        crlf = CRLF_DO_NOT_CONVERT;
-        break;
-      case CONVERT:
-        crlf = CRLF_CONVERT_TO_PROJECT;
-        break;
-      case ASK:
-        crlf = CRLF_ASK;
-        break;
-      default:
-        assert false : "Unknown crlf policy: " + settings.getLineSeparatorsConversion();
-        crlf = null;
-    }
-    return crlf;
   }
 
   /**
@@ -165,7 +134,6 @@ public class GitVcsPanel {
   public boolean isModified(@NotNull GitVcsSettings settings) {
     return !settings.getAppSettings().getPathToGit().equals(getCurrentExecutablePath()) ||
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
-           !crlfPolicyItem(settings).equals(myConvertTextFilesComboBox.getSelectedItem()) ||
            !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((settings.getSyncSetting() == GitBranchSyncSetting.SYNC) != mySyncBranchControl.isSelected() ||
            settings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected());
@@ -184,19 +152,6 @@ public class GitVcsPanel {
                                          GitVcsApplicationSettings.SshExecutable.NATIVE_SSH);
     settings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
 
-    Object policyItem = myConvertTextFilesComboBox.getSelectedItem();
-    GitVcsSettings.ConversionPolicy conversionPolicy;
-    if (CRLF_DO_NOT_CONVERT.equals(policyItem)) {
-      conversionPolicy = GitVcsSettings.ConversionPolicy.NONE;
-    } else if (CRLF_CONVERT_TO_PROJECT.equals(policyItem)) {
-      conversionPolicy = GitVcsSettings.ConversionPolicy.CONVERT;
-    } else if (CRLF_ASK.equals(policyItem)) {
-      conversionPolicy = GitVcsSettings.ConversionPolicy.ASK;
-    }
-    else {
-      throw new IllegalStateException("Unknown selected CRLF policy: " + policyItem);
-    }
-    settings.setLineSeparatorsConversion(conversionPolicy);
     settings.setSyncSetting(mySyncBranchControl.isSelected() ? GitBranchSyncSetting.SYNC : GitBranchSyncSetting.DONT);
     settings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
   }

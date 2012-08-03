@@ -46,7 +46,6 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
-import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.history.NewGitUsersComponent;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
@@ -145,67 +144,65 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     List<VcsException> exceptions = new ArrayList<VcsException>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(changes, exceptions);
     log.assertTrue(!sortedChanges.isEmpty(), "Trying to commit an empty list of changes: " + changes);
-    if (GitFileSeparatorConverter.convertSeparatorsIfNeeded(myProject, mySettings, sortedChanges, exceptions)) {
-      for (Map.Entry<VirtualFile, Collection<Change>> entry : sortedChanges.entrySet()) {
-        Set<FilePath> files = new HashSet<FilePath>();
-        final VirtualFile root = entry.getKey();
+    for (Map.Entry<VirtualFile, Collection<Change>> entry : sortedChanges.entrySet()) {
+      Set<FilePath> files = new HashSet<FilePath>();
+      final VirtualFile root = entry.getKey();
+      try {
+        File messageFile = createMessageFile(root, message);
         try {
-          File messageFile = createMessageFile(root, message);
+          final Set<FilePath> added = new HashSet<FilePath>();
+          final Set<FilePath> removed = new HashSet<FilePath>();
+          for (Change change : entry.getValue()) {
+            switch (change.getType()) {
+              case NEW:
+              case MODIFICATION:
+                added.add(change.getAfterRevision().getFile());
+                break;
+              case DELETED:
+                removed.add(change.getBeforeRevision().getFile());
+                break;
+              case MOVED:
+                FilePath afterPath = change.getAfterRevision().getFile();
+                FilePath beforePath = change.getBeforeRevision().getFile();
+                added.add(afterPath);
+                if (!GitFileUtils.shouldIgnoreCaseChange(afterPath.getPath(), beforePath.getPath())) {
+                  removed.add(beforePath);
+                }
+                break;
+              default:
+                throw new IllegalStateException("Unknown change type: " + change.getType());
+            }
+          }
           try {
-            final Set<FilePath> added = new HashSet<FilePath>();
-            final Set<FilePath> removed = new HashSet<FilePath>();
-            for (Change change : entry.getValue()) {
-              switch (change.getType()) {
-                case NEW:
-                case MODIFICATION:
-                  added.add(change.getAfterRevision().getFile());
-                  break;
-                case DELETED:
-                  removed.add(change.getBeforeRevision().getFile());
-                  break;
-                case MOVED:
-                  FilePath afterPath = change.getAfterRevision().getFile();
-                  FilePath beforePath = change.getBeforeRevision().getFile();
-                  added.add(afterPath);
-                  if (!GitFileUtils.shouldIgnoreCaseChange(afterPath.getPath(), beforePath.getPath())) {
-                    removed.add(beforePath);
-                  }
-                  break;
-                default:
-                  throw new IllegalStateException("Unknown change type: " + change.getType());
+            if (updateIndex(myProject, root, added, removed, exceptions)) {
+              try {
+                files.addAll(added);
+                files.addAll(removed);
+                commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend);
               }
-            }
-            try {
-              if (updateIndex(myProject, root, added, removed, exceptions)) {
-                try {
-                  files.addAll(added);
-                  files.addAll(removed);
-                  commit(myProject, root, files, messageFile, myNextCommitAuthor, myNextCommitAmend);
+              catch (VcsException ex) {
+                if (!isMergeCommit(ex)) {
+                  throw ex;
                 }
-                catch (VcsException ex) {
-                  if (!isMergeCommit(ex)) {
-                    throw ex;
-                  }
-                  if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions)) {
-                    throw ex;
-                  }
+                if (!mergeCommit(myProject, root, added, removed, messageFile, myNextCommitAuthor, exceptions)) {
+                  throw ex;
                 }
               }
             }
-            finally {
-              if (!messageFile.delete()) {
-                log.warn("Failed to remove temporary file: " + messageFile);
-              }
+          }
+          finally {
+            if (!messageFile.delete()) {
+              log.warn("Failed to remove temporary file: " + messageFile);
             }
           }
-          catch (VcsException e) {
-            exceptions.add(e);
-          }
         }
-        catch (IOException ex) {
-          //noinspection ThrowableInstanceNeverThrown
-          exceptions.add(new VcsException("Creation of commit message file failed", ex));
+        catch (VcsException e) {
+          exceptions.add(e);
         }
+      }
+      catch (IOException ex) {
+        //noinspection ThrowableInstanceNeverThrown
+        exceptions.add(new VcsException("Creation of commit message file failed", ex));
       }
     }
     if (myNextCommitIsPushed != null && myNextCommitIsPushed.booleanValue() && exceptions.isEmpty()) {

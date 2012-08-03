@@ -50,12 +50,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     SHELVE,
   }
 
-  public enum ConversionPolicy {
-    NONE, // No conversion is performed
-    CONVERT, // The files are converted to project line separators
-    ASK  // Show dialog and ask user what to do: convert files or leave unchanged.
-  }
-
   public static class State {
     // The previously entered authors of the commit (up to {@value #PREVIOUS_COMMIT_AUTHORS_LIMIT})
     public List<String> PREVIOUS_COMMIT_AUTHORS = new ArrayList<String>();
@@ -63,7 +57,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     // The policy that specifies how files are saved before update or rebase
     public UpdateChangesPolicy UPDATE_CHANGES_POLICY = UpdateChangesPolicy.STASH;
     public UpdateMethod UPDATE_TYPE = UpdateMethod.BRANCH_DEFAULT;
-    public ConversionPolicy LINE_SEPARATORS_CONVERSION = ConversionPolicy.ASK;
     public boolean PUSH_AUTO_UPDATE = false;
     public GitBranchSyncSetting SYNC_SETTING = GitBranchSyncSetting.NOT_DECIDED;
     public String RECENT_GIT_ROOT_PATH = null;
@@ -82,14 +75,6 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
   
   public static GitVcsSettings getInstance(Project project) {
     return PeriodicalTasksCloser.getInstance().safeGetService(project, GitVcsSettings.class);
-  }
-
-  public ConversionPolicy getLineSeparatorsConversion() {
-    return myState.LINE_SEPARATORS_CONVERSION;
-  }
-
-  public void setLineSeparatorsConversion(ConversionPolicy lineSeparatorsConversion) {
-    myState.LINE_SEPARATORS_CONVERSION = lineSeparatorsConversion;
   }
 
   public UpdateMethod getUpdateType() {
