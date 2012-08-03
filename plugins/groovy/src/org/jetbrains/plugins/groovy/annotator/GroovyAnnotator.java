@@ -1106,7 +1106,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   @Override
   public void visitClosure(GrClosableBlock closure) {
     super.visitClosure(closure);
-    if (!closure.hasParametersSection() && isClosureAmbiguous(closure)) {
+    if (!closure.hasParametersSection() && !followsError(closure) && isClosureAmbiguous(closure)) {
       myHolder.createErrorAnnotation(closure, GroovyBundle.message("ambiguous.code.block"));
     }
 
@@ -1123,6 +1123,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
       myHolder.createWeakWarningAnnotation(new TextRange(startOffset, endOffset), GroovyBundle.message("closure.is.too.complex.to.analyze"));
     }
+  }
+
+  /**
+   * for example if (!(a inst)) {}
+   *                            ^
+   *                            we are here
+   */
+
+  private static boolean followsError(GrClosableBlock closure) {
+    return closure.getPrevSibling() instanceof PsiErrorElement ||
+           closure.getPrevSibling() instanceof PsiWhiteSpace && closure.getPrevSibling().getPrevSibling() instanceof PsiErrorElement;
   }
 
   private static boolean isClosureAmbiguous(GrClosableBlock closure) {
