@@ -201,7 +201,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   private StructuredDocString getStructuredDocString(String qualifiedName, LanguageLevel level) {
     final Properties db = getStdlibTypes(level);
     final String docString = db.getProperty(qualifiedName);
-    if (docString == null && level.isPy3K()) {
+    if (docString == null && level.isPy3K()) { //if we couldn't find for Py3K will search in Python2 db
       return getStructuredDocString(qualifiedName, LanguageLevel.PYTHON27);
     }
     return StructuredDocString.parse(docString);
