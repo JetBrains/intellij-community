@@ -77,6 +77,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.*;
 import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
@@ -1428,6 +1429,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  private static final Key<WeakReference<FileContentImpl>> ourFileContentKey = Key.create("unsaved.document.index.content");
+
 // returns false if doc was not indexed because the file does not fit in scope
   private boolean indexUnsavedDocument(@NotNull final Document document, @NotNull final ID<?, ?> requestedIndexId, final Project project, 
                                        @Nullable GlobalSearchScope filter, @Nullable VirtualFile restrictedFile) throws StorageException {
@@ -1467,7 +1470,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               return;
             }
 
-            final FileContentImpl newFc = new FileContentImpl(vFile, contentText, vFile.getCharset());
+            // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
+            WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
+            FileContentImpl previousContent = previousContentRef != null ? previousContentRef.get() : null;
+            final FileContentImpl newFc;
+            if (previousContent != null && previousContent.getStamp() == currentDocStamp) {
+              newFc = previousContent;
+            } else {
+              newFc = new FileContentImpl(vFile, contentText, vFile.getCharset(), currentDocStamp);
+              document.putUserData(ourFileContentKey, new WeakReference<FileContentImpl>(newFc));
+            }
 
             if (dominantContentFile != null) {
               dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
