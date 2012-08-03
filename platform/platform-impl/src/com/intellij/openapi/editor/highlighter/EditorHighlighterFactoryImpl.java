@@ -17,14 +17,17 @@ package com.intellij.openapi.editor.highlighter;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutors;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +61,10 @@ public class EditorHighlighterFactoryImpl extends EditorHighlighterFactory {
 
   @Override
   public EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile vFile, @NotNull final EditorColorsScheme settings, final Project project) {
+    if (SingleRootFileViewProvider.isTooLarge(vFile)) {
+      return new EmptyEditorHighlighter(settings.getAttributes(HighlighterColors.TEXT));
+    }
+
     final FileType fileType = vFile.getFileType();
     if (fileType instanceof LanguageFileType) {
       LanguageFileType substFileType = substituteFileType(((LanguageFileType)fileType).getLanguage(), vFile, project);
