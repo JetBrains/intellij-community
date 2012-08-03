@@ -17,7 +17,7 @@ package com.intellij.openapi.diff.impl.dir.actions.popup;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.diff.impl.dir.DirDiffElement;
+import com.intellij.openapi.diff.impl.dir.DirDiffElementImpl;
 import com.intellij.openapi.diff.impl.dir.DirDiffOperation;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 
@@ -33,7 +33,7 @@ public class SetNoOperation extends AnAction {
     final DirDiffTableModel model = SetOperationToBase.getModel(e);
     final JTable table = SetOperationToBase.getTable(e);
     assert model != null && table != null;
-    for (DirDiffElement element : model.getSelectedElements()) {
+    for (DirDiffElementImpl element : model.getSelectedElements()) {
         element.setOperation(DirDiffOperation.NONE);
     }
     table.repaint();
@@ -44,7 +44,7 @@ public class SetNoOperation extends AnAction {
     final DirDiffTableModel model = SetOperationToBase.getModel(e);
     final JTable table = SetOperationToBase.getTable(e);
     if (table != null && model != null) {
-      for (DirDiffElement element : model.getSelectedElements()) {
+      for (DirDiffElementImpl element : model.getSelectedElements()) {
         if (element.getOperation() != DirDiffOperation.NONE) {
           e.getPresentation().setEnabled(true);
           return;

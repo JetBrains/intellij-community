@@ -16,10 +16,7 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.diff.BackgroundOperatingDiffElement;
-import com.intellij.ide.diff.DiffElement;
-import com.intellij.ide.diff.DirDiffModel;
-import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.ide.diff.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -64,12 +61,12 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private DiffElement mySrc;
   private DiffElement myTrg;
   private DTree myTree;
-  private final List<DirDiffElement> myElements = new ArrayList<DirDiffElement>();
+  private final List<DirDiffElementImpl> myElements = new ArrayList<DirDiffElementImpl>();
   private final AtomicBoolean myUpdating = new AtomicBoolean(false);
   private JBTable myTable;
   public String DECORATOR = "DIFF_TABLE_DECORATOR";
   public volatile AtomicReference<String> text = new AtomicReference<String>(prepareText(""));
-  private Updater updater;
+  private Updater myUpdater;
   private List<DirDiffModelListener> myListeners = new ArrayList<DirDiffModelListener>();
   private TableSelectionConfig mySelectionConfig;
 
@@ -90,11 +87,11 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void applyRemove() {
-    final List<DirDiffElement> selectedElements = getSelectedElements();
+    final List<DirDiffElementImpl> selectedElements = getSelectedElements();
     myUpdating.set(true);
-    final Iterator<DirDiffElement> i = myElements.iterator();
+    final Iterator<DirDiffElementImpl> i = myElements.iterator();
     while(i.hasNext()) {
-      final DType type = i.next().getType();
+      final DiffType type = i.next().getType();
       switch (type) {
         case SOURCE:
           if (!mySettings.showNewOnSource) i.remove();
@@ -164,7 +161,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return mySrc.isOperationsEnabled() && myTrg.isOperationsEnabled();
   }
 
-  public List<DirDiffElement> getElements() {
+  public List<DirDiffElementImpl> getElements() {
     return myElements;
   }
 
@@ -209,8 +206,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
         try {
-          updater = new Updater(loadingPanel, 100);
-          updater.start();
+          myUpdater = new Updater(loadingPanel, 100);
+          myUpdater.start();
           myTree = new DTree(null, "", true);
           mySrc.refresh(userForcedRefresh);
           myTrg.refresh(userForcedRefresh);
@@ -229,6 +226,35 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         }
       }
     });
+  }
+
+  // todo move to headless model implementation
+  public void reloadModelSynchronously() {
+    myUpdating.set(true);
+
+    try {
+      myTree = new DTree(null, "", true);
+      mySrc.refresh(true);
+      myTrg.refresh(true);
+      scan(mySrc, myTree, true);
+      scan(myTrg, myTree, false);
+    }
+    catch (final IOException e) {
+      LOG.warn(e);
+      reportException(VcsBundle.message("refresh.failed.message", StringUtil.decapitalize(e.getLocalizedMessage())));
+    }
+    finally {
+      myTree.setSource(mySrc);
+      myTree.setTarget(myTrg);
+      myTree.update(mySettings);
+
+      ArrayList<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>();
+      fillElements(myTree, elements);
+      myElements.clear();
+      myElements.addAll(elements);
+
+      myUpdating.set(false);
+    }
   }
 
   private void reportException(final String htmlContent) {
@@ -263,16 +289,16 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     final JBLoadingPanel loadingPanel = getLoadingPanel();
     if (!loadingPanel.isLoading()) {
       loadingPanel.startLoading();
-      if (updater == null) {
-        updater = new Updater(loadingPanel, 100);
-        updater.start();
+      if (myUpdater == null) {
+        myUpdater = new Updater(loadingPanel, 100);
+        myUpdater.start();
       }
     }
     final Application app = ApplicationManager.getApplication();
     app.executeOnPooledThread(new Runnable() {
       public void run() {
         myTree.updateVisibility(mySettings);
-        final ArrayList<DirDiffElement> elements = new ArrayList<DirDiffElement>();
+        final ArrayList<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>();
         fillElements(myTree, elements);
         final Runnable uiThread = new Runnable() {
           public void run() {
@@ -301,7 +327,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     });
   }
 
-  private void fillElements(DTree tree, List<DirDiffElement> elements) {
+  private void fillElements(DTree tree, List<DirDiffElementImpl> elements) {
     if (!myUpdating.get()) return;
     boolean separatorAdded = tree.getParent() == null;
     text.set(prepareText(tree.getPath()));
@@ -310,26 +336,26 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       if (!child.isContainer()) {
         if (child.isVisible()) {
           if (!separatorAdded) {
-            elements.add(DirDiffElement.createDirElement(tree, tree.getSource(), tree.getTarget(), tree.getPath()));
+            elements.add(DirDiffElementImpl.createDirElement(tree, tree.getSource(), tree.getTarget(), tree.getPath()));
             separatorAdded = true;
           }
-          final DType type = child.getType();
+          final DiffType type = child.getType();
           if (type != null) {
             switch (type) {
               case SOURCE:
-                elements.add(DirDiffElement.createSourceOnly(child, child.getSource()));
+                elements.add(DirDiffElementImpl.createSourceOnly(child, child.getSource()));
                 break;
               case TARGET:
-                elements.add(DirDiffElement.createTargetOnly(child, child.getTarget()));
+                elements.add(DirDiffElementImpl.createTargetOnly(child, child.getTarget()));
                 break;
               case CHANGED:
-                elements.add(DirDiffElement.createChange(child, child.getSource(), child.getTarget(), mySettings.customSourceChooser));
+                elements.add(DirDiffElementImpl.createChange(child, child.getSource(), child.getTarget(), mySettings.customSourceChooser));
                 break;
               case EQUAL:
-                elements.add(DirDiffElement.createEqual(child, child.getSource(), child.getTarget()));
+                elements.add(DirDiffElementImpl.createEqual(child, child.getSource(), child.getTarget()));
                 break;
               case ERROR:
-                elements.add(DirDiffElement.createError(child, child.getSource(), child.getTarget()));
+                elements.add(DirDiffElementImpl.createError(child, child.getSource(), child.getTarget()));
               case SEPARATOR:
                 break;
             }
@@ -370,7 +396,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   @Nullable
-  public DirDiffElement getElementAt(int index) {
+  public DirDiffElementImpl getElementAt(int index) {
     return 0 <= index && index < myElements.size() ? myElements.get(index) : null;
   }
 
@@ -414,7 +440,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   @Nullable
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    final DirDiffElement element = myElements.get(rowIndex);
+    final DirDiffElementImpl element = myElements.get(rowIndex);
     if (element.isSeparator()) {
       return columnIndex == 0 ? element.getName() : null;
     }
@@ -431,11 +457,11 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return "";
   }
 
-  public List<DirDiffElement> getSelectedElements() {
+  public List<DirDiffElementImpl> getSelectedElements() {
     final int[] rows = myTable.getSelectedRows();
-    final ArrayList<DirDiffElement> elements = new ArrayList<DirDiffElement>();
+    final ArrayList<DirDiffElementImpl> elements = new ArrayList<DirDiffElementImpl>();
     for (int row : rows) {
-      final DirDiffElement element = getElementAt(row);
+      final DirDiffElementImpl element = getElementAt(row);
       if (element == null || element.isSeparator()) continue;
       elements.add(element);
     }
@@ -518,7 +544,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return mySettings;
   }
 
-  public void performCopyTo(final DirDiffElement element) {
+  public void performCopyTo(final DirDiffElementImpl element) {
     final DiffElement<?> source = element.getSource();
     if (source != null) {
       final String path = element.getParentNode().getPath();
@@ -559,10 +585,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void refreshElementAfterCopyTo(DiffElement newElement, DirDiffElement element) {
+  private void refreshElementAfterCopyTo(DiffElement newElement, DirDiffElementImpl element) {
     if (newElement != null) {
       final DTree node = element.getNode();
-      node.setType(DType.EQUAL);
+      node.setType(DiffType.EQUAL);
       node.setTarget(newElement);
 
       final int row = myElements.indexOf(element);
@@ -576,7 +602,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  public void performCopyFrom(final DirDiffElement element) {
+  public void performCopyFrom(final DirDiffElementImpl element) {
     final DiffElement<?> target = element.getTarget();
     if (target != null) {
       final String path = element.getParentNode().getPath();
@@ -611,10 +637,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void refreshElementAfterCopyFrom(DirDiffElement element, DiffElement newElement) {
+  private void refreshElementAfterCopyFrom(DirDiffElementImpl element, DiffElement newElement) {
     if (newElement != null) {
       final DTree node = element.getNode();
-      node.setType(DType.EQUAL);
+      node.setType(DiffType.EQUAL);
       node.setSource(newElement);
 
       final int row = myElements.indexOf(element);
@@ -628,7 +654,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void removeElement(DirDiffElement element, boolean removeFromTree) {
+  private void removeElement(DirDiffElementImpl element, boolean removeFromTree) {
     int row = myElements.indexOf(element);
     if (row != -1) {
       final DTree node = element.getNode();
@@ -640,7 +666,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       int start = row;
 
       if (row > 0 && row == myElements.size() && myElements.get(row - 1).isSeparator()) {
-        final DirDiffElement el = myElements.get(row - 1);
+        final DirDiffElementImpl el = myElements.get(row - 1);
         if (removeFromTree) {
           el.getParentNode().remove(el.getNode());
         }
@@ -648,7 +674,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         start = row - 1;
         }
         else if (row != myElements.size() && myElements.get(row).isSeparator() && row > 0 && myElements.get(row - 1).isSeparator()) {
-          final DirDiffElement el = myElements.get(row - 1);
+          final DirDiffElementImpl el = myElements.get(row - 1);
           if (removeFromTree) {
             el.getParentNode().remove(el.getNode());
           }
@@ -659,7 +685,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       }
   }
 
-  public void performDelete(final DirDiffElement element) {
+  public void performDelete(final DirDiffElementImpl element) {
     final DiffElement source = element.getSource();
     final DiffElement target = element.getTarget();
     LOG.assertTrue(source == null || target == null);
@@ -708,7 +734,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   public void synchronizeSelected() {
     rememberSelection();
-    for (DirDiffElement element : getSelectedElements()) {
+    for (DirDiffElementImpl element : getSelectedElements()) {
       syncElement(element);
     }
     restoreSelection();
@@ -721,13 +747,13 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   }
 
   public void synchronizeAll() {
-    for (DirDiffElement element : myElements.toArray(new DirDiffElement[myElements.size()])) {
+    for (DirDiffElementImpl element : myElements.toArray(new DirDiffElementImpl[myElements.size()])) {
       syncElement(element);
     }
     selectFirstRow();
   }
 
-  private void syncElement(DirDiffElement element) {
+  private void syncElement(DirDiffElementImpl element) {
     final DirDiffOperation operation = element.getOperation();
     if (operation == null) return;
     switch (operation) {
@@ -776,10 +802,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             }
           }
         }, ModalityState.stateForComponent(myLoadingPanel));
-        updater = new Updater(myLoadingPanel, mySleep);
-        updater.start();
+        myUpdater = new Updater(myLoadingPanel, mySleep);
+        myUpdater.start();
       } else {
-        updater = null;
+        myUpdater = null;
         myPanel.focusTable();
       }
     }
@@ -802,7 +828,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       if (newRowCount == 0) return;
 
       int row = Math.min(newRowCount < rowCount ? selectedRow : selectedRow + 1, newRowCount - 1);
-      final DirDiffElement element = getElementAt(row);
+      final DirDiffElementImpl element = getElementAt(row);
       if (element != null && element.isSeparator()) {
         if (getElementAt(row +1) != null) {
           row += 1;
@@ -810,7 +836,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
           row -= 1;
         }
       }
-      final DirDiffElement el = getElementAt(row);
+      final DirDiffElementImpl el = getElementAt(row);
       row = el == null || el.isSeparator() ? 0 : row;
       myTable.getSelectionModel().setSelectionInterval(row, row);
       TableUtil.scrollSelectionToVisible(myTable);

@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.ide.diff.DiffElement;
-import com.intellij.ide.diff.DiffErrorElement;
-import com.intellij.ide.diff.DirDiffSettings;
+import com.intellij.ide.diff.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +26,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 
-import static com.intellij.openapi.diff.impl.dir.DType.ERROR;
+import static com.intellij.ide.diff.DiffType.ERROR;
 
 /**
  * @author Konstantin Bulenkov
@@ -45,15 +43,15 @@ public class DTree {
     }
   };
 
-  private boolean expanded = true;
+  private boolean myExpanded = true;
   @Nullable private final DTree myParent;
-  private HashMap<String, DTree> children;
+  private HashMap<String, DTree> myChildren;
   private String myName;
   private final boolean isContainer;
   private SortedList<DTree> myChildrenList;
   private DiffElement<?> mySource;
   private DiffElement<?> myTarget;
-  private DType type;
+  private DiffType myType;
   private boolean myVisible = true;
   private String mySeparator = null;
   private String myPath = null;
@@ -69,7 +67,7 @@ public class DTree {
     init();
     if (myChildrenList == null) {
       myChildrenList = new SortedList<DTree>(COMPARATOR);
-      myChildrenList.addAll(children.values());
+      myChildrenList.addAll(myChildren.values());
     }
     return myChildrenList;
   }
@@ -79,11 +77,11 @@ public class DTree {
     myChildrenList = null;
     final DTree node;
     final String name = element.getName();
-    if (children.containsKey(name)) {
-      node = children.get(name);
+    if (myChildren.containsKey(name)) {
+      node = myChildren.get(name);
     } else {
       node = new DTree(this, name, element.isContainer());
-      children.put(name, node);
+      myChildren.put(name, node);
     }
 
     if (source) {
@@ -112,8 +110,8 @@ public class DTree {
   }
 
   private void init() {
-    if (children == null) {
-      children = new HashMap<String, DTree>();
+    if (myChildren == null) {
+      myChildren = new HashMap<String, DTree>();
     }
   }
 
@@ -127,11 +125,11 @@ public class DTree {
   }
 
   public boolean isExpanded() {
-    return expanded;
+    return myExpanded;
   }
 
   public void setExpanded(boolean expanded) {
-    this.expanded = expanded;
+    this.myExpanded = expanded;
   }
 
   public boolean isContainer() {
@@ -150,19 +148,19 @@ public class DTree {
       if (src instanceof DiffErrorElement || trg instanceof DiffErrorElement) {
         tree.setType(ERROR);
       } else if (src == null && trg != null) {
-        tree.setType(DType.TARGET);
+        tree.setType(DiffType.TARGET);
       } else if (src != null && trg == null) {
-        tree.setType(DType.SOURCE);
+        tree.setType(DiffType.SOURCE);
       } else {
         assert src != null;
-        DType dtype = src.getSize() == trg.getSize() ? DType.EQUAL : DType.CHANGED;
-        if (dtype == DType.EQUAL) {
+        DiffType dtype = src.getSize() == trg.getSize() ? DiffType.EQUAL : DiffType.CHANGED;
+        if (dtype == DiffType.EQUAL) {
           switch (settings.compareMode) {
             case CONTENT:
-              dtype = isEqual(src, trg) ? DType.EQUAL : DType.CHANGED;
+              dtype = isEqual(src, trg) ? DiffType.EQUAL : DiffType.CHANGED;
               break;
             case TIMESTAMP:
-              dtype = Math.abs(src.getTimeStamp() - trg.getTimeStamp()) <= settings.compareTimestampAccuracy ? DType.EQUAL : DType.CHANGED;
+              dtype = Math.abs(src.getTimeStamp() - trg.getTimeStamp()) <= settings.compareTimestampAccuracy ? DiffType.EQUAL : DiffType.CHANGED;
               break;
           }
         }
@@ -178,20 +176,20 @@ public class DTree {
 
   public void updateVisibility(DirDiffSettings settings) {
     if (getChildren().isEmpty()) {
-     if (type == ERROR) {
+     if (myType == ERROR) {
         myVisible = true;
        return;
       }
-      if (type != DType.SEPARATOR && !"".equals(settings.getFilter())) {
+      if (myType != DiffType.SEPARATOR && !"".equals(settings.getFilter())) {
         if (!settings.getFilterPattern().matcher(getName()).matches()) {
           myVisible = false;
           return;
         }
       }
-      if (type == null) {
+      if (myType == null) {
         myVisible = true;
       } else {
-      switch (type) {
+      switch (myType) {
         case SOURCE:
           myVisible = settings.showNewOnSource;
           break;
@@ -212,7 +210,7 @@ public class DTree {
       }
     } else {
       myVisible = false;
-      for (DTree child : children.values()) {
+      for (DTree child : myChildren.values()) {
         child.updateVisibility(settings);
         myVisible = myVisible || child.isVisible();
       }
@@ -220,16 +218,16 @@ public class DTree {
   }
 
   public void reset() {
-    children.clear();
+    myChildren.clear();
   }
 
   public void remove(DTree node) {
     init();
     final boolean removed = myChildrenList.remove(node);
     if (removed) {
-      for (String key : children.keySet()) {
-        if (children.get(key) == node) {
-          children.remove(key);
+      for (String key : myChildren.keySet()) {
+        if (myChildren.get(key) == node) {
+          myChildren.remove(key);
           return;
         }
       }
@@ -247,12 +245,12 @@ public class DTree {
     }
   }
 
-  public DType getType() {
-    return type;
+  public DiffType getType() {
+    return myType;
   }
 
-  public void setType(DType type) {
-    this.type = type;
+  public void setType(DiffType type) {
+    this.myType = type;
   }
 
   public String getPath() {

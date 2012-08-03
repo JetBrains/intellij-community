@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.diff;
 
+import java.util.List;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -26,4 +28,6 @@ public interface DirDiffModel {
   void setSourceDir(DiffElement src);
   void setTargetDir(DiffElement trg);
   DirDiffSettings getSettings();
+
+  List<? extends DirDiffElement> getElements();
 }

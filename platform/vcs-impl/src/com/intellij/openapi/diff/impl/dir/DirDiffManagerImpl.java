@@ -15,10 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir;
 
-import com.intellij.ide.diff.DiffElement;
-import com.intellij.ide.diff.DirDiffSettings;
-import com.intellij.ide.diff.JarFileDiffElement;
-import com.intellij.ide.diff.VirtualFileDiffElement;
+import com.intellij.ide.diff.*;
 import com.intellij.openapi.diff.DirDiffManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -107,5 +104,12 @@ public class DirDiffManagerImpl extends DirDiffManager {
              ? new JarFileDiffElement(file) : new VirtualFileDiffElement(file);
     }
     return null;
+  }
+
+  @Override
+  public DirDiffModel createDiffModel(DiffElement e1, DiffElement e2, DirDiffSettings settings) {
+    DirDiffTableModel newModel = new DirDiffTableModel(myProject, e1, e2, settings);
+    newModel.reloadModelSynchronously();
+    return newModel;
   }
 }

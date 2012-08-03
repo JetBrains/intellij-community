@@ -16,6 +16,8 @@
 package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DiffType;
+import com.intellij.ide.diff.DirDiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +30,9 @@ import static com.intellij.openapi.diff.impl.dir.DirDiffOperation.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DirDiffElement {
+public class DirDiffElementImpl implements DirDiffElement {
   private DTree myParent;
-  private DType myType;
+  private DiffType myType;
   private DiffElement mySource;
   private long mySourceLength;
   private DiffElement myTarget;
@@ -40,7 +42,7 @@ public class DirDiffElement {
   private DirDiffOperation myDefaultOperation;
   private DTree myNode;
 
-  private DirDiffElement(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target, DType type, String name,
+  private DirDiffElementImpl(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target, DiffType type, String name,
                          @Nullable DirDiffOperation defaultOperation) {
     myParent = parent.getParent();
     myNode = parent;
@@ -53,7 +55,7 @@ public class DirDiffElement {
     if(defaultOperation != null){
       myDefaultOperation = defaultOperation;
     }
-    else if (type == DType.ERROR) {
+    else if (type == DiffType.ERROR) {
       myDefaultOperation = NONE;
     }
     else if (isSource()) {
@@ -62,10 +64,10 @@ public class DirDiffElement {
     else if (isTarget()) {
       myDefaultOperation = COPY_FROM;
     }
-    else if (type == DType.EQUAL) {
+    else if (type == DiffType.EQUAL) {
       myDefaultOperation = EQUAL;
     }
-    else if (type == DType.CHANGED) {
+    else if (type == DiffType.CHANGED) {
       assert source != null;
       myDefaultOperation = MERGE;
     }
@@ -92,7 +94,7 @@ public class DirDiffElement {
     return timeStamp < 0 ? "" : DateFormatUtil.formatDateTime(timeStamp);
   }
 
-  public static DirDiffElement createChange(DTree parent,
+  public static DirDiffElementImpl createChange(DTree parent,
                                             @NotNull DiffElement source,
                                             @NotNull DiffElement target,
                                             @Nullable DirDiffSettings.CustomSourceChooser customSourceChooser) {
@@ -106,30 +108,30 @@ public class DirDiffElement {
         defaultOperation = COPY_FROM;
       }
     }
-    return new DirDiffElement(parent, source, target, DType.CHANGED, source.getName(), defaultOperation);
+    return new DirDiffElementImpl(parent, source, target, DiffType.CHANGED, source.getName(), defaultOperation);
   }
 
-  public static DirDiffElement createError(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target) {
-    return new DirDiffElement(parent, source, target, DType.ERROR, source == null ? target.getName() : source.getName(), null);
+  public static DirDiffElementImpl createError(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target) {
+    return new DirDiffElementImpl(parent, source, target, DiffType.ERROR, source == null ? target.getName() : source.getName(), null);
   }
 
-  public static DirDiffElement createSourceOnly(DTree parent, @NotNull DiffElement source) {
-    return new DirDiffElement(parent, source, null, DType.SOURCE, null, null);
+  public static DirDiffElementImpl createSourceOnly(DTree parent, @NotNull DiffElement source) {
+    return new DirDiffElementImpl(parent, source, null, DiffType.SOURCE, null, null);
   }
 
-  public static DirDiffElement createTargetOnly(DTree parent, @NotNull DiffElement target) {
-    return new DirDiffElement(parent, null, target, DType.TARGET, null, null);
+  public static DirDiffElementImpl createTargetOnly(DTree parent, @NotNull DiffElement target) {
+    return new DirDiffElementImpl(parent, null, target, DiffType.TARGET, null, null);
   }
 
-  public static DirDiffElement createDirElement(DTree parent, DiffElement src, DiffElement trg, String name) {
-    return new DirDiffElement(parent, src, trg, DType.SEPARATOR, name, null);
+  public static DirDiffElementImpl createDirElement(DTree parent, DiffElement src, DiffElement trg, String name) {
+    return new DirDiffElementImpl(parent, src, trg, DiffType.SEPARATOR, name, null);
   }
 
-  public static DirDiffElement createEqual(DTree parent, @NotNull DiffElement source, @NotNull DiffElement target) {
-    return new DirDiffElement(parent, source, target, DType.EQUAL, source.getName(), null);
+  public static DirDiffElementImpl createEqual(DTree parent, @NotNull DiffElement source, @NotNull DiffElement target) {
+    return new DirDiffElementImpl(parent, source, target, DiffType.EQUAL, source.getName(), null);
   }
 
-  public DType getType() {
+  public DiffType getType() {
     return myType;
   }
 
@@ -147,7 +149,7 @@ public class DirDiffElement {
 
   @Nullable
   public String getSourceName() {
-    return myType == DType.CHANGED || myType == DType.SOURCE || myType == DType.EQUAL
+    return myType == DiffType.CHANGED || myType == DiffType.SOURCE || myType == DiffType.EQUAL
            ? mySource.getName() : mySource == null ? null : mySource.getName();
   }
 
@@ -167,7 +169,7 @@ public class DirDiffElement {
 
   @Nullable
   public String getTargetName() {
-    return myType == DType.CHANGED || myType == DType.TARGET || myType == DType.EQUAL
+    return myType == DiffType.CHANGED || myType == DiffType.TARGET || myType == DiffType.EQUAL
            ? myTarget.getName() : myTarget == null ? null : myTarget.getName();
   }
 
@@ -177,15 +179,15 @@ public class DirDiffElement {
   }
 
   public boolean isSeparator() {
-    return myType == DType.SEPARATOR;
+    return myType == DiffType.SEPARATOR;
   }
 
   public boolean isSource() {
-    return myType == DType.SOURCE;
+    return myType == DiffType.SOURCE;
   }
 
   public boolean isTarget() {
-    return myType == DType.TARGET;
+    return myType == DiffType.TARGET;
   }
 
   public DirDiffOperation getOperation() {
@@ -197,7 +199,7 @@ public class DirDiffElement {
     myTargetLength = mySourceLength;
     myDefaultOperation = DirDiffOperation.EQUAL;
     myOperation = DirDiffOperation.EQUAL;
-    myType = DType.EQUAL;
+    myType = DiffType.EQUAL;
   }
 
   public void updateTargetFromSource(DiffElement source) {
@@ -205,25 +207,25 @@ public class DirDiffElement {
     mySourceLength = myTargetLength;
     myDefaultOperation = DirDiffOperation.EQUAL;
     myOperation = DirDiffOperation.EQUAL;
-    myType = DType.EQUAL;
+    myType = DiffType.EQUAL;
   }
 
   public void setNextOperation() {
     final DirDiffOperation op = getOperation();
-    if (myType == DType.SOURCE) {
+    if (myType == DiffType.SOURCE) {
       myOperation = op == COPY_TO ? DELETE : op == DELETE ? NONE : COPY_TO;
-    } else if (myType == DType.TARGET) {
+    } else if (myType == DiffType.TARGET) {
       myOperation = op == COPY_FROM ? DELETE : op == DELETE ? NONE : COPY_FROM;
-    } else if (myType == DType.CHANGED) {
+    } else if (myType == DiffType.CHANGED) {
       myOperation = op == MERGE ? COPY_FROM : op == COPY_FROM ? COPY_TO : MERGE;
     }
   }
 
   public void setOperation(@NotNull DirDiffOperation operation) {
-    if (myType == DType.EQUAL || myType == DType.SEPARATOR) return;
-    if (myType == DType.TARGET && operation == COPY_TO) return;
-    if (myType == DType.SOURCE && operation == COPY_FROM) return;
-    if (myType == DType.CHANGED && operation == DELETE) return;
+    if (myType == DiffType.EQUAL || myType == DiffType.SEPARATOR) return;
+    if (myType == DiffType.TARGET && operation == COPY_TO) return;
+    if (myType == DiffType.SOURCE && operation == COPY_FROM) return;
+    if (myType == DiffType.CHANGED && operation == DELETE) return;
 
     myOperation = operation;
   }
