@@ -377,15 +377,6 @@ public class AndroidRootUtil {
   }
 
   @Nullable
-  private static String getDefaultGenSourceRoot(AndroidFacet facet) {
-    final VirtualFile mainContentRoot = getMainContentRoot(facet);
-    final String moduleDirPath = mainContentRoot != null ? mainContentRoot.getPath() : null;
-    return moduleDirPath != null
-           ? moduleDirPath + '/' + SdkConstants.FD_GEN_SOURCES
-           : null;
-  }
-
-  @Nullable
   public static VirtualFile getMainContentRoot(@NotNull AndroidFacet facet) {
     final Module module = facet.getModule();
     
