@@ -30,6 +30,7 @@ import java.util.ArrayList;
 
 public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
+  public static final String DEFAULT_EMPTY_TEXT = UIBundle.message("message.nothingToShow");
 
   @Nullable
   private Component myOwner;
@@ -76,7 +77,7 @@ public abstract class StatusText {
 
     myComponent.setOpaque(false);
     myComponent.setFont(UIUtil.getLabelFont());
-    setText(UIBundle.message("message.nothingToShow"), DEFAULT_ATTRIBUTES);
+    setText(DEFAULT_EMPTY_TEXT, DEFAULT_ATTRIBUTES);
     myIsDefaultText = true;
   }
 
