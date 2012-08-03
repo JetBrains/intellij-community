@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions.wordSelection;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -32,7 +33,8 @@ import java.util.List;
 public class MethodOrClassSelectioner extends BasicSelectioner {
   @Override
   public boolean canSelect(PsiElement e) {
-    return e instanceof PsiClass && !(e instanceof PsiTypeParameter) || e instanceof PsiMethod;
+    return (e instanceof PsiClass && !(e instanceof PsiTypeParameter) || e instanceof PsiMethod) &&
+           e.getLanguage() == JavaLanguage.INSTANCE;
   }
 
   @Override

@@ -15,18 +15,19 @@
  */
 package com.intellij.codeInsight.editorActions.wordSelection;
 
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiIdentifier;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.editor.Editor;
 
 import java.util.List;
 
 public class FieldSelectioner extends WordSelectioner {
   @Override
   public boolean canSelect(PsiElement e) {
-    return e instanceof PsiField;
+    return e instanceof PsiField && e.getLanguage() == JavaLanguage.INSTANCE;
   }
 
   private static void addRangeElem(final List<TextRange> result,
