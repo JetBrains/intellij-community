@@ -566,10 +566,7 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     for (StyleableDefinition child : styleable.getChildren()) {
       String childTagName = AndroidManifestUtils.getTagNameByStyleableName(child.getName());
       if (childTagName != null && !subtagSet.contains(childTagName)) {
-        Class c = AndroidManifestUtils.getClassByManifestStyleableName(child.getName());
-        if (c != null) {
-          registerSubtags(childTagName, c, registrar, registeredSubtags);
-        }
+        registerSubtags(childTagName, ManifestElement.class, registrar, registeredSubtags);
       }
     }
   }

@@ -93,25 +93,6 @@ public class AndroidManifestUtils {
   }
 
   @Nullable
-  public static Class getClassByManifestStyleableName(@NotNull String styleableName) {
-   /* String prefix = "AndroidManifest";
-    if (!styleableName.startsWith(prefix)) {
-      return null;
-    }
-    if (styleableName.equals(prefix)) {
-      return Manifest.class;
-    }
-    String remained = styleableName.substring(prefix.length());
-    try {
-      return Class.forName("org.jetbrains.android.dom.manifest." + remained);
-    }
-    catch (ClassNotFoundException e) {
-      return ManifestElement.class;
-    }*/
-    return ManifestElement.class;
-  }
-
-  @Nullable
   public static String getTagNameByStyleableName(@NotNull String styleableName) {
     String prefix = "AndroidManifest";
     if (!styleableName.startsWith(prefix)) {
