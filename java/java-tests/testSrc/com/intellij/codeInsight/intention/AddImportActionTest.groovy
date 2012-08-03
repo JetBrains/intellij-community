@@ -86,6 +86,25 @@ public class Foo {
 
   }
 
+  public void testUseContext() {
+    myFixture.addClass 'package foo; public class Log {}'
+    myFixture.addClass 'package bar; public class Log {}'
+    myFixture.addClass 'package bar; public class LogFactory { public static Log log(){} }'
+    myFixture.configureByText 'a.java', '''
+public class Foo {
+    Lo<caret>g l = bar.LogFactory.log();
+}
+'''
+    importClass()
+    myFixture.checkResult '''import bar.Log;
+
+public class Foo {
+    Lo<caret>g l = bar.LogFactory.log();
+}
+'''
+
+  }
+
   private def importClass() {
     myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
   }

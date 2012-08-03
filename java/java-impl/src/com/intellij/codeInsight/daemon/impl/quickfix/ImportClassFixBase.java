@@ -41,6 +41,8 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,7 +89,7 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     boolean referenceHasTypeParameters = hasTypeParameters(myRef);
     PsiClass[] classes = cache.getClassesByName(name, scope);
     if (classes.length == 0) return Collections.emptyList();
-    ArrayList<PsiClass> classList = new ArrayList<PsiClass>(classes.length);
+    List<PsiClass> classList = new ArrayList<PsiClass>(classes.length);
     boolean isAnnotationReference = myRef.getParent() instanceof PsiAnnotation;
     for (PsiClass aClass : classes) {
       if (isAnnotationReference && !aClass.isAnnotationType()) continue;
@@ -122,8 +124,13 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
         }
       });
       if (!filtered.isEmpty()) {
-        return filtered;
+        classList = filtered;
       }
+    }
+
+    List<PsiClass> filtered = filterByContext(classList, myRef);
+    if (!filtered.isEmpty()) {
+      classList = filtered;
     }
 
     return classList;
@@ -134,9 +141,26 @@ public abstract class ImportClassFixBase<T extends PsiElement & PsiReference> im
     return null;
   }
 
+  protected List<PsiClass> filterByContext(List<PsiClass> candidates, T ref) {
+    return candidates;
+  }
+
   protected abstract boolean isAccessible(PsiMember member, T reference);
 
   protected abstract String getQualifiedName(T reference);
+
+  protected static List<PsiClass> filterAssignableFrom(PsiType type, List<PsiClass> candidates) {
+    final PsiClass actualClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    if (actualClass != null) {
+      return ContainerUtil.findAll(candidates, new Condition<PsiClass>() {
+        @Override
+        public boolean value(PsiClass psiClass) {
+          return InheritanceUtil.isInheritorOrSelf(psiClass, actualClass, true);
+        }
+      });
+    }
+    return candidates;
+  }
 
   public enum Result {
     POPUP_SHOWN,
