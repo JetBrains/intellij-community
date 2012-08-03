@@ -180,7 +180,8 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
       }
     }
     else if (element instanceof XmlAttribute) {
-      return element.getTextRange();
+      final XmlAttributeValue valueElement = ((XmlAttribute)element).getValueElement();
+      return valueElement != null ? valueElement.getValueTextRange() : null;
     }
     else {
       return null;
@@ -205,9 +206,13 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
        range.getEndOffset() <= document.getTextLength() // psi and document maybe not in sync after error
       ) {
 
-      if (range.getStartOffset() + MIN_TEXT_RANGE_LENGTH < range.getEndOffset()) {
-        foldings.add(new FoldingDescriptor(elementToFold.getNode(), range));
-        return true;
+      int startLine = document.getLineNumber(range.getStartOffset());
+      int endLine = document.getLineNumber(range.getEndOffset() - 1);
+      if (startLine < endLine || elementToFold instanceof XmlAttribute) {
+        if (range.getStartOffset() + MIN_TEXT_RANGE_LENGTH < range.getEndOffset()) {
+          foldings.add(new FoldingDescriptor(elementToFold.getNode(), range));
+          return true;
+        }
       }
     }
 
@@ -216,12 +221,9 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
 
   public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
-    if(psi instanceof XmlAttribute) {
-      final String attributeName = ((XmlAttribute)psi).getName();
-      return attributeName.isEmpty() ? "..." : attributeName;
-    }
     if (psi instanceof XmlTag ||
         psi instanceof XmlComment ||
+        psi instanceof XmlAttribute ||
         psi instanceof XmlConditionalSection
        ) return "...";
     return null;
