@@ -15,17 +15,22 @@
  */
 package org.jetbrains.android;
 
+import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.android.dom.animation.AndroidAnimationUtils;
 import org.jetbrains.android.dom.animation.AnimationDomFileDescription;
 import org.jetbrains.android.dom.animator.AndroidAnimatorUtil;
@@ -35,8 +40,10 @@ import org.jetbrains.android.dom.drawable.AndroidDrawableDomUtil;
 import org.jetbrains.android.dom.drawable.DrawableStateListDomFileDescription;
 import org.jetbrains.android.dom.layout.AndroidLayoutUtil;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
+import org.jetbrains.android.dom.layout.LayoutElement;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
 import org.jetbrains.android.dom.xml.AndroidXmlResourcesUtil;
+import org.jetbrains.android.dom.xml.PreferenceElement;
 import org.jetbrains.android.dom.xml.XmlResourceDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +62,7 @@ public class AndroidCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static boolean complete(@NotNull AndroidFacet facet, @NotNull XmlFile xmlFile, @NotNull CompletionResultSet resultSet) {
+  private static boolean completeTagNames(@NotNull AndroidFacet facet, @NotNull XmlFile xmlFile, @NotNull CompletionResultSet resultSet) {
     if (ManifestDomFileDescription.isManifestFile(xmlFile)) {
       resultSet.addElement(LookupElementBuilder.create("manifest"));
       return false;
@@ -97,38 +104,64 @@ public class AndroidCompletionContributor extends CompletionContributor {
     }
     PsiElement parent = position.getParent();
 
-    if (!(parent instanceof XmlTag)) {
-      return;
-    }
-    XmlTag tag = (XmlTag)parent;
+    if (parent instanceof XmlTag) {
+      XmlTag tag = (XmlTag)parent;
 
-    if (tag.getParentTag() != null) {
-      return;
-    }
-    final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode());
+      if (tag.getParentTag() != null) {
+        return;
+      }
+      final ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode());
 
-    if (startTagName == null || startTagName.getPsi() != position) {
-      return;
-    }
-    final PsiFile file = tag.getContainingFile();
-    if (!(file instanceof XmlFile)) {
-      return;
-    }
-    final PsiReference reference = file.findReferenceAt(parameters.getOffset());
-    if (reference != null) {
-      final PsiElement element = reference.getElement();
-      if (element != null) {
-        final int refOffset = element.getTextRange().getStartOffset() +
-                              reference.getRangeInElement().getStartOffset();
-        if (refOffset != position.getTextRange().getStartOffset()) {
-          // do not provide completion if we're inside some reference starting in the middle of tag name
-          return;
+      if (startTagName == null || startTagName.getPsi() != position) {
+        return;
+      }
+      final PsiFile file = tag.getContainingFile();
+      if (!(file instanceof XmlFile)) {
+        return;
+      }
+      final PsiReference reference = file.findReferenceAt(parameters.getOffset());
+      if (reference != null) {
+        final PsiElement element = reference.getElement();
+        if (element != null) {
+          final int refOffset = element.getTextRange().getStartOffset() +
+                                reference.getRangeInElement().getStartOffset();
+          if (refOffset != position.getTextRange().getStartOffset()) {
+            // do not provide completion if we're inside some reference starting in the middle of tag name
+            return;
+          }
         }
       }
-    }
 
-    if (!complete(facet, (XmlFile)file, resultSet)) {
-      resultSet.stopHere();
+      if (!completeTagNames(facet, (XmlFile)file, resultSet)) {
+        resultSet.stopHere();
+      }
+    }
+    else if (parent instanceof XmlAttribute) {
+      final ASTNode attrName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(parent.getNode());
+
+      if (attrName == null ||
+          attrName.getPsi() != position ||
+          position.getText().startsWith("android:")) {
+        return;
+      }
+
+      final PsiElement gp = parent.getParent();
+      if (!(gp instanceof XmlTag)) {
+        return;
+      }
+
+      final DomElement element = DomManager.getDomManager(gp.getProject()).getDomElement((XmlTag)gp);
+      if (!(element instanceof LayoutElement) &&
+          !(element instanceof PreferenceElement)) {
+        return;
+      }
+
+      final String prefix = ((XmlTag)gp).getPrefixByNamespace(SdkConstants.NS_RESOURCES);
+      if (prefix == null || prefix.length() < 3) {
+        return;
+      }
+      final LookupElementBuilder e = LookupElementBuilder.create(prefix + ":").withTypeText("[Namespace Prefix]", true);
+      resultSet.addElement(PrioritizedLookupElement.withPriority(e, Double.MAX_VALUE));
     }
   }
 }

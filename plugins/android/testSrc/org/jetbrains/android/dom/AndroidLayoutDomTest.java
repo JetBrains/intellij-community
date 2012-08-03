@@ -636,6 +636,26 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     myFixture.checkResultByFile("res/layout/unknown.xml", testFolder + '/' + getTestName(true) + "_layout_after.xml", true);
   }
 
+  public void testAndroidPrefixCompletion1() throws Throwable {
+    doTestAndroidPrefixCompletion("android:");
+  }
+
+  public void testAndroidPrefixCompletion2() throws Throwable {
+    doTestAndroidPrefixCompletion("android:");
+  }
+
+  public void testAndroidPrefixCompletion3() throws Throwable {
+    doTestAndroidPrefixCompletion(null);
+  }
+
+  public void testAndroidPrefixCompletion4() throws Throwable {
+    doTestAndroidPrefixCompletion("andr:");
+  }
+
+  public void testAndroidPrefixCompletion5() throws Throwable {
+    doTestAndroidPrefixCompletion(null);
+  }
+
   public void testCreateResourceFromUsage1() throws Throwable {
     final VirtualFile virtualFile = copyFileToProject(getTestName(true) + ".xml");
     doCreateFileResourceFromUsage(virtualFile);

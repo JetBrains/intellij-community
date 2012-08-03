@@ -201,4 +201,8 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     doTestJavaHighlighting("p1.p2");
   }
 
+  public void testAndroidPrefixCompletion() throws Throwable {
+    // do not complete prefix in manifest because there is not many attributes
+    doTestAndroidPrefixCompletion(null);
+  }
 }

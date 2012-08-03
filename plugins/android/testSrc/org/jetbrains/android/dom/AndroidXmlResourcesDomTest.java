@@ -183,4 +183,8 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
   public void testPreferenceHeaders1() throws Throwable {
     doTestCompletion();
   }
+
+  public void testAndroidPrefixCompletion() throws Throwable {
+    doTestAndroidPrefixCompletion("android:");
+  }
 }
