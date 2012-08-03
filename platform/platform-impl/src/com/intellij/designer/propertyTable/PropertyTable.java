@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -819,21 +820,22 @@ public abstract class PropertyTable extends JBTable {
       }
 
       Property property = myProperties.get(row);
+      if (getChildren(property).isEmpty()) return;
+
+      Icon icon = UIUtil.getTreeNodeIcon(false, true, true);
 
       Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
-      int indent = property.getIndent() * 11;
-      if (e.getX() < rect.x + indent || e.getX() > rect.x + 9 + indent || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
+      int indent = getBeforeIconAndAfterIndents(property, icon).first;
+      if (e.getX() < rect.x + indent || e.getX() > rect.x + indent + icon.getIconWidth() || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
         return;
       }
 
-      if (!getChildren(property).isEmpty()) {
-        // TODO: disallow selection for this row
-        if (isExpanded(property)) {
-          collapse(row);
-        }
-        else {
-          expand(row);
-        }
+      // TODO: disallow selection for this row
+      if (isExpanded(property)) {
+        collapse(row);
+      }
+      else {
+        expand(row);
       }
     }
   }
@@ -877,6 +879,19 @@ public abstract class PropertyTable extends JBTable {
       // empty
     }
     return result;
+  }
+
+  @NotNull
+  private static Pair<Integer, Integer> getBeforeIconAndAfterIndents(@NotNull Property property, @NotNull Icon icon) {
+    int nodeIndent = UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent();
+    int beforeIcon = nodeIndent * getDepth(property);
+
+    int leftIconOffset = Math.max(0, UIUtil.getTreeLeftChildIndent() - (icon.getIconWidth() / 2));
+    beforeIcon += leftIconOffset;
+
+    int afterIcon = Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth());
+
+    return Pair.create(beforeIcon, afterIcon);
   }
 
   private class PropertyCellEditorListener implements PropertyEditorListener {
@@ -1046,19 +1061,16 @@ public abstract class PropertyTable extends JBTable {
 
         myRenderer.setIcon(hasChildren ? icon : null);
 
-        int nodeIndent = UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent();
-        int totalIndent = nodeIndent * getDepth(property);
+        Pair<Integer, Integer> indents = getBeforeIconAndAfterIndents(property, icon);
+        int indent = indents.first;
 
         if (hasChildren) {
-          int leftIconOffset = Math.max(0, UIUtil.getTreeLeftChildIndent() - (icon.getIconWidth() / 2));
-          totalIndent += leftIconOffset;
-          myRenderer.setIconTextGap(Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth()));
+          myRenderer.setIconTextGap(indents.second);
         }
         else {
-          totalIndent += nodeIndent;
+          indent += icon.getIconWidth() + indents.second;
         }
-
-        myRenderer.setIpad(new Insets(0, totalIndent, 0, 0));
+        myRenderer.setIpad(new Insets(0, indent, 0, 0));
 
         return myRenderer;
       }
