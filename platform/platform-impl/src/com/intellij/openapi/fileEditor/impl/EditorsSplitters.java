@@ -55,6 +55,7 @@ import java.awt.datatransfer.Transferable;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 
 /**
@@ -64,7 +65,7 @@ public class EditorsSplitters extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
 
   private EditorWindow myCurrentWindow;
-  final Set<EditorWindow> myWindows = new ArrayListSet<EditorWindow>();
+  final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
 
   private final FileEditorManagerImpl myManager;
   private Element mySplittersElement;  // temporarily used during initialization
