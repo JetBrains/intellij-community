@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.editor.actions;
+package org.jetbrains.plugins.groovy.editor.actions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;

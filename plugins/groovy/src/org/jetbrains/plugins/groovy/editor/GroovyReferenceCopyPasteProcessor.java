@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.editor;
+package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.codeInsight.editorActions.CopyPasteReferenceProcessor;
 import com.intellij.codeInsight.editorActions.ReferenceTransferableData;
@@ -33,7 +33,7 @@ import java.util.ArrayList;
  * @author peter
  */
 public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcessor<GrReferenceElement> {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.editor.GroovyReferenceCopyPasteProcessor");
+  private static final Logger LOG = Logger.getInstance(GroovyReferenceCopyPasteProcessor.class);
 
   protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceTransferableData.ReferenceData> to) {
     if (element instanceof GrReferenceElement) {

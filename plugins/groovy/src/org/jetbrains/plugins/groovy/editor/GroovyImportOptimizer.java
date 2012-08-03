@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.editor;
+package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.editor.Document;
@@ -42,8 +42,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ResolverProcessor;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.editor.GroovyImportHelper.isImplicitlyImported;
-import static org.jetbrains.plugins.groovy.lang.editor.GroovyImportHelper.processImports;
+import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.isImplicitlyImported;
+import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImports;
 
 /**
  * @author ven

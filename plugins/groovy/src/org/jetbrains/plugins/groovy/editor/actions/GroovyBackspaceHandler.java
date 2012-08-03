@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.editor.actions;
+package org.jetbrains.plugins.groovy.editor.actions;
 
 import com.intellij.codeInsight.editorActions.BackspaceHandlerDelegate;
 import com.intellij.codeInsight.editorActions.JavaBackspaceHandler;

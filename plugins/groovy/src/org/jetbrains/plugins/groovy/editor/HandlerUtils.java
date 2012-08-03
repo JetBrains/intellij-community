@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.lang.editor;
+package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;

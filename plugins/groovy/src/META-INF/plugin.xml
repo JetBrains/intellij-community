@@ -211,7 +211,7 @@
 
     <nameSuggestionProvider implementation="org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionProvider"/>
 
-    <statementUpDownMover implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyStatementMover"/>
+    <statementUpDownMover implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyStatementMover"/>
 
     <applicationService serviceInterface="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"
                         serviceImplementation="org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings"/>
@@ -232,13 +232,13 @@
                                        implementationClass="org.jetbrains.plugins.groovy.formatter.GroovyWhiteSpaceFormattingStrategy"/>
     <postFormatProcessor implementation="org.jetbrains.plugins.groovy.formatter.GroovyBracePostFormatProcessor"/>
 
-    <enterHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyEnterHandler"
+    <enterHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyEnterHandler"
                           order="before EnterBetweenBracesHandler"/>
-    <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringTypedActionHandler"/>
-    <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GStringBackspaceHandlerDelegate"/>
+    <typedHandler implementation="org.jetbrains.plugins.groovy.editor.actions.GStringTypedActionHandler"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GStringBackspaceHandlerDelegate"/>
 
-    <typedHandler implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyTypedHandler"/>
-    <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.lang.editor.actions.GroovyBackspaceHandler"/>
+    <typedHandler implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyTypedHandler"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.plugins.groovy.editor.actions.GroovyBackspaceHandler"/>
 
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Generic"/>
     <liveTemplateContext implementation="org.jetbrains.plugins.groovy.template.GroovyTemplateContextType$Expression"/>
@@ -262,7 +262,7 @@
     <findUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GroovyFindUsagesHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="org.jetbrains.plugins.groovy.findUsages.GrHighlightHandlerFactory"/>
     <lang.braceMatcher language="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovyBraceMatcher"/>
-    <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer"/>
+    <lang.importOptimizer language="Groovy" implementationClass="org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer"/>
     <lang.documentationProvider language="Groovy"
                                 implementationClass="org.jetbrains.plugins.groovy.lang.documentation.GroovyDocumentationProvider"/>
     <lang.smartEnterProcessor language="Groovy"
@@ -353,7 +353,7 @@
     <configurationType implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType"/>
     <configurationProducer implementation="org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationProducer"/>
 
-    <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.lang.editor.GroovyQuoteHandler"/>
+    <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.editor.GroovyQuoteHandler"/>
 
     <compileServer.plugin classpath="groovy_rt.jar"/>
 
@@ -453,8 +453,8 @@
 
     <treeCopyHandler implementation="org.jetbrains.plugins.groovy.lang.GroovyChangeUtilSupport"/>
 
-    <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.lang.editor.GroovyLiteralCopyPasteProcessor"/>
-    <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.lang.editor.GroovyReferenceCopyPasteProcessor"/>
+    <copyPastePreProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyLiteralCopyPasteProcessor"/>
+    <copyPastePostProcessor implementation="org.jetbrains.plugins.groovy.editor.GroovyReferenceCopyPasteProcessor"/>
 
     <specialTool shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
                  groupPath="Groovy"
