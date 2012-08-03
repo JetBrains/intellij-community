@@ -1055,10 +1055,18 @@ public abstract class PropertyTable extends JBTable {
 
         myRenderer.setIcon(hasChildren ? icon : null);
 
-        int indent = (UIUtil.getTreeLeftChildIndent() + myRenderer.getIconTextGap()) * getDepth(property);
-        if (!hasChildren) indent += icon.getIconWidth() + myRenderer.getIconTextGap();
+        int nodeIndent = UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent();
+        int totalIndent = nodeIndent * getDepth(property);
 
-        myRenderer.setIpad(new Insets(0, indent, 0, 0));
+        if (hasChildren) {
+          int leftIconOffset = Math.max(0, UIUtil.getTreeLeftChildIndent() - (icon.getIconWidth() / 2));
+          totalIndent += leftIconOffset;
+          myRenderer.setIconTextGap(Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth()));
+        } else {
+          totalIndent += nodeIndent;
+        }
+
+        myRenderer.setIpad(new Insets(0, totalIndent, 0, 0));
 
         return myRenderer;
       }
