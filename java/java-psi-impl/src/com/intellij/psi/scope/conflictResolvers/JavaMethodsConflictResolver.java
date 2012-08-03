@@ -490,7 +490,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         if (MethodSignatureUtil.isSubsignature(method1.getSignature(info1.getSubstitutor()), method2.getSignature(info2.getSubstitutor()))) {
           isMoreSpecific = Specifics.SECOND;
         }
-        else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC)) {
+        else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
           isMoreSpecific = Specifics.SECOND;
         }
       }
@@ -498,7 +498,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         if (MethodSignatureUtil.isSubsignature(method2.getSignature(info2.getSubstitutor()), method1.getSignature(info1.getSubstitutor()))) {
           isMoreSpecific = Specifics.FIRST;
         }
-        else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC)) {
+        else if (method1.hasModifierProperty(PsiModifier.STATIC) && method2.hasModifierProperty(PsiModifier.STATIC) && boxingHappened[0] == 0) {
           isMoreSpecific = Specifics.FIRST;
         }
       }
