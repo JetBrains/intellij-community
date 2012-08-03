@@ -61,6 +61,7 @@ public class AndroidManifestUtils {
     if (element instanceof Application) {
       strings.add("name");
       strings.add("manageSpaceActivity");
+      strings.add("backupAgent");
       strings.add("debuggable");
     }
     if (element instanceof Provider) {
