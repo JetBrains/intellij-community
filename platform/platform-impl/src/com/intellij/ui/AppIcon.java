@@ -280,7 +280,7 @@ public abstract class AppIcon {
         final int y = myAppImage.getHeight() - progressHeight - yInset;
         Shape rect = new RoundRectangle2D.Double(xInset, y, width, progressHeight, progressHeight, progressHeight);
         Shape border = new RoundRectangle2D.Double(xInset - 1, y - 1, width + 2, progressHeight + 2, (progressHeight + 2), (progressHeight + 2));
-        Shape progress = new RoundRectangle2D.Double(xInset + 1, y + 1, (width - 2)  * value, progressHeight - 3, (progressHeight - 2), (progressHeight - 2));
+        Shape progress = new RoundRectangle2D.Double(xInset + 1, y + 1, (width - 2)  * value, progressHeight - 2, (progressHeight - 2), (progressHeight - 2));
         AppImage appImg = createAppImage();
 
         appImg.myG2d.setColor(Color.GRAY.brighter().brighter());
