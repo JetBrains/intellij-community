@@ -103,7 +103,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
 
 
       PsiType[] args = PsiUtil
-        .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, null);
+        .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, null, false);
       final GroovyResolveResult candidate = PsiImplUtil.extractUniqueResult(candidates);
       final PsiElement element = candidate.getElement();
       if (element instanceof PsiNamedElement) {
@@ -150,7 +150,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     GrArgumentList argList = getArgumentList();
 
     PsiType[] argTypes = PsiUtil
-      .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument);
+      .getArgumentTypes(argList.getNamedArguments(), argList.getExpressionArguments(), GrClosableBlock.EMPTY_ARRAY, true, upToArgument, false);
     if (argTypes == null) return GroovyResolveResult.EMPTY_ARRAY;
 
     final PsiManager manager = getManager();

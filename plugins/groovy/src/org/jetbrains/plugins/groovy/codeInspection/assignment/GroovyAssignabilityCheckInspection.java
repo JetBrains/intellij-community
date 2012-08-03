@@ -410,7 +410,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
       if (exprArgs.length == 0 && !PsiUtil.isConstructorHasRequiredParameters(constructor)) return true;
 
-      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprArgs, GrClosableBlock.EMPTY_ARRAY, false, null);
+      PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprArgs, GrClosableBlock.EMPTY_ARRAY, false, null, false);
       if (listOrMap.isMap() && namedArgs.length == 0) {
         argumentTypes = new PsiType[]{listOrMap.getType()};
       }
