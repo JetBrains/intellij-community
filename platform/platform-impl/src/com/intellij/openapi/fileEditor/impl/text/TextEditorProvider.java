@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.psi.SingleRootFileViewProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,9 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory() || !file.isValid()) {
+      return false;
+    }
+    if (SingleRootFileViewProvider.isTooLargeForContentLoading(file)) {
       return false;
     }
 

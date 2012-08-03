@@ -39,6 +39,7 @@ import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.file.PsiBinaryFileImpl;
+import com.intellij.psi.impl.file.PsiLargeFileImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiPlainTextFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
@@ -264,12 +265,21 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       if (psiFile != null) return psiFile;
     }
 
+    if (isTooLargeForContentLoading(file)) {
+      return new PsiLargeFileImpl((PsiManagerImpl)getManager(), this);
+    }
+
     return new PsiPlainTextFileImpl(this);
   }
 
   public static boolean isTooLarge(@NotNull VirtualFile vFile) {
     if (!checkFileSizeLimit(vFile)) return false;
     return fileSizeIsGreaterThan(vFile, PersistentFSConstants.getMaxIntellisenseFileSize());
+  }
+
+  public static boolean isTooLargeForContentLoading(@NotNull VirtualFile vFile) {
+    if (!checkFileSizeLimit(vFile)) return false;
+    return fileSizeIsGreaterThan(vFile, PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD);
   }
 
   private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {

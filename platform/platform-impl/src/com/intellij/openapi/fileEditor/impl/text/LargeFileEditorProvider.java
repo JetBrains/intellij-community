@@ -1,0 +1,156 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.openapi.fileEditor.impl.text;
+
+import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.ide.structureView.StructureViewBuilder;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.SingleRootFileViewProvider;
+import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.beans.PropertyChangeListener;
+
+/**
+ * @author peter
+ */
+public class LargeFileEditorProvider implements FileEditorProvider, DumbAware {
+
+  public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
+    if (file.isDirectory() || !file.isValid()) {
+      return false;
+    }
+    return SingleRootFileViewProvider.isTooLargeForContentLoading(file);
+  }
+
+  @NotNull
+  public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
+    return new LargeFileEditor(file);
+  }
+
+  public void disposeEditor(@NotNull FileEditor editor) {
+    Disposer.dispose(editor);
+  }
+
+  @NotNull
+  public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
+    return FileEditorState.INSTANCE;
+  }
+
+  public void writeState(@NotNull FileEditorState _state, @NotNull Project project, @NotNull Element element) {
+  }
+
+  @NotNull
+  public String getEditorTypeId() {
+    return "LargeFileEditor";
+  }
+
+  @NotNull
+  public FileEditorPolicy getPolicy() {
+    return FileEditorPolicy.NONE;
+  }
+
+  private static class LargeFileEditor extends UserDataHolderBase implements FileEditor {
+    private final VirtualFile myFile;
+
+    public LargeFileEditor(VirtualFile file) {
+      myFile = file;
+    }
+
+    @NotNull
+    @Override
+    public JComponent getComponent() {
+      JLabel label = new JLabel(
+        "File " + myFile.getPath() + " is too large for " + ApplicationNamesInfo.getInstance().getFullProductName() + " editor");
+      label.setHorizontalAlignment(SwingConstants.CENTER);
+      return label;
+    }
+
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return null;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "Large file editor";
+    }
+
+    @NotNull
+    @Override
+    public FileEditorState getState(@NotNull FileEditorStateLevel level) {
+      return new TextEditorState();
+    }
+
+    @Override
+    public void setState(@NotNull FileEditorState state) {
+    }
+
+    @Override
+    public boolean isModified() {
+      return false;
+    }
+
+    @Override
+    public boolean isValid() {
+      return myFile.isValid();
+    }
+
+    @Override
+    public void selectNotify() {
+    }
+
+    @Override
+    public void deselectNotify() {
+    }
+
+    @Override
+    public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
+    }
+
+    @Override
+    public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
+    }
+
+    @Override
+    public BackgroundEditorHighlighter getBackgroundHighlighter() {
+      return null;
+    }
+
+    @Override
+    public FileEditorLocation getCurrentLocation() {
+      return null;
+    }
+
+    @Override
+    public StructureViewBuilder getStructureViewBuilder() {
+      return null;
+    }
+
+    @Override
+    public void dispose() {
+    }
+
+  }
+}
