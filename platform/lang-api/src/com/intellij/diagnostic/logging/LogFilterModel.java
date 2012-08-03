@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.regex.Pattern;
 
 /**
@@ -82,6 +81,9 @@ public abstract class LogFilterModel {
 
   @NotNull
   public abstract MyProcessingResult processLine(String line);
+
+  public void processingStarted() {
+  }
   
   public static class MyProcessingResult {
     private final Key myKey;

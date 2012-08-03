@@ -211,6 +211,15 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
     }
   }
 
+  public void processingStarted() {
+    myPrevMessageLogLevel = null;
+    myPrevTag = null;
+    myPrevPid = null;
+    myFullMessageApplicable = false;
+    myFullMessageApplicableByCustomFilter = false;
+    myMessageBuilder = new StringBuilder();
+  }
+
   @NotNull
   public MyProcessingResult processLine(String line) {
     final Matcher matcher = ANDROID_LOG_MESSAGE_PATTERN.matcher(line);

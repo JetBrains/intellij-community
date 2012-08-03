@@ -429,6 +429,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   private synchronized void doFilter() {
     myConsole.clear();
+    myModel.processingStarted();
+
     final String[] lines = myOriginalDocument.toString().split("\n");
     int offset = 0;
     boolean caretPositioned = false;
