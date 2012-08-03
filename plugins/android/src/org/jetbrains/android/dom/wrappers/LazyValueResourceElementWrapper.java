@@ -40,7 +40,6 @@ public class LazyValueResourceElementWrapper extends RenameableFakePsiElement im
       throw new IncorrectOperationException(
         "Cannot find resource '" + myResourceInfo.getName() + "' in file " + myResourceInfo.getContainingFile().getPath());
     }
-    System.out.println("Lazy;set name: " + name);
     return new ValueResourceElementWrapper(element).setName(name);
   }
 
@@ -98,7 +97,6 @@ public class LazyValueResourceElementWrapper extends RenameableFakePsiElement im
   public static PsiElement computeLazyElement(PsiElement element) {
     if (element instanceof LazyValueResourceElementWrapper) {
       element = ((LazyValueResourceElementWrapper)element).computeElement();
-      System.out.println("computed element" + element);
     }
     return element;
   }
