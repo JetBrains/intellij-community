@@ -57,9 +57,11 @@ public class InstanceOfInstruction extends InstructionImpl implements MixinTypeI
       GrExpression left = ((GrBinaryExpression)element).getLeftOperand();
       GrExpression right = ((GrBinaryExpression)element).getRightOperand();
       GroovyResolveResult result = ((GrReferenceExpression)right).advancedResolve();
-      PsiClass resolved = (PsiClass)result.getElement();
-      PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createType(resolved, result.getSubstitutor());
-      return new Pair<GrExpression, PsiType>(left, type);
+      final PsiElement resolved = result.getElement();
+      if (resolved instanceof PsiClass) {
+        PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createType((PsiClass)resolved, result.getSubstitutor());
+        return new Pair<GrExpression, PsiType>(left, type);
+      }
     }
     return null;
   }
