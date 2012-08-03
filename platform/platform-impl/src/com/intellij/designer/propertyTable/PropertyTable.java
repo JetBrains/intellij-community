@@ -78,7 +78,10 @@ public abstract class PropertyTable extends JBTable {
     setModel(myModel);
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     showColumns(false);
-    setShowGrid(false);
+
+    setShowVerticalLines(false);
+    setIntercellSpacing(new Dimension(0, 1));
+    setGridColor(UIUtil.getSlightlyDarkerColor(getBackground()));
 
     setRowSelectionAllowed(true);
     setColumnSelectionAllowed(false);
@@ -1051,7 +1054,10 @@ public abstract class PropertyTable extends JBTable {
         boolean hasChildren = !getChildren(property).isEmpty();
 
         myRenderer.setIcon(hasChildren ? icon : null);
-        int indent = (icon.getIconWidth() + myRenderer.getIconTextGap()) * (getDepth(property) + (hasChildren ? 0 : 1));
+
+        int indent = (UIUtil.getTreeLeftChildIndent() + myRenderer.getIconTextGap()) * getDepth(property);
+        if (!hasChildren) indent += icon.getIconWidth() + myRenderer.getIconTextGap();
+
         myRenderer.setIpad(new Insets(0, indent, 0, 0));
 
         return myRenderer;

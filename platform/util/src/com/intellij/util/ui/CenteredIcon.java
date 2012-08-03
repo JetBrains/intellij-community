@@ -45,19 +45,19 @@ public class CenteredIcon implements Icon {
   public void paintIcon(Component c, Graphics g, int x, int y) {
     final Dimension size = c.getSize();
 
-    int actualX;
-    int actualY;
+    int offsetX;
+    int offsetY;
 
     if (myCenteredInComponent) {
-      actualX = size.width / 2 - myIcon.getIconWidth() / 2;
-      actualY = size.height / 2 - myIcon.getIconHeight() / 2;
+      offsetX = size.width / 2 - myIcon.getIconWidth() / 2;
+      offsetY = size.height / 2 - myIcon.getIconHeight() / 2;
     }
     else {
-      actualX = (myWidth - myIcon.getIconWidth()) / 2;
-      actualY = (myHight - myIcon.getIconHeight()) / 2;
+      offsetX = (myWidth - myIcon.getIconWidth()) / 2;
+      offsetY = (myHight - myIcon.getIconHeight()) / 2;
     }
 
-    myIcon.paintIcon(c, g, x + actualX, y + actualY);
+    myIcon.paintIcon(c, g, x + offsetX, y + offsetY);
   }
 
   public int getIconWidth() {

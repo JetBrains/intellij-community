@@ -821,12 +821,12 @@ public class UIUtil {
     Icon selectedIcon = getTreeSelectedExpandedIcon();
     Icon notSelectedIcon = getTreeExpandedIcon();
 
-    int widht = Math.max(selectedIcon.getIconWidth(), notSelectedIcon.getIconWidth());
+    int width = Math.max(selectedIcon.getIconWidth(), notSelectedIcon.getIconWidth());
     int height = Math.max(selectedIcon.getIconWidth(), notSelectedIcon.getIconWidth());
 
     return new CenteredIcon(expanded ? (white ? getTreeSelectedExpandedIcon() : getTreeExpandedIcon())
                                      : (white ? getTreeSelectedCollapsedIcon() : getTreeCollapsedIcon()),
-                            widht, height, false);
+                            width, height, false);
   }
 
   public static Icon getTreeCollapsedIcon() {
