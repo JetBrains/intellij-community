@@ -117,6 +117,28 @@ this.allOptions = [:];
 ''')
   }
 
+  void testSWforMemberWithDoc() {
+    doTestForSelectWord(4, '''\
+class A {
+  /**
+   * abc
+   */
+  def fo<caret>o() {}
+
+  def bar(){}
+}
+''', '''\
+class A {
+<selection>  /**
+   * abc
+   */
+  def fo<caret>o() {}
+</selection>
+  def bar(){}
+}
+''')
+  }
+
   private void doTestForSelectWord(int count, String input, String expected) {
     myFixture.configureByText("a.groovy", input);
     selectWord(count)
