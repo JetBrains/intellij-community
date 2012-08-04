@@ -608,9 +608,8 @@ public class ControlFlowUtils {
   }
 
 
-  public static boolean isReturnValue(@NotNull GrExpression expression, @NotNull GrMethod method) {
-    GrOpenBlock block = method.getBlock();
-    return block != null && getAllReturnValues(block).contains(expression);
+  public static boolean isReturnValue(@NotNull GrExpression expression, @NotNull GrControlFlowOwner flowOwner) {
+    return getAllReturnValues(flowOwner).contains(expression);
   }
 
   public static boolean visitAllExitPoints(@Nullable GrControlFlowOwner block, ExitPointVisitor visitor) {

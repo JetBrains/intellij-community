@@ -29,7 +29,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -47,7 +46,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -240,17 +238,6 @@ public class GroovyExpectedTypesProvider {
       }
     }
 
-    @Nullable
-    private static PsiClass resolveAnnotation(PsiElement insideAnnotation) {
-      final GrAnnotation annotation = PsiTreeUtil.getParentOfType(insideAnnotation, GrAnnotation.class);
-
-      final GrCodeReferenceElement reference = annotation.getClassReference();
-      final GroovyResolveResult result = reference.advancedResolve();
-      final PsiElement element = result.getElement();
-      if (element instanceof PsiClass && ((PsiClass)element).isAnnotationType()) return (PsiClass)element;
-      return null;
-    }
-
     @Override
     public void visitDefaultAnnotationValue(GrDefaultAnnotationValue defaultAnnotationValue) {
       final GrAnnotationMethod method = ((GrAnnotationMethod)defaultAnnotationValue.getParent());
@@ -266,7 +253,7 @@ public class GroovyExpectedTypesProvider {
       final GrAnnotationNameValuePair nameValuePair = PsiTreeUtil.getParentOfType(arrayInitializer, GrAnnotationNameValuePair.class, true, GrDefaultAnnotationValue.class);
       if (nameValuePair != null) {
 
-        final PsiClass annot = resolveAnnotation(arrayInitializer);
+        final PsiClass annot = ResolveUtil.resolveAnnotation(arrayInitializer);
         if (annot == null) return;
 
         final String name = nameValuePair.getName();
@@ -307,7 +294,7 @@ public class GroovyExpectedTypesProvider {
     @Override
     public void visitAnnotationNameValuePair(GrAnnotationNameValuePair nameValuePair) {
       if (myExpression.equals(nameValuePair.getValue())) {
-        final PsiClass annot = resolveAnnotation(nameValuePair.getParent());
+        final PsiClass annot = ResolveUtil.resolveAnnotation(nameValuePair.getParent());
         if (annot != null) {
           final String name = nameValuePair.getName();
           if (name != null) {

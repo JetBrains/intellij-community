@@ -1312,10 +1312,8 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
   public void visitAnnotationArgumentList(GrAnnotationArgumentList annotationArgumentList) {
     final GrAnnotation annotation = (GrAnnotation)annotationArgumentList.getParent();
 
-    final PsiElement resolved = annotation.getClassReference().resolve();
-    if (resolved == null) return;
-    assert resolved instanceof PsiClass;
-    final PsiClass annot = (PsiClass)resolved;
+    final PsiClass annot = ResolveUtil.resolveAnnotation(annotationArgumentList);
+    if (annot == null) return;
 
     final GrAnnotationNameValuePair[] attributes = annotationArgumentList.getAttributes();
 
@@ -1388,7 +1386,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final GlobalSearchScope resolveScope = value.getResolveScope();
     final PsiManager manager = value.getManager();
 
-    if (value instanceof GrExpression) {
+    if (value instanceof GrExpression && !(value instanceof GrClosableBlock)) {
       final PsiType rtype = ((GrExpression)value).getType();
 
       if (rtype != null && !checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype, skipArrays)) {

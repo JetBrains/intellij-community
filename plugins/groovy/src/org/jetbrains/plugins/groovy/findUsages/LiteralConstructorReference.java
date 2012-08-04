@@ -79,7 +79,7 @@ public class LiteralConstructorReference extends PsiReferenceBase.Poly<GrListOrM
     else {
       final GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(expression);
       if (controlFlowOwner instanceof GrOpenBlock && controlFlowOwner.getParent() instanceof GrMethod) {
-        if (ControlFlowUtils.isReturnValue(expression, (GrMethod)controlFlowOwner.getParent())) {
+        if (ControlFlowUtils.isReturnValue(expression, controlFlowOwner)) {
           type = ((GrMethod)controlFlowOwner.getParent()).getReturnType();
         }
       }
