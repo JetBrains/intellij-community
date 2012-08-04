@@ -17,35 +17,34 @@ package standardDsls
 
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiUtil
+
 import static standardDsls.Constants.NUMBER
 import static standardDsls.Constants.STRING
-
 /**
  * @author Maxim.Medvedev
  */
 
-interface Constants {
+private interface Constants {
   String NUMBER = "java.lang.Number"
   String STRING = "java.lang.String"
   String WILDCARD_PREFIX = "? extends "
 }
 
-def extractIterableParameter(PsiType type) {
-  if (!type) return null
+private String extractIterableParameter(PsiType type) {
   def componentType = PsiUtil.extractIterableTypeParameter(type, true)
-  return removeWildcard(componentType.canonicalText?:componentType.presentableText);
+  return removeWildcard(componentType?.canonicalText ?: componentType?.presentableText);
 }
 
 private String removeWildcard(String componentType) {
-  componentType = componentType.replace("?extends", "? extends ")
+  componentType = componentType?.replace("?extends", "? extends ")
 
   if (componentType?.startsWith(Constants.WILDCARD_PREFIX)) {
-    return componentType.substring(Constants.WILDCARD_PREFIX.size())
+    return componentType?.substring(Constants.WILDCARD_PREFIX.size())
   }
   return componentType
 }
 
-def constructElementTypeArg(PsiType psiType) {
+private String constructElementTypeArg(PsiType psiType) {
   def arg = extractIterableParameter(psiType)
   if (!arg || arg == "null") return ""
   return "<$arg>"
