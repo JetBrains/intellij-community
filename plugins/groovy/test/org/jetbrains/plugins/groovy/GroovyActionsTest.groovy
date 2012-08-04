@@ -57,7 +57,7 @@ public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 "a.<selection>foo(b)</selection>"
   }
 
-  public void testSWInCodeBlock() {doTestForSelectWord 3}
+  public void testSWInCodeBlock() {doTestForSelectWord 5}
 
   public void testElseBranch() {
     doTestForSelectWord (3, '''\
@@ -74,6 +74,46 @@ def foo() {
 <selection>  else <caret>{
   }
 </selection>}
+''')
+  }
+
+  void testBlocksOfCode() {
+    doTestForSelectWord(8, '''\
+this.allOptions = [:];
+    confTag.option.each{ opt ->
+      def value = opt.'@value';
+      if (value == null) {
+        value = opt.value ? opt.value[0].'@defaultName' : null;
+      }
+      this.allOptions[opt.'@name'] = value;
+    }
+
+    def moduleNode = confTag.mod<caret>ule[0] ;
+    if (moduleNode != null && !"wholeProject".equals(this.allOptions['TEST_SEARCH_SCOPE'])) {
+      this.moduleRef = JpsElementFactory.instance.createModuleReference(moduleNode.'@name');
+    } else {
+      this.moduleRef = null;
+    }
+
+    this.macroExpander = macroExpander;
+''', '''\
+this.allOptions = [:];
+    confTag.option.each{ opt ->
+      def value = opt.'@value';
+      if (value == null) {
+        value = opt.value ? opt.value[0].'@defaultName' : null;
+      }
+      this.allOptions[opt.'@name'] = value;
+    }
+
+<selection>    def moduleNode = confTag.mod<caret>ule[0] ;
+    if (moduleNode != null && !"wholeProject".equals(this.allOptions['TEST_SEARCH_SCOPE'])) {
+      this.moduleRef = JpsElementFactory.instance.createModuleReference(moduleNode.'@name');
+    } else {
+      this.moduleRef = null;
+    }
+</selection>
+    this.macroExpander = macroExpander;
 ''')
   }
 

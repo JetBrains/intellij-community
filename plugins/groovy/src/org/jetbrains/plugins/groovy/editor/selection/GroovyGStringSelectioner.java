@@ -42,7 +42,7 @@ public class GroovyGStringSelectioner extends ExtendWordSelectionHandlerBase {
 
   @Override
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    List<TextRange> ranges = new ArrayList<TextRange>();
+    List<TextRange> ranges = super.select(e, editorText, cursorOffset, editor);
     PsiElement parent = e.getParent();
 
     if (parent instanceof GrString) {

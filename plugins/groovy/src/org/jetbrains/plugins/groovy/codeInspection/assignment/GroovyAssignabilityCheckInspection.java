@@ -293,6 +293,8 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
 
     private void checkConstructorCall(GrConstructorCall constructorCall, GroovyPsiElement refElement) {
       final GrArgumentList argList = constructorCall.getArgumentList();
+      if (hasErrorElements(argList)) return;
+
       if (!checkCannotInferArgumentTypes(refElement)) return;
       final GroovyResolveResult constructorResolveResult = constructorCall.advancedResolve();
       final PsiElement constructor = constructorResolveResult.getElement();
@@ -555,7 +557,21 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       }
     }
 
+    /**
+     * checks only children of e
+     */
+    private static boolean hasErrorElements(@Nullable PsiElement e) {
+      if (e == null) return false;
+
+      for (PsiElement child = e.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child instanceof PsiErrorElement) return true;
+      }
+      return false;
+    }
+
     private void checkMethodCall(GrMethodCall call) {
+      if (hasErrorElements(call.getArgumentList())) return;
+
       final GrExpression expression = call.getInvokedExpression();
       if (!(expression instanceof GrReferenceExpression)) { //it checks in visitRefExpr(...)
         final PsiType type = expression.getType();
@@ -709,7 +725,7 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
         final PsiType qualifier = inferQualifierTypeByPlace((GrReferenceExpression)place);
         if (qualifier != null && !MixinMemberContributor.isCategoryMethod(staticMethod, qualifier, methodResolveResult.getSubstitutor())) {
           registerError(((GrReferenceExpression)place).getReferenceNameElement(),
-                        GroovyInspectionBundle.message("category,method.0.cannot.be.applied.to.1", method.getName(),
+                        GroovyInspectionBundle.message("category.method.0.cannot.be.applied.to.1", method.getName(),
                                                        qualifier.getCanonicalText()));
           return false;
         }
