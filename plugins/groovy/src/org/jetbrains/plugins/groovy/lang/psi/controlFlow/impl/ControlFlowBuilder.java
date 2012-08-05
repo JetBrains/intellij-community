@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
+import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
@@ -138,14 +140,45 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
+
+  private static boolean isCertainlyReturnStatement(GrStatement st) {
+    final PsiElement parent = st.getParent();
+    if (parent instanceof GrOpenBlock) {
+      if (st != ArrayUtil.getLastElement(((GrOpenBlock)parent).getStatements())) return false;
+
+      PsiElement pparent = parent.getParent();
+      if (pparent instanceof GrMethod) {
+        return true;
+      }
+      //todo switch
+      if (pparent instanceof GrBlockStatement || pparent instanceof GrCatchClause || pparent instanceof GrLabeledStatement) pparent = pparent.getParent();
+      if (pparent instanceof GrIfStatement || pparent instanceof GrControlStatement || pparent instanceof GrTryCatchStatement) {
+        return isCertainlyReturnStatement((GrStatement)pparent);
+      }
+    }
+
+    else if (parent instanceof GrClosableBlock) {
+      return st == ArrayUtil.getLastElement(((GrClosableBlock)parent).getStatements());
+    }
+
+    else if (parent instanceof GroovyFileBase) {
+      return st == ArrayUtil.getLastElement(((GroovyFileBase)parent).getStatements());
+    }
+    else if (parent instanceof GrIfStatement || parent instanceof GrControlStatement) return isCertainlyReturnStatement((GrStatement)parent);
+
+    return false;
+  }
+
   private void handlePossibleReturn(@NotNull GrStatement last) {
+    if (!isCertainlyReturnStatement(last)) return;
+
     //last statement inside finally clause cannot be possible return statement
     final GrFinallyClause finallyClause = PsiTreeUtil.getParentOfType(last, GrFinallyClause.class, false, GrClosableBlock.class, GrMember.class);
     if (finallyClause != null) return;
 
     if (!(last instanceof GrExpression && PsiTreeUtil.isAncestor(myLastInScope, last, false))) return;
 
-    addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)last));
+    InstructionImpl head = addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)last));
 
     for (ListIterator<Pair<InstructionImpl, GroovyPsiElement>> iterator = myPending.listIterator(myPending.size());iterator.hasPrevious(); ) {
       Pair<InstructionImpl, GroovyPsiElement> pair = iterator.previous();
@@ -153,10 +186,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (scopeWhenToAdd == null) continue;
       if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, last, false)) break;
 
+      interruptFlow();
       MaybeReturnInstruction may = addNode(new MaybeReturnInstruction((GrExpression)last));
       addEdge(pair.first, may);
       iterator.set(new Pair<InstructionImpl, GroovyPsiElement>(may, scopeWhenToAdd));
     }
+
+    myHead = head;
   }
 
   public Instruction[] buildControlFlow(GroovyPsiElement scope) {
@@ -652,11 +688,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (thenBranch != null || elseBranch != null) {
       final InstructionImpl end = new IfEndInstruction(ifStatement);
       addNode(end);
-      if (thenEnd != null) addEdge(thenEnd, end);
+      if (thenEnd != null) {
+        addEdge(thenEnd, end);
+      }
+
       if (elseEnd != null) {
         addEdge(elseEnd, end);
       }
-      else {
+      else if (elseBranch == null) {
         addEdge(conditionEnd != null ? conditionEnd : ifInstruction, end);
       }
     }

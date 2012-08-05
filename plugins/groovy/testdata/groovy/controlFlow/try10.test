@@ -15,7 +15,7 @@ cde
 6(7) element: Block statement
 7(8) element: IF statement
 8(9,10) READ abc
-9(5) element: IF statement
+9(5) End element: IF statement
 10(4)  RETURN
 11(12) READ cde
 12(13) element: Reference expression MAYBE_RETURN

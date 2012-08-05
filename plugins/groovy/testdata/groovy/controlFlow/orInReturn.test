@@ -5,6 +5,6 @@ OperatingSystem.isWindows() || OperatingSystem.isMacOsX()
 2(3) READ OperatingSystem
 3(4,6) element: Logical expression
 4(5) READ OperatingSystem
-5(6) element: Logical expression MAYBE_RETURN
+5(7) element: Logical expression MAYBE_RETURN
 6(7) element: Logical expression MAYBE_RETURN
 7() element: null

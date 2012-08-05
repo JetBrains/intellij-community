@@ -29,4 +29,9 @@ public class IfEndInstruction extends InstructionImpl{
   public GrIfStatement getElement() {
     return (GrIfStatement)super.getElement();
   }
+
+  @Override
+  protected String getElementPresentation() {
+    return "End element: " + myPsiElement;
+  }
 }

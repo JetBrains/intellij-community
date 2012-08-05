@@ -10,5 +10,5 @@ if (i in String) i = i.substring(2)
 7(8) READ i
 8(9) WRITE i
 9(10) element: Assignment expression MAYBE_RETURN
-10(11) element: IF statement
+10(11) End element: IF statement
 11() element: null
