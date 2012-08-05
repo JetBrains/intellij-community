@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -28,11 +29,15 @@ import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitConfigUtil;
+import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.crlf.GitCrlfDialog;
+import git4idea.crlf.GitCrlfProblemsDetector;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -60,10 +65,13 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
   }
 
   private class MyCheckinHandler extends CheckinHandler {
-    private CheckinProjectPanel myPanel;
+    @NotNull private final CheckinProjectPanel myPanel;
+    @NotNull private final Project myProject;
 
-    public MyCheckinHandler(CheckinProjectPanel panel) {
+
+    public MyCheckinHandler(@NotNull CheckinProjectPanel panel) {
       myPanel = panel;
+      myProject = myPanel.getProject();
     }
 
     @Override
@@ -77,9 +85,59 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         if (result != ReturnResult.COMMIT) {
           return result;
         }
+        result = warnAboutCrlfIfNeeded();
+        if (result != ReturnResult.COMMIT) {
+          return result;
+        }
         return warnAboutDetachedHeadIfNeeded();
       }
       return ReturnResult.COMMIT;
+    }
+
+    @NotNull
+    private ReturnResult warnAboutCrlfIfNeeded() {
+      GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
+      if (!SystemInfo.isWindows || !settings.warnAboutCrlf()) {
+        return ReturnResult.COMMIT;
+      }
+
+      GitCrlfProblemsDetector crlfHelper = GitCrlfProblemsDetector.detect(myPanel.getVirtualFiles());
+      if (crlfHelper.shouldWarn()) {
+        final GitCrlfDialog dialog = new GitCrlfDialog(myProject);
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            dialog.show();
+          }
+        });
+        int decision = dialog.getExitCode();
+        if  (decision == GitCrlfDialog.CANCEL) {
+          return ReturnResult.CANCEL;
+        }
+        else {
+          if (decision == GitCrlfDialog.SET) {
+            VirtualFile anyRoot = myPanel.getRoots().iterator().next(); // config will be set globally => any root will do.
+            setCoreAutoCrlfAttribute(anyRoot);
+          }
+          else {
+            if (dialog.dontWarnAgain()) {
+              settings.setWarnAboutCrlf(false);
+            }
+          }
+          return ReturnResult.COMMIT;
+        }
+      }
+      return ReturnResult.COMMIT;
+    }
+
+    private void setCoreAutoCrlfAttribute(@NotNull VirtualFile aRoot) {
+      try {
+        GitConfigUtil.setValue(myProject, aRoot, GitConfigUtil.CORE_AUTOCRLF, "true", "--global");
+      }
+      catch (VcsException e) {
+        // it is not critical: the user just will get the dialog again next time
+        LOG.warn("Couldn't globally set core.autocrlf in " + aRoot, e);
+      }
     }
 
     private ReturnResult checkUserName() {

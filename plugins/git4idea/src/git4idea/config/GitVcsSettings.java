@@ -41,7 +41,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   private final GitVcsApplicationSettings myAppSettings;
   private State myState = new State();
-  
+
   /**
    * The way the local changes are saved before update if user has selected auto-stash
    */
@@ -63,6 +63,7 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     public Map<String, String> RECENT_BRANCH_BY_REPOSITORY = new HashMap<String, String>();
     public String RECENT_COMMON_BRANCH = null;
     public boolean AUTO_COMMIT_ON_CHERRY_PICK = false;
+    public boolean WARN_ABOUT_CRLF = true;
   }
 
   public GitVcsSettings(GitVcsApplicationSettings appSettings) {
@@ -169,6 +170,14 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
 
   public boolean isAutoCommitOnCherryPick() {
     return myState.AUTO_COMMIT_ON_CHERRY_PICK;
+  }
+
+  public boolean warnAboutCrlf() {
+    return myState.WARN_ABOUT_CRLF;
+  }
+
+  public void setWarnAboutCrlf(boolean warn) {
+    myState.WARN_ABOUT_CRLF = warn;
   }
 
   /**
