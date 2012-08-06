@@ -344,7 +344,9 @@ reindex
 renderer
 repo
 resetlogs
+resizable
 resize
+resizeable
 rethrow
 rethrowing
 rethrown
