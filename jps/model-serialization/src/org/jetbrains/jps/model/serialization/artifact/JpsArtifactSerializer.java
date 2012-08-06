@@ -151,7 +151,7 @@ public class JpsArtifactSerializer {
         }
       }
     }
-    return null;
+    return STANDARD_TYPE_SERIALIZERS[0];
   }
 
   private static JpsArtifactTypeSerializer getTypeSerializer(JpsArtifactType type) {
