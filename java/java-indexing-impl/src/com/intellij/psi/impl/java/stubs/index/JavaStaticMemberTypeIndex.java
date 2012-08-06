@@ -42,7 +42,7 @@ public class JavaStaticMemberTypeIndex extends StringStubIndexExtension<PsiMembe
     return JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES;
   }
 
-  public Collection<PsiMember> getStaticMembers(final String shortTypeText, final Project project, @NotNull final GlobalSearchScope scope) {
+  public Collection<PsiMember> getStaticMembers(@NotNull final String shortTypeText, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(shortTypeText, project, new JavaSourceFilterScope(scope));
   }
 

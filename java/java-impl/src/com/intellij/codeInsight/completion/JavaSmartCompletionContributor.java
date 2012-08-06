@@ -311,9 +311,9 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
     PsiElement position = params.getPosition();
     if (!BasicExpressionCompletionContributor.AFTER_DOT.accepts(position)) {
       for (ExpectedTypeInfo info : mergedInfos) {
-        new JavaMembersGetter(info.getType(), position).addMembers(params, !quick, consumer);
+        new JavaMembersGetter(info.getType(), params).addMembers(!quick, consumer);
         if (!info.getDefaultType().equals(info.getType())) {
-          new JavaMembersGetter(info.getDefaultType(), position).addMembers(params, !quick, consumer);
+          new JavaMembersGetter(info.getDefaultType(), params).addMembers(!quick, consumer);
         }
       }
     }

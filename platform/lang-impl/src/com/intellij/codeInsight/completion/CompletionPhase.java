@@ -363,7 +363,7 @@ public abstract class CompletionPhase implements Disposable {
     @Override
     public int newCompletionStarted(int time, boolean repeated) {
       CompletionServiceImpl.setCompletionPhase(NoCompletion);
-      return time + 1;
+      return repeated ? time + 1 : time;
     }
   }
 

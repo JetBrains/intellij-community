@@ -2,7 +2,7 @@ class C{
     {
         Object o;
         if (o instanceof Foo) {
-            new Object().do<caret>
+            new Object().dofo<caret>
         }
     }
 }

@@ -2,23 +2,25 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupItem;
+import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 
 @SuppressWarnings({"ALL"})
-public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
-  private static final String BASE_PATH = "/codeInsight/completion/smartType/second";
+public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCase {
 
-  public SecondSmartTypeCompletionTest() {
-    setType(CompletionType.SMART);
+  @Override
+  protected void complete() {
+    myItems = myFixture.complete(CompletionType.SMART, 2);
   }
 
   @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath();
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/smartType/second";
   }
 
   public void testMethodAsQualifier() throws Throwable { doTest(); }
@@ -69,7 +71,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
   public void testDontIgnoreToStringInsideIt() throws Throwable { doTest(); }
   public void testDontIgnoreToStringInStringBuilders() throws Throwable {
     configure();
-    assertStringItems("bar.substring", "bar.substring", "bar.toString");
+    myFixture.assertPreferredCompletionItems(0, "bar.substring", "bar.substring", "bar.toString");
   }
 
   public void testNoObjectMethodsAsFirstPart() throws Throwable { doTest(); }
@@ -81,7 +83,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
   public void testNewStaticProblem() throws Throwable { doTest(); }
 
   public void testChainingPerformance() throws Throwable {
-    configureByFileNoComplete(BASE_PATH + "/" + getTestName(false) + ".java");
+    myFixture.configureByFile(getTestName(false) + ".java");
     PlatformTestUtil.startPerformanceTest(getTestName(false), 1000, new ThrowableRunnable() {
       @Override
       public void run() throws Exception {
@@ -103,12 +105,12 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   private void configure() {
-    configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    configureByFile(getTestName(false) + ".java");
   }
 
   public void testNoArraysAsListCommonPrefix() throws Throwable {
     configure();
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    checkResultByFile(getTestName(false) + ".java");
     assertStringItems("bar()", "foo()");
     assertEquals("Arrays.asList(f.bar())", ((LookupItem)((LookupElementDecorator)myItems[0]).getDelegate()).getPresentableText());
     assertEquals("Arrays.asList(f.foo())", ((LookupItem)((LookupElementDecorator)myItems[1]).getDelegate()).getPresentableText());
@@ -117,11 +119,11 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   public void testRestoreInitialPrefix() throws Throwable {
-    configureByFileNoComplete(BASE_PATH + "/" + getTestName(false) + ".java");
-    complete(1);
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.complete(CompletionType.SMART);
     assertStringItems("MyEnum.Bar", "MyEnum.Foo");
     checkResult();
-    complete(1);
+    myFixture.complete(CompletionType.SMART);
     assertStringItems("my.getEnum", "MyEnum.Bar", "MyEnum.Foo");
   }
 
@@ -138,8 +140,8 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
 
   private void doAntiTest() throws Exception {
     configure();
-    assertNull(myItems);
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    assertEmpty(myItems);
+    checkResultByFile(getTestName(false) + ".java");
   }
 
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
@@ -157,7 +159,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
 
   public void testNoRedundantCasts() throws Throwable {
     configure();
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + ".java");
+    checkResultByFile(getTestName(false) + ".java");
     assertStringItems("o.gggg", "false", "true"); 
   }
 
@@ -168,7 +170,7 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
   }
 
   private void checkResult() {
-    checkResultByFile(BASE_PATH + "/" + getTestName(false) + "-out.java");
+    checkResultByFile(getTestName(false) + "-out.java");
   }
 
   public void testSingletonMap() throws Throwable {
@@ -202,6 +204,11 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     checkResult();
   }
 
+  public void testGlobalFactoryMethods() {
+    configure();
+    assertStringItems("createExpected", "createSubGeneric", "createSubRaw", "createSubString");
+  }
+
   public void testEmptyMapPresentation() {
     configure();
     LookupElementPresentation presentation = new LookupElementPresentation();
@@ -214,13 +221,6 @@ public class SecondSmartTypeCompletionTest extends LightCompletionTestCase {
     LookupElementPresentation presentation = new LookupElementPresentation();
     myItems[0].renderElement(presentation);
     assertEquals("Collections.emptyMap", presentation.getItemText());
-  }
-
-  @Override
-  protected void complete() {
-    complete(2);
-    LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-    myItems = lookup == null ? null : lookup.getItems().toArray(LookupElement.EMPTY_ARRAY);
   }
 
   protected void tearDown() throws Exception {

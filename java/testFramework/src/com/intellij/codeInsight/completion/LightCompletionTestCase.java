@@ -23,7 +23,6 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
@@ -103,7 +102,7 @@ public abstract class LightCompletionTestCase extends LightCodeInsightTestCase {
   }
 
   protected void assertStringItems(@NonNls String... items) {
-    assertEquals(getLookupStrings(new ArrayList<String>()), Arrays.asList(items));
+    assertOrderedEquals(getLookupStrings(new ArrayList<String>()), items);
   }
 
   protected void assertContainsItems(final String... expected) {

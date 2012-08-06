@@ -68,10 +68,12 @@ public class BasicExpressionCompletionContributor {
     }
 
     if (!AFTER_DOT.accepts(element)) {
-      new CollectionsUtilityMethodsProvider(parameters.getPosition(),
-                                            parameters.getExpectedType(),
-                                            parameters.getDefaultType(), result)
-        .addCompletions(parameters.getParameters().getInvocationCount() > 1 || StringUtil.isNotEmpty(matcher.getPrefix()));
+      if (parameters.getParameters().getInvocationCount() <= 1) {
+        new CollectionsUtilityMethodsProvider(parameters.getPosition(),
+                                              parameters.getExpectedType(),
+                                              parameters.getDefaultType(), result)
+          .addCompletions(StringUtil.isNotEmpty(matcher.getPrefix()));
+      }
       ClassLiteralGetter.addCompletions(parameters, result, matcher);
 
       final PsiElement position = parameters.getPosition();
