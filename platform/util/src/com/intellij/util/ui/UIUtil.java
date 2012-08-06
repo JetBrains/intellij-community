@@ -1177,8 +1177,8 @@ public class UIUtil {
   public static void drawRectPickedOut(Graphics2D g, int x, int y, int w, int h) {
     g.drawLine(x+1, y, x+w-1, y);
     g.drawLine(x+w, y+1, x+w, y+h-1);
-    g.drawLine(x+w-1, y+h, x+1, y+h);
-    g.drawLine(x, y+1, x, y+h-1);
+    g.drawLine(x + w - 1, y + h, x + 1, y + h);
+    g.drawLine(x, y + 1, x, y + h - 1);
   }
 
   private static void drawBoringDottedLine(final Graphics2D g,
@@ -1224,6 +1224,36 @@ public class UIUtil {
     final GradientPaint gradientPaint = new GradientPaint(0, 0, Gray._215, 0, height, Gray._200);
     g2d.setPaint(gradientPaint);
     g2d.fillRect(0, 0, width, height);
+  }
+
+  public static void drawHeader(Graphics g, int x, int width, int height, boolean active, boolean drawTopLine) {
+    drawHeader(g, x, width, height, active, false, drawTopLine);
+  }
+
+  public static void drawHeader(Graphics g,
+                                int x,
+                                int width,
+                                int height,
+                                boolean active,
+                                boolean toolWindow,
+                                boolean drawTopLine) {
+    g.setColor(getPanelBackground());
+    g.fillRect(x, 0, width, height);
+
+    ((Graphics2D)g).setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
+    g.fillRect(x, 0, width, height);
+
+    g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
+    if (drawTopLine) g.drawLine(x, 0, width, 0);
+    g.drawLine(x, height - 1, width, height - 1);
+
+    g.setColor(new Color(255, 255, 255, 100));
+    g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);
+
+    if (active) {
+      g.setColor(new Color(100, 150, 230, toolWindow? 50 : 30));
+      g.fillRect(x, 0, width, height);
+    }
   }
 
   public static void drawDoubleSpaceDottedLine(final Graphics2D g,

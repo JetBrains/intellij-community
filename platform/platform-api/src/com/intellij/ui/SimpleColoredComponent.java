@@ -456,11 +456,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   }
   
 
-  protected void doPaintTextBackground(Graphics2D g, int offset) {
+  private void doPaintTextBackground(Graphics2D g, int offset) {
     if (isOpaque() || shouldDrawBackground()) {
-      g.setColor(getBackground());
-      g.fillRect(offset, 0, getWidth() - offset, getHeight());
+      paintBackground(g, offset, getWidth() - offset, getHeight());
     }
+  }
+
+  protected void paintBackground(Graphics2D g, int x, int width, int height) {
+    g.setColor(getBackground());
+    g.fillRect(x, 0, width, height);
   }
 
   protected void doPaintIcon(Graphics2D g, Icon icon, int offset) {

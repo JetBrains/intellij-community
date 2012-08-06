@@ -19,6 +19,7 @@ import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.model.PropertyContext;
+import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -60,9 +61,21 @@ import java.util.List;
  */
 public abstract class PropertyTable extends JBTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.propertyTable.PropertyTable");
+  private static final Comparator<String> GROUP_COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(String o1, String o2) {
+      return StringUtil.compare(o1, o2, true);
+    }
+  };
+  private static final Comparator<Property> PROPERTY_COMPARATOR = new Comparator<Property>() {
+    @Override
+    public int compare(Property o1, Property o2) {
+      return StringUtil.compare(o1.getName(), o2.getName(), true);
+    }
+  };
 
   private boolean mySorted;
-  private boolean myShowCategories;
+  private boolean myShowGroups;
   private boolean myShowExpertProperties;
 
   private final AbstractTableModel myModel = new PropertyTableModel();
@@ -111,13 +124,13 @@ public abstract class PropertyTable extends JBTable {
     return mySorted;
   }
 
-  public boolean isShowCategories() {
-    return myShowCategories;
+  public void setShowGroups(boolean showGroups) {
+    myShowGroups = showGroups;
+    update();
   }
 
-  public void setShowCategories(boolean showCategories) {
-    myShowCategories = showCategories;
-    update();
+  public boolean isShowGroups() {
+    return myShowGroups;
   }
 
   public void showExpert(boolean showExpert) {
@@ -270,7 +283,7 @@ public abstract class PropertyTable extends JBTable {
       Property selection = initialSelection != null ? initialSelection : getSelectionProperty();
       myContainers = new ArrayList<PropertiesContainer>(containers);
       fillProperties();
-      sortProperties();
+      sortPropertiesAndCreateGroups();
       myModel.fireTableDataChanged();
 
       restoreSelection(selection);
@@ -280,25 +293,46 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private void sortProperties() {
-    if (!mySorted && !myShowCategories) return;
+  private void sortPropertiesAndCreateGroups() {
+    if (!mySorted && !myShowGroups) return;
 
     Collections.sort(myProperties, new Comparator<Property>() {
       @Override
       public int compare(Property o1, Property o2) {
-        if (myShowCategories) {
-          String c1 = o1.getCategory();
-          String c2 = o2.getCategory();
-          int result = StringUtil.compare(c1, c2, true);
-          if (result != 0) {
-            if (c1 == null) return 1;
-            if (c2 == null) return -1;
-            return result;
-          }
+        if (myShowGroups) {
+          int result = getGroupComparator().compare(o1.getGroup(), o2.getGroup());
+          if (result != 0) return result;
         }
-        return mySorted ? StringUtil.compare(o1.getName(), o2.getName(), true) : 0;
+        return mySorted ? getPropertyComparator().compare(o1, o2) : 0;
       }
     });
+
+    if (myShowGroups) {
+      for (int i = 0; i < myProperties.size() - 1; i++) {
+        Property prev = i == 0 ? null : myProperties.get(i - 1);
+        Property each = myProperties.get(i);
+
+        String eachGroup = each.getGroup();
+        String prevGroup = prev == null ? null : prev.getGroup();
+
+        if (prevGroup != null || eachGroup != null) {
+          if (!StringUtil.equalsIgnoreCase(eachGroup, prevGroup)) {
+            myProperties.add(i, new GroupProperty(each.getGroup()));
+            i++;
+          }
+        }
+      }
+    }
+  }
+
+  @NotNull
+  protected Comparator<String> getGroupComparator() {
+    return GROUP_COMPARATOR;
+  }
+
+  @NotNull
+  protected Comparator<Property> getPropertyComparator() {
+    return PROPERTY_COMPARATOR;
   }
 
   private void restoreSelection(Property selection) {
@@ -327,7 +361,14 @@ public abstract class PropertyTable extends JBTable {
       getSelectionModel().setSelectionInterval(indexToSelect, indexToSelect);
     }
     else if (getRowCount() > 0) {
-      getSelectionModel().setSelectionInterval(0, 0);
+      indexToSelect = 0;
+      for (int i = 0; i < myProperties.size(); i++) {
+        if (!(myProperties.get(i) instanceof GroupProperty)) {
+          indexToSelect = i;
+          break;
+        }
+      }
+      getSelectionModel().setSelectionInterval(indexToSelect, indexToSelect);
     }
     TableUtil.scrollSelectionToVisible(this);
   }
@@ -1036,13 +1077,31 @@ public abstract class PropertyTable extends JBTable {
   protected abstract TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity);
 
   private class PropertyCellRenderer implements TableCellRenderer {
-    private final ColoredTableCellRenderer myRenderer;
+    private final ColoredTableCellRenderer myCellRenderer;
+    private final ColoredTableCellRenderer myGroupRenderer;
 
     private PropertyCellRenderer() {
-      myRenderer = new ColoredTableCellRenderer() {
+      myCellRenderer = new MyCellRenderer();
+      myGroupRenderer = new MyCellRenderer() {
+        private boolean mySelected;
+        public boolean myDrawTopLine;
+
+
+        @Override
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-          setPaintFocusBorder(false);
-          setFocusBorderAroundIcon(true);
+          super.customizeCellRenderer(table, value, selected, hasFocus, row, column);
+          mySelected = selected;
+          myDrawTopLine = row > 0;
+        }
+
+        @Override
+        protected void paintBackground(Graphics2D g, int x, int width, int height) {
+          if (mySelected) {
+            super.paintBackground(g, x, width, height);
+          }
+          else {
+            UIUtil.drawHeader(g, x, width, height, true, myDrawTopLine);
+          }
         }
       };
     }
@@ -1057,11 +1116,24 @@ public abstract class PropertyTable extends JBTable {
       column = table.convertColumnIndexToModel(column);
       Property property = (Property)value;
       Color background = table.getBackground();
-      boolean isDefault = true;
 
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       boolean tableHasFocus = focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, table);
 
+      ColoredTableCellRenderer renderer = property instanceof GroupProperty ? myGroupRenderer : myCellRenderer;
+
+      renderer.getTableCellRendererComponent(table, value, selected, cellHasFocus, row, column);
+      renderer.setBackground(selected ? UIUtil.getTreeSelectionBackground(tableHasFocus) : background);
+
+      if (property instanceof GroupProperty) {
+        renderer.setIpad(new Insets(0, 5, 0, 0));
+        if (column == 0) {
+          renderer.append(property.getName());
+        }
+        return renderer;
+      }
+
+      boolean isDefault = true;
       try {
         isDefault = isDefault(property);
       }
@@ -1069,13 +1141,9 @@ public abstract class PropertyTable extends JBTable {
         LOG.debug(e);
       }
 
-      myRenderer.clear();
+      renderer.clear();
 
       if (column == 0) {
-        myRenderer.getTableCellRendererComponent(table, value, selected, cellHasFocus, row, column);
-
-        myRenderer.setBackground(selected ? UIUtil.getTreeSelectionBackground(tableHasFocus) : background);
-
         SimpleTextAttributes attr = SimpleTextAttributes.REGULAR_ATTRIBUTES;
 
         if (!selected && !isDefault) {
@@ -1101,31 +1169,31 @@ public abstract class PropertyTable extends JBTable {
           attr = attr.derive(attr.getStyle() | style, template.getFgColor(), template.getBgColor(), template.getWaveColor());
         }
 
-        myRenderer.append(property.getName(), attr);
+        renderer.append(property.getName(), attr);
 
         Icon icon = UIUtil.getTreeNodeIcon(isExpanded(property), selected, tableHasFocus);
         boolean hasChildren = !getChildren(property).isEmpty();
 
-        myRenderer.setIcon(hasChildren ? icon : null);
+        renderer.setIcon(hasChildren ? icon : null);
 
         Pair<Integer, Integer> indents = getBeforeIconAndAfterIndents(property, icon);
         int indent = indents.first;
 
         if (hasChildren) {
-          myRenderer.setIconTextGap(indents.second);
+          renderer.setIconTextGap(indents.second);
         }
         else {
           indent += icon.getIconWidth() + indents.second;
         }
-        myRenderer.setIpad(new Insets(0, indent, 0, 0));
+        renderer.setIpad(new Insets(0, indent, 0, 0));
 
-        return myRenderer;
+        return renderer;
       }
       else {
         try {
-          PropertyRenderer renderer = property.getRenderer();
+          PropertyRenderer valueRenderer = property.getRenderer();
           JComponent component =
-            renderer.getComponent(getCurrentComponent(), getPropertyContext(), getValue(property), selected, tableHasFocus);
+            valueRenderer.getComponent(getCurrentComponent(), getPropertyContext(), getValue(property), selected, tableHasFocus);
 
           component.setBackground(selected ? UIUtil.getTreeSelectionBackground(tableHasFocus) : background);
           component.setFont(table.getFont());
@@ -1138,11 +1206,34 @@ public abstract class PropertyTable extends JBTable {
         }
         catch (Exception e) {
           LOG.debug(e);
-          myRenderer.getTableCellRendererComponent(table, value, selected, cellHasFocus, row, column);
-          myRenderer.append(formatErrorGettingValueMesage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
-          return myRenderer;
+          renderer.append(formatErrorGettingValueMesage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          return renderer;
         }
       }
+    }
+
+    private class MyCellRenderer extends ColoredTableCellRenderer {
+      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        setPaintFocusBorder(false);
+        setFocusBorderAroundIcon(true);
+      }
+    }
+  }
+
+  private static class GroupProperty extends Property {
+    public GroupProperty(@Nullable String name) {
+      super(null, StringUtil.notNullize(name));
+    }
+
+    @NotNull
+    @Override
+    public PropertyRenderer getRenderer() {
+      return new LabelPropertyRenderer(null);
+    }
+
+    @Override
+    public PropertyEditor getEditor() {
+      return null;
     }
   }
 }
