@@ -16,14 +16,10 @@
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.ui.laf.IdeaDarkLookAndFeelInfo;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.ide.ui.laf.DarculaInstaller;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ListCellRendererWrapper;
@@ -162,23 +158,12 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       final UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
       if (lafManager.checkLookAndFeel(lafInfo)) {
         update = shouldUpdateUI = true;
+        boolean wasDarcula = UIUtil.isUnderDarcula();
         lafManager.setCurrentLookAndFeel(lafInfo);
-        if (lafInfo instanceof IdeaDarkLookAndFeelInfo && !lafInfo.getName().equals(
-          EditorColorsManager.getInstance().getGlobalScheme().getName())) {
-          final EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(lafInfo.getName());
-
-          if (scheme != null) {
-            final int answer = Messages.showOkCancelDialog("Set " + lafInfo.getName() + " editor scheme as well?",
-                                                           "Setup Editor Color Scheme",
-                                                           Messages.getQuestionIcon());
-            if (answer == Messages.OK) {
-              EditorColorsManager.getInstance().setGlobalScheme(scheme);
-              if (Messages.showOkCancelDialog("Restart now?", "Restart", Messages.getQuestionIcon()) == Messages.OK) {
-                ApplicationManagerEx.getApplicationEx().restart();
-              }
-            }
-
-          }
+        if (UIUtil.isUnderDarcula()) {
+          DarculaInstaller.install();
+        } else if (wasDarcula) {
+          DarculaInstaller.uninstall();
         }
       }
     }
