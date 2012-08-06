@@ -236,7 +236,6 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     final PsiElement[] children = getChildren(atCaret);
 
     for (PsiElement child : children) {
-      if (atCaret instanceof GrStatement && child instanceof GrStatement) continue;
       collectAllElements(child, res, recurse);
     }
   }
