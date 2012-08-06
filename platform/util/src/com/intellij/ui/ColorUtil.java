@@ -19,6 +19,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +107,8 @@ public class ColorUtil {
   public static Color getColor(@NotNull Class<?> cls) {
     final Annotation annotation = cls.getAnnotation(Colored.class);
     if (annotation instanceof Colored) {
-      return fromHex(((Colored)annotation).color(), null);
+      final Colored colored = (Colored)annotation;
+      return fromHex(UIUtil.isUnderDarcula() ? colored.darkVariant() : colored.color(), null);
     }
     return null;
   }
