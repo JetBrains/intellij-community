@@ -108,6 +108,12 @@ public class FileAttributesReadingTest {
     assertFileAttributes(new File(file.getPath().replace(File.separator, File.separator + "." + File.separator)));
     assertFileAttributes(new File(myTempDirectory,
                                   File.separator + ".." + File.separator + myTempDirectory.getName() + File.separator + file.getName()));
+
+    if (SystemInfo.isUnix) {
+      final File backSlashFile = FileUtil.createTempFile(myTempDirectory, "test\\", "\\txt", true);
+      FileUtil.writeToFile(backSlashFile, myTestData);
+      assertFileAttributes(backSlashFile);
+    }
   }
 
   @Test
