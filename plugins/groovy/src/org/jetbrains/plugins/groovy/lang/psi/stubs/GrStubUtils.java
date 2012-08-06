@@ -31,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrMultiTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
@@ -44,19 +43,6 @@ import java.util.List;
  * Date: 02.06.2009
  */
 public class GrStubUtils {
-
-
-  private GrStubUtils() {
-  }
-
-  public static String[] getMultiTypes(GrMultiTypeParameter psi) {
-    final GrTypeElement[] typeElements = psi.getTypeElements();
-    final String[] types = new String[typeElements.length];
-    for (int i = 0; i < typeElements.length; i++) {
-      types[i] = typeElements[i].getText();
-    }
-    return types;
-  }
 
   public static void writeStringArray(StubOutputStream dataStream, String[] array) throws IOException {
     dataStream.writeByte(array.length);
@@ -88,8 +74,7 @@ public class GrStubUtils {
   }
 
   @Nullable
-  public static String getTypeText(GrTypeElement typeElementGroovy) {
-    final GrTypeElement typeElement = typeElementGroovy;
+  public static String getTypeText(GrTypeElement typeElement) {
     return typeElement == null ? null : typeElement.getText();
   }
 
