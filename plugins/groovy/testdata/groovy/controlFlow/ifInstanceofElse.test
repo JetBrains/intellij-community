@@ -23,6 +23,6 @@ else b = 3
 18(21) element: Assignment expression MAYBE_RETURN
 19(20) WRITE b
 20(21) element: Assignment expression MAYBE_RETURN
-21(22) element: IF statement
-22(23) element: IF statement
+21(22) End element: IF statement
+22(23) End element: IF statement
 23() element: null

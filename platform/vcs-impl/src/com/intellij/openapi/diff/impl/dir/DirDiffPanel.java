@@ -17,6 +17,7 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DiffType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -108,8 +109,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
       public void valueChanged(ListSelectionEvent e) {
         final int lastIndex = e.getLastIndex();
         final int firstIndex = e.getFirstIndex();
-        final DirDiffElement last = myModel.getElementAt(lastIndex);
-        final DirDiffElement first = myModel.getElementAt(firstIndex);
+        final DirDiffElementImpl last = myModel.getElementAt(lastIndex);
+        final DirDiffElementImpl first = myModel.getElementAt(firstIndex);
         if (last == null || first == null) return;
         if (last.isSeparator()) {
           final int ind = lastIndex + ((lastIndex < firstIndex) ? 1 : -1);
@@ -159,7 +160,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
         if (rows.length == 0) return;
         if (keyCode == KeyEvent.VK_DOWN && row < rowCount - 1) {
           row++;
-          final DirDiffElement element = myModel.getElementAt(row);
+          final DirDiffElementImpl element = myModel.getElementAt(row);
           if (element == null) return;
           if (element.isSeparator()) {
             row++;
@@ -167,7 +168,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
         }
         else if (keyCode == KeyEvent.VK_UP && row > 0) {
           row--;
-          final DirDiffElement element = myModel.getElementAt(row);
+          final DirDiffElementImpl element = myModel.getElementAt(row);
           if (element == null) return;
           if (element.isSeparator()) {
             row--;
@@ -176,7 +177,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
         else {
           return;
         }
-        final DirDiffElement element = myModel.getElementAt(row);
+        final DirDiffElementImpl element = myModel.getElementAt(row);
         if (element == null) return;
         if (!element.isSeparator()) {
           e.consume();
@@ -339,7 +340,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   private void changeOperationForSelection() {
     for (int row : myTable.getSelectedRows()) {
       if (row != -1) {
-        final DirDiffElement element = myModel.getElementAt(row);
+        final DirDiffElementImpl element = myModel.getElementAt(row);
         if (element != null) {
           element.setNextOperation();
           myModel.fireTableRowsUpdated(row, row);
@@ -350,7 +351,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
   public void update(boolean force) {
     final Project project = myModel.getProject();
-    final DirDiffElement element = myModel.getElementAt(myTable.getSelectedRow());
+    final DirDiffElementImpl element = myModel.getElementAt(myTable.getSelectedRow());
     if (element == null) {
       clearDiffPanel();
       return;
@@ -361,7 +362,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
       return;
     }
     clearDiffPanel();
-    if (element.getType() == DType.CHANGED) {
+    if (element.getType() == DiffType.CHANGED) {
       try {
         myDiffPanelComponent = element.getSource().getDiffComponent(element.getTarget(), project, myDiffWindow.getWindow(), myModel);
       }
@@ -379,7 +380,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
     } else {
       final DiffElement object;
       final DiffElement target;
-      if (element.getType() == DType.ERROR) {
+      if (element.getType() == DiffType.ERROR) {
         object = element.getSource() == null ? element.getTarget() : element.getSource();
         target = element.getSource() == null ? element.getSource() : element.getTarget();
       } else {

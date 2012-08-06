@@ -15,24 +15,18 @@
  */
 package org.jetbrains.plugins.groovy.editor.selection;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
-
-import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
+import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 
 /**
  * @author Maxim.Medvedev
  */
 public class GroovyWordSelectionFilter implements Condition<PsiElement> {
   public boolean value(PsiElement element) {
-
-    final ASTNode node = element.getNode();
+return !(element instanceof GroovyPsiElement || element.getLanguage() == GroovyFileType.GROOVY_LANGUAGE);
+/*    final ASTNode node = element.getNode();
     if (node == null) return false;
 
     final IElementType type = node.getElementType();
@@ -61,6 +55,6 @@ public class GroovyWordSelectionFilter implements Condition<PsiElement> {
            !(element instanceof GrArgumentList) &&
            !(type == mDOLLAR)
 
-      ;
+      ;*/
   }
 }

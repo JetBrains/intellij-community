@@ -140,6 +140,14 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     doTestCompletion(false);
   }
 
+  public void testBackupAgentCompletion() throws Throwable {
+    // todo: place it to mock Android sdk
+    copyFileToProject("BackupAgent.java", "src/android/app/backup/BackupAgent.java");
+
+    copyFileToProject("MyBackupAgent.java", "src/p1/p2/MyBackupAgent.java");
+    doTestCompletionVariants(getTestName(false) + ".xml", ".MyBackupAgent");
+  }
+
   public void testUsesPermissionCompletion() throws Throwable {
     doTestCompletion(false);
   }
@@ -201,4 +209,8 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     doTestJavaHighlighting("p1.p2");
   }
 
+  public void testAndroidPrefixCompletion() throws Throwable {
+    // do not complete prefix in manifest because there is not many attributes
+    doTestAndroidPrefixCompletion(null);
+  }
 }

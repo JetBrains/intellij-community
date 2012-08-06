@@ -22,9 +22,11 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
 import git4idea.PlatformFacade;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -81,12 +83,17 @@ public class GitRootErrorsFinder {
       }
       else {
         String mappedPath = mapping.systemIndependentPath();
-        if (!gitPaths.contains(mappedPath)) {
+        if (!gitPaths.contains(mappedPath) && !hasGitDir(mappedPath)) {
           errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, mappedPath));
         }
       }
     }
     return errors;
+  }
+
+  private static boolean hasGitDir(String path) {
+    File file = new File(path, GitUtil.DOT_GIT);
+    return file.exists();
   }
 
   @NotNull

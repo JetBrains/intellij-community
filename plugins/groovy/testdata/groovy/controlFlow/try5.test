@@ -15,7 +15,7 @@ fScript.previewTask(taskName)
 2(3,5) READ ddd
 3(4) READ fXRec
 4(16) element: RETURN statement
-5(6) element: IF statement
+5(6) End element: IF statement
 6(7) WRITE fScript
 7(9) element: Open block
 8(11) element: Finally clause

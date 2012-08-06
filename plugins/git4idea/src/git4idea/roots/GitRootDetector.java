@@ -41,6 +41,8 @@ import java.util.Set;
  */
 public class GitRootDetector {
 
+  private static final int MAXIMUM_SCAN_DEPTH = 2;
+
   @NotNull private final Project myProject;
   @NotNull private final PlatformFacade myPlatformFacade;
 
@@ -90,7 +92,7 @@ public class GitRootDetector {
   @NotNull
   private Set<VirtualFile> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
     final Set<VirtualFile> roots = new HashSet<VirtualFile>();
-    if (depth > 2) {
+    if (depth > MAXIMUM_SCAN_DEPTH) {
       // performance optimization via limitation: don't scan deep though the whole VFS, 2 levels under a content root is enough
       return roots;
     }

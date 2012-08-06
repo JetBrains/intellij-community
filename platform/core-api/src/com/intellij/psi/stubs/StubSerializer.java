@@ -22,7 +22,7 @@ import java.io.IOException;
 /*
  * @author max
  */
-public interface StubSerializer<T extends StubElement> {
+public interface StubSerializer<T extends StubElement> extends ObjectStubSerializer<T, StubElement> {
   @NonNls
   String getExternalId();
 

@@ -231,10 +231,11 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
   }
 
   static CharFilter.Result getLookupAction(final char charTyped, final LookupImpl lookup) {
-    if (!Registry.is("ide.completion.allow.finishing.by.chars")) {
-      return CharFilter.Result.ADD_TO_PREFIX;
-    }
     final CharFilter.Result filtersDecision = getFiltersDecision(charTyped, lookup);
+    if (!Registry.is("ide.completion.allow.finishing.by.chars") &&
+        filtersDecision == CharFilter.Result.SELECT_ITEM_AND_FINISH_LOOKUP) {
+      return CharFilter.Result.HIDE_LOOKUP;
+    }
 
     final LookupElement currentItem = lookup.getCurrentItem();
     if (currentItem != null && charTyped != ' ') {

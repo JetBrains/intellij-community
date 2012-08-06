@@ -367,22 +367,13 @@ public class AndroidRootUtil {
   @Nullable
   public static String getRenderscriptGenSourceRootPath(@NotNull AndroidFacet facet) {
     // todo: return correct path for mavenized module when it'll be supported
-    return getDefaultGenSourceRoot(facet);
+    return getAidlGenSourceRootPath(facet);
   }
 
   @Nullable
   public static String getBuildconfigGenSourceRootPath(@NotNull AndroidFacet facet) {
     // todo: return correct path for mavenized module when it'll be supported
-    return getDefaultGenSourceRoot(facet);
-  }
-
-  @Nullable
-  private static String getDefaultGenSourceRoot(AndroidFacet facet) {
-    final VirtualFile mainContentRoot = getMainContentRoot(facet);
-    final String moduleDirPath = mainContentRoot != null ? mainContentRoot.getPath() : null;
-    return moduleDirPath != null
-           ? moduleDirPath + '/' + SdkConstants.FD_GEN_SOURCES
-           : null;
+    return getAptGenSourceRootPath(facet);
   }
 
   @Nullable

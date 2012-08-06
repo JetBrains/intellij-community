@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface StubElement<T extends PsiElement> {
+public interface StubElement<T extends PsiElement> extends Stub {
   IStubElementType getStubType();
   StubElement getParentStub();
   List<StubElement> getChildrenStubs();

@@ -1,0 +1,5 @@
+<LinearLayout xmlns:an="http://schemas.android.com/apk/res/android"
+              an:orientation="horizontal"
+              an:layout_width="match_parent">
+  <Button <caret>
+</LinearLayout>

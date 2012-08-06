@@ -37,7 +37,7 @@ import java.io.IOException;
  */
 public class CoreStubTreeLoader extends StubTreeLoader {
   @Override
-  public StubTree readOrBuild(Project project, VirtualFile vFile, @Nullable PsiFile psiFile) {
+  public ObjectStubTree readOrBuild(Project project, VirtualFile vFile, @Nullable PsiFile psiFile) {
     if (!canHaveStub(vFile)) {
       return null;
     }
@@ -45,7 +45,7 @@ public class CoreStubTreeLoader extends StubTreeLoader {
     try {
       final FileContent fc = new FileContentImpl(vFile, vFile.contentsToByteArray());
       fc.putUserData(IndexingDataKeys.PROJECT, project);
-      final StubElement element = StubTreeBuilder.buildStubTree(fc);
+      final Stub element = StubTreeBuilder.buildStubTree(fc);
       if (element instanceof PsiFileStub) {
         return new StubTree((PsiFileStub)element);
       }
@@ -58,7 +58,7 @@ public class CoreStubTreeLoader extends StubTreeLoader {
   }
 
   @Override
-  public StubTree readFromVFile(Project project, VirtualFile vFile) {
+  public ObjectStubTree readFromVFile(Project project, VirtualFile vFile) {
     return null;
   }
 

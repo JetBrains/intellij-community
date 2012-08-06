@@ -392,6 +392,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myStriped = striped;
     if (striped) {
       getColumnModel().setColumnMargin(0);
+      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
       setShowGrid(false);
     }
   }
@@ -479,7 +480,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       final Color bg =  row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
       final JComponent c = (JComponent)result;
       final boolean cellSelected = isCellSelected(row, column);
-      if (!cellSelected || (!hasFocus() && !getSelectionBackground().equals(c.getBackground()))) {
+      if (!cellSelected) {
         c.setOpaque(true);
         c.setBackground(bg);
         for (Component child : c.getComponents()) {

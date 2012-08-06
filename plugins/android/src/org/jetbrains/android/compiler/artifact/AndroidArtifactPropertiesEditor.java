@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -46,7 +45,6 @@ public class AndroidArtifactPropertiesEditor extends ArtifactPropertiesEditor im
   private TextFieldWithBrowseButton myProGuardConfigFilePathField;
   private JCheckBox myIncludeSystemProGuardFileCheckBox;
   private JPanel myProGuardConfigPanel;
-  private JLabel myIndentLabel;
   private JPanel myKeyStoreButtonsPanel;
   private JPanel myProGuardPanel;
 
@@ -54,10 +52,6 @@ public class AndroidArtifactPropertiesEditor extends ArtifactPropertiesEditor im
                                          @NonNull AndroidApplicationArtifactProperties properties,
                                          @NotNull final Project project) {
     myProperties = properties;
-
-    myIndentLabel.setPreferredSize(new Dimension(20, 1));
-    myIndentLabel.setMinimumSize(new Dimension(20, 1));
-    myIndentLabel.setMaximumSize(new Dimension(20, 1));
 
     myKeyStoreButtonsPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 0, 5, 0));
     myProGuardPanel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));

@@ -1343,4 +1343,41 @@ new Base() {
 }
 ''')
   }
+
+  void testClosuresInAnnotations() {
+    testHighlighting('''\
+@interface Test {
+  Class value()
+}
+
+@Test({String}) def foo1(){}
+@Test({2.class}) def foo2(){}
+<error descr="Method with signature foo3() is already defined in the class '_'">@Test({<warning descr="Cannot assign 'Integer' to 'Class'">2</warning>}) def foo3()</error>{}
+<error descr="Method with signature foo3() is already defined in the class '_'">@Test({abc}) def foo3()</error>{}
+@Test(String) def foo4(){}
+''', GroovyAssignabilityCheckInspection)
+  }
+
+  void testVarIsNotInitialized() {
+    testHighlighting('''\
+def xxx() {
+  def category = null
+  for (def update : updateIds) {
+    def p = update
+
+    if (something) {
+      category = p
+    }
+
+    print p
+  }
+}
+
+def bar() {
+  def p
+  print <warning descr="Variable 'p' might not be assigned">p</warning>
+}
+''', UnassignedVariableAccessInspection)
+  }
+
 }

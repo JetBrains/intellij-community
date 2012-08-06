@@ -88,25 +88,32 @@ public abstract class DiffElement<T> /*implements Disposable */{
   public JComponent getViewComponent(Project project, @Nullable DiffElement target, @NotNull Disposable parentDisposable) {
     disposeViewComponent();
     try {
-      final T value = getValue();
       FileType fileType = getFileType();
       if (fileType != null && fileType.isBinary()) {
         return getFromProviders(project, target);
       }
       final byte[] content = getContent();
-      final EditorFactory editorFactory = EditorFactory.getInstance();
-      final Document document = value instanceof VirtualFile
-                                ? FileDocumentManager.getInstance().getDocument((VirtualFile)value)
-                                : editorFactory.createDocument(StringUtil.convertLineSeparators(new String(content)));
-      if (document != null && fileType != null) {
-        myEditor = editorFactory.createEditor(document, project, fileType, true);
-        myEditor.getSettings().setFoldingOutlineShown(false);
-        return myEditor.getComponent();
-      }
+      myEditor = createViewComponentEditor(project, content, fileType);
+      return myEditor != null? myEditor.getComponent() : null;
     }
     catch (IOException e) {
       LOG.error(e);
       // TODO
+    }
+    return null;
+  }
+
+  @Nullable
+  protected Editor createViewComponentEditor(Project project, @Nullable byte[] content, @Nullable FileType fileType) {
+    EditorFactory editorFactory = EditorFactory.getInstance();
+    if (editorFactory == null) return null;
+    T value = getValue();
+    Document document = value instanceof VirtualFile
+                        ? FileDocumentManager.getInstance().getDocument((VirtualFile)value)
+                        : editorFactory.createDocument(StringUtil.convertLineSeparators(new String(content)));
+
+    if (document != null && fileType != null) {
+      return editorFactory.createEditor(document, project, fileType, true);
     }
     return null;
   }

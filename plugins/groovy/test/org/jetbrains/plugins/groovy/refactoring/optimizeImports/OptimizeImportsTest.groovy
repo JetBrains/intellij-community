@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.optimizeImports;
-
+package org.jetbrains.plugins.groovy.refactoring.optimizeImports
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.openapi.application.ApplicationManager
@@ -27,10 +26,9 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
-import org.jetbrains.plugins.groovy.lang.editor.GroovyImportOptimizer
-import org.jetbrains.plugins.groovy.util.TestUtils
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
-
+import org.jetbrains.plugins.groovy.editor.GroovyImportOptimizer
+import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */

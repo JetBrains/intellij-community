@@ -87,6 +87,7 @@ public class InstructionImpl implements Instruction {
   }
 
   protected String getElementPresentation() {
+    //return "element: " + (myPsiElement != null ? myPsiElement.getText() : null);
     return "element: " + myPsiElement;
   }
 

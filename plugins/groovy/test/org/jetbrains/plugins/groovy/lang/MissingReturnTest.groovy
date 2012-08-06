@@ -35,6 +35,96 @@ public class MissingReturnTest extends LightGroovyTestCase {
   public void testFinally() {doTest();}
   public void testClosureWithExplicitExpectedType() {doTest()}
 
+
+  public void testInterruptFlowInElseBranch() {
+    doTextText('''\
+//correct
+public int foo(int bar) {
+    if (bar < 0) {
+        return -1
+    }
+    else if (bar > 0) {
+        return 12
+    }
+    else {
+        throw new IllegalArgumentException('bar cannot be zero!')
+    }
+}
+
+//incorrect
+public int foo2(int bar) {
+    if (bar < 0) {
+        return -1
+    }
+    else if (bar > 0) {
+        return 12
+    }
+<warning descr="Not all execution paths return a value">}</warning>
+''')
+  }
+
+  void testSwitch() {
+    doTextText('''\
+//correct
+String foo(e) {
+    switch(e) {
+        case 1: 1; break
+        case 2: return 2; break
+        default: 3
+    }
+}
+
+//incorrect
+String foo2(e) {
+    switch(e) {
+        case 1: 1; break
+        case 2: break
+        default: 3
+    }
+<warning descr="Not all execution paths return a value">}</warning>
+''')
+  }
+
+  void testSwitchWithIf() {
+    doTextText('''\
+//correct
+String foo(e) {
+    switch(e) {
+        case 1:
+            if (e=='a') {
+                return 'a'
+            }
+            else {
+                'c'
+            }
+            break
+        default: ''
+    }
+}
+
+//incorrect
+String foo2(e) {
+    switch(e) {
+        case 1:
+            if (e=='a') {
+                return 'a'
+            }
+            else {
+           //     'c'
+            }
+            break
+        default: ''
+    }
+<warning descr="Not all execution paths return a value">}</warning>
+''')
+  }
+
+  void doTextText(String text) {
+    myFixture.configureByText('___.groovy', text)
+    myFixture.enableInspections(MissingReturnInspection)
+    myFixture.testHighlighting(true, false, false)
+  }
+
   private void doTest() {
     myFixture.enableInspections(new MissingReturnInspection());
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".groovy");

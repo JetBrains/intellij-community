@@ -10,7 +10,7 @@ print e
 2(3) element: IF statement
 3(4,5) READ c
 4(7) element: RETURN statement
-5(9) element: IF statement
+5(9) End element: IF statement
 6(11) element: Finally clause
 7(6,8)  CALL 6
 8(17) AFTER CALL 7

@@ -51,17 +51,6 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
     for (final Object o : element.getChildren()) {
       Element listElement = (Element)o;
       if (ATTR_LIST.equals(listElement.getName())) {
-        String sizeString = listElement.getAttributeValue(ATTR_LISTSIZE);
-        int listSize;
-        try {
-          listSize = Integer.parseInt(sizeString);
-        }
-        catch (NumberFormatException ex) {
-          throw new InvalidDataException("Size " + sizeString + " found. Must be integer!");
-        }
-        for (int j = 0; j < listSize; j++) {
-          add(null);
-        }
         final ClassLoader classLoader = Reflection.getCallerClass(2).getClassLoader();
         for (final Object o1 : listElement.getChildren()) {
           Element listItemElement = (Element)o1;
@@ -69,7 +58,6 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
             throw new InvalidDataException(
               "Unable to read list item. Unknown element found: " + listItemElement.getName());
           }
-          String itemIndexString = listItemElement.getAttributeValue(ATTR_INDEX);
           String itemClassString = listItemElement.getAttributeValue(ATTR_CLASS);
           Class itemClass;
           try {
@@ -84,11 +72,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
 
           LOG.assertTrue(String.class.equals(itemClass));
 
-          int index = Integer.parseInt(itemIndexString);
-          if (index >= listSize) {
-            throw new InvalidDataException("Index out of list size: index " + index + ", size " + listSize);
-          }
-          set(index, listItem);
+          add(listItem);
         }
       }
     }

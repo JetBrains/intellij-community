@@ -42,36 +42,36 @@ import java.util.concurrent.locks.Lock;
 public class StubSerializationHelper {
   private AbstractStringEnumerator myNameStorage;
 
-  protected final TIntObjectHashMap<StubSerializer<? extends StubElement>> myIdToSerializer = new TIntObjectHashMap<StubSerializer<? extends StubElement>>();
-  protected final TObjectIntHashMap<StubSerializer<? extends StubElement>> mySerializerToId = new TObjectIntHashMap<StubSerializer<? extends StubElement>>();
+  protected final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<ObjectStubSerializer>();
+  protected final TObjectIntHashMap<ObjectStubSerializer> mySerializerToId = new TObjectIntHashMap<ObjectStubSerializer>();
 
   public StubSerializationHelper(AbstractStringEnumerator nameStorage) {
     myNameStorage = nameStorage;
   }
 
-  public void assignId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
+  public void assignId(@NotNull final ObjectStubSerializer serializer) throws IOException {
     final int id = persistentId(serializer);
-    final StubSerializer old = myIdToSerializer.put(id, serializer);
+    final ObjectStubSerializer old = myIdToSerializer.put(id, serializer);
     assert old == null : "ID: " + serializer.getExternalId() + " is not unique; Already registered serializer with this ID: " + old.getClass().getName();
 
     final int oldId = mySerializerToId.put(serializer, id);
     assert oldId == 0 : "Serializer " + serializer + " is already registered; Old ID:" + oldId;
   }
 
-  private int persistentId(@NotNull final StubSerializer<? extends StubElement> serializer) throws IOException {
+  private int persistentId(@NotNull final ObjectStubSerializer serializer) throws IOException {
     if (myNameStorage == null) {
       throw new IOException("SerializationManager's name storage failed to initialize");
     }
     return myNameStorage.enumerate(serializer.getExternalId());
   }
 
-  private void doSerialize(final StubElement rootStub, final StubOutputStream stream) throws IOException {
-    final StubSerializer serializer = StubSerializationUtil.getSerializer(rootStub);
+  private void doSerialize(final Stub rootStub, final StubOutputStream stream) throws IOException {
+    final ObjectStubSerializer serializer = StubSerializationUtil.getSerializer(rootStub);
 
     DataInputOutputUtil.writeINT(stream, getClassId(serializer));
     serializer.serialize(rootStub, stream);
 
-    final List<StubElement> children = rootStub.getChildrenStubs();
+    final List<? extends Stub> children = rootStub.getChildrenStubs();
     final int childrenSize = children.size();
     DataInputOutputUtil.writeINT(stream, childrenSize);
     for (int i = 0; i < childrenSize; ++i) {
@@ -79,7 +79,7 @@ public class StubSerializationHelper {
     }
   }
 
-  public void serialize(StubElement rootStub, OutputStream stream) throws IOException {
+  public void serialize(Stub rootStub, OutputStream stream) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
@@ -94,7 +94,7 @@ public class StubSerializationHelper {
     resultStream.write(out.getInternalBuffer(), 0, out.size());
   }
 
-  private int getClassId(final StubSerializer serializer) {
+  private int getClassId(final ObjectStubSerializer serializer) {
     final int idValue = mySerializerToId.get(serializer);
     assert idValue != 0: "No ID found for serializer " + LogUtil.objectAndClass(serializer);
     return idValue;
@@ -152,7 +152,7 @@ public class StubSerializationHelper {
 
   private final RecentStringInterner myStringInterner = new RecentStringInterner(8192);
 
-  public StubElement deserialize(InputStream stream) throws IOException {
+  public Stub deserialize(InputStream stream) throws IOException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
     StubInputStream inputStream = new StubInputStream(stream, storage);
     final int size = DataInputOutputUtil.readINT(inputStream);
@@ -168,13 +168,13 @@ public class StubSerializationHelper {
     return deserialize(inputStream, null);
   }
 
-  private StubElement deserialize(StubInputStream stream, StubElement parentStub) throws IOException {
+  private Stub deserialize(StubInputStream stream, Stub parentStub) throws IOException {
     final int id = DataInputOutputUtil.readINT(stream);
-    final StubSerializer serializer = getClassById(id);
+    final ObjectStubSerializer serializer = getClassById(id);
 
     assert serializer != null : "No serializer registered for stub: ID=" + id + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null");
 
-    StubElement stub = serializer.deserialize(stream, parentStub);
+    Stub stub = serializer.deserialize(stream, parentStub);
     int childCount = DataInputOutputUtil.readINT(stream);
     for (int i = 0; i < childCount; i++) {
       deserialize(stream, stub);
@@ -183,7 +183,7 @@ public class StubSerializationHelper {
   }
 
 
-  private StubSerializer getClassById(int id) {
+  private ObjectStubSerializer getClassById(int id) {
     return myIdToSerializer.get(id);
   }
 

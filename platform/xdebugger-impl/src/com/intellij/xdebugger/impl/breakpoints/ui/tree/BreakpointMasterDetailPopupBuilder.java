@@ -264,7 +264,7 @@ public class BreakpointMasterDetailPopupBuilder {
     }
 
     if (!found && !breakpoints.isEmpty()) {
-      myTreeController.selectBreakpointItem(breakpoints.iterator().next());
+      myTreeController.selectBreakpointItem(null);
     }
   }
 

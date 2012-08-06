@@ -1020,17 +1020,17 @@ class RunConfigurable extends BaseConfigurable {
         DefaultMutableTreeNode parent = (DefaultMutableTreeNode)node.getParent();
         nodeIndexToSelect = parent.getIndex(node);
         parentToSelect = parent;
-        parent.remove(node);
+        node.removeFromParent();
         changedParents.add(parent);
 
-        if (parent.getChildCount() == 0) {
+        if (parent.getChildCount() == 0 && parent.getUserObject() instanceof ConfigurationType) {
           changedParents.remove(parent);
           wasRootChanged = true;
 
           nodeIndexToSelect = myRoot.getIndex(parent);
           nodeIndexToSelect = Math.max(0, nodeIndexToSelect - 1);
           parentToSelect = myRoot;
-          myRoot.remove(parent);
+          parent.removeFromParent();
         }
       }
 

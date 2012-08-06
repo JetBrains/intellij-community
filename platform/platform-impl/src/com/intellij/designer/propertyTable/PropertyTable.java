@@ -19,12 +19,15 @@ import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.model.PropertyContext;
+import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.ColoredTableCellRenderer;
@@ -58,20 +61,35 @@ import java.util.List;
  */
 public abstract class PropertyTable extends JBTable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.designer.propertyTable.PropertyTable");
+  private static final Comparator<String> GROUP_COMPARATOR = new Comparator<String>() {
+    @Override
+    public int compare(String o1, String o2) {
+      return StringUtil.compare(o1, o2, true);
+    }
+  };
+  private static final Comparator<Property> PROPERTY_COMPARATOR = new Comparator<Property>() {
+    @Override
+    public int compare(Property o1, Property o2) {
+      return StringUtil.compare(o1.getName(), o2.getName(), true);
+    }
+  };
+
+  private boolean mySorted;
+  private boolean myShowGroups;
+  private boolean myShowExpertProperties;
 
   private final AbstractTableModel myModel = new PropertyTableModel();
   private List<PropertiesContainer> myContainers = Collections.emptyList();
   private List<Property> myProperties = Collections.emptyList();
   private final Set<String> myExpandedProperties = new HashSet<String>();
 
+  private boolean mySkipUpdate;
   private boolean myStoppingEditing;
-  private final PropertyCellEditor myCellEditor = new PropertyCellEditor();
-  private final PropertyEditorListener myPropertyEditorListener = new PropertyCellEditorListener();
 
   private final TableCellRenderer myCellRenderer = new PropertyCellRenderer();
+  private final PropertyCellEditor myCellEditor = new PropertyCellEditor();
 
-  private boolean mySkipUpdate;
-  private boolean myShowExpert;
+  private final PropertyEditorListener myPropertyEditorListener = new PropertyCellEditorListener();
 
 
   public PropertyTable() {
@@ -97,6 +115,33 @@ public abstract class PropertyTable extends JBTable {
     tableHeader.setPreferredSize(value ? null : new Dimension());
   }
 
+  public void setSorted(boolean sorted) {
+    mySorted = sorted;
+    update();
+  }
+
+  public boolean isSorted() {
+    return mySorted;
+  }
+
+  public void setShowGroups(boolean showGroups) {
+    myShowGroups = showGroups;
+    update();
+  }
+
+  public boolean isShowGroups() {
+    return myShowGroups;
+  }
+
+  public void showExpert(boolean showExpert) {
+    myShowExpertProperties = showExpert;
+    update();
+  }
+
+  public boolean isShowExpertProperties() {
+    return myShowExpertProperties;
+  }
+
   public void setUI(TableUI ui) {
     super.setUI(ui);
 
@@ -105,8 +150,8 @@ public abstract class PropertyTable extends JBTable {
     InputMap focusedInputMap = getInputMap(JComponent.WHEN_FOCUSED);
     InputMap ancestorInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
-    actionMap.put("selectPreviousRow", new MySelectPreviousRowAction());
-    actionMap.put("selectNextRow", new MySelectNextRowAction());
+    actionMap.put("selectPreviousRow", new MySelectNextPreviousRowAction(false));
+    actionMap.put("selectNextRow", new MySelectNextPreviousRowAction(true));
 
     actionMap.put("startEditing", new MyStartEditingAction());
     focusedInputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "startEditing");
@@ -142,15 +187,6 @@ public abstract class PropertyTable extends JBTable {
 
   public TableCellRenderer getCellRenderer(int row, int column) {
     return myCellRenderer;
-  }
-
-  public boolean isShowExpert() {
-    return myShowExpert;
-  }
-
-  public void showExpert(boolean showExpert) {
-    myShowExpert = showExpert;
-    update();
   }
 
   public void restoreDefaultValue() {
@@ -247,6 +283,7 @@ public abstract class PropertyTable extends JBTable {
       Property selection = initialSelection != null ? initialSelection : getSelectionProperty();
       myContainers = new ArrayList<PropertiesContainer>(containers);
       fillProperties();
+      sortPropertiesAndCreateGroups();
       myModel.fireTableDataChanged();
 
       restoreSelection(selection);
@@ -254,6 +291,48 @@ public abstract class PropertyTable extends JBTable {
     finally {
       mySkipUpdate = false;
     }
+  }
+
+  private void sortPropertiesAndCreateGroups() {
+    if (!mySorted && !myShowGroups) return;
+
+    Collections.sort(myProperties, new Comparator<Property>() {
+      @Override
+      public int compare(Property o1, Property o2) {
+        if (myShowGroups) {
+          int result = getGroupComparator().compare(o1.getGroup(), o2.getGroup());
+          if (result != 0) return result;
+        }
+        return mySorted ? getPropertyComparator().compare(o1, o2) : 0;
+      }
+    });
+
+    if (myShowGroups) {
+      for (int i = 0; i < myProperties.size() - 1; i++) {
+        Property prev = i == 0 ? null : myProperties.get(i - 1);
+        Property each = myProperties.get(i);
+
+        String eachGroup = each.getGroup();
+        String prevGroup = prev == null ? null : prev.getGroup();
+
+        if (prevGroup != null || eachGroup != null) {
+          if (!StringUtil.equalsIgnoreCase(eachGroup, prevGroup)) {
+            myProperties.add(i, new GroupProperty(each.getGroup()));
+            i++;
+          }
+        }
+      }
+    }
+  }
+
+  @NotNull
+  protected Comparator<String> getGroupComparator() {
+    return GROUP_COMPARATOR;
+  }
+
+  @NotNull
+  protected Comparator<Property> getPropertyComparator() {
+    return PROPERTY_COMPARATOR;
   }
 
   private void restoreSelection(Property selection) {
@@ -282,7 +361,14 @@ public abstract class PropertyTable extends JBTable {
       getSelectionModel().setSelectionInterval(indexToSelect, indexToSelect);
     }
     else if (getRowCount() > 0) {
-      getSelectionModel().setSelectionInterval(0, 0);
+      indexToSelect = 0;
+      for (int i = 0; i < myProperties.size(); i++) {
+        if (!(myProperties.get(i) instanceof GroupProperty)) {
+          indexToSelect = i;
+          break;
+        }
+      }
+      getSelectionModel().setSelectionInterval(indexToSelect, indexToSelect);
     }
     TableUtil.scrollSelectionToVisible(this);
   }
@@ -348,7 +434,7 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private void addProperty(Property property, List<Property> properties) {
-    if (property.isExpert() && !myShowExpert) {
+    if (property.isExpert() && !myShowExpertProperties) {
       return;
     }
 
@@ -455,7 +541,7 @@ public abstract class PropertyTable extends JBTable {
     List<Property> properties = new ArrayList<Property>(getChildren(property));
     for (Iterator<Property> I = properties.iterator(); I.hasNext(); ) {
       Property child = I.next();
-      if (child.isExpert() && !myShowExpert) {
+      if (child.isExpert() && !myShowExpertProperties) {
         I.remove();
       }
     }
@@ -693,44 +779,35 @@ public abstract class PropertyTable extends JBTable {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   /**
-   * Reimplementation of LookAndFeel's SelectPreviousRowAction action.
-   * Standard implementation isn't smart enough.
-   *
-   * @see javax.swing.plaf.basic.BasicTableUI
-   */
-  private class MySelectPreviousRowAction extends AbstractAction {
-    public void actionPerformed(ActionEvent e) {
-      int rowCount = getRowCount();
-      LOG.assertTrue(rowCount > 0);
-      int selectedRow = getSelectedRow();
-      if (selectedRow != -1) {
-        selectedRow -= 1;
-      }
-      selectedRow = (selectedRow + rowCount) % rowCount;
-      if (isEditing()) {
-        finishEditing();
-        getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
-        scrollRectToVisible(getCellRect(selectedRow, 0, true));
-        startEditing(selectedRow);
-      }
-      else {
-        getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
-        scrollRectToVisible(getCellRect(selectedRow, 0, true));
-      }
-    }
-  }
-
-  /**
    * Reimplementation of LookAndFeel's SelectNextRowAction action.
    * Standard implementation isn't smart enough.
    *
    * @see javax.swing.plaf.basic.BasicTableUI
    */
-  private class MySelectNextRowAction extends AbstractAction {
+  private class MySelectNextPreviousRowAction extends AbstractAction {
+    private boolean selectNext;
+
+    private MySelectNextPreviousRowAction(boolean selectNext) {
+      this.selectNext = selectNext;
+    }
+
     public void actionPerformed(ActionEvent e) {
       int rowCount = getRowCount();
       LOG.assertTrue(rowCount > 0);
-      int selectedRow = (getSelectedRow() + 1) % rowCount;
+
+      int selectedRow = getSelectedRow();
+      if (selectedRow == -1) {
+        selectedRow = 0;
+      }
+      else {
+        if (selectNext) {
+          selectedRow = Math.min(rowCount - 1, getSelectedRow() + 1);
+        }
+        else {
+          selectedRow = Math.max(0, selectedRow - 1);
+        }
+      }
+
       if (isEditing()) {
         finishEditing();
         getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
@@ -828,21 +905,25 @@ public abstract class PropertyTable extends JBTable {
       }
 
       Property property = myProperties.get(row);
+      if (getChildren(property).isEmpty()) return;
+
+      Icon icon = UIUtil.getTreeNodeIcon(false, true, true);
 
       Rectangle rect = getCellRect(row, convertColumnIndexToView(0), false);
-      int indent = property.getIndent() * 11;
-      if (e.getX() < rect.x + indent || e.getX() > rect.x + 9 + indent || e.getY() < rect.y || e.getY() > rect.y + rect.height) {
+      int indent = getBeforeIconAndAfterIndents(property, icon).first;
+      if (e.getX() < rect.x + indent ||
+          e.getX() > rect.x + indent + icon.getIconWidth() ||
+          e.getY() < rect.y ||
+          e.getY() > rect.y + rect.height) {
         return;
       }
 
-      if (!getChildren(property).isEmpty()) {
-        // TODO: disallow selection for this row
-        if (isExpanded(property)) {
-          collapse(row);
-        }
-        else {
-          expand(row);
-        }
+      // TODO: disallow selection for this row
+      if (isExpanded(property)) {
+        collapse(row);
+      }
+      else {
+        expand(row);
       }
     }
   }
@@ -886,6 +967,19 @@ public abstract class PropertyTable extends JBTable {
       // empty
     }
     return result;
+  }
+
+  @NotNull
+  private static Pair<Integer, Integer> getBeforeIconAndAfterIndents(@NotNull Property property, @NotNull Icon icon) {
+    int nodeIndent = UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent();
+    int beforeIcon = nodeIndent * getDepth(property);
+
+    int leftIconOffset = Math.max(0, UIUtil.getTreeLeftChildIndent() - (icon.getIconWidth() / 2));
+    beforeIcon += leftIconOffset;
+
+    int afterIcon = Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth());
+
+    return Pair.create(beforeIcon, afterIcon);
   }
 
   private class PropertyCellEditorListener implements PropertyEditorListener {
@@ -983,13 +1077,31 @@ public abstract class PropertyTable extends JBTable {
   protected abstract TextAttributesKey getErrorAttributes(@NotNull HighlightSeverity severity);
 
   private class PropertyCellRenderer implements TableCellRenderer {
-    private final ColoredTableCellRenderer myRenderer;
+    private final ColoredTableCellRenderer myCellRenderer;
+    private final ColoredTableCellRenderer myGroupRenderer;
 
     private PropertyCellRenderer() {
-      myRenderer = new ColoredTableCellRenderer() {
+      myCellRenderer = new MyCellRenderer();
+      myGroupRenderer = new MyCellRenderer() {
+        private boolean mySelected;
+        public boolean myDrawTopLine;
+
+
+        @Override
         protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
-          setPaintFocusBorder(false);
-          setFocusBorderAroundIcon(true);
+          super.customizeCellRenderer(table, value, selected, hasFocus, row, column);
+          mySelected = selected;
+          myDrawTopLine = row > 0;
+        }
+
+        @Override
+        protected void paintBackground(Graphics2D g, int x, int width, int height) {
+          if (mySelected) {
+            super.paintBackground(g, x, width, height);
+          }
+          else {
+            UIUtil.drawHeader(g, x, width, height, true, myDrawTopLine);
+          }
         }
       };
     }
@@ -1004,11 +1116,24 @@ public abstract class PropertyTable extends JBTable {
       column = table.convertColumnIndexToModel(column);
       Property property = (Property)value;
       Color background = table.getBackground();
-      boolean isDefault = true;
 
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       boolean tableHasFocus = focusOwner != null && SwingUtilities.isDescendingFrom(focusOwner, table);
 
+      ColoredTableCellRenderer renderer = property instanceof GroupProperty ? myGroupRenderer : myCellRenderer;
+
+      renderer.getTableCellRendererComponent(table, value, selected, cellHasFocus, row, column);
+      renderer.setBackground(selected ? UIUtil.getTreeSelectionBackground(tableHasFocus) : background);
+
+      if (property instanceof GroupProperty) {
+        renderer.setIpad(new Insets(0, 5, 0, 0));
+        if (column == 0) {
+          renderer.append(property.getName());
+        }
+        return renderer;
+      }
+
+      boolean isDefault = true;
       try {
         isDefault = isDefault(property);
       }
@@ -1016,13 +1141,9 @@ public abstract class PropertyTable extends JBTable {
         LOG.debug(e);
       }
 
-      myRenderer.clear();
+      renderer.clear();
 
       if (column == 0) {
-        myRenderer.getTableCellRendererComponent(table, value, selected, cellHasFocus, row, column);
-
-        myRenderer.setBackground(selected ? UIUtil.getTreeSelectionBackground(tableHasFocus) : background);
-
         SimpleTextAttributes attr = SimpleTextAttributes.REGULAR_ATTRIBUTES;
 
         if (!selected && !isDefault) {
@@ -1048,33 +1169,31 @@ public abstract class PropertyTable extends JBTable {
           attr = attr.derive(attr.getStyle() | style, template.getFgColor(), template.getBgColor(), template.getWaveColor());
         }
 
-        myRenderer.append(property.getName(), attr);
+        renderer.append(property.getName(), attr);
 
         Icon icon = UIUtil.getTreeNodeIcon(isExpanded(property), selected, tableHasFocus);
         boolean hasChildren = !getChildren(property).isEmpty();
 
-        myRenderer.setIcon(hasChildren ? icon : null);
+        renderer.setIcon(hasChildren ? icon : null);
 
-        int nodeIndent = UIUtil.getTreeLeftChildIndent() + UIUtil.getTreeRightChildIndent();
-        int totalIndent = nodeIndent * getDepth(property);
+        Pair<Integer, Integer> indents = getBeforeIconAndAfterIndents(property, icon);
+        int indent = indents.first;
 
         if (hasChildren) {
-          int leftIconOffset = Math.max(0, UIUtil.getTreeLeftChildIndent() - (icon.getIconWidth() / 2));
-          totalIndent += leftIconOffset;
-          myRenderer.setIconTextGap(Math.max(0, nodeIndent - leftIconOffset - icon.getIconWidth()));
-        } else {
-          totalIndent += nodeIndent;
+          renderer.setIconTextGap(indents.second);
         }
+        else {
+          indent += icon.getIconWidth() + indents.second;
+        }
+        renderer.setIpad(new Insets(0, indent, 0, 0));
 
-        myRenderer.setIpad(new Insets(0, totalIndent, 0, 0));
-
-        return myRenderer;
+        return renderer;
       }
       else {
         try {
-          PropertyRenderer renderer = property.getRenderer();
+          PropertyRenderer valueRenderer = property.getRenderer();
           JComponent component =
-            renderer.getComponent(getCurrentComponent(), getPropertyContext(), getValue(property), selected, tableHasFocus);
+            valueRenderer.getComponent(getCurrentComponent(), getPropertyContext(), getValue(property), selected, tableHasFocus);
 
           component.setBackground(selected ? UIUtil.getTreeSelectionBackground(tableHasFocus) : background);
           component.setFont(table.getFont());
@@ -1087,11 +1206,34 @@ public abstract class PropertyTable extends JBTable {
         }
         catch (Exception e) {
           LOG.debug(e);
-          myRenderer.getTableCellRendererComponent(table, value, selected, cellHasFocus, row, column);
-          myRenderer.append(formatErrorGettingValueMesage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
-          return myRenderer;
+          renderer.append(formatErrorGettingValueMesage(e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          return renderer;
         }
       }
+    }
+
+    private class MyCellRenderer extends ColoredTableCellRenderer {
+      protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        setPaintFocusBorder(false);
+        setFocusBorderAroundIcon(true);
+      }
+    }
+  }
+
+  private static class GroupProperty extends Property {
+    public GroupProperty(@Nullable String name) {
+      super(null, StringUtil.notNullize(name));
+    }
+
+    @NotNull
+    @Override
+    public PropertyRenderer getRenderer() {
+      return new LabelPropertyRenderer(null);
+    }
+
+    @Override
+    public PropertyEditor getEditor() {
+      return null;
     }
   }
 }

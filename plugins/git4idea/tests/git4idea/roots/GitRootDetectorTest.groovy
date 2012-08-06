@@ -146,7 +146,7 @@ class GitRootDetectorTest extends AbstractGitRootTest {
   }
 
   @Test
-  // This is a test of performance optimization via limitation: don't scan deep though the whole VFS
+  // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
   void "don't scan deeper than 2 levels below a content root"() {
     doTest content_roots:  ["content_root"],
            gits:           ["community", "content_root/lev1/lev2", "content_root2/lev1/lev2/lev3"],

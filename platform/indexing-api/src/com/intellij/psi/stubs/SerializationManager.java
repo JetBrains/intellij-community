@@ -29,14 +29,14 @@ import java.util.List;
 
 public abstract class SerializationManager {
 
-  protected final List<StubSerializer<? extends StubElement>> myAllSerializers = new ArrayList<StubSerializer<? extends StubElement>>();
+  protected final List<ObjectStubSerializer> myAllSerializers = new ArrayList<ObjectStubSerializer>();
   private volatile boolean mySerializersLoaded = false;
 
   public static SerializationManager getInstance() {
     return ApplicationManager.getApplication().getComponent(SerializationManager.class);
   }
 
-  public void registerSerializer(StubSerializer<? extends StubElement> serializer) {
+  public void registerSerializer(ObjectStubSerializer serializer) {
     myAllSerializers.add(serializer);
   }
 

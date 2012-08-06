@@ -204,7 +204,8 @@ public class DebuggerUIUtil {
       }
     };
 
-    final Balloon balloon = showBreakpointEditor(project, mainPanel, breakpoint.getType().getDisplayText(breakpoint), point, component, viewBreakpoints);
+    final Balloon balloon = showBreakpointEditor(project, mainPanel, breakpoint.getType().getDisplayText(breakpoint), point, component, viewBreakpoints,
+                                                 breakpoint);
     balloonRef.set(balloon);
 
 
@@ -259,7 +260,7 @@ public class DebuggerUIUtil {
                                              final String displayName,
                                              final Point whereToShow,
                                              final JComponent component,
-                                             @Nullable final Runnable showMoreOptions) {
+                                             @Nullable final Runnable showMoreOptions, Object breakpoint) {
     final BreakpointEditor editor = new BreakpointEditor();
     editor.setPropertiesPanel(mainPanel);
     editor.setShowMoreOptionsLink(true);
@@ -294,7 +295,7 @@ public class DebuggerUIUtil {
       balloon.show(new RelativePoint(component, whereToShow), Balloon.Position.below);
     }
 
-    BreakpointsMasterDetailPopupFactory.getInstance(project).setBalloonToHide(balloon);
+    BreakpointsMasterDetailPopupFactory.getInstance(project).setBalloonToHide(balloon, breakpoint);
 
     return balloon;
   }

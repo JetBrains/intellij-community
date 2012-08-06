@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -44,6 +44,11 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     assertNotNull(myDefaultHint);
     final String testName = getTestName(false);
     doTest(testName, myDefaultHint);
+  }
+
+  protected void doTest(String hint) {
+    final String testName = getTestName(false);
+    doTest(testName, hint);
   }
 
   protected void doTest(final String testName, final String hint) {

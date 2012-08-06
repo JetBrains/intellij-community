@@ -21,6 +21,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +34,15 @@ public class RunAndroidSdkManagerAction extends AndroidRunSdkToolAction {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.actions.RunAndroidSdkManagerAction");
 
   public RunAndroidSdkManagerAction() {
-    super(AndroidBundle.message("android.run.sdk.manager.action.text"));
+    super(getName());
+  }
+
+  private static String getName() {
+    return AndroidBundle.message("android.run.sdk.manager.action.text");
   }
 
   @Override
-  protected void doRunTool(@NotNull Project project, @NotNull final String sdkPath) {
+  protected void doRunTool(@NotNull final Project project, @NotNull final String sdkPath) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -59,15 +64,13 @@ public class RunAndroidSdkManagerAction extends AndroidRunSdkToolAction {
         }
 
         final String message = processor.getMessage();
-        if (message.contains("Error")) {
-          commandLine = new GeneralCommandLine();
-          commandLine.setExePath(toolPath);
-          try {
-            AndroidUtils.executeCommand(commandLine, null, WaitingStrategies.DoNotWait.getInstance());
-          }
-          catch (ExecutionException e) {
-            LOG.error(e);
-          }
+        if (message.toLowerCase().contains("error")) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showErrorDialog(project, "Cannot launch SDK manager.\nOutput:\n" + message, getName());
+            }
+          });
         }
       }
     });

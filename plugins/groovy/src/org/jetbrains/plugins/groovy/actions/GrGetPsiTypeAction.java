@@ -32,7 +32,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Function;
-import org.jetbrains.plugins.groovy.lang.editor.HandlerUtils;
+import org.jetbrains.plugins.groovy.editor.HandlerUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;

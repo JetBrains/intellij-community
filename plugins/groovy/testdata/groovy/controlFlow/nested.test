@@ -15,7 +15,7 @@ for (e in [1,2,3,4]) {
 6(7,3) element: For statement
 7(8) element: Block statement
 8(1,9) element: IF statement
-9(10) element: IF statement
+9(10) End element: IF statement
 10(11) READ print
 11(12) READ e
 12(6) READ ee

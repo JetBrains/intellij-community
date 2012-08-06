@@ -56,6 +56,11 @@ public abstract class Property<T extends PropertiesContainer> {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Nullable
+  public String getGroup() {
+    return null;
+  }
+
+  @Nullable
   public final Property getParent() {
     return myParent;
   }
@@ -65,13 +70,7 @@ public abstract class Property<T extends PropertiesContainer> {
     return Collections.emptyList();
   }
 
-  public int getIndent() {
-    if (myParent != null) {
-      return myParent.getParent() != null ? 2 : 1;
-    }
-    return 0;
-  }
-
+  @NotNull
   public String getPath() {
     return myParent == null ? myName : myParent.getPath() + "/" + myName;
   }

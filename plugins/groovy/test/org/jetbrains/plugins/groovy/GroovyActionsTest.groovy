@@ -29,37 +29,35 @@ import org.jetbrains.plugins.groovy.util.TestUtils
  */
 public class GroovyActionsTest extends LightCodeInsightFixtureTestCase {
 
-  protected String getBasePath() {
-    return TestUtils.testDataPath + "groovy/actions/";
-  }
+  final String basePath =  TestUtils.testDataPath + 'groovy/actions/';
 
-  public void testSelectWordBeforeMethod() throws Throwable {
+  public void testSelectWordBeforeMethod() {
     doTestForSelectWord 1;
   }
 
-  public void testSWInGString1() throws Exception {doTestForSelectWord(1);}
-  public void testSWInGString2() throws Exception {doTestForSelectWord(2);}
-  public void testSWInGString3() throws Exception {doTestForSelectWord(3);}
-  public void testSWInGString4() throws Exception {doTestForSelectWord(4);}
-  public void testSWInGString5() throws Exception {doTestForSelectWord(5);}
-  public void testSWInParameterList() throws Exception {doTestForSelectWord(3);}
+  public void testSWInGString1() {doTestForSelectWord(1);}
+  public void testSWInGString2() {doTestForSelectWord(2);}
+  public void testSWInGString3() {doTestForSelectWord(3);}
+  public void testSWInGString4() {doTestForSelectWord(4);}
+  public void testSWInGString5() {doTestForSelectWord(5);}
+  public void testSWInParameterList() {doTestForSelectWord(3);}
   public void testSWInArgLabel1() {doTestForSelectWord(2)}
   public void testSWInArgLabel2() {doTestForSelectWord(2)}
   public void testSWInArgLabel3() {doTestForSelectWord(2)}
 
-  public void testSWListLiteralArgument() throws Exception {
+  public void testSWListLiteralArgument() {
     doTestForSelectWord 2,
 "foo([a<caret>], b)",
 "foo(<selection>[a<caret>]</selection>, b)"
   }
 
-  public void testSWMethodParametersBeforeQualifier() throws Exception {
+  public void testSWMethodParametersBeforeQualifier() {
     doTestForSelectWord 2,
 "a.fo<caret>o(b)",
 "a.<selection>foo(b)</selection>"
   }
 
-  public void testSWInCodeBlock() throws Exception {doTestForSelectWord 3}
+  public void testSWInCodeBlock() {doTestForSelectWord 5}
 
   public void testElseBranch() {
     doTestForSelectWord (3, '''\
@@ -79,29 +77,91 @@ def foo() {
 ''')
   }
 
-  private void doTestForSelectWord(int count, String input, String expected) throws Exception {
+  void testBlocksOfCode() {
+    doTestForSelectWord(8, '''\
+this.allOptions = [:];
+    confTag.option.each{ opt ->
+      def value = opt.'@value';
+      if (value == null) {
+        value = opt.value ? opt.value[0].'@defaultName' : null;
+      }
+      this.allOptions[opt.'@name'] = value;
+    }
+
+    def moduleNode = confTag.mod<caret>ule[0] ;
+    if (moduleNode != null && !"wholeProject".equals(this.allOptions['TEST_SEARCH_SCOPE'])) {
+      this.moduleRef = JpsElementFactory.instance.createModuleReference(moduleNode.'@name');
+    } else {
+      this.moduleRef = null;
+    }
+
+    this.macroExpander = macroExpander;
+''', '''\
+this.allOptions = [:];
+    confTag.option.each{ opt ->
+      def value = opt.'@value';
+      if (value == null) {
+        value = opt.value ? opt.value[0].'@defaultName' : null;
+      }
+      this.allOptions[opt.'@name'] = value;
+    }
+
+<selection>    def moduleNode = confTag.mod<caret>ule[0] ;
+    if (moduleNode != null && !"wholeProject".equals(this.allOptions['TEST_SEARCH_SCOPE'])) {
+      this.moduleRef = JpsElementFactory.instance.createModuleReference(moduleNode.'@name');
+    } else {
+      this.moduleRef = null;
+    }
+</selection>
+    this.macroExpander = macroExpander;
+''')
+  }
+
+  void testSWforMemberWithDoc() {
+    doTestForSelectWord(4, '''\
+class A {
+  /**
+   * abc
+   */
+  def fo<caret>o() {}
+
+  def bar(){}
+}
+''', '''\
+class A {
+<selection>  /**
+   * abc
+   */
+  def fo<caret>o() {}
+</selection>
+  def bar(){}
+}
+''')
+  }
+
+  private void doTestForSelectWord(int count, String input, String expected) {
     myFixture.configureByText("a.groovy", input);
     selectWord(count)
     myFixture.checkResult(expected);
   }
 
-  private void doTestForSelectWord(int count) throws Exception {
+  private void doTestForSelectWord(int count) {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     selectWord(count)
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy");
   }
 
   private def selectWord(int count) {
-    myFixture.getEditor().getSettings().setCamelWords(true);
+    myFixture.editor.settings.camelWords = true;
     for (int i = 0; i < count; i++) {
       performEditorAction(IdeActions.ACTION_EDITOR_SELECT_WORD_AT_CARET);
     }
   }
 
   private void performEditorAction(final String actionId) {
-    final EditorActionHandler handler = EditorActionManager.getInstance().getActionHandler(actionId);
-    final Editor editor = myFixture.getEditor();
-    handler.execute(editor, DataManager.getInstance().getDataContext(editor.getContentComponent()));
+    final EditorActionHandler handler = EditorActionManager.instance.getActionHandler(actionId);
+    final Editor editor = myFixture.editor;
+    handler.execute(editor, DataManager.instance.getDataContext(editor.contentComponent));
   }
 
 }

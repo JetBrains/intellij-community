@@ -27,7 +27,7 @@ public interface BinaryFileStubBuilder {
   boolean acceptsFile(final VirtualFile file);
 
   @Nullable
-  StubElement buildStubTree(final VirtualFile file, byte[] content, final Project project);
+  Stub buildStubTree(final VirtualFile file, byte[] content, final Project project);
 
   int getStubVersion();
 }

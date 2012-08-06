@@ -345,7 +345,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
                                                         String name,
                                                         final boolean byShape,
                                                         @Nullable GrExpression upToArgument) {
-    final PsiType[] argTypes = PsiUtil.getArgumentTypes(this, false, upToArgument);
+    final PsiType[] argTypes = PsiUtil.getArgumentTypes(this, false, upToArgument, byShape);
     if (byShape && argTypes != null) {
       for (int i = 0; i < argTypes.length; i++) {
         argTypes[i] = TypeConversionUtil.erasure(argTypes[i]);

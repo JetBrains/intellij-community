@@ -163,6 +163,14 @@ class GitRootErrorsFinderTest extends AbstractGitRootTest {
            errors:        [unreg: ["community", "contrib"]]
   }
 
+  @Test
+  void "Real Git root deeper than 3 levels should be detected"() {
+    doTest content_roots: [".", "community", "contrib"],
+           git:           [".", "community", "contrib", "community/level1/level2/level3"],
+           roots:         [PROJECT, "community/level1/level2/level3"],
+           errors:        [unreg: ["community", "contrib"]]
+  }
+
   private void doTest(Map map) {
     myProject = initProject(map.git, [], map.content_roots)
     myVcsManager = (GitMockVcsManager) myPlatformFacade.getVcsManager(myProject)

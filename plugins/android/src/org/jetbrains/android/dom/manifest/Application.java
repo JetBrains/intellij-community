@@ -60,6 +60,11 @@ public interface Application extends ManifestElement {
   AndroidAttributeValue<PsiClass> getManageSpaceActivity();
 
   @Convert(PackageClassConverter.class)
+  @ExtendClass("android.app.backup.BackupAgent")
+  @Attribute("backupAgent")
+  AndroidAttributeValue<PsiClass> getBackupAgent();
+
+  @Convert(PackageClassConverter.class)
   @ExtendClass("android.app.Application")
   AndroidAttributeValue<PsiClass> getName();
 

@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.ide.diff.DiffElement;
+import com.intellij.ide.diff.DirDiffModel;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -40,4 +41,6 @@ public abstract class DirDiffManager {
 
   @Nullable
   public abstract DiffElement createDiffElement(Object obj);
+
+  public abstract DirDiffModel createDiffModel(DiffElement e1, DiffElement e2, DirDiffSettings settings);
 }

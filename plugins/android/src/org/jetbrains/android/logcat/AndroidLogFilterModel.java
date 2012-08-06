@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
  */
 public abstract class AndroidLogFilterModel extends LogFilterModel {
   static final Pattern ANDROID_LOG_MESSAGE_PATTERN =
-    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+[A-Z]+/(\\S+)\\((\\d+)\\):(.*)");
+    Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+[A-Z]+/([\\S ]+)\\((\\d+)\\):(.*)");
 
   private final List<LogFilterListener> myListeners = new ArrayList<LogFilterListener>();
 
@@ -209,6 +209,15 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
       saveLogLevel(((AndroidLogFilter)filter).myLogLevel);
       fireFilterChange(filter);
     }
+  }
+
+  public void processingStarted() {
+    myPrevMessageLogLevel = null;
+    myPrevTag = null;
+    myPrevPid = null;
+    myFullMessageApplicable = false;
+    myFullMessageApplicableByCustomFilter = false;
+    myMessageBuilder = new StringBuilder();
   }
 
   @NotNull

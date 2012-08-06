@@ -267,6 +267,19 @@ public final class TreeUtil {
     return selectionPath;
   }
 
+  @NotNull
+  public static TreePath getFirstLeafNodePath(@NotNull JTree tree) {
+    final TreeModel model = tree.getModel();
+    Object root = model.getRoot();
+    TreePath selectionPath = new TreePath(root);
+    while (model.getChildCount(root) > 0) {
+      final Object child = model.getChild(root, 0);
+      selectionPath = selectionPath.pathByAddingChild(child);
+      root = child;
+    }
+    return selectionPath;
+  }
+
   private static void addEach(final TreeNode aRootNode, @NotNull final TreeNode aNode, @NotNull final List<TreeNode> aPathStack) {
     aPathStack.add(aNode);
 

@@ -42,6 +42,7 @@ import java.util.*;
 
 public class VfsUtil extends VfsUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.VfsUtil");
+  public static final char VFS_PATH_SEPARATOR = '/';
 
   public static void saveText(@NotNull VirtualFile file, @NotNull String text) throws IOException {
     Charset charset = file.getCharset();
@@ -669,5 +670,31 @@ public class VfsUtil extends VfsUtilCore {
   public static VirtualFile[] getChildren(@NotNull VirtualFile dir) {
     VirtualFile[] children = dir.getChildren();
     return children == null ? VirtualFile.EMPTY_ARRAY : children;
+  }
+
+  /**
+   * @param url Url for virtual file
+   * @return url for parent directory of virtual file
+   */
+  @Nullable
+  public static String getParentDir(@Nullable final String url) {
+    if (url == null) {
+      return null;
+    }
+    final int index = url.lastIndexOf(VFS_PATH_SEPARATOR);
+    return index < 0 ? null : url.substring(0, index);
+  }
+
+  /**
+   * @param urlOrPath Url for virtual file
+   * @return file name
+   */
+  @Nullable
+  public static String extractFileName(@Nullable final String urlOrPath) {
+    if (urlOrPath == null) {
+      return null;
+    }
+    final int index = urlOrPath.lastIndexOf(VFS_PATH_SEPARATOR);
+    return index < 0 ? null : urlOrPath.substring(index+1);
   }
 }

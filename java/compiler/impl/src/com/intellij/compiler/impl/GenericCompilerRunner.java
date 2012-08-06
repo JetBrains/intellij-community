@@ -48,6 +48,7 @@ import java.util.*;
  */
 public class GenericCompilerRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.GenericCompilerRunner");
+  private static final Logger FULL_LOG = Logger.getInstance("#com.intellij.full-generic-compiler-log");
   private CompileContext myContext;
   private final boolean myForceCompile;
   private final boolean myOnlyCheckStatus;
@@ -228,10 +229,10 @@ public class GenericCompilerRunner {
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(toProcess.size() + " items will be processed, " + toRemove.size() + " items will be removed");
-      for (int i = 0; i < Math.min(100, toProcess.size()); i++) {
+      for (int i = 0; i < getItemsCountToShowInLog(toProcess.size()); i++) {
         LOG.debug("to process:" + toProcess.get(i).getItem().getKey());
       }
-      for (int i = 0; i < Math.min(100, toRemove.size()); i++) {
+      for (int i = 0; i < getItemsCountToShowInLog(toRemove.size()); i++) {
         LOG.debug("to delete:" + toRemove.get(i));
       }
     }
@@ -281,10 +282,10 @@ public class GenericCompilerRunner {
         CompilerUtil.refreshIODirectories(dirsToRefresh);
         if (LOG.isDebugEnabled()) {
           LOG.debug("refreshed " + filesToRefresh.size() + " files and " + dirsToRefresh.size() + " dirs");
-          for (int i = 0; i < Math.min(100, filesToRefresh.size()); i++) {
+          for (int i = 0; i < getItemsCountToShowInLog(filesToRefresh.size()); i++) {
             LOG.debug("file: " + filesToRefresh.get(i));
           }
-          for (int i = 0; i < Math.min(100, dirsToRefresh.size()); i++) {
+          for (int i = 0; i < getItemsCountToShowInLog(dirsToRefresh.size()); i++) {
             LOG.debug("dir: " + dirsToRefresh.get(i));
           }
         }
@@ -308,6 +309,13 @@ public class GenericCompilerRunner {
 
     return true;
 
+  }
+
+  private static int getItemsCountToShowInLog(final int size) {
+    if (size > 100 && !FULL_LOG.isDebugEnabled()) {
+      return 100;
+    }
+    return size;
   }
 
   private class SourceItemHashingStrategy<S> implements TObjectHashingStrategy<S> {

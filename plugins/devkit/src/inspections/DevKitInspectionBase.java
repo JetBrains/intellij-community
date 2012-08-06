@@ -101,7 +101,7 @@ public abstract class DevKitInspectionBase extends BaseJavaLocalInspectionTool {
     return types;
   }
 
-  protected static boolean isPluginXml(PsiFile file) {
+  public static boolean isPluginXml(PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
     final XmlFile pluginXml = (XmlFile)file;
 

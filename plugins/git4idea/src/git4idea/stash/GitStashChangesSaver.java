@@ -34,8 +34,6 @@ import com.intellij.util.continuation.ContinuationContext;
 import git4idea.GitVcs;
 import git4idea.PlatformFacade;
 import git4idea.commands.*;
-import git4idea.config.GitVcsSettings;
-import git4idea.convert.GitFileSeparatorConverter;
 import git4idea.merge.GitConflictResolver;
 import git4idea.ui.GitUnstashDialog;
 import git4idea.util.GitUIUtil;
@@ -64,7 +62,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
   protected void save(Collection<VirtualFile> rootsToSave) throws VcsException {
     LOG.info("save " + rootsToSave);
     final Map<VirtualFile, Collection<Change>> changes = new LocalChangesUnderRoots(myProject).getChangesUnderRoots(rootsToSave);
-    convertSeparatorsIfNeeded(changes);
     stash(changes.keySet());
   }
 
@@ -118,18 +115,6 @@ public class GitStashChangesSaver extends GitChangesSaver {
         myStashedRoots.add(root);
       }
       myProgressIndicator.setText(oldProgressTitle);
-    }
-  }
-
-  private void convertSeparatorsIfNeeded(Map<VirtualFile, Collection<Change>> changes) throws VcsException {
-    LOG.info("convertSeparatorsIfNeeded ");
-    GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
-    if (settings != null) {
-      List<VcsException> exceptions = new ArrayList<VcsException>(1);
-      GitFileSeparatorConverter.convertSeparatorsIfNeeded(myProject, settings, changes, exceptions);
-      if (!exceptions.isEmpty()) {
-        throw exceptions.get(0);
-      }
     }
   }
 

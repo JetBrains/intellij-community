@@ -661,9 +661,10 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final VirtualFile vFile = getVirtualFile();
     if (!(vFile instanceof VirtualFileWithId)) return null;
 
-    StubTree stubHolder = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
-    if (stubHolder == null) return null;
-    
+    ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
+    if (!(tree instanceof StubTree)) return null;
+    StubTree stubHolder = (StubTree)tree;
+
     final IElementType contentElementType = getContentElementType();
     if (!(contentElementType instanceof IStubFileElementType)) {
       final FileViewProvider viewProvider = getViewProvider();

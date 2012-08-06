@@ -39,13 +39,15 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
   private String myLogExpression;
   private String myCondition;
   private XBreakpointDependencyState myDependencyState;
+  private long myTimeStamp;
 
   public BreakpointState() {
   }
 
-  public BreakpointState(final boolean enabled, final String typeId) {
+  public BreakpointState(final boolean enabled, final String typeId, final long timeStamp) {
     myEnabled = enabled;
     myTypeId = typeId;
+    myTimeStamp = timeStamp;
   }
 
   @Attribute("enabled")
@@ -131,5 +133,13 @@ public class BreakpointState<B extends XBreakpoint<P>, P extends XBreakpointProp
 
   public XBreakpointBase<B,P,?> createBreakpoint(@NotNull T type, @NotNull XBreakpointManagerImpl breakpointManager) {
     return new XBreakpointBase<B, P, BreakpointState<B,P,?>>(type, breakpointManager, this);
+  }
+
+  public long getTimeStamp() {
+    return myTimeStamp;
+  }
+
+  public void setTimeStamp(long timeStamp) {
+    myTimeStamp = timeStamp;
   }
 }

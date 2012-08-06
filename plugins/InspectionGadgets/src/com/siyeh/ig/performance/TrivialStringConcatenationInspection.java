@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,71 +53,80 @@ public class TrivialStringConcatenationInspection extends BaseInspection {
   @NonNls
   static String calculateReplacementExpression(PsiLiteralExpression expression) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-    if (!(parent instanceof PsiBinaryExpression)) {
-      if (parent instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
-        final PsiExpression[] operands = polyadicExpression.getOperands();
-        final PsiClassType stringType = PsiType.getJavaLangString(expression.getManager(), expression.getResolveScope());
-        boolean seenString = false;
-        boolean seenEmpty = false;
-        final StringBuilder text = new StringBuilder();
-        for (PsiExpression operand : operands) {
-          operand = ParenthesesUtils.stripParentheses(operand);
-          if (operand == null) {
-            return null;
-          }
-          if (operand == expression) {
-            seenEmpty = true;
-            continue;
-          }
-
-          if (stringType.equals(operand.getType())) {
-            seenString = true;
-          }
-          if (text.length() > 0) {
-            text.append('+');
-          }
-          if (!seenString && seenEmpty) {
-            text.append(buildReplacement(operand, seenString));
-            seenString = true;
-          }
-          else {
-            text.append(operand.getText());
-          }
-        }
-        return text.toString();
-      }
+    if (!(parent instanceof PsiPolyadicExpression)) {
       return null;
     }
-    final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
-    final PsiExpression lOperand = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
-    final PsiExpression rOperand = ParenthesesUtils.stripParentheses(binaryExpression.getROperand());
-    final PsiExpression replacement;
-    if (ExpressionUtils.isEmptyStringLiteral(lOperand)) {
-      replacement = rOperand;
+    if (parent instanceof PsiBinaryExpression) {
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parent;
+      final PsiExpression lOperand = ParenthesesUtils.stripParentheses(binaryExpression.getLOperand());
+      final PsiExpression rOperand = ParenthesesUtils.stripParentheses(binaryExpression.getROperand());
+      final PsiExpression replacement;
+      if (ExpressionUtils.isEmptyStringLiteral(lOperand)) {
+        replacement = rOperand;
+      }
+      else {
+        replacement = lOperand;
+      }
+      return replacement == null ? "" : buildReplacement(replacement, false);
     }
-    else {
-      replacement = lOperand;
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    final PsiClassType stringType = PsiType.getJavaLangString(expression.getManager(), expression.getResolveScope());
+    boolean seenString = false;
+    boolean seenEmpty = false;
+    boolean replaced = false;
+    PsiExpression operandToReplace = null;
+    final StringBuilder text = new StringBuilder();
+    for (PsiExpression operand : operands) {
+      if (operandToReplace != null && !replaced) {
+        if (TypeUtils.expressionHasType(operand, CommonClassNames.JAVA_LANG_STRING)) {
+          seenString = true;
+        }
+        if (text.length() > 0) {
+          text.append(" + ");
+        }
+        text.append(buildReplacement(operandToReplace, seenString));
+        text.append(" + ");
+        text.append(operand.getText());
+        replaced = true;
+        continue;
+      }
+      if (operand == expression) {
+        seenEmpty = true;
+        continue;
+      }
+      if (seenEmpty && !replaced) {
+        operandToReplace = operand;
+        continue;
+      }
+      if (stringType.equals(operand.getType())) {
+        seenString = true;
+      }
+      if (text.length() > 0) {
+        text.append(" + ");
+      }
+      text.append(operand.getText());
     }
-    return buildReplacement(replacement, false);
+    if (!replaced && operandToReplace != null) {
+      text.append(" + ");
+      text.append(buildReplacement(operandToReplace, seenString));
+    }
+    return text.toString();
   }
 
-  private static String buildReplacement(PsiExpression replacement, boolean seenString) {
-    if (replacement == null) {
-      return "";
-    }
-    if (ExpressionUtils.isNullLiteral(replacement)) {
+  static String buildReplacement(@NotNull PsiExpression operandToReplace, boolean seenString) {
+    if (ExpressionUtils.isNullLiteral(operandToReplace)) {
       if (seenString) {
-        return "(Object)null";
+        return "null";
       }
       else {
         return "String.valueOf((Object)null)";
       }
     }
-    if (seenString || TypeUtils.expressionHasType(replacement, CommonClassNames.JAVA_LANG_STRING)) {
-      return replacement.getText();
+    if (seenString || TypeUtils.expressionHasType(operandToReplace, CommonClassNames.JAVA_LANG_STRING)) {
+      return operandToReplace.getText();
     }
-    return "String.valueOf(" + replacement.getText() + ')';
+    return "String.valueOf(" + operandToReplace.getText() + ')';
   }
 
   @Override

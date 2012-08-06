@@ -196,7 +196,7 @@ public class GenerationUtil {
       type = caller.getType();
     }
     if (type != null) {
-      final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null);
+      final PsiType[] argumentTypes = PsiUtil.getArgumentTypes(namedArgs, exprs, closureArgs, false, null, false);
       final GroovyResolveResult[] candidates = ResolveUtil.getMethodCandidates(type, methodName, psiContext, argumentTypes);
       call = PsiImplUtil.extractUniqueResult(candidates);
     }

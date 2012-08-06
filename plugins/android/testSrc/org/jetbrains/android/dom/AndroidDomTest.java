@@ -8,6 +8,7 @@ import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.inspections.AndroidDomInspection;
 import org.jetbrains.android.inspections.AndroidElementNotAllowedInspection;
 import org.jetbrains.android.inspections.AndroidUnknownAttributeInspection;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -104,6 +105,21 @@ abstract class AndroidDomTest extends AndroidTestCase {
 
   protected VirtualFile copyFileToProject(String from, String to) throws IOException {
     return myFixture.copyFileToProject(testFolder + '/' + from, to);
+  }
+
+  protected void doTestAndroidPrefixCompletion(@Nullable String prefix) throws IOException {
+    final VirtualFile f = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    myFixture.complete(CompletionType.BASIC);
+    List<String> strs = myFixture.getLookupElementStrings();
+    if (prefix != null) {
+      assertNotNull(strs);
+      assertEquals(strs.get(0), prefix);
+    }
+    else if (strs != null && strs.size() > 0) {
+      final String first = strs.get(0);
+      assertFalse(first.endsWith(":"));
+    }
   }
 }
 

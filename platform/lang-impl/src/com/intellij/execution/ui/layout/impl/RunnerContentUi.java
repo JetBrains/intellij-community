@@ -88,7 +88,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private final Comparator<TabInfo> myTabsComparator = new Comparator<TabInfo>() {
     public int compare(final TabInfo o1, final TabInfo o2) {
       //noinspection ConstantConditions
-      return getTabFor(o1).getIndex() - getTabFor(o2).getIndex();
+      TabImpl tab1 = getTabFor(o1);
+      TabImpl tab2 = getTabFor(o2);
+      int index1 = tab1 != null ? tab1.getIndex() : -1;
+      int index2 = tab2 != null ? tab2.getIndex() : -1;
+      return index1 - index2;
     }
   };
   Project myProject;

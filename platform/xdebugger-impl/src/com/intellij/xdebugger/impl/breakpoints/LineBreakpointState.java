@@ -33,8 +33,8 @@ public class LineBreakpointState<P extends XBreakpointProperties> extends
   public LineBreakpointState() {
   }
 
-  public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line) {
-    super(enabled, typeId);
+  public LineBreakpointState(final boolean enabled, final String typeId, final String fileUrl, final int line, final long timeStamp) {
+    super(enabled, typeId, timeStamp);
     myFileUrl = fileUrl;
     myLine = line;
   }

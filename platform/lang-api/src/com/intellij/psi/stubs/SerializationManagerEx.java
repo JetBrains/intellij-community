@@ -27,9 +27,9 @@ public abstract class SerializationManagerEx extends SerializationManager {
     return (SerializationManagerEx) SerializationManager.getInstance();
   }
 
-  public abstract void serialize(StubElement rootStub, OutputStream stream);
+  public abstract void serialize(Stub rootStub, OutputStream stream);
 
-  public abstract StubElement deserialize(InputStream stream);
+  public abstract Stub deserialize(InputStream stream);
 
   public abstract boolean isNameStorageCorrupted();
 

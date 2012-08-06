@@ -69,6 +69,7 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private boolean myIsInUpdate;
   private RangeMarker savedBeforeBulkCaretMarker;
   private boolean myIgnoreWrongMoves = false;
+  private boolean mySkipChangeRequests;
 
   /**
    * We check that caret is located at the target offset at the end of {@link #moveToOffset(int, boolean)} method. However,
@@ -137,6 +138,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void moveToVisualPosition(@NotNull VisualPosition pos) {
     assertIsDispatchThread();
     validateCallContext();
+    if (mySkipChangeRequests) {
+      return;
+    }
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
@@ -211,6 +215,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   public void moveToOffset(int offset, boolean locateBeforeSoftWrap) {
     assertIsDispatchThread();
     validateCallContext();
+    if (mySkipChangeRequests) {
+      return;
+    }
     final LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
     final CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, true);
     final LogicalPosition positionByOffsetAfterMove = myEditor.offsetToLogicalPosition(myOffset);
@@ -252,6 +259,9 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
                                   boolean scrollToCaret)
   {
     assertIsDispatchThread();
+    if (mySkipChangeRequests) {
+      return;
+    }
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
@@ -406,8 +416,10 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
   private CaretEvent moveToLogicalPosition(@NotNull LogicalPosition pos,
                                            boolean locateBeforeSoftWrap,
                                            @Nullable StringBuilder debugBuffer,
-                                           boolean delayListenersNotification)
-  {
+                                           boolean delayListenersNotification) {
+    if (mySkipChangeRequests) {
+      return null;
+    }
     if (myReportCaretMoves) {
       LogMessageEx.error(LOG, "Unexpected caret move request");
     }
@@ -526,9 +538,15 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          FoldRegion[] allCollapsedAt = myEditor.getFoldingModel().fetchCollapsedAt(offset);
-          for (FoldRegion foldRange : allCollapsedAt) {
-            foldRange.setExpanded(true);
+          mySkipChangeRequests = true;
+          try {
+            FoldRegion[] allCollapsedAt = myEditor.getFoldingModel().fetchCollapsedAt(offset);
+            for (FoldRegion foldRange : allCollapsedAt) {
+              foldRange.setExpanded(true);
+            }
+          }
+          finally {
+            mySkipChangeRequests = false;
           }
         }
       };

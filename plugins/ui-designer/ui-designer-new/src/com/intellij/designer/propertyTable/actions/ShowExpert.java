@@ -58,7 +58,7 @@ public class ShowExpert extends ToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return myTable.isShowExpert();
+    return myTable.isShowExpertProperties();
   }
 
   @Override
