@@ -429,20 +429,27 @@ public abstract class PropertyTable extends JBTable {
 
   private void fillProperties(PropertiesContainer<?> component, List<Property> properties) {
     for (Property property : component.getProperties()) {
-      addProperty(property, properties);
+      addProperty(component, property, properties);
     }
   }
 
-  private void addProperty(Property property, List<Property> properties) {
+  private void addProperty(PropertiesContainer<?> component, Property property, List<Property> properties) {
     if (property.isExpert() && !myShowExpertProperties) {
-      return;
+      try {
+        if (property.isDefaultValue(component)) {
+          return;
+        }
+      }
+      catch (Throwable e) {
+        return;
+      }
     }
 
     properties.add(property);
 
     if (isExpanded(property)) {
       for (Property child : getChildren(property)) {
-        addProperty(child, properties);
+        addProperty(component, child, properties);
       }
     }
   }
