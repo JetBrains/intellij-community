@@ -820,6 +820,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             pane.mouseExited(e);
           }
         }
+
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          QuickDocInfoPane pane = quickDocPaneRef.get();
+          if (pane != null) {
+            pane.mouseClicked(e);
+          }
+        }
       };
       Ref<Consumer<String>> newTextConsumerRef = new Ref<Consumer<String>>();
       JComponent label = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, mouseListener, newTextConsumerRef);
@@ -1016,6 +1024,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
     public void mouseExited(@NotNull MouseEvent e) {
       processStateChangeIfNecessary(e.getLocationOnScreen(), false);
+    }
+
+    public void mouseClicked(@NotNull MouseEvent e) {
+      // TODO den check the processing.
+      int i = 1;
     }
 
     private void processStateChangeIfNecessary(@NotNull Point mouseScreenLocation, boolean mouseEntered) {
