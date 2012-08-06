@@ -300,11 +300,7 @@ public class MavenModuleImporter {
 
         moduleProfile.clearProcessors();
 
-        if (processors == null) {
-          moduleProfile.setObtainProcessorsFromClasspath(true);
-        }
-        else {
-          moduleProfile.setObtainProcessorsFromClasspath(false);
+        if (processors != null) {
           for (String processor : processors) {
             moduleProfile.addProcessor(processor);
           }
