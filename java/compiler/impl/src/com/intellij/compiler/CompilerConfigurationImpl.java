@@ -384,6 +384,27 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myModuleProcessorProfiles.addAll(moduleProfiles);
   }
 
+  @Nullable
+  public ProcessorConfigProfile findModuleProcessorProfile(@NotNull String name) {
+    for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
+      if (name.equals(profile.getName())) {
+        return profile;
+      }
+    }
+
+    return null;
+  }
+
+  public void removeModuleProcessorProfile(ProcessorConfigProfile profile) {
+    myModuleProcessorProfiles.remove(profile);
+    myProcessorsProfilesMap = null; // clear cache
+  }
+
+  public void addModuleProcessorProfile(@NotNull ProcessorConfigProfile profile) {
+    myModuleProcessorProfiles.add(profile);
+    myProcessorsProfilesMap = null; // clear cache
+  }
+
   @Override
   @NotNull
   public ProcessorConfigProfile getAnnotationProcessingConfiguration(Module module) {

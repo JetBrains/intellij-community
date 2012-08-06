@@ -60,6 +60,8 @@ public class MavenProject {
     .put("1.7", "1.7")
     .put("7", "1.7").build();
 
+  public enum ProcMode {BOTH, ONLY, NONE}
+
   @Nullable
   public static MavenProject read(DataInputStream in) throws IOException {
     String path = in.readUTF();
@@ -360,6 +362,86 @@ public class MavenProject {
                                               testSources ? "generatedTestSourcesDirectory" : "generatedSourcesDirectory",
                                               def);
   }
+  
+  @NotNull
+  public ProcMode getProcMode() {
+    Element compilerConfiguration = getCompilerConfig();
+    if (compilerConfiguration == null) {
+      return ProcMode.BOTH;
+    }
+    Element procElement = compilerConfiguration.getChild("proc");
+    if (procElement == null) {
+      return ProcMode.BOTH;
+    }
+    else {
+      String procMode = procElement.getValue();
+      return ("only".equalsIgnoreCase(procMode)) ? ProcMode.ONLY : ("none".equalsIgnoreCase(procMode)) ? ProcMode.NONE : ProcMode.BOTH;
+    }
+  }
+
+  //@Nullable
+  //private static Element getAnnotationProcessorsConfiguration(@Nullable Element compilerConfig) {
+  //  return (compilerConfig == null) ? null : compilerConfig.getChild("annotationProcessors");
+  //}
+  
+  //private String getCompilerArgument() {
+  //  return MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), "compilerArgument");
+  //}
+  //
+  //private String getCompilerArguments(){
+  //  StringBuilder compilerArguments = new StringBuilder();
+  //  Element compilerArgumentsElement = MavenJDOMUtil.findChildByPath(getCompilerConfig(), "compilerArguments");
+  //  if(compilerArgumentsElement != null){
+  //    List compilerArgumentsElements = compilerArgumentsElement.getChildren();
+  //    for(Object compilerArgumentsElementKey: compilerArgumentsElements){
+  //      String key = ((Element)compilerArgumentsElementKey).getName();
+  //      String value = ((Element)compilerArgumentsElementKey).getValue();
+  //      compilerArguments.append(prepareKeyValue(key)).append(" ").append(prepareValueContent(value));
+  //    }
+  //  }
+  //  return compilerArguments.toString();
+  //}
+  //
+  //private static String prepareValueContent(String value) {
+  //  return (value == null || value.length() == 0)? "" : value + " ";
+  //}
+  //
+  //private static String prepareKeyValue(final String key) {
+  //  return (key.startsWith( "-A" ))? key.substring(2) : key;
+  //}
+
+  @Nullable
+  public List<String> getDeclaredAnnotationProcessors() {
+    Element compilerConfig = getCompilerConfig();
+    if (compilerConfig == null) return null;
+
+    Element processors = compilerConfig.getChild("annotationProcessors");
+    if (processors == null) return null;
+
+    List<String> res = new ArrayList<String>();
+
+    for (Element element : (List<Element>)processors.getChildren("annotationProcessor")){
+      String processorClassName = element.getTextTrim();
+      if (!processorClassName.isEmpty()) {
+        res.add(processorClassName);
+      }
+    }
+
+    return res;
+  }
+  
+  //private String getArgumentsForAnnotationProcessor(){
+  //  return getCompilerArguments() + formatCompilerArgument(getCompilerArgument()) ;
+  //}
+  
+  //private static String formatCompilerArgument(String compilerArgument){
+  //  String[] splitArguments = compilerArgument.split("\\s+");
+  //  List<String> formattedArguments = new ArrayList<String>();
+  //  for(String splitArgument: splitArguments){
+  //    formattedArguments.add((splitArgument.startsWith( "-A" ))? splitArgument.substring(2) : splitArgument);
+  //  }
+  //  return StringUtil.join(formattedArguments, " ");
+  //}
 
   @NotNull
   public String getOutputDirectory() {

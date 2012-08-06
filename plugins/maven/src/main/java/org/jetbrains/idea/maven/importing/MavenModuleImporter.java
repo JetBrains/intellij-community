@@ -15,10 +15,14 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.ProcessorConfigProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -33,6 +37,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
@@ -40,6 +45,11 @@ import java.util.List;
 import java.util.Map;
 
 public class MavenModuleImporter {
+
+  public static final String PROFILE_PREFIX = "Annotation profile for ";
+
+  public static final String MAVEN_DEFAULT_ANNOTATION_PROFILE = "Maven default annotation processors profile";
+
   private final Module myModule;
   private final MavenProjectsTree myMavenTree;
   private final MavenProject myMavenProject;
@@ -79,6 +89,7 @@ public class MavenModuleImporter {
     configDependencies();
     configLanguageLevel();
     configEncoding();
+    configAnnotationProcessors();
   }
 
   public void preConfigFacets() {
@@ -216,6 +227,105 @@ public class MavenModuleImporter {
         libraryModel.addRoot(file, rootType);
       }
     }
+  }
+
+  private void configAnnotationProcessors() {
+    if (Boolean.parseBoolean(System.getProperty("idea.maven.keep.annotation.processors"))) return;
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(
+      myModule.getProject());
+
+    ProcessorConfigProfile currentProfile = compilerConfiguration.getAnnotationProcessingConfiguration(myModule);
+
+    String moduleProfileName = PROFILE_PREFIX + myModule.getName();
+
+    if (currentProfile != compilerConfiguration.getDefaultProcessorProfile()
+        && !MAVEN_DEFAULT_ANNOTATION_PROFILE.equals(currentProfile.getName())
+        && !moduleProfileName.equals(currentProfile.getName())) {
+      return;
+    }
+
+    ProcessorConfigProfile moduleProfile = compilerConfiguration.findModuleProcessorProfile(moduleProfileName);
+
+    ProcessorConfigProfile defaultMavenProfile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE);
+
+    if (shouldEnableAnnotationProcessors()) {
+      String annotationProcessorDirectory = getRelativeAnnotationProcessorDirectory();
+      if (annotationProcessorDirectory == null) {
+        annotationProcessorDirectory = "target/generated-sources/annotations";
+      }
+
+      List<String> processors = myMavenProject.getDeclaredAnnotationProcessors();
+
+      if (processors == null && "target/generated-sources/annotations".equals(annotationProcessorDirectory)) {
+        if (moduleProfile != null) {
+          compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
+        }
+
+        if (defaultMavenProfile == null) {
+          defaultMavenProfile = new ProcessorConfigProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE);
+          defaultMavenProfile.setEnabled(true);
+          defaultMavenProfile.setObtainProcessorsFromClasspath(true);
+          defaultMavenProfile.setGeneratedSourcesDirectoryName("target/generated-sources/annotations");
+          compilerConfiguration.addModuleProcessorProfile(defaultMavenProfile);
+        }
+
+        defaultMavenProfile.addModuleName(myModule.getName());
+      }
+      else {
+        if (defaultMavenProfile != null) {
+          defaultMavenProfile.removeModuleName(myModule.getName());
+
+          if (defaultMavenProfile.getModuleNames().isEmpty()) {
+            compilerConfiguration.removeModuleProcessorProfile(defaultMavenProfile);
+          }
+        }
+
+        if (moduleProfile == null) {
+          moduleProfile = new ProcessorConfigProfile(moduleProfileName);
+          moduleProfile.setEnabled(true);
+          moduleProfile.addModuleName(myModule.getName());
+          compilerConfiguration.addModuleProcessorProfile(moduleProfile);
+        }
+
+        moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory);
+
+        if (processors == null) {
+          moduleProfile.setObtainProcessorsFromClasspath(true);
+        }
+        else {
+          moduleProfile.setObtainProcessorsFromClasspath(false);
+          for (String processor : processors) {
+            moduleProfile.addProcessor(processor);
+          }
+        }
+      }
+    }
+    else {
+      if (defaultMavenProfile != null) {
+        defaultMavenProfile.removeModuleName(myModule.getName());
+
+        if (defaultMavenProfile.getModuleNames().isEmpty()) {
+          compilerConfiguration.removeModuleProcessorProfile(defaultMavenProfile);
+        }
+      }
+
+      if (moduleProfile != null) {
+        compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
+      }
+    }
+  }
+
+  @Nullable
+  private String getRelativeAnnotationProcessorDirectory() {
+    String absoluteAnnotationProcessorDirectory = myMavenProject.getAnnotationProcessorDirectory(false);
+    String absoluteProjectDirectory = myMavenProject.getDirectory();
+
+    return FileUtil.getRelativePath(new File(absoluteProjectDirectory), new File(absoluteAnnotationProcessorDirectory));
+  }
+
+  private boolean shouldEnableAnnotationProcessors() {
+    return myMavenProject.getProcMode() != MavenProject.ProcMode.NONE;
   }
 
   @NotNull
