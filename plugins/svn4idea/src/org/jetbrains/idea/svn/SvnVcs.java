@@ -35,6 +35,7 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -636,8 +637,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final boolean keep;
     boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     // this commented since not everything is tested with the new pool. simple variant to be used right now
-    //if (StringUtil.isEmptyOrSpaces(property) || unitTestMode) {
-    if (unitTestMode) {
+    if (StringUtil.isEmptyOrSpaces(property) || unitTestMode) {
+    //if (unitTestMode) {
       keep = ! unitTestMode;  // default
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
