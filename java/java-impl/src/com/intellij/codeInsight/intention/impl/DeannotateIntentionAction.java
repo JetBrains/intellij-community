@@ -60,11 +60,12 @@ public class DeannotateIntentionAction implements IntentionAction {
     PsiModifierListOwner listOwner = getContainer(editor, file);
     if (listOwner != null) {
       final PsiAnnotation[] annotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(listOwner);
-      if (annotations != null) {
+      if (annotations != null && annotations.length > 0) {
         if (annotations.length == 1) {
           myAnnotationName = annotations[0].getQualifiedName();
         }
-        return true;
+        final VirtualFile virtualFile = annotations[0].getContainingFile().getVirtualFile();
+        return virtualFile != null && (virtualFile.isWritable() || virtualFile.isInLocalFileSystem());
       }
     }
     return false;
