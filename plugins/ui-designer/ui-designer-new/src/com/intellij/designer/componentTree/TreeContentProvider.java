@@ -75,11 +75,7 @@ public final class TreeContentProvider extends AbstractTreeStructure {
 
   @Override
   public boolean isAlwaysLeaf(Object element) {
-    if (element instanceof RadComponent) {
-      RadComponent component = (RadComponent)element;
-      return component.getTreeChildren().length == 0;
-    }
-    return false;
+    return element instanceof RadComponent && ((RadComponent)element).getChildren().isEmpty();
   }
 
   @Override
