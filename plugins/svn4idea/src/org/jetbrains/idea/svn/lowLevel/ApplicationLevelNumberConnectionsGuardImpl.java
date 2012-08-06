@@ -17,7 +17,8 @@ package org.jetbrains.idea.svn.lowLevel;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.util.Processor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.hash.HashSet;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -72,6 +73,8 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
   public void setDelay(int delay) {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myDelay = delay;
+    myFuture.cancel(true);
+    myFuture = myService.scheduleWithFixedDelay(myRecheck, myDelay, myDelay, TimeUnit.MILLISECONDS);
   }
 
   public int getCurrentlyActiveConnections() {
@@ -121,10 +124,10 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
   }
 
   @Override
-  public void waitForTotalNumberOfConnectionsOk(Processor<Thread> cancelChecker) throws SVNException {
+  public void waitForTotalNumberOfConnectionsOk() throws SVNException {
     synchronized (myLock) {
       if (myCurrentlyActiveConnections >= CachingSvnRepositoryPool.ourMaxTotal) {
-        waitForFreeConnections(cancelChecker);
+        waitForFreeConnections();
         return;
       }
       int cntTotal = getTotalRepositories();
@@ -133,13 +136,13 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
           pool.closeInactive();
         }
         if (myCurrentlyActiveConnections >= CachingSvnRepositoryPool.ourMaxTotal) {
-          waitForFreeConnections(cancelChecker);
+          waitForFreeConnections();
         }
       }
     }
   }
 
-  private void waitForFreeConnections(final Processor<Thread> cancelChecker) throws SVNException {
+  private void waitForFreeConnections() throws SVNException {
     synchronized (myLock) {
       while (myCurrentlyActiveConnections >= CachingSvnRepositoryPool.ourMaxTotal && ! myDisposed) {
         try {
@@ -148,7 +151,8 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
         catch (InterruptedException e) {
           //
         }
-        if (! cancelChecker.process(Thread.currentThread())) {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null && indicator.isCanceled()) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED));
         }
       }
@@ -156,7 +160,7 @@ public class ApplicationLevelNumberConnectionsGuardImpl implements Disposable, A
   }
 
   @Override
-  public boolean shouldKeepConnectionLocally(Processor<Thread> cancelChecker) {
+  public boolean shouldKeepConnectionLocally() {
     synchronized (myLock) {
       if (myCurrentlyActiveConnections > CachingSvnRepositoryPool.ourMaxTotal) return false;
       int cntTotal = getTotalRepositories();

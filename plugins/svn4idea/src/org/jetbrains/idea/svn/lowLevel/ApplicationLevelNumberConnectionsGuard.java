@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.lowLevel;
 
-import com.intellij.util.Processor;
 import org.tmatesoft.svn.core.SVNException;
 
 /**
@@ -25,6 +24,6 @@ import org.tmatesoft.svn.core.SVNException;
  * Time: 12:11 PM
  */
 public interface ApplicationLevelNumberConnectionsGuard {
-  void waitForTotalNumberOfConnectionsOk(Processor<Thread> cancelChecker) throws SVNException;
-  boolean shouldKeepConnectionLocally(Processor<Thread> cancelChecker);
+  void waitForTotalNumberOfConnectionsOk() throws SVNException;
+  boolean shouldKeepConnectionLocally();
 }

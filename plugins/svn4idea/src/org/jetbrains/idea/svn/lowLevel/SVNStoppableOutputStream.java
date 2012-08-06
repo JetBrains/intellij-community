@@ -15,7 +15,8 @@
  */
 package org.jetbrains.idea.svn.lowLevel;
 
-import com.intellij.util.Processor;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,11 +29,9 @@ import java.io.OutputStream;
  */
 public class SVNStoppableOutputStream extends OutputStream {
   private final OutputStream myLogStream;
-  private final Processor<Thread> myCancelChecker;
 
-  public SVNStoppableOutputStream(final OutputStream logStream, final Processor<Thread> cancelChecker) {
+  public SVNStoppableOutputStream(final OutputStream logStream) {
     myLogStream = logStream;
-    this.myCancelChecker = cancelChecker;
   }
 
   @Override
@@ -60,7 +59,8 @@ public class SVNStoppableOutputStream extends OutputStream {
   }
 
   private void check() throws IOException {
-    if (! myCancelChecker.process(Thread.currentThread())) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null && indicator.isCanceled()) {
       throw new IOException("Write request to canceled by user");
     }
   }

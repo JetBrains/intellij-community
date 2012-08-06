@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.lowLevel;
 
-import com.intellij.util.Processor;
 import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNLogType;
 
@@ -31,11 +30,9 @@ import java.util.logging.Level;
  */
 public class ProxySvnLog implements ISVNDebugLog {
   private final ISVNDebugLog myLog;
-  private final Processor<Thread> myCancelChecker;
 
-  public ProxySvnLog(ISVNDebugLog log, final Processor<Thread> cancelChecker) {
+  public ProxySvnLog(ISVNDebugLog log) {
     myLog = log;
-    myCancelChecker = cancelChecker;
   }
 
   @Override
@@ -55,12 +52,12 @@ public class ProxySvnLog implements ISVNDebugLog {
 
   @Override
   public OutputStream createLogStream(SVNLogType logType, OutputStream os) {
-    return new SVNStoppableOutputStream(myLog.createLogStream(logType, os), myCancelChecker);
+    return new SVNStoppableOutputStream(myLog.createLogStream(logType, os));
   }
 
   @Override
   public InputStream createLogStream(SVNLogType logType, InputStream is) {
-    return new SVNStoppableInputStream(is, myLog.createLogStream(logType, is), myCancelChecker);
+    return new SVNStoppableInputStream(is, myLog.createLogStream(logType, is));
   }
 
   @Override

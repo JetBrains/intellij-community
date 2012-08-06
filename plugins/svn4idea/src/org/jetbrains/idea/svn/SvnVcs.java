@@ -160,7 +160,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public static final String SVNKIT_HTTP_SSL_PROTOCOLS = "svnkit.http.sslProtocols";
   private final SvnExecutableChecker myChecker;
-  private CancelHelper myProgressProxy;
 
   public static final Processor<Exception> ourBusyExceptionProcessor = new Processor<Exception>() {
     @Override
@@ -584,14 +583,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     mySvnBranchPointsCalculator = null;
     myWorkingCopiesContent.deactivate();
     myLoadedBranchesStorage.deactivate();
-    myProgressProxy.dispose();
-    myProgressProxy = null;
     myPool.dispose();
     myPool = null;
-  }
-
-  public CancelHelper getProgressProxy() {
-    return myProgressProxy;
   }
 
   public VcsShowConfirmationOption getAddConfirmation() {
@@ -649,9 +642,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
     }
-    myProgressProxy = new CancelHelper(myProject);
-    myPool = new SvnIdeaRepositoryPoolManager(keep, myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject),
-                                              myProgressProxy);
+    myPool = new SvnIdeaRepositoryPoolManager(keep, myConfiguration.getAuthenticationManager(this), myConfiguration.getOptions(myProject));
   }
 
   @NotNull

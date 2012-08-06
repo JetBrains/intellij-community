@@ -139,7 +139,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
     myInLoad = true;
     myBrowser.setLoading(true);
-    ProgressManager.getInstance().run(CancelHelper.getInstance(myProject).proxyTask(new Task.Backgroundable(myProject, "Loading changes", true, BackgroundFromStartOption.getInstance()) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, "Loading changes", true, BackgroundFromStartOption.getInstance()) {
       
       public void run(@NotNull final ProgressIndicator indicator) {
         try {
@@ -182,7 +182,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
           myBrowser.setLoading(false);
         }
       }
-    }));
+    });
   }
 
   public void clearCaches() {

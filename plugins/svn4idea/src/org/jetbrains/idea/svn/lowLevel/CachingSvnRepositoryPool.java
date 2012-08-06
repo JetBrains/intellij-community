@@ -17,8 +17,9 @@ package org.jetbrains.idea.svn.lowLevel;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.hash.HashSet;
@@ -47,9 +48,10 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
   private int myMaxConcurrent;        // per host
   private final ThrowableConvertor<SVNURL, SVNRepository, SVNException> myCreator;
   private final ThrowableConsumer<Pair<SVNURL, SVNRepository>, SVNException> myAdjuster;
-  private final Processor<Thread> myCancelChecker;
   private final Map<String, RepoGroup> myGroups;
   private ApplicationLevelNumberConnectionsGuard myGuard;
+
+  private long myConnectionTimeout;
 
   private boolean myDisposed;
   private final Object myLock;
@@ -57,12 +59,12 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
   public CachingSvnRepositoryPool(ThrowableConvertor<SVNURL, SVNRepository, SVNException> creator,
                                   final int maxCached, final int maxConcurrent,
                                   ThrowableConsumer<Pair<SVNURL, SVNRepository>, SVNException> adjuster,
-                                  final Processor<Thread> cancelChecker, final ApplicationLevelNumberConnectionsGuard guard) {
+                                  final ApplicationLevelNumberConnectionsGuard guard) {
     myGuard = guard;
     myLock = new Object();
+    myConnectionTimeout = DEFAULT_IDLE_TIMEOUT;
     myCreator = creator;
     myAdjuster = adjuster;
-    myCancelChecker = cancelChecker;
     myMaxCached = maxCached > 0 ? maxCached : ourMaxCachedDefault;
     myMaxConcurrent = maxConcurrent > 0 ? maxConcurrent : ourMaxConcurrentDefault;
     if (myMaxConcurrent < myMaxCached) {
@@ -72,9 +74,17 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
     myDisposed = false;
   }
 
-  public CachingSvnRepositoryPool(ThrowableConvertor<SVNURL, SVNRepository, SVNException> creator, ThrowableConsumer<Pair<SVNURL, SVNRepository>, SVNException> adjuster,
-                                  final Processor<Thread> cancelChecker, final ApplicationLevelNumberConnectionsGuard guard) {
-    this(creator, -1, -1, adjuster, cancelChecker, guard);
+  public CachingSvnRepositoryPool(ThrowableConvertor<SVNURL, SVNRepository, SVNException> creator,
+                                  ThrowableConsumer<Pair<SVNURL, SVNRepository>, SVNException> adjuster,
+                                  final ApplicationLevelNumberConnectionsGuard guard) {
+    this(creator, -1, -1, adjuster, guard);
+  }
+
+
+  public void setConnectionTimeout(long connectionTimeout) {
+    synchronized (myLock) {
+      myConnectionTimeout = connectionTimeout;
+    }
   }
 
   public void waitingInterrupted() {
@@ -102,7 +112,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       final String host = url.getHost();
       RepoGroup group = myGroups.get(host);
       if (group == null) {
-        group = new RepoGroup(myCreator, myMaxCached, myMaxConcurrent, myAdjuster, myGuard, myCancelChecker, myLock);
+        group = new RepoGroup(myCreator, myMaxCached, myMaxConcurrent, myAdjuster, myGuard, myLock, myConnectionTimeout);
       }
       myGroups.put(host, group);
       return group.getRepo(url, mayReuse);
@@ -159,22 +169,22 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
     private final int myMaxConcurrent;        // per host
     private final ThrowableConsumer<Pair<SVNURL, SVNRepository>, SVNException> myAdjuster;
     private final ApplicationLevelNumberConnectionsGuard myGuard;
-    private final Processor<Thread> myCancelChecker;
 
     private final TreeMap<Long, SVNRepository> myInactive;
     private final Set<SVNRepository> myUsed;
     private boolean myDisposed;
     private final Object myWait;
+    private long myConnectionTimeout;
 
     private RepoGroup(ThrowableConvertor<SVNURL, SVNRepository, SVNException> creator, int cached, int concurrent,
                       final ThrowableConsumer<Pair<SVNURL, SVNRepository>, SVNException> adjuster,
-                      final ApplicationLevelNumberConnectionsGuard guard, final Processor<Thread> cancelChecker, final Object waitObj) {
+                      final ApplicationLevelNumberConnectionsGuard guard, final Object waitObj, final long connectionTimeout) {
       myCreator = creator;
       myMaxCached = cached;
       myMaxConcurrent = concurrent;
       myAdjuster = adjuster;
       myGuard = guard;
-      myCancelChecker = cancelChecker;
+      myConnectionTimeout = connectionTimeout;
 
       myInactive = new TreeMap<Long, SVNRepository>();
       myUsed = new HashSet<SVNRepository>();
@@ -212,20 +222,20 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       if (! myInactive.isEmpty() && mayReuse) {
         return fromInactive(url);
       }
-      myGuard.waitForTotalNumberOfConnectionsOk(myCancelChecker);
+      myGuard.waitForTotalNumberOfConnectionsOk();
 
       if (myUsed.size() >= myMaxConcurrent) {
         synchronized (myWait) {
           if ((myUsed.size() + myInactive.size()) >= myMaxConcurrent) {
             while ((myUsed.size() + myInactive.size()) >= myMaxConcurrent && ! myDisposed) {
               try {
-                myWait.wait(500);
+                myWait.wait(300);
               }
               catch (InterruptedException e) {
                 //
               }
-              if (! myCancelChecker.process(Thread.currentThread())) {
-                myWait.notifyAll();    // unblock others
+              ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+              if (indicator != null && indicator.isCanceled()) {
                 throw new SVNException(SVNErrorMessage.create(SVNErrorCode.CANCELLED));
               }
             }
@@ -253,7 +263,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       final SVNRepository next = entry.getValue();
       myInactive.remove(entry.getKey());
       myAdjuster.consume(Pair.create(url, next));
-      if (! myGuard.shouldKeepConnectionLocally(myCancelChecker)) {
+      if (! myGuard.shouldKeepConnectionLocally()) {
         myInactive.clear();
       }
       return next;
@@ -262,7 +272,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
     @Override
     public void returnRepo(SVNRepository repo) {
       myUsed.remove(repo);
-      if (myGuard.shouldKeepConnectionLocally(myCancelChecker) && myInactive.size() < myMaxCached) {
+      if (myGuard.shouldKeepConnectionLocally() && myInactive.size() < myMaxCached) {
         long time = System.currentTimeMillis();
         if (myInactive.containsKey(time)) {
           time = myInactive.lastKey() + 1;
@@ -277,7 +287,7 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
       final Iterator<Long> iterator = longs.iterator();
       while (iterator.hasNext()) {
         final Long next = iterator.next();
-        if (time - next > DEFAULT_IDLE_TIMEOUT) {
+        if (time - next > myConnectionTimeout) {
           myInactive.get(next).closeSession();
           iterator.remove();
         } else {
@@ -302,10 +312,6 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
     public int getInactiveSize() {
       return myInactive.size();
     }
-  }
-
-  Processor<Thread> getCancelChecker() {
-    return myCancelChecker;
   }
 
   public Map<String, RepoGroup> getGroups() {

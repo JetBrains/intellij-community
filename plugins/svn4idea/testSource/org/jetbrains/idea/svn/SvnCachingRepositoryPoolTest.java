@@ -15,14 +15,16 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.CancelHelper;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.testFramework.vcs.FileBasedTest;
 import com.intellij.util.ThrowableConvertor;
+import com.intellij.util.concurrency.Semaphore;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.lowLevel.ApplicationLevelNumberConnectionsGuardImpl;
 import org.jetbrains.idea.svn.lowLevel.CachingSvnRepositoryPool;
 import org.jetbrains.idea.svn.lowLevel.SvnIdeaRepositoryPoolManager;
-import org.junit.Before;
 import org.junit.Test;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -39,29 +41,22 @@ import java.util.Random;
  * Time: 5:37 PM
  */
 public class SvnCachingRepositoryPoolTest extends FileBasedTest {
-  private CancelHelper myHelper;
-
-  @Override
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-    myHelper = CancelHelper.getInstance(myProject);
-  }
 
   @Test
   public void testRepositoriesAreClosed() throws Exception {
-    final SvnIdeaRepositoryPoolManager poolManager = new SvnIdeaRepositoryPoolManager(true, null, null, myHelper);
-    testBigFlow(poolManager);
+    final SvnIdeaRepositoryPoolManager poolManager = new SvnIdeaRepositoryPoolManager(true, null, null);
+    testBigFlow(poolManager, true);
   }
 
   @Test
   public void testCloseWorker() throws Exception {
-    final SvnIdeaRepositoryPoolManager poolManager = new SvnIdeaRepositoryPoolManager(true, null, null, myHelper);
+    final SvnIdeaRepositoryPoolManager poolManager = new SvnIdeaRepositoryPoolManager(true, null, null);
     final ApplicationLevelNumberConnectionsGuardImpl guard = SvnIdeaRepositoryPoolManager.getOurGuard();
     guard.setDelay(20);
-    testBigFlow(poolManager);
+    ((CachingSvnRepositoryPool) poolManager.getPool()).setConnectionTimeout(20);
+    testBigFlow(poolManager, false);
     try {
-      Thread.sleep(20);
+      Thread.sleep(50);
     } catch (InterruptedException e) {
       //
     }
@@ -72,11 +67,103 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
     CachingSvnRepositoryPool.RepoGroup group = groups.values().iterator().next();
     Assert.assertEquals(0, group.getUsedSize());
     Assert.assertEquals(0, group.getInactiveSize());  // !!!
-
     poolManager.dispose();
+    checkAfterDispose(poolManager);
   }
 
-  private void testBigFlow(final SvnIdeaRepositoryPoolManager poolManager) throws SVNException {
+  @Test
+  public void testCancel() throws Exception {
+    final SvnIdeaRepositoryPoolManager poolManager = new SvnIdeaRepositoryPoolManager(true, null, null, 1, 1);
+    final SVNURL url = SVNURL.parseURIEncoded("http://a.b.c");
+    poolManager.setCreator(new ThrowableConvertor<SVNURL, SVNRepository, SVNException>() {
+      @Override
+      public SVNRepository convert(SVNURL svnurl) throws SVNException {
+        return new MockSvnRepository(svnurl, ISVNSession.DEFAULT);
+      }
+    });
+    final MockSvnRepository repository1 = (MockSvnRepository)poolManager.createRepository(url, true);
+
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+
+    poolManager.setCreator(new ThrowableConvertor<SVNURL, SVNRepository, SVNException>() {
+      @Override
+      public SVNRepository convert(SVNURL svnurl) throws SVNException {
+        semaphore.waitFor();
+        return new MockSvnRepository(svnurl, ISVNSession.DEFAULT);
+      }
+    });
+    final SVNException[] exc = new SVNException[1];
+    final Runnable target = new Runnable() {
+      @Override
+      public void run() {
+        try {
+          final MockSvnRepository repository = (MockSvnRepository)poolManager.createRepository(url, true);
+          repository.fireConnectionClosed();
+        }
+        catch (SVNException e) {
+          e.printStackTrace();
+          exc[0] = e;
+        }
+      }
+    };
+    final EmptyProgressIndicator indicator = new EmptyProgressIndicator() {
+      @Override
+      public void cancel() {
+        super.cancel();
+        ProgressManagerImpl.canceled();
+      }
+    };
+    Thread thread = new Thread(new Runnable() {
+      @Override
+      public void run() {
+        ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(target, indicator);
+      }
+    });
+    thread.start();
+
+    try {
+      Thread.sleep(10);
+    } catch (InterruptedException e) {
+      //
+    }
+    Assert.assertTrue(thread.isAlive());
+    indicator.cancel();
+    final Object obj = new Object();
+    while (! timeout(System.currentTimeMillis()) && thread.isAlive()) {
+      synchronized (obj) {
+        try {
+          obj.wait(300);
+        } catch (InterruptedException e) {
+          //
+        }
+      }
+    }
+    Assert.assertTrue(!thread.isAlive());
+    Assert.assertNotNull(exc[0]);
+    //repository1.fireConnectionClosed(); // also test that used are also closed.. in dispose
+
+    poolManager.dispose();
+    checkAfterDispose(poolManager);
+  }
+
+  private void checkAfterDispose(SvnIdeaRepositoryPoolManager poolManager) {
+    final ApplicationLevelNumberConnectionsGuardImpl guard = SvnIdeaRepositoryPoolManager.getOurGuard();
+    Assert.assertEquals(0, guard.getCurrentlyActiveConnections());
+
+    final CachingSvnRepositoryPool pool = (CachingSvnRepositoryPool) poolManager.getPool();
+    Map<String,CachingSvnRepositoryPool.RepoGroup> groups = pool.getGroups();
+    Assert.assertEquals(1, groups.size());
+    CachingSvnRepositoryPool.RepoGroup group = groups.values().iterator().next();
+    Assert.assertEquals(0, group.getUsedSize());
+
+    Assert.assertEquals(0, guard.getInstanceCount());
+
+    Assert.assertEquals(0, group.getUsedSize());
+    Assert.assertEquals(0, group.getInactiveSize());
+  }
+
+  private void testBigFlow(final SvnIdeaRepositoryPoolManager poolManager, boolean disposeAfter) throws SVNException {
     poolManager.setCreator(new ThrowableConvertor<SVNURL, SVNRepository, SVNException>() {
       @Override
       public SVNRepository convert(SVNURL svnurl) throws SVNException {
@@ -139,12 +226,14 @@ public class SvnCachingRepositoryPoolTest extends FileBasedTest {
     CachingSvnRepositoryPool.RepoGroup group = groups.values().iterator().next();
     Assert.assertEquals(0, group.getUsedSize());
 
-    poolManager.dispose();
-    Assert.assertEquals(0, guard.getCurrentlyActiveConnections());
-    Assert.assertEquals(0, guard.getInstanceCount());
+    if (disposeAfter) {
+      poolManager.dispose();
+      Assert.assertEquals(0, guard.getCurrentlyActiveConnections());
+      Assert.assertEquals(0, guard.getInstanceCount());
 
-    Assert.assertEquals(0, group.getUsedSize());
-    Assert.assertEquals(0, group.getInactiveSize());
+      Assert.assertEquals(0, group.getUsedSize());
+      Assert.assertEquals(0, group.getInactiveSize());
+    }
   }
 
   private boolean timeout(long start) {
