@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.startup.StartupActivity;
@@ -17,6 +18,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
+import com.jetbrains.python.PythonModuleTypeBase;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.packaging.PyPackageUtil;
@@ -50,7 +52,12 @@ public class PyTestRunnerUpdater implements StartupActivity {
       return;
     }
 
-    updateIntegratedTools(project, 10000);
+    for (Module m: ModuleManager.getInstance(project).getModules()) {
+      if (ModuleType.get(m) instanceof PythonModuleTypeBase) {
+        updateIntegratedTools(project, 10000);
+        break;
+      }
+    }
   }
 
   private static void updateIntegratedTools(final Project project, final int delay) {
@@ -71,41 +78,8 @@ public class PyTestRunnerUpdater implements StartupActivity {
             if (!TestRunnerService.getInstance(project).getProjectConfiguration().isEmpty())
               return;
 
-            String testRunner = "";
             //check setup.py
-            final Module[] modules = ModuleManager.getInstance(project).getModules();
-            for (Module module : modules) {
-              if (!testRunner.isEmpty()) break;
-              final PyFile setupPy = PyPackageUtil.findSetupPy(module);
-              if (setupPy == null)
-                continue;
-              final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
-              if (setupCall == null)
-                continue;
-              for (PyExpression arg : setupCall.getArguments()) {
-                if (arg instanceof PyKeywordArgument) {
-                  final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
-                  if ("test_loader".equals(kwarg.getKeyword()) || "test_suite".equals(kwarg.getKeyword())) {
-                    final PyExpression value = kwarg.getValueExpression();
-                    if (value instanceof PyStringLiteralExpression) {
-                      final String stringValue = ((PyStringLiteralExpression)value).getStringValue();
-                      if (stringValue.contains(PyNames.NOSE_TEST)) {
-                        testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
-                        break;
-                      }
-                      if (stringValue.contains(PyNames.PY_TEST)) {
-                        testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
-                        break;
-                      }
-                      if (stringValue.contains(PyNames.AT_TEST)) {
-                        testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
-                        break;
-                      }
-                    }
-                  }
-                }
-              }
-            }
+            String testRunner = detectTestRunnerFromSetupPy(project);
 
             //try to find test_runner import
             final Collection<VirtualFile> filenames = FilenameIndex.getAllFilesByExt(project, PythonFileType.INSTANCE.getDefaultExtension(),
@@ -116,7 +90,12 @@ public class PyTestRunnerUpdater implements StartupActivity {
                 if (testRunner.isEmpty()) testRunner = checkImports(file, project);   //find test runner import
               }
               else {
-                checkDocstring(file, project);    // detect docstring type
+                if (PyDocumentationSettings.getInstance(project).getFormat().isEmpty()) {
+                  checkDocstring(file, project);    // detect docstring type
+                }
+              }
+              if (!testRunner.isEmpty() && !PyDocumentationSettings.getInstance(project).getFormat().isEmpty()) {
+                break;
               }
             }
             if (testRunner.isEmpty()) {
@@ -147,9 +126,46 @@ public class PyTestRunnerUpdater implements StartupActivity {
     });
   }
 
+  private static String detectTestRunnerFromSetupPy(Project project) {
+    String testRunner = "";
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      if (!testRunner.isEmpty()) break;
+      final PyFile setupPy = PyPackageUtil.findSetupPy(module);
+      if (setupPy == null)
+        continue;
+      final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
+      if (setupCall == null)
+        continue;
+      for (PyExpression arg : setupCall.getArguments()) {
+        if (arg instanceof PyKeywordArgument) {
+          final PyKeywordArgument kwarg = (PyKeywordArgument)arg;
+          if ("test_loader".equals(kwarg.getKeyword()) || "test_suite".equals(kwarg.getKeyword())) {
+            final PyExpression value = kwarg.getValueExpression();
+            if (value instanceof PyStringLiteralExpression) {
+              final String stringValue = ((PyStringLiteralExpression)value).getStringValue();
+              if (stringValue.contains(PyNames.NOSE_TEST)) {
+                testRunner = PythonTestConfigurationsModel.PYTHONS_NOSETEST_NAME;
+                break;
+              }
+              if (stringValue.contains(PyNames.PY_TEST)) {
+                testRunner = PythonTestConfigurationsModel.PY_TEST_NAME;
+                break;
+              }
+              if (stringValue.contains(PyNames.AT_TEST)) {
+                testRunner = PythonTestConfigurationsModel.PYTHONS_ATTEST_NAME;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    return testRunner;
+  }
+
   private static void checkDocstring(VirtualFile file, Project project) {
     final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(project);
-    if (!documentationSettings.getFormat().isEmpty()) return;
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile instanceof PyFile) {
       if (documentationSettings.isEpydocFormat(psiFile))

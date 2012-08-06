@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -58,6 +59,7 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
     myDocStringFormat = format;
   }
 
+  @Transient
   public String getFormat() {
     return myDocStringFormat;
   }
