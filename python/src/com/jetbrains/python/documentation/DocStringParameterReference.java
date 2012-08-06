@@ -65,7 +65,20 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> {
 
   @Nullable
   private PsiElement resolveParameter(PyFunction owner) {
-    return owner.getParameterList().findParameterByName(getCanonicalText());
+    final PyParameterList parameterList = owner.getParameterList();
+    final PyNamedParameter resolved = parameterList.findParameterByName(getCanonicalText());
+    if (resolved != null) {
+      return resolved;
+    }
+    for (PyParameter parameter : parameterList.getParameters()) {
+      if (parameter instanceof PyNamedParameter) {
+        final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
+        if (namedParameter.isKeywordContainer() || namedParameter.isPositionalContainer()) {
+          return namedParameter;
+        }
+      }
+    }
+    return null;
   }
 
   @NotNull
