@@ -28,6 +28,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.LightColors;
 import com.intellij.util.containers.hash.LinkedHashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +53,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   private FileColorSharedConfigurationManager mySharedConfigurationManager;
 
   private static final Map<String, Color> ourDefaultColors;
+  private static final Map<String, Color> ourDefaultDarkColors;
 
   static {
     ourDefaultColors = new LinkedHashMap<String, Color>();
@@ -61,6 +63,13 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
     ourDefaultColors.put("Rose", new Color(242, 206, 202));
     ourDefaultColors.put("Violet", new Color(222, 213, 241));
     ourDefaultColors.put("Yellow", new Color(255, 255, 228));
+    ourDefaultDarkColors = new LinkedHashMap<String, Color>();
+    ourDefaultDarkColors.put("Blue", new Color(255-220, 255-240, 255-255));
+    ourDefaultDarkColors.put("Green", new Color(255-231, 255-250, 255-219));
+    ourDefaultDarkColors.put("Orange", new Color(255-246, 255-224, 255-202));
+    ourDefaultDarkColors.put("Rose", new Color(255-242, 255-206, 255-202));
+    ourDefaultDarkColors.put("Violet", new Color(255-222, 255-213, 255-241));
+    ourDefaultDarkColors.put("Yellow", new Color(255-255, 255-255, 255-228));
   }
 
   public FileColorManagerImpl(@NotNull final Project project) {
@@ -136,7 +145,7 @@ public class FileColorManagerImpl extends FileColorManager implements Persistent
   @SuppressWarnings({"MethodMayBeStatic"})
   @Nullable
   public Color getColor(@NotNull final String name) {
-    final Color color = ourDefaultColors.get(name);
+    final Color color = UIUtil.isUnderDarcula() ? ourDefaultDarkColors.get(name) : ourDefaultColors.get(name);
     return color == null ? ColorUtil.fromHex(name, null) : color;
   }
 
