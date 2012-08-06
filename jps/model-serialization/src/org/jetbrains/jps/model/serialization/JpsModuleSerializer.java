@@ -42,8 +42,6 @@ public class JpsModuleSerializer {
   private static final String MODULE_LIBRARY_TYPE = "module-library";
   private static final String MODULE_TYPE = "module";
   private static final String MODULE_NAME_ATTRIBUTE = "module-name";
-  private static final String PROJECT_LEVEL = "project";
-  private static final String APPLICATION_LEVEL = "application";
   private static final String GENERATED_LIBRARY_NAME_PREFIX = "#";
 
   public static void loadRootModel(JpsModule module, Element rootModelComponent, JpsSdkType<?> projectSdkType) {
@@ -84,7 +82,8 @@ public class JpsModuleSerializer {
         String name = orderEntry.getAttributeValue(NAME_ATTRIBUTE);
         String level = orderEntry.getAttributeValue(LEVEL_ATTRIBUTE);
         final JpsLibraryDependency dependency =
-          dependenciesList.addLibraryDependency(elementFactory.createLibraryReference(name, createLibraryTableReference(level)));
+          dependenciesList.addLibraryDependency(elementFactory.createLibraryReference(name, JpsLibraryTableSerializer
+            .createLibraryTableReference(level)));
         loadModuleDependencyProperties(dependency, orderEntry);
       }
       else if (MODULE_LIBRARY_TYPE.equals(type)) {
@@ -170,14 +169,14 @@ public class JpsModuleSerializer {
           JpsLibrary library = reference.resolve();
           String libraryName = library.getName();
           JpsLibraryTableSerializer
-            .saveLibrary(library, libraryElement, libraryName.startsWith(GENERATED_LIBRARY_NAME_PREFIX) ? null : libraryName);
+            .saveLibrary(library, libraryElement, isGeneratedName(libraryName) ? null : libraryName);
           element.addContent(libraryElement);
         }
         else {
           element = createDependencyElement(LIBRARY_TYPE);
           saveModuleDependencyProperties(dependency, element);
           element.setAttribute(NAME_ATTRIBUTE, reference.getLibraryName());
-          element.setAttribute(LEVEL_ATTRIBUTE, getLevelId(parentReference));
+          element.setAttribute(LEVEL_ATTRIBUTE, JpsLibraryTableSerializer.getLevelId(parentReference));
         }
         rootModelElement.addContent(element);
       }
@@ -192,6 +191,10 @@ public class JpsModuleSerializer {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       extension.saveRootModel(module, rootModelElement);
     }
+  }
+
+  private static boolean isGeneratedName(String libraryName) {
+    return libraryName.startsWith(GENERATED_LIBRARY_NAME_PREFIX);
   }
 
   private static Element createDependencyElement(final String type) {
@@ -214,39 +217,5 @@ public class JpsModuleSerializer {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       extension.saveModuleDependencyProperties(dependency, orderEntry);
     }
-  }
-
-  public static JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String level) {
-    JpsElementFactory elementFactory = JpsElementFactory.getInstance();
-    if (level.equals(PROJECT_LEVEL)) {
-      return elementFactory.createProjectReference();
-    }
-    if (level.equals(APPLICATION_LEVEL)) {
-      return elementFactory.createGlobalReference();
-    }
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      final JpsElementReference<? extends JpsCompositeElement> reference = extension.createLibraryTableReference(level);
-      if (reference != null) {
-        return reference;
-      }
-    }
-    throw new UnsupportedOperationException();
-  }
-
-  private static String getLevelId(JpsElementReference<? extends JpsCompositeElement> reference) {
-    JpsCompositeElement element = reference.resolve();
-    if (element instanceof JpsProject) {
-      return PROJECT_LEVEL;
-    }
-    else if (element instanceof JpsGlobal) {
-      return APPLICATION_LEVEL;
-    }
-    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      String levelId = extension.getLibraryTableLevelId(reference);
-      if (levelId != null) {
-        return levelId;
-      }
-    }
-    return null;
   }
 }

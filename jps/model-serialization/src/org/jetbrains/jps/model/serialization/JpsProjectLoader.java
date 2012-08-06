@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.serialization.artifact.JpsArtifactLoader;
+import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetLoader;
 
 import java.io.File;
@@ -98,7 +98,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private void loadArtifacts(Element artifactManagerComponent) {
-    JpsArtifactLoader.loadArtifacts(myProject, artifactManagerComponent);
+    JpsArtifactSerializer.loadArtifacts(myProject, artifactManagerComponent);
   }
 
   @Nullable

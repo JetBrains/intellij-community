@@ -18,7 +18,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsProjectSerializationTest extends JpsSerializationTestCase {
-  private static final String SAMPLE_PROJECT_PATH = "/jps/model-serialization/testData/sampleProject";
+  public static final String SAMPLE_PROJECT_PATH = "/jps/model-serialization/testData/sampleProject";
 
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
@@ -89,8 +89,8 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     }
   }
 
-  private static File getFileInSampleProject(String moduleFilePath) {
-    return new File(getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH + "/" + moduleFilePath));
+  public static File getFileInSampleProject(String relativePath) {
+    return new File(getTestDataFileAbsolutePath(SAMPLE_PROJECT_PATH + "/" + relativePath));
   }
 
   public void _testLoadIdeaProject() {
