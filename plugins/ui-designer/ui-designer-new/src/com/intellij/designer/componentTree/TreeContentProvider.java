@@ -83,6 +83,11 @@ public final class TreeContentProvider extends AbstractTreeStructure {
   }
 
   @Override
+  public boolean isAlwaysLeaf(Object element) {
+    return element instanceof RadComponent && ((RadComponent)element).getChildren().isEmpty();
+  }
+
+  @Override
   public boolean hasSomethingToCommit() {
     return false;
   }
