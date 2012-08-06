@@ -176,6 +176,20 @@ public class ListScrollingUtil {
     }
   }
 
+  public static boolean isIndexFullyVisible(JList list, int index) {
+    int first = list.getFirstVisibleIndex();
+    int last = list.getLastVisibleIndex();
+
+    if (index < 0 || first < 0 || last < 0 || index < first || index > last) {
+      return false;
+    }
+    if (index > first && index < last) {
+      return true;
+    }
+
+    return list.getVisibleRect().contains(list.getCellBounds(index, index));
+  }
+
   private static int getVisibleRowCount(JList list) {
     return list.getLastVisibleIndex() - list.getFirstVisibleIndex() + 1;
   }

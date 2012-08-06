@@ -477,16 +477,13 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       updateListHeight(listModel);
 
       myList.setSelectedIndex(toSelect);
-      if (onExplicitAction && myShown) {
-        myList.ensureIndexIsVisible(toSelect);
-      }
       return !oldModel.equals(items);
     }
 
   }
 
   private boolean isSelectionVisible() {
-    return myList.getFirstVisibleIndex() <= myList.getSelectedIndex() && myList.getSelectedIndex() <= myList.getLastVisibleIndex();
+    return ListScrollingUtil.isIndexFullyVisible(myList, myList.getSelectedIndex());
   }
 
   private boolean checkReused() {
@@ -1286,7 +1283,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
       HintManagerImpl.updateLocation(this, myEditor, rectangle.getLocation());
 
-      if (reused || selectionVisible) {
+      if (reused || selectionVisible || onExplicitAction) {
         ensureSelectionVisible();
       }
     }
