@@ -49,6 +49,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
 
   private final List<RemoteDebuggerCloseListener> myCloseListeners = Lists.newArrayList();
+  private DebuggerReader myDebuggerReader;
 
   public RemoteDebugger(final IPyDebugProcess debugProcess, final ServerSocket serverSocket, final int timeout) {
     myDebugProcess = debugProcess;
@@ -79,8 +80,8 @@ public class RemoteDebugger implements ProcessDebugger {
 
     if (myConnected) {
       try {
-        final DebuggerReader reader = new DebuggerReader();
-        ApplicationManager.getApplication().executeOnPooledThread(reader);
+        myDebuggerReader = new DebuggerReader();
+        ApplicationManager.getApplication().executeOnPooledThread(myDebuggerReader);
       }
       catch (Exception e) {
         synchronized (mySocketObject) {
@@ -355,7 +356,7 @@ public class RemoteDebugger implements ProcessDebugger {
         LOG.warn("Error closing socket", e);
       }
     }
-    disconnect();
+    myDebuggerReader.close();
     fireCloseEvent();
   }
 
@@ -407,6 +408,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private class DebuggerReader implements Runnable {
     private final InputStream myInputStream;
+    private boolean myClosing = false;
 
     private DebuggerReader() throws IOException {
       synchronized (mySocketObject) {
@@ -442,10 +444,12 @@ public class RemoteDebugger implements ProcessDebugger {
           processThreadEvent(frame);
         }
         else if (AbstractCommand.isWriteToConsole(frame.getCommand())) {
-          writeToConsole(parseIoEvent(frame));
+          writeToConsole(ProtocolParser.parseIo(frame.getPayload()));
         }
         else if (AbstractCommand.isExitEvent(frame.getCommand())) {
           fireCommunicationError();
+        } else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
+          recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
         }
         else {
           placeResponse(frame.getSequence(), frame);
@@ -455,6 +459,10 @@ public class RemoteDebugger implements ProcessDebugger {
         // shouldn't interrupt reader thread
         LOG.error(t);
       }
+    }
+
+    private void recordCallSignature(PySignature signature) {
+      myDebugProcess.recordSignature(signature);
     }
 
     // todo: extract response processing
@@ -499,10 +507,6 @@ public class RemoteDebugger implements ProcessDebugger {
       }
     }
 
-    private PyIo parseIoEvent(ProtocolFrame frame) throws PyDebuggerException {
-      return ProtocolParser.parseIo(frame.getPayload());
-    }
-
     private PyThreadInfo parseThreadEvent(ProtocolFrame frame) throws PyDebuggerException {
       return ProtocolParser.parseThread(frame.getPayload(), myDebugProcess.getPositionConverter());
     }
@@ -513,6 +517,10 @@ public class RemoteDebugger implements ProcessDebugger {
       }
       catch (IOException ignore) {
       }
+    }
+
+    public void close() {
+      myClosing = true;
     }
   }
 

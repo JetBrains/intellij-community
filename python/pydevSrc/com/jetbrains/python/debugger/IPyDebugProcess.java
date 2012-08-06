@@ -28,4 +28,6 @@ public interface IPyDebugProcess {
   void init();
 
   int handleDebugPort(int port) throws IOException;
+
+  void recordSignature(PySignature signature);
 }

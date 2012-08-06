@@ -279,7 +279,7 @@ class ReaderThread(PyDBDaemonThread):
                     r = self.sock.recv(1024)
                 except:
                     self.handleExcept()
-                    break #Finished communication.
+                    return #Finished communication.
                 if IS_PY3K:
                     r = r.decode('utf-8')
 

@@ -17,6 +17,28 @@ public class ProtocolParser {
   private ProtocolParser() {
   }
 
+  public static PySignature parseCallSignature(String payload) throws PyDebuggerException {
+    final XppReader reader = openReader(payload, true);
+    reader.moveDown();
+    if (!"call_signature".equals(reader.getNodeName())) {
+      throw new PyDebuggerException("Expected <call_signature>, found " + reader.getNodeName());
+    }
+    final String file = readString(reader, "file", "");
+    final String name = readString(reader, "name", "");
+    PySignature signature = new PySignature(file, name);
+
+    while (reader.hasMoreChildren()) {
+      reader.moveDown();
+      if (!"arg".equals(reader.getNodeName())) {
+        throw new PyDebuggerException("Expected <arg>, found " + reader.getNodeName());
+      }
+      signature.addArgumentVar(readString(reader, "name", ""), readString(reader, "type", ""));
+      reader.moveUp();
+    }
+
+    return signature;
+  }
+
   public static String parseSourceContent(String payload) throws PyDebuggerException {
     return payload;
   }

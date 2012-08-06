@@ -35,6 +35,9 @@ public class PyTypeChecker {
     if (expected == null || actual == null) {
       return true;
     }
+    if (expected instanceof PyWeakType || actual instanceof PyWeakType) {
+      return true;
+    }
     if (expected instanceof PyClassType) {
       final PyClass c = ((PyClassType)expected).getPyClass();
       if (c != null && "object".equals(c.getName())) {
@@ -247,7 +250,7 @@ public class PyTypeChecker {
 
   @NotNull
   public static Map<PyGenericType, PyType> collectCallGenerics(@NotNull PyFunction function, @Nullable PyExpression receiver,
-                                                                @NotNull TypeEvalContext context) {
+                                                               @NotNull TypeEvalContext context) {
     final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
     // Collect generic params of object type
     final Set<PyGenericType> generics = new LinkedHashSet<PyGenericType>();

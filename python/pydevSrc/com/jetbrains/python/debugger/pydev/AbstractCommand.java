@@ -31,12 +31,16 @@ public abstract class AbstractCommand {
   public static final int REMOVE_DJANGO_EXCEPTION_BREAKPOINT = 126;
   public static final int SMART_STEP_INTO = 128;
   public static final int EXIT = 129;
+  public static final int CALL_SIGNATURE_TRACE = 130;
+
   public static final int VERSION = 501;
   public static final String NEW_LINE_CHAR = "@_@NEW_LINE_CHAR@_@";
   public static final String TAB_CHAR = "@_@TAB_CHAR@_@";
 
+
   @NotNull private final RemoteDebugger myDebugger;
   private final int myCommandCode;
+
 
   protected AbstractCommand(@NotNull final RemoteDebugger debugger, final int commandCode) {
     myDebugger = debugger;
@@ -75,7 +79,6 @@ public abstract class AbstractCommand {
     if (frame == null) {
       if (!myDebugger.isConnected()) {
         throw new PyDebuggerException("No connection (command:  " + myCommandCode + " )");
-
       }
       throw new PyDebuggerException("Timeout waiting for response on " + myCommandCode);
     }
@@ -86,6 +89,10 @@ public abstract class AbstractCommand {
     if (response.getCommand() >= 900 && response.getCommand() < 1000) {
       throw new PyDebuggerException(response.getPayload());
     }
+  }
+
+  public static boolean isCallSignatureTrace(int command) {
+    return command == CALL_SIGNATURE_TRACE;
   }
 
   public static boolean isWriteToConsole(final int command) {
