@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.lang.TokenWrapper;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -107,6 +108,11 @@ public abstract class LexerTestCase extends UsefulTestCase {
   }
 
   private static String getTokenText(Lexer lexer) {
+    final IElementType tokenType = lexer.getTokenType();
+    if (tokenType instanceof TokenWrapper) {
+      return ((TokenWrapper)tokenType).getValue();
+    }
+
     String text = lexer.getBufferSequence().subSequence(lexer.getTokenStart(), lexer.getTokenEnd()).toString();
     text = StringUtil.replace(text, "\n", "\\n");
     return text;
