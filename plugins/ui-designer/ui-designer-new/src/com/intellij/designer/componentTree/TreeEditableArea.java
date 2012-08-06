@@ -142,7 +142,6 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
 
   private void setRawSelection(@Nullable Object value) {
     unhookSelection();
-    myTreeBuilder.queueUpdate();
 
     if (value == null) {
       myTreeBuilder.select(ArrayUtil.EMPTY_OBJECT_ARRAY, null);
@@ -158,7 +157,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
         myTree.clearSelection();
       }
     }
-
+    myTreeBuilder.queueUpdate();
     hookSelection();
     fireSelectionChanged();
   }
