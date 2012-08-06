@@ -81,7 +81,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   private final Object myStubLock = new Object();
   private SoftReference<StubTree> myStub;
   protected final PsiManagerEx myManager;
-  private volatile Object myTreeElementPointer; // SoftReference/WeakReference to RepositoryTreeElement when has repository id, RepositoryTreeElement otherwise
+  private volatile Object myTreeElementPointer; // SoftReference/WeakReference to ASTNode or a strong reference to a tree if the file is a DummyHolder
   public static final Key<Boolean> BUILDING_STUB = new Key<Boolean>("Don't use stubs mark!");
 
   protected PsiFileImpl(@NotNull IElementType elementType, IElementType contentElementType, @NotNull FileViewProvider provider) {
