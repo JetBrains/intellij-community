@@ -43,9 +43,13 @@ public class ClsModifierListImpl extends ClsRepositoryPsiElement<PsiModifierList
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
+    return hasMaskModifierProperty(name, getStub().getModifiersMask());
+  }
+
+  public static boolean hasMaskModifierProperty(String name, int mask) {
     int flag = PsiModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP.get(name);
     assert flag != 0;
-    return (getStub().getModifiersMask() & flag) != 0;
+    return (mask & flag) != 0;
   }
 
   @Override

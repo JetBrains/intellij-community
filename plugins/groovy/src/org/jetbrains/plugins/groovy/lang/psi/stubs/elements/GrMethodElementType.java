@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
+import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
@@ -61,8 +62,9 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
 
   public void indexStub(GrMethodStub stub, IndexSink sink) {
     String name = stub.getName();
-    if (name != null) {
-      sink.occurrence(GrMethodNameIndex.KEY, name);
+    sink.occurrence(GrMethodNameIndex.KEY, name);
+    if (GrStubUtils.isGroovyStaticMemberStub(stub)) {
+      sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
     }
     for (String annName : stub.getAnnotations()) {
       if (annName != null) {

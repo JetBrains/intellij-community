@@ -211,8 +211,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   public boolean hasExplicitModifier(@NotNull @NonNls String name) {
     final GrModifierListStub stub = getStub();
     if (stub != null) {
-      final int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
-      return (stub.getModifiersFlags() & flag) != 0;
+      return hasMaskExplicitModifier(name, stub.getModifiersFlags());
     }
 
     if (name.equals(GrModifier.PUBLIC)) return findChildByType(GroovyElementTypes.kPUBLIC) != null;
@@ -228,6 +227,11 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     if (name.equals(GrModifier.NATIVE)) return findChildByType(GroovyElementTypes.kNATIVE) != null;
     if (name.equals(GrModifier.DEF)) return findChildByType(GroovyTokenTypes.kDEF) != null;
     return name.equals(GrModifier.VOLATILE) && findChildByType(GroovyElementTypes.kVOLATILE) != null;
+  }
+
+  public static boolean hasMaskExplicitModifier(String name, int mask) {
+    final int flag = NAME_TO_MODIFIER_FLAG_MAP.get(name);
+    return (mask & flag) != 0;
   }
 
   public void setModifierProperty(@NotNull @NonNls String name, boolean doSet) throws IncorrectOperationException {

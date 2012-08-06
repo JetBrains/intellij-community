@@ -17,19 +17,23 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrMultiTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 import java.io.IOException;
 import java.util.List;
@@ -101,5 +105,13 @@ public class GrStubUtils {
       }
     }
     return ArrayUtil.toStringArray(annoNames);
+  }
+
+  public static boolean isGroovyStaticMemberStub(StubElement<?> stub) {
+    StubElement<GrModifierList> type = stub.findChildStubByType(GroovyElementTypes.MODIFIERS);
+    if (type instanceof GrModifierListStub) {
+      return GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.STATIC, ((GrModifierListStub)type).getModifiersFlags());
+    }
+    return true;
   }
 }

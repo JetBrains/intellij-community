@@ -20,8 +20,11 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.compiled.ClsModifierListImpl;
 import com.intellij.psi.impl.java.stubs.impl.PsiMethodStubImpl;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.impl.source.PsiAnnotationMethodImpl;
@@ -145,6 +148,17 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(JavaStubIndexKeys.METHODS, name);
+      if (isJavaStaticMemberStub(stub)) {
+        sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
+      }
     }
+  }
+
+  public static boolean isJavaStaticMemberStub(StubElement<?> stub) {
+    StubElement<PsiModifierList> type = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    if (type instanceof PsiModifierListStub) {
+      return ClsModifierListImpl.hasMaskModifierProperty(PsiModifier.STATIC, ((PsiModifierListStub)type).getModifiersMask());
+    }
+    return true;
   }
 }
