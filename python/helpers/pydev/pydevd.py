@@ -1,5 +1,6 @@
 #IMPORTANT: pydevd_constants must be the 1st thing defined because it'll keep a reference to the original sys._getframe
 from django_debug import DjangoLineBreakpoint
+from pydevd_signature import SignatureFactory
 from pydevd_frame import add_exception_to_frame
 from pydevd_constants import * #@UnusedWildImport
 import pydev_imports
@@ -125,7 +126,10 @@ class PyDBCommandThread(PyDBDaemonThread):
         self.setName('pydevd.CommandThread')
 
     def OnRun(self):
-        time.sleep(5) #this one will only start later on (because otherwise we may not have any non-daemon threads
+        for i in range(1, 10):
+            time.sleep(0.5) #this one will only start later on (because otherwise we may not have any non-daemon threads
+            if self.killReceived:
+                return
 
         run_traced = True
 
@@ -152,6 +156,31 @@ class PyDBCommandThread(PyDBDaemonThread):
             pass
             #only got this error in interpreter shutdown
             #PydevdLog(0, 'Finishing debug communication...(3)')
+
+
+#=======================================================================================================================
+# PyDBCheckAliveThread
+#=======================================================================================================================
+class PyDBCheckAliveThread(PyDBDaemonThread):
+
+    def __init__(self, pyDb):
+        PyDBDaemonThread.__init__(self)
+        self.pyDb = pyDb
+        self.setDaemon(False)
+        self.setName('pydevd.CheckAliveThread')
+
+    def OnRun(self):
+            pydevd_tracing.SetTrace(None) # no debugging on this thread
+            while True:
+                if not self.pyDb.haveAliveThreads():
+                    self.pyDb.FinishDebuggingSession()
+                    for t in threadingEnumerate():
+                        if hasattr(t, 'doKillPydevThread'):
+                            t.doKillPydevThread()
+                    return
+
+                time.sleep(0.3)
+
 
 if USE_LIB_COPY:
     import _pydev_thread as thread
@@ -251,6 +280,7 @@ class PyDB:
         self._lock_running_thread_ids = threading.Lock()
         self._finishDebuggingSession = False
         self.force_post_mortem_stop = 0
+        self.signature_factory = SignatureFactory()
 
         #this is a dict of thread ids pointing to thread ids. Whenever a command is passed to the java end that
         #acknowledges that a thread was created, the thread id should be passed here -- and if at some time we do not
@@ -258,6 +288,12 @@ class PyDB:
         #was killed.
         self._running_thread_ids = {}
 
+    def haveAliveThreads(self):
+        for t in threadingEnumerate():
+            if not isinstance(t, PyDBDaemonThread) and t.isAlive():
+                return True
+
+        return False
 
     def FinishDebuggingSession(self):
         self._finishDebuggingSession = True
@@ -1062,6 +1098,7 @@ class PyDB:
             time.sleep(0.1) # busy wait until we receive run command
 
         PyDBCommandThread(debugger).start()
+        PyDBCheckAliveThread(debugger).start()
 
         pydev_imports.execfile(file, globals, locals) #execute the script
 
@@ -1241,6 +1278,7 @@ def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_
         sys.exitfunc = exit_hook
 
         PyDBCommandThread(debugger).start()
+        PyDBCheckAliveThread(debugger).start()
 
     else:
         #ok, we're already in debug mode, with all set, so, let's just set the break

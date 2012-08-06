@@ -333,7 +333,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   private static PyType getContextSensitiveType(@NotNull PyFunction function, @NotNull TypeEvalContext context,
                                                 @NotNull PyExpression source) {
     if (function instanceof PyFunctionImpl) {
-      return ((PyFunctionImpl)function).getReturnType(context, source, new HashMap<PyExpression, PyNamedParameter>());
+      return ((PyFunctionImpl)function).getReturnTypeWithoutCallSite(context, source);
     }
     return function.getReturnType(context, null);
   }

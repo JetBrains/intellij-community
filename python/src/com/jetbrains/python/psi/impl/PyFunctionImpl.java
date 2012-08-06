@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.Maps;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.IconLoader;
@@ -149,11 +150,13 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   @Override
   public PyType getReturnType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
     final PyType type = getGenericReturnType(context, callSite);
+
     if (callSite == null) {
       return type;
     }
+    final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
+
     if (PyTypeChecker.hasGenerics(type, context)) {
-      final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, context);
       if (results != null) {
         final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, results.getReceiver(), results.getArguments(),
                                                                                         context);
@@ -163,22 +166,39 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
       return null;
     }
-    return type;
+    if (results != null && isWeak(results.getArguments(), context)) {
+      return PyWeakTypeFactory.create(type);
+    }
+    else {
+      return type;
+    }
   }
 
   @Nullable
-  public PyType getReturnType(@NotNull TypeEvalContext context,
-                              @Nullable PyExpression receiver,
-                              @NotNull Map<PyExpression, PyNamedParameter> arguments) {
+  /**
+   * Suits when there is no call site(e.g. implicit __iter__ call in statement for)
+   */
+  public PyType getReturnTypeWithoutCallSite(@NotNull TypeEvalContext context,
+                                             @Nullable PyExpression receiver) {
     final PyType type = getGenericReturnType(context, null);
     if (PyTypeChecker.hasGenerics(type, context)) {
-      final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyGenericCall(this, receiver, arguments, context);
+      final Map<PyGenericType, PyType> substitutions =
+        PyTypeChecker.unifyGenericCall(this, receiver, Maps.<PyExpression, PyNamedParameter>newHashMap(), context);
       if (substitutions != null) {
         return PyTypeChecker.substitute(type, substitutions, context);
       }
       return null;
     }
     return type;
+  }
+
+  private static boolean isWeak(Map<PyExpression, PyNamedParameter> arguments, TypeEvalContext context) {
+    for (PyNamedParameter param : arguments.values()) {
+      if (param.getType(context) instanceof PyWeakType) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
@@ -543,7 +563,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     final List childrenStubs = parentStub.getChildrenStubs();
     int index = childrenStubs.indexOf(getStub());
     if (index >= 0 && index < childrenStubs.size() - 1) {
-      StubElement nextStub = (StubElement) childrenStubs.get(index+1);
+      StubElement nextStub = (StubElement)childrenStubs.get(index + 1);
       if (nextStub instanceof PyTargetExpressionStub) {
         final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)nextStub;
         if (targetExpressionStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
@@ -569,6 +589,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
    * def moo(cls):
    * &nbsp;&nbsp;pass
    * </pre>
+   *
    * @return name of the built-in decorator, or null (even if there are non-built-in decorators).
    */
   @Nullable
@@ -583,7 +604,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
           if (PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) {
             return deconame;
           }
-          for(PyKnownDecoratorProvider provider: PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+          for (PyKnownDecoratorProvider provider : PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
             String name = provider.toKnownDecorator(deconame);
             if (name != null) {
               return name;

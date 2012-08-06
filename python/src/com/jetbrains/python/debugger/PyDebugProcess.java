@@ -252,6 +252,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
   }
 
+  @Override
+  public void recordSignature(PySignature signature) {
+    PySignatureCacheManager.getInstance(getSession().getProject()).recordSignature(signature);
+  }
+
   protected void afterConnect() {
   }
 
@@ -335,7 +340,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void stop() {
-    myDebugger.disconnect();
+    myDebugger.close();
   }
 
   @Override

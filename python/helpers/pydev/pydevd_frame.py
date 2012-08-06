@@ -9,6 +9,7 @@ import traceback #@Reimport
 import os.path
 import sys
 import pydev_log
+from pydevd_signature import sendSignatureCallTrace
 
 basename = os.path.basename
 
@@ -89,6 +90,9 @@ class PyDBFrame:
 
         if getattr(thread, 'pydev_do_not_trace', None):
             return None
+
+        if event == 'call':
+            sendSignatureCallTrace(mainDebugger, frame)
 
         if event not in ('line', 'call', 'return'):
             if event == 'exception':

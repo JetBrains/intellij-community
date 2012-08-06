@@ -274,7 +274,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (reference == null || reference.isSoft()) return;
       HighlightSeverity severity = HighlightSeverity.ERROR;
       if (reference instanceof PsiReferenceEx) {
-        severity = ((PsiReferenceEx) reference).getUnresolvedHighlightSeverity(myTypeEvalContext);
+        severity = ((PsiReferenceEx)reference).getUnresolvedHighlightSeverity(myTypeEvalContext);
         if (severity == null) return;
       }
       PyExceptPart guard = getImportErrorGuard(node);
@@ -287,6 +287,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final PyExpression qualifier = qExpr.getQualifier();
         final String name = node.getName();
         if (qualifier != null && name != null && isGuardedByHasattr(qualifier, name)) {
+          return;
+        }
+        if (qualifier != null &&  isWeakQualifier(qualifier)) {
           return;
         }
       }
@@ -318,9 +321,13 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       else if (reference instanceof PyImportReference &&
                target == reference.getElement().getContainingFile() &&
-               !isContainingFileImportAllowed(node, (PsiFile) target)) {
+               !isContainingFileImportAllowed(node, (PsiFile)target)) {
         registerProblem(node, "Import resolves to its containing file");
       }
+    }
+
+    private boolean isWeakQualifier(PyExpression qualifier) {
+      return qualifier.getType(myTypeEvalContext) instanceof PyWeakType;
     }
 
     private static boolean isContainingFileImportAllowed(PyElement node, PsiFile target) {
@@ -366,8 +373,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final String text = reference.getElement().getText();
       TextRange rangeInElement = reference.getRangeInElement();
       String ref_text = text;  // text of the part we're working with
-      if (rangeInElement.getStartOffset() > 0 && rangeInElement.getEndOffset() > 0)
+      if (rangeInElement.getStartOffset() > 0 && rangeInElement.getEndOffset() > 0) {
         ref_text = rangeInElement.substring(text);
+      }
       final PsiElement element = reference.getElement();
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
       if (ref_text.length() <= 0) return; // empty text, nothing to highlight
@@ -390,12 +398,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               actions.add(new UnresolvedRefAddFutureImportQuickFix(refex));
             }
           }
-          if (ref_text.equals("true") || ref_text.equals("false"))
+          if (ref_text.equals("true") || ref_text.equals("false")) {
             actions.add(new UnresolvedRefTrueFalseQuickFix(element));
+          }
           addAddSelfFix(node, refex, actions);
           PyCallExpression callExpression = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
-          if (callExpression != null)
+          if (callExpression != null) {
             actions.add(new UnresolvedRefCreateFunctionQuickFix(callExpression, refex));
+          }
         }
         // unqualified:
         // may be module's
@@ -412,8 +422,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       if (reference instanceof DocStringParameterReference) {
-        if (myIgnoredIdentifiers.contains(reference.getCanonicalText()))
+        if (myIgnoredIdentifiers.contains(reference.getCanonicalText())) {
           return;
+        }
       }
       if (reference instanceof PsiReferenceEx && description == null) {
         description = ((PsiReferenceEx)reference).getUnresolvedDescription();
@@ -588,8 +599,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 PyType type = myTypeEvalContext.getType(callexpr);
                 if (type != null && type instanceof PyClassType) {
                   String name = ((PyCallExpression)callexpr).getCallee().getText();
-                  if (name != null && name.equals("property"))
+                  if (name != null && name.equals("property")) {
                     actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+                  }
                 }
               }
             }
@@ -617,8 +629,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private static boolean suppressHintForAutoImport(PyElement node, AutoImportQuickFix importFix) {
-        // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
-        // as a quickfix but no popup balloon (PY-2312)
+      // if the context doesn't look like a function call and we only found imports of functions, suggest auto-import
+      // as a quickfix but no popup balloon (PY-2312)
       if (!isCall(node) && importFix.hasOnlyFunctions()) {
         return true;
       }
@@ -641,7 +653,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (qexpr != null) {
             final PyType type = myTypeEvalContext.getType(qexpr);
             if (type instanceof PyModuleType) {
-              anchor = ((PyModuleType) type).getModule();
+              anchor = ((PyModuleType)type).getModule();
             }
             else {
               anchor = null;
@@ -672,7 +684,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private static void addPluginQuickFixes(PsiReference reference, final List<LocalQuickFix> actions) {
-      for(PyUnresolvedReferenceQuickFixProvider provider: Extensions.getExtensions(PyUnresolvedReferenceQuickFixProvider.EP_NAME)) {
+      for (PyUnresolvedReferenceQuickFixProvider provider : Extensions.getExtensions(PyUnresolvedReferenceQuickFixProvider.EP_NAME)) {
         provider.registerQuickFixes(reference, new Consumer<LocalQuickFix>() {
           public void consume(LocalQuickFix localQuickFix) {
             actions.add(localQuickFix);
@@ -691,7 +703,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private List<PsiElement> collectUnusedImportElements() {
-      if (myAllImports.isEmpty()){
+      if (myAllImports.isEmpty()) {
         return Collections.emptyList();
       }
       // PY-1315 Unused imports inspection shouldn't work in python repl console
@@ -704,7 +716,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       Set<NameDefiner> unusedImports = new HashSet<NameDefiner>(myAllImports);
       unusedImports.removeAll(myUsedImports);
       Set<String> usedImportNames = new HashSet<String>();
-      for (PsiElement usedImport: myUsedImports) {
+      for (PsiElement usedImport : myUsedImports) {
         if (usedImport instanceof NameDefiner) {
           for (PyElement e : ((NameDefiner)usedImport).iterateNames()) {
             usedImportNames.add(e.getName());

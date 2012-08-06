@@ -408,6 +408,9 @@
 
     <iconProvider implementation="com.jetbrains.python.PyDirectoryIconProvider"/>
 
+    <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
+                        serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
+
     <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>
@@ -766,6 +769,8 @@
     <typeProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider"/>
     <pyModuleMembersProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibModuleMembersProvider"/>
     <documentationLinkProvider implementation="com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider"/>
+
+    <typeProvider implementation="com.jetbrains.python.debugger.PyCallSignatureTypeProvider"/>
 
     <!-- Django -->
     <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>

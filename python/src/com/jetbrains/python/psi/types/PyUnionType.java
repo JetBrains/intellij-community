@@ -18,7 +18,7 @@ import java.util.*;
 public class PyUnionType implements PyType {
   private final Set<PyType> myMembers;
 
-  private PyUnionType(Collection<PyType> members) {
+  PyUnionType(Collection<PyType> members) {
     myMembers = new LinkedHashSet<PyType>(members);
   }
 

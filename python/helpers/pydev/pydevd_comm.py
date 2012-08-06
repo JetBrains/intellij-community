@@ -14,7 +14,7 @@ each command has a format:
     payload is urlencoded again to prevent stray characters corrupting protocol/xml encodings
 
     Commands:
- 
+
     NUMBER   NAME                     FROM*     ARGUMENTS                     RESPONSE      NOTE
 100 series: program execution
     101      RUN                      JAVA      -                             -
@@ -25,17 +25,17 @@ each command has a format:
     105      THREAD_SUSPEND           JAVA      XML of the stack,             suspends the thread
                                                 reason for suspension
                                       PYDB      id                            notifies JAVA that thread was suspended
-                                      
+
     106      CMD_THREAD_RUN           JAVA      id                            resume the thread
                                       PYDB      id \t reason                  notifies JAVA that thread was resumed
-                                      
+
     107      STEP_INTO                JAVA      thread_id
     108      STEP_OVER                JAVA      thread_id
     109      STEP_RETURN              JAVA      thread_id
-    
+
     110      GET_VARIABLE             JAVA      thread_id \t frame_id \t      GET_VARIABLE with XML of var content
                                                 FRAME|GLOBAL \t attributes*
-                                                
+
     111      SET_BREAK                JAVA      file/line of the breakpoint
     112      REMOVE_BREAK             JAVA      file/line of the return
     113      CMD_EVALUATE_EXPRESSION  JAVA      expression                    result of evaluating the expression
@@ -50,10 +50,10 @@ each command has a format:
 500 series diagnostics/ok
     501      VERSION                  either      Version string (1.0)        Currently just used at startup
     502      RETURN                   either      Depends on caller    -
-    
+
 900 series: errors
     901      ERROR                    either      -                           This is reserved for unexpected errors.
-                                  
+
     * JAVA - remote debugger, the java end
     * PYDB - pydevd, the python end
 '''
@@ -132,9 +132,10 @@ CMD_REMOVE_DJANGO_EXCEPTION_BREAK = 126
 CMD_SET_NEXT_STATEMENT = 127
 CMD_SMART_STEP_INTO = 128
 CMD_EXIT = 129
+CMD_SIGNATURE_CALL_TRACE = 130
 CMD_VERSION = 501
 CMD_RETURN = 502
-CMD_ERROR = 901 
+CMD_ERROR = 901
 
 ID_TO_MEANING = {
     '101':'CMD_RUN',
@@ -165,13 +166,15 @@ ID_TO_MEANING = {
     '126':'CMD_REMOVE_DJANGO_EXCEPTION_BREAK',
     '127':'CMD_SET_NEXT_STATEMENT',
     '128':'CMD_SMART_STEP_INTO',
+    '129': 'CMD_EXIT',
+    '130': 'CMD_SIGNATURE_CALL_TRACE',
     '501':'CMD_VERSION',
     '502':'CMD_RETURN',
     '901':'CMD_ERROR',
-}
+    }
 
 MAX_IO_MSG_SIZE = 1000  #if the io is too big, we'll not send all (could make the debugger too non-responsive)
-                        #this number can be changed if there's need to do so
+#this number can be changed if there's need to do so
 
 VERSION_STRING = "@@BUILD_NUMBER@@"
 
@@ -182,7 +185,7 @@ VERSION_STRING = "@@BUILD_NUMBER@@"
 # PydevdLog
 #=======================================================================================================================
 def PydevdLog(level, *args):
-    """ levels are: 
+    """ levels are:
         0 most serious warnings/errors
         1 warnings/significant events
         2 informational trace
@@ -202,7 +205,7 @@ class GlobalDebuggerHolder:
         Holder for the global debugger.
     '''
     globalDbg = None
-    
+
 #=======================================================================================================================
 # GetGlobalDebugger
 #=======================================================================================================================
@@ -234,9 +237,9 @@ class PyDBDaemonThread(threading.Thread):
             ss = PyCore.PySystemState()
             # Note: Py.setSystemState() affects only the current thread.
             PyCore.Py.setSystemState(ss)
-            
+
         self.OnRun()
-        
+
     def OnRun(self):
         raise NotImplementedError('Should be reimplemented by: %s' % self.__class__)
 
@@ -244,19 +247,19 @@ class PyDBDaemonThread(threading.Thread):
         #that was not working very well because jython gave some socket errors
         self.killReceived = True
 
-            
+
 #=======================================================================================================================
 # ReaderThread
 #=======================================================================================================================
 class ReaderThread(PyDBDaemonThread):
     """ reader thread reads and dispatches commands in an infinite loop """
-    
+
     def __init__(self, sock):
         PyDBDaemonThread.__init__(self)
         self.sock = sock
         self.setName("pydevd.Reader")
-        
-        
+
+
     def doKillPydevThread(self):
         #We must close the socket so that it doesn't stay halted there.
         self.killReceived = True
@@ -270,20 +273,20 @@ class ReaderThread(PyDBDaemonThread):
         pydevd_tracing.SetTrace(None) # no debugging on this thread
         buffer = ""
         try:
-            
+
             while not self.killReceived:
                 try:
                     r = self.sock.recv(1024)
                 except:
                     self.handleExcept()
-                    break #Finished communication.
+                    return #Finished communication.
                 if IS_PY3K:
                     r = r.decode('utf-8')
-                    
+
                 buffer += r
                 if DebugInfoHolder.DEBUG_RECORD_SOCKET_READS:
                     sys.stdout.write('received >>%s<<\n' % (buffer,))
-                    
+
                 if len(buffer) == 0:
                     self.handleExcept()
                     break
@@ -320,6 +323,7 @@ class WriterThread(PyDBDaemonThread):
     """ writer thread writes out the commands in an infinite loop """
     def __init__(self, sock):
         PyDBDaemonThread.__init__(self)
+        self.setDaemon(False)  #we decided not to be a Daemon as we want to be good - to deliver all data even after other threads die.
         self.sock = sock
         self.setName("pydevd.Writer")
         self.cmdQueue = PydevQueue.Queue()
@@ -327,19 +331,26 @@ class WriterThread(PyDBDaemonThread):
             self.timeout = 0
         else:
             self.timeout = 0.1
-       
+
     def addCommand(self, cmd):
         """ cmd is NetCommand """
-        self.cmdQueue.put(cmd)
+        if not self.killReceived: #we don't take new data after everybody die
+            self.cmdQueue.put(cmd)
 
     def OnRun(self):
         """ just loop and write responses """
-            
+
         pydevd_tracing.SetTrace(None) # no debugging on this thread
         try:
-            while not self.killReceived:
+            while True:
                 try:
-                    cmd = self.cmdQueue.get(1)
+                    try:
+                        cmd = self.cmdQueue.get(1, 0.3)
+                    except PydevQueue.Empty:
+                        if self.killReceived:
+                            return #break if queue is empty and killReceived
+                        else:
+                            continue
                 except:
                     #PydevdLog(0, 'Finishing debug communication...(1)')
                     #when liberating the thread here, we could have errors because we were shutting down
@@ -356,7 +367,7 @@ class WriterThread(PyDBDaemonThread):
                         sys.stderr.write('%s\n' % (out_message,))
                     except:
                         pass
-                
+
                 if IS_PY3K:
                     out = bytearray(out, 'utf-8')
                 self.sock.send(out) #TODO: this does not guarantee that all message are sent (and jython does not have a send all)
@@ -364,17 +375,17 @@ class WriterThread(PyDBDaemonThread):
                     break
                 if time is None:
                     break #interpreter shutdown
-                time.sleep(self.timeout)                
+                time.sleep(self.timeout)
         except Exception:
             GlobalDebuggerHolder.globalDbg.FinishDebuggingSession()
             if DebugInfoHolder.DEBUG_TRACE_LEVEL >= 0:
                 traceback.print_exc()
-    
-    
+
+
 
 
 #--------------------------------------------------- CREATING THE SOCKET THREADS
-    
+
 #=======================================================================================================================
 # StartServer
 #=======================================================================================================================
@@ -415,18 +426,18 @@ def StartClient(host, port):
 
 
 #------------------------------------------------------------------------------------ MANY COMMUNICATION STUFF
-    
+
 #=======================================================================================================================
 # NetCommand
 #=======================================================================================================================
 class NetCommand:
     """ Commands received/sent over the network.
-    
+
     Command can represent command received from the debugger,
     or one to be sent by daemon.
     """
     next_seq = 0 # sequence numbers
- 
+
     def __init__(self, id, seq, text):
         """ smart handling of paramaters
         if sequence is 0, new sequence will be generated
@@ -436,7 +447,7 @@ class NetCommand:
         self.seq = seq
         self.text = text
         self.outgoing = self.makeMessage(id, seq, text)
-  
+
     def getNextSeq(self):
         """ returns next sequence number """
         NetCommand.next_seq += 2
@@ -445,7 +456,7 @@ class NetCommand:
     def getOutgoing(self):
         """ returns the outgoing message"""
         return self.outgoing
-    
+
     def makeMessage(self, cmd, seq, payload):
         encoded = quote(to_string(payload), '/<>_=" \t')
         return str(cmd) + '\t' + str(seq) + '\t' + encoded + "\n"
@@ -454,7 +465,7 @@ class NetCommand:
 # NetCommandFactory
 #=======================================================================================================================
 class NetCommandFactory:
-    
+
     def __init_(self):
         self.next_seq = 0
 
@@ -473,7 +484,7 @@ class NetCommandFactory:
     def makeThreadCreatedMessage(self, thread):
         cmdText = "<xml>" + self.threadToXML(thread) + "</xml>"
         return NetCommand(CMD_THREAD_CREATE, 0, cmdText)
- 
+
     def makeListThreadsMessage(self, seq):
         """ returns thread listing as XML """
         try:
@@ -497,12 +508,12 @@ class NetCommandFactory:
         @param ctx: 1 for stdio 2 for stderr
         @param dbg: If not none, add to the writer
         '''
-        
+
         try:
             if len(v) > MAX_IO_MSG_SIZE:
                 v = v[0:MAX_IO_MSG_SIZE]
                 v += '...'
-                
+
             v = pydevd_vars.makeValidXmlValue(quote(v, '/>_= \t'))
             net = NetCommand(str(CMD_WRITE_TO_CONSOLE), 0, '<xml><io s="%s" ctx="%s"/></xml>' % (v, ctx))
         except:
@@ -518,15 +529,15 @@ class NetCommandFactory:
             return NetCommand(CMD_VERSION, seq, VERSION_STRING)
         except:
             return self.makeErrorMessage(seq, GetExceptionTracebackStr())
-    
+
     def makeThreadKilledMessage(self, id):
         try:
             return NetCommand(CMD_THREAD_KILL, 0, str(id))
         except:
             return self.makeErrorMessage(0, GetExceptionTracebackStr())
-    
+
     def makeThreadSuspendMessage(self, thread_id, frame, stop_reason, message):
-        
+
         """ <xml>
             <thread id="id" stop_reason="reason">
                     <frame id="id" name="functionName " file="file" line="line">
@@ -576,7 +587,7 @@ class NetCommandFactory:
                     curFrame = curFrame.f_back
             except :
                 traceback.print_exc()
-            
+
             cmdTextList.append("</thread></xml>")
             cmdText = ''.join(cmdTextList)
             return NetCommand(CMD_THREAD_SUSPEND, 0, cmdText)
@@ -601,7 +612,7 @@ class NetCommandFactory:
         except Exception:
             return self.makeErrorMessage(seq, GetExceptionTracebackStr())
 
-            
+
     def makeEvaluateExpressionMessage(self, seq, payload):
         try:
             return NetCommand(CMD_EVALUATE_EXPRESSION, seq, payload)
@@ -643,12 +654,12 @@ INTERNAL_SUSPEND_THREAD = 2
 #=======================================================================================================================
 class InternalThreadCommand:
     """ internal commands are generated/executed by the debugger.
-    
+
     The reason for their existence is that some commands have to be executed
     on specific threads. These are the InternalThreadCommands that get
     get posted to PyDB.cmdQueue.
     """
-    
+
     def canBeExecutedBy(self, thread_id):
         '''By default, it must be in the same thread to be executed
         '''
@@ -729,11 +740,11 @@ class InternalGetVariable(InternalThreadCommand):
         self.frame_id = frame_id
         self.scope = scope
         self.attributes = attrs
-     
+
     def doIt(self, dbg):
         """ Converts request into python variable """
         try:
-            xml = "<xml>"            
+            xml = "<xml>"
             valDict = pydevd_vars.resolveCompoundVariable(self.thread_id, self.frame_id, self.scope, self.attributes)
             if valDict is None:
                 valDict = {}
@@ -770,7 +781,7 @@ class InternalChangeVariable(InternalThreadCommand):
         self.scope = scope
         self.attr = attr
         self.expression = expression
-     
+
     def doIt(self, dbg):
         """ Converts request into python variable """
         try:
@@ -794,7 +805,7 @@ class InternalGetFrame(InternalThreadCommand):
         self.sequence = seq
         self.thread_id = thread_id
         self.frame_id = frame_id
-     
+
     def doIt(self, dbg):
         """ Converts request into python variable """
         try:
@@ -815,7 +826,7 @@ class InternalGetFrame(InternalThreadCommand):
             cmd = dbg.cmdFactory.makeErrorMessage(self.sequence, "Error resolving frame: %s from thread: %s" % (self.frame_id, self.thread_id))
             dbg.writer.addCommand(cmd)
 
-           
+
 #=======================================================================================================================
 # InternalEvaluateExpression
 #=======================================================================================================================
@@ -829,7 +840,7 @@ class InternalEvaluateExpression(InternalThreadCommand):
         self.expression = expression
         self.doExec = doExec
         self.doTrim = doTrim
-    
+
     def doIt(self, dbg):
         """ Converts request into python variable """
         try:
@@ -895,8 +906,8 @@ class InternalGetCompletions(InternalThreadCommand):
         self.thread_id = thread_id
         self.frame_id = frame_id
         self.act_tok = act_tok
-    
-    
+
+
     def doIt(self, dbg):
         """ Converts request into completions """
         try:
@@ -914,9 +925,9 @@ class InternalGetCompletions(InternalThreadCommand):
                     import _completer
                 except :
                     pass
-            
+
             try:
-                
+
                 frame = pydevd_vars.findFrame(self.thread_id, self.frame_id)
                 if frame is not None:
 
@@ -941,24 +952,24 @@ class InternalGetCompletions(InternalThreadCommand):
                         completions = completer.complete(self.act_tok)
                     except :
                         completions = []
-                
-                
+
+
                 def makeValid(s):
                     return pydevd_vars.makeValidXmlValue(pydevd_vars.quote(s, '/>_= \t'))
-                
+
                 msg = "<xml>"
-                
+
                 for comp in completions:
                     msg += '<comp p0="%s" p1="%s" p2="%s" p3="%s"/>' % (makeValid(comp[0]), makeValid(comp[1]), makeValid(comp[2]), makeValid(comp[3]),)
                 msg += "</xml>"
-                
+
                 cmd = dbg.cmdFactory.makeGetCompletionsMessage(self.sequence, msg)
                 dbg.writer.addCommand(cmd)
-                
+
             finally:
                 if remove_path is not None:
                     sys.path.remove(remove_path)
-                    
+
         except:
             exc = GetExceptionTracebackStr()
             sys.stderr.write('%s\n' % (exc,))
@@ -974,14 +985,14 @@ def PydevdFindThreadById(thread_id):
         # there was a deadlock here when I did not remove the tracing function when thread was dead
         threads = threading.enumerate()
         for i in threads:
-            if thread_id == GetThreadId(i): 
+            if thread_id == GetThreadId(i):
                 return i
-            
+
         sys.stderr.write("Could not find thread %s\n" % thread_id)
         sys.stderr.write("Available: %s\n" % [GetThreadId(t) for t in threads])
         sys.stderr.flush()
     except:
         traceback.print_exc()
-        
+
     return None
 
