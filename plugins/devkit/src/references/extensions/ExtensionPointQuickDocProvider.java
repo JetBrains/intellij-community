@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
 import java.util.List;
@@ -47,7 +48,8 @@ public class ExtensionPointQuickDocProvider implements DocumentationProvider {
   }
 
   @Override
-  public String generateDoc(PsiElement element, PsiElement originalElement) {
+  public String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {
+    if (originalElement == null) return null;
     if (originalElement.getLanguage() == XMLLanguage.INSTANCE || DevKitInspectionBase.isPluginXml(originalElement.getContainingFile())) {
       final PsiElement context = element.getContext();
       String fqn = null;
