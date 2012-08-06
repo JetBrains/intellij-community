@@ -286,6 +286,7 @@ public class MavenModuleImporter {
         if (moduleProfile == null) {
           moduleProfile = new ProcessorConfigProfile(moduleProfileName);
           moduleProfile.setEnabled(true);
+          moduleProfile.setObtainProcessorsFromClasspath(true);
           moduleProfile.addModuleName(myModule.getName());
           compilerConfiguration.addModuleProcessorProfile(moduleProfile);
         }

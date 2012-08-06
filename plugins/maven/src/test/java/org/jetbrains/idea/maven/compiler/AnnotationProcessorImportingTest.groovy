@@ -103,10 +103,8 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
 
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE).getModuleNames() == new HashSet<String>(["project", "module1"])
-    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module2').isObtainProcessorsFromClasspath() == false
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module2').getProcessors() == new HashSet<String>(["com.test.SourceCodeGeneratingAnnotationProcessor2"])
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module3') == null
-    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module4').isObtainProcessorsFromClasspath() == false
   }
 
   public void testOverrideGeneratedOutputDir() {
