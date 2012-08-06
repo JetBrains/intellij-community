@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.UserDataHolderBase;
 
-public interface BinaryFileStubBuilder {
-  boolean acceptsFile(final VirtualFile file);
+/**
+ * @author Dmitry Avdeev
+ *         Date: 8/3/12
+ */
+public abstract class ObjectStubBase<T extends Stub>  extends UserDataHolderBase implements Stub {
 
-  @Nullable
-  Stub buildStubTree(final VirtualFile file, byte[] content, final Project project);
+  protected final T myParent;
+  public int id;
 
-  int getStubVersion();
+  public ObjectStubBase(T parent) {
+    myParent = parent;
+  }
+
+  public T getParentStub() {
+    return myParent;
+  }
 }

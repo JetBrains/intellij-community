@@ -248,10 +248,11 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
               return true;
             }
             if (stubTree == null) {
-              stubTree = StubTreeLoader.getInstance().readFromVFile(project, file);
-              if (stubTree == null) {
+              ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(project, file);
+              if (!(objectStubTree instanceof ObjectStubTree)) {
                 return true;
               }
+              stubTree = (StubTree)objectStubTree;
               final List<StubElement<?>> plained = stubTree.getPlainList();
               for (int i = 0, size = value.size(); i < size; i++) {
                 final StubElement<?> stub = plained.get(value.get(i));
@@ -298,7 +299,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                 final int stubTreeIndex = value.get(i);
                 if (stubTreeIndex >= plained.size()) {
                   final VirtualFile virtualFile = psiFile.getVirtualFile();
-                  StubTree stubTreeFromIndex = StubTreeLoader.getInstance().readFromVFile(project, file);
+                  StubTree stubTreeFromIndex = (StubTree)StubTreeLoader.getInstance().readFromVFile(project, file);
                   LOG.error(LogMessageEx.createEvent("PSI and index do not match: PSI " + psiFile + ", first stub " + plained.get(0),
                                                      "Please report the problem to JetBrains with the file attached",
                                                      new Attachment(virtualFile != null ? virtualFile.getPath() : "vFile.txt", psiFile.getText()),

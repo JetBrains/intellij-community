@@ -87,7 +87,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
         }
         myNameStorage = new PersistentStringEnumerator(myFile, true);
         myStubSerializationHelper = new StubSerializationHelper(myNameStorage);
-        for (StubSerializer<? extends StubElement> serializer : myAllSerializers) {
+        for (ObjectStubSerializer serializer : myAllSerializers) {
           myStubSerializationHelper.assignId(serializer);
         }
       }
@@ -133,7 +133,8 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     }
   }
 
-  public void registerSerializer(@NotNull StubSerializer<? extends StubElement> serializer) {
+  @Override
+  public void registerSerializer(@NotNull ObjectStubSerializer serializer) {
     super.registerSerializer(serializer);
     try {
       myStubSerializationHelper.assignId(serializer);
@@ -144,8 +145,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     }
   }
 
-
-
+  @Override
   public void serialize(Stub rootStub, OutputStream stream) {
     initSerializers();
     try {
@@ -157,7 +157,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     }
   }
 
-
+  @Override
   public Stub deserialize(InputStream stream) {
     initSerializers();
 

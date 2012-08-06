@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.util.xml.stubs;
 
-/*
- * @author max
+import com.intellij.psi.stubs.SerializationManager;
+
+/**
+ * @author Dmitry Avdeev
+ *         Date: 8/2/12
  */
-package com.intellij.psi.stubs;
+public class DomElementTypeHolder {
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nullable;
-
-public interface BinaryFileStubBuilder {
-  boolean acceptsFile(final VirtualFile file);
-
-  @Nullable
-  Stub buildStubTree(final VirtualFile file, byte[] content, final Project project);
-
-  int getStubVersion();
+  static {
+    SerializationManager.getInstance().registerSerializer(TagStubSerializer.INSTANCE);
+    SerializationManager.getInstance().registerSerializer(AttributeStubSerializer.INSTANCE);
+  }
 }

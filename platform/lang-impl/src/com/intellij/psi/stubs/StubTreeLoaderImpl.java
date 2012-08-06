@@ -40,8 +40,8 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   @Nullable
-  public StubTree readOrBuild(Project project, final VirtualFile vFile, @Nullable PsiFile psiFile) {
-    final StubTree fromIndices = readFromVFile(project, vFile);
+  public ObjectStubTree readOrBuild(Project project, final VirtualFile vFile, @Nullable PsiFile psiFile) {
+    final ObjectStubTree fromIndices = readFromVFile(project, vFile);
     if (fromIndices != null) {
       return fromIndices;
     }
@@ -82,7 +82,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
 
   @Override
   @Nullable
-  public StubTree readFromVFile(Project project, final VirtualFile vFile) {
+  public ObjectStubTree readFromVFile(Project project, final VirtualFile vFile) {
     if (DumbService.getInstance(project).isDumb()) {
       return null;
     }
@@ -95,7 +95,7 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
 
       if (size == 1) {
         Stub stub = datas.get(0).getStub(false);
-        return new StubTree((PsiFileStub)stub);
+        return stub instanceof PsiFileStub ? new StubTree((PsiFileStub)stub) : new ObjectStubTree((ObjectStubBase)stub, true);
       }
       else if (size != 0) {
         LOG.error("Twin stubs: " + vFile.getPresentableUrl() + " has " + size + " stub versions. Should only have one. id=" + id);

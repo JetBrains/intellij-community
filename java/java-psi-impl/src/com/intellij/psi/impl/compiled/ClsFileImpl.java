@@ -421,7 +421,7 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     final StubTree derefd = derefStub();
     if (derefd != null) return derefd;
 
-    StubTree stubHolder = StubTreeLoader.getInstance().readOrBuild(getProject(), getVirtualFile(), this);
+    StubTree stubHolder = (StubTree)StubTreeLoader.getInstance().readOrBuild(getProject(), getVirtualFile(), this);
     if (stubHolder == null) {
       // Must be corrupted classfile
       LOG.info("Class file is corrupted: " + getVirtualFile().getPresentableUrl());

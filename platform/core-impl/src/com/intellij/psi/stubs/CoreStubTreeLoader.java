@@ -37,7 +37,7 @@ import java.io.IOException;
  */
 public class CoreStubTreeLoader extends StubTreeLoader {
   @Override
-  public StubTree readOrBuild(Project project, VirtualFile vFile, @Nullable PsiFile psiFile) {
+  public ObjectStubTree readOrBuild(Project project, VirtualFile vFile, @Nullable PsiFile psiFile) {
     if (!canHaveStub(vFile)) {
       return null;
     }
@@ -58,7 +58,7 @@ public class CoreStubTreeLoader extends StubTreeLoader {
   }
 
   @Override
-  public StubTree readFromVFile(Project project, VirtualFile vFile) {
+  public ObjectStubTree readFromVFile(Project project, VirtualFile vFile) {
     return null;
   }
 

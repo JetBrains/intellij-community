@@ -77,15 +77,14 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       if (parserDefinition == null) return false;
 
       final IFileElementType elementType = parserDefinition.getFileNodeType();
-      return elementType instanceof IStubFileElementType &&
-            (((IStubFileElementType)elementType).shouldBuildStubFor(file) || IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)));
+      if (elementType instanceof IStubFileElementType &&
+                  (((IStubFileElementType)elementType).shouldBuildStubFor(file) ||
+                   IndexingStamp.isFileIndexed(file, INDEX_ID, IndexInfrastructure.getIndexCreationStamp(INDEX_ID)))) {
+        return true;
+      }
     }
-    if (fileType.isBinary()) {
-      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-      return builder != null && builder.acceptsFile(file);
-    }
-
-    return false;
+    final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+    return builder != null && builder.acceptsFile(file);
   }
 
   private static final KeyDescriptor<Integer> DATA_DESCRIPTOR = new IntInlineKeyDescriptor();
@@ -309,7 +308,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       final Map<StubIndexKey, Map<Object, StubIdList>> stubTree;
       if (!data.isEmpty()) {
         final SerializedStubTree stub = data.values().iterator().next();
-        Map<StubIndexKey, Map<Object, int[]>> map = new StubTree((PsiFileStub)stub.getStub(true), false).indexStubTree();
+        Map<StubIndexKey, Map<Object, int[]>> map = new ObjectStubTree((ObjectStubBase)stub.getStub(true), false).indexStubTree();
 
         // xxx:fix refs inplace
         stubTree = (Map)map;

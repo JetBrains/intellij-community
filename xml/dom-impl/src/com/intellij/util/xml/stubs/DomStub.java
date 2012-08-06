@@ -15,9 +15,25 @@
  */
 package com.intellij.util.xml.stubs;
 
+import com.intellij.psi.stubs.ObjectStubBase;
+
 /**
  * @author Dmitry Avdeev
  *         Date: 8/2/12
  */
-public class DomStubElement {
+public abstract class DomStub extends ObjectStubBase<DomStub> {
+
+  private final String myName;
+
+  public DomStub(DomStub parent, String name) {
+    super(parent);
+    myName = name;
+    if (parent != null) {
+      ((TagStub)parent).addChild(this);
+    }
+  }
+
+  public String getName() {
+    return myName;
+  }
 }

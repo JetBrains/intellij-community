@@ -46,10 +46,8 @@ public class StubTreeBuilder {
 
       final FileType fileType = inputData.getFileType();
 
-      if (fileType.isBinary()) {
-        final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-        assert builder != null;
-
+      final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+      if (builder != null) {
         data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
       }
       else {
