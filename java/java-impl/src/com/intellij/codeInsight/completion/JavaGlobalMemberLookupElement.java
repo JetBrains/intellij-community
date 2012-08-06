@@ -3,6 +3,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.DefaultLookupItemRenderer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
@@ -85,6 +86,8 @@ public class JavaGlobalMemberLookupElement extends LookupElement implements Stat
 
   @Override
   public void handleInsert(InsertionContext context) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
+
     (willBeImported() ? myImportInsertion : myQualifiedInsertion).handleInsert(context, this);
   }
 

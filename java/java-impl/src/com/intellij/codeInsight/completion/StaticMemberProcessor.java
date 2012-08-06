@@ -2,7 +2,6 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -17,7 +16,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.containers.CollectionFactory.hashSet;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
@@ -45,8 +47,6 @@ public abstract class StaticMemberProcessor {
   }
 
   public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
-
     final GlobalSearchScope scope = myPosition.getResolveScope();
     final PsiShortNamesCache namesCache = PsiShortNamesCache.getInstance(myProject);
     String[] methodNames = namesCache.getAllMethodNames();
