@@ -36,12 +36,14 @@ public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrement
   private final Map<String, VirtualFile> mySourceByOutput;
   private final Map<String, JarInfo> myJarByPath;
   private final CompileContext myCompileContext;
+  private final boolean myPrintToLog;
 
   public ArtifactsProcessingItemsBuilderContext(CompileContext compileContext) {
     myCompileContext = compileContext;
     myItemsBySource = new HashMap<VirtualFile, ArtifactCompilerCompileItem>();
     mySourceByOutput = new HashMap<String, VirtualFile>();
     myJarByPath = new HashMap<String, JarInfo>();
+    myPrintToLog = ArtifactsCompilerInstance.FULL_LOG.isDebugEnabled();
   }
 
   public boolean addDestination(@NotNull VirtualFile sourceFile, @NotNull DestinationInfo destinationInfo) {
@@ -50,6 +52,9 @@ public class ArtifactsProcessingItemsBuilderContext implements ArtifactIncrement
     }
 
     if (checkOutputPath(destinationInfo.getOutputPath(), sourceFile)) {
+      if (myPrintToLog) {
+        ArtifactsCompilerInstance.FULL_LOG.debug("  " + sourceFile.getPath() + " -> " + destinationInfo);
+      }
       getOrCreateProcessingItem(sourceFile).addDestination(destinationInfo);
       return true;
     }

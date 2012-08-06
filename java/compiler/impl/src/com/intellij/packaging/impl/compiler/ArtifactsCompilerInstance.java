@@ -39,10 +39,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -64,6 +61,7 @@ import java.util.*;
 public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactBuildTarget, ArtifactCompilerCompileItem,
   String, VirtualFilePersistentState, ArtifactPackagingItemOutputState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.packaging.impl.compiler.ArtifactsCompilerInstance");
+  public static final Logger FULL_LOG = Logger.getInstance("#com.intellij.full-artifacts-compiler-log");
   private ArtifactsProcessingItemsBuilderContext myBuilderContext;
 
   public ArtifactsCompilerInstance(CompileContext context) {
@@ -167,6 +165,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
     final VirtualFile outputFile = LocalFileSystem.getInstance().findFileByPath(outputPath);
     final CopyToDirectoryInstructionCreator instructionCreator = new CopyToDirectoryInstructionCreator(myBuilderContext, outputPath, outputFile);
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(getProject()).getResolvingContext();
+    FULL_LOG.debug("Collecting items for " + artifact.getName());
     rootElement.computeIncrementalCompilerInstructions(instructionCreator, resolvingContext, myBuilderContext, artifact.getArtifactType());
   }
 
@@ -175,6 +174,7 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
                           final Set<ArtifactCompilerCompileItem> processedItems,
                           final @NotNull Set<String> writtenPaths,
                           final Set<String> deletedJars) {
+    FULL_LOG.debug("Building " + artifact.getName());
     final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
 
     final DeploymentUtil deploymentUtil = DeploymentUtil.getInstance();
@@ -205,9 +205,12 @@ public class ArtifactsCompilerInstance extends GenericCompilerInstance<ArtifactB
                 File toFile = new File(FileUtil.toSystemDependentName(explodedDestination.getOutputPath()));
                 try {
                   if (sourceFile.isInLocalFileSystem()) {
-                    final File ioFromFile = VfsUtil.virtualToIoFile(sourceFile);
+                    final File ioFromFile = VfsUtilCore.virtualToIoFile(sourceFile);
                     if (ioFromFile.exists()) {
                       deploymentUtil.copyFile(ioFromFile, toFile, myContext, writtenPaths, fileFilter);
+                    }
+                    else {
+                      LOG.debug("Cannot copy " + ioFromFile.getAbsolutePath() + ": file doesn't exist");
                     }
                   }
                   else {
