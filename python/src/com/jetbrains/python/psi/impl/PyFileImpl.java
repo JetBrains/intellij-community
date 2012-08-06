@@ -10,6 +10,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.IndexingDataKeys;
@@ -38,7 +39,8 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   private final Map<FutureFeature, Boolean> myFutureFeatures;
   private List<String> myDunderAll;
   private boolean myDunderAllCalculated;
-  private volatile ExportedNameCache myExportedNameCache;
+  private SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<ExportedNameCache>(null);
+  private final Object myENCLock = new Object();
   private final PsiModificationTracker myModificationTracker;
 
   private class ExportedNameCache {
@@ -407,10 +409,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     stack.add(name);
     try {
-      if (myExportedNameCache == null) {
-        myExportedNameCache = new ExportedNameCache();
-      }
-      PsiElement result = myExportedNameCache.resolve(name);
+      PsiElement result = getExportedNameCache().resolve(name);
       if (result != null) {
         return result;
       }
@@ -423,6 +422,18 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     finally {
       stack.remove(name);
     }
+  }
+
+  private ExportedNameCache getExportedNameCache() {
+    ExportedNameCache cache;
+    synchronized (myENCLock) {
+      cache = myExportedNameCache != null ? myExportedNameCache.get() : null;
+      if (cache == null) {
+        cache = new ExportedNameCache();
+        myExportedNameCache = new SoftReference<ExportedNameCache>(cache);
+      }
+    }
+    return cache;
   }
 
   @Nullable
@@ -673,7 +684,9 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     ControlFlowCache.clear(this);
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
-    myExportedNameCache = null;
+    synchronized (myENCLock) {
+      myExportedNameCache.clear();
+    }
   }
 
   private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {
