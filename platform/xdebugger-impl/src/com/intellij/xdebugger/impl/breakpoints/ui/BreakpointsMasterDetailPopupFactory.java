@@ -35,6 +35,8 @@ public class BreakpointsMasterDetailPopupFactory {
   private Project myProject;
   private Balloon myBalloonToHide;
   private Object myBreakpoint;
+  private JBPopup myPopupShowing;
+
 
   public BreakpointsMasterDetailPopupFactory(Project project) {
     myProject = project;
@@ -63,7 +65,11 @@ public class BreakpointsMasterDetailPopupFactory {
     return ServiceManager.getService(project, BreakpointsMasterDetailPopupFactory.class);
   }
 
+  @Nullable
   public JBPopup createPopup(@Nullable Object initialBreakpoint) {
+    if (myPopupShowing != null) {
+      return null;
+    }
     BreakpointMasterDetailPopupBuilder builder = new BreakpointMasterDetailPopupBuilder(myProject);
     builder.setInitialBreakpoint(initialBreakpoint != null ? initialBreakpoint : myBreakpoint);
     builder.setBreakpointsPanelProviders(collectPanelProviders());
@@ -84,6 +90,7 @@ public class BreakpointsMasterDetailPopupFactory {
           myBalloonToHide.hide();
           myBalloonToHide = null;
         }
+        myPopupShowing = popup;
       }
 
       @Override
@@ -91,6 +98,7 @@ public class BreakpointsMasterDetailPopupFactory {
         for (BreakpointPanelProvider provider : collectPanelProviders()) {
           provider.onDialogClosed(myProject);
         }
+        myPopupShowing = null;
       }
     });
     return popup;
