@@ -18,6 +18,7 @@ package com.intellij.lang.java.parser;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderAdapter;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.JavaDocLexer;
 import com.intellij.lexer.Lexer;
@@ -169,7 +170,9 @@ public class JavaParserUtil {
     final PsiBuilderFactory factory = PsiBuilderFactory.getInstance();
     final LanguageLevel level = PsiUtil.getLanguageLevel(psi);
     final Lexer lexer = JavaParserDefinition.createLexer(level);
-    final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, psi.getLanguage(), text);
+    Language language = psi.getLanguage();
+    if (!language.isKindOf(JavaLanguage.INSTANCE)) language = JavaLanguage.INSTANCE;
+    final PsiBuilder builder = factory.createBuilder(project, chameleon, lexer, language, text);
     setLanguageLevel(builder, level);
 
     return builder;
