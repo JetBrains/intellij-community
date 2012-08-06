@@ -318,4 +318,24 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertFalse(virtualFile.exists());
     assertFalse(virtualFile.isValid());
   }
+
+  public void testBadFileName() throws Exception {
+    if (!SystemInfo.isUnix) {
+      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
+      return;
+    }
+
+    final File dir = FileUtil.createTempDirectory("test.", ".dir");
+    final File file = FileUtil.createTempFile(dir, "test\\", "\\txt", true);
+
+    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    assertNotNull(vDir);
+    assertEquals(0, vDir.getChildren().length);
+
+    ((VirtualFileSystemEntry)vDir).markDirtyRecursively();
+    vDir.refresh(false, true);
+
+    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNull(vFile);
+  }
 }
