@@ -1,7 +1,6 @@
 package com.intellij.tasks.pivotal;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.util.Consumer;
 
@@ -47,6 +46,12 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
         return new Dimension(oldSize.width, size.height);
       }
     }, BorderLayout.CENTER);
+
+    myUsernameLabel.setVisible(false);
+    myUserNameText.setVisible(false);
+    myPasswordLabel.setVisible(false);
+    myPasswordText.setVisible(false);
+    myUseHTTPAuthentication.setVisible(false);
   }
 
   @Override
@@ -54,6 +59,5 @@ public class PivotalTrackerRepositoryEditor extends BaseRepositoryEditor<Pivotal
     super.apply();
     myRepository.setProjectId(myProjectId.getText().trim());
     myRepository.setAPIKey(myAPIKey.getText().trim());
-    myUseHTTPAuthentication.setSelected(!StringUtil.isEmpty(myPasswordText.getText()));
   }
 }
