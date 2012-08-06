@@ -47,12 +47,9 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
     return myElement;
   }
 
-  public DomElementNavigationProvider getNavigationProvider() {
-    return myNavigationProvider;
-  }
-
+  @Nullable
   public Object getValue() {
-    return myElement.getXmlElement();
+    return myElement.isValid() ? myElement.getXmlElement() : null;
   }
 
   public ItemPresentation getPresentation() {
