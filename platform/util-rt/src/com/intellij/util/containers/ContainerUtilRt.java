@@ -33,11 +33,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ContainerUtilRt {
   private static final int ARRAY_COPY_THRESHOLD = 20;
 
-  public static <K, V> HashMap<K,V> newHashMap() {
+  public static <K, V> HashMap<K, V> newHashMap() {
     return new HashMap<K, V>();
   }
 
-  public static <K, V> HashMap<K,V> newHashMap(Map<K, V> map) {
+  public static <K, V> HashMap<K, V> newHashMap(Map<K, V> map) {
     return new HashMap<K, V>(map);
   }
 
@@ -57,7 +57,7 @@ public class ContainerUtilRt {
     return new ArrayList<T>();
   }
 
-  public static <E> ArrayList<E> newArrayList(E ... array) {
+  public static <E> ArrayList<E> newArrayList(E... array) {
     ArrayList<E> list = new ArrayList<E>(computeArrayListCapacity(array.length));
     Collections.addAll(list, array);
     return list;
@@ -65,9 +65,8 @@ public class ContainerUtilRt {
 
   public static <E> ArrayList<E> newArrayList(Iterable<? extends E> iterable) {
     ArrayList<E> list = newArrayList();
-    Iterator<? extends E> elements = iterable.iterator();
-    while (elements.hasNext()) {
-      list.add(elements.next());
+    for (E anIterable : iterable) {
+      list.add(anIterable);
     }
     return list;
   }
@@ -76,7 +75,7 @@ public class ContainerUtilRt {
     return new HashSet<T>();
   }
 
-  public static <T> HashSet<T> newHashSet(T ... elements) {
+  public static <T> HashSet<T> newHashSet(T... elements) {
     HashSet<T> set = newHashSet();
     Collections.addAll(set, elements);
     return set;
@@ -88,7 +87,7 @@ public class ContainerUtilRt {
 
   public static <T> HashSet<T> newHashSet(Iterator<? extends T> iterator) {
     HashSet<T> set = newHashSet();
-    while(iterator.hasNext()) set.add(iterator.next());
+    while (iterator.hasNext()) set.add(iterator.next());
     return set;
   }
 

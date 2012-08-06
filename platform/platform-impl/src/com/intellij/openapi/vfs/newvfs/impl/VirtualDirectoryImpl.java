@@ -69,7 +69,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   // guarded by this
   private Object myChildren; // Either Map<String, VFile> or VFile[]
 
-  public VirtualDirectoryImpl(@NotNull String name, final VirtualDirectoryImpl parent, @NotNull NewVirtualFileSystem fs, final int id) {
+  public VirtualDirectoryImpl(@NotNull final String name,
+                              @Nullable final VirtualDirectoryImpl parent,
+                              @NotNull final NewVirtualFileSystem fs,
+                              final int id) {
     super(name, parent, id);
     myFS = fs;
   }
@@ -481,8 +484,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private Map<String, VirtualFileSystemEntry> asMap() {
     Object children = myChildren;
     if (children instanceof Map) {
-      //noinspection unchecked
-      return (Map<String, VirtualFileSystemEntry>)children;
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      final Map<String, VirtualFileSystemEntry> map = (Map<String, VirtualFileSystemEntry>)children;
+      return map;
     }
     return null;
   }
@@ -495,8 +499,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myChildren = map;
     }
     else {
-      //noinspection unchecked
-      map = (Map<String, VirtualFileSystemEntry>)myChildren;
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      final Map<String, VirtualFileSystemEntry> aMap = (Map<String, VirtualFileSystemEntry>)myChildren;
+      map = aMap;
     }
 
     return map;
@@ -573,6 +578,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @TestOnly
   public synchronized void cleanupCachedChildren(@NotNull Set<VirtualFile> survivors) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     if (survivors.contains(this)) {
       for (VirtualFile file : getCachedChildren()) {
         if (file instanceof VirtualDirectoryImpl) {

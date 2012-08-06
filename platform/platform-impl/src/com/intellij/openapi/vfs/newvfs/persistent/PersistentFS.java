@@ -113,6 +113,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
     return areChildrenLoaded(getFileId(dir));
   }
 
+  @Override
   public long getCreationTimestamp() {
     return FSRecords.getCreationTimestamp();
   }
@@ -224,20 +225,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
   }
 
   @NotNull
-  public static int[] listIds(@NotNull VirtualFile parent) {
-    final int parentId = getFileId(parent);
-
-    int[] ids = FSRecords.list(parentId);
-    if (!areChildrenLoaded(parentId)) {
-      String[] names = listPersisted(ids);
-      Pair<String[], int[]> pair = persistAllChildren(parent, parentId, Pair.create(names, ids));
-      return pair.second;
-    }
-
-    return ids;
-  }
-
-  @NotNull
   public static Pair<String[],int[]> listAll(@NotNull VirtualFile parent) {
     final int parentId = getFileId(parent);
 
@@ -248,7 +235,6 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
 
     return pair;
   }
-
 
   private static boolean areChildrenLoaded(final int parentId) {
     final int mask = CHILDREN_CACHED_FLAG;
@@ -594,6 +580,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       storeContentToStorage(fileLength, file, readOnly, bytes, bytes.length);
       return nativeStream;
     }
+    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
     final BufferExposingByteArrayOutputStream cache = new BufferExposingByteArrayOutputStream((int)fileLength);
     return new ReplicatorInputStream(nativeStream, cache) {
       @Override
