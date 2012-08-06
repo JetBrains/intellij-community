@@ -154,7 +154,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     synchronized (this) {
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
-      int id = PersistentFS.getId(this, name, delegate);
+      int id = ourPersistence.getId(this, name, delegate);
       if (id > 0) {
         // maybe another doFindChild() sneaked in the middle
         VirtualFileSystemEntry lastTry = map.get(name);
@@ -174,7 +174,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public VirtualFileSystemEntry createChild(@NotNull String name, int id) {
     final VirtualFileSystemEntry child;
     final NewVirtualFileSystem fs = getFileSystem();
-    if (PersistentFS.isDirectory(id)) {
+    if (ourPersistence.isDirectory(id)) {
       child = new VirtualDirectoryImpl(name, this, fs, id);
     }
     else {
@@ -382,8 +382,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return Arrays.asList(getChildren());
     }
 
-    final String[] names = PersistentFS.listPersisted(this);
-    NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
+    final String[] names = ourPersistence.listPersisted(this);
+    final NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
     for (String name : names) {
       findChild(name, false, false, delegate);
     }
@@ -400,7 +400,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return children;
     }
 
-    Pair<String[], int[]> pair = PersistentFS.listAll(this);
+    Pair<String[], int[]> pair = ourPersistence.listAll(this);
     final int[] childrenIds = pair.second;
     if (childrenIds.length == 0) {
       children = EMPTY_ARRAY;

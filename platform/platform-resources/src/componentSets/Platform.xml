@@ -27,7 +27,7 @@
 
     <component>
       <interface-class>com.intellij.openapi.vfs.newvfs.ManagingFS</interface-class>
-      <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.PersistentFS</implementation-class>
+      <implementation-class>com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl</implementation-class>
     </component>
 
     <component>
