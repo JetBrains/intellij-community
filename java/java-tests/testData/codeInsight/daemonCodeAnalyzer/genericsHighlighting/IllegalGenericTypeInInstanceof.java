@@ -37,3 +37,17 @@ class BreakpointTree<TP> {
 }
 class Node {}
 class XBreakpoint<SR>{}
+
+public class GenericInnerClass<E> {
+    private void problem( Base base ) {
+        if ( base instanceof First) {}
+    }
+
+    private class Base {
+    }
+
+    private class First<T> extends Base {
+    }
+
+}
+
