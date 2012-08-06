@@ -91,6 +91,7 @@
     <orderEntry type="module" module-name="gradle" />
     <orderEntry type="module" module-name="rearranger" />
     <orderEntry type="module" module-name="xml-tests" scope="TEST" />
+    <orderEntry type="module" module-name="dom-tests" />
   </component>
 </module>
 
