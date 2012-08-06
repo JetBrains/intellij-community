@@ -1065,7 +1065,8 @@ class StringExt {
 "".su<caret>b()''')
 
     myFixture.addFileToProject("META-INF/services/org.codehaus.groovy.runtime.ExtensionModule", """\
-extensionClasses=pack.StringExt
+extensionClasses=\\
+  pack.StringExt
 """)
 
     assertNotNull(ref.resolve())

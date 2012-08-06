@@ -3,8 +3,8 @@ OperatingSystem.isWindows() || OperatingSystem.isMacOsX()
 0(1) element: null
 1(2) Condition Logical expression
 2(3) READ OperatingSystem
-3(4,6) element: Logical expression
-4(5) READ OperatingSystem
-5(7) element: Logical expression MAYBE_RETURN
+3(4,5) element: Logical expression
+4(7) element: Logical expression MAYBE_RETURN
+5(6) READ OperatingSystem
 6(7) element: Logical expression MAYBE_RETURN
 7() element: null

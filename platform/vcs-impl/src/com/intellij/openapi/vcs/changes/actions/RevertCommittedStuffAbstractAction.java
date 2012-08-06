@@ -30,7 +30,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
@@ -78,7 +77,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     if (!chooser.isOK()) return;
 
     final List<FilePatch> patches = new ArrayList<FilePatch>();
-    ProgressManager.getInstance().run(CancelHelper.getInstance(project).proxyTask(new Task.Backgroundable(project, VcsBundle.message("revert.changes.title"), true,
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, VcsBundle.message("revert.changes.title"), true,
                                                               BackgroundFromStartOption.getInstance()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -101,7 +100,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
       public void onSuccess() {
         new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null, null).execute();
       }
-    }));
+    });
   }
 
   public void update(final AnActionEvent e) {

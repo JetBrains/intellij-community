@@ -30,6 +30,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   private static final String ATTR_LIST = "list";
   private static final String ATTR_LISTSIZE = "size";
   private static final String ATTR_ITEM = "item";
+  private static final String ATTR_INDEX = "index";
   private static final String ATTR_CLASS = "class";
   private static final String ATTR_VALUE = "itemvalue";
 
@@ -86,6 +87,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
       String listItem = get(i);
       if (listItem != null) {
         Element itemElement = new Element(ATTR_ITEM);
+        itemElement.setAttribute(ATTR_INDEX, Integer.toString(i));
         itemElement.setAttribute(ATTR_CLASS, listItem.getClass().getName());
         itemElement.setAttribute(ATTR_VALUE, DefaultJDOMExternalizer.filterXMLCharacters(listItem));
         listElement.addContent(itemElement);

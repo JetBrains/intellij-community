@@ -167,7 +167,7 @@ public abstract class DiffActionExecutor {
     };
 
     myHandler.register(VcsBackgroundableActions.keyFrom(mySelectedFile));
-    ProgressManager.getInstance().run(CancelHelper.getInstance(myProject).proxyTask(task));
+    ProgressManager.getInstance().run(task);
   }
 
   public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,

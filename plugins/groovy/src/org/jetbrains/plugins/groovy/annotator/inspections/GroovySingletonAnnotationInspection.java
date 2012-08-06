@@ -27,13 +27,14 @@ import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
 /**
  * User: Dmitry.Krasilschikov
  * Date: 29.04.2009
  */
 public class GroovySingletonAnnotationInspection extends BaseInspection {
-  public static final String SINGLETON = "groovy.lang.Singleton";
+  public static final String SINGLETON = GroovyCommonClassNames.GROOVY_LANG_SINGLETON;
 
   protected BaseInspectionVisitor buildVisitor() {
     return new Visitor();

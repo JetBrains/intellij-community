@@ -15,11 +15,12 @@
  */
 package org.jetbrains.idea.svn.auth;
 
+import com.intellij.openapi.Disposable;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 
-public interface SvnAuthenticationInteraction {
+public interface SvnAuthenticationInteraction extends Disposable {
   void warnOnAuthStorageDisabled(final SVNURL url);
   void warnOnPasswordStorageDisabled(final SVNURL url);
   void warnOnSSLPassphraseStorageDisabled(final SVNURL url);

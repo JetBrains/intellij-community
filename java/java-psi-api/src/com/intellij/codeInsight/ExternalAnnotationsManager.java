@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public abstract class ExternalAnnotationsManager {
   @NonNls public static final String ANNOTATIONS_XML = "annotations.xml";
 
@@ -57,5 +59,8 @@ public abstract class ExternalAnnotationsManager {
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
   public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
+
+  @Nullable
+  public abstract List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner);
 
 }

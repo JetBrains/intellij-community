@@ -20,7 +20,6 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.tree.IElementType;
@@ -32,15 +31,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public abstract class StubBase<T extends PsiElement> extends UserDataHolderBase implements StubElement<T> {
-  private final StubElement myParent;
+public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<StubElement> implements StubElement<T> {
   private final List<StubElement> myChildren = new SmartList<StubElement>();
   private final IStubElementType myElementType;
   private volatile T myPsi;
-  public int id;
 
   protected StubBase(final StubElement parent, final IStubElementType elementType) {
-    myParent = parent;
+    super(parent);
     myElementType = elementType;
     if (parent != null) {
       ((StubBase)parent).myChildren.add(this);

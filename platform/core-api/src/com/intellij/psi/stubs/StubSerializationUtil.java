@@ -21,7 +21,7 @@ package com.intellij.psi.stubs;
 public abstract class StubSerializationUtil {
   private StubSerializationUtil() {}
 
-  public static StubSerializer getSerializer(StubElement rootStub) {
+  public static ObjectStubSerializer getSerializer(Stub rootStub) {
     if (rootStub instanceof PsiFileStub) {
       final PsiFileStub fileStub = (PsiFileStub)rootStub;
       return fileStub.getType();

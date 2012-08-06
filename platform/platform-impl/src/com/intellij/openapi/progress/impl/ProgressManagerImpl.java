@@ -104,12 +104,6 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   public static void canceled() {
     ourNeedToCheckCancel = true;
     ProgressIndicatorProvider.ourNeedToCheckCancel = true;
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().getMessageBus().syncPublisher(CANCEL_CALLED).run();
-      }
-    });
   }
 
   private static class NonCancelableIndicator extends EmptyProgressIndicator implements NonCancelableSection {

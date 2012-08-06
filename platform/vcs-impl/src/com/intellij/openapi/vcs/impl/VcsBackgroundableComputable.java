@@ -20,7 +20,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
@@ -109,7 +108,7 @@ public class VcsBackgroundableComputable<T> extends Task.Backgroundable {
     if (handler != null) {
       handler.register(actionParameter);
     }
-    ProgressManager.getInstance().run(CancelHelper.getInstance(project).proxyTask(backgroundableComputable));
+    ProgressManager.getInstance().run(backgroundableComputable);
   }
 
   public void run(@NotNull ProgressIndicator indicator) {

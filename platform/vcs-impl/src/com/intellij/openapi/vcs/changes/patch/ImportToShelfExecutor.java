@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.CommitContext;
@@ -123,8 +122,7 @@ public class ImportToShelfExecutor implements ApplyPatchExecutor {
         }
       }
     };
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(CancelHelper.getInstance(myProject).proxyRunnable(vcsCatchingRunnable),
-                                                                      "Import patch to shelf", true, myProject);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(vcsCatchingRunnable, "Import patch to shelf", true, myProject);
     if (! vcsCatchingRunnable.get().isEmpty()) {
       AbstractVcsHelper.getInstance(myProject).showErrors(vcsCatchingRunnable.get(), IMPORT_TO_SHELF);
     }

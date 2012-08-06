@@ -105,7 +105,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           ApplicationManager.getApplication().saveAll();
         }
         Task.Backgroundable task = new Updater(project, roots, vcsToVirtualFiles);
-        ProgressManager.getInstance().run(CancelHelper.getInstance(project).proxyTask(task));
+        ProgressManager.getInstance().run(task);
       }
       catch (ProcessCanceledException e1) {
         //ignore
@@ -549,7 +549,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
               } else {
                 // trigger next update; for CVS when updating from several branches simultaneously
                 reset();
-                ProgressManager.getInstance().run(CancelHelper.getInstance(myProject).proxyTask(Updater.this));
+                ProgressManager.getInstance().run(Updater.this);
               }
             }
           }

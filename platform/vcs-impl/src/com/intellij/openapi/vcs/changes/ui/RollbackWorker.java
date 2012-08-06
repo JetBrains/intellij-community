@@ -77,7 +77,7 @@ public class RollbackWorker {
 
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance()
-        .run(CancelHelper.getInstance(myProject).proxyTask(new Task.Backgroundable(myProject, myOperationName, true,
+        .run(new Task.Backgroundable(myProject, myOperationName, true,
                                      new PerformInBackgroundOption() {
                                        public boolean shouldStartInBackground() {
                                          return VcsConfiguration.getInstance(myProject).PERFORM_ROLLBACK_IN_BACKGROUND;
@@ -89,7 +89,7 @@ public class RollbackWorker {
           public void run(@NotNull ProgressIndicator indicator) {
             rollbackAction.run();
           }
-        }));
+        });
     }
     else {
       rollbackAction.run();

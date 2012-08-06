@@ -24,17 +24,16 @@ import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.TestMethods;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.ui.ComponentContainer;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author Alexey
  */
 public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
 
-  public RerunFailedTestsAction(JComponent parent) {
-    super(parent);
+  public RerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
+    super(componentContainer);
   }
 
   @Override

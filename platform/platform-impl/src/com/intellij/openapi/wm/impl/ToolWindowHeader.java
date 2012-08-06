@@ -333,28 +333,11 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   private static BufferedImage drawToBuffer(boolean active, int height, boolean floating) {
     final int width = 150;
     
-    BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    Graphics2D _g = image.createGraphics();
+    BufferedImage image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+    Graphics2D g = image.createGraphics();
+    UIUtil.drawHeader(g, 0, width, height, active, true, !floating);
+    g.dispose();
 
-    _g.setColor(UIUtil.getPanelBackground());
-    _g.fillRect(0, 0, width, height);
-
-    _g.setPaint(new GradientPaint(0, 0, new Color(0, 0, 0, 5), 0, height, new Color(0, 0, 0, 20)));
-    _g.fillRect(0, 0, width, height);
-
-    _g.setColor(new Color(0, 0, 0, 90));
-    if (!floating) _g.drawLine(0, 0, width, 0);
-    _g.drawLine(0, height - 1, width, height - 1);
-
-    _g.setColor(new Color(255, 255, 255, 100));
-    _g.drawLine(0, 1, width, 1);
-
-    if (active) {
-      _g.setColor(new Color(100, 150, 230, 50));
-      _g.fillRect(0, 0, width, height);
-    }
-    
-    _g.dispose();
     return image; 
   }
 

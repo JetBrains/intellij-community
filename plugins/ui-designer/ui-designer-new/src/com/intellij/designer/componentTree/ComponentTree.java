@@ -24,7 +24,6 @@ import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.FeedbackTreeLayer;
 import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -45,16 +44,12 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Alexander Lobas
  */
 public final class ComponentTree extends Tree implements DataProvider {
-  private final Map<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>> myAttributes =
-    new HashMap<HighlightSeverity, Map<SimpleTextAttributes, SimpleTextAttributes>>();
   private final StartInplaceEditing myInplaceEditingAction;
   private QuickFixManager myQuickFixManager;
   private DesignerEditorPanel myDesigner;
@@ -184,19 +179,14 @@ public final class ComponentTree extends Tree implements DataProvider {
       wrapper = new AttributeWrapper() {
         @Override
         public SimpleTextAttributes getAttribute(SimpleTextAttributes attributes) {
-          Map<SimpleTextAttributes, SimpleTextAttributes> attributesMap = myAttributes.get(level.getSeverity());
-          if (attributesMap == null) {
-            attributesMap = new HashMap<SimpleTextAttributes, SimpleTextAttributes>();
-            myAttributes.put(level.getSeverity(), attributesMap);
+          Color bgColor = textAttributes.getBackgroundColor();
+          try {
+            textAttributes.setBackgroundColor(null);
+            return SimpleTextAttributes.fromTextAttributes(TextAttributes.merge(attributes.toTextAttributes(), textAttributes));
           }
-
-          SimpleTextAttributes result = attributesMap.get(attributes);
-          if (result == null) {
-            result = SimpleTextAttributes.fromTextAttributes(TextAttributes.merge(attributes.toTextAttributes(), textAttributes));
-            attributesMap.put(attributes, result);
+          finally {
+            textAttributes.setBackgroundColor(bgColor);
           }
-
-          return result;
         }
       };
     }

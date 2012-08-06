@@ -98,7 +98,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
       final VcsException[] exc = new VcsException[1];
       final List<Change> changes = new LinkedList<Change>();
       final FilePath[] targetPath = new FilePath[1];
-      ProgressManager.getInstance().run(CancelHelper.getInstance(myVcs.getProject()).proxyTask(new Task.Backgroundable(myVcs.getProject(),
+      ProgressManager.getInstance().run(new Task.Backgroundable(myVcs.getProject(),
                                                                 "Loading revision " + revisionNumber.asString() + " contents", true,
                                                                 BackgroundFromStartOption.getInstance()) {
         @Override
@@ -134,7 +134,7 @@ class ShowDiffFromAnnotation extends AnAction implements LineNumberListener {
             ShowDiffAction.showDiffForChange(changes.toArray(new Change[changes.size()]), idx, myVcs.getProject(), context);
           }
         }
-      }));
+      });
     }
   }
 

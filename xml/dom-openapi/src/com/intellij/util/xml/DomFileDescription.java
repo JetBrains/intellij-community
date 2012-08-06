@@ -256,4 +256,7 @@ public class DomFileDescription<T> {
     return null;
   }
 
+  public boolean hasStubs() {
+    return false;
+  }
 }

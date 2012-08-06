@@ -39,6 +39,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,8 +51,10 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   private QuickFixManager myQuickFixManager;
   private PropertyTablePanel myPropertyTablePanel;
 
-
   public RadPropertyTable(@NotNull Project project) {
+    setShowVerticalLines(true);
+    setIntercellSpacing(new Dimension(1, 1));
+
     myProject = project;
 
     getSelectionModel().addListSelectionListener(new ListSelectionListener() {

@@ -84,14 +84,16 @@ public class MavenUIUtil {
 
         final Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
 
+        Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+
         panel.add(baseComponent, BorderLayout.CENTER);
-        panel.setBackground(selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground());
+        panel.setBackground(background);
         panel.setForeground(foreground);
 
         CheckBoxState state = handler.getState(userObject);
         checkbox.setSelected(state != CheckBoxState.UNCHECKED);
         checkbox.setEnabled(state != CheckBoxState.PARTIAL);
-        checkbox.setBackground(UIUtil.getTreeTextBackground());
+        checkbox.setBackground(background);
         checkbox.setForeground(foreground);
 
         return panel;

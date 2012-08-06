@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsConfigurationDialogFactory;
@@ -56,8 +57,11 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
     }
 
     if (Registry.is("debugger.breakpoint.use.breakpoints.popup")) {
-      BreakpointsMasterDetailPopupFactory.
-        getInstance(project).createPopup(myInitialBreakpoint).showCenteredInCurrentWindow(project);
+      final JBPopup popup = BreakpointsMasterDetailPopupFactory.
+        getInstance(project).createPopup(myInitialBreakpoint);
+      if (popup != null) {
+        popup.showCenteredInCurrentWindow(project);
+      }
     }
     else {
       DialogWrapper dialog = BreakpointsConfigurationDialogFactory.getInstance(project).createDialog(myInitialBreakpoint);

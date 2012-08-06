@@ -30,14 +30,13 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.*;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.ui.ComponentContainer;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,9 +47,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
-public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate {
-  private static List<AbstractRerunFailedTestsAction> registry = new ArrayList<AbstractRerunFailedTestsAction>();
+public class AbstractRerunFailedTestsAction extends AnAction implements AnAction.TransparentUpdate, Disposable {
+  private static List<AbstractRerunFailedTestsAction> registry = new CopyOnWriteArrayList<AbstractRerunFailedTestsAction>();
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.junit2.ui.actions.RerunFailedTestsAction");
   private TestFrameworkRunningModel myModel;
   private Getter<TestFrameworkRunningModel> myModelProvider;
@@ -64,11 +64,16 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     myParent = null;
   }
 
-  protected AbstractRerunFailedTestsAction(JComponent parent) {
-    myParent = parent;
+  protected AbstractRerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
+    myParent = componentContainer.getComponent();
     registry.add(this);
+    Disposer.register(componentContainer, this);
     copyFrom(ActionManager.getInstance().getAction("RerunFailedTests"));
-    registerCustomShortcutSet(getShortcutSet(), parent);
+    registerCustomShortcutSet(getShortcutSet(), myParent);
+  }
+
+  public void dispose() {
+    registry.remove(this);
   }
 
   public void init(final TestConsoleProperties consoleProperties,

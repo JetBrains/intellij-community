@@ -207,7 +207,7 @@ public class TestNGRunnableState extends JavaCommandLineState {
     });
     console.attachToProcess(processHandler);
 
-    RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(console.getComponent());
+    RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(console);
     rerunFailedTestsAction.init(console.getProperties(), getEnvironment());
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       public TestFrameworkRunningModel get() {

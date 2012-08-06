@@ -250,6 +250,6 @@ public class RollbackAction extends AnAction implements DumbAware {
         });
       }
     };
-    progressManager.runProcessWithProgressSynchronously(CancelHelper.getInstance(project).proxyRunnable(action), operationName, true, project);
+    progressManager.runProcessWithProgressSynchronously(action, operationName, true, project);
   }
 }

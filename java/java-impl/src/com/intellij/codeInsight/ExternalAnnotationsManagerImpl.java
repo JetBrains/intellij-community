@@ -92,8 +92,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         myExternalAnnotations.clear();
-        annotationsFileToData.clear();
-        annotationsFileToModificationStamp.clear();
+        annotationsFileToDataAndModificationStamp.clear();
         myHasAnyAnnotationsRoots = ThreeState.UNSURE;
       }
     });

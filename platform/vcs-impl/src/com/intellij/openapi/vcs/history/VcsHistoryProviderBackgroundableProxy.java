@@ -134,7 +134,7 @@ public class VcsHistoryProviderBackgroundableProxy {
                              final VcsBackgroundableActions resultingActionKey,
                              final BackgroundableActionEnabledHandler handler,
                              final VcsAppendableHistorySessionPartner cachedPartner) {
-    ProgressManager.getInstance().run(CancelHelper.getInstance(myProject).proxyTask(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"),
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, VcsBundle.message("loading.file.history.progress"),
                                                               true, BackgroundFromStartOption.getInstance()) {
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -157,7 +157,7 @@ public class VcsHistoryProviderBackgroundableProxy {
             }, ModalityState.NON_MODAL);
         }
       }
-    }));
+    });
   }
 
   private static class HistoryPartnerProxy implements VcsAppendableHistorySessionPartner {

@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import org.tmatesoft.svn.core.ISVNCanceller;
@@ -48,22 +47,24 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
   private final boolean myKeepConnection;
   private final ISVNConnectionListener myListener;
   private ISVNAuthenticationManager myAuthManager;
-  private final CancelHelper myProgressProxy;
   private ThrowableConvertor<SVNURL, SVNRepository, SVNException> myCreator;
 
   static {
     ourGuard = new ApplicationLevelNumberConnectionsGuardImpl();
   }
 
+  public SvnIdeaRepositoryPoolManager(final boolean keepConnection, final ISVNAuthenticationManager authManager,
+                                      final ISVNTunnelProvider tunnelProvider) {
+    this(keepConnection, authManager, tunnelProvider, -1, -1);
+  }
+
   public SvnIdeaRepositoryPoolManager(final boolean keepConnection,
                                       final ISVNAuthenticationManager authManager,
-                                      final ISVNTunnelProvider tunnelProvider,
-                                      final CancelHelper progressProxy) {
+                                      final ISVNTunnelProvider tunnelProvider, final int maxCached, final int maxConcurrent) {
     myKeepConnection = keepConnection;
     myAuthManager = authManager;
-    myProgressProxy = progressProxy;
-    myLog = new ProxySvnLog(SVNDebugLog.getDefaultLog(), progressProxy);
-    myCanceller = createCanceller(progressProxy);
+    myLog = new ProxySvnLog(SVNDebugLog.getDefaultLog());
+    myCanceller = createCanceller();
 
     final ThrowableConvertor<SVNURL, SVNRepository, SVNException> creator = new ThrowableConvertor<SVNURL, SVNRepository, SVNException>() {
       @Override
@@ -95,7 +96,7 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
     };
 
     if (keepConnection) {
-      CachingSvnRepositoryPool pool = new CachingSvnRepositoryPool(creator, -1, -1, adjuster, myProgressProxy, ourGuard);
+      CachingSvnRepositoryPool pool = new CachingSvnRepositoryPool(creator, maxCached, maxConcurrent, adjuster, ourGuard);
       myPool = pool;
       myListener = new ISVNConnectionListener() {
         @Override
@@ -118,7 +119,7 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
     }
   }
 
-  public static ISVNCanceller createCanceller(final CancelHelper progressProxy) {
+  public static ISVNCanceller createCanceller() {
     return new ISVNCanceller() {
       @Override
       public void checkCancelled() throws SVNCancelException {
@@ -127,7 +128,8 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
         if (pi != null) {
           if (pi.isCanceled()) throw new SVNCancelException();
         }
-        if (! progressProxy.process(Thread.currentThread())) {
+        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+        if (indicator != null && indicator.isCanceled()) {
           throw new SVNCancelException();
         }
       }

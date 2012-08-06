@@ -28,7 +28,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -76,7 +79,7 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
     if (synchronously()) {
       action.run();
     } else {
-      progressManager.runProcessWithProgressSynchronously(CancelHelper.getInstance(project).proxyRunnable(action), getName(), true, project);
+      progressManager.runProcessWithProgressSynchronously(action, getName(), true, project);
     }
   }
 

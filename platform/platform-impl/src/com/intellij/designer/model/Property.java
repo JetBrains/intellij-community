@@ -56,7 +56,7 @@ public abstract class Property<T extends PropertiesContainer> {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Nullable
-  public String getCategory() {
+  public String getGroup() {
     return null;
   }
 

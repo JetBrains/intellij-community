@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,11 +90,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   private final CodeStyleSettings myCurrentSettings;
   private final Language myDefaultLanguage;
   
-  protected CodeStyleAbstractPanel(CodeStyleSettings settings) {
+  protected CodeStyleAbstractPanel(@NotNull CodeStyleSettings settings) {
     this(null, null, settings);
   }
 
-  protected CodeStyleAbstractPanel(@Nullable Language defaultLanguage, @Nullable CodeStyleSettings currentSettings, CodeStyleSettings settings) {
+  protected CodeStyleAbstractPanel(@Nullable Language defaultLanguage,
+                                   @Nullable CodeStyleSettings currentSettings,
+                                   @NotNull CodeStyleSettings settings)
+  {
     Disposer.register(this, myDiffCalculator);
     myCurrentSettings = currentSettings;
     mySettings = settings;
@@ -575,6 +578,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return myEditor;
   }
 
+  @NotNull
   protected CodeStyleSettings getSettings() {
     return mySettings;
   }

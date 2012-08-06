@@ -31,7 +31,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CancelHelper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.BackgroundFromStartOption;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -80,14 +79,14 @@ public class UnshelveChangesAction extends AnAction {
 
     final List<ShelvedBinaryFile> finalBinaryFiles = binaryFiles;
     final List<ShelvedChange> finalChanges = changes;
-    ProgressManager.getInstance().run(CancelHelper.getInstance(project).proxyTask(new Task.Backgroundable(project, "Unshelve changes", true, BackgroundFromStartOption.getInstance()) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Unshelve changes", true, BackgroundFromStartOption.getInstance()) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for(ShelvedChangeList changeList: changeLists) {
           ShelveChangesManager.getInstance(project).unshelveChangeList(changeList, finalChanges, finalBinaryFiles, chooser.getSelectedList());
         }
       }
-    }));
+    });
   }
 
   @Override

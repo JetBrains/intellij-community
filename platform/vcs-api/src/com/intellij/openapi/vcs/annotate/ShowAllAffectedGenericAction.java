@@ -137,7 +137,7 @@ public class ShowAllAffectedGenericAction extends AnAction {
         }
       }
     };
-    ProgressManager.getInstance().run(CancelHelper.getInstance(project).proxyTask(task));
+    ProgressManager.getInstance().run(task);
   }
 
   public static CommittedChangeList getRemoteList(final AbstractVcs vcs, final VcsRevisionNumber revision, final VirtualFile nonLocal)

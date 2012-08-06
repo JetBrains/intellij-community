@@ -650,11 +650,11 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         public void run() {
           try {
             final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-              CancelHelper.getInstance(myProject).proxyRunnable(new Runnable() {
+              new Runnable() {
               public void run() {
                 session.execute(getIncludedChanges(), getCommitMessage());
               }
-            }), commitExecutor.getActionText(), true, getProject());
+            }, commitExecutor.getActionText(), true, getProject());
 
             if (completed) {
               for (CheckinHandler handler : myHandlers) {

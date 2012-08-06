@@ -1357,4 +1357,41 @@ new Base() {
 @Test(String) def foo4(){}
 ''', GroovyAssignabilityCheckInspection)
   }
+
+  void testVarIsNotInitialized() {
+    testHighlighting('''\
+def xxx() {
+  def category = null
+  for (def update : updateIds) {
+    def p = update
+
+    if (something) {
+      category = p
+    }
+
+    print p
+  }
+}
+
+def bar() {
+  def p
+  print <warning descr="Variable 'p' might not be assigned">p</warning>
+}
+''', UnassignedVariableAccessInspection)
+  }
+
+  void testDelegateWithDeprecated() {
+    testHighlighting('''\
+interface Foo {
+    @Deprecated
+    void foo()
+}
+
+
+<error descr="Method 'foo' is not implemented">class FooImpl implements Foo</error> {
+    @Delegate(deprecated = false) Foo delegate
+}
+''')
+  }
+
 }

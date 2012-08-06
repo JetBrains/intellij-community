@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
@@ -93,8 +94,11 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            BreakpointsMasterDetailPopupFactory.
-                          getInstance(project).createPopup(javaBreakpoint).showCenteredInCurrentWindow(project);
+            final JBPopup popup = BreakpointsMasterDetailPopupFactory.
+              getInstance(project).createPopup(javaBreakpoint);
+            if (popup != null) {
+              popup.showCenteredInCurrentWindow(project);
+            }
           }
         });
       }

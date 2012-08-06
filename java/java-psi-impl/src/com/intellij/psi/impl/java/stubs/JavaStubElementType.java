@@ -68,7 +68,7 @@ public abstract class JavaStubElementType<StubT extends StubElement, PsiT extend
 
   @Override
   public final StubT createStub(@NotNull final PsiT psi, final StubElement parentStub) {
-    final String message = "Should not be called. Element=" + psi + "; file=" + (psi.isValid() ? psi.getContainingFile() : "-");
+    final String message = "Should not be called. Element=" + psi + "; class" + psi.getClass() + "; file=" + (psi.isValid() ? psi.getContainingFile() : "-");
     throw new UnsupportedOperationException(message);
   }
 

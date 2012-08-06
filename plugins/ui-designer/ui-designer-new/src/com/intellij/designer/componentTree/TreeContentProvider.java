@@ -61,10 +61,21 @@ public final class TreeContentProvider extends AbstractTreeStructure {
   @NotNull
   @Override
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-    if (element == myTreeRoot || element instanceof RadComponent) {
+    if (element == myTreeRoot) {
       return new TreeNodeDescriptor(parentDescriptor, element);
     }
+    if (element instanceof RadComponent) {
+      RadComponent component = (RadComponent)element;
+      TreeNodeDescriptor descriptor = new TreeNodeDescriptor(parentDescriptor, element);
+      descriptor.setWasDeclaredAlwaysLeaf(component.getTreeChildren().length == 0);
+      return descriptor;
+    }
     throw new IllegalArgumentException("Unknown element: " + element);
+  }
+
+  @Override
+  public boolean isAlwaysLeaf(Object element) {
+    return element instanceof RadComponent && ((RadComponent)element).getChildren().isEmpty();
   }
 
   @Override

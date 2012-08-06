@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,17 +121,17 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return map;
   }
 
-  protected Map<PsiFile, MultiMap<String, AnnotationData>> annotationsFileToData = new HashMap<PsiFile, MultiMap<String, AnnotationData>>();
-  protected Map<PsiFile, Long> annotationsFileToModificationStamp = new HashMap<PsiFile, Long>();
+  protected ConcurrentMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>> annotationsFileToDataAndModificationStamp
+    = new ConcurrentWeakHashMap<PsiFile, Pair<MultiMap<String, AnnotationData>, Long>>();
   @NotNull
   private MultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
-    if (annotationsFileToData.containsKey(file) && file.getModificationStamp() == annotationsFileToModificationStamp.get(file)) {
-      return annotationsFileToData.get(file);
+    Pair<MultiMap<String, AnnotationData>, Long> cached = annotationsFileToDataAndModificationStamp.get(file);
+    if (cached != null && cached.getSecond() == file.getModificationStamp()) {
+      return cached.getFirst();
     }
     else {
       MultiMap<String, AnnotationData> data = new MultiMap<String, AnnotationData>();
-      annotationsFileToData.put(file, data);
-      annotationsFileToModificationStamp.put(file, file.getModificationStamp());
+      annotationsFileToDataAndModificationStamp.put(file, Pair.create(data, file.getModificationStamp()));
 
       Document document;
       try {
@@ -204,8 +205,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @NotNull
   protected abstract List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile);
 
+  @Override
   @Nullable
-  protected List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
+  public List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
     final PsiFile containingFile = listOwner.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
       return null;
