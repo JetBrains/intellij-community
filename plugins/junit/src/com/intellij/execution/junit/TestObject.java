@@ -341,7 +341,7 @@ public abstract class TestObject implements JavaCommandLine {
       return new DefaultExecutionResult(null, handler);
     }
 
-    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView.getComponent());
+    final RerunFailedTestsAction rerunFailedTestsAction = new RerunFailedTestsAction(consoleView);
     rerunFailedTestsAction.init(consoleProperties, myEnvironment);
     rerunFailedTestsAction.setModelProvider(new Getter<TestFrameworkRunningModel>() {
       @Override

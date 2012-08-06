@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.ui.ComponentContainer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -18,7 +19,6 @@ import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGRunnableState;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.io.File;
 import java.net.ServerSocket;
 import java.util.ArrayList;
@@ -27,8 +27,9 @@ import java.util.List;
 import java.util.Map;
 
 public class RerunFailedTestsAction extends AbstractRerunFailedTestsAction {
-  public RerunFailedTestsAction(JComponent parent) {
-    super(parent);
+
+  public RerunFailedTestsAction(@NotNull ComponentContainer componentContainer) {
+    super(componentContainer);
   }
 
   @Override
