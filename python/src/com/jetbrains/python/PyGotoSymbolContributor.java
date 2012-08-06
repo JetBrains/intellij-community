@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPresentableElementImpl;
+import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
@@ -36,7 +37,7 @@ public class PyGotoSymbolContributor implements GotoClassContributor {
   @NotNull
   public NavigationItem[] getItemsByName(final String name, final String pattern, final Project project, final boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems
-                                    ? PyClassNameIndex.projectWithLibrariesScope(project)
+                                    ? PyProjectScopeBuilder.excludeSdkTestsScope(project)
                                     : GlobalSearchScope.projectScope(project);
 
     List<NavigationItem> symbols = new ArrayList<NavigationItem>();

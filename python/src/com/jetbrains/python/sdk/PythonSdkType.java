@@ -45,7 +45,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -760,7 +760,7 @@ public class PythonSdkType extends SdkType {
 
   public static boolean isStdLib(VirtualFile vFile, Sdk pythonSdk) {
     if (pythonSdk != null) {
-      final VirtualFile libDir = PyClassNameIndex.findLibDir(pythonSdk);
+      final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
       if (libDir != null && VfsUtilCore.isAncestor(libDir, vFile, false)) {
         final VirtualFile sitePackages = libDir.findChild("site-packages");
         if (sitePackages != null && VfsUtilCore.isAncestor(sitePackages, vFile, false)) {

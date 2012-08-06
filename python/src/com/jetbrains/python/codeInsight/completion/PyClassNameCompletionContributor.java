@@ -18,10 +18,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 
-import java.util.*;
+import java.util.Collection;
 
 /**
  * @author yole
@@ -58,7 +59,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                                                                        final InsertHandler<LookupElement> insertHandler,
                                                                        final Condition<T> condition) {
     final Project project = targetFile.getProject();
-    final GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
+    GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(targetFile);
 
     Collection<String> keys = StubIndex.getInstance().getAllKeys(key, project);
     for (final String elementName : CompletionUtil.sortMatching(resultSet.getPrefixMatcher(), keys)) {

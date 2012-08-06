@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyInstanceAttributeIndex;
@@ -111,7 +111,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
   private void addImplicitResolveResults(String referencedName, ResolveResultList ret) {
     final Project project = myElement.getProject();
-    final GlobalSearchScope scope = PyClassNameIndex.projectWithLibrariesScope(project);
+    final GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(project);
     final Collection functions = PyFunctionNameIndex.find(referencedName, project, scope);
     final PsiFile containingFile = myElement.getContainingFile();
     final List<PyQualifiedName> imports;
