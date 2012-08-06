@@ -50,7 +50,7 @@ public interface DocumentationProvider {
    * @return                 target element's documentation (if any)
    */
   @Nullable
-  String generateDoc(PsiElement element, PsiElement originalElement);
+  String generateDoc(PsiElement element, @Nullable PsiElement originalElement);
 
   @Nullable
   PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element);
