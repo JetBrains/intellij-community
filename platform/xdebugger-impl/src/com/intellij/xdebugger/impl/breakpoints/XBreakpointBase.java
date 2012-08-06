@@ -169,6 +169,11 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     }
   }
 
+  @Override
+  public long getTimeStamp() {
+    return myState.getTimeStamp();
+  }
+
   public boolean isValid() {
     return true;
   }

@@ -18,6 +18,7 @@ package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -137,7 +138,13 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @NotNull 
   public Comparator<B> getBreakpointComparator() {
-    return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
+    return new Comparator<B>() {
+      @Override
+      public int compare(B b, B b1) {
+        return (int)(b1.getTimeStamp() - b.getTimeStamp());
+      }
+    };
+    //return XDebuggerUtil.getInstance().getDefaultBreakpointComparator(this);
   }
 
   /**

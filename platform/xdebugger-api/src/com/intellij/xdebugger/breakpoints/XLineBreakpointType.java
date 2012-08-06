@@ -78,10 +78,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return XDebuggerBundle.message("xbreakpoint.default.display.text", line + 1, path);
   }
 
-  @NotNull
-  public Comparator<XLineBreakpoint<P>> getBreakpointComparator() {
-    return XDebuggerUtil.getInstance().getDefaultLineBreakpointComparator();
-  }
+  //@NotNull
+  //public Comparator<XLineBreakpoint<P>> getBreakpointComparator() {
+  //  return XDebuggerUtil.getInstance().getDefaultLineBreakpointComparator();
+  //}
 
   /**
    * Source position for line breakpoint is determined by its file and line

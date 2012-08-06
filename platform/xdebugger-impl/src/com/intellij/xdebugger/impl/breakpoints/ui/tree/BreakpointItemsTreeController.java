@@ -189,10 +189,13 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     return list;
   }
 
-  public void selectBreakpointItem(final BreakpointItem breakpoint) {
+  public void selectBreakpointItem(@Nullable final BreakpointItem breakpoint) {
     BreakpointItemNode node = myNodes.get(breakpoint);
     if (node != null) {
       TreeUtil.selectNode(myTreeView, node);
+    }
+    else if (breakpoint == null) {
+      TreeUtil.selectPath(myTreeView, TreeUtil.getFirstLeafNodePath(myTreeView));
     }
   }
 

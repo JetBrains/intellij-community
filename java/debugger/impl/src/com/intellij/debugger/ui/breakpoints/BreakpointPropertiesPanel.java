@@ -616,7 +616,6 @@ public abstract class BreakpointPropertiesPanel {
 
     if (breakpoint.getLogMessage() != null) {
       myLogExpressionCombo.setText(breakpoint.getLogMessage());
-      IdeFocusManager.findInstance().requestFocus(myLogExpressionCombo, false);
     }
     else {
       myLogExpressionCombo.setText(emptyText());

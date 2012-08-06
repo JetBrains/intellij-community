@@ -58,8 +58,10 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   private XSourcePosition mySourcePosition;
   private boolean myDisposed;
 
-  public XLineBreakpointImpl(final XLineBreakpointType<P> type, XBreakpointManagerImpl breakpointManager, String url, int line, @Nullable final P properties) {
-    super(type, breakpointManager, properties, new LineBreakpointState<P>(true, type.getId(), url, line));
+  public XLineBreakpointImpl(final XLineBreakpointType<P> type,
+                             XBreakpointManagerImpl breakpointManager,
+                             @Nullable final P properties, LineBreakpointState<P> state) {
+    super(type, breakpointManager, properties, state);
     myType = type;
   }
 

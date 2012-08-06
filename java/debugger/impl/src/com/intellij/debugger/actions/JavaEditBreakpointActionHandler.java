@@ -51,7 +51,7 @@ import java.awt.*;
  */
 public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler {
   @Override
-  protected void doShowPopup(final Project project, final EditorGutterComponentEx gutterComponent, final Point whereToShow, Object breakpoint) {
+  protected void doShowPopup(final Project project, final EditorGutterComponentEx gutterComponent, final Point whereToShow, final Object breakpoint) {
     if (!(breakpoint instanceof BreakpointWithHighlighter)) return;
 
     final BreakpointWithHighlighter javaBreakpoint = (BreakpointWithHighlighter)breakpoint;
@@ -99,7 +99,8 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
         });
       }
     };
-    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions);
+    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions,
+                                                                breakpoint);
     balloon.addListener(saveOnClose);
 
     propertiesPanel.setDelegate(new BreakpointPropertiesPanel.Delegate() {
@@ -108,7 +109,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
         propertiesPanel.setActionsPanelVisible(true);
         balloon.hide();
         final Balloon newBalloon =
-          DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions);
+          DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, gutterComponent, showMoreOptions, breakpoint);
         newBalloon.addListener(saveOnClose);
       }
     });

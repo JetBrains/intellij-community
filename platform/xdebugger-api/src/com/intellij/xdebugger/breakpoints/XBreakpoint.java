@@ -60,4 +60,6 @@ public interface XBreakpoint<P extends XBreakpointProperties> extends UserDataHo
   @Nullable
   String getCondition();
   void setCondition(@Nullable String condition);
+
+  long getTimeStamp();
 }

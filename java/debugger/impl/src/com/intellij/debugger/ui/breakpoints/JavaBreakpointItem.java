@@ -141,6 +141,14 @@ class JavaBreakpointItem extends BreakpointItem {
 
   @Override
   public int compareTo(BreakpointItem breakpointItem) {
+    final Object breakpoint = breakpointItem.getBreakpoint();
+    if (breakpoint instanceof Breakpoint) {
+      return -getIndexOf(myBreakpoint) + getIndexOf((Breakpoint)breakpoint);
+    }
     return getDisplayText().compareTo(breakpointItem.getDisplayText());
+  }
+
+  private int getIndexOf(Breakpoint breakpoint) {
+    return DebuggerManagerEx.getInstanceEx(myBreakpoint.getProject()).getBreakpointManager().getBreakpoints().indexOf(breakpoint);
   }
 }

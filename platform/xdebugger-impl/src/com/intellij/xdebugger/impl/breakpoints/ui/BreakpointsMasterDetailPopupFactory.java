@@ -34,6 +34,7 @@ public class BreakpointsMasterDetailPopupFactory {
 
   private Project myProject;
   private Balloon myBalloonToHide;
+  private Object myBreakpoint;
 
   public BreakpointsMasterDetailPopupFactory(Project project) {
     myProject = project;
@@ -53,8 +54,9 @@ public class BreakpointsMasterDetailPopupFactory {
     return panelProviders;
   }
 
-  public void setBalloonToHide(Balloon balloonToHide) {
+  public void setBalloonToHide(Balloon balloonToHide, Object breakpoint) {
     myBalloonToHide = balloonToHide;
+    myBreakpoint = breakpoint;
   }
 
   public static BreakpointsMasterDetailPopupFactory getInstance(Project project) {
@@ -63,7 +65,7 @@ public class BreakpointsMasterDetailPopupFactory {
 
   public JBPopup createPopup(@Nullable Object initialBreakpoint) {
     BreakpointMasterDetailPopupBuilder builder = new BreakpointMasterDetailPopupBuilder(myProject);
-    builder.setInitialBreakpoint(initialBreakpoint);
+    builder.setInitialBreakpoint(initialBreakpoint != null ? initialBreakpoint : myBreakpoint);
     builder.setBreakpointsPanelProviders(collectPanelProviders());
     builder.setCallback(new BreakpointMasterDetailPopupBuilder.BreakpointChosenCallback() {
       @Override
@@ -73,11 +75,15 @@ public class BreakpointsMasterDetailPopupFactory {
         }
       }
     });
+    myBreakpoint = null;
     final JBPopup popup = builder.createPopup();
     popup.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
-        if (myBalloonToHide != null) myBalloonToHide.hide();
+        if (myBalloonToHide != null) {
+          myBalloonToHide.hide();
+          myBalloonToHide = null;
+        }
       }
 
       @Override
