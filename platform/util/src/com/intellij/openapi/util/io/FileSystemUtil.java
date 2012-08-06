@@ -133,7 +133,7 @@ public class FileSystemUtil {
   @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public static FileAttributes getAttributes(@NotNull final File file) {
-    return getAttributes(file.getAbsolutePath());
+    return getAttributes(file.getPath());
   }
 
   public static boolean isSymLink(@NotNull final String path) {
