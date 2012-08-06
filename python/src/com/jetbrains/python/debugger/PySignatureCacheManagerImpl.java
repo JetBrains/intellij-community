@@ -136,7 +136,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
       return "";
     }
 
-    PyClass cls = PyUtil.getContainingClassOrSelf(function);
+    PyClass cls = function.getContainingClass();
 
     if (cls != null) {
       name = cls.getName() + "." + name;
