@@ -1357,4 +1357,27 @@ new Base() {
 @Test(String) def foo4(){}
 ''', GroovyAssignabilityCheckInspection)
   }
+
+  void testVarIsNotInitialized() {
+    testHighlighting('''\
+def xxx() {
+  def category = null
+  for (def update : updateIds) {
+    def p = update
+
+    if (something) {
+      category = p
+    }
+
+    print p
+  }
+}
+
+def bar() {
+  def p
+  print <warning descr="Variable 'p' might not be assigned">p</warning>
+}
+''', UnassignedVariableAccessInspection)
+  }
+
 }

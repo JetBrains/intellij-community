@@ -45,9 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -100,7 +98,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
    * last visited node
    */
   private InstructionImpl myHead;
-  private GroovyPsiElement myLastInScope;
 
   /**
    * list of pending nodes and corresponding scopes sorted by scopes from the biggest to smallest.
@@ -150,7 +147,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       if (pparent instanceof GrMethod) {
         return true;
       }
-      //todo switch
+
       if (pparent instanceof GrBlockStatement || pparent instanceof GrCatchClause || pparent instanceof GrLabeledStatement) pparent = pparent.getParent();
       if (pparent instanceof GrIfStatement || pparent instanceof GrControlStatement || pparent instanceof GrTryCatchStatement) {
         return isCertainlyReturnStatement((GrStatement)pparent);
@@ -164,35 +161,50 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     else if (parent instanceof GroovyFileBase) {
       return st == ArrayUtil.getLastElement(((GroovyFileBase)parent).getStatements());
     }
-    else if (parent instanceof GrIfStatement || parent instanceof GrControlStatement) return isCertainlyReturnStatement((GrStatement)parent);
 
+    else if (parent instanceof GrIfStatement || parent instanceof GrControlStatement) {
+      return isCertainlyReturnStatement((GrStatement)parent);
+    }
+
+    else if (parent instanceof GrCaseSection) {
+      final GrStatement[] statements = ((GrCaseSection)parent).getStatements();
+      final GrStatement last = ArrayUtil.getLastElement(statements);
+      final GrSwitchStatement switchStatement = (GrSwitchStatement)parent.getParent();
+
+      if (last instanceof GrBreakStatement && statements.length > 1 && statements[statements.length - 2] == st) {
+        return isCertainlyReturnStatement(switchStatement);
+      }
+      else if (st == last) {
+        if (st instanceof GrBreakStatement || isLastStatementInCaseSection((GrCaseSection)parent, switchStatement)) {
+          return isCertainlyReturnStatement(switchStatement);
+        }
+      }
+    }
     return false;
   }
 
-  private void handlePossibleReturn(@NotNull GrStatement last) {
-    if (!isCertainlyReturnStatement(last)) return;
-
-    //last statement inside finally clause cannot be possible return statement
-    final GrFinallyClause finallyClause = PsiTreeUtil.getParentOfType(last, GrFinallyClause.class, false, GrClosableBlock.class, GrMember.class);
-    if (finallyClause != null) return;
-
-    if (!(last instanceof GrExpression && PsiTreeUtil.isAncestor(myLastInScope, last, false))) return;
-
-    InstructionImpl head = addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)last));
-
-    for (ListIterator<Pair<InstructionImpl, GroovyPsiElement>> iterator = myPending.listIterator(myPending.size());iterator.hasPrevious(); ) {
-      Pair<InstructionImpl, GroovyPsiElement> pair = iterator.previous();
-      final GroovyPsiElement scopeWhenToAdd = pair.getSecond();
-      if (scopeWhenToAdd == null) continue;
-      if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, last, false)) break;
-
-      interruptFlow();
-      MaybeReturnInstruction may = addNode(new MaybeReturnInstruction((GrExpression)last));
-      addEdge(pair.first, may);
-      iterator.set(new Pair<InstructionImpl, GroovyPsiElement>(may, scopeWhenToAdd));
+  private static boolean isLastStatementInCaseSection(GrCaseSection caseSection, GrSwitchStatement switchStatement) {
+    final GrCaseSection[] sections = switchStatement.getCaseSections();
+    final int i = ArrayUtil.find(sections, caseSection);
+    if (i == sections.length - 1) {
+      return true;
     }
 
-    myHead = head;
+    for (int j = i + 1; j < sections.length; j++) {
+      GrCaseSection section = sections[j];
+      for (GrStatement statement : section.getStatements()) {
+        if (!(statement instanceof GrBreakStatement)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  private void handlePossibleReturn(@NotNull GrStatement possibleReturn) {
+    if (possibleReturn instanceof GrExpression && isCertainlyReturnStatement(possibleReturn)) {
+      addNodeAndCheckPending(new MaybeReturnInstruction((GrExpression)possibleReturn));
+    }
   }
 
   public Instruction[] buildControlFlow(GroovyPsiElement scope) {
@@ -204,15 +216,6 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     myFinallyCount = 0;
     myPending = new ArrayList<Pair<InstructionImpl, GroovyPsiElement>>();
     myInstructionNumber = 0;
-
-    myLastInScope = null;
-
-    if (scope instanceof GrStatementOwner) {
-      GrStatement[] statements = ((GrStatementOwner)scope).getStatements();
-      if (statements.length > 0) {
-        myLastInScope = statements[statements.length - 1];
-      }
-    }
 
     startNode(null);
     if (scope instanceof GrClosableBlock) {
@@ -595,14 +598,17 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       }
       if (negations.isEmpty()) {
         InstructionImpl head = myHead;
-        NegatingGotoInstruction negation = addNode(new NegatingGotoInstruction(expression, condition));
-        addPendingEdge(expression, negation);
+        addNode(new NegatingGotoInstruction(expression, condition));
+        handlePossibleReturn(expression);
+        addPendingEdge(expression, myHead);
         myHead = head;
       }
     }
     else /*if (opType == mLOR)*/ {
-      addNodeAndCheckPending(new InstructionImpl(expression)); //collect all pending edges from left argument
+      final InstructionImpl instruction = addNodeAndCheckPending(new InstructionImpl(expression));//collect all pending edges from left argument
+      handlePossibleReturn(expression);
       addPendingEdge(expression, myHead);
+      myHead = instruction;
 
       InstructionImpl head = reduceAllNegationsIntoInstruction(expression, negations);
       if (head != null) myHead = head;
@@ -927,8 +933,17 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       value.accept(this);
     }
 
-    for (GrStatement statement : caseSection.getStatements()) {
+    final GrStatement[] statements = caseSection.getStatements();
+
+    //infer 'may be return' position
+    int i;
+    for (i = statements.length - 1; i >= 0 && statements[i] instanceof GrBreakStatement; i--) {
+    }
+
+    for (int j = 0; j < statements.length; j++) {
+      GrStatement statement = statements[j];
       statement.accept(this);
+      if (j == i) handlePossibleReturn(statement);
     }
   }
 
