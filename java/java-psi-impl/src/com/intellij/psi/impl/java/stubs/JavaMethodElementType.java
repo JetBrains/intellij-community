@@ -150,6 +150,7 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
       sink.occurrence(JavaStubIndexKeys.METHODS, name);
       if (isJavaStaticMemberStub(stub)) {
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
+        sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getReturnTypeText(false).getShortTypeText());
       }
     }
   }

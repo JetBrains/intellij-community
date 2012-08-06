@@ -353,7 +353,8 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
     @Override
     public GrParameterStub createStub(@NotNull GrParameter psi, StubElement parentStub) {
-      return new GrParameterStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi), GrStubUtils.getTypeText(psi));
+      return new GrParameterStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi), GrStubUtils.getTypeText(
+        psi.getTypeElementGroovy()));
     }
 
     @Override

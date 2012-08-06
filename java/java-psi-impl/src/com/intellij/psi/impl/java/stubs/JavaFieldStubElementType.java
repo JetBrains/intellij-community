@@ -140,6 +140,7 @@ public abstract class JavaFieldStubElementType extends JavaStubElementType<PsiFi
       sink.occurrence(JavaStubIndexKeys.FIELDS, name);
       if (JavaMethodElementType.isJavaStaticMemberStub(stub)) {
         sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
+        sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, stub.getType(false).getShortTypeText());
       }
     }
   }

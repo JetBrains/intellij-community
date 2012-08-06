@@ -1187,6 +1187,7 @@
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaMethodNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaStaticMemberNameIndex"/>
+    <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaStaticMemberTypeIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaShortClassNameIndex"/>
     <stubIndex implementation="com.intellij.psi.impl.java.stubs.index.JavaSuperClassNameOccurenceIndex"/>
 

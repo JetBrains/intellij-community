@@ -58,7 +58,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     }
 
     return new GrFieldStub(parentStub, StringRef.fromString(psi.getName()), annNames, namedParameters.toArray(new String[namedParameters.size()]), FIELD, GrFieldStub.buildFlags(psi),
-                           GrStubUtils.getTypeText(psi));
+                           GrStubUtils.getTypeText(psi.getTypeElementGroovy()));
   }
 
   public void serialize(GrFieldStub stub, StubOutputStream dataStream) throws IOException {
@@ -101,6 +101,7 @@ public class GrFieldElementType extends GrStubElementType<GrFieldStub, GrField> 
     sink.occurrence(GrFieldNameIndex.KEY, name);
     if (GrStubUtils.isGroovyStaticMemberStub(stub)) {
       sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
+      sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, GrStubUtils.getShortTypeText(stub.getTypeText()));
     }
     for (String annName : stub.getAnnotations()) {
       if (annName != null) {

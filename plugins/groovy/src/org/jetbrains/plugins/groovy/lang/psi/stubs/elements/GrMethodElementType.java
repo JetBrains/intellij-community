@@ -20,6 +20,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -44,20 +45,23 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
 
     Set<String> namedParameters = psi.getNamedParameters().keySet();
     return new GrMethodStub(parentStub, StringRef.fromString(psi.getName()), GrStubUtils.getAnnotationNames(psi),
-                            namedParameters.toArray(new String[namedParameters.size()]), this);
+                            ArrayUtil.toStringArray(namedParameters), this,
+                            GrStubUtils.getTypeText(psi.getReturnTypeElementGroovy()));
   }
 
   public void serialize(GrMethodStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
     GrStubUtils.writeStringArray(dataStream, stub.getNamedParameters());
+    GrStubUtils.writeNullableString(dataStream, stub.getTypeText());
   }
 
   public GrMethodStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef ref = dataStream.readName();
     final String[] annNames = GrStubUtils.readStringArray(dataStream);
     String[] namedParameters = GrStubUtils.readStringArray(dataStream);
-    return new GrMethodStub(parentStub, ref, annNames, namedParameters, this);
+    String typeText = GrStubUtils.readNullableString(dataStream);
+    return new GrMethodStub(parentStub, ref, annNames, namedParameters, this, typeText);
   }
 
   public void indexStub(GrMethodStub stub, IndexSink sink) {
@@ -65,6 +69,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
     sink.occurrence(GrMethodNameIndex.KEY, name);
     if (GrStubUtils.isGroovyStaticMemberStub(stub)) {
       sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_NAMES, name);
+      sink.occurrence(JavaStubIndexKeys.JVM_STATIC_MEMBERS_TYPES, GrStubUtils.getShortTypeText(stub.getTypeText()));
     }
     for (String annName : stub.getAnnotations()) {
       if (annName != null) {

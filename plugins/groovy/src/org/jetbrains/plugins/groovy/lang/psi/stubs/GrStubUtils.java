@@ -20,16 +20,17 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrMultiTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -87,8 +88,8 @@ public class GrStubUtils {
   }
 
   @Nullable
-  public static String getTypeText(GrVariable psi) {
-    final GrTypeElement typeElement = psi.getTypeElementGroovy();
+  public static String getTypeText(GrTypeElement typeElementGroovy) {
+    final GrTypeElement typeElement = typeElementGroovy;
     return typeElement == null ? null : typeElement.getText();
   }
 
@@ -113,5 +114,17 @@ public class GrStubUtils {
       return GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.STATIC, ((GrModifierListStub)type).getModifiersFlags());
     }
     return true;
+  }
+
+  @NotNull
+  public static String getShortTypeText(@Nullable String text) {
+    if (text == null) {
+      return "";
+    }
+    int i = text.length();
+    while (i - 2 >= 0 && text.charAt(i - 2) == '[' && text.charAt(i - 1) == ']') {
+      i -= 2;
+    }
+    return PsiNameHelper.getShortClassName(text.substring(0, i)) + text.substring(i);
   }
 }
