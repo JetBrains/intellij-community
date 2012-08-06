@@ -607,6 +607,11 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         "Store the passphrase in plaintext?", Messages.getQuestionIcon());
       return answer == 0;
     }
+
+    @Override
+    public void dispose() {
+      myProject = null;
+    }
   }
 
   private static boolean isLion() {
