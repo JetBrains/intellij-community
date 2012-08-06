@@ -68,6 +68,24 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
   </build>
 """)
 
+    createModulePom("module4", """
+<groupId>test</groupId>
+<artifactId>module4</artifactId>
+<version>1</version>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <annotationProcessors>
+          </annotationProcessors>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+""")
+
     importProject """
 <groupId>test</groupId>
 <artifactId>project</artifactId>
@@ -77,6 +95,7 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
   <module>module1</module>
   <module>module2</module>
   <module>module3</module>
+  <module>module4</module>
 </modules>
 
 """;
@@ -86,6 +105,8 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE).getModuleNames() == new HashSet<String>(["project", "module1"])
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module2').isObtainProcessorsFromClasspath() == false
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module2').getProcessors() == new HashSet<String>(["com.test.SourceCodeGeneratingAnnotationProcessor2"])
+    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module3') == null
+    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + 'module4').isObtainProcessorsFromClasspath() == false
   }
 
   public void testOverrideGeneratedOutputDir() {
@@ -110,6 +131,34 @@ class AnnotationProcessorImportingTest extends MavenImportingTestCase {
 
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
     assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project").getGeneratedSourcesDirectoryName().endsWith("out/generated")
+  }
+
+  public void testImportAnnotationProcessorOptions() {
+    importProject """
+<groupId>test</groupId>
+<artifactId>project</artifactId>
+<version>1</version>
+
+<build>
+  <plugins>
+    <plugin>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <configuration>
+        <compilerArgument>-Aopt1=111 -Xmx512Mb -Aopt2=222</compilerArgument>
+        <compilerArguments>
+          <Aopt3>333</Aopt3>
+          <opt>666</opt>
+        </compilerArguments>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+""";
+
+    def compilerConfiguration = ((CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject))
+
+    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.MAVEN_DEFAULT_ANNOTATION_PROFILE) == null
+    assert compilerConfiguration.findModuleProcessorProfile(MavenModuleImporter.PROFILE_PREFIX + "project").getProcessorOptions() == ['opt1': '111', 'opt2': '222', 'opt3': '333']
   }
 
 }
