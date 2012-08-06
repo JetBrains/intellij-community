@@ -165,7 +165,7 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       return current;
     }
 
-    final String[] names;
+    String[] names;
     if (currentNames.length == 0) {
       names = delegateNames;
     }
@@ -176,8 +176,9 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       names = ArrayUtil.toStringArray(allNamesSet);
     }
 
-    final int[] childrenIds = ArrayUtil.newIntArray(names.length);
+    int[] childrenIds = ArrayUtil.newIntArray(names.length);
 
+    int filter = 0;
     for (int i = 0; i < names.length; i++) {
       final String name = names[i];
       int idx = ArrayUtil.indexOf(currentNames, name);
@@ -187,10 +188,32 @@ public class PersistentFS extends ManagingFS implements ApplicationComponent {
       else {
         final FakeVirtualFile child = new FakeVirtualFile(file, name);
         final FileAttributes attributes = fs.getAttributes(child);
-        assert attributes != null : fs + ": " + child;
-        final int childId = createAndCopyRecord(fs, child, id, attributes);
-        childrenIds[i] = childId;
+        if (attributes != null) {
+          final int childId = createAndCopyRecord(fs, child, id, attributes);
+          childrenIds[i] = childId;
+        }
+        else {
+          childrenIds[i] = -1;
+          ++filter;
+          LOG.warn("fs=" + fs + " dir=" + file + " name=" + name + " curr=" + currentNames.length);
+        }
       }
+    }
+
+    if (filter != 0) {
+      final int newLength = names.length - filter;
+      final String[] newNames = ArrayUtil.newStringArray(newLength);
+      final int[] newIds = ArrayUtil.newIntArray(newLength);
+      for (int i = 0, k = 0; i < names.length; i++) {
+        if (childrenIds[i] >= 0) {
+          newNames[k] = names[i];
+          newIds[k] = childrenIds[i];
+          //noinspection AssignmentToForLoopParameter
+          ++k;
+        }
+      }
+      names = newNames;
+      childrenIds = newIds;
     }
 
     FSRecords.updateList(id, childrenIds);

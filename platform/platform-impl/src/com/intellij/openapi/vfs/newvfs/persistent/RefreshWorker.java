@@ -100,8 +100,13 @@ public class RefreshWorker {
           }
 
           for (String name : newNames) {
-            boolean isDirectory = fs.isDirectory(new FakeVirtualFile(file, name));
-            scheduleCreation(file, name, isDirectory);
+            final FileAttributes childAttributes = fs.getAttributes(new FakeVirtualFile(file, name));
+            if (childAttributes != null) {
+              scheduleCreation(file, name, childAttributes.isDirectory());
+            }
+            else {
+              LOG.warn("fs=" + fs + " dir=" + file + " name=" + name);
+            }
           }
 
           for (VirtualFile child : file.getChildren()) {
@@ -111,7 +116,8 @@ public class RefreshWorker {
                 checkAndScheduleChildRefresh(file, child, childAttributes);
               }
               else {
-                LOG.error(child + " on " + fs);
+                LOG.warn("fs=" + fs + " dir=" + file + " name=" + child.getName());
+                scheduleDeletion(child);
               }
             }
           }
