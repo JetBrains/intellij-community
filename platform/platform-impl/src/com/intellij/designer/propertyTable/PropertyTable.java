@@ -1166,7 +1166,7 @@ public abstract class PropertyTable extends JBTable {
 
           int style = ((template.getStyle() & SimpleTextAttributes.STYLE_WAVED) != 0 ? SimpleTextAttributes.STYLE_WAVED : 0)
                       | ((template.getStyle() & SimpleTextAttributes.STYLE_UNDERLINE) != 0 ? SimpleTextAttributes.STYLE_UNDERLINE : 0);
-          attr = attr.derive(attr.getStyle() | style, template.getFgColor(), template.getBgColor(), template.getWaveColor());
+          attr = attr.derive(attr.getStyle() | style, template.getFgColor(), null, template.getWaveColor());
         }
 
         renderer.append(property.getName(), attr);
