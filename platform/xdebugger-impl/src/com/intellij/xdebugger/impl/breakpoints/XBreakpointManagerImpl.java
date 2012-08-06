@@ -114,14 +114,17 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
   @NotNull
   public <T extends XBreakpointProperties> XBreakpoint<T> addBreakpoint(final XBreakpointType<XBreakpoint<T>,T> type, @Nullable final T properties) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    XBreakpointBase<?, T, ?> breakpoint = createBreakpoint(type, properties, true);
+    XBreakpointBase<?, T, ?> breakpoint = createBreakpoint(type, properties, true, false);
     addBreakpoint(breakpoint, false, true);
     return breakpoint;
   }
 
   private <T extends XBreakpointProperties> XBreakpointBase<?, T, ?> createBreakpoint(XBreakpointType<XBreakpoint<T>, T> type,
-                                                                                      T properties, final boolean enabled) {
-    BreakpointState<?,T,?> state = new BreakpointState<XBreakpoint<T>,T,XBreakpointType<XBreakpoint<T>,T>>(enabled, type.getId(), myTime++);
+                                                                                      T properties, final boolean enabled,
+                                                                                      boolean defaultBreakpoint) {
+    BreakpointState<?,T,?> state = new BreakpointState<XBreakpoint<T>,T,XBreakpointType<XBreakpoint<T>,T>>(enabled,
+                                                                                                           type.getId(),
+                                                                                                           defaultBreakpoint ? 0 : myTime++);
     return new XBreakpointBase<XBreakpoint<T>,T, BreakpointState<?,T,?>>(type, this, properties, state);
   }
 
@@ -370,7 +373,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
       @Override
       public XBreakpoint<P> createBreakpoint(@Nullable P properties) {
         //noinspection unchecked
-        return XBreakpointManagerImpl.this.createBreakpoint((XBreakpointType<XBreakpoint<P>, P>)type, properties, false);
+        return XBreakpointManagerImpl.this.createBreakpoint((XBreakpointType<XBreakpoint<P>, P>)type, properties, false, true);
       }
     });
   }
