@@ -166,7 +166,7 @@ public class PySkeletonRefresher {
     if (!skeletonsDir.exists()) {
       skeletonsDir.mkdirs();
     }
-    final String readablePath = PythonSdkType.shortenDirName(homePath);
+    final String readablePath = FileUtil.getLocationRelativeToUserHome(homePath);
 
     myBlacklist = loadBlacklist();
 

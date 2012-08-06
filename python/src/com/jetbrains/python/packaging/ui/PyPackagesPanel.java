@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
@@ -517,7 +518,7 @@ public class PyPackagesPanel extends JPanel {
                    AllIcons.Vcs.Arrow_right : null);
       final Object pyPackage = table.getValueAt(row, 0);
       if (pyPackage instanceof PyPackage) {
-        cell.setToolTipText(PythonSdkType.shortenDirName(((PyPackage)pyPackage).getLocation()));
+        cell.setToolTipText(FileUtil.getLocationRelativeToUserHome(((PyPackage)pyPackage).getLocation()));
       }
       return cell;
     }

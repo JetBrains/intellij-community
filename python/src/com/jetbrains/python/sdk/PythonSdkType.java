@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import com.intellij.util.SystemProperties;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -316,28 +315,17 @@ public class PythonSdkType extends SdkType {
   }
 
 
-  // /home/joe/foo -> ~/foo
-  public static String shortenDirName(String path) {
-    String home = SystemProperties.getUserHome();
-    if (path.startsWith(home)) {
-      return "~" + path.substring(home.length());
-    }
-    else {
-      return FileUtil.toSystemDependentName(path);
-    }
-  }
-
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
     String name = getVersionString(sdkHome);
     return suggestSdkNameFromVersion(sdkHome, name);
   }
 
   public static String suggestSdkNameFromVersion(String sdkHome, String version) {
-    final String short_home_name = shortenDirName(sdkHome);
+    final String short_home_name = FileUtil.getLocationRelativeToUserHome(sdkHome);
     if (version != null) {
       File virtualenv_root = getVirtualEnvRoot(sdkHome);
       if (virtualenv_root != null) {
-        version += " virtualenv at " + shortenDirName(virtualenv_root.getAbsolutePath());
+        version += " virtualenv at " + FileUtil.getLocationRelativeToUserHome(virtualenv_root.getAbsolutePath());
       }
       else {
         version += " (" + short_home_name + ")";
