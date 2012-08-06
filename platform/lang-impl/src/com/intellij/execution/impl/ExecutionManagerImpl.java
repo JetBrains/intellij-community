@@ -50,9 +50,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * @author dyoma
@@ -65,7 +64,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private RunContentManagerImpl myContentManager;
   private final Alarm awaitingTerminationAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
   private final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
-    Collections.synchronizedList(new ArrayList<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>>());
+    new CopyOnWriteArrayList<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>>();
 
   /**
    * reflection
@@ -315,12 +314,9 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   private void forgetRunContentDescriptor(RunContentDescriptor runContentDescriptor) {
-    for (
-      Iterator<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> iterator = myRunningConfigurations.iterator();
-      iterator.hasNext(); ) {
-      Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity = iterator.next();
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (trinity.getFirst() == runContentDescriptor) {
-        iterator.remove();
+        myRunningConfigurations.remove(trinity);
         return;
       }
     }
