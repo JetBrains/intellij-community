@@ -56,7 +56,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     initializeSignatures(clazz, PsiSubstitutor.EMPTY, signatures, processed);
 
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    process(clazz, PsiSubstitutor.EMPTY, processed, methods, clazz);
+    process(clazz, PsiSubstitutor.EMPTY, new HashSet<PsiClass>(), processed, methods, clazz);
 
     final Set<PsiMethod> result = new LinkedHashSet<PsiMethod>();
     for (PsiMethod method : methods) {
@@ -127,7 +127,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       }
 
       final List<PsiClassType> superTypes;
-      if (clazz instanceof GrTypeDefinition && !(clazz.isAnnotationType() || clazz.isInterface())) {
+      if (clazz instanceof GrTypeDefinition) {
         final PsiReferenceList extendsList = clazz.getExtendsList();
         final PsiReferenceList implementsList = clazz.getImplementsList();
         final PsiClassType[] extendList = extendsList == null ? PsiClassType.EMPTY_ARRAY : extendsList.getReferencedTypes();
@@ -160,14 +160,15 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
    */
   private static void process(PsiClass clazz,
                               PsiSubstitutor superClassSubstitutor,
-                              Set<PsiClass> processed,
+                              Set<PsiClass> processedWithoutDeprecated,
+                              Set<PsiClass> processedAll,
                               List<PsiMethod> collector,
                               GrTypeDefinition classToDelegateTo) {
     final List<PsiMethod> result = new ArrayList<PsiMethod>();
 
     //process super methods before delegated methods
     for (PsiClassType superType : clazz.getSuperTypes()) {
-      processClassInner(superType, superClassSubstitutor, true, result, classToDelegateTo, processed);
+      processClassInner(superType, superClassSubstitutor, false, result, classToDelegateTo, processedWithoutDeprecated, processedAll);
     }
 
     if (clazz instanceof GrTypeDefinition) {
@@ -179,7 +180,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
         final PsiType type = field.getDeclaredType();
         if (!(type instanceof PsiClassType)) continue;
 
-        processClassInner((PsiClassType)type, superClassSubstitutor, shouldDelegateDeprecated(delegate), result, classToDelegateTo, processed);
+        processClassInner((PsiClassType)type, superClassSubstitutor, shouldDelegateDeprecated(delegate), result, classToDelegateTo, processedWithoutDeprecated, processedAll);
       }
     }
 
@@ -188,10 +189,11 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
 
   private static void processClassInner(PsiClassType type,
                                         PsiSubstitutor superClassSubstitutor,
-                                        boolean deprecated,
+                                        boolean shouldProcessDeprecated,
                                         List<PsiMethod> result,
                                         GrTypeDefinition classToDelegateTo,
-                                        Set<PsiClass> processed) {
+                                        Set<PsiClass> processedWithoutDeprecated,
+                                        Set<PsiClass> processedAll) {
     final PsiClassType.ClassResolveResult resolveResult = type.resolveGenerics();
     final PsiClass psiClass = resolveResult.getElement();
     if (psiClass == null) return;
@@ -203,17 +205,23 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
 
     final PsiSubstitutor substitutor = TypesUtil.composeSubstitutors(resolveResult.getSubstitutor(), superClassSubstitutor);
 
+    if (processedAll.contains(psiClass)) return;
+    if (!shouldProcessDeprecated && processedWithoutDeprecated.contains(psiClass)) return;
 
-    if (processed.contains(psiClass)) return;
-    processed.add(psiClass);
+    if (shouldProcessDeprecated) {
+      processedAll.add(psiClass);
+    }
+    else {
+      processedWithoutDeprecated.add(psiClass);
+    }
 
-    collectMethods(psiClass, substitutor, deprecated, classToDelegateTo, result);
-    process(psiClass, substitutor, processed, result, classToDelegateTo);
+    collectMethods(psiClass, substitutor, shouldProcessDeprecated, classToDelegateTo, result);
+    process(psiClass, substitutor, processedWithoutDeprecated, processedAll, result, classToDelegateTo);
   }
 
   private static void collectMethods(PsiClass currentClass,
                                      PsiSubstitutor currentClassSubstitutor,
-                                     boolean deprecated,
+                                     boolean shouldProcessDeprecated,
                                      GrTypeDefinition classToDelegateTo,
                                      Collection<PsiMethod> collector) {
     final List<PsiMethod> methods;
@@ -230,7 +238,7 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
     
     for (PsiMethod method : methods) {
       if (method.isConstructor() || method.hasModifierProperty(PsiModifier.STATIC)) continue;
-      if (deprecated && PsiImplUtil.getAnnotation(method, CommonClassNames.JAVA_LANG_DEPRECATED) != null) continue;
+      if (!shouldProcessDeprecated && PsiImplUtil.getAnnotation(method, CommonClassNames.JAVA_LANG_DEPRECATED) != null) continue;
       collector.add(generateDelegateMethod(method, classToDelegateTo, currentClassSubstitutor));
     }
   }
