@@ -392,6 +392,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     myStriped = striped;
     if (striped) {
       getColumnModel().setColumnMargin(0);
+      setIntercellSpacing(new Dimension(getIntercellSpacing().width, 0));
       setShowGrid(false);
     }
   }
