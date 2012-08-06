@@ -226,15 +226,17 @@ public class NewMappings {
     String path = file.getPath();
     final String systemIndependPath = FileUtil.toSystemIndependentName((file.isDirectory() && (! path.endsWith("/"))) ? (path + "/") : path);
 
+    final VcsDirectoryMapping[] mappings;
     synchronized (myLock) {
-      for (int i = mySortedMappings.length - 1; i >= 0; -- i) {
-        final VcsDirectoryMapping mapping = mySortedMappings[i];
-        if (fileMatchesMapping(file, matchContext, systemIndependPath, mapping)) {
-          return mapping;
-        }
-      }
-      return null;
+      mappings = mySortedMappings;
     }
+    for (int i = mappings.length - 1; i >= 0; -- i) {
+      final VcsDirectoryMapping mapping = mappings[i];
+      if (fileMatchesMapping(file, matchContext, systemIndependPath, mapping)) {
+        return mapping;
+      }
+    }
+    return null;
   }
 
   @Nullable
