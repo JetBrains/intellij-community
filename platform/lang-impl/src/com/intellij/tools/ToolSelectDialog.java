@@ -33,7 +33,7 @@ import java.io.IOException;
 class ToolSelectDialog extends DialogWrapper {
   private final ToolsPanel myToolsPanel = new ToolsPanel();
 
-  protected ToolSelectDialog(@Nullable Project project, ToolBeforeRunTask task) {
+  protected ToolSelectDialog(@Nullable Project project, @Nullable String actionIdToSelect) {
     super(project);
     myToolsPanel.reset();
     setOKActionEnabled(myToolsPanel.getSingleSelectedTool() != null);
@@ -45,8 +45,8 @@ class ToolSelectDialog extends DialogWrapper {
     });
     init();
     pack();
-    if(task.getToolActionId() != null){
-      myToolsPanel.selectTool(task.getToolActionId());
+    if(actionIdToSelect != null){
+      myToolsPanel.selectTool(actionIdToSelect);
     }
   }
 
