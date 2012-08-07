@@ -157,9 +157,16 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
 
   public static boolean isJavaStaticMemberStub(StubElement<?> stub) {
     StubElement<PsiModifierList> type = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
-    if (type instanceof PsiModifierListStub) {
-      return ClsModifierListImpl.hasMaskModifierProperty(PsiModifier.STATIC, ((PsiModifierListStub)type).getModifiersMask());
+    if (!(type instanceof PsiModifierListStub)) {
+      return false;
     }
+
+    int mask = ((PsiModifierListStub)type).getModifiersMask();
+    if (ClsModifierListImpl.hasMaskModifierProperty(PsiModifier.PRIVATE, mask) ||
+        !ClsModifierListImpl.hasMaskModifierProperty(PsiModifier.STATIC, mask)) {
+      return false;
+    }
+
     return true;
   }
 }

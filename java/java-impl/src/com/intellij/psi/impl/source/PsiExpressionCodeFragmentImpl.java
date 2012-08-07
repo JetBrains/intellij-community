@@ -47,8 +47,8 @@ public class PsiExpressionCodeFragmentImpl extends PsiCodeFragmentImpl implement
   @Override
   public PsiType getExpectedType() {
     PsiType type = myExpectedType;
-    if (type != null) {
-      LOG.assertTrue(type.isValid());
+    if (type != null && !type.isValid()) {
+      return null;
     }
     return type;
   }

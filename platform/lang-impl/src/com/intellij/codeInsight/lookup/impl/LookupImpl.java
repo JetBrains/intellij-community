@@ -91,13 +91,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private static final Icon relevanceSortIcon = AllIcons.Ide.LookupRelevance;
   private static final Icon lexiSortIcon = AllIcons.Ide.LookupAlphanumeric;
 
+  private final LookupOffsets myOffsets;
   private final Project myProject;
   private final Editor myEditor;
-  private String myInitialPrefix;
-
-  private boolean myStableStart;
-  private RangeMarker myLookupStartMarker;
-  private RangeMarker myLookupOriginalStartMarker;
   private final JBList myList = new JBList(new CollectionListModel<LookupElement>()) {
     @Override
     protected void processKeyEvent(final KeyEvent e) {
@@ -133,7 +129,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myHidden = false;
   private boolean mySelectionTouched;
   private boolean myFocused = true;
-  private String myAdditionalPrefix = "";
   private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
   private final JPanel myIconPanel = new JPanel(new BorderLayout());
   private volatile boolean myCalculating;
@@ -210,11 +205,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myIconPanel.setBackground(Color.LIGHT_GRAY);
     myIconPanel.add(myProcessIcon);
 
-    updateLookupStart(0);
-
-    int caret = myEditor.getCaretModel().getOffset();
-    myLookupOriginalStartMarker = myEditor.getDocument().createRangeMarker(caret, caret);
-    myLookupOriginalStartMarker.setGreedyToLeft(true);
+    myOffsets = new LookupOffsets(editor);
 
     final CollectionListModel<LookupElement> model = getListModel();
     addEmptyItem(model);
@@ -395,13 +386,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
 
   public String getAdditionalPrefix() {
-    return myAdditionalPrefix;
+    return myOffsets.getAdditionalPrefix();
   }
 
   void appendPrefix(char c) {
     checkValid();
-    myAdditionalPrefix += c;
-    myInitialPrefix = null;
+    myOffsets.appendPrefix(c);
     synchronized (myList) {
       myPresentableArranger.prefixChanged();
     }
@@ -425,15 +415,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   boolean truncatePrefix(boolean preserveSelection) {
-    final int len = myAdditionalPrefix.length();
-    if (len == 0) return false;
+    if (!myOffsets.truncatePrefix()) {
+      return false;
+    }
 
     if (preserveSelection) {
       markSelectionTouched();
     }
 
-    myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
-    myInitialPrefix = null;
     boolean shouldUpdate;
     synchronized (myList) {
       shouldUpdate = myPresentableArranger == myArranger;
@@ -463,7 +452,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         LOG.error("Arranger " + myPresentableArranger + " returned invalid selection index=" + toSelect + "; items=" + items);
       }
 
-      checkMinPrefixLengthChanges(items);
+      myOffsets.checkMinPrefixLengthChanges(items, this);
       List<LookupElement> oldModel = listModel.toList();
 
       listModel.removeAll();
@@ -497,20 +486,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
-  private void checkMinPrefixLengthChanges(Collection<LookupElement> items) {
-    if (myStableStart) return;
-    if (!myCalculating && !items.isEmpty()) {
-      myStableStart = true;
-    }
-
-    int minPrefixLength = items.isEmpty() ? 0 : Integer.MAX_VALUE;
-    for (final LookupElement item : items) {
-      minPrefixLength = Math.min(itemMatcher(item).getPrefix().length(), minPrefixLength);
-    }
-
-    updateLookupStart(minPrefixLength);
-  }
-
   private void updateListHeight(ListModel model) {
     myList.setFixedCellHeight(myCellRenderer.getListCellRendererComponent(myList, model.getElementAt(0), 0, false, false).getPreferredSize().height);
 
@@ -536,7 +511,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   @Override
   public String itemPattern(@NotNull LookupElement element) {
     String prefix = itemMatcher(element).getPrefix();
-    return myAdditionalPrefix.isEmpty() ? prefix : prefix + myAdditionalPrefix;
+    String additionalPrefix = getAdditionalPrefix();
+    return additionalPrefix.isEmpty() ? prefix : prefix + additionalPrefix;
   }
 
   @Override
@@ -546,7 +522,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return false;
     }
 
-    if (myAdditionalPrefix.length() > 0) {
+    if (getAdditionalPrefix().length() > 0) {
       matcher = matcher.cloneWithPrefix(itemPattern(item));
     }
     return matcher.prefixMatches(item);
@@ -740,12 +716,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public int getLookupStart() {
-    LOG.assertTrue(myLookupStartMarker.isValid(), disposeTrace);
-    return myLookupStartMarker.getStartOffset();
+    return myOffsets.getLookupStart(disposeTrace);
   }
 
   public int getLookupOriginalStart() {
-    return myLookupOriginalStartMarker.isValid() ? myLookupOriginalStartMarker.getStartOffset() : -1;
+    return myOffsets.getLookupOriginalStart();
   }
 
   public boolean performGuardedChange(Runnable change) {
@@ -754,29 +729,17 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     checkValid();
-    assert myLookupStartMarker != null : "null start before";
-    assert myLookupStartMarker.isValid() : "invalid start";
     assert !myChangeGuard : "already in change";
 
     myChangeGuard = true;
-    final Document document = myEditor.getDocument();
-    RangeMarkerSpy spy = new RangeMarkerSpy(myLookupStartMarker) {
-      @Override
-      protected void invalidated(DocumentEvent e) {
-        LOG.info("Lookup start marker invalidated, say thanks to the " + e +
-                  ", doc=" + document +
-                  ", debug=" + debug);
-      }
-    };
-    document.addDocumentListener(spy);
+    boolean result;
     try {
-      change.run();
+      result = myOffsets.performGuardedChange(change, debug);
     }
     finally {
-      document.removeDocumentListener(spy);
       myChangeGuard = false;
     }
-    if (myDisposed || !myLookupStartMarker.isValid()) {
+    if (!result || myDisposed) {
       hide();
       return false;
     }
@@ -958,22 +921,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
   }
 
-  private int updateLookupStart(int myMinPrefixLength) {
-    int offset = myEditor.getSelectionModel().hasSelection()
-                 ? myEditor.getSelectionModel().getSelectionStart()
-                 : myEditor.getCaretModel().getOffset();
-    int start = Math.max(offset - myMinPrefixLength - myAdditionalPrefix.length(), 0);
-    if (myLookupStartMarker != null) {
-      if (myLookupStartMarker.isValid() && myLookupStartMarker.getStartOffset() == start && myLookupStartMarker.getEndOffset() == start) {
-        return start;
-      }
-      myLookupStartMarker.dispose();
-    }
-    myLookupStartMarker = myEditor.getDocument().createRangeMarker(start, start);
-    myLookupStartMarker.setGreedyToLeft(true);
-    return start;
-  }
-
   @Nullable
   public LookupElement getCurrentItem(){
     LookupElement item = (LookupElement)myList.getSelectedValue();
@@ -1069,7 +1016,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     final PrefixMatcher firstItemMatcher = itemMatcher(firstItem);
     final String oldPrefix = firstItemMatcher.getPrefix();
-    final String presentPrefix = oldPrefix + myAdditionalPrefix;
+    final String presentPrefix = oldPrefix + getAdditionalPrefix();
     String commonPrefix = getCaseCorrectedLookupString(firstItem);
 
     for (int i = 1; i < listModel.getSize(); i++) {
@@ -1105,12 +1052,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     }
 
-    if (myAdditionalPrefix.length() == 0 && myInitialPrefix == null && !explicitlyInvoked) {
-      myInitialPrefix = presentPrefix;
-    }
-    else {
-      myInitialPrefix = null;
-    }
+    myOffsets.setInitialPrefix(presentPrefix, explicitlyInvoked);
 
     replacePrefix(presentPrefix, commonPrefix);
     return true;
@@ -1136,7 +1078,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         myMatchers.clear();
         myMatchers.putAll(newMatchers);
 
-        myAdditionalPrefix = "";
+        myOffsets.clearAdditionalPrefix();
 
         myEditor.getCaretModel().moveToOffset(start + newPrefix.length());
       }
@@ -1219,9 +1161,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void restorePrefix() {
-    if (myInitialPrefix != null) {
-      myEditor.getDocument().replaceString(getLookupStart(), myEditor.getCaretModel().getOffset(), myInitialPrefix);
-    }
+    myOffsets.restorePrefix(getLookupStart());
   }
 
   private static String staticDisposeTrace = null;
@@ -1239,11 +1179,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       return;
     }
 
-    if (myLookupStartMarker != null) {
-      myLookupStartMarker.dispose();
-      myLookupStartMarker = null;
-    }
-    myLookupOriginalStartMarker.dispose();
+    myOffsets.disposeMarkers();
     Disposer.dispose(myProcessIcon);
     Disposer.dispose(myHintAlarm);
     myDisposed = true;
@@ -1255,7 +1191,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
     final boolean reused = mayCheckReused && checkReused();
     if (reused) {
-      myAdditionalPrefix = "";
+      myOffsets.clearAdditionalPrefix();
     }
 
     boolean selectionVisible = isSelectionVisible();

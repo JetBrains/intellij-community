@@ -1,9 +1,5 @@
-class Super<T> {
-}
-
-class SubString extends Super<String> {
-  public static SubString createSubString() {}
-}
+class Super<T> { }
+class SubString extends Super<String> { }
 class SubInt extends Super<Integer> { }
 class SubGeneric<T> extends Super<T> { }
 class SubRaw extends Super { }
@@ -18,12 +14,14 @@ class Factory {
   public static Super<Integer> createSuperInt() {}
   public static SubInt createSubInt() {}
   public static <T> SubGeneric<T> createSubGeneric() {}
-  public static SubRaw createSubRaw() {}
+  public static final SubRaw SUB_RAW = null
+  public static Super<String> NON_FINAL
+  public final Super<String> NON_STATIC
 }
 
 class Intermediate {
 
-    Super<String> s = <caret>
+  Super<String> s = <caret>
 }
 
 

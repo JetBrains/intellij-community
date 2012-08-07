@@ -57,6 +57,7 @@ public class PsiScopesUtil {
                                    @NotNull final PsiElement entrance,
                                    @Nullable final PsiElement maxScope,
                                    @NotNull final ResolveState state) {
+    assert entrance.isValid();
     PsiElement prevParent = entrance;
     PsiElement scope = entrance;
 
@@ -78,6 +79,9 @@ public class PsiScopesUtil {
       if (scope == maxScope) break;
       prevParent = scope;
       scope = prevParent.getContext();
+      if (scope != null && scope != prevParent.getParent() && !scope.isValid()) {
+        break;
+      }
       processor.handleEvent(JavaScopeProcessorEvent.CHANGE_LEVEL, null);
     }
 

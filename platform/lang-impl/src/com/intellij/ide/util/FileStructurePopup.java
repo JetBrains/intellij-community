@@ -304,15 +304,20 @@ public class FileStructurePopup implements Disposable {
           token.finish();
         }
 
-        myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
+        SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            myTreeHasBuilt.setDone();
-            //noinspection SSBasedInspection
-            SwingUtilities.invokeLater(new Runnable() {
+            myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
               @Override
               public void run() {
-                selectPsiElement(myInitialPsiElement);
+                myTreeHasBuilt.setDone();
+                //noinspection SSBasedInspection
+                SwingUtilities.invokeLater(new Runnable() {
+                  @Override
+                  public void run() {
+                    selectPsiElement(myInitialPsiElement);
+                  }
+                });
               }
             });
           }
