@@ -2,6 +2,7 @@ package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.testFramework.IdeaTestCase;
@@ -17,16 +18,34 @@ import com.intellij.util.xml.impl.DomManagerImpl;
 public class DomStubsTest extends LightPlatformCodeInsightFixtureTestCase {
 
   public void testDomLoading() throws Exception {
+    getRootStub("foo.xml");
+  }
 
-    PsiFile psiFile = myFixture.configureByFile("foo.xml");
+  public void testFoo() throws Exception {
+    doTest("foo.xml", "Element:foo\n" +
+                      "  Element:bar\n" +
+                      "    Attribute:attribute:xxx\n" +
+                      "  Element:bar\n");
+  }
+
+  private ElementStub getRootStub(String filePath) {
+    PsiFile psiFile = myFixture.configureByFile(filePath);
 
     StubTreeLoader loader = StubTreeLoader.getInstance();
     VirtualFile file = psiFile.getVirtualFile();
     assertTrue(loader.canHaveStub(file));
     ObjectStubTree stubTree = loader.readFromVFile(getProject(), file);
     assertNotNull(stubTree);
+    ElementStub root = (ElementStub)stubTree.getRoot();
+    assertNotNull(root);
+    return root;
   }
 
+  private void doTest(String file, String stubText) {
+    ElementStub stub = getRootStub(file);
+    assertEquals(stubText, DebugUtil.stubTreeToString(stub));
+  }
+  
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public DomStubsTest() {
     IdeaTestCase.initPlatformPrefix();

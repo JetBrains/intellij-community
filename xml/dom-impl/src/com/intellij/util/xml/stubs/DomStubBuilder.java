@@ -47,8 +47,9 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     DomManager manager = DomManager.getDomManager(project);
     DomFileElement<? extends DomElement> fileElement = manager.getFileElement(xmlFile);
     if (fileElement == null || !fileElement.getFileDescription().hasStubs()) return null;
-
-    return new TagStub(null, fileElement.getRootTag().getLocalName());
+    DomStubBuilderVisitor visitor = new DomStubBuilderVisitor();
+    visitor.visitDomElement(fileElement.getRootElement());
+    return visitor.getRoot();
   }
 
   @Override

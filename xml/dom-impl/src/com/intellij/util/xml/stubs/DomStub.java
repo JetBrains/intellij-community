@@ -23,17 +23,10 @@ import com.intellij.psi.stubs.ObjectStubBase;
  */
 public abstract class DomStub extends ObjectStubBase<DomStub> {
 
-  private final String myName;
-
-  public DomStub(DomStub parent, String name) {
+  public DomStub(DomStub parent) {
     super(parent);
-    myName = name;
     if (parent != null) {
-      ((TagStub)parent).addChild(this);
+      ((ElementStub)parent).addChild(this);
     }
-  }
-
-  public String getName() {
-    return myName;
   }
 }

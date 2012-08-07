@@ -15,16 +15,16 @@
  */
 package com.intellij.util.xml.stubs;
 
-import com.intellij.psi.stubs.SerializationManager;
+import com.intellij.psi.stubs.Stubbed;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/2/12
+ *         Date: 8/7/12
  */
-public class DomElementTypeHolder {
+public interface Bar extends DomElement {
 
-  static {
-    SerializationManager.getInstance().registerSerializer(ElementStubSerializer.INSTANCE);
-    SerializationManager.getInstance().registerSerializer(AttributeStubSerializer.INSTANCE);
-  }
+  @Stubbed
+  GenericAttributeValue getAttribute();
 }

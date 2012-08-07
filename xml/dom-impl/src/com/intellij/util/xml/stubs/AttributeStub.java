@@ -17,6 +17,7 @@ package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
+import com.intellij.util.io.StringRef;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,15 +28,21 @@ import java.util.List;
  */
 public class AttributeStub extends DomStub {
 
-  private final String myValue;
+  private final StringRef myName;
+  private final StringRef myValue;
 
-  public AttributeStub(DomStub parent, String name, String value) {
-    super(parent, name);
+  public AttributeStub(DomStub parent, StringRef name, StringRef value) {
+    super(parent);
+    myName = name;
     myValue = value;
   }
 
+  public String getName() {
+    return myName.getString();
+  }
+
   public String getValue() {
-    return myValue;
+    return myValue.getString();
   }
 
   @Override
@@ -46,5 +53,10 @@ public class AttributeStub extends DomStub {
   @Override
   public ObjectStubSerializer getStubType() {
     return AttributeStubSerializer.INSTANCE;
+  }
+
+  @Override
+  public String toString() {
+    return getName() + ":" + getValue();
   }
 }

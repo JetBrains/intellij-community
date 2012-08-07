@@ -18,6 +18,7 @@ package com.intellij.util.xml.stubs;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.util.SmartList;
+import com.intellij.util.io.StringRef;
 
 import java.util.List;
 
@@ -25,12 +26,18 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 8/2/12
  */
-public class TagStub extends DomStub {
+public class ElementStub extends DomStub {
 
+  private final StringRef myType;
   private final List<DomStub> myChildren = new SmartList<DomStub>();
 
-  public TagStub(DomStub parent, String name) {
-    super(parent, name);
+  public ElementStub(ElementStub parent, StringRef type) {
+    super(parent);
+    myType = type;
+  }
+
+  public String getType() {
+    return myType.getString();
   }
 
   void addChild(DomStub child) {
@@ -44,6 +51,11 @@ public class TagStub extends DomStub {
 
   @Override
   public ObjectStubSerializer getStubType() {
-    return TagStubSerializer.INSTANCE;
+    return ElementStubSerializer.INSTANCE;
+  }
+
+  @Override
+  public String toString() {
+    return getType();
   }
 }

@@ -26,7 +26,7 @@ import java.io.IOException;
  * @author Dmitry Avdeev
  *         Date: 8/3/12
  */
-public class AttributeStubSerializer implements ObjectStubSerializer<AttributeStub, TagStub> {
+public class AttributeStubSerializer implements ObjectStubSerializer<AttributeStub, ElementStub> {
 
   final static ObjectStubSerializer INSTANCE = new AttributeStubSerializer();
 
@@ -42,12 +42,16 @@ public class AttributeStubSerializer implements ObjectStubSerializer<AttributeSt
   }
 
   @Override
-  public AttributeStub deserialize(StubInputStream dataStream, TagStub parentStub) throws IOException {
-    return new AttributeStub(parentStub, dataStream.readName().getString(), dataStream.readName().getString());
+  public AttributeStub deserialize(StubInputStream dataStream, ElementStub parentStub) throws IOException {
+    return new AttributeStub(parentStub, dataStream.readName(), dataStream.readName());
   }
 
   @Override
   public void indexStub(AttributeStub stub, IndexSink sink) {
   }
 
+  @Override
+  public String toString() {
+    return "Attribute";
+  }
 }

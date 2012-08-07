@@ -35,8 +35,8 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
 import com.intellij.psi.impl.source.tree.SharedImplUtil;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.*;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
@@ -237,7 +237,7 @@ public class DebugUtil {
     }
   }
 
-  public static String stubTreeToString(final StubElement root) {
+  public static String stubTreeToString(final Stub root) {
     final LengthBuilder ruler = new LengthBuilder();
     stubTreeToBuffer(root, ruler, 0);
     final StringBuilder builder = new StringBuilder(ruler.getLength());
@@ -245,18 +245,18 @@ public class DebugUtil {
     return builder.toString();
   }
 
-  public static void stubTreeToBuffer(final StubElement node, final Appendable buffer, final int indent) {
+  public static void stubTreeToBuffer(final Stub node, final Appendable buffer, final int indent) {
     StringUtil.repeatSymbol(buffer, ' ', indent);
     try {
-      final IStubElementType stubType = node.getStubType();
+      final ObjectStubSerializer stubType = node.getStubType();
       if (stubType != null) {
         buffer.append(stubType.toString()).append(':');
       }
       buffer.append(node.toString()).append('\n');
 
       @SuppressWarnings({"unchecked"})
-      final List<StubElement> children = node.getChildrenStubs();
-      for (final StubElement child : children) {
+      final List<? extends Stub> children = node.getChildrenStubs();
+      for (final Stub child : children) {
         stubTreeToBuffer(child, buffer, indent + 2);
       }
     }
