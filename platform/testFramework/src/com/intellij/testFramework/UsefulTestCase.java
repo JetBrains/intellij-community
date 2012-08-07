@@ -487,6 +487,16 @@ public abstract class UsefulTestCase extends TestCase {
     return ts[0];
   }
 
+  public static <T> void assertOneOf(T value, T... values) {
+    boolean found = false;
+    for (T v : values) {
+      if (value == v || (value != null && value.equals(v))) {
+        found = true;
+      }
+    }
+    Assert.assertTrue("" + value + " should be equal to one of " + Arrays.toString(values), found);
+  }
+
   public static void printThreadDump() {
     PerformanceWatcher.dumpThreadsToConsole("Thread dump:");
   }
