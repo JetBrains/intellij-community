@@ -19,7 +19,6 @@ import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.jps.model.JpsElementProperties;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,7 +26,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JpsAndroidModuleProperties extends JpsElementProperties {
+public class JpsAndroidModuleProperties {
   public String GEN_FOLDER_RELATIVE_PATH_APT;
   public String GEN_FOLDER_RELATIVE_PATH_AIDL;
 

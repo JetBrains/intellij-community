@@ -6,10 +6,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.DummyJpsElementProperties;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsElementProperties;
-import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -166,7 +163,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     return expander;
   }
 
-  private static <P extends JpsElementProperties> JpsModule createModule(String name, Element moduleRoot, JpsModulePropertiesSerializer<P> loader) {
+  private static <P extends JpsElement> JpsModule createModule(String name, Element moduleRoot, JpsModulePropertiesSerializer<P> loader) {
     return JpsElementFactory.getInstance().createModule(name, loader.getType(), loader.loadProperties(moduleRoot));
   }
 
@@ -178,10 +175,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    return new JpsModulePropertiesSerializer<DummyJpsElementProperties>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE") {
+    return new JpsModulePropertiesSerializer<JpsDummyElement>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE") {
       @Override
-      public DummyJpsElementProperties loadProperties(@Nullable Element moduleRootElement) {
-        return DummyJpsElementProperties.INSTANCE;
+      public JpsDummyElement loadProperties(@Nullable Element moduleRootElement) {
+        return JpsElementFactory.getInstance().createDummyElement();
       }
     };
   }

@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public interface JpsElementTypeWithDefaultProperties<P extends JpsElementProperties> {
+public interface JpsElementTypeWithDefaultProperties<P> {
   @NotNull
   P createDefaultProperties();
 }

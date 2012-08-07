@@ -33,8 +33,8 @@ public class JpsElementFactoryImpl extends JpsElementFactory {
   }
 
   @Override
-  public <P extends JpsElementProperties> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties) {
-    return new JpsModuleImpl(type, name, properties);
+  public <P extends JpsElement> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties) {
+    return new JpsModuleImpl<P>(type, name, properties);
   }
 
 
@@ -74,5 +74,17 @@ public class JpsElementFactoryImpl extends JpsElementFactory {
   @Override
   public JpsElementReference<JpsGlobal> createGlobalReference() {
     return new JpsGlobalElementReference();
+  }
+
+  @NotNull
+  @Override
+  public JpsDummyElement createDummyElement() {
+    return new JpsDummyElementImpl();
+  }
+
+  @NotNull
+  @Override
+  public <P> JpsSimpleElement<P> createSimpleElement(@NotNull P properties) {
+    return new JpsSimpleElementImpl<P>(properties);
   }
 }

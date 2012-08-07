@@ -15,12 +15,10 @@
  */
 package org.jetbrains.jps.devkit.model;
 
-import org.jetbrains.jps.model.JpsElementProperties;
-
 /**
  * @author nik
  */
-public class JpsPluginModuleProperties extends JpsElementProperties {
+public class JpsPluginModuleProperties {
   private final String myPluginXmlUrl;
 
   public JpsPluginModuleProperties(String pluginXmlUrl) {

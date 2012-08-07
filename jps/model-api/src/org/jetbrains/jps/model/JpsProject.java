@@ -16,7 +16,7 @@ import java.util.List;
 public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement<JpsProject> {
 
   @NotNull
-  <P extends JpsElementProperties, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
+  <P extends JpsElement, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsModule addModule(@NotNull String name, @NotNull ModuleType moduleType);
 
   void addModule(@NotNull JpsModule module);
