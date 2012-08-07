@@ -94,16 +94,6 @@ public class CompoundProperty extends Property<RadViewComponent> implements IPro
   }
 
   @Override
-  public boolean isDefaultValue(@NotNull RadViewComponent component) throws Exception {
-    for (Property<RadViewComponent> childProperty : myChildren) {
-      if (!childProperty.isDefaultValue(component)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  @Override
   public void setDefaultValue(@NotNull RadViewComponent component) throws Exception {
     for (Property<RadViewComponent> childProperty : myChildren) {
       childProperty.setDefaultValue(component);
