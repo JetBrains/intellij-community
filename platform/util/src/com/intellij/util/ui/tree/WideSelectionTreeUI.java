@@ -231,7 +231,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   protected void paintVerticalLine(Graphics g, JComponent c, int x, int top, int bottom) {
-    if (tree.hasFocus()) {
+    if (tree.hasFocus() && UIUtil.isUnderAlloyIDEALookAndFeel()) {
       int y0 = top, y1 = top;
       while (y1 < bottom) {
         y0 = y1;
