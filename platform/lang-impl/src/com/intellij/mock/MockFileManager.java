@@ -89,6 +89,7 @@ public class MockFileManager implements FileManager {
     myViewProviders.put(virtualFile, fileViewProvider);
   }
 
+  @NotNull
   public List<PsiFile> getAllCachedFiles() {
     throw new UnsupportedOperationException("Method getAllCachedFiles is not yet implemented in " + getClass().getName());
   }

@@ -105,6 +105,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileSystem#extractPresentableUrl
    */
   public final String getPresentableUrl() {
+    if (!isValid()) return null;
     return getFileSystem().extractPresentableUrl(getPath());
   }
 

@@ -222,7 +222,7 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
 
     List<MavenProject> children = myProjectsTree.getModules(roots.get(0));
     assertEquals(1, children.size());
-    assertSame(m, children.get(0).getFile());
+    assertEquals(m, children.get(0).getFile());
   }
 
   public void testAddingAndRemovingManagedFiles() throws Exception {

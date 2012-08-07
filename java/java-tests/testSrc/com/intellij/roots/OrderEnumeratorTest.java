@@ -120,11 +120,11 @@ public class OrderEnumeratorTest extends ModuleRootManagerTestCase {
   public void testCaching() throws Exception {
     final VirtualFile[] roots = orderEntries(myModule).classes().usingCache().getRoots();
     assertOrderedEquals(roots, getRtJar());
-    assertSame(roots, orderEntries(myModule).classes().usingCache().getRoots());
+    assertEquals(roots, orderEntries(myModule).classes().usingCache().getRoots());
     final VirtualFile[] rootsWithoutSdk = orderEntries(myModule).withoutSdk().classes().usingCache().getRoots();
     assertEmpty(rootsWithoutSdk);
-    assertSame(roots, orderEntries(myModule).classes().usingCache().getRoots());
-    assertSame(rootsWithoutSdk, orderEntries(myModule).withoutSdk().classes().usingCache().getRoots());
+    assertEquals(roots, orderEntries(myModule).classes().usingCache().getRoots());
+    assertEquals(rootsWithoutSdk, orderEntries(myModule).withoutSdk().classes().usingCache().getRoots());
 
     ModuleRootModificationUtil.addDependency(myModule, createJDomLibrary());
 
