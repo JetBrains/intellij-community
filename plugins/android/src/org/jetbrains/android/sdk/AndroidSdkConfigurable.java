@@ -18,6 +18,7 @@ package org.jetbrains.android.sdk;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -77,7 +78,10 @@ public class AndroidSdkConfigurable implements AdditionalDataConfigurable {
   public boolean isModified() {
     final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)mySdk.getSdkAdditionalData();
     Sdk javaSdk = data != null ? data.getJavaSdk() : null;
-    return javaSdk != myForm.getSelectedSdk();
+    final String javaSdkHomePath = javaSdk != null ? javaSdk.getHomePath() : null;
+    final Sdk selectedSdk = myForm.getSelectedSdk();
+    final String selectedSdkHomePath = selectedSdk != null ? selectedSdk.getHomePath() : null;
+    return !FileUtil.pathsEqual(javaSdkHomePath, selectedSdkHomePath);
   }
 
   @Override
