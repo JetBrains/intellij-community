@@ -78,32 +78,27 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
   private static class JpsPluginModulePropertiesSerializer extends JpsModulePropertiesSerializer<JpsSimpleElement<JpsPluginModuleProperties>> {
     private static final String URL_ATTRIBUTE = "url";
     private static final String MANIFEST_ATTRIBUTE = "manifest";
-    private static final String COMPONENT_NAME = "DevKit.ModuleBuildProperties";
 
     private JpsPluginModulePropertiesSerializer() {
-      super(JpsPluginModuleType.INSTANCE, "PLUGIN_MODULE");
+      super(JpsPluginModuleType.INSTANCE, "PLUGIN_MODULE", "DevKit.ModuleBuildProperties");
     }
 
     @Override
-    public JpsSimpleElement<JpsPluginModuleProperties> loadProperties(@Nullable Element moduleRootElement) {
-      Element component = JpsLoaderBase.findComponent(moduleRootElement, COMPONENT_NAME);
-      String pluginXmlUrl = component != null ? component.getAttributeValue(URL_ATTRIBUTE) : null;
-      String manifestFileUrl = component != null ? component.getAttributeValue(MANIFEST_ATTRIBUTE) : null;
+    public JpsSimpleElement<JpsPluginModuleProperties> loadProperties(@Nullable Element componentElement) {
+      String pluginXmlUrl = componentElement != null ? componentElement.getAttributeValue(URL_ATTRIBUTE) : null;
+      String manifestFileUrl = componentElement != null ? componentElement.getAttributeValue(MANIFEST_ATTRIBUTE) : null;
       return JpsElementFactory.getInstance().createSimpleElement(new JpsPluginModuleProperties(pluginXmlUrl, manifestFileUrl));
     }
 
     @Override
-    public void saveProperties(@NotNull JpsSimpleElement<JpsPluginModuleProperties> element, @NotNull Element moduleRootElement) {
-      Element component = JpsLoaderBase.findComponent(moduleRootElement, COMPONENT_NAME);
-      if (component != null) {
-        String pluginXmlUrl = element.getData().getPluginXmlUrl();
-        if (pluginXmlUrl != null) {
-          component.setAttribute(URL_ATTRIBUTE, pluginXmlUrl);
-        }
-        String manifestFileUrl = element.getData().getManifestFileUrl();
-        if (manifestFileUrl != null) {
-          component.setAttribute(MANIFEST_ATTRIBUTE, manifestFileUrl);
-        }
+    public void saveProperties(@NotNull JpsSimpleElement<JpsPluginModuleProperties> element, @NotNull Element componentElement) {
+      String pluginXmlUrl = element.getData().getPluginXmlUrl();
+      if (pluginXmlUrl != null) {
+        componentElement.setAttribute(URL_ATTRIBUTE, pluginXmlUrl);
+      }
+      String manifestFileUrl = element.getData().getManifestFileUrl();
+      if (manifestFileUrl != null) {
+        componentElement.setAttribute(MANIFEST_ATTRIBUTE, manifestFileUrl);
       }
     }
   }

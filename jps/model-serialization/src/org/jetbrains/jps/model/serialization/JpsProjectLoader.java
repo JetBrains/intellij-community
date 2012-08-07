@@ -90,8 +90,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final Element root = loadRootElement(iprFile);
     JpsSdkType<?> projectSdkType = loadProjectRoot(root);
     loadModules(root, projectSdkType);
-    loadProjectLibraries(findComponent(root, "libraryTable"));
-    loadArtifacts(findComponent(root, "ArtifactManager"));
+    loadProjectLibraries(JDomSerializationUtil.findComponent(root, "libraryTable"));
+    loadArtifacts(JDomSerializationUtil.findComponent(root, "ArtifactManager"));
   }
 
   private void loadArtifacts(Element artifactManagerComponent) {
@@ -101,7 +101,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   @Nullable
   private JpsSdkType<?> loadProjectRoot(Element root) {
     JpsSdkType<?> sdkType = null;
-    Element rootManagerElement = findComponent(root, "ProjectRootManager");
+    Element rootManagerElement = JDomSerializationUtil.findComponent(root, "ProjectRootManager");
     if (rootManagerElement != null) {
       String sdkName = rootManagerElement.getAttributeValue("project-jdk-name");
       String sdkTypeId = rootManagerElement.getAttributeValue("project-jdk-type");
@@ -121,7 +121,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private void loadModules(Element root, final JpsSdkType<?> projectSdkType) {
-    Element componentRoot = findComponent(root, "ProjectModuleManager");
+    Element componentRoot = JDomSerializationUtil.findComponent(root, "ProjectModuleManager");
     if (componentRoot == null) return;
     final Element modules = componentRoot.getChild("modules");
     List<Future<JpsModule>> futures = new ArrayList<Future<JpsModule>>();
@@ -152,8 +152,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final String typeId = moduleRoot.getAttributeValue("type");
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
-    JpsModuleSerializer.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
-    JpsFacetLoader.loadFacets(module, findComponent(moduleRoot, "FacetManager"), FileUtil.toSystemIndependentName(path));
+    JpsModuleSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
+    JpsFacetLoader.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"), FileUtil.toSystemIndependentName(path));
     return module;
   }
 
@@ -164,7 +164,9 @@ public class JpsProjectLoader extends JpsLoaderBase {
   }
 
   private static <P extends JpsElement> JpsModule createModule(String name, Element moduleRoot, JpsModulePropertiesSerializer<P> loader) {
-    return JpsElementFactory.getInstance().createModule(name, loader.getType(), loader.loadProperties(moduleRoot));
+    String componentName = loader.getComponentName();
+    Element component = componentName != null ? JDomSerializationUtil.findComponent(moduleRoot, componentName) : null;
+    return JpsElementFactory.getInstance().createModule(name, loader.getType(), loader.loadProperties(component));
   }
 
   private static JpsModulePropertiesSerializer<?> getModulePropertiesSerializer(@NotNull String typeId) {
@@ -175,14 +177,14 @@ public class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    return new JpsModulePropertiesSerializer<JpsDummyElement>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE") {
+    return new JpsModulePropertiesSerializer<JpsDummyElement>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE", null) {
       @Override
-      public JpsDummyElement loadProperties(@Nullable Element moduleRootElement) {
+      public JpsDummyElement loadProperties(@Nullable Element componentElement) {
         return JpsElementFactory.getInstance().createDummyElement();
       }
 
       @Override
-      public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element moduleRootElement) {
+      public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element componentElement) {
       }
     };
   }

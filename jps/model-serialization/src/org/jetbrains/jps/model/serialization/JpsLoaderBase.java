@@ -5,8 +5,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,15 +39,5 @@ public abstract class JpsLoaderBase {
 
   protected static boolean isXmlFile(File file) {
     return file.isFile() && FileUtil.getExtension(file.getName()).equalsIgnoreCase("xml");
-  }
-
-  @Nullable
-  public static Element findComponent(@Nullable Element root, @NotNull String componentName) {
-    for (Element element : JDOMUtil.getChildren(root, "component")) {
-      if (componentName.equals(element.getAttributeValue("name"))) {
-        return element;
-      }
-    }
-    return null;
   }
 }
