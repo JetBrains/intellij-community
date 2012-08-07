@@ -34,7 +34,8 @@ import java.io.IOException;
 public class GitTestRunEnv {
 
   public static final String GIT_EXECUTABLE_ENV = "IDEA_TEST_GIT_EXECUTABLE";
-  private String gitExecutable;
+  private static String ourGitExecutable;
+
   private File myRootDir;
 
   private int myRetryCount;
@@ -42,7 +43,7 @@ public class GitTestRunEnv {
 
 
   public GitTestRunEnv(@NotNull File rootDir) {
-    gitExecutable = getExecutable();
+    ourGitExecutable = getExecutable();
     myRootDir = rootDir;
   }
 
@@ -56,9 +57,9 @@ public class GitTestRunEnv {
   }
 
   public String run(boolean silent, @NotNull String command, String... params) throws IOException {
-    String[] arguments = ArrayUtil.mergeArrays(new String[]{gitExecutable, command}, params);
+    String[] arguments = ArrayUtil.mergeArrays(new String[]{ourGitExecutable, command}, params);
     if (!silent) {
-      log("# " + StringUtil.join(arguments, " "));
+      log("# git " + command + " " + StringUtil.join(params, " "));
     }
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
     builder.directory(myRootDir);
@@ -97,6 +98,9 @@ public class GitTestRunEnv {
   }
 
   private String getExecutable() {
+    if (ourGitExecutable != null) {
+      return ourGitExecutable;
+    }
     String exec = System.getenv(GIT_EXECUTABLE_ENV);
     if (exec != null && new File(exec).exists()) {
       log("Using Git from GIT_EXECUTABLE_ENV: " + exec);
