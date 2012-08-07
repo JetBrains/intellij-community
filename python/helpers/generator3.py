@@ -2429,16 +2429,6 @@ def processOne(name, mod_file_name, doing_builtins):
     try:
         try:
             fname = buildOutputName(subdir, name)
-
-            if mod_file_name and fname:
-                try:
-                    fstat = os.stat(fname)
-                    mod_stat = os.stat(mod_file_name)
-                    if fstat.st_mtime>mod_stat.st_mtime:
-                        report("Skeleton for " + mod_file_name + " already exists.")
-                        return True
-                except:
-                    pass
             action("opening %r", fname)
             outfile = fopen(fname, "w")
             old_modules = list(sys.modules.keys())
