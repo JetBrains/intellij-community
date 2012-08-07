@@ -84,6 +84,10 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  public void testMultipartString() {  // PY-6698
+    doTest();
+  }
+
   private void doTestCannotPerform() {
     boolean thrownExpectedException = false;
     try {
