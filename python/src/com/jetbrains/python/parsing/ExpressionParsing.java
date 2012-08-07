@@ -110,7 +110,7 @@ public class ExpressionParsing extends Parsing {
       builder.error(message("PARSE.expected.expression"));
     }
     if (builder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
-      parseComprehension(expr, PyTokenTypes.RBRACKET, PyElementTypes.LIST_COMP_EXPRESSION, false);
+      parseComprehension(expr, PyTokenTypes.RBRACKET, PyElementTypes.LIST_COMP_EXPRESSION);
     }
     else {
       while (builder.getTokenType() != PyTokenTypes.RBRACKET) {
@@ -132,8 +132,7 @@ public class ExpressionParsing extends Parsing {
 
   private void parseComprehension(PsiBuilder.Marker expr,
                                   @Nullable final IElementType endToken,
-                                  final IElementType exprType,
-                                  final boolean leaveEndTokenOutside) {
+                                  final IElementType exprType) {
     assertCurrentToken(PyTokenTypes.FOR_KEYWORD);
     while (true) {
       myBuilder.advanceLexer();
@@ -148,16 +147,7 @@ public class ExpressionParsing extends Parsing {
       if (atToken(PyTokenTypes.FOR_KEYWORD)) {
         continue;
       }
-      if (endToken == null) {
-        break;
-      }
-      if (atToken(endToken)) {
-        if (leaveEndTokenOutside) {
-          expr.done(exprType);
-          nextToken();
-          return;
-        }
-        nextToken();
+      if (endToken == null || matchToken(endToken)) {
         break;
       }
       myBuilder.error(message("PARSE.expected.for.or.bracket"));
@@ -207,7 +197,7 @@ public class ExpressionParsing extends Parsing {
     }
     else if (atToken(PyTokenTypes.FOR_KEYWORD)) {
       firstExprMarker.drop();
-      parseComprehension(expr, PyTokenTypes.RBRACE, PyElementTypes.SET_COMP_EXPRESSION, false);
+      parseComprehension(expr, PyTokenTypes.RBRACE, PyElementTypes.SET_COMP_EXPRESSION);
     }
     else {
       myBuilder.error("expression expected");
@@ -228,7 +218,7 @@ public class ExpressionParsing extends Parsing {
     }
     firstKeyValueMarker.done(PyElementTypes.KEY_VALUE_EXPRESSION);
     if (myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
-      parseComprehension(startMarker, PyTokenTypes.RBRACE, PyElementTypes.DICT_COMP_EXPRESSION, false);
+      parseComprehension(startMarker, PyTokenTypes.RBRACE, PyElementTypes.DICT_COMP_EXPRESSION);
     }
     else {
       while (myBuilder.getTokenType() != PyTokenTypes.RBRACE) {
@@ -280,7 +270,7 @@ public class ExpressionParsing extends Parsing {
     else {
       parseYieldOrTupleExpression(isTargetExpression);
       if (myBuilder.getTokenType() == PyTokenTypes.FOR_KEYWORD) {
-        parseComprehension(expr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION, false);
+        parseComprehension(expr, PyTokenTypes.RPAR, PyElementTypes.GENERATOR_EXPRESSION);
       }
       else {
         checkMatches(PyTokenTypes.RPAR, message("PARSE.expected.rpar"));
@@ -465,7 +455,7 @@ public class ExpressionParsing extends Parsing {
       argNumber++;
       if (argNumber > 1) {
         if (argNumber == 2 && atToken(PyTokenTypes.FOR_KEYWORD) && genexpr != null) {
-          parseComprehension(genexpr, null, PyElementTypes.GENERATOR_EXPRESSION, true);
+          parseComprehension(genexpr, null, PyElementTypes.GENERATOR_EXPRESSION);
           genexpr = null;
           continue;
         }
