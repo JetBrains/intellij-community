@@ -9,18 +9,22 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
+import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.types.PyModuleType;
 
 import java.util.Collection;
 
@@ -40,9 +44,25 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       if (PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) != null) {
         return;
       }
-      addVariantsFromIndex(result, parameters.getOriginalFile(), PyClassNameIndex.KEY, CLASS_INSERT_HANDLER,
+      addVariantsFromIndex(result, parameters.getOriginalFile(), PyClassNameIndex.KEY, IMPORTING_INSERT_HANDLER,
                            Conditions.<PyClass>alwaysTrue());
       addVariantsFromIndex(result, parameters.getOriginalFile(), PyFunctionNameIndex.KEY, FUNCTION_INSERT_HANDLER, TOPLEVEL_FUNCTION);
+      addVariantsFromModules(result, parameters.getOriginalFile());
+    }
+  }
+
+  private static void addVariantsFromModules(CompletionResultSet result, PsiFile targetFile) {
+    Collection<VirtualFile> files = FileTypeIndex.getFiles(PythonFileType.INSTANCE, PyProjectScopeBuilder.excludeSdkTestsScope(targetFile));
+    for (VirtualFile file : files) {
+      PsiFile pyFile = targetFile.getManager().findFile(file);
+      if (pyFile == null) continue;
+      PsiFileSystemItem importable = (PsiFileSystemItem) PyUtil.turnInitIntoDir(pyFile);
+      if (PythonReferenceImporter.isImportableModule(targetFile, importable)) {
+        LookupElementBuilder element = PyModuleType.buildFileLookupElement(importable, null);
+        if (element != null) {
+          result.addElement(element.withInsertHandler(IMPORTING_INSERT_HANDLER));
+        }
+      }
     }
   }
 
@@ -65,8 +85,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     for (final String elementName : CompletionUtil.sortMatching(resultSet.getPrefixMatcher(), keys)) {
       for (T element : StubIndex.getInstance().get(key, elementName, project, scope)) {
         if (condition.value(element)) {
-          resultSet.addElement(LookupElementBuilder.create(element)
-                                 .withIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED))
+          resultSet.addElement(LookupElementBuilder.createWithIcon(element)
                                  .withTailText(" " + ((NavigationItem)element).getPresentation().getLocationString(), true)
                                  .withInsertHandler(insertHandler));
         }
@@ -74,9 +93,9 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static final InsertHandler<LookupElement> CLASS_INSERT_HANDLER = new InsertHandler<LookupElement>() {
+  private static final InsertHandler<LookupElement> IMPORTING_INSERT_HANDLER = new InsertHandler<LookupElement>() {
     public void handleInsert(final InsertionContext context, final LookupElement item) {
-      addImportForLookupElement(context, item, context.getTailOffset() - 1);
+        addImportForLookupElement(context, item, context.getTailOffset() - 1);
     }
   };
 

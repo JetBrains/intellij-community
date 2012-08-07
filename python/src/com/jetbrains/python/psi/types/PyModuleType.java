@@ -273,7 +273,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return result.toArray();
   }
 
-  private void addImportedSubmodules(PyExpression location, Set<String> names_already, List<Object> result) {
+  private void addImportedSubmodules(PyExpression location, Set<String> exiatingNames, List<Object> result) {
     PsiFile file = location.getContainingFile();
     if (file instanceof PyFile) {
       PyFile pyFile = (PyFile)file;
@@ -286,10 +286,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
           }
           LookupElement element = null;
           if (target instanceof PsiFileSystemItem) {
-            element = buildFileLookupElement(location, names_already, (PsiFileSystemItem) target);
+            element = buildFileLookupElement((PsiFileSystemItem) target, exiatingNames);
           }
           else if (target instanceof PsiNamedElement) {
-            element = LookupElementBuilder.create((PsiNamedElement)target).withIcon(target.getIcon(0));
+            element = LookupElementBuilder.createWithIcon((PsiNamedElement)target);
           }
           if (element != null) {
             result.add(element);
@@ -304,26 +304,23 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                          Set<String> names_already) {
     List<LookupElement> result = new ArrayList<LookupElement>();
     for (PsiFileSystemItem item : getSubmodulesList(directory)) {
-      LookupElement lookupElement = buildFileLookupElement(location, names_already, item);
-      if (lookupElement != null) {
-        result.add(lookupElement);
+      if (item != location.getContainingFile().getOriginalFile()) {
+        LookupElement lookupElement = buildFileLookupElement(item, names_already);
+        if (lookupElement != null) {
+          result.add(lookupElement);
+        }
       }
     }
     return result;
   }
 
   @Nullable
-  private static LookupElement buildFileLookupElement(PsiElement location,
-                                                      Set<String> names_already,
-                                                      PsiFileSystemItem item) {
-    if (item == location.getContainingFile().getOriginalFile()) return null;
-    String s = item.getName();
-    int pos = s.lastIndexOf('.'); // it may not contain a dot, except in extension; cut it off.
-    if (pos > 0) s = s.substring(0, pos);
+  public static LookupElementBuilder buildFileLookupElement(PsiFileSystemItem item, @Nullable Set<String> existingNames) {
+    String s = FileUtil.getNameWithoutExtension(item.getName());
     if (!PyNames.isIdentifier(s)) return null;
-    if (names_already != null) {
-      if (names_already.contains(s)) return null;
-      else names_already.add(s);
+    if (existingNames != null) {
+      if (existingNames.contains(s)) return null;
+      else existingNames.add(s);
     }
     return LookupElementBuilder.create(item, s)
       .withTypeText(getPresentablePath((PsiDirectory)item.getParent()))

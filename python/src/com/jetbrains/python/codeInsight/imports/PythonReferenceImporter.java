@@ -157,7 +157,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
         if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
           PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
           if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile() &&
-              (ImportFromExistingAction.isRoot(project, srcfile) || PyNames.isIdentifier(FileUtil.getNameWithoutExtension(srcfile.getName()))) &&
+              (ImportFromExistingAction.isRoot(srcfile) || PyNames.isIdentifier(FileUtil.getNameWithoutExtension(srcfile.getName()))) &&
                !isShadowedModule(srcfile)) {
             PyQualifiedName import_path = ResolveImportUtil.findCanonicalImportPath(srcfile, node);
             if (import_path != null && !seen_file_names.contains(import_path.toString())) {
@@ -216,11 +216,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
     List<PsiElement> result = new ArrayList<PsiElement>();
     PsiFile[] files = FilenameIndex.getFilesByName(project, reftext + ".py", scope);
     for (PsiFile file : files) {
-      PsiDirectory parent = file.getParent();
-      if (parent != null && file != targetFile &&
-          (parent.findFile(PyNames.INIT_DOT_PY) != null ||
-           ImportFromExistingAction.isRoot(project, parent) ||
-           parent == targetFile.getParent())) {
+      if (isImportableModule(targetFile, file)) {
         result.add(file);
       }
     }
@@ -233,6 +229,14 @@ public class PythonReferenceImporter implements ReferenceImporter {
       }
     }
     return result;
+  }
+
+  public static boolean isImportableModule(PsiFile targetFile, PsiFileSystemItem file) {
+    PsiDirectory parent = (PsiDirectory)file.getParent();
+    return parent != null && file != targetFile &&
+           (parent.findFile(PyNames.INIT_DOT_PY) != null ||
+            ImportFromExistingAction.isRoot(parent) ||
+            parent == targetFile.getParent());
   }
 
   private static boolean isIndexableTopLevel(PsiElement symbol) {
