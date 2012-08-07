@@ -180,6 +180,10 @@ public class JpsProjectLoader extends JpsLoaderBase {
       public JpsDummyElement loadProperties(@Nullable Element moduleRootElement) {
         return JpsElementFactory.getInstance().createDummyElement();
       }
+
+      @Override
+      public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element moduleRootElement) {
+      }
     };
   }
 }

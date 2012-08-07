@@ -61,8 +61,10 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
     for (JpsModule module : model.getProject().getModules()) {
       JpsElement propertiesElement = module.getProperties();
       if (propertiesElement instanceof JpsSimpleElement) {
-        JpsPluginModuleProperties properties = ((JpsSimpleElement<JpsPluginModuleProperties>)propertiesElement).getProperties();
-        artifacts.add(createArtifact(module, properties));
+        Object properties = ((JpsSimpleElement)propertiesElement).getProperties();
+        if (properties instanceof JpsPluginModuleProperties) {
+          artifacts.add(createArtifact(module, (JpsPluginModuleProperties)properties));
+        }
       }
     }
     return artifacts;
