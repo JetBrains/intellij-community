@@ -20,7 +20,7 @@ public abstract class JpsElementFactory {
 
   public abstract JpsModel createModel();
 
-  public abstract <P extends JpsElementProperties> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties);
+  public abstract <P extends JpsElement> JpsModule createModule(@NotNull String name, @NotNull JpsModuleType<P> type, @NotNull P properties);
 
   public abstract <P extends JpsElementProperties> JpsTypedLibrary<P> createLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties);
 
@@ -39,4 +39,10 @@ public abstract class JpsElementFactory {
 
   @NotNull
   public abstract JpsElementReference<JpsGlobal> createGlobalReference();
+
+  @NotNull
+  public abstract JpsDummyElement createDummyElement();
+
+  @NotNull
+  public abstract <P> JpsSimpleElement<P> createSimpleElement(@NotNull P properties);
 }

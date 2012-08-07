@@ -26,8 +26,9 @@ import org.jetbrains.jps.devkit.model.JpsIdeaSdkProperties;
 import org.jetbrains.jps.devkit.model.JpsIdeaSdkType;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties;
 import org.jetbrains.jps.incremental.artifacts.JpsSyntheticArtifactProvider;
-import org.jetbrains.jps.model.JpsElementProperties;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
@@ -58,9 +59,10 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
   public List<JpsArtifact> createArtifacts(@NotNull JpsModel model) {
     List<JpsArtifact> artifacts = new ArrayList<JpsArtifact>();
     for (JpsModule module : model.getProject().getModules()) {
-      JpsElementProperties properties = module.getProperties();
-      if (properties instanceof JpsPluginModuleProperties) {
-        artifacts.add(createArtifact(module, (JpsPluginModuleProperties)properties));
+      JpsElement propertiesElement = module.getProperties();
+      if (propertiesElement instanceof JpsSimpleElement) {
+        JpsPluginModuleProperties properties = ((JpsSimpleElement<JpsPluginModuleProperties>)propertiesElement).getProperties();
+        artifacts.add(createArtifact(module, properties));
       }
     }
     return artifacts;

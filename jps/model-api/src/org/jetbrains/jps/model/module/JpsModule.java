@@ -68,5 +68,5 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   JpsModuleType<?> getModuleType();
 
   @NotNull
-  JpsElementProperties getProperties();
+  JpsElement getProperties();
 }

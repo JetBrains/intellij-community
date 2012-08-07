@@ -255,9 +255,11 @@ public class MavenModuleImporter {
         annotationProcessorDirectory = "target/generated-sources/annotations";
       }
 
+      Map<String, String> options = myMavenProject.getAnnotationProcessorOptions();
+
       List<String> processors = myMavenProject.getDeclaredAnnotationProcessors();
 
-      if (processors == null && "target/generated-sources/annotations".equals(annotationProcessorDirectory)) {
+      if (processors == null && options.isEmpty() && "target/generated-sources/annotations".equals(annotationProcessorDirectory)) {
         if (moduleProfile != null) {
           compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
         }
@@ -284,17 +286,21 @@ public class MavenModuleImporter {
         if (moduleProfile == null) {
           moduleProfile = new ProcessorConfigProfile(moduleProfileName);
           moduleProfile.setEnabled(true);
+          moduleProfile.setObtainProcessorsFromClasspath(true);
           moduleProfile.addModuleName(myModule.getName());
           compilerConfiguration.addModuleProcessorProfile(moduleProfile);
         }
 
         moduleProfile.setGeneratedSourcesDirectoryName(annotationProcessorDirectory);
 
-        if (processors == null) {
-          moduleProfile.setObtainProcessorsFromClasspath(true);
+        moduleProfile.clearProcessorOptions();
+        for (Map.Entry<String, String> entry : options.entrySet()) {
+          moduleProfile.setOption(entry.getKey(), entry.getValue());
         }
-        else {
-          moduleProfile.setObtainProcessorsFromClasspath(false);
+
+        moduleProfile.clearProcessors();
+
+        if (processors != null) {
           for (String processor : processors) {
             moduleProfile.addProcessor(processor);
           }

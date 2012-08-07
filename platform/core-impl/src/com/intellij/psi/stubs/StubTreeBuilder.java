@@ -50,9 +50,9 @@ public class StubTreeBuilder {
       if (builder != null) {
         data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
       }
-      else {
-        final LanguageFileType filetype = (LanguageFileType)fileType;
-        Language l = filetype.getLanguage();
+      else if (!fileType.isBinary()) {
+        final LanguageFileType languageFileType = (LanguageFileType)fileType;
+        Language l = languageFileType.getLanguage();
         final IFileElementType type = LanguageParserDefinitions.INSTANCE.forLanguage(l).getFileNodeType();
 
         PsiFile psi = inputData.getPsiFile();
@@ -63,11 +63,13 @@ public class StubTreeBuilder {
           if (type instanceof IStubFileElementType) {
             data = ((IStubFileElementType)type).getBuilder().buildStubTree(psi);
           }
-          else if (filetype instanceof SubstitutedFileType) {
-            SubstitutedFileType substituted = (SubstitutedFileType) filetype;
+          else if (languageFileType instanceof SubstitutedFileType) {
+            SubstitutedFileType substituted = (SubstitutedFileType) languageFileType;
             LanguageFileType original = (LanguageFileType)substituted.getOriginalFileType();
             final IFileElementType originalType = LanguageParserDefinitions.INSTANCE.forLanguage(original.getLanguage()).getFileNodeType();
-            data = ((IStubFileElementType)originalType).getBuilder().buildStubTree(psi);
+            if (originalType instanceof IStubFileElementType) {
+              data = ((IStubFileElementType)originalType).getBuilder().buildStubTree(psi);
+            }
           }
         }
         finally {

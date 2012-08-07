@@ -15,16 +15,13 @@
  */
 package org.jetbrains.jps.devkit.model;
 
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.module.JpsModuleType;
 
 /**
  * @author nik
  */
-public class JpsPluginModuleType extends JpsModuleType<JpsPluginModuleProperties> {
+public class JpsPluginModuleType extends JpsModuleType<JpsSimpleElement<JpsPluginModuleProperties>> {
   public static final JpsPluginModuleType INSTANCE = new JpsPluginModuleType();
 
-  @Override
-  public JpsPluginModuleProperties createCopy(JpsPluginModuleProperties properties) {
-    return new JpsPluginModuleProperties(properties);
-  }
 }

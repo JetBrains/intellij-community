@@ -61,10 +61,6 @@ public class JpsTypedDataImpl<T extends JpsElementType<?>> extends JpsElementBas
     setProperties(data.getProperties());
   }
 
-  public static <T extends JpsElementType<?> & JpsElementTypeWithDefaultProperties<?>> JpsTypedDataImpl<T> createTypedData(T type) {
-    return createTypedData(type, type.createDefaultProperties());
-  }
-
   public static <T extends JpsElementType<?>> JpsTypedDataImpl<T> createTypedData(T type, final JpsElementProperties properties) {
     return new JpsTypedDataImpl<T>(type, properties);
   }

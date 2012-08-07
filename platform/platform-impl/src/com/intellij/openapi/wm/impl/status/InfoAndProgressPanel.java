@@ -357,20 +357,25 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
   }
 
   public void setRefreshVisible(final boolean visible) {
-    myRefreshAlarm.cancelAllRequests();
-    myRefreshAlarm.addRequest(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        if (visible) {
-          myRefreshIcon.resume();
-        }
-        else {
-          myRefreshIcon.suspend();
-        }
-        myRefreshIcon.revalidate();
-        myRefreshIcon.repaint();
+        myRefreshAlarm.cancelAllRequests();
+        myRefreshAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            if (visible) {
+              myRefreshIcon.resume();
+            }
+            else {
+              myRefreshIcon.suspend();
+            }
+            myRefreshIcon.revalidate();
+            myRefreshIcon.repaint();
+          }
+        }, visible ? 100 : 300);
       }
-    }, visible ? 100 : 300);
+    });
   }
 
   public void setRefreshToolTipText(final String tooltip) {

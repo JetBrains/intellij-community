@@ -29,10 +29,6 @@ import java.io.IOException;
 import java.util.Arrays;
 
 public class ResourceFilteringTest extends MavenImportingTestCase {
-  @Override
-  protected boolean runInDispatchThread() {
-    return false;
-  }
 
   @Override
   protected boolean runInWriteAction() {

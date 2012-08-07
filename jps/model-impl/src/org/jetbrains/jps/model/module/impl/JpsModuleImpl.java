@@ -14,17 +14,17 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl> implements JpsModule {
-  private static final JpsTypedDataRole<JpsModuleType<?>> TYPED_DATA_ROLE = new JpsTypedDataRole<JpsModuleType<?>>();
+public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsModuleImpl<P>> implements JpsModule {
   private static final JpsUrlListRole CONTENT_ROOTS_ROLE = new JpsUrlListRole("content roots");
   private static final JpsUrlListRole EXCLUDED_ROOTS_ROLE = new JpsUrlListRole("excluded roots");
-  public static final JpsElementChildRole<JpsDependenciesListImpl>
-    DEPENDENCIES_LIST_CHILD_ROLE = JpsElementChildRoleBase.create("dependencies");
+  public static final JpsElementChildRole<JpsDependenciesListImpl> DEPENDENCIES_LIST_CHILD_ROLE = JpsElementChildRoleBase.create("dependencies");
+  private final JpsModuleType<P> myModuleType;
   private final JpsLibraryCollection myLibraryCollection;
 
-  public <P extends JpsElementProperties> JpsModuleImpl(JpsModuleType<P> type, @NotNull String name, @NotNull P properties) {
+  public JpsModuleImpl(JpsModuleType<P> type, @NotNull String name, @NotNull P properties) {
     super(name);
-    myContainer.setChild(TYPED_DATA_ROLE, new JpsTypedDataImpl<JpsModuleType<?>>(type, properties));
+    myModuleType = type;
+    myContainer.setChild(myModuleType.getPropertiesRole(), properties);
     myContainer.setChild(CONTENT_ROOTS_ROLE);
     myContainer.setChild(EXCLUDED_ROOTS_ROLE);
     myContainer.setChild(JpsFacetRole.COLLECTION_ROLE);
@@ -34,21 +34,22 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl> i
     myContainer.setChild(JpsSdkReferencesTableImpl.ROLE);
   }
 
-  private JpsModuleImpl(JpsModuleImpl original) {
+  private JpsModuleImpl(JpsModuleImpl<P> original) {
     super(original);
+    myModuleType = original.myModuleType;
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.getChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 
   @NotNull
   @Override
-  public JpsModuleImpl createCopy() {
-    return new JpsModuleImpl(this);
+  public JpsModuleImpl<P> createCopy() {
+    return new JpsModuleImpl<P>(this);
   }
 
   @Override
   @NotNull
-  public JpsElementProperties getProperties() {
-    return myContainer.getChild(TYPED_DATA_ROLE).getProperties();
+  public P getProperties() {
+    return myContainer.getChild(myModuleType.getPropertiesRole());
   }
 
   @NotNull
@@ -178,6 +179,6 @@ public class JpsModuleImpl extends JpsNamedCompositeElementBase<JpsModuleImpl> i
 
   @Override
   public JpsModuleType<?> getModuleType() {
-    return myContainer.getChild(TYPED_DATA_ROLE).getType();
+    return myModuleType;
   }
 }

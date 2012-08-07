@@ -30,6 +30,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -169,7 +170,9 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     inner.setLayout(new BoxLayout(inner, BoxLayout.X_AXIS));
     inner.setBorder(
       BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.LIGHT_GRAY, 1), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-    inner.setBackground(Color.WHITE);
+    if (!UIUtil.isUnderDarcula()) {
+      inner.setBackground(Color.WHITE);
+    }
     result.add(inner, BorderLayout.CENTER);
 
     final ButtonGroup group = new ButtonGroup();
@@ -243,7 +246,8 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
           doPerformAction(e);
         }
       });
-      setBackground(Color.WHITE);
+
+      setBackground(UIUtil.isUnderDarcula() ? UIUtil.getControlColor() : Color.WHITE);
       setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
     }
 
@@ -262,7 +266,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     @Override
     public Color getForeground() {
       if (getModel().isSelected()) {
-        return Color.BLACK;
+        return UIUtil.isUnderDarcula() ? Color.WHITE : Color.BLACK;
       } else if (getModel().isRollover()) {
         return Color.GRAY;
       } else {

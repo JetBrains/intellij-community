@@ -18,8 +18,10 @@ package com.intellij.psi.impl.cache;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiNameHelper;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
@@ -274,5 +276,12 @@ public class TypeInfo {
 
   public void addAnnotation(PsiAnnotationStub annotation) {
     myAnnotationStubs.add(annotation);
+  }
+
+  @NotNull
+  public String getShortTypeText() {
+    if (text == null) return "";
+    String name = PsiNameHelper.getShortClassName(text.getString());
+    return arrayCount > 0 ? name + StringUtil.repeat("[]", arrayCount) : name;
   }
 }

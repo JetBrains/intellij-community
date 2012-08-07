@@ -23,14 +23,14 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class IdeaDarkLookAndFeelInfo extends UIManager.LookAndFeelInfo {
+public class DarculaLookAndFeelInfo extends UIManager.LookAndFeelInfo {
     @NonNls public static final String CLASS_NAME = "idea.dark.laf.classname";
-    public IdeaDarkLookAndFeelInfo(){
+    public DarculaLookAndFeelInfo(){
       super(IdeBundle.message("idea.dark.look.and.feel"), CLASS_NAME);
     }
 
     public boolean equals(Object obj){
-      return (obj instanceof IdeaDarkLookAndFeelInfo);
+      return (obj instanceof DarculaLookAndFeelInfo);
     }
 
     public int hashCode(){

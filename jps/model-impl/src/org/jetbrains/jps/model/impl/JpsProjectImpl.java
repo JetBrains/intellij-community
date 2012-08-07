@@ -44,10 +44,10 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
   @NotNull
   @Override
   public
-  <P extends JpsElementProperties, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
+  <P extends JpsElement, ModuleType extends JpsModuleType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsModule addModule(@NotNull final String name, @NotNull ModuleType moduleType) {
     final JpsElementCollectionImpl<JpsModule> collection = myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
-    return collection.addChild(new JpsModuleImpl(moduleType, name, moduleType.createDefaultProperties()));
+    return collection.addChild(new JpsModuleImpl<P>(moduleType, name, moduleType.createDefaultProperties()));
   }
 
   @NotNull

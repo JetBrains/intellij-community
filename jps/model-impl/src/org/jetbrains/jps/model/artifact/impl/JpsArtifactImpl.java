@@ -21,6 +21,8 @@ public class JpsArtifactImpl extends JpsNamedCompositeElementBase<JpsArtifactImp
     ROOT_ELEMENT_CHILD_ROLE = JpsElementChildRoleBase.create("root element");
   private static final JpsTypedDataRole<JpsArtifactType> TYPED_DATA_ROLE = new JpsTypedDataRole<JpsArtifactType>();
   private String myOutputPath;
+  private boolean myBuildOnMake;
+
 
   public JpsArtifactImpl(@NotNull String name, @NotNull JpsCompositePackagingElement rootElement, @NotNull JpsArtifactType type) {
     super(name);
@@ -71,5 +73,18 @@ public class JpsArtifactImpl extends JpsNamedCompositeElementBase<JpsArtifactImp
   @Override
   public void setRootElement(@NotNull JpsCompositePackagingElement rootElement) {
     myContainer.setChild(ROOT_ELEMENT_CHILD_ROLE, rootElement);
+  }
+
+  @Override
+  public boolean isBuildOnMake() {
+    return myBuildOnMake;
+  }
+
+  @Override
+  public void setBuildOnMake(boolean buildOnMake) {
+    if (myBuildOnMake != buildOnMake) {
+      myBuildOnMake = buildOnMake;
+      fireElementChanged();
+    }
   }
 }

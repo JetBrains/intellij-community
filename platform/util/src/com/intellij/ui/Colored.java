@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,4 +36,10 @@ public @interface Colored {
    */
   @RegExp(prefix = "[0-9a-f]{6}")
   String color();
+
+  /**
+   * @return color as hex-string
+   */
+  @RegExp(prefix = "[0-9a-f]{6}")
+  String darkVariant();
 }

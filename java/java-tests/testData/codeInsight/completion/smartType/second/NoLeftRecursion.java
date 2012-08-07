@@ -2,7 +2,7 @@ public class Test {
 
   static MyEnum getAvailabilityStatusCode() {
 
-    return get<caret>
+    return getAS<caret>
   }
 
 

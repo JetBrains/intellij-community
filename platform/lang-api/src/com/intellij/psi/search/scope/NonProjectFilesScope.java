@@ -25,16 +25,13 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.Colored;
 import com.intellij.util.ArrayUtil;
-import org.intellij.lang.annotations.RegExp;
 
 /**
  * @author Konstantin Bulenkov
  */
-@Colored(color = NonProjectFilesScope.DEFAULT_COLOR)
+@Colored(color = "ffffe4", darkVariant = "000029")
 public class NonProjectFilesScope extends NamedScope {
   public static final String NAME = "Non-Project Files";
-  @RegExp(prefix = "[0-9a-f]{6}")
-  public static final String DEFAULT_COLOR = "ffffe4";
 
   public NonProjectFilesScope() {
     super(NAME, new AbstractPackageSet("NonProject") {

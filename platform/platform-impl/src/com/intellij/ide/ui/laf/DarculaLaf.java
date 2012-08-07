@@ -36,9 +36,10 @@ import java.util.Properties;
 /**
  * @author Konstantin Bulenkov
  */
-final class DurculaLaf extends BasicLookAndFeel {
+public final class DarculaLaf extends BasicLookAndFeel {
+  public static final String NAME = "Darcula";
   BasicLookAndFeel base;
-  public DurculaLaf() {
+  public DarculaLaf() {
     try {
       if (SystemInfo.isWindows) {
         base = new IdeaLaf();
@@ -160,7 +161,7 @@ final class DurculaLaf extends BasicLookAndFeel {
       final Properties properties = new Properties();
       final String secondPart = postfix == null ? "" : "_" + postfix;
       final String name = "darcula" + secondPart + ".properties";
-      final InputStream stream = DurculaLaf.class.getResourceAsStream(name);
+      final InputStream stream = DarculaLaf.class.getResourceAsStream(name);
       properties.load(stream);
       for (String key : properties.stringPropertyNames()) {
         final String value = properties.getProperty(key);
@@ -203,7 +204,7 @@ final class DurculaLaf extends BasicLookAndFeel {
 
   @Override
   public String getName() {
-    return "Darcula";
+    return NAME;
   }
 
   @Override

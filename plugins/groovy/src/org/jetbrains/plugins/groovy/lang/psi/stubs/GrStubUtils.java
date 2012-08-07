@@ -17,19 +17,23 @@
 package org.jetbrains.plugins.groovy.lang.psi.stubs;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
+import com.intellij.psi.PsiNameHelper;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrMultiTypeParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,19 +43,6 @@ import java.util.List;
  * Date: 02.06.2009
  */
 public class GrStubUtils {
-
-
-  private GrStubUtils() {
-  }
-
-  public static String[] getMultiTypes(GrMultiTypeParameter psi) {
-    final GrTypeElement[] typeElements = psi.getTypeElements();
-    final String[] types = new String[typeElements.length];
-    for (int i = 0; i < typeElements.length; i++) {
-      types[i] = typeElements[i].getText();
-    }
-    return types;
-  }
 
   public static void writeStringArray(StubOutputStream dataStream, String[] array) throws IOException {
     dataStream.writeByte(array.length);
@@ -83,8 +74,7 @@ public class GrStubUtils {
   }
 
   @Nullable
-  public static String getTypeText(GrVariable psi) {
-    final GrTypeElement typeElement = psi.getTypeElementGroovy();
+  public static String getTypeText(GrTypeElement typeElement) {
     return typeElement == null ? null : typeElement.getText();
   }
 
@@ -101,5 +91,25 @@ public class GrStubUtils {
       }
     }
     return ArrayUtil.toStringArray(annoNames);
+  }
+
+  public static boolean isGroovyStaticMemberStub(StubElement<?> stub) {
+    StubElement<GrModifierList> type = stub.findChildStubByType(GroovyElementTypes.MODIFIERS);
+    if (type instanceof GrModifierListStub) {
+      return GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.STATIC, ((GrModifierListStub)type).getModifiersFlags());
+    }
+    return true;
+  }
+
+  @NotNull
+  public static String getShortTypeText(@Nullable String text) {
+    if (text == null) {
+      return "";
+    }
+    int i = text.length();
+    while (i - 2 >= 0 && text.charAt(i - 2) == '[' && text.charAt(i - 1) == ']') {
+      i -= 2;
+    }
+    return PsiNameHelper.getShortClassName(text.substring(0, i)) + text.substring(i);
   }
 }

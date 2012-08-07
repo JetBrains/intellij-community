@@ -2,13 +2,12 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.StaticImportMethodFix;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.java.stubs.index.JavaStaticMemberNameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.CollectionFactory;
@@ -17,7 +16,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.util.containers.CollectionFactory.hashSet;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
@@ -45,58 +47,39 @@ public abstract class StaticMemberProcessor {
   }
 
   public void processStaticMethodsGlobally(final PrefixMatcher matcher, Consumer<LookupElement> consumer) {
-    FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
-
     final GlobalSearchScope scope = myPosition.getResolveScope();
-    final PsiShortNamesCache namesCache = PsiShortNamesCache.getInstance(myProject);
-    String[] methodNames = namesCache.getAllMethodNames();
-    for (final String methodName : CompletionUtil.sortMatching(matcher, Arrays.asList(methodNames))) {
-      if (matcher.prefixMatches(methodName)) {
-        Set<PsiClass> classes = new THashSet<PsiClass>();
-        for (final PsiMethod method : namesCache.getMethodsByName(methodName, scope)) {
-          if (isStaticallyImportable(method)) {
-            final PsiClass containingClass = method.getContainingClass();
-            assert containingClass != null : method.getName() + "; " + method + "; " + method.getClass();
+    Collection<String> memberNames = JavaStaticMemberNameIndex.getInstance().getAllKeys(myProject);
+    for (final String memberName : CompletionUtil.sortMatching(matcher, memberNames)) {
+      Set<PsiClass> classes = new THashSet<PsiClass>();
+      for (final PsiMember member : JavaStaticMemberNameIndex.getInstance().getStaticMembers(memberName, myProject, scope)) {
+        if (isStaticallyImportable(member)) {
+          final PsiClass containingClass = member.getContainingClass();
+          assert containingClass != null : member.getName() + "; " + member + "; " + member.getClass();
 
-            if (classes.add(containingClass) && JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
-              final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-              showHint(shouldImport);
-
+          if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
+            final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
+            showHint(shouldImport);
+            if (member instanceof PsiMethod && classes.add(containingClass)) {
               final PsiMethod[] allMethods = containingClass.getAllMethods();
               final List<PsiMethod> overloads = ContainerUtil.findAll(allMethods, new Condition<PsiMethod>() {
                 @Override
                 public boolean value(PsiMethod psiMethod) {
-                  return methodName.equals(psiMethod.getName()) && isStaticallyImportable(psiMethod);
+                  return memberName.equals(psiMethod.getName()) && isStaticallyImportable(psiMethod);
                 }
               });
 
               assert !overloads.isEmpty();
               if (overloads.size() == 1) {
-                assert method == overloads.get(0);
-                consumer.consume(createLookupElement(method, containingClass, shouldImport));
+                assert member == overloads.get(0);
+                consumer.consume(createLookupElement(member, containingClass, shouldImport));
               } else {
                 if (overloads.get(0).getParameterList().getParametersCount() == 0) {
                   overloads.add(0, overloads.remove(1));
                 }
                 consumer.consume(createLookupElement(overloads, containingClass, shouldImport));
               }
-            }
-          }
-        }
-      }
-    }
-    String[] fieldNames = namesCache.getAllFieldNames();
-    for (final String fieldName : CompletionUtil.sortMatching(matcher, Arrays.asList(fieldNames))) {
-      if (matcher.prefixMatches(fieldName)) {
-        for (final PsiField field : namesCache.getFieldsByName(fieldName, scope)) {
-          if (isStaticallyImportable(field)) {
-            final PsiClass containingClass = field.getContainingClass();
-            assert containingClass != null : field.getName() + "; " + field + "; " + field.getClass();
-
-            if (JavaCompletionUtil.isSourceLevelAccessible(myPosition, containingClass, myPackagedContext)) {
-              final boolean shouldImport = myStaticImportedClasses.contains(containingClass);
-              showHint(shouldImport);
-              consumer.consume(createLookupElement(field, containingClass, shouldImport));
+            } else if (member instanceof PsiField) {
+              consumer.consume(createLookupElement(member, containingClass, shouldImport));
             }
           }
         }

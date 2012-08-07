@@ -273,7 +273,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*Git", "BlaGitBla");
     assertFalse(firstLetterMatcher("*Git").matches("BlagitBla"));
     assertMatches("*git", "BlagitBla");
-    assertDoesntMatch("*Git*", "AtpGenerationItem");
+    assertMatches("*Git*", "AtpGenerationItem");
     assertMatches("Collec*Util*", "CollectionUtils");
     assertMatches("Collec*Util*", "CollectionUtilsTest");
     assertTrue(caseInsensitiveMatcher("*us").matches("usage"));
@@ -283,6 +283,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches(" File. sepa", "File._separator");
     assertMatches(" File. _sepa", "File._separator");
     assertMatches(" _fo", "_foo");
+    assertMatches("*BComp", "BaseComponent");
   }
 
   public void testMiddleMatchingFirstLetterSensitive() {
@@ -294,6 +295,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertFalse(firstLetterMatcher(" _bl").matches("_top"));
     assertFalse(firstLetterMatcher("*Ch").matches("char"));
     assertTrue(firstLetterMatcher("*codes").matches("CFLocaleCopyISOCountryCodes"));
+    assertTrue(firstLetterMatcher("*Bcomp").matches("BaseComponent"));
   }
 
   private static Matcher firstLetterMatcher(String pattern) {

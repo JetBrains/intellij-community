@@ -237,7 +237,7 @@ libraryLicense(name: "protobuf", version: "2.3.0", license: "New BSD", url: "htt
 libraryLicense(name: "Netty", libraryName: "Netty", version: "3.3.1", license: "Apache 2.0", url: "http://netty.io", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "Kryo", libraryName: "Kryo", version: "1.04", license: "New BSD License", url: "http://code.google.com/p/kryo/", licenseUrl: "http://www.opensource.org/licenses/bsd-license.php")
 libraryLicense(name: "Snappy-Java", libraryName: "Snappy-Java", version: "1.0.4.1", license: "Apache 2.0", url: "http://code.google.com/p/snappy-java/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
-libraryLicense(name: "cucumber-jvm", libraryName: "Cucumber-JVM", version: "1.0.11", license: "MIT License", url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html")
+libraryLicense(name: "Cucumber-JVM", libraryName: "cucumber-jvm", version: "1.0.11", license: "MIT License", url: "https://github.com/cucumber/cucumber-jvm/", licenseUrl: "http://www.opensource.org/licenses/mit-license.html")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")

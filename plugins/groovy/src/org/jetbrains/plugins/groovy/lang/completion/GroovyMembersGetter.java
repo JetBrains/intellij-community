@@ -18,7 +18,10 @@ package org.jetbrains.plugins.groovy.lang.completion;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -31,23 +34,19 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 */
 class GroovyMembersGetter extends MembersGetter {
   private final PsiClassType myExpectedType;
-  private final GroovyPsiElement myContext;
-  private final CompletionParameters myParameters;
 
-  GroovyMembersGetter(PsiClassType expectedType, PsiElement context, CompletionParameters parameters) {
-    myParameters = parameters;
+  GroovyMembersGetter(PsiClassType expectedType, CompletionParameters parameters) {
+    super(GroovyCompletionContributor.completeStaticMembers(parameters), parameters.getPosition());
     myExpectedType = JavaCompletionUtil.originalize(expectedType);
-    myContext = (GroovyPsiElement)context;
   }
 
   public void processMembers(boolean searchInheritors, final Consumer<LookupElement> results) {
-    processMembers(myContext, results, myExpectedType.resolve(), PsiTreeUtil.getParentOfType(myContext, GrAnnotation.class) != null, searchInheritors,
-                   GroovyCompletionContributor.completeStaticMembers(myParameters));
+    processMembers(results, myExpectedType.resolve(), PsiTreeUtil.getParentOfType(myPlace, GrAnnotation.class) == null, searchInheritors);
   }
 
   @Override
   protected LookupElement createFieldElement(PsiField field) {
-    if (!TypesUtil.isAssignable(myExpectedType, field.getType(), myContext)) {
+    if (!isSuitableType(field.getType())) {
       return null;
     }
 
@@ -57,10 +56,14 @@ class GroovyMembersGetter extends MembersGetter {
   @Override
   protected LookupElement createMethodElement(PsiMethod method) {
     PsiType type = method.getReturnType();
-    if (type == null || !TypesUtil.isAssignable(myExpectedType, type, myContext)) {
+    if (!isSuitableType(type)) {
       return null;
     }
 
     return GroovyCompletionContributor.createGlobalMemberElement(method, method.getContainingClass(), false);
+  }
+
+  private boolean isSuitableType(PsiType type) {
+    return type != null && TypesUtil.isAssignable(myExpectedType, type, (GroovyPsiElement)myPlace.getParent());
   }
 }

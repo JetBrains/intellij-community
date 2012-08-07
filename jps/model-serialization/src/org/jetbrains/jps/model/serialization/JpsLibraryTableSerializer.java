@@ -5,11 +5,10 @@ import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.DummyJpsElementProperties;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsElementProperties;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.module.JpsModuleReference;
 
 import java.util.*;
 
@@ -40,6 +39,9 @@ public class JpsLibraryTableSerializer {
       public void saveProperties(DummyJpsElementProperties properties, Element element) {
       }
     };
+  private static final String MODULE_LEVEL = "module";
+  private static final String PROJECT_LEVEL = "project";
+  private static final String APPLICATION_LEVEL = "application";
 
   public static void loadLibraries(Element libraryTableElement, JpsLibraryCollection result) {
     for (Element libraryElement : JDOMUtil.getChildren(libraryTableElement, LIBRARY_TAG)) {
@@ -206,5 +208,42 @@ public class JpsLibraryTableSerializer {
       }
     }
     throw new IllegalArgumentException("unknown type library:" + type);
+  }
+
+  public static JpsElementReference<? extends JpsCompositeElement> createLibraryTableReference(String level) {
+    JpsElementFactory elementFactory = JpsElementFactory.getInstance();
+    if (level.equals(PROJECT_LEVEL)) {
+      return elementFactory.createProjectReference();
+    }
+    if (level.equals(APPLICATION_LEVEL)) {
+      return elementFactory.createGlobalReference();
+    }
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      final JpsElementReference<? extends JpsCompositeElement> reference = extension.createLibraryTableReference(level);
+      if (reference != null) {
+        return reference;
+      }
+    }
+    throw new UnsupportedOperationException();
+  }
+
+  public static String getLevelId(JpsElementReference<? extends JpsCompositeElement> reference) {
+    if (reference instanceof JpsModuleReference) {
+      return MODULE_LEVEL;
+    }
+    JpsCompositeElement element = reference.resolve();
+    if (element instanceof JpsProject) {
+      return PROJECT_LEVEL;
+    }
+    else if (element instanceof JpsGlobal) {
+      return APPLICATION_LEVEL;
+    }
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      String levelId = extension.getLibraryTableLevelId(reference);
+      if (levelId != null) {
+        return levelId;
+      }
+    }
+    return null;
   }
 }

@@ -24,7 +24,11 @@ public interface JpsArtifact extends JpsNamedElement, JpsReferenceableElement<Jp
 
   void setRootElement(@NotNull JpsCompositePackagingElement rootElement);
 
+  boolean isBuildOnMake();
+
   @NotNull
   @Override
   JpsArtifactReference createReference();
+
+  void setBuildOnMake(boolean buildOnMake);
 }

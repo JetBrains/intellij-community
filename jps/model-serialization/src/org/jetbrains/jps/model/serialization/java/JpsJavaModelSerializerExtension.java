@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.serialization.JpsLibraryRootTypeSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
-import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementLoader;
+import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 
 import java.util.Arrays;
 import java.util.List;
@@ -119,8 +119,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   }
 
   @Override
-  public List<? extends JpsPackagingElementLoader<?>> getPackagingElementLoaders() {
-    return Arrays.asList(new JpsModuleOutputPackagingElementLoader(), new JpsTestModuleOutputPackagingElementLoader());
+  public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
+    return Arrays.asList(new JpsModuleOutputPackagingElementSerializer(), new JpsTestModuleOutputPackagingElementSerializer());
   }
 
   private static void loadExplodedDirectoryExtension(JpsModule module, Element rootModelComponent) {
@@ -212,9 +212,10 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     return JpsJavaExtensionService.getInstance();
   }
 
-  private static class JpsModuleOutputPackagingElementLoader extends JpsPackagingElementLoader<JpsProductionModuleOutputPackagingElement> {
-    private JpsModuleOutputPackagingElementLoader() {
-      super("module-output");
+  private static class JpsModuleOutputPackagingElementSerializer
+    extends JpsPackagingElementSerializer<JpsProductionModuleOutputPackagingElement> {
+    private JpsModuleOutputPackagingElementSerializer() {
+      super("module-output", JpsProductionModuleOutputPackagingElement.class);
     }
 
     @Override
@@ -222,17 +223,27 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       JpsModuleReference reference = JpsElementFactory.getInstance().createModuleReference(element.getAttributeValue("name"));
       return getService().createProductionModuleOutput(reference);
     }
+
+    @Override
+    public void save(JpsProductionModuleOutputPackagingElement element, Element tag) {
+      tag.setAttribute("name", element.getModuleReference().getModuleName());
+    }
   }
 
-  private static class JpsTestModuleOutputPackagingElementLoader extends JpsPackagingElementLoader<JpsTestModuleOutputPackagingElement> {
-    private JpsTestModuleOutputPackagingElementLoader() {
-      super("module-test-output");
+  private static class JpsTestModuleOutputPackagingElementSerializer extends JpsPackagingElementSerializer<JpsTestModuleOutputPackagingElement> {
+    private JpsTestModuleOutputPackagingElementSerializer() {
+      super("module-test-output", JpsTestModuleOutputPackagingElement.class);
     }
 
     @Override
     public JpsTestModuleOutputPackagingElement load(Element element) {
       JpsModuleReference reference = JpsElementFactory.getInstance().createModuleReference(element.getAttributeValue("name"));
       return getService().createTestModuleOutput(reference);
+    }
+
+    @Override
+    public void save(JpsTestModuleOutputPackagingElement element, Element tag) {
+      tag.setAttribute("name", element.getModuleReference().getModuleName());
     }
   }
 }

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,9 +52,16 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
     shouldImport |= myOriginalPosition != null && PsiTreeUtil.isAncestor(containingClass, myOriginalPosition, false);
 
     if (member instanceof PsiMethod) {
-      return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new JavaMethodCallElement((PsiMethod)member, shouldImport, false));
+      return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new GlobalMethodCallElement((PsiMethod)member, shouldImport, false));
     }
-    return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new VariableLookupItem((PsiField)member, shouldImport));
+    return AutoCompletionPolicy.NEVER_AUTOCOMPLETE.applyPolicy(new VariableLookupItem((PsiField)member, shouldImport) {
+      @Override
+      public void handleInsert(InsertionContext context) {
+        FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
+
+        super.handleInsert(context);
+      }
+    });
   }
 
   @Override
@@ -62,8 +70,21 @@ public class JavaStaticMemberProcessor extends StaticMemberProcessor {
                                               boolean shouldImport) {
     shouldImport |= myOriginalPosition != null && PsiTreeUtil.isAncestor(containingClass, myOriginalPosition, false);
 
-    final JavaMethodCallElement element = new JavaMethodCallElement(overloads.get(0), shouldImport, true);
+    final JavaMethodCallElement element = new GlobalMethodCallElement(overloads.get(0), shouldImport, true);
     element.putUserData(JavaCompletionUtil.ALL_METHODS_ATTRIBUTE, overloads);
     return element;
+  }
+
+  private static class GlobalMethodCallElement extends JavaMethodCallElement {
+    public GlobalMethodCallElement(PsiMethod member, boolean shouldImport, boolean mergedOverloads) {
+      super(member, shouldImport, mergedOverloads);
+    }
+
+    @Override
+    public void handleInsert(InsertionContext context) {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.GLOBAL_MEMBER_NAME);
+
+      super.handleInsert(context);
+    }
   }
 }

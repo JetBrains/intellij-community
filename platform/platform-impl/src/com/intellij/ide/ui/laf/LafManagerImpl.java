@@ -120,7 +120,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     myListenerList = new EventListenerList();
 
     IdeaLookAndFeelInfo ideaLaf = new IdeaLookAndFeelInfo();
-    IdeaDarkLookAndFeelInfo ideaDarkLaf = new IdeaDarkLookAndFeelInfo();
+    DarculaLookAndFeelInfo darculaLaf = new DarculaLookAndFeelInfo();
     UIManager.LookAndFeelInfo[] installedLafs = UIManager.getInstalledLookAndFeels();
 
     final boolean darculaAvailable = Registry.is("dark.laf.available");
@@ -128,7 +128,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     myLafs = new UIManager.LookAndFeelInfo[(darculaAvailable ? 2 : 1) + installedLafs.length];
     myLafs[0] = ideaLaf;
     if (darculaAvailable) {
-      myLafs[1] = ideaDarkLaf;
+      myLafs[1] = darculaLaf;
     }
     System.arraycopy(installedLafs, 0, myLafs, darculaAvailable ? 2 : 1, installedLafs.length);
     Arrays.sort(myLafs, new Comparator<UIManager.LookAndFeelInfo>() {
@@ -321,8 +321,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         return;
       }
     }
-    else if (IdeaDarkLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
-      DurculaLaf laf = new DurculaLaf();
+    else if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
+      DarculaLaf laf = new DarculaLaf();
       MetalLookAndFeel.setCurrentTheme(new IdeaDarkMetalTheme());
       try {
         UIManager.setLookAndFeel(laf);

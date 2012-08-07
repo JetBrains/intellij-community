@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
@@ -383,7 +384,52 @@ public class MavenProject {
   //private static Element getAnnotationProcessorsConfiguration(@Nullable Element compilerConfig) {
   //  return (compilerConfig == null) ? null : compilerConfig.getChild("annotationProcessors");
   //}
-  
+
+  public Map<String, String> getAnnotationProcessorOptions() {
+    Element compilerConfig = getCompilerConfig();
+
+    if (compilerConfig == null) return Collections.emptyMap();
+
+    Map<String, String> res = null;
+
+    String compilerArgument = compilerConfig.getChildText("compilerArgument");
+    if (!StringUtil.isEmptyOrSpaces(compilerArgument)) {
+      ParametersList parametersList = new ParametersList();
+      parametersList.addParametersString(compilerArgument);
+
+      for (String param : parametersList.getParameters()) {
+        if (param.startsWith("-A")) {
+          int idx = param.indexOf('=', 3);
+          if (idx >= 0) {
+            if (res == null) {
+              res = new LinkedHashMap<String, String>();
+            }
+
+            res.put(param.substring(2, idx), param.substring(idx + 1));
+          }
+        }
+      }
+    }
+
+    Element compilerArguments = compilerConfig.getChild("compilerArguments");
+    if (compilerArguments != null) {
+      for (Element e : (Collection<Element>)compilerArguments.getChildren()){
+        String name = e.getName();
+        if (name.length() > 1 && name.charAt(0) == 'A') {
+          if (res == null) {
+            res = new LinkedHashMap<String, String>();
+          }
+
+          res.put(name.substring(1), e.getTextTrim());
+        }
+      }
+    }
+
+    if (res == null) return Collections.emptyMap();
+
+    return res;
+  }
+
   //private String getCompilerArgument() {
   //  return MavenJDOMUtil.findChildValueByPath(getCompilerConfig(), "compilerArgument");
   //}

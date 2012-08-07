@@ -6,10 +6,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.artifact.JpsArtifactType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementLoader;
+import org.jetbrains.jps.model.serialization.artifact.JpsArtifactTypeSerializer;
+import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsModuleExtensionLoader;
 import org.jetbrains.jps.service.JpsServiceManager;
 
@@ -79,12 +79,11 @@ public abstract class JpsModelSerializerExtension {
     return Collections.emptyList();
   }
 
-  public List<? extends JpsPackagingElementLoader<?>> getPackagingElementLoaders() {
+  public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
     return Collections.emptyList();
   }
 
-  @Nullable
-  public JpsArtifactType getArtifactType(@NotNull String typeId) {
-    return null;
+  public List<JpsArtifactTypeSerializer> getArtifactTypeSerializers() {
+    return Collections.emptyList();
   }
 }

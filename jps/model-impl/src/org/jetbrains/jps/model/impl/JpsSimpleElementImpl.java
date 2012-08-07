@@ -6,14 +6,14 @@ import org.jetbrains.jps.model.*;
 /**
  * @author nik
  */
-public class SimpleJpsElementImpl<P extends JpsElementProperties> extends JpsElementBase<SimpleJpsElementImpl<P>> implements SimpleJpsElement<P> {
+public class JpsSimpleElementImpl<P> extends JpsElementBase<JpsSimpleElementImpl<P>> implements JpsSimpleElement<P> {
   private P myProperties;
 
-  public SimpleJpsElementImpl(P properties) {
+  public JpsSimpleElementImpl(P properties) {
     myProperties = properties;
   }
 
-  public SimpleJpsElementImpl(SimpleJpsElementImpl<P> original) {
+  public JpsSimpleElementImpl(JpsSimpleElementImpl<P> original) {
     myProperties = original.myProperties;
   }
 
@@ -33,12 +33,12 @@ public class SimpleJpsElementImpl<P extends JpsElementProperties> extends JpsEle
 
   @NotNull
   @Override
-  public SimpleJpsElementImpl<P> createCopy() {
-    return new SimpleJpsElementImpl<P>(this);
+  public JpsSimpleElementImpl<P> createCopy() {
+    return new JpsSimpleElementImpl<P>(this);
   }
 
   @Override
-  public void applyChanges(@NotNull SimpleJpsElementImpl<P> modified) {
+  public void applyChanges(@NotNull JpsSimpleElementImpl<P> modified) {
     setProperties(modified.getProperties());
   }
 }

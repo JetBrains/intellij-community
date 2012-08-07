@@ -22,6 +22,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 
@@ -44,7 +45,7 @@ public class GrFieldStub extends StubBase<GrField> implements NamedStub<GrField>
                          final String[] annotations,
                          String[] namedParameters,
                          final IStubElementType elemType,
-                         byte flags, String typeText) {
+                         byte flags, @Nullable String typeText) {
     super(parent, elemType);
     myName = name;
     myAnnotations = annotations;
@@ -79,6 +80,7 @@ public class GrFieldStub extends StubBase<GrField> implements NamedStub<GrField>
     return myFlags;
   }
 
+  @Nullable
   public String getTypeText() {
     return myTypeText;
   }

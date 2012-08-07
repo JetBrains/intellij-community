@@ -23,6 +23,8 @@ import org.jetbrains.jps.devkit.model.JpsIdeaSdkProperties;
 import org.jetbrains.jps.devkit.model.JpsIdeaSdkType;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleType;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.serialization.*;
 import org.jetbrains.jps.model.serialization.JpsModulePropertiesSerializer;
 import org.jetbrains.jps.model.serialization.JpsSdkPropertiesSerializer;
@@ -73,15 +75,16 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
     }
   }
 
-  private static class JpsPluginModulePropertiesSerializer extends JpsModulePropertiesSerializer<JpsPluginModuleProperties> {
+  private static class JpsPluginModulePropertiesSerializer extends JpsModulePropertiesSerializer<JpsSimpleElement<JpsPluginModuleProperties>> {
     private JpsPluginModulePropertiesSerializer() {
       super(JpsPluginModuleType.INSTANCE, "PLUGIN_MODULE");
     }
 
     @Override
-    public JpsPluginModuleProperties loadProperties(@Nullable Element moduleRootElement) {
+    public JpsSimpleElement<JpsPluginModuleProperties> loadProperties(@Nullable Element moduleRootElement) {
       Element component = JpsLoaderBase.findComponent(moduleRootElement, "DevKit.ModuleBuildProperties");
-      return new JpsPluginModuleProperties(component != null ? component.getAttributeValue("url") : null);
+      String pluginXmlUrl = component != null ? component.getAttributeValue("url") : null;
+      return JpsElementFactory.getInstance().createSimpleElement(new JpsPluginModuleProperties(pluginXmlUrl));
     }
   }
 }

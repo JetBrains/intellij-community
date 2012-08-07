@@ -159,6 +159,7 @@ public final class TreeEditableArea implements EditableArea, FeedbackTreeLayer, 
       }
     }
 
+    myTreeBuilder.queueUpdate();
     hookSelection();
     fireSelectionChanged();
   }
