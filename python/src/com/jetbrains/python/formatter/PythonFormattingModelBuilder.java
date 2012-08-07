@@ -69,6 +69,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
       .before(COMMA).spaceIf(commonSettings.SPACE_BEFORE_COMMA)
+      .around(DOT).spaces(0)
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
       .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)

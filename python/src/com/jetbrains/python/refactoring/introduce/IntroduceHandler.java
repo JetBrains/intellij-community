@@ -435,7 +435,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     
     @Override
     public void visitWhiteSpace(PsiWhiteSpace space) {
-      myResult.append(space.getText().replace('\n', ' '));
+      myResult.append(space.getText().replace('\n', ' ').replace("\\", ""));
     }
 
     @Override

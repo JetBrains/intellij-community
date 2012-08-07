@@ -80,6 +80,10 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  public void testBackslash() {  // PY-6908
+    doTest();
+  }
+
   private void doTestCannotPerform() {
     boolean thrownExpectedException = false;
     try {
