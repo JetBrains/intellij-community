@@ -80,6 +80,11 @@ public class ReplacePromptDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
+  protected String getDimensionServiceKey() {
+    return "ReplaceDuplicatesPrompt";
+  }
+
   private class DoAction extends AbstractAction {
     private final int myExitCode;
 
