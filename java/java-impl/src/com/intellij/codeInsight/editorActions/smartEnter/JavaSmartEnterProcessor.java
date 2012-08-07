@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -96,6 +97,8 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
   @Override
   public boolean process(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile psiFile) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.complete.statement");
+
     final Document document = editor.getDocument();
     final String textForRollback = document.getText();
     try {
