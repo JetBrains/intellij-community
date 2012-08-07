@@ -15,21 +15,27 @@
  */
 package org.jetbrains.jps.devkit.model;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * @author nik
  */
 public class JpsPluginModuleProperties {
   private final String myPluginXmlUrl;
+  private final String myManifestFileUrl;
 
-  public JpsPluginModuleProperties(String pluginXmlUrl) {
+  public JpsPluginModuleProperties(@Nullable String pluginXmlUrl, @Nullable String manifestFileUrl) {
     myPluginXmlUrl = pluginXmlUrl;
+    myManifestFileUrl = manifestFileUrl;
   }
 
-  public JpsPluginModuleProperties(JpsPluginModuleProperties properties) {
-    myPluginXmlUrl = properties.getPluginXmlUrl();
-  }
-
+  @Nullable
   public String getPluginXmlUrl() {
     return myPluginXmlUrl;
+  }
+
+  @Nullable
+  public String getManifestFileUrl() {
+    return myManifestFileUrl;
   }
 }

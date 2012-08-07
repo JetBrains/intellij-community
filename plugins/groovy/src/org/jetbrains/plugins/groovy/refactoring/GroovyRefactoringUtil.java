@@ -531,7 +531,6 @@ public abstract class GroovyRefactoringUtil {
     argText.append("[");
     for (PsiElement argument : arguments) {
       argText.append(argument.getText()).append(", ");
-      argument.delete();
     }
     if (arguments.size() > 0) {
       argText.delete(argText.length() - 2, argText.length());
@@ -547,7 +546,7 @@ public abstract class GroovyRefactoringUtil {
     }
     return GroovyPsiElementFactory.getInstance(project).createExpressionFromText(argText.toString());
   }
-  
+
   public static boolean hasSideEffect(@NotNull GroovyPsiElement statement) {
     final Ref<Boolean> hasSideEffect = new Ref<Boolean>(false);
     statement.accept(new GroovyRecursiveElementVisitor() {

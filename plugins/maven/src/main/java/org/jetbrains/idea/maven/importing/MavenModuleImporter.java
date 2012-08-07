@@ -259,7 +259,7 @@ public class MavenModuleImporter {
 
       List<String> processors = myMavenProject.getDeclaredAnnotationProcessors();
 
-      if (processors == null && options.isEmpty() && "target/generated-sources/annotations".equals(annotationProcessorDirectory)) {
+      if (processors == null && options.isEmpty() && "target/generated-sources/annotations".equals(annotationProcessorDirectory.replace('\\', '/'))) {
         if (moduleProfile != null) {
           compilerConfiguration.removeModuleProcessorProfile(moduleProfile);
         }
