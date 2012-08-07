@@ -62,7 +62,9 @@ public class CheckBoxList extends JBList {
             JCheckBox checkbox = (JCheckBox)getModel().getElementAt(index);
             int iconArea;
             try {
-              iconArea = ((BasicRadioButtonUI)checkbox.getUI()).getDefaultIcon().getIconWidth();
+              iconArea = checkbox.getMargin().left +
+                         ((BasicRadioButtonUI)checkbox.getUI()).getDefaultIcon().getIconWidth() +
+                         checkbox.getIconTextGap();
             }
             catch (ClassCastException c) {
               iconArea = DEFAULT_CHECK_BOX_WIDTH;
