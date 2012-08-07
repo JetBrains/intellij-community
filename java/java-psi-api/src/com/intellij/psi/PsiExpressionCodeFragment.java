@@ -15,6 +15,8 @@
  */
 package com.intellij.psi;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Represents a fragment of Java code the contents of which is an expression.
  *
@@ -34,7 +36,7 @@ public interface PsiExpressionCodeFragment extends JavaCodeFragment {
    *
    * @return the expected type of the expression.
    */
-  PsiType getExpectedType();
+  @Nullable PsiType getExpectedType();
 
   /**
    * Sets the expected type of the expression (not used by the expression itself,
