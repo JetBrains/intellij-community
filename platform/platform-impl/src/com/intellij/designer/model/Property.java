@@ -93,6 +93,10 @@ public abstract class Property<T extends PropertiesContainer> {
     return false;
   }
 
+  public boolean isDefaultValueWithDepth(@NotNull T container) throws Exception {
+    return isDefaultValue(container);
+  }
+
   public void setDefaultValue(@NotNull T container) throws Exception {
   }
 

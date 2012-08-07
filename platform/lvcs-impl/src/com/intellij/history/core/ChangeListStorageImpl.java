@@ -28,7 +28,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.storage.AbstractStorage;
 import gnu.trove.TIntHashSet;
@@ -87,7 +86,7 @@ public class ChangeListStorageImpl implements ChangeListStorage {
   }
 
   private static long getVFSTimestamp() {
-    return ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp();
+    return ManagingFS.getInstance().getCreationTimestamp();
   }
 
   private void handleError(Throwable e, @Nullable String message) {
@@ -125,11 +124,10 @@ public class ChangeListStorageImpl implements ChangeListStorage {
 
   public static void notifyUser(String message) {
     final String logFile = PathManager.getLogPath();
-    String createIssuePart = "<br>" +
+    /*String createIssuePart = "<br>" +
                              "<br>" +
                              "Please attach log files from <a href=\"file\">" + logFile + "</a><br>" +
-                             "to the <a href=\"url\">YouTrack issue</a>";
-
+                             "to the <a href=\"url\">YouTrack issue</a>";*/
     Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
                                               "Local History is broken",
                                               message /*+ createIssuePart*/,

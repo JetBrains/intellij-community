@@ -436,7 +436,7 @@ public abstract class PropertyTable extends JBTable {
   private void addProperty(PropertiesContainer<?> component, Property property, List<Property> properties) {
     if (property.isExpert() && !myShowExpertProperties) {
       try {
-        if (property.isDefaultValue(component)) {
+        if (property.isDefaultValueWithDepth(component)) {
           return;
         }
       }

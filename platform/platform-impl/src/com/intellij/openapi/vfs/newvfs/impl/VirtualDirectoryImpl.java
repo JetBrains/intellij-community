@@ -69,7 +69,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   // guarded by this
   private Object myChildren; // Either Map<String, VFile> or VFile[]
 
-  public VirtualDirectoryImpl(@NotNull String name, final VirtualDirectoryImpl parent, @NotNull NewVirtualFileSystem fs, final int id) {
+  public VirtualDirectoryImpl(@NotNull final String name,
+                              @Nullable final VirtualDirectoryImpl parent,
+                              @NotNull final NewVirtualFileSystem fs,
+                              final int id) {
     super(name, parent, id);
     myFS = fs;
   }
@@ -151,7 +154,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
     synchronized (this) {
       // do not extract getId outside the synchronized block since it will cause a concurrency problem.
-      int id = PersistentFS.getId(this, name, delegate);
+      int id = ourPersistence.getId(this, name, delegate);
       if (id > 0) {
         // maybe another doFindChild() sneaked in the middle
         VirtualFileSystemEntry lastTry = map.get(name);
@@ -171,7 +174,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public VirtualFileSystemEntry createChild(@NotNull String name, int id) {
     final VirtualFileSystemEntry child;
     final NewVirtualFileSystem fs = getFileSystem();
-    if (PersistentFS.isDirectory(id)) {
+    if (ourPersistence.isDirectory(id)) {
       child = new VirtualDirectoryImpl(name, this, fs, id);
     }
     else {
@@ -379,8 +382,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return Arrays.asList(getChildren());
     }
 
-    final String[] names = PersistentFS.listPersisted(this);
-    NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
+    final String[] names = ourPersistence.listPersisted(this);
+    final NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
     for (String name : names) {
       findChild(name, false, false, delegate);
     }
@@ -397,7 +400,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return children;
     }
 
-    Pair<String[], int[]> pair = PersistentFS.listAll(this);
+    Pair<String[], int[]> pair = ourPersistence.listAll(this);
     final int[] childrenIds = pair.second;
     if (childrenIds.length == 0) {
       children = EMPTY_ARRAY;
@@ -481,8 +484,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private Map<String, VirtualFileSystemEntry> asMap() {
     Object children = myChildren;
     if (children instanceof Map) {
-      //noinspection unchecked
-      return (Map<String, VirtualFileSystemEntry>)children;
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      final Map<String, VirtualFileSystemEntry> map = (Map<String, VirtualFileSystemEntry>)children;
+      return map;
     }
     return null;
   }
@@ -495,8 +499,9 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       myChildren = map;
     }
     else {
-      //noinspection unchecked
-      map = (Map<String, VirtualFileSystemEntry>)myChildren;
+      @SuppressWarnings({"unchecked", "UnnecessaryLocalVariable"})
+      final Map<String, VirtualFileSystemEntry> aMap = (Map<String, VirtualFileSystemEntry>)myChildren;
+      map = aMap;
     }
 
     return map;
@@ -573,6 +578,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   @TestOnly
   public synchronized void cleanupCachedChildren(@NotNull Set<VirtualFile> survivors) {
+    assert ApplicationManager.getApplication().isUnitTestMode();
     if (survivors.contains(this)) {
       for (VirtualFile file : getCachedChildren()) {
         if (file instanceof VirtualDirectoryImpl) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Bas Leijdekkers
+ * Copyright 2006-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,15 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.OrderedSet;
+import com.intellij.util.ui.CheckBox;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,36 +32,47 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreNegations = false;
 
+  @SuppressWarnings("PublicField")
+  public OrderedSet<String> ignoredTypes = new OrderedSet();
+
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "size.replaceable.by.isempty.display.name");
+    return InspectionGadgetsBundle.message("size.replaceable.by.isempty.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "expression.can.be.replaced.problem.descriptor", infos[0]);
+    return InspectionGadgetsBundle.message("expression.can.be.replaced.problem.descriptor", infos[0]);
   }
 
   @Override
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
+    final JComponent panel = new JPanel(new BorderLayout());
+    final ListTable table =
+      new ListTable(new ListWrappingTableModel(ignoredTypes, InspectionGadgetsBundle.message("ignored.classes.table")));
+    JPanel tablePanel =
+      UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.class.type.to.ignore"));
+    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
       "size.replaceable.by.isempty.negation.ignore.option"), this, "ignoreNegations");
+    panel.add(tablePanel, BorderLayout.CENTER);
+    panel.add(checkBox, BorderLayout.SOUTH);
+    return panel;
   }
 
   @Override
@@ -71,8 +86,7 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "size.replaceable.by.isempty.quickfix");
+      return InspectionGadgetsBundle.message("size.replaceable.by.isempty.quickfix");
     }
 
     @Override
@@ -194,6 +208,11 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       final PsiClass aClass = classType.resolve();
       if (aClass == null) {
         return null;
+      }
+      for (String ignoredType : ignoredTypes) {
+        if (InheritanceUtil.isInheritor(aClass, ignoredType)) {
+          return null;
+        }
       }
       final PsiMethod[] methods = aClass.findMethodsByName("isEmpty", true);
       for (PsiMethod method : methods) {

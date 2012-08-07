@@ -73,7 +73,7 @@ public class MavenDomUtil {
 
     String name = file.getName();
     return name.equals(MavenConstants.POM_XML) ||
-           name.endsWith("." + MavenConstants.POM_EXTENSION) ||
+           name.endsWith(".pom") ||
            name.equals(MavenConstants.SUPER_POM_XML);
   }
 

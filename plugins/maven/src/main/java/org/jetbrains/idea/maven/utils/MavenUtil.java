@@ -445,6 +445,8 @@ public class MavenUtil {
 
     Runnable runnable = new Runnable() {
       public void run() {
+        if (project.isDisposed()) return;
+
         try {
           task.run(indicator);
         }

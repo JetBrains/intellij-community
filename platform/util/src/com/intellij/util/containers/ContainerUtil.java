@@ -37,6 +37,70 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
+  public static <K, V> HashMap<K, V> newHashMap() {
+    return ContainerUtilRt.newHashMap();
+  }
+
+  public static <K, V> HashMap<K, V> newHashMap(Map<K, V> map) {
+    return ContainerUtilRt.newHashMap(map);
+  }
+
+  public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
+    return ContainerUtilRt.newTreeMap();
+  }
+
+  public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
+    return ContainerUtilRt.newLinkedHashMap();
+  }
+
+  public static <T> LinkedList<T> newLinkedList() {
+    return ContainerUtilRt.newLinkedList();
+  }
+
+  public static <T> ArrayList<T> newArrayList() {
+    return ContainerUtilRt.newArrayList();
+  }
+
+  public static <E> ArrayList<E> newArrayList(E... array) {
+    return ContainerUtilRt.newArrayList(array);
+  }
+
+  public static <E> ArrayList<E> newArrayList(Iterable<? extends E> iterable) {
+    return ContainerUtilRt.newArrayList(iterable);
+  }
+
+  public static <T> HashSet<T> newHashSet() {
+    return ContainerUtilRt.newHashSet();
+  }
+
+  public static <T> HashSet<T> newHashSet(T... elements) {
+    return ContainerUtilRt.newHashSet(elements);
+  }
+
+  public static <T> HashSet<T> newHashSet(Iterable<? extends T> iterable) {
+    return ContainerUtilRt.newHashSet(iterable);
+  }
+
+  public static <T> HashSet<T> newHashSet(Iterator<? extends T> iterator) {
+    return ContainerUtilRt.newHashSet(iterator);
+  }
+
+  public static <T> TreeSet<T> newTreeSet() {
+    return ContainerUtilRt.newTreeSet();
+  }
+
+  public static <T> TreeSet<T> newTreeSet(Comparator<? super T> comparator) {
+    return ContainerUtilRt.newTreeSet(comparator);
+  }
+
+  public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
+    return ContainerUtilRt.newArrayListWithExpectedSize(size);
+  }
+
+  public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
+    return ContainerUtilRt.newArrayListWithCapacity(size);
+  }
+
   public static <K, V> ConcurrentMap<K, V> newConcurrentMap() {
     return new ConcurrentHashMap<K, V>();
   }

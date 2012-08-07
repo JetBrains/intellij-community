@@ -33,6 +33,7 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -292,21 +293,36 @@ public class FileStructurePopup implements Disposable {
     }
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
-    myFilteringStructure.rebuild();
-    myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        myTreeHasBuilt.setDone();
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
+        final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+        try {
+          myFilteringStructure.rebuild();
+        }
+        finally {
+          token.finish();
+        }
+
+        myAbstractTreeBuilder.queueUpdate().doWhenDone(new Runnable() {
           @Override
           public void run() {
-            selectPsiElement(myInitialPsiElement);
+            myTreeHasBuilt.setDone();
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                selectPsiElement(myInitialPsiElement);
+              }
+            });
           }
         });
+        installUpdater();
       }
     });
+  }
 
+  private void installUpdater() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, myPopup);
       alarm.addRequest(new Runnable() {
@@ -330,24 +346,26 @@ public class FileStructurePopup implements Disposable {
                     myAbstractTreeBuilder.refilter(null, false, false).doWhenProcessed(new Runnable() {
                       @Override
                       public void run() {
-                        myTree.repaint();
-                        if (isBackspace && handleBackspace(filter)) {
-                          return;
-                        }
-                        if (myFilteringStructure.getRootElement().getChildren().length == 0) {
-                          for (JCheckBox box : myCheckBoxes.values()) {
-                            if (!box.isSelected()) {
-                              myAutoClicked.add(box);
-                              myTriggeredCheckboxes.add(0, Pair.create(filter, box));
-                              box.doClick();
-                              filter = "";
-                              break;
+                        SwingUtilities.invokeLater(new Runnable() {
+                          @Override
+                          public void run() {
+                            myTree.repaint();
+                            if (isBackspace && handleBackspace(filter)) {
+                              return;
+                            }
+                            if (myFilteringStructure.getRootElement().getChildren().length == 0) {
+                              for (JCheckBox box : myCheckBoxes.values()) {
+                                if (!box.isSelected()) {
+                                  myAutoClicked.add(box);
+                                  myTriggeredCheckboxes.add(0, Pair.create(filter, box));
+                                  box.doClick();
+                                  filter = "";
+                                  break;
+                                }
+                              }
                             }
                           }
-                        }
-                        //if (mySpeedSearch.isPopupActive()) {
-                        //  mySpeedSearch.refreshSelection();
-                        //}
+                        });
                       }
                     });
                   }

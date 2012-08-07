@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ public abstract class ManagingFS implements FileSystemInterface, FileSystemPersi
 
   public abstract int getFilesystemModificationCount();
 
+  public abstract long getCreationTimestamp();
+
   public abstract boolean areChildrenLoaded(@NotNull VirtualFile dir);
 
   public abstract boolean wereChildrenAccessed(@NotNull VirtualFile dir);
@@ -64,7 +66,6 @@ public abstract class ManagingFS implements FileSystemInterface, FileSystemPersi
 
   @NotNull
   public abstract VirtualFile[] getRoots(@NotNull NewVirtualFileSystem fs);
-
 
   @NotNull
   public abstract VirtualFile[] getLocalRoots();

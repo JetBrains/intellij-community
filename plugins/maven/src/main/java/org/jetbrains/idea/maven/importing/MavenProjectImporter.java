@@ -86,6 +86,7 @@ public class MavenProjectImporter {
     myModuleModel = modelsProvider.getModuleModel();
   }
 
+  @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
     List<MavenProjectsProcessorTask> postTasks = new ArrayList<MavenProjectsProcessorTask>();
 
@@ -100,6 +101,8 @@ public class MavenProjectImporter {
 
     mapMavenProjectsToModulesAndNames();
 
+    if (myProject.isDisposed()) return null;
+
     boolean projectsHaveChanges = projectsToImportHaveChanges();
     if (projectsHaveChanges) {
       hasChanges = true;
@@ -111,6 +114,8 @@ public class MavenProjectImporter {
       hasChanges = true;
       configModuleGroups();
     }
+
+    if (myProject.isDisposed()) return null;
 
     boolean modulesDeleted = deleteObsoleteModules();
     hasChanges |= modulesDeleted;

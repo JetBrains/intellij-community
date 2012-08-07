@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,22 @@
  */
 package com.intellij.util.containers;
 
-import java.util.Collection;
+import java.util.Map;
 
-public class HashSet<E> extends java.util.HashSet<E>{
-  public HashSet() { }
+@SuppressWarnings("ClassNameSameAsAncestorName")
+public class HashMap<K, V> extends java.util.HashMap<K, V> {
+  public HashMap() { }
 
-  public HashSet(Collection<? extends E> collection) {
-    super(collection);
-  }
-
-  public HashSet(int i, float v) {
+  public HashMap(int i, float v) {
     super(i, v);
   }
 
-  public HashSet(int i) {
+  public HashMap(int i) {
     super(i);
+  }
+
+  public <K1 extends K, V1 extends V> HashMap(Map<K1, V1> map) {
+    super(map);
   }
 
   public void clear() {

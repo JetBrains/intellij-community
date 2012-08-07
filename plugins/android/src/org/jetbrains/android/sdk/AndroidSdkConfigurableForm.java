@@ -49,6 +49,8 @@ class AndroidSdkConfigurableForm {
   private final DefaultComboBoxModel myBuildTargetsModel = new DefaultComboBoxModel();
   private String mySdkLocation;
 
+  private boolean myFreeze = false;
+
   public AndroidSdkConfigurableForm(@NotNull SdkModel sdkModel, @NotNull final SdkModificator sdkModificator) {
     mySdkModel = sdkModel;
     myInternalJdkComboBox.setModel(myJdksModel);
@@ -76,6 +78,9 @@ class AndroidSdkConfigurableForm {
 
     myBuildTargetComboBox.addItemListener(new ItemListener() {
       public void itemStateChanged(final ItemEvent e) {
+        if (myFreeze) {
+          return;
+        }
         final IAndroidTarget target = (IAndroidTarget)e.getItem();
 
         List<OrderRoot> roots = AndroidSdkUtils.getLibraryRootsForTarget(target, mySdkLocation);
@@ -138,18 +143,10 @@ class AndroidSdkConfigurableForm {
 
     mySdkLocation = androidSdk != null ? androidSdk.getHomePath() : null;
     AndroidSdkData androidSdkData = mySdkLocation != null ? AndroidSdkData.parse(mySdkLocation, new EmptySdkLog()) : null;
-    updateBuildTargets(androidSdkData);
 
-    if (buildTarget != null) {
-      for (int i = 0; i < myBuildTargetsModel.getSize(); i++) {
-        IAndroidTarget target = (IAndroidTarget)myBuildTargetsModel.getElementAt(i);
-        if (buildTarget.hashString().equals(target.hashString())) {
-          myBuildTargetComboBox.setSelectedIndex(i);
-          return;
-        }
-      }
-    }
-    myBuildTargetComboBox.setSelectedItem(null);
+    myFreeze = true;
+    updateBuildTargets(androidSdkData, buildTarget);
+    myFreeze = false;
   }
 
   private void updateJdks() {
@@ -161,7 +158,7 @@ class AndroidSdkConfigurableForm {
     }
   }
 
-  private void updateBuildTargets(AndroidSdkData androidSdkData) {
+  private void updateBuildTargets(AndroidSdkData androidSdkData, IAndroidTarget buildTarget) {
     myBuildTargetsModel.removeAllElements();
 
     if (androidSdkData != null) {
@@ -169,6 +166,17 @@ class AndroidSdkConfigurableForm {
         myBuildTargetsModel.addElement(target);
       }
     }
+
+    if (buildTarget != null) {
+      for (int i = 0; i < myBuildTargetsModel.getSize(); i++) {
+        IAndroidTarget target = (IAndroidTarget)myBuildTargetsModel.getElementAt(i);
+        if (buildTarget.hashString().equals(target.hashString())) {
+          myBuildTargetComboBox.setSelectedIndex(i);
+          return;
+        }
+      }
+    }
+    myBuildTargetComboBox.setSelectedItem(null);
   }
 
   public void addJavaSdk(Sdk sdk) {

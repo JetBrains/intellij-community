@@ -84,6 +84,10 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   public void disposeComponent() {
+    for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
+      Disposer.dispose(trinity.first);
+    }
+    myRunningConfigurations.clear();
   }
 
   public RunContentManager getContentManager() {
@@ -316,6 +320,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private void forgetRunContentDescriptor(RunContentDescriptor runContentDescriptor) {
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (trinity.getFirst() == runContentDescriptor) {
+        //runContentDescriptor.dispose();
         myRunningConfigurations.remove(trinity);
         return;
       }

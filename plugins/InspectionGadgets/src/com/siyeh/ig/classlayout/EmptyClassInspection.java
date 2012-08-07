@@ -150,12 +150,8 @@ public class EmptyClassInspection extends BaseInspection {
       if (initializers.length > 0) {
         return;
       }
-      if (ignoreClassWithParameterization) {
-        final PsiReferenceList extendsList = aClass.getExtendsList();
-        final PsiReferenceList implementsList = aClass.getImplementsList();
-        if (isSuperParameterization(extendsList) || isSuperParameterization(implementsList)) {
-          return;
-        }
+      if (ignoreClassWithParameterization && isSuperParametrization(aClass)) {
+        return;
       }
       if (AnnotationUtil.isAnnotated(aClass, ignorableAnnotations)) {
         return;
@@ -166,7 +162,7 @@ public class EmptyClassInspection extends BaseInspection {
       registerClassError(aClass, aClass);
     }
 
-    private boolean isSuperParameterization(PsiReferenceList extendsList) {
+    private boolean hasTypeArguments(PsiReferenceList extendsList) {
       if (extendsList == null) {
         return false;
       }
@@ -178,6 +174,27 @@ public class EmptyClassInspection extends BaseInspection {
         }
         final PsiType[] typeArguments = parameterList.getTypeArguments();
         if (typeArguments.length != 0) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private boolean isSuperParametrization(PsiClass aClass) {
+      if (!(aClass instanceof PsiAnonymousClass)) {
+        final PsiReferenceList extendsList = aClass.getExtendsList();
+        final PsiReferenceList implementsList = aClass.getImplementsList();
+        return hasTypeArguments(extendsList) || hasTypeArguments(implementsList);
+      }
+      final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)aClass;
+      final PsiJavaCodeReferenceElement reference = anonymousClass.getBaseClassReference();
+      final PsiReferenceParameterList parameterList = reference.getParameterList();
+      if (parameterList == null) {
+        return false;
+      }
+      final PsiTypeElement[] elements = parameterList.getTypeParameterElements();
+      for (PsiTypeElement element : elements) {
+        if (element != null) {
           return true;
         }
       }
