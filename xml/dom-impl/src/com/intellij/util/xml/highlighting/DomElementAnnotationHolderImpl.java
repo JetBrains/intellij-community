@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,9 +113,12 @@ public class DomElementAnnotationHolderImpl extends SmartList<DomElementProblemD
         .addAll(result, resolvingConverter.getQuickFixes(new ConvertContextImpl(DomManagerImpl.getDomInvocationHandler(element))));
     }
     if (reference instanceof LocalQuickFixProvider) {
-      ContainerUtil.addAll(result, ((LocalQuickFixProvider)reference).getQuickFixes());
+      final LocalQuickFix[] localQuickFixes = ((LocalQuickFixProvider)reference).getQuickFixes();
+      if (localQuickFixes != null) {
+        ContainerUtil.addAll(result, localQuickFixes);
+      }
     }
-    return result.toArray(new LocalQuickFix[result.size()]);
+    return result.isEmpty() ? LocalQuickFix.EMPTY_ARRAY : result.toArray(new LocalQuickFix[result.size()]);
   }
 
   public <T extends DomElementProblemDescriptor> T addProblem(final T problemDescriptor) {
