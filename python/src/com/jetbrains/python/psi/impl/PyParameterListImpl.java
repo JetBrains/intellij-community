@@ -63,93 +63,29 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     return false;
   }
 
-  public boolean isCompatibleTo(@NotNull PyParameterList another) {
-    PyParameter[] parameters = getParameters();
-    final PyParameter[] anotherParameters = another.getParameters();
-    final int parametersLength = parameters.length;
-    final int anotherParametersLength = anotherParameters.length;
-    if (parametersLength == anotherParametersLength) {
-      if (hasPositionalContainer() == another.hasPositionalContainer() && hasKeywordContainer() == another.hasKeywordContainer()) {
-        return true;
-      }
+  public boolean isCompatibleTo(@NotNull PyParameterList other) {
+    PyParameter[] params = getParameters();
+    final PyParameter[] otherParams = other.getParameters();
+    if (hasPositionalContainer() || hasKeywordContainer()) {
+      return true;
     }
-
-    int i = 0;
-    int j = 0;
-    while (i < parametersLength && j < anotherParametersLength) {
-      PyParameter parameter = parameters[i];
-      PyParameter anotherParameter = anotherParameters[j];
-      if (parameter instanceof PyNamedParameter && anotherParameter instanceof PyNamedParameter) {
-        PyNamedParameter namedParameter = (PyNamedParameter)parameter;
-        PyNamedParameter anotherNamedParameter = (PyNamedParameter)anotherParameter;
-
-        if (namedParameter.isPositionalContainer()) {
-          while (j < anotherParametersLength
-                 && !anotherNamedParameter.isPositionalContainer()
-                 && !anotherNamedParameter.isKeywordContainer()) {
-            anotherParameter = anotherParameters[j++];
-            anotherNamedParameter = (PyNamedParameter) anotherParameter;
-          }
-          ++i;
-          continue;
-        }
-
-        if (anotherNamedParameter.isPositionalContainer()) {
-          while (i < parametersLength
-                 && !namedParameter.isPositionalContainer()
-                 && !namedParameter.isKeywordContainer()) {
-            parameter = parameters[i++];
-            namedParameter = (PyNamedParameter) parameter;
-          }
-          ++j;
-          continue;
-        }
-
-        if (namedParameter.isKeywordContainer() || anotherNamedParameter.isKeywordContainer()) {
-          break;
-        }
+    final PyFunction otherFunction = other.getContainingFunction();
+    final boolean otherHasArgs = other.hasPositionalContainer();
+    final boolean otherHasKwargs = other.hasKeywordContainer();
+    if (otherHasArgs || otherHasKwargs) {
+      int specialParamsCount = 0;
+      if (otherHasArgs) {
+        specialParamsCount++;
       }
-
-      // both are simple parameters
-      ++i;
-      ++j;
-    }
-
-    if (i < parametersLength) {
-      if (parameters[i] instanceof PyNamedParameter) {
-        final PyNamedParameter nextParameter = (PyNamedParameter)parameters[i];
-        if (nextParameter.isKeywordContainer() || nextParameter.isPositionalContainer()) {
-          ++i;
-        }
-        while (nextParameter.isKeywordContainer() && j<anotherParametersLength && anotherParameters[j].hasDefaultValue()) {
-          j++;
-        }
+      if (otherHasKwargs) {
+        specialParamsCount++;
       }
-    }
-
-    if (j < anotherParametersLength) {
-      if (anotherParameters[j] instanceof PyNamedParameter) {
-        final PyNamedParameter nextParameter = (PyNamedParameter)anotherParameters[j];
-        if (nextParameter.isKeywordContainer() || nextParameter.isPositionalContainer()) {
-          ++j;
-        }
-        while (nextParameter.isKeywordContainer() && i<parametersLength && parameters[i].hasDefaultValue()) {
-          i++;
-        }
+      if (otherFunction != null && otherFunction.asMethod() != null) {
+        specialParamsCount++;
       }
+      return otherParams.length == specialParamsCount;
     }
-    return (i >= parametersLength) && (j >= anotherParametersLength);
-    //
-    //if (weHaveStarred && parameters.length - 1 <= anotherParameters.length) {
-    //  if (weHaveDoubleStarred == anotherHasDoubleStarred) {
-    //    return true;
-    //  }
-    //}
-    //if ((anotherHasDoubleStarred && parameters.length == anotherParameters.length - 1)
-    //  || (weHaveDoubleStarred && parameters.length == anotherParameters.length + 1)) {
-    //  return true;
-    //}
-    //return false;
+    return params.length == otherParams.length;
   }
 
   @Override

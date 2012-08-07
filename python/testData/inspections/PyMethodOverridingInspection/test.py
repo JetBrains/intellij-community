@@ -11,7 +11,7 @@ class c3(c1):
         pass
 
 class c4(c1):
-    def foo<warning descr="Method signature does not match signature of base method">(self, **a)</warning>:
+    def foo(self, **a):
         pass
 
 class c5(c1):
@@ -58,12 +58,6 @@ class c12(c4):
     def foo(self):
         pass
 
-class OrderedDict(dict):
-    def update(self, dict_):                     # PY-669
-        for k, v in dict_.items():
-            self.__setitem__(k, v)
-
-
 class c13:
     def foo(self, *args):
         pass
@@ -78,4 +72,34 @@ class c15:                                    # PY-1083
 
 class c16:
     def foo(self, **kwargs):
+        pass
+
+
+# PY-6700
+class c17:
+    def foo(self, **kwargs):
+        pass
+
+class c18(c17):
+    def foo(self, arg1=None, **kwargs): # pass
+        pass
+
+class c19:
+    def foo(self, *args, **kwargs):
+        raise NotImplementedError()
+
+class c20(c19):
+    def foo(self): # pass
+        pass
+
+class c21(c19):
+    def foo(self, arg1): # pass
+        pass
+
+class c22:
+    def foo(self, arg1, *args, **kwargs):
+        raise NotImplementedError()
+
+class c23(c22):
+    def foo<warning descr="Method signature does not match signature of base method">(self, arg1, arg2=None)</warning>: # fail
         pass
