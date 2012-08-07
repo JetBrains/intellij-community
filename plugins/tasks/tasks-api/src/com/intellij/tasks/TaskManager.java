@@ -39,9 +39,9 @@ public abstract class TaskManager {
    * @return up-to-date issues retrieved from repositories
    * @see #getCachedIssues()
    */
-  public abstract List<Task> getIssues(String query);
+  public abstract List<Task> getIssues(@Nullable String query);
 
-  public abstract List<Task> getIssues(String query, boolean forceRequest);
+  public abstract List<Task> getIssues(@Nullable String query, boolean forceRequest);
 
   /**
    * Returns already cached issues.
@@ -53,7 +53,9 @@ public abstract class TaskManager {
   public abstract Task updateIssue(String id); 
 
   public abstract LocalTask[] getLocalTasks();
-  
+
+  public abstract List<LocalTask> getLocalTasks(String query);
+
   public abstract LocalTask addTask(Task issue);
 
   public abstract LocalTask createLocalTask(String summary);

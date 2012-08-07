@@ -30,14 +30,14 @@ public class OpenTaskAction extends BaseTaskAction {
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.actions.OpenTaskAction");
 
   public OpenTaskAction() {
-    super("Open _New Task...");
+    super("_Open Task...");
   }
 
   public void actionPerformed(AnActionEvent e) {
 
     Project project = getProject(e);
     if (project == null) return;
-    ActivateTaskDialog dialog = new ActivateTaskDialog(project);
+    OpenTaskDialog dialog = new OpenTaskDialog(project);
     dialog.show();
     if (dialog.isOK()) {
       Task task = dialog.getSelectedTask();

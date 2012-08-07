@@ -31,31 +31,44 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.ui.ScreenUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent{
+public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent {
   private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
   private final boolean myMayRequestCurrentWindow;
   private final ChooseByNamePopup myOldPopup;
+  private ActionMap myActionMap;
+  private InputMap myInputMap;
+  private String myAdText;
 
-  protected ChooseByNamePopup(@Nullable final Project project, final ChooseByNameModel model, ChooseByNameItemProvider provider, final ChooseByNamePopup oldPopup,
-                            @Nullable final String predefinedText, boolean mayRequestOpenInCurrentWindow, int initialIndex) {
+  protected ChooseByNamePopup(@Nullable final Project project,
+                              final ChooseByNameModel model,
+                              ChooseByNameItemProvider provider,
+                              final ChooseByNamePopup oldPopup,
+                              @Nullable final String predefinedText,
+                              boolean mayRequestOpenInCurrentWindow,
+                              int initialIndex) {
     super(project, model, provider, oldPopup != null ? oldPopup.getEnteredText() : predefinedText, initialIndex);
     myOldPopup = oldPopup;
     if (oldPopup != null) { //inherit old focus owner
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
     myMayRequestCurrentWindow = mayRequestOpenInCurrentWindow;
+    myAdText = myMayRequestCurrentWindow ? "Press " +
+                                           KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK)) +
+                                           " to open in current window" : null;
   }
 
   public String getEnteredText() {
@@ -79,9 +92,17 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
       rebuildList(myInitialIndex, 0, null, ModalityState.current(), null);
     }
-    if (myOldFocusOwner != null){
+    if (myOldFocusOwner != null) {
       myPreviouslyFocusedComponent = myOldFocusOwner;
       myOldFocusOwner = null;
+    }
+
+    if (myInputMap != null && myActionMap != null) {
+      for (KeyStroke keyStroke : myInputMap.keys()) {
+        Object key = myInputMap.get(keyStroke);
+        myTextField.getInputMap().put(keyStroke, key);
+        myTextField.getActionMap().put(key, myActionMap.get(key));
+      }
     }
   }
 
@@ -94,7 +115,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return true;
   }
 
-  protected boolean isShowListForEmptyPattern(){
+  protected boolean isShowListForEmptyPattern() {
     return myShowListForEmptyPattern;
   }
 
@@ -130,13 +151,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     myListScrollPane.setVisible(true);
     myListScrollPane.setBorder(null);
-    String adText = myMayRequestCurrentWindow ? "Press " + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, KeyEvent.SHIFT_MASK)) + " to open in current window" : null;
+    String adText = getAdText();
     if (myDropdownPopup == null) {
       ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myListScrollPane);
       builder.setFocusable(false)
         .setRequestFocus(false)
         .setCancelKeyEnabled(false)
-        .setFocusOwners(new JComponent[] {myTextField})
+        .setFocusOwners(new JComponent[]{myTextField})
         .setBelongsToGlobalPopupStack(false)
         .setModalContext(false)
         .setAdText(adText)
@@ -151,7 +172,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myDropdownPopup.setLocation(preferredBounds.getLocation());
       myDropdownPopup.setSize(preferredBounds.getSize());
       myDropdownPopup.show(layeredPane);
-    } else {
+    }
+    else {
       myDropdownPopup.setLocation(preferredBounds.getLocation());
 
       // in 'focus follows mouse' mode, to avoid focus escaping to editor, don't reduce popup size when list size is reduced
@@ -170,12 +192,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
   }
 
-  protected void close(final boolean isOk) {
-    if (checkDisposed()){
+  public void close(final boolean isOk) {
+    if (checkDisposed()) {
       return;
     }
 
-    if (isOk){
+    if (isOk) {
       myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
 
       final List<Object> chosenElements = getChosenElements();
@@ -197,7 +219,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         return;
       }
 
-      if (!chosenElements.isEmpty()){
+      if (!chosenElements.isEmpty()) {
         final String enteredText = getEnteredText();
         if (enteredText.indexOf('*') >= 0) {
           FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.wildcards");
@@ -214,7 +236,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
           }
         }
       }
-      else{
+      else {
         return;
       }
     }
@@ -226,7 +248,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
 
     cleanupUI(isOk);
-    myActionListener.onClose ();
+    myActionListener.onClose();
   }
 
   @Nullable
@@ -238,7 +260,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (myTextPopup != null) {
       if (ok) {
         myTextPopup.closeOk(null);
-      } else {
+      }
+      else {
         myTextPopup.cancel();
       }
       myTextPopup = null;
@@ -247,7 +270,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     if (myDropdownPopup != null) {
       if (ok) {
         myDropdownPopup.closeOk(null);
-      } else {
+      }
+      else {
         myDropdownPopup.cancel();
       }
       myDropdownPopup = null;
@@ -266,10 +290,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final PsiElement context,
                                               @Nullable final String predefinedText,
                                               boolean mayRequestOpenInCurrentWindow, final int initialIndex) {
-     return createPopup(project,model,new DefaultChooseByNameItemProvider(context),predefinedText,mayRequestOpenInCurrentWindow,initialIndex);
+    return createPopup(project, model, new DefaultChooseByNameItemProvider(context), predefinedText, mayRequestOpenInCurrentWindow,
+                       initialIndex);
   }
 
-  public static ChooseByNamePopup createPopup(final Project project, final ChooseByNameModel model, final ChooseByNameItemProvider provider) {
+  public static ChooseByNamePopup createPopup(final Project project,
+                                              final ChooseByNameModel model,
+                                              final ChooseByNameItemProvider provider) {
     return createPopup(project, model, provider, null);
   }
 
@@ -333,20 +360,21 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private int getLineOrColumn(final boolean line) {
     final Matcher matcher = patternToDetectLinesAndColumns.matcher(getEnteredText());
     if (matcher.matches()) {
-      final int groupNumber = line ? 2:3;
+      final int groupNumber = line ? 2 : 3;
       try {
-        if(groupNumber <= matcher.groupCount()) {
+        if (groupNumber <= matcher.groupCount()) {
           final String group = matcher.group(groupNumber);
           if (group != null) return Integer.parseInt(group) - 1;
         }
         if (!line && getLineOrColumn(true) != -1) return 0;
       }
-      catch (NumberFormatException ignored) {}
+      catch (NumberFormatException ignored) {
+      }
     }
 
     return -1;
   }
-  
+
   @Nullable
   public String getPathToAnonymous() {
     final Matcher matcher = patternToDetectAnonymousClasses.matcher(getEnteredText());
@@ -361,7 +389,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
     }
 
-    return null;    
+    return null;
   }
 
   public int getColumnPosition() {
@@ -377,5 +405,20 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     String name = getEnteredText().substring(index + 1).trim();
     return StringUtil.isEmpty(name) ? null : name;
+  }
+
+  public void registerAction(@NonNls String aActionName, KeyStroke keyStroke, Action aAction) {
+    if (myInputMap == null) myInputMap = new InputMap();
+    if (myActionMap == null) myActionMap = new ActionMap();
+    myInputMap.put(keyStroke, aActionName);
+    myActionMap.put(aActionName, aAction);
+  }
+
+  public String getAdText() {
+    return myAdText;
+  }
+
+  public void setAdText(final String adText) {
+    myAdText = adText;
   }
 }

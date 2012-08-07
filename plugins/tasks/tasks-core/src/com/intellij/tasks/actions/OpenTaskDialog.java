@@ -57,7 +57,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
-public class ActivateTaskDialog extends DialogWrapper {
+public class OpenTaskDialog extends DialogWrapper {
 
   private JPanel myPanel;
 
@@ -77,7 +77,7 @@ public class ActivateTaskDialog extends DialogWrapper {
   private AsyncProcessIcon myUpdateIcon;
   private JLabel myUpdateLabel;
 
-  protected ActivateTaskDialog(Project project) {
+  protected OpenTaskDialog(Project project) {
 
     super(project, true);
     myProject = project;
@@ -260,7 +260,7 @@ public class ActivateTaskDialog extends DialogWrapper {
 
   @NonNls
   protected String getDimensionServiceKey() {
-    return "ActivateTaskDialog";
+    return "OpenTaskDialog";
   }
 
   @Override
@@ -305,7 +305,7 @@ public class ActivateTaskDialog extends DialogWrapper {
 
     @Override
     protected String getQuickDocHotKeyAdvertisementTail(@NotNull String shortcut) {
-      return " task description and comments";
+      return "task description and comments";
     }
 
     @NotNull

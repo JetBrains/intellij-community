@@ -17,7 +17,6 @@
 package com.intellij.tasks.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +50,7 @@ public class TaskUtil {
     return formatTask(task, repository.getCommitMessageFormat());
   }
 
-  public static String getTrimmedSummary(LocalTask task) {
+  public static String getTrimmedSummary(Task task) {
     String text;
     if (task.isIssue()) {
       text = task.getId() + ": " + task.getSummary();

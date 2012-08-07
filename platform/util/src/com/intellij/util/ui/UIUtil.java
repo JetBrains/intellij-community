@@ -283,7 +283,7 @@ public class UIUtil {
   public static void setEnabled(Component component, boolean enabled, boolean recursively) {
     component.setEnabled(enabled);
     if (component instanceof JLabel) {
-      Color color = enabled ? getLabelForeground() : UIManager.getColor("Label.disabledForeground");
+      Color color = enabled ? getLabelForeground() : getLabelDisabledForeground();
       if (color != null) {
         component.setForeground(color);
       }
@@ -414,6 +414,10 @@ public class UIUtil {
 
   public static Color getLabelForeground() {
     return UIManager.getColor("Label.foreground");
+  }
+
+  public static Color getLabelDisabledForeground() {
+    return UIManager.getColor("Label.disabledForeground");
   }
 
   public static Icon getOptionPanelWarningIcon() {

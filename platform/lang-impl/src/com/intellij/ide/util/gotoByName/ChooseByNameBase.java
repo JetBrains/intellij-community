@@ -1397,10 +1397,12 @@ public abstract class ChooseByNameBase {
   public static final String NON_PREFIX_SEPARATOR = "non-prefix matches:";
 
   public static Component renderNonPrefixSeparatorComponent(Color backgroundColor) {
-    final TitledSeparator separator = new TitledSeparator();
-    separator.setBorder(BorderFactory.createEmptyBorder(0, 2, 0, 0));
-    separator.setBackground(backgroundColor);
-    return separator;
+    final JPanel panel = new JPanel(new BorderLayout());
+    final JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+    panel.setPreferredSize(new Dimension(0, 3));
+    panel.add(separator, BorderLayout.SOUTH);
+    panel.setBackground(backgroundColor);
+    return panel;
   }
 
   private class CalcElementsThread implements Runnable {

@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.psi.PsiFile;
-import com.intellij.tasks.actions.ActivateTaskDialog;
+import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.MapDataContext;
@@ -84,7 +84,7 @@ public class TaskCompletionTest extends LightCodeInsightFixtureTestCase {
     Document document = myFixture.getDocument(psiFile);
     final Project project = getProject();
     TextFieldWithAutoCompletionContributor.installCompletion(document, project,
-                                                             new ActivateTaskDialog.MyTextFieldWithAutoCompletionListProvider(project),
+                                                             new OpenTaskDialog.MyTextFieldWithAutoCompletionListProvider(project),
                                                              false);
     document.putUserData(CommitMessage.DATA_CONTEXT_KEY, new MapDataContext());
   }
