@@ -28,7 +28,7 @@ import java.io.File;
  * Time: 11:47 AM
  */
 public class Idea87218Test {
-  private final static String ourWcPath = "C:\\TestProjects\\sortedProjects\\Subversion\\Sasha\\move2unv";
+  private final static String ourWcPath = "C:\\TestProjects\\sortedProjects\\Subversion\\Sasha\\moveTest";
 
   public static void main(String[] args) {
     try {
@@ -43,9 +43,13 @@ public class Idea87218Test {
 
       File dst = new File(dir, "file1.txt");
 
+      /*
       final SVNCopyClient copyClient = new SVNCopyClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
       final SVNCopySource svnCopySource = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
       copyClient.doCopy(new SVNCopySource[]{svnCopySource}, dst, true, false, true);
+      */
+      SVNMoveClient moveClient = new SVNMoveClient((ISVNRepositoryPool)null, new DefaultSVNOptions());
+      moveClient.doMove(src, dst);
     }
     catch (SVNException e) {
       e.printStackTrace();
