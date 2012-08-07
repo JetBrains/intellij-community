@@ -859,7 +859,9 @@ public class ExpectedTypesProvider {
         myResult = types;
       }
       else {
-        LOG.assertTrue(myExpr.equals(expr.getElseExpression()));
+        if (!myExpr.equals(expr.getElseExpression())) {
+          LOG.error(Arrays.asList(expr.getChildren()) + "; " + myExpr);
+        }
         myResult = getExpectedTypes(expr, myForCompletion);
         for (ExpectedTypeInfo info : myResult) {
           ((ExpectedTypeInfoImpl)info).setInsertExplicitTypeParams(true);
