@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,38 +123,54 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
 
       final Insets insets = SystemInfo.isMac ? getInsets() : new Insets(0, 0, 0, 0);
 
-      final int totalBarLength = size.width - insets.left - insets.right - (SystemInfo.isMac ? 0 : 0);
+      final int totalBarLength = size.width - insets.left - insets.right;
       final int usedBarLength = totalBarLength - (int)(totalBarLength * freeMemory / maxMemory);
       final int allocatedBarWidth = totalBarLength - (int)(totalBarLength * (freeMemory - runtime.freeMemory()) / maxMemory);
       final int barHeight = SystemInfo.isMac ? HEIGHT : size.height - insets.top - insets.bottom;
       final Graphics2D g2 = (Graphics2D)bg;
 
       final int yOffset = (size.height - barHeight) / 2;
-      final int xOffset = insets.left + (SystemInfo.isMac ? 0 : 0);
+      final int xOffset = insets.left;
+      if (!UIUtil.isUnderAquaLookAndFeel()) {
+        g2.setColor(UIUtil.getControlColor());
+        g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
+      } else {
+        g2.setPaint(new GradientPaint(0, 0, Gray._190, 0, size.height - 1, Gray._230));
+        g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
 
-      g2.setPaint(new GradientPaint(0, 0, Gray._190, 0, size.height - 1, Gray._230));
-      g2.fillRect(xOffset, yOffset, totalBarLength, barHeight);
+        g2.setPaint(new GradientPaint(0, 0, new Gray(200, 100), 0, size.height - 1, new Gray(150, 130)));
+        g2.fillRect(xOffset + 1, yOffset, allocatedBarWidth, barHeight);
 
-      g2.setPaint(new GradientPaint(0, 0, new Gray(200, 100), 0, size.height - 1, new Gray(150, 130)));
-      g2.fillRect(xOffset + 1, yOffset, allocatedBarWidth, barHeight);
-
-      g2.setColor(Gray._175);
-      g2.drawLine(xOffset + allocatedBarWidth, yOffset + 1, xOffset + allocatedBarWidth, yOffset + barHeight - 1);
+        g2.setColor(Gray._175);
+        g2.drawLine(xOffset + allocatedBarWidth, yOffset + 1, xOffset + allocatedBarWidth, yOffset + barHeight - 1);
+      }
 
       if (pressed) {
-        g2.setPaint(new GradientPaint(1, 1, new Color(101, 111, 135), 0, size.height - 2, new Color(175, 185, 202)));
+        Color start = new Color(101, 111, 135);
+        Color end = new Color(175, 185, 202);
+        if (UIUtil.isUnderDarcula()) {
+          start = start.darker();
+          end = end.darker();
+        }
+        g2.setPaint(new GradientPaint(1, 1, start, 0, size.height - 2, end));
         g2.fillRect(xOffset + 1, yOffset, usedBarLength, barHeight);
       } else {
-        g2.setPaint(new GradientPaint(1, 1, new Color(175, 185, 202), 0, size.height - 2, new Color(126, 138, 168)));
+        Color start = new Color(175, 185, 202);
+        Color end = new Color(126, 138, 168);
+        if (UIUtil.isUnderDarcula()) {
+          start = start.darker();
+          end = end.darker();
+        }
+        g2.setPaint(new GradientPaint(1, 1, start, 0, size.height - 2, end));
         g2.fillRect(xOffset + 1, yOffset, usedBarLength, barHeight);
 
-        if (SystemInfo.isMac) {
+        if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
           g2.setColor(new Color(194, 197, 203));
           g2.drawLine(xOffset + 1, yOffset+1, allocatedBarWidth, yOffset+1);
         }
       }
 
-      if (SystemInfo.isMac) {
+      if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
         g2.setColor(Gray._110);
         g2.drawRect(xOffset, yOffset, totalBarLength, barHeight - 1);
       }
@@ -168,7 +184,7 @@ public class MemoryUsagePanel extends JButton implements CustomStatusBarWidget {
       final int infoHeight = fontMetrics.getHeight() - fontMetrics.getDescent();
       UIUtil.applyRenderingHints(g2);
 
-      g2.setColor(Color.black);
+      g2.setColor(UIUtil.getListForeground());
       g2.drawString(info, xOffset + (totalBarLength - infoWidth) / 2, yOffset + (barHeight + infoHeight) / 2 - 1);
       bg.dispose();
     }
