@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.resolve;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
@@ -96,8 +97,18 @@ public class ResolveUtil {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     
     boolean doProcessNonCodeMembers = false;
-
+    boolean isJavaResolver = false;
     while (run != null) {
+
+      //hack for walking up in java code
+      //java's processDeclarations don't check names so we should do it manually
+      if (!isJavaResolver && run.getLanguage() == JavaLanguage.INSTANCE) {
+        isJavaResolver = true;
+        if (processor.getHint(NameHint.KEY) != null) {
+          processor = new JavaResolverProcessor(processor);
+        }
+      }
+
       if (!run.processDeclarations(processor, ResolveState.initial(), lastParent, place)) return false;
       if (processNonCodeMethods) {
         if (!doProcessNonCodeMembers) {
