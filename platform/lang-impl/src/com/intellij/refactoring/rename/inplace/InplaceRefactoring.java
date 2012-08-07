@@ -36,10 +36,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -699,10 +696,15 @@ public abstract class InplaceRefactoring {
       }
     });
     myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
     myBalloon.show(new PositionTracker<Balloon>(myEditor.getContentComponent()) {
       @Override
       public RelativePoint recalculateLocation(Balloon object) {
-        final RelativePoint target = JBPopupFactory.getInstance().guessBestPopupLocation(myEditor);
+        if (myTarget != null && !popupFactory.isBestPopupLocationVisible(myEditor)) {
+          return myTarget;
+        }
+        final RelativePoint target = popupFactory.guessBestPopupLocation(myEditor);
+        if (target == null) return myTarget;
         final Point screenPoint = target.getScreenPoint();
         int y = screenPoint.y;
         if (target.getPoint().getY() > myEditor.getLineHeight() + myBalloon.getPreferredSize().getHeight()) {

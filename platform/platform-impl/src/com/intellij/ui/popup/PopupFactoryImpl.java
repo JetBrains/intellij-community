@@ -472,7 +472,22 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return new RelativePoint(component, popupMenuPoint);
   }
 
+  @Override
+  public boolean isBestPopupLocationVisible(Editor editor) {
+    return getVisibleBestPopupLocation(editor) != null;
+  }
+
   public RelativePoint guessBestPopupLocation(Editor editor) {
+    Point p = getVisibleBestPopupLocation(editor);
+    if (p == null) {
+      final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+      p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
+    }
+    return new RelativePoint(editor.getContentComponent(), p);
+  }
+
+  @Nullable
+  private static Point getVisibleBestPopupLocation(Editor editor) {
     VisualPosition visualPosition = editor.getUserData(ANCHOR_POPUP_POSITION);
 
     if (visualPosition == null) {
@@ -484,15 +499,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
         visualPosition = editor.offsetToVisualPosition(caretModel.getOffset());
       }
     }
-    
+
     Point p = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
 
     final Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
-    if (!visibleArea.contains(p)) {
-      p = new Point((visibleArea.x + visibleArea.width) / 2, (visibleArea.y + visibleArea.height) / 2);
-    }
-
-    return new RelativePoint(editor.getContentComponent(), p);
+    return visibleArea.contains(p) ? p : null;
   }
 
   public Point getCenterOf(JComponent container, JComponent content) {

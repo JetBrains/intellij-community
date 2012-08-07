@@ -247,6 +247,13 @@ public abstract class JBPopupFactory {
    */
   public abstract RelativePoint guessBestPopupLocation(Editor editor);
 
+  /**
+   * @param editor the editor over which the popup is shown.
+   * @return true if popup location is located in visible area
+   *         false if center would be suggested instead
+   */
+  public abstract boolean isBestPopupLocationVisible(Editor editor);
+
   public abstract Point getCenterOf(JComponent container, JComponent content);
   
   @Nullable
