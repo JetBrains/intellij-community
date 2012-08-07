@@ -70,3 +70,24 @@ public class XXX {
          foo(() -> <error descr="Variable used in lambda expression should be effectively final">y</error>=1);
      }
 }
+
+class Sample {
+        public static void main(String[] args) {
+                Runnable runnable = () -> {
+                        Integer i;
+                        if (true) {
+                                i = 111;
+                                System.out.println(i);
+                        }
+                };
+
+                Runnable runnable2 = () -> {
+                        Integer i2 = 333;
+                        i2 = 444;
+                        System.out.println(i2);
+                };
+
+                runnable.run();         // prints 111
+                runnable2.run();        // prints 444
+        }
+}
