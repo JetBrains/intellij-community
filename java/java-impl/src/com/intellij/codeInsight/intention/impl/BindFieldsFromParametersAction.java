@@ -266,7 +266,17 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     String[] names = suggestedNameInfo.names;
 
     final boolean isFinal = !isMethodStatic && method.isConstructor();
-    final String fieldName = usedNames.add(names[0]) ? names[0] : JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(names[0], myParameter, true);
+    String name = names[0];
+    if (targetClass != null) {
+      for (String curName : names) {
+        if (!usedNames.contains(curName) && targetClass.findFieldByName(curName, false) != null) {
+          name = curName;
+          break;
+        }
+      }
+    }
+    final String fieldName = usedNames.add(name) ? name
+                                                 : JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(name, myParameter, true);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
