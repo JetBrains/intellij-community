@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -84,21 +83,8 @@ public class MainImpl {
     // http://weblogs.java.net/blog/shan_man/archive/2005/06/improved_drag_g.html
     System.setProperty("sun.swing.enableImprovedDragGesture", "");
 
-    if (SystemInfo.isWindows && !SystemInfo.isWindows9x && !StartupUtil.isHeadless) {
-      final Logger LOG = Logger.getInstance(LOG_CATEGORY);
-      try {
-        if (SystemInfo.isAMD64) {
-          System.loadLibrary("focuskiller64");
-        }
-        else {
-          System.loadLibrary("focuskiller");
-        }
-        LOG.info("Using \"FocusKiller\" library to prevent focus stealing.");
-      }
-      catch (Throwable e) {
-        LOG.info("\"FocusKiller\" library not found or there were problems loading it.", e);
-      }
-    }
+    final Logger LOG = Logger.getInstance(LOG_CATEGORY);
+    StartupUtil.loadSystemLibraries(LOG);
 
     startApplication(args);
   }

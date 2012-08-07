@@ -18,7 +18,6 @@ package com.intellij.idea;
 
 import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.Restarter;
@@ -44,12 +43,6 @@ public class Main {
 
   @SuppressWarnings("MethodNamesDifferingOnlyByCase")
   public static void main(final String[] args) {
-    // force using bundled JNA dispatcher (if not explicitly stated)
-    if (SystemInfo.isUnix && System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
-      System.setProperty("jna.nosys", "true");
-      System.setProperty("jna.nounpack", "false");
-    }
-
     final int[] restartCode = {Restarter.getRestartCode()};
 
     Runnable restart = new Runnable() {

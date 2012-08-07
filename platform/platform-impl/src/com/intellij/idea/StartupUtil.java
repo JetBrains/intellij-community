@@ -21,14 +21,18 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.Consumer;
+import com.intellij.util.SystemProperties;
+import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
+import org.xerial.snappy.Snappy;
+import org.xerial.snappy.SnappyLoader;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,12 +40,14 @@ import java.util.List;
  * @author yole
  */
 public class StartupUtil {
+  @NonNls public static final String NO_SPLASH = "nosplash";
+
+  public static final boolean NO_SNAPPY = SystemProperties.getBooleanProperty("idea.no.snappy", false);
+
   static boolean isHeadless;
 
   private static SocketLock ourLock;
   private static String myDefaultLAF;
-
-  @NonNls public static final String NOSPLASH = "nosplash";
 
   private StartupUtil() { }
 
@@ -54,7 +60,7 @@ public class StartupUtil {
   }
 
   public static boolean shouldShowSplash(final String[] args) {
-    return !Arrays.asList(args).contains(NOSPLASH);
+    return !Arrays.asList(args).contains(NO_SPLASH);
   }
 
   public static boolean isHeadless() {
@@ -139,62 +145,8 @@ public class StartupUtil {
     return true;
   }
 
-  private static boolean checkTmpIsAccessible() {
-    if (!SystemInfo.isUnix || SystemInfo.isMac) return true;
-
-    final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
-    if (!tmpDir.isDirectory()) {
-      showError("Inaccessible Temp Directory", "Temp directory '" + tmpDir + "' does not exist.\n" +
-                                               "Please set 'java.io.tmpdir' system property to point to an existing directory.");
-      return false;
-    }
-
-    final File tmp;
-    try {
-      //noinspection SSBasedInspection
-      tmp = File.createTempFile("idea_tmp_check_", ".sh", tmpDir);
-      FileUtil.writeToFile(tmp, "#!/bin/sh\n" +
-                                "exit 0");
-    }
-    catch (IOException e) {
-      showError("Inaccessible Temp Directory", e.getMessage() + " (" + tmpDir + ").\n" +
-                                               "Temp directory is not accessible.\n" +
-                                               "Please set 'java.io.tmpdir' system property to point to a writable directory.");
-      return false;
-    }
-
-    String message = null;
-    try {
-      if (!tmp.setExecutable(true, true) && !tmp.canExecute()) {
-        message = "Cannot make '" + tmp.getAbsolutePath() + "' executable.";
-      }
-      else {
-        final int rv = new ProcessBuilder(tmp.getAbsolutePath()).start().waitFor();
-        if (rv != 0) {
-          message = "Cannot execute '" + tmp.getAbsolutePath() + "': " + rv;
-        }
-      }
-    }
-    catch (Exception e) {
-      message = e.getMessage();
-    }
-
-    if (!tmp.delete()) {
-      tmp.deleteOnExit();
-    }
-
-    if (message != null) {
-      showError("Inaccessible Temp Directory", message + ".\nPossible reason: temp directory is mounted with a 'noexec' option.\n" +
-                                               "Please set 'java.io.tmpdir' system property to point to an accessible directory.");
-      return false;
-    }
-
-    return true;
-  }
-
   static boolean checkStartupPossible(String[] args) {
     return checkJdkVersion() &&
-           checkTmpIsAccessible() &&
            checkSystemFolders() &&
            lockSystemFolders(args);
   }
@@ -211,5 +163,62 @@ public class StartupUtil {
 
   public synchronized static void addExternalInstanceListener(Consumer<List<String>> consumer) {
     ourLock.setActivateListener(consumer);
+  }
+
+  private static final String JAVA_IO_TEMP_DIR = "java.io.tmpdir";
+
+  static void loadSystemLibraries(final Logger log) {
+    // load JNA and Snappy in own temp directory - to avoid collisions and work around no-exec /tmp
+    final File ideaTempDir = new File(PathManager.getSystemPath(), "tmp");
+    if (!(ideaTempDir.mkdirs() || ideaTempDir.exists())) {
+      throw new RuntimeException("Unable to create temp directory '" + ideaTempDir + "'");
+    }
+
+    final String javaTempDir = System.getProperty(JAVA_IO_TEMP_DIR);
+    try {
+      System.setProperty(JAVA_IO_TEMP_DIR, ideaTempDir.getPath());
+      if (System.getProperty("jna.nosys") == null && System.getProperty("jna.nounpack") == null) {
+        // force using bundled JNA dispatcher (if not explicitly stated)
+        System.setProperty("jna.nosys", "true");
+        System.setProperty("jna.nounpack", "false");
+      }
+      try {
+        final long t = System.currentTimeMillis();
+        log.info("JNA library loaded (" + (Native.POINTER_SIZE * 8) + "-bit) in " + (System.currentTimeMillis() - t) + " ms");
+      }
+      catch (Throwable t) {
+        log.error("Unable to load JNA library", t);
+      }
+    }
+    finally {
+      System.setProperty(JAVA_IO_TEMP_DIR, javaTempDir);
+    }
+
+    if (!NO_SNAPPY) {
+      if (System.getProperty(SnappyLoader.KEY_SNAPPY_TEMPDIR) == null) {
+        System.setProperty(SnappyLoader.KEY_SNAPPY_TEMPDIR, ideaTempDir.getPath());
+      }
+      try {
+        final long t = System.currentTimeMillis();
+        log.info("Snappy library loaded (" + Snappy.getNativeLibraryVersion() + ") in " + (System.currentTimeMillis() - t) + " ms");
+      }
+      catch (Throwable t) {
+        log.error("Unable to load Snappy library", t);
+      }
+    }
+
+    if (SystemInfo.isWindows && !SystemInfo.isWindows9x) {
+      IdeaWin32.isAvailable();  // logging is done there
+    }
+
+    if (SystemInfo.isWindows && !SystemInfo.isWindows9x && !isHeadless) {
+      try {
+        System.loadLibrary(SystemInfo.isAMD64 ? "focusKiller64" : "focusKiller");
+        log.info("Using \"FocusKiller\" library to prevent focus stealing.");
+      }
+      catch (Throwable t) {
+        log.info("\"FocusKiller\" library not found or there were problems loading it.", t);
+      }
+    }
   }
 }
