@@ -45,9 +45,11 @@ public class PatchedWeakReference<T> extends WeakReference<T>{
     if(ourRefsList.size() % 100 == 0) {
       int i = 0;
     }
+    /*
     synchronized(ourQueue) {
       ourRefsList.add(this);
     }
+    */
   }
 
   /**

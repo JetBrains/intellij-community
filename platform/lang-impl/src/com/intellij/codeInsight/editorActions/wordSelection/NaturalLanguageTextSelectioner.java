@@ -18,7 +18,6 @@ package com.intellij.codeInsight.editorActions.wordSelection;
 
 import com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -26,7 +25,7 @@ import com.intellij.psi.PsiPlainText;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -106,17 +105,30 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
   }
 
   public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
-    final SelectionModel selectionModel = editor.getSelectionModel();
-    if (!selectionModel.hasSelection()) {
+    TextRange range = expandSelection(e, editorText, cursorOffset, cursorOffset);
+    if (range == null) {
       return Collections.emptyList();
     }
 
+    ArrayList<TextRange> result = new ArrayList<TextRange>();
+    result.add(range);
+    while (true) {
+      TextRange next = expandSelection(e, editorText, range.getStartOffset(), range.getEndOffset());
+      if (next == null || next.equals(range)) {
+        break;
+      }
+      result.add(next);
+      range = next;
+    }
+    return result;
+ }
+
+  @Nullable
+  private static TextRange expandSelection(PsiElement e, CharSequence editorText, int selStart, int selEnd) {
     TextRange range = e.getTextRange();
     int shift = range.getStartOffset();
-    int selStart = selectionModel.getSelectionStart();
-    int selEnd = selectionModel.getSelectionEnd();
     if (selStart <= shift || selEnd >= range.getEndOffset()) {
-      return Collections.emptyList();
+      return null;
     }
 
     String elementText = editorText.subSequence(shift, range.getEndOffset()).toString();
@@ -124,24 +136,24 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     int end = selEnd - shift;
 
     TextRange best = findSentenceRange(elementText, start, end);
-    best = narrowRange(best, best, findCustomRange(elementText, start, end, '\"', '\"'));
-    best = narrowRange(best, best, findCustomRange(elementText, start, end, '(', ')'));
+    best = narrowRange(best, findCustomRange(elementText, start, end, '\"', '\"'));
+    best = narrowRange(best, findCustomRange(elementText, start, end, '(', ')'));
 
     TextRange natural = findNaturalRange(elementText, start, end);
     if (!natural.contains(best)) {
-      return Collections.emptyList();
+      return null;
     }
 
     TextRange paragraph = findParagraphRange(elementText, start, end);
     if (best.getStartOffset() == start && best.getEndOffset() == end || !paragraph.contains(best)) {
-      return Arrays.asList(paragraph.shiftRight(shift));
+      return paragraph.shiftRight(shift);
     }
 
 
-    return Arrays.asList(best.shiftRight(shift));
- }
+    return best.shiftRight(shift);
+  }
 
-  private static TextRange narrowRange(TextRange sentence, TextRange best, TextRange candidate) {
+  private static TextRange narrowRange(TextRange best, TextRange candidate) {
     return candidate != null && best.contains(candidate) ? candidate : best;
   }
 
