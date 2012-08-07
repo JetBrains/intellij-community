@@ -41,7 +41,6 @@ class SignatureFactory(object):
                     class_name = "%s.%s"%(tp.__module__, class_name)
 
                 res.add_arg(name, class_name)
-            print(res.__str__())
             return res
         except:
             import traceback
