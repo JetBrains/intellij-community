@@ -193,7 +193,11 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     final MethodJavaDocHelper javaDocHelper = new MethodJavaDocHelper(method);
     PsiElementFactory factory = JavaPsiFacade.getInstance(data.getProject()).getElementFactory();
 
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    PsiParameter parameter = factory.createParameter(data.getParameterName(), data.getForcedType());
+    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, data.isDeclareFinal());
+
+    final PsiParameterList parameterList = method.getParameterList();
+    final PsiParameter[] parameters = parameterList.getParameters();
     data.getParametersToRemove().forEachDescending(new TIntProcedure() {
       public boolean execute(final int paramNum) {
         try {
@@ -211,10 +215,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
       }
     });
 
-    PsiParameter parameter = factory.createParameter(data.getParameterName(), data.getForcedType());
-    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, data.isDeclareFinal());
     final PsiParameter anchorParameter = getAnchorParameter(method);
-    final PsiParameterList parameterList = method.getParameterList();
     parameter = (PsiParameter)parameterList.addAfter(parameter, anchorParameter);
     JavaCodeStyleManager.getInstance(data.getProject()).shortenClassReferences(parameter);
     final PsiDocTag tagForAnchorParameter = javaDocHelper.getTagForParameter(anchorParameter);
