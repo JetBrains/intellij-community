@@ -1,7 +1,6 @@
 package com.jetbrains.python.refactoring.rename;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;

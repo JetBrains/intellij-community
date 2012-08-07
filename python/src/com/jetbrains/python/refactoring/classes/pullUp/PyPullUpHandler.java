@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.PsiNavigateUtil;
 import com.jetbrains.python.PyBundle;

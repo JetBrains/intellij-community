@@ -1,7 +1,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;

@@ -3,6 +3,7 @@ package com.jetbrains.python.refactoring.introduce;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -18,6 +19,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -26,6 +28,7 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -156,7 +159,15 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected Collection<String> generateSuggestedNames(PyExpression expression) {
-    Collection<String> candidates = new LinkedHashSet<String>();
+    Collection<String> candidates = new LinkedHashSet<String>() {
+      @Override
+      public boolean add(String s) {
+        if (PyNames.isReserved(s)) {
+          return false;
+        }
+        return super.add(s);
+      }
+    };
     String text = expression.getText();
     if (expression instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)expression).getCallee();
@@ -435,7 +446,27 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
     
     @Override
     public void visitWhiteSpace(PsiWhiteSpace space) {
-      myResult.append(space.getText().replace('\n', ' '));
+      myResult.append(space.getText().replace('\n', ' ').replace("\\", ""));
+    }
+
+    @Override
+    public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+      ASTNode child = node.getNode().getFirstChildNode();
+      while (child != null) {
+        String text = child.getText();
+        if (child.getElementType() == TokenType.WHITE_SPACE) {
+          if (text.contains("\n")) {
+            if (!text.contains("\\")) {
+              myResult.append("\\");
+            }
+            myResult.append(text);
+          }
+        }
+        else {
+          myResult.append(text);
+        }
+        child = child.getTreeNext();
+      }
     }
 
     @Override

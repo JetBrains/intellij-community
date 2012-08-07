@@ -7,11 +7,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.*;
+import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import java.io.CharArrayWriter;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -123,6 +126,39 @@ public class UnsupportedFeaturesUtil {
       }
     }
     return false;
+  }
+
+  private static class VersionsParser extends DefaultHandler {
+    private CharArrayWriter myContent = new CharArrayWriter();
+    private LanguageLevel myCurrentLevel;
+
+    public void startElement(String namespaceURI,
+                String localName,
+                String qName,
+                Attributes attr) throws SAXException {
+      myContent.reset();
+      if (localName.equals("python")) {
+        BUILTINS.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<String>());
+        MODULES.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<String>());
+        myCurrentLevel = LanguageLevel.fromPythonVersion(attr.getValue("version"));
+      }
+     }
+
+    public void endElement(String namespaceURI,
+              String localName,
+              String qName) throws SAXException {
+      if (localName.equals("func")) {
+        BUILTINS.get(myCurrentLevel).add(myContent.toString());
+      }
+      if (localName.equals("module")) {
+        MODULES.get(myCurrentLevel).add(myContent.toString());
+      }
+    }
+
+    public void characters(char[] ch, int start, int length)
+                                          throws SAXException {
+      myContent.write(ch, start, length);
+    }
   }
 }
 

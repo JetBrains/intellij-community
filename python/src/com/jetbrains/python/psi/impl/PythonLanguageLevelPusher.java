@@ -34,7 +34,6 @@ import java.util.*;
  * @author yole
  */
 public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
-  public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
   private final Map<Module, Sdk> myModuleSdks = new WeakHashMap<Module, Sdk>();
 
   public static void pushLanguageLevel(final Project project) {
@@ -69,8 +68,8 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   public LanguageLevel getImmediateValue(Project project, VirtualFile file) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && FORCE_LANGUAGE_LEVEL != null) {
-      return FORCE_LANGUAGE_LEVEL;
+    if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
+      return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
 
     final Module module = ModuleUtil.findModuleForFile(file, project);
@@ -98,8 +97,8 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   public LanguageLevel getImmediateValue(Module module) {
-    if (ApplicationManager.getApplication().isUnitTestMode() && FORCE_LANGUAGE_LEVEL != null) {
-      return FORCE_LANGUAGE_LEVEL;
+    if (ApplicationManager.getApplication().isUnitTestMode() && LanguageLevel.FORCE_LANGUAGE_LEVEL != null) {
+      return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
 
     final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
@@ -189,7 +188,7 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
   }
 
   public static void setForcedLanguageLevel(final Project project, @Nullable LanguageLevel languageLevel) {
-    FORCE_LANGUAGE_LEVEL = languageLevel;
+    LanguageLevel.FORCE_LANGUAGE_LEVEL = languageLevel;
     pushLanguageLevel(project);
   }
 }

@@ -5,7 +5,6 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StringStubIndexExtension;
 import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
-import com.intellij.util.io.KeyDescriptor;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
 

@@ -33,11 +33,22 @@ public class PyClassNameCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testModule() {
+    doTest();
+  }
+
+  public void testVariable() {
+    doTest();
+  }
+
   private void doTest() {
     final String path = "/completion/className/" + getTestName(true);
     myFixture.copyDirectoryToProject(path, "");
     myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
     myFixture.complete(CompletionType.BASIC, 2);
-    myFixture.checkResultByFile(path + "/" + getTestName(true) + ".after.py");
+    if (myFixture.getLookupElements() != null) {
+      myFixture.finishLookup();
+    }
+    myFixture.checkResultByFile(path + "/" + getTestName(true) + ".after.py", true);
   }
 }

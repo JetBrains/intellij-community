@@ -2,12 +2,13 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.tree.IStubFileElementType;
+import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.PythonLanguage;
@@ -40,7 +41,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
   }
 
   protected SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {
-    final IStubFileElementType file = PythonLanguage.getInstance().getFileElementType();
+    final IFileElementType file = LanguageParserDefinitions.INSTANCE.forLanguage(PythonLanguage.getInstance()).getFileNodeType();
     final PyCodeStyleSettings pySettings = settings.getCustomSettings(PyCodeStyleSettings.class);
     final TokenSet STATEMENT_OR_DECLARATION = TokenSet.orSet(PythonDialectsTokenSetProvider.INSTANCE.getStatementTokens(),
                                                              CLASS_OR_FUNCTION);
@@ -69,6 +70,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .before(COLON).spaceIf(pySettings.SPACE_BEFORE_PY_COLON)
       .after(COMMA).spaceIf(commonSettings.SPACE_AFTER_COMMA)
       .before(COMMA).spaceIf(commonSettings.SPACE_BEFORE_COMMA)
+      .around(DOT).spaces(0)
       .before(SEMICOLON).spaceIf(commonSettings.SPACE_BEFORE_SEMICOLON)
       .withinPairInside(LPAR, RPAR, ARGUMENT_LIST).spaceIf(commonSettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES)
       .before(LBRACKET).spaceIf(pySettings.SPACE_BEFORE_LBRACKET)

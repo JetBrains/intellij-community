@@ -50,13 +50,13 @@ public class PyFormatterTest extends PyTestCase {
   public void testBlankLineBeforeFunction() {
     doTest();
   }
-  
+
   public void testStarArgument() {  // PY-1395
     doTest();
   }
 
   public void testDictLiteral() {  // PY-1461
-    doTest();    
+    doTest();
   }
 
   public void testListAssignment() {  // PY-1522
@@ -121,12 +121,12 @@ public class PyFormatterTest extends PyTestCase {
     CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).SPACE_BEFORE_METHOD_PARENTHESES = true;
     doTest();
   }
-  
+
   public void testOptionalAlignForMethodParameters() {  // PY-3995
     CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS = false;
     doTest();
   }
-  
+
   public void testNoAlignForMethodArguments() {  // PY-3995
     doTest();
   }
@@ -135,7 +135,7 @@ public class PyFormatterTest extends PyTestCase {
     CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
-  
+
   public void testLambdaColon() {
     doTest();
   }
@@ -145,6 +145,10 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testIndentInGenerator() {  // PY-6219
+    doTest();
+  }
+
+  public void testSpaceAroundDot() {  // PY-6908
     doTest();
   }
 
@@ -158,7 +162,7 @@ public class PyFormatterTest extends PyTestCase {
       " #  Extract from here to ...\n" +
       "   desired_impulse_response = {'dirac, 'gaussian', logistic_derivative'}\n" +
       "return desired,                o";
-    
+
     final PsiFile file = PyElementGenerator.getInstance(myFixture.getProject()).createDummyFile(LanguageLevel.PYTHON30, initial);
     final PsiElement reformatted = CodeStyleManager.getInstance(myFixture.getProject()).reformat(file);
 
@@ -176,7 +180,7 @@ public class PyFormatterTest extends PyTestCase {
     assertEquals(expected, reformatted.getText());
   }
 
- private void doTest() {
+  private void doTest() {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override

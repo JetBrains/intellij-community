@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Comparing;
@@ -124,7 +123,7 @@ public class ImportFromExistingAction implements QuestionAction {
     final Project project = myTarget.getProject();
     final PyElementGenerator gen = PyElementGenerator.getInstance(project);
     AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, item.getFile());
-    if (isRoot(project, item.getFile())) {
+    if (isRoot(item.getFile())) {
       AddImportHelper.addImportStatement(myTarget.getContainingFile(), myName, null, priority);
     }
     else {
@@ -170,11 +169,11 @@ public class ImportFromExistingAction implements QuestionAction {
     }
   }
 
-  public static boolean isRoot(Project project, PsiFileSystemItem directory) {
+  public static boolean isRoot(PsiFileSystemItem directory) {
     if (directory == null) return true;
     VirtualFile vFile = directory.getVirtualFile();
     if (vFile == null) return true;
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    ProjectFileIndex fileIndex = ProjectFileIndex.SERVICE.getInstance(directory.getProject());
     return Comparing.equal(fileIndex.getClassRootForFile(vFile), vFile) ||
            Comparing.equal(fileIndex.getContentRootForFile(vFile), vFile) ||
            Comparing.equal(fileIndex.getSourceRootForFile(vFile), vFile);

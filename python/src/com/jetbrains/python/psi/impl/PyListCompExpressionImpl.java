@@ -1,10 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.ResolveState;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.jetbrains.python.psi.ComprhForComponent;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyListCompExpression;
 import com.jetbrains.python.psi.types.PyType;

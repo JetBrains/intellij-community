@@ -6,7 +6,6 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;

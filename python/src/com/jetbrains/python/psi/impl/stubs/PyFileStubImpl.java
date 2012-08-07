@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl.stubs;
 
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
@@ -58,6 +59,6 @@ public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStu
 
   @Override
   public IStubFileElementType getType() {
-    return PythonLanguage.getInstance().getFileElementType();
+    return (IStubFileElementType) LanguageParserDefinitions.INSTANCE.forLanguage(PythonLanguage.getInstance()).getFileNodeType();
   }
 }

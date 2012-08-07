@@ -129,6 +129,7 @@ public class PyNames {
     "__mro__",
     "__name__",
     "__path__",
+    "__qualname__",
     "__self__",
     "__slots__",
     "__version__"

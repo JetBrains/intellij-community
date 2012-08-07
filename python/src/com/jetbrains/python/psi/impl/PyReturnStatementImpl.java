@@ -3,7 +3,6 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import org.jetbrains.annotations.Nullable;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReturnStatement;

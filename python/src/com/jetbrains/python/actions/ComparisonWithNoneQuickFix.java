@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyElementType;

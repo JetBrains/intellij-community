@@ -20,7 +20,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.endsWith;
-import static com.intellij.openapi.util.text.StringUtil.joinOrNull;
 import static com.intellij.openapi.util.text.StringUtil.startsWith;
 
 /**

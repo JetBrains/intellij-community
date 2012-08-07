@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyDelStatement;
 import com.jetbrains.python.psi.PyElementVisitor;
