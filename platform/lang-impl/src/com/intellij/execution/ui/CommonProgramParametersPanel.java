@@ -37,7 +37,6 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,8 +85,8 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
       }
     }) {
       @Override
-      protected void installPathCompletion(@Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
-        super.installPathCompletion(project, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor) {
+        super.installPathCompletion(FileChooserDescriptorFactory.createSingleFolderDescriptor());
       }
     };
     panel.add(myWorkingDirectoryField, BorderLayout.CENTER);

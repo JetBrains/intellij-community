@@ -38,12 +38,15 @@ public class MinusculeMatcher implements Matcher {
   public MinusculeMatcher(String pattern, NameUtil.MatchingCaseSensitivity options) {
     myOptions = options;
     myPattern = StringUtil.trimEnd(pattern, "* ").toCharArray();
-    for (int i = 1; i < myPattern.length; i++) {
-      char c = myPattern[i];
-      if (Character.isUpperCase(c)) {
+    int i = 0;
+    while (isWildcard(i)) i++;
+    i++;
+    while (i < myPattern.length) {
+      if (Character.isUpperCase(myPattern[i])) {
         myHasHumps = true;
         return;
       }
+      i++;
     }
     myHasHumps = false;
   }

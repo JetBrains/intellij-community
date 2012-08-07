@@ -15,9 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -42,11 +40,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   public TextFieldWithBrowseButton(JTextField field, @Nullable ActionListener browseActionListener) {
     super(field, browseActionListener);
     if (ApplicationManager.getApplication() != null) {
-      final DataManager manager = DataManager.getInstance();
-      if (manager != null) {
-        installPathCompletion(PlatformDataKeys.PROJECT.getData(manager.getDataContext()),
-                              FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
-      }
+      installPathCompletion(FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     }
   }
 
@@ -56,14 +50,15 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
 
   public void addBrowseFolderListener(@Nullable String title, @Nullable String description, @Nullable Project project, FileChooserDescriptor fileChooserDescriptor) {
     addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
-    installPathCompletion(project, fileChooserDescriptor);
+    installPathCompletion(fileChooserDescriptor);
   }
 
-  protected void installPathCompletion(final @Nullable Project project, final FileChooserDescriptor fileChooserDescriptor) {
-    installPathCompletion(project, fileChooserDescriptor, null);
+  protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor) {
+    installPathCompletion(fileChooserDescriptor, null);
   }
 
-  protected void installPathCompletion(final @Nullable Project project, final FileChooserDescriptor fileChooserDescriptor, @Nullable Disposable parent) {
+  protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor,
+                                       @Nullable Disposable parent) {
     final Application application = ApplicationManager.getApplication();
      if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
      FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, parent);
@@ -111,7 +106,7 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
       super(browseActionListener);
     }
 
-    protected void installPathCompletion(final Project project, final FileChooserDescriptor fileChooserDescriptor) {
+    protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor) {
     }
   }
 }
