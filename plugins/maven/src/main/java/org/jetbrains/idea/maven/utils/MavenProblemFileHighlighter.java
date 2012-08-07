@@ -15,30 +15,29 @@
  */
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.model.MavenConstants;
 
 public class MavenProblemFileHighlighter implements Condition<VirtualFile> {
-  private final Project myProject;
-
-  public MavenProblemFileHighlighter(Project project) {
-    myProject = project;
-  }
 
   public boolean value(final VirtualFile file) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-      return psiFile != null && MavenDomUtil.isMavenFile(psiFile);
+    String fileName = file.getName();
+
+    // MavenDomUtil.isProjectFile(PsiFile)
+    if (fileName.equals(MavenConstants.POM_XML) || fileName.endsWith(".pom") || fileName.equals(MavenConstants.SUPER_POM_XML)) {
+      return true;
     }
-    finally {
-      accessToken.finish();
+
+    // MavenDomUtil.isProfilesFile(PsiFile)
+    if (fileName.equals(MavenConstants.PROFILES_XML)) {
+      return true;
     }
+
+    if (fileName.equals(MavenConstants.SETTINGS_XML)) {
+      return true;
+    }
+
+    return false;
   }
 }
