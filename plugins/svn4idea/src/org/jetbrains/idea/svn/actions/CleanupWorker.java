@@ -111,7 +111,11 @@ public class CleanupWorker {
           }
         });
         for (final VirtualFile root : myRoots) {
-          manager.fileDirty(root);
+          if (root.isDirectory()) {
+            manager.dirDirtyRecursively(root);
+          } else {
+            manager.fileDirty(root);
+          }
         }
 
         if (! exceptions.isEmpty()) {
