@@ -3,7 +3,7 @@
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_logo.png" textcolor="B7C9B5"/>
   <about url="/pycharm_about.png"/>
-  <icon size32="/PyCharm_32.png" size16="/PyCharm_16.png" size32opaque="/PyCharm_32.png" size12="/PyCharm_12.png"/>
+  <icon size32="/PyCharm_32.png" size16="/PyCharm_16.png" size32opaque="/PyCharm_32.png" size12="/PyCharm_13.png"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm" script="charm"/>
   <install-over minbuild="0" maxbuild="0" version="1.x"/>
