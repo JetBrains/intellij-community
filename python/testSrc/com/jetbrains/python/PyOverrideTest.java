@@ -85,4 +85,12 @@ public class PyOverrideTest extends PyTestCase {
   public void testReturnAnnotation() {  // PY-2690
     doTest3k();
   }
+
+  public void testSingleStar() {  // PY-6455
+    doTest3k();
+  }
+
+  public void testStarArgs() {  // PY-6455
+    doTest3k();
+  }
 }

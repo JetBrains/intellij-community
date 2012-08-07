@@ -18,9 +18,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFunctionBuilder;
@@ -163,17 +160,24 @@ public class PyOverrideImplementUtil {
     assert baseClass != null;
     StringBuilder statementBody = new StringBuilder();
 
-    String[] paramTexts = ContainerUtil.map(baseParams, new Function<PyParameter, String>() {
-      @Override
-      public String fun(PyParameter pyParameter) {
-        final PyNamedParameter pyNamedParameter = pyParameter.getAsNamed();
-        if (pyNamedParameter != null) {
-          return pyNamedParameter.getRepr(false);
+    boolean hadStar = false;
+    List<String> parameters = new ArrayList<String>();
+    for (PyParameter parameter: baseParams) {
+      final PyNamedParameter pyNamedParameter = parameter.getAsNamed();
+      if (pyNamedParameter != null) {
+        String repr = pyNamedParameter.getRepr(false);
+        parameters.add(hadStar ? pyNamedParameter.getName() + "=" + repr : repr);
+        if (pyNamedParameter.isPositionalContainer()) {
+          hadStar = true;
         }
-        return pyParameter.getText();
       }
-    }, ArrayUtil.EMPTY_STRING_ARRAY);
-    int startIndex = 0;
+      else if (parameter instanceof PySingleStarParameter) {
+        hadStar = true;
+      }
+      else {
+        parameters.add(parameter.getText());
+      }
+    }
 
     if (PyNames.FAKE_OLD_BASE.equals(baseFunction.getContainingClass().getName())) {
       statementBody.append(PyNames.PASS);
@@ -190,12 +194,14 @@ public class PyOverrideImplementUtil {
           statementBody.append(pyClass.getName()).append(", ").append(PyUtil.getFirstParameterName(baseFunction));
         }
         statementBody.append(").").append(baseFunction.getName()).append("(");
-        startIndex = 1;
+        if (parameters.size() > 0) {
+          parameters.remove(0);
+        }
       }
       else {
         statementBody.append(getReferenceText(pyClass, baseClass)).append(".").append(baseFunction.getName()).append("(");
       }
-      statementBody.append(StringUtil.join(paramTexts, startIndex, paramTexts.length, ", "));
+      statementBody.append(StringUtil.join(parameters, ", "));
       statementBody.append(")");
     }
 
