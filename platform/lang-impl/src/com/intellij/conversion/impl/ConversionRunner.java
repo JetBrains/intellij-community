@@ -75,7 +75,11 @@ public class ConversionRunner {
     myProcessProjectLibraries = myProjectLibrariesConverter != null
                                  && myProjectLibrariesConverter.isConversionNeeded(myContext.getProjectLibrariesSettings());
 
-    return myProcessProjectFile || myProcessWorkspaceFile || myProcessRunConfigurations || !myModulesFilesToProcess.isEmpty();
+    return myProcessProjectFile ||
+           myProcessWorkspaceFile ||
+           myProcessRunConfigurations ||
+           !myModulesFilesToProcess.isEmpty() ||
+           myConverter.isConversionNeeded();
   }
 
   public boolean isModuleConversionNeeded(File moduleFile) throws CannotConvertException {
