@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
@@ -209,7 +210,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertEquals(5, virtualFile.getLength());
 
     FileUtil.writeToFile(file, "new content");
-    PersistentFS.cleanPersistedContents();
+    ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
     s = VfsUtilCore.loadText(virtualFile);
     assertEquals("new content", s);
     assertEquals(11, virtualFile.getLength());
@@ -317,5 +318,25 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     virtualFile.refresh(false, false);
     assertFalse(virtualFile.exists());
     assertFalse(virtualFile.isValid());
+  }
+
+  public void testBadFileName() throws Exception {
+    if (!SystemInfo.isUnix) {
+      System.err.println(getName() + " skipped: " + SystemInfo.OS_NAME);
+      return;
+    }
+
+    final File dir = FileUtil.createTempDirectory("test.", ".dir");
+    final File file = FileUtil.createTempFile(dir, "test\\", "\\txt", true);
+
+    final VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+    assertNotNull(vDir);
+    assertEquals(0, vDir.getChildren().length);
+
+    ((VirtualFileSystemEntry)vDir).markDirtyRecursively();
+    vDir.refresh(false, true);
+
+    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    assertNull(vFile);
   }
 }

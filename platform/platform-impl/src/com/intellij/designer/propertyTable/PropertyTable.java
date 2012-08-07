@@ -200,7 +200,7 @@ public abstract class PropertyTable extends JBTable {
         @Override
         public void run() throws Exception {
           for (PropertiesContainer component : myContainers) {
-            if (!property.isDefaultValue(component)) {
+            if (!property.isRecursiveDefault(component)) {
               property.setDefaultValue(component);
             }
           }
@@ -427,16 +427,16 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private void fillProperties(PropertiesContainer<?> component, List<Property> properties) {
-    for (Property property : component.getProperties()) {
-      addProperty(component, property, properties);
+  private void fillProperties(PropertiesContainer<?> container, List<Property> properties) {
+    for (Property property : container.getProperties()) {
+      addProperty(container, property, properties);
     }
   }
 
-  private void addProperty(PropertiesContainer<?> component, Property property, List<Property> properties) {
+  private void addProperty(PropertiesContainer<?> container, Property property, List<Property> properties) {
     if (property.isExpert() && !myShowExpertProperties) {
       try {
-        if (property.isDefaultValue(component)) {
+        if (property.isRecursiveDefault(container)) {
           return;
         }
       }
@@ -449,7 +449,7 @@ public abstract class PropertyTable extends JBTable {
 
     if (isExpanded(property)) {
       for (Property child : getChildren(property)) {
-        addProperty(component, child, properties);
+        addProperty(container, child, properties);
       }
     }
   }
@@ -557,7 +557,7 @@ public abstract class PropertyTable extends JBTable {
 
   public boolean isDefault(Property property) throws Exception {
     for (PropertiesContainer component : myContainers) {
-      if (!property.isDefaultValue(component)) {
+      if (!property.isRecursiveDefault(component)) {
         return false;
       }
     }
@@ -1142,7 +1142,12 @@ public abstract class PropertyTable extends JBTable {
 
       boolean isDefault = true;
       try {
-        isDefault = isDefault(property);
+        for (PropertiesContainer container : myContainers) {
+          if (!property.showAsDefault(container)) {
+            isDefault = false;
+            break;
+          }
+        }
       }
       catch (Exception e) {
         LOG.debug(e);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,14 @@ public class VFileMoveEvent extends VFileEvent {
   private final VirtualFile myOldParent;
   private final VirtualFile myNewParent;
 
-  public VFileMoveEvent(Object requestor, final VirtualFile file, final VirtualFile newParent) {
+  public VFileMoveEvent(final Object requestor, @NotNull final VirtualFile file, final VirtualFile newParent) {
     super(requestor, false);
     myFile = file;
     myNewParent = newParent;
     myOldParent = file.getParent();
   }
 
+  @NotNull
   @Override
   public VirtualFile getFile() {
     return myFile;

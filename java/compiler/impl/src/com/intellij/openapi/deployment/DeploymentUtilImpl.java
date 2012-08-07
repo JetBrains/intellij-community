@@ -50,6 +50,9 @@ public class DeploymentUtilImpl extends DeploymentUtil {
                        @Nullable Set<String> writtenPaths,
                        @Nullable FileFilter fileFilter) throws IOException {
     if (fileFilter != null && !fileFilter.accept(fromFile)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Skipping " + fromFile.getAbsolutePath() + ": it wasn't accepted by filter " + fileFilter);
+      }
       return;
     }
     checkPathDoNotNavigatesUpFromFile(fromFile);
@@ -69,13 +72,19 @@ public class DeploymentUtilImpl extends DeploymentUtil {
     }
     if (fromFile.equals(toFile)
         || writtenPaths != null && !writtenPaths.add(toFile.getPath())) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Skipping " + fromFile.getAbsolutePath() + ": " + toFile.getAbsolutePath() + " is already written");
+      }
       return;
     }
-    if (!FileUtil.isFilePathAcceptable(toFile, fileFilter)) return;
-    if (context.getProgressIndicator() != null) {
-      context.getProgressIndicator().setText("Copying files");
-      context.getProgressIndicator().setText2(fromFile.getPath());
+    if (!FileUtil.isFilePathAcceptable(toFile, fileFilter)) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Skipping " + fromFile.getAbsolutePath() + ": " + toFile.getAbsolutePath() + " wasn't accepted by filter " + fileFilter);
+      }
+      return;
     }
+    context.getProgressIndicator().setText("Copying files");
+    context.getProgressIndicator().setText2(fromFile.getPath());
     try {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Copy file '" + fromFile + "' to '"+toFile+"'");

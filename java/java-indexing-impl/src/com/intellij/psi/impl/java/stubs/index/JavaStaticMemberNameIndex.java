@@ -45,9 +45,4 @@ public class JavaStaticMemberNameIndex extends StringStubIndexExtension<PsiMembe
   public Collection<PsiMember> getStaticMembers(final String name, final Project project, @NotNull final GlobalSearchScope scope) {
     return super.get(name, project, new JavaSourceFilterScope(scope));
   }
-
-  @Override
-  public boolean isKeyHighlySelective() {
-    return true;
-  }
 }

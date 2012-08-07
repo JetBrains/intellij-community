@@ -60,6 +60,10 @@ public abstract class ProjectConverter {
     return Collections.emptyList();
   }
 
+  public boolean isConversionNeeded() {
+    return false;
+  }
+
   public void preProcessingFinished() throws CannotConvertException {
   }
 

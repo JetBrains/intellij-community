@@ -107,7 +107,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   }
 
   /**
-   * Not intended to be overriden or called by implementors.
+   * Not intended to be overridden or called by implementors.
    * Override {@link #checkFileElement(com.intellij.util.xml.DomFileElement, DomElementAnnotationHolder)} (which is preferred) or
    * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} instead.
    */
@@ -117,6 +117,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
       for (Class<? extends T> domClass: myDomClasses) {
         final DomFileElement<? extends T> fileElement = DomManager.getDomManager(file.getProject()).getFileElement((XmlFile)file, domClass);
         if (fileElement != null) {
+          //noinspection unchecked
           return checkDomFile((DomFileElement<T>)fileElement, manager, isOnTheFly);
         }
       }
@@ -134,15 +135,17 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   }
 
   /**
-   * not intended to be overriden or called by implementors
+   * not intended to be overridden or called by implementors
    */
   @Nullable
   protected ProblemDescriptor[] checkDomFile(@NotNull final DomFileElement<T> domFileElement,
                                              @NotNull final InspectionManager manager,
-                                             final boolean isOnTheFly) {
+                                             @SuppressWarnings("UnusedParameters") final boolean isOnTheFly) {
     final DomElementAnnotationsManager annotationsManager = DomElementAnnotationsManager.getInstance(manager.getProject());
 
     final List<DomElementProblemDescriptor> list = annotationsManager.checkFileElement(domFileElement, this);
+    if (list.isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
+
     List<ProblemDescriptor> problems =
       ContainerUtil.concat(list, new Function<DomElementProblemDescriptor, Collection<? extends ProblemDescriptor>>() {
         public Collection<ProblemDescriptor> fun(final DomElementProblemDescriptor s) {

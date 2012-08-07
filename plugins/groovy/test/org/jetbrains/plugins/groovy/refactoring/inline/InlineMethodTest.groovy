@@ -13,39 +13,33 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.inline;
+package org.jetbrains.plugins.groovy.refactoring.inline
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.refactoring.InlineHandler;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.refactoring.inline.GenericInlineHandler;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import junit.framework.Assert;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-
-import java.util.List;
-
+import com.intellij.lang.ASTNode
+import com.intellij.lang.refactoring.InlineHandler
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
+import com.intellij.psi.impl.source.tree.TreeElement
+import com.intellij.refactoring.inline.GenericInlineHandler
+import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import junit.framework.Assert
+import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
+import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
 public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
-  @Override
-  protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/refactoring/inlineMethod/";
-  }
+  final String basePath = TestUtils.testDataPath + "groovy/refactoring/inlineMethod/";
 
   public void testAbstr1() throws Throwable { doTest(); }
   public void testBlock1() throws Throwable { doTest(); }
@@ -105,31 +99,27 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
   public void testVarargs() {doTest();}
 
-  public void testInlineAll() throws Throwable {
+  public void testInlineAll() {
     doTest(new GroovyInlineHandler() {
       @Override
-      public Settings prepareInlineElement(PsiElement element, Editor editor, boolean invokedOnReference) {
-        return new Settings() {
+      public InlineHandler.Settings prepareInlineElement(PsiElement element, Editor editor, boolean invokedOnReference) {
+        return new InlineHandler.Settings() {
           @Override
-          public boolean isOnlyOneReferenceToInline() {
-            return false;
-          }
-        };
+          boolean isOnlyOneReferenceToInline() {false}
+        }
       }
-    });
+    })
   }
   
-  public void testInlineNamedArgs() {
-    doTest();
-  }
+  public void testInlineNamedArgs() {doTest(); }
+  public void testInlineVarargs() {doTest()}
 
   protected void doTest() {
     doTest(new GroovyInlineHandler());
-
   }
 
   protected void doTest(InlineHandler handler) {
-    doInlineTest(myFixture, getTestDataPath() + getTestName(true) + ".test", handler);
+    doInlineTest(myFixture, testDataPath + getTestName(true) + ".test", handler);
   }
 
   public static void doInlineTest(final JavaCodeInsightTestFixture fixture,
@@ -140,32 +130,32 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
 
     fixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, fileText);
 
-    final PsiFile file = fixture.getFile();
-    final Editor editor = fixture.getEditor();
-    setIndentationToNode(file.getNode());
-    int startOffset = editor.getSelectionModel().getSelectionStart();
-    int endOffset = editor.getSelectionModel().getSelectionEnd();
-    editor.getCaretModel().moveToOffset(endOffset);
+    final PsiFile file = fixture.file;
+    final Editor editor = fixture.editor;
+    indentationToNode = file.node;
+    int startOffset = editor.selectionModel.selectionStart;
+    int endOffset = editor.selectionModel.selectionEnd;
+    editor.caretModel.moveToOffset(endOffset);
 
     GroovyPsiElement selectedArea = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, GrReferenceExpression.class);
     if (selectedArea == null) {
     PsiElement identifier = GroovyRefactoringUtil.findElementInRange(file, startOffset, endOffset, PsiElement.class);
     if (identifier != null){
-      Assert.assertTrue("Selected area doesn't point to method", identifier.getParent() instanceof GrVariable);
-      selectedArea = (GroovyPsiElement)identifier.getParent();
+      Assert.assertTrue("Selected area doesn't point to method", identifier.parent instanceof GrVariable);
+      selectedArea = (GroovyPsiElement)identifier.parent;
     }
   }
     Assert.assertNotNull("Selected area reference points to nothing", selectedArea);
-    PsiElement element = selectedArea instanceof GrExpression ? selectedArea.getReference().resolve() : selectedArea;
+    PsiElement element = selectedArea instanceof GrExpression ? selectedArea.reference.resolve() : selectedArea;
     Assert.assertNotNull("Cannot resolve selected reference expression", element);
 
     try {
       GenericInlineHandler.invoke(element, editor, inlineHandler);
-      editor.getSelectionModel().removeSelection();
+      editor.selectionModel.removeSelection();
       fixture.checkResult(data.get(1), true);
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
-      assertEquals(data.get(1), "FAIL: " + e.getMessage());
+      assertEquals(data.get(1), "FAIL: " + e.message);
     }
   }
 
@@ -174,7 +164,7 @@ public class InlineMethodTest extends LightCodeInsightFixtureTestCase {
       CodeEditUtil.setOldIndentation(((TreeElement) element), 0);
     }
     for (ASTNode node : element.getChildren(null)) {
-      setIndentationToNode(node);
+      indentationToNode = node;
     }
   }
 

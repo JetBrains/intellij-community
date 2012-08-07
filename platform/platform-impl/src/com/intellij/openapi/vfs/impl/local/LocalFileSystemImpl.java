@@ -136,7 +136,7 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     });
-    ((PersistentFS)ManagingFS.getInstance()).clearIdCache();
+    PersistentFS.getInstance().clearIdCache();
 
     for (VirtualFile root : ManagingFS.getInstance().getRoots(this)) {
       if (root instanceof VirtualDirectoryImpl) {

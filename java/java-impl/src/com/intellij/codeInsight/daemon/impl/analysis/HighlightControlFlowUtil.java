@@ -694,7 +694,7 @@ public class HighlightControlFlowUtil {
       return highlightInfo;
     }  else {
       final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(context, PsiLambdaExpression.class);
-      if (lambdaExpression != null) {
+      if (lambdaExpression != null && !PsiTreeUtil.isAncestor(lambdaExpression, variable, true)) {
         boolean effectivelyFinal;
         if (variable instanceof PsiParameter) {
           final PsiElement parent = variable.getParent();

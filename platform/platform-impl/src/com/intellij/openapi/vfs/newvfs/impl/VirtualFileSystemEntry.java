@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.io.IOUtil;
@@ -45,7 +44,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private static final Key<String> SYMLINK_TARGET = Key.create("SYMLINK_TARGET");
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
-  protected static final PersistentFS ourPersistence = (PersistentFS)ManagingFS.getInstance();
+  protected static final PersistentFS ourPersistence = PersistentFS.getInstance();
 
   private static final byte DIRTY_FLAG = 0x01;
   private static final byte HAS_SYMLINK_FLAG = 0x02;

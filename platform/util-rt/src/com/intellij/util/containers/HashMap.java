@@ -13,26 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon;
+package com.intellij.util.containers;
 
-import org.jetbrains.annotations.NonNls;
+import java.util.Map;
 
-public class LambdaParamsTest extends LightDaemonAnalyzerTestCase {
-  @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/params";
+@SuppressWarnings("ClassNameSameAsAncestorName")
+public class HashMap<K, V> extends java.util.HashMap<K, V> {
+  public HashMap() { }
 
-  public void testFormalParams() throws Exception {
-    doTest();
-  }
-  
-  public void testInferredParams() throws Exception {
-    doTest();
+  public HashMap(int i, float v) {
+    super(i, v);
   }
 
-  public void testMethodApplicability() throws Exception {
-    doTest();
+  public HashMap(int i) {
+    super(i);
   }
 
-  private void doTest() throws Exception {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", false, false);
+  public <K1 extends K, V1 extends V> HashMap(Map<K1, V1> map) {
+    super(map);
+  }
+
+  public void clear() {
+    if (size() == 0) return; // optimization
+    super.clear();
   }
 }

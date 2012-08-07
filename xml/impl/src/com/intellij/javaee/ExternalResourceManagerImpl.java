@@ -101,9 +101,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NonNls private static final String URL_ATTR = "url";
   @NonNls private static final String LOCATION_ATTR = "location";
   @NonNls private static final String IGNORED_RESOURCE_ELEMENT = "ignored-resource";
-  @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-doctype";
+  @NonNls private static final String HTML_DEFAULT_DOCTYPE_ELEMENT = "default-html-language-level";
   private static final String DEFAULT_VERSION = null;
   @NonNls public static final String STANDARD_SCHEMAS = "/standardSchemas/";
+
+  public static String HTML5_DOCTYPE_ELEMENT = "HTML5";
 
   public ExternalResourceManagerImpl(PathMacrosImpl pathMacros) {
     myPathMacros = pathMacros;
@@ -361,7 +363,14 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
     Element child = element.getChild(HTML_DEFAULT_DOCTYPE_ELEMENT);
     if (child != null) {
-      myDefaultHtmlDoctype = child.getText();
+      final String text = child.getText();
+
+      if (HTML5_DOCTYPE_ELEMENT.equals(text)) {
+        myDefaultHtmlDoctype = Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
+      }
+      else {
+        myDefaultHtmlDoctype = text;
+      }
     }
     Element catalogElement = element.getChild(CATALOG_PROPERTIES_ELEMENT);
     if (catalogElement != null) {
@@ -392,7 +401,14 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
     if (myDefaultHtmlDoctype != null) {
       final Element e = new Element(HTML_DEFAULT_DOCTYPE_ELEMENT);
-      e.setText(myDefaultHtmlDoctype);
+
+      if (Html5SchemaProvider.HTML5_SCHEMA_LOCATION.equals(myDefaultHtmlDoctype)) {
+        // do not store the path to html5 schema in project settings
+        e.setText(HTML5_DOCTYPE_ELEMENT);
+      }
+      else {
+        e.setText(myDefaultHtmlDoctype);
+      }
       element.addContent(e);
     }
     if (myCatalogPropertiesFile != null) {

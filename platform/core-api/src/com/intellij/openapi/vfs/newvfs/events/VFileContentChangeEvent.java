@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,14 +30,18 @@ public class VFileContentChangeEvent extends VFileEvent {
   private final long myOldModificationStamp;
   private final long myNewModificationStamp;
 
-  public VFileContentChangeEvent(final Object requestor, @NotNull VirtualFile file, long oldModificationStamp, long newModificationStamp, boolean isFromRefresh) {
+  public VFileContentChangeEvent(final Object requestor,
+                                 @NotNull final VirtualFile file,
+                                 final long oldModificationStamp,
+                                 final long newModificationStamp,
+                                 final boolean isFromRefresh) {
     super(requestor, isFromRefresh);
-
     myFile = file;
     myOldModificationStamp = oldModificationStamp;
     myNewModificationStamp = newModificationStamp == -1 ? LocalTimeCounter.currentTime() : newModificationStamp;
   }
 
+  @NotNull
   @Override
   public VirtualFile getFile() {
     return myFile;

@@ -51,6 +51,7 @@ public class MavenImportingSettingsForm {
   private JPanel myAdditionalSettingsPanel;
   private JPanel mySeparateModulesDirPanel;
   private JComboBox myGeneratedSourcesComboBox;
+  private JCheckBox myExcludeTargetFolderCheckBox;
 
   public MavenImportingSettingsForm(boolean isImportStep, boolean isCreatingNewProject) {
     mySearchRecursivelyCheckBox.setVisible(isImportStep);
@@ -111,6 +112,7 @@ public class MavenImportingSettingsForm {
     data.setCreateModuleGroups(myCreateGroupsCheckBox.isSelected());
 
     data.setKeepSourceFolders(myKeepSourceFoldersCheckBox.isSelected());
+    data.setExcludeTargetFolder(myExcludeTargetFolderCheckBox.isSelected());
     data.setUseMavenOutput(myUseMavenOutputCheckBox.isSelected());
 
     data.setUpdateFoldersOnImportPhase((String)myUpdateFoldersOnImportPhaseComboBox.getSelectedItem());
@@ -131,6 +133,7 @@ public class MavenImportingSettingsForm {
     myCreateGroupsCheckBox.setSelected(data.isCreateModuleGroups());
 
     myKeepSourceFoldersCheckBox.setSelected(data.isKeepSourceFolders());
+    myExcludeTargetFolderCheckBox.setSelected(data.isExcludeTargetFolder());
     myUseMavenOutputCheckBox.setSelected(data.isUseMavenOutput());
 
     myUpdateFoldersOnImportPhaseComboBox.setSelectedItem(data.getUpdateFoldersOnImportPhase());

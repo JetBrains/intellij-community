@@ -20,6 +20,8 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
@@ -103,18 +105,19 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     finally {
       accessToken.finish();
     }
+    final Document document = editor.getDocument();
     if (expressions.size() == 1) {
-      invokeImpl(expressions.get(0));
+      invokeImpl(expressions.get(0), document);
     }
     else if (expressions.size() > 0) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        invokeImpl(expressions.get(expressions.size() - 1));
+        invokeImpl(expressions.get(expressions.size() - 1), document);
         return;
       }
       IntroduceTargetChooser.showChooser(editor, expressions,
                                          new Pass<GrExpression>() {
                                            public void pass(final GrExpression selectedValue) {
-                                             invokeImpl(selectedValue);
+                                             invokeImpl(selectedValue, document);
                                            }
                                          },
                                          new Function<GrExpression, String>() {
@@ -127,7 +130,7 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     }
   }
 
-  private static void invokeImpl(PsiElement element) {
+  private static void invokeImpl(final PsiElement element, Document document) {
     boolean isMultiline = containsMultilineStrings((GrExpression)element);
 
     StringBuilder builder = new StringBuilder(element.getTextLength());
@@ -145,16 +148,21 @@ public class ConvertConcatenationToGstringIntention extends Intention {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrExpression newExpr = factory.createExpressionFromText(GrStringUtil.addQuotes(text, true));
 
-    final AccessToken accessToken = WriteAction.start();
-    try {
-      final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
-      if (expression instanceof GrString) {
-        GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
+    CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
+      @Override
+      public void run() {
+        final AccessToken accessToken = WriteAction.start();
+        try {
+          final GrExpression expression = ((GrExpression)element).replaceWithExpression(newExpr, true);
+          if (expression instanceof GrString) {
+            GrStringUtil.removeUnnecessaryBracesInGString((GrString)expression);
+          }
+        }
+        finally {
+          accessToken.finish();
+        }
       }
-    }
-    finally {
-      accessToken.finish();
-    }
+    }, null, null, document);
   }
 
   private static boolean containsMultilineStrings(GrExpression expr) {

@@ -135,7 +135,7 @@ public class MavenFoldersImporter {
   }
 
   @NotNull
-  private List<Pair<Path, Boolean>> normalize(@NotNull List<Pair<Path, Boolean>> folders) {
+  private static List<Pair<Path, Boolean>> normalize(@NotNull List<Pair<Path, Boolean>> folders) {
     List<Pair<Path, Boolean>> result = new ArrayList<Pair<Path, Boolean>>(folders.size());
     for (Pair<Path, Boolean> eachToAdd : folders) {
       addSourceFolder(eachToAdd, result);
@@ -143,7 +143,7 @@ public class MavenFoldersImporter {
     return result;
   }
 
-  private void addSourceFolder(Pair<Path, Boolean> folder, List<Pair<Path, Boolean>> result) {
+  private static void addSourceFolder(Pair<Path, Boolean> folder, List<Pair<Path, Boolean>> result) {
     for (Pair<Path, Boolean> eachExisting : result) {
       if (MavenRootModelAdapter.isEqualOrAncestor(eachExisting.first.getPath(), folder.first.getPath())
           || MavenRootModelAdapter.isEqualOrAncestor(folder.first.getPath(), eachExisting.first.getPath())) {
@@ -178,9 +178,11 @@ public class MavenFoldersImporter {
         configGeneratedSourceFolder(f, isGeneratedTestSources);
       }
       else {
-        if (myModel.hasRegisteredSourceSubfolder(f)) continue;
-        if (myModel.isAlreadyExcluded(f)) continue;
-        myModel.addExcludedFolder(f.getPath());
+        if (myImportingSettings.isExcludeTargetFolder()) {
+          if (myModel.hasRegisteredSourceSubfolder(f)) continue;
+          if (myModel.isAlreadyExcluded(f)) continue;
+          myModel.addExcludedFolder(f.getPath());
+        }
       }
     }
 
@@ -196,8 +198,14 @@ public class MavenFoldersImporter {
       myModel.addExcludedFolder(eachFolder);
     }
 
-    if (!myModel.hasRegisteredSourceSubfolder(targetDir)) {
-      myModel.addExcludedFolder(targetDir.getPath());
+    if (myImportingSettings.isExcludeTargetFolder()) {
+      if (!myModel.hasRegisteredSourceSubfolder(targetDir)) {
+        myModel.addExcludedFolder(targetDir.getPath());
+      }
+    }
+    else {
+      myModel.addExcludedFolder(myMavenProject.getOutputDirectory());
+      myModel.addExcludedFolder(myMavenProject.getTestOutputDirectory());
     }
   }
 

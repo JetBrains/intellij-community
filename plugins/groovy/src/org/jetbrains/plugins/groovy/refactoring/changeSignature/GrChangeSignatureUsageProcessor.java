@@ -516,6 +516,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
                 (i != parameters.length - 1 || !parameter.isVarargType())) {
               final PsiType type = parameter.createType(changeInfo.getMethod().getParameterList(), argumentList.getManager());
               final GrExpression arg = GroovyRefactoringUtil.generateArgFromMultiArg(substitutor, arguments, type, element.getProject());
+              for (PsiElement argument : arguments) {
+                argument.delete();
+              }
               anchor = argumentList.addAfter(arg, anchor);
               GrReferenceAdjuster.shortenReferences(anchor);
             }

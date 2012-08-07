@@ -67,7 +67,7 @@ public class FileSystemUtil {
     final boolean forceUseNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
 
     if (!forceUseNio2) {
-      if (SystemInfo.isWindows) {
+      if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
         try {
           return check(new IdeaWin32MediatorImpl());
         }
@@ -133,7 +133,7 @@ public class FileSystemUtil {
   @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public static FileAttributes getAttributes(@NotNull final File file) {
-    return getAttributes(file.getAbsolutePath());
+    return getAttributes(file.getPath());
   }
 
   public static boolean isSymLink(@NotNull final String path) {

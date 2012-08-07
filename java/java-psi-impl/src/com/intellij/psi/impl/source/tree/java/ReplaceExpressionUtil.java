@@ -86,7 +86,8 @@ public class ReplaceExpressionUtil {
     else if (i == JavaElementType.LITERAL_EXPRESSION ||
              i == JavaElementType.THIS_EXPRESSION ||
              i == JavaElementType.SUPER_EXPRESSION ||
-             i == JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION) {
+             i == JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION ||
+             i == JavaElementType.LAMBDA_EXPRESSION) {
       return false;
     }
 

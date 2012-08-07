@@ -40,6 +40,7 @@ public class MavenImportingSettings implements Cloneable {
   private boolean importAutomatically = false;
   private boolean createModulesForAggregators = true;
   private boolean createModuleGroups = false;
+  private boolean excludeTargetFolder = true;
   private boolean keepSourceFolders = true;
   private boolean useMavenOutput = true;
   private String updateFoldersOnImportPhase = UPDATE_FOLDERS_DEFAULT_PHASE;
@@ -115,6 +116,14 @@ public class MavenImportingSettings implements Cloneable {
     this.keepSourceFolders = keepSourceFolders;
   }
 
+  public boolean isExcludeTargetFolder() {
+    return excludeTargetFolder;
+  }
+
+  public void setExcludeTargetFolder(boolean excludeTargetFolder) {
+    this.excludeTargetFolder = excludeTargetFolder;
+  }
+
   public boolean isUseMavenOutput() {
     return useMavenOutput;
   }
@@ -173,6 +182,7 @@ public class MavenImportingSettings implements Cloneable {
     if (downloadSourcesAutomatically != that.downloadSourcesAutomatically) return false;
     if (lookForNested != that.lookForNested) return false;
     if (keepSourceFolders != that.keepSourceFolders) return false;
+    if (excludeTargetFolder != that.excludeTargetFolder) return false;
     if (useMavenOutput != that.useMavenOutput) return false;
     if (generatedSourcesFolder != that.generatedSourcesFolder) return false;
     if (!dedicatedModuleDir.equals(that.dedicatedModuleDir)) return false;

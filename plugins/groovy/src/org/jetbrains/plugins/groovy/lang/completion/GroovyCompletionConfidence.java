@@ -20,8 +20,10 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.console.GroovyShellAction;
+import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -44,6 +46,11 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
   @Override
   public ThreeState shouldFocusLookup(@NotNull CompletionParameters parameters) {
     final PsiElement position = parameters.getPosition();
+
+    PsiFile file = position.getContainingFile();
+    if (file instanceof GroovyFile && GroovyScriptTypeDetector.getScriptType((GroovyFile)file) != GroovyScriptTypeDetector.DEFAULT_TYPE) {
+      return ThreeState.NO;
+    }
 
     if (position.getParent() instanceof GrReferenceElement &&
         psiElement().afterLeaf(psiElement().withText("(").withParent(GrForStatement.class)).accepts(position)) {

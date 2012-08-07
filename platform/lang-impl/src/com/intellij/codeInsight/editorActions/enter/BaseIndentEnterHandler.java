@@ -118,8 +118,9 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     if (type == myLineCommentType) {
       final String restString = editorCharSequence.subSequence(caret, document.getLineEndOffset(lineNumber)).toString();
       if (!StringUtil.isEmptyOrSpaces(restString)) {
-        EditorModificationUtil.insertStringAtCaret(editor, "\n" + lineIndent + myLineCommentPrefix);
-        editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, 1));
+        final String linePrefix = lineIndent + myLineCommentPrefix;
+        EditorModificationUtil.insertStringAtCaret(editor, "\n" + linePrefix);
+        editor.getCaretModel().moveToLogicalPosition(new LogicalPosition(lineNumber + 1, linePrefix.length()));
         return Result.Stop;
       }
       else if (iterator.getStart() < lineStartOffset) {

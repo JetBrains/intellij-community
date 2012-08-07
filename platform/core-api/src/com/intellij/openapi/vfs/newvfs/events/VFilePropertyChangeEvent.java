@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,12 @@ public class VFilePropertyChangeEvent extends VFileEvent {
   private final Object myOldValue;
   private final Object myNewValue;
 
-  public VFilePropertyChangeEvent(Object requestor, @NotNull VirtualFile file, @NotNull String propertyName, Object oldValue, Object newValue, boolean isFromRefresh) {
+  public VFilePropertyChangeEvent(final Object requestor,
+                                  @NotNull final VirtualFile file,
+                                  @NotNull final String propertyName,
+                                  final Object oldValue,
+                                  final Object newValue,
+                                  final boolean isFromRefresh) {
     super(requestor, isFromRefresh);
     myFile = file;
     myPropertyName = propertyName;
@@ -39,6 +44,7 @@ public class VFilePropertyChangeEvent extends VFileEvent {
     myNewValue = newValue;
   }
 
+  @NotNull
   @Override
   public VirtualFile getFile() {
     return myFile;

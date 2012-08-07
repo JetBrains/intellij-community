@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -64,7 +63,7 @@ public class RefreshWorker {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
 
-    final PersistentFS persistence = (PersistentFS)ManagingFS.getInstance();
+    final PersistentFS persistence = PersistentFS.getInstance();
 
     while (!myRefreshQueue.isEmpty()) {
       final VirtualFileSystemEntry file = (VirtualFileSystemEntry)myRefreshQueue.pullFirst();
@@ -100,8 +99,13 @@ public class RefreshWorker {
           }
 
           for (String name : newNames) {
-            boolean isDirectory = fs.isDirectory(new FakeVirtualFile(file, name));
-            scheduleCreation(file, name, isDirectory);
+            final FileAttributes childAttributes = fs.getAttributes(new FakeVirtualFile(file, name));
+            if (childAttributes != null) {
+              scheduleCreation(file, name, childAttributes.isDirectory());
+            }
+            else {
+              LOG.warn("fs=" + fs + " dir=" + file + " name=" + name);
+            }
           }
 
           for (VirtualFile child : file.getChildren()) {
@@ -111,7 +115,8 @@ public class RefreshWorker {
                 checkAndScheduleChildRefresh(file, child, childAttributes);
               }
               else {
-                LOG.error(child + " on " + fs);
+                LOG.warn("fs=" + fs + " dir=" + file + " name=" + child.getName());
+                scheduleDeletion(child);
               }
             }
           }

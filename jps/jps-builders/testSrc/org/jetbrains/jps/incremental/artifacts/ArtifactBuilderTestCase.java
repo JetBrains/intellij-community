@@ -28,6 +28,7 @@ import org.jetbrains.jps.incremental.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
@@ -114,7 +115,8 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   
   protected JpsArtifact addArtifact(String name, LayoutElementTestUtil.LayoutElementCreator root) {
     assertFalse("JpsArtifact " + name + " already exists", getArtifactNames().contains(name));
-    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myJpsProject, name, root.buildElement(), DirectoryArtifactType.INSTANCE);
+    JpsArtifact artifact = JpsArtifactService.getInstance().addArtifact(myJpsProject, name, root.buildElement(), DirectoryArtifactType.INSTANCE,
+                                                                        JpsElementFactory.getInstance().createDummyElement());
     artifact.setOutputPath(getAbsolutePath("out/artifacts/" + name));
     return artifact;
   }
