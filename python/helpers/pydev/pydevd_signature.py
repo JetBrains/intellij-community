@@ -73,7 +73,6 @@ class SignatureFactory(object):
                 dicts = [d for d in gc.get_referrers(funcs[0])
                          if isinstance(d, dict)]
                 if len(dicts) == 1:
-                    print([c for c in gc.get_referrers(dicts[0])])
                     classes = [c for c in gc.get_referrers(dicts[0])
                                if hasattr(c, "__bases__") or inspect.isclass(c)]
                 elif len(dicts) > 1:   #new-style classes
