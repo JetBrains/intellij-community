@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class CommandLineProcessor {
     int line = -1;
     for (int i = 0, argsSize = args.size(); i < argsSize; i++) {
       String arg = args.get(i);
-      if (arg.equals(StartupUtil.NOSPLASH)) {
+      if (arg.equals(StartupUtil.NO_SPLASH)) {
         continue;
       }
       if (arg.equals("-l") || arg.equals("--line")) {

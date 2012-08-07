@@ -15,6 +15,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.idea.StartupUtil;
 import com.intellij.util.io.DataInputOutputUtil;
 import org.xerial.snappy.Snappy;
 
@@ -28,26 +29,27 @@ import java.lang.reflect.Field;
  * @author Maxim.Mossienko
  */
 public class IOUtils {
-  private static volatile boolean canUseSnappy;
+  private static final boolean ourCanUseSnappy;
+
   static {
+    boolean canUseSnappy = false;
     try {
-      if (System.getProperty("idea.no.snappy") == null) { // if enabled
+      if (!StartupUtil.NO_SNAPPY) {
         Field impl = Snappy.class.getDeclaredField("impl");
         impl.setAccessible(true);
         canUseSnappy = impl.get(null) != null;
       }
-      else {
-        canUseSnappy = false;
-      }
     }
-    catch (Throwable e) {}
+    catch (Throwable ignored) { }
+
+    ourCanUseSnappy = canUseSnappy;
   }
 
   private static final int COMPRESSION_THRESHOLD = 64;
   private static final ThreadLocal<SoftReference<byte[]>> spareBufferLocal = new ThreadLocal<SoftReference<byte[]>>();
 
   public static int writeCompressed(DataOutput out, byte[] bytes, int length) throws IOException {
-    if (length > COMPRESSION_THRESHOLD && canUseSnappy) {
+    if (length > COMPRESSION_THRESHOLD && ourCanUseSnappy) {
       SoftReference<byte[]> reference = spareBufferLocal.get();
       byte[] compressedOutputBuffer = reference != null ? reference.get():null;
       int maxCompressedSize = 32 + length + length / 6; // snappy.cc#MaxCompressedLength
@@ -66,14 +68,14 @@ public class IOUtils {
     }
   }
 
-  public static final byte[] readCompressed(DataInput in) throws IOException {
+  public static byte[] readCompressed(DataInput in) throws IOException {
     int size = DataInputOutputUtil.readINT(in);
     byte[] bytes = new byte[Math.abs(size)];
     in.readFully(bytes);
     if (size >= 0) {
       return bytes;
     } else {
-      if (!canUseSnappy) throw new IOException("Can not read compressed data");
+      if (!ourCanUseSnappy) throw new IOException("Can not read compressed data");
       return Snappy.uncompress(bytes);
     }
   }

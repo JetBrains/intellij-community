@@ -42,7 +42,7 @@ public class IdeaWin32 {
 
   static {
     boolean available = false;
-    if (SystemInfo.isWindows) {
+    if (SystemInfo.isWindows && !SystemInfo.isWindows9x) {
       String libName = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
       try {
         String path = PathManager.getBinPath() + "/" + libName + ".dll";
@@ -60,7 +60,7 @@ public class IdeaWin32 {
         available = true;
       }
       catch (Throwable t) {
-        LOG.warn("Failed to load native filesystem for Windows", t);
+        LOG.error("Failed to load native filesystem for Windows", t);
       }
     }
 
