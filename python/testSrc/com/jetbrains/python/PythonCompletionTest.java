@@ -584,4 +584,8 @@ public class PythonCompletionTest extends PyTestCase {
   public void testNoInitForSubmodules() {
     doMultiFileTest();
   }
+
+  public void testUnknownNewReturnType() {  // PY-6671
+    doTest();
+  }
 }

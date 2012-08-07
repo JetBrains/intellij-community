@@ -162,6 +162,12 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
               }
             }
             if (t != null && !(t instanceof PyNoneType)) {
+              if (t instanceof PyTypeReference) {
+                PyType resolved = ((PyTypeReference)t).resolve(callee, context);
+                if (resolved == null) {
+                  return new PyWeakClassType(cls, false);
+                }
+              }
               return t;
             }
           }
