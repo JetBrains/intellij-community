@@ -287,8 +287,8 @@ private layoutFull(Map args, String target, Set usedJars) {
         module("forms_rt")
       }
 
-      jar("resources_en.jar") {
-        // custom resources go first
+      jar([name: "resources_en.jar", duplicate: "preserve"]) {
+        // custom resources should go first
         fileset(dir: "$home/python/resources") {
           include(name: "**/tips/**")
         }
