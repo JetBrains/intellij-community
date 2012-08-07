@@ -7,7 +7,6 @@ import com.intellij.usages.PsiNamedElementUsageGroupBase;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.impl.FileStructureGroupRuleProvider;
-import com.intellij.usages.impl.rules.FileGroupingRule;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.UsageGroupingRule;
 import com.jetbrains.python.psi.PyClass;

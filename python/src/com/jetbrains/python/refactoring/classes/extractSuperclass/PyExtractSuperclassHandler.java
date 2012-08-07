@@ -15,7 +15,6 @@ import com.jetbrains.python.refactoring.classes.PyClassMembersRefactoringSupport
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfo;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
-import com.jetbrains.python.refactoring.classes.pullUp.PyPullUpHelper;
 
 import java.util.Collection;
 

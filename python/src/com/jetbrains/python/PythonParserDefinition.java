@@ -15,6 +15,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.lexer.PythonIndentingLexer;
 import com.jetbrains.python.parsing.PyParser;
 import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.PyFileElementType;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import org.jetbrains.annotations.NotNull;
@@ -24,15 +25,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Keith Lea
  */
 public class PythonParserDefinition implements ParserDefinition {
-  private final PythonLanguage language;
-
   private final TokenSet myWhitespaceTokens;
   private final TokenSet myCommentTokens;
   private final TokenSet myStringLiteralTokens;
 
   public PythonParserDefinition() {
-    language = (PythonLanguage)PythonFileType.INSTANCE.getLanguage();
-
     myWhitespaceTokens = TokenSet.create(PyTokenTypes.LINE_BREAK, PyTokenTypes.SPACE, PyTokenTypes.TAB, PyTokenTypes.FORMFEED);
     myCommentTokens = TokenSet.create(PyTokenTypes.END_OF_LINE_COMMENT);
     myStringLiteralTokens = TokenSet.orSet(PyTokenTypes.STRING_NODES, TokenSet.create(PyElementTypes.STRING_LITERAL_EXPRESSION));
@@ -44,7 +41,7 @@ public class PythonParserDefinition implements ParserDefinition {
   }
 
   public IFileElementType getFileNodeType() {
-    return language.getFileElementType();
+    return PyFileElementType.INSTANCE;
   }
 
   @NotNull

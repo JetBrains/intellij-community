@@ -6,7 +6,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
 import com.intellij.refactoring.classMembers.DependencyMemberInfoModel;
 import com.intellij.refactoring.ui.ConflictsDialog;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;

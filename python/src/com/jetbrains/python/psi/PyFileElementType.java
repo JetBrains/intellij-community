@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.io.StringRef;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.parsing.PyConsoleParser;
 import com.jetbrains.python.console.PydevConsoleRunner;
@@ -33,7 +34,9 @@ import java.util.List;
  * @author yole
  */
 public class PyFileElementType extends IStubFileElementType<PyFileStub> {
-  public PyFileElementType(Language language) {
+  public static PyFileElementType INSTANCE = new PyFileElementType(PythonLanguage.getInstance());
+
+  protected PyFileElementType(Language language) {
     super(language);
   }
 

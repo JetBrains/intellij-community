@@ -5,7 +5,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -20,6 +19,8 @@ public enum LanguageLevel {
   PYTHON31(31, true, false, true, true),
   PYTHON32(32, true, false, true, true),
   PYTHON33(33, true, false, true, true);
+
+  public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
   public static LanguageLevel getDefault() {
     return PYTHON26;
@@ -113,7 +114,7 @@ public enum LanguageLevel {
       if (level != null) return level;      
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        final LanguageLevel languageLevel = PythonLanguageLevelPusher.FORCE_LANGUAGE_LEVEL;
+        final LanguageLevel languageLevel = FORCE_LANGUAGE_LEVEL;
         if (languageLevel != null) {
           return languageLevel;
         }

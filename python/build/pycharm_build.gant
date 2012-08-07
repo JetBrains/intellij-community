@@ -53,7 +53,7 @@ private List<String> pycharmPlatformApiModules() {
 
 
 private List pycharmImplementationModules() {
-  return ["yaml", "graph", "coverage-common", "python", "python-ide"]
+  return ["yaml", "graph", "coverage-common", "python", "python-ide", "python-openapi"]
 }
 
 class Paths {

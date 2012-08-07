@@ -1,7 +1,6 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.PythonDialectsTokenSetContributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

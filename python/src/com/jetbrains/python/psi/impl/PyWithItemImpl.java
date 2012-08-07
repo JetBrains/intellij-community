@@ -5,7 +5,6 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyWithItem;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
