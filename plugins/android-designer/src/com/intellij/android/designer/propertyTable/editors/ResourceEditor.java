@@ -29,7 +29,6 @@ import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.designer.propertyTable.editors.ComboEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
@@ -123,8 +122,7 @@ public class ResourceEditor extends PropertyEditor {
     else {
       myEditor = new TextFieldWithBrowseButton() {
         @Override
-        protected void installPathCompletion(@Nullable Project project,
-                                             FileChooserDescriptor fileChooserDescriptor,
+        protected void installPathCompletion(FileChooserDescriptor fileChooserDescriptor,
                                              @Nullable Disposable parent) {
         }
 
