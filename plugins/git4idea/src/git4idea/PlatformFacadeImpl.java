@@ -20,6 +20,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -107,6 +108,12 @@ public class PlatformFacadeImpl implements PlatformFacade {
   @Override
   public IdeaPluginDescriptor getPluginByClassName(@NotNull String name) {
     return PluginManager.getPlugin(PluginManager.getPluginByClassName(name));
+  }
+
+  @NotNull
+  @Override
+  public FileDocumentManager getFileDocumentManager() {
+    return FileDocumentManager.getInstance();
   }
 
   @NotNull

@@ -15,6 +15,7 @@
  */
 package git4idea.checkin;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -33,6 +34,8 @@ import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.PlatformFacade;
+import git4idea.commands.Git;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersion;
@@ -102,7 +105,11 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.COMMIT;
       }
 
-      GitCrlfProblemsDetector crlfHelper = GitCrlfProblemsDetector.detect(myPanel.getVirtualFiles());
+      PlatformFacade platformFacade = ServiceManager.getService(myProject, PlatformFacade.class);
+      Git git = ServiceManager.getService(Git.class);
+
+      Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
+      GitCrlfProblemsDetector crlfHelper = GitCrlfProblemsDetector.detect(myProject, platformFacade, git, files);
       if (crlfHelper.shouldWarn()) {
         final GitCrlfDialog dialog = new GitCrlfDialog(myProject);
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {

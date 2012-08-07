@@ -139,7 +139,7 @@ class GitMockProject implements Project {
 
   @Override
   MessageBus getMessageBus() {
-    throw new UnsupportedOperationException()
+    null
   }
 
   @Override
@@ -155,7 +155,7 @@ class GitMockProject implements Project {
   @NotNull
   @Override
   Condition getDisposed() {
-    throw new UnsupportedOperationException()
+    Condition.FALSE
   }
 
   @Override

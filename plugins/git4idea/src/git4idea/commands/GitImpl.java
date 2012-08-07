@@ -136,6 +136,25 @@ public class GitImpl implements Git {
     return run(handler, true);
   }
 
+  @NotNull
+  @Override
+  public GitCommandResult config(@NotNull GitRepository repository, String... params) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CONFIG);
+    h.addParameters(params);
+    return run(h);
+  }
+
+  @NotNull
+  @Override
+  public GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes,
+                                    @NotNull Collection<VirtualFile> files) {
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CONFIG);
+    h.addParameters(new ArrayList<String>(attributes));
+    h.endOptions();
+    h.addRelativeFiles(files);
+    return run(h);
+  }
+
   @Override
   @NotNull
   public GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge,

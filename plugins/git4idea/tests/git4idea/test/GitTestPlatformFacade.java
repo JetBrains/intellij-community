@@ -18,6 +18,7 @@ package git4idea.test;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.mock.MockLocalFileSystem;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -143,6 +144,12 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @Override
   public IdeaPluginDescriptor getPluginByClassName(@NotNull String name) {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public FileDocumentManager getFileDocumentManager() {
+    return new GitMockFileDocumentManager();
   }
 
   @NotNull
