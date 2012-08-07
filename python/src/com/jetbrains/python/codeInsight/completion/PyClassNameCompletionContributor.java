@@ -24,6 +24,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
+import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
 import com.jetbrains.python.psi.types.PyModuleType;
 
 import java.util.Collection;
@@ -44,10 +45,11 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
       if (PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) != null) {
         return;
       }
-      addVariantsFromIndex(result, parameters.getOriginalFile(), PyClassNameIndex.KEY, IMPORTING_INSERT_HANDLER,
-                           Conditions.<PyClass>alwaysTrue());
-      addVariantsFromIndex(result, parameters.getOriginalFile(), PyFunctionNameIndex.KEY, FUNCTION_INSERT_HANDLER, TOPLEVEL_FUNCTION);
-      addVariantsFromModules(result, parameters.getOriginalFile());
+      final PsiFile originalFile = parameters.getOriginalFile();
+      addVariantsFromIndex(result, originalFile, PyClassNameIndex.KEY, IMPORTING_INSERT_HANDLER, Conditions.<PyClass>alwaysTrue());
+      addVariantsFromIndex(result, originalFile, PyFunctionNameIndex.KEY, FUNCTION_INSERT_HANDLER, IS_TOPLEVEL);
+      addVariantsFromIndex(result, originalFile, PyVariableNameIndex.KEY, IMPORTING_INSERT_HANDLER, IS_TOPLEVEL);
+      addVariantsFromModules(result, originalFile);
     }
   }
 
@@ -66,10 +68,10 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static Condition<PyFunction> TOPLEVEL_FUNCTION = new Condition<PyFunction>() {
+  private static Condition<PsiElement> IS_TOPLEVEL = new Condition<PsiElement>() {
     @Override
-    public boolean value(PyFunction pyFunction) {
-      return PyPsiUtils.isTopLevel(pyFunction);
+    public boolean value(PsiElement element) {
+      return PyPsiUtils.isTopLevel(element);
     }
   };
 
@@ -77,7 +79,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                                                                        final PsiFile targetFile,
                                                                        final StubIndexKey<String, T> key,
                                                                        final InsertHandler<LookupElement> insertHandler,
-                                                                       final Condition<T> condition) {
+                                                                       final Condition<? super T> condition) {
     final Project project = targetFile.getProject();
     GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(targetFile);
 
