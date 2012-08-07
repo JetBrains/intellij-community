@@ -137,6 +137,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA57339() throws Exception {doTest(false);}
   public void testIDEA57340() throws Exception {doTest(false);}
   public void testIDEA89771() throws Exception {doTest(false);}
+  public void testIDEA89801() throws Exception {doTest(false);}
   public void testInconvertibleTypes() throws Exception {doTest(false);}
 
   public void testJavaUtilCollections_NoVerify() throws Exception {

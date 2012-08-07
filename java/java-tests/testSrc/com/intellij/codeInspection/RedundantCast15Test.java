@@ -37,6 +37,7 @@ public class RedundantCast15Test extends InspectionTestCase {
   public void testEnumConstant() throws Exception { doTest(); }
 
   public void testRawCast() throws Exception { doTest();}
+  public void testCastToUnboundWildcard() throws Exception { doTest();}
 
   public void testRawCastsToAvoidIncompatibility() throws Exception { doTest();}
   
