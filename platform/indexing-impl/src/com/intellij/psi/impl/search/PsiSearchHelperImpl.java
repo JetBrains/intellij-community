@@ -342,7 +342,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   public void processUsagesInNonJavaFiles(@Nullable final PsiElement originalElement,
                                           @NotNull String qName,
                                           @NotNull final PsiNonJavaFileReferenceProcessor processor,
-                                          @NotNull GlobalSearchScope searchScope) {
+                                          @NotNull final GlobalSearchScope initialScope) {
     if (qName.length() == 0) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");
     }
@@ -352,10 +352,15 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     int dollarIndex = qName.lastIndexOf('$');
     int maxIndex = Math.max(dotIndex, dollarIndex);
     final String wordToSearch = maxIndex >= 0 ? qName.substring(maxIndex + 1) : qName;
-    if (originalElement != null && myManager.isInProject(originalElement) && searchScope.isSearchInLibraries()) {
-      searchScope = searchScope.intersectWith(GlobalSearchScope.projectScope(myManager.getProject()));
-    }
-    final GlobalSearchScope theSearchScope = searchScope;
+    final GlobalSearchScope theSearchScope = ApplicationManager.getApplication().runReadAction(new Computable<GlobalSearchScope>() {
+      @Override
+      public GlobalSearchScope compute() {
+        if (originalElement != null && myManager.isInProject(originalElement) && initialScope.isSearchInLibraries()) {
+          return initialScope.intersectWith(GlobalSearchScope.projectScope(myManager.getProject()));
+        }
+        return initialScope;
+      }
+    });
     PsiFile[] files = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile[]>() {
       @Override
       public PsiFile[] compute() {
@@ -380,7 +385,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }.execute().getResultObject();
 
     final Ref<Boolean> cancelled = new Ref<Boolean>(Boolean.FALSE);
-    final GlobalSearchScope finalScope = searchScope;
+    final GlobalSearchScope finalScope = initialScope;
     for (int i = 0; i < files.length; i++) {
       if (progress != null) progress.checkCanceled();
 
