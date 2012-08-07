@@ -38,6 +38,7 @@
         </constraints>
         <properties>
           <text value="Use Maven &amp;output directories"/>
+          <toolTipText value="IDEA compiler will use output directory defined in maven model (target/classes by default) "/>
         </properties>
       </component>
       <component id="27a65" class="javax.swing.JLabel">
@@ -54,6 +55,7 @@
         </constraints>
         <properties>
           <text value="Import Maven projects &amp;automatically"/>
+          <toolTipText value="Synchronize Maven project model and IDEA project model each time when pom.xml is changed  "/>
         </properties>
       </component>
       <grid id="49dc8" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

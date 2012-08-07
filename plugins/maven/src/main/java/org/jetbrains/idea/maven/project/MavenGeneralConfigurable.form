@@ -77,6 +77,7 @@
         <properties>
           <margin top="2" left="0" bottom="2" right="3"/>
           <text value="Work &amp;offline"/>
+          <toolTipText value="&lt;html&gt;Add option &lt;b&gt;--offline&lt;/b&gt; to command line when run maven goals&lt;/html&gt;"/>
         </properties>
       </component>
       <component id="2d2f9" class="javax.swing.JCheckBox" binding="checkboxUsePluginRegistry">
@@ -86,6 +87,7 @@
         <properties>
           <margin top="2" left="0" bottom="2" right="3"/>
           <text value="Use plugin &amp;registry"/>
+          <toolTipText value="&lt;html&gt;Add option &lt;b&gt;--no-plugin-registry&lt;/b&gt; if this option is not selected&lt;/html&gt;"/>
         </properties>
       </component>
       <component id="86396" class="javax.swing.JCheckBox" binding="checkboxRecursive">
@@ -97,6 +99,7 @@
         <properties>
           <margin top="2" left="0" bottom="2" right="3"/>
           <text value="Execute &amp;goals recursively "/>
+          <toolTipText value="&lt;html&gt;Add option &lt;b&gt;--non-recursive&lt;/b&gt; if this option is not selected&lt;/html&gt;"/>
         </properties>
       </component>
       <component id="6fd1" class="javax.swing.JCheckBox" binding="checkboxProduceExceptionErrorMessages">
@@ -107,6 +110,7 @@
           <alignmentY value="0.5"/>
           <margin top="2" left="0" bottom="2" right="0"/>
           <text value="Print &amp;exception stack traces"/>
+          <toolTipText value="&lt;html&gt;Add option &lt;b&gt;--errors&lt;/b&gt; to command line when run maven goals&lt;/html&gt;"/>
         </properties>
       </component>
       <nested-form id="3edfe" form-file="org/jetbrains/idea/maven/project/MavenEnvironmentForm.form" binding="mavenPathsForm">
