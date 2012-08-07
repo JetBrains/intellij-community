@@ -66,12 +66,12 @@ public abstract class JpsModelSerializerExtension {
   }
 
   @NotNull
-  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesLoaders() {
+  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
     return Collections.emptyList();
   }
 
   @NotNull
-  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesLoaders() {
+  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
     return Collections.emptyList();
   }
 

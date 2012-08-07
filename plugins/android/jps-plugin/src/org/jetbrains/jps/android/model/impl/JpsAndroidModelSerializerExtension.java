@@ -82,7 +82,7 @@ public class JpsAndroidModelSerializerExtension extends JpsModelSerializerExtens
 
   @NotNull
   @Override
-  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesLoaders() {
+  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
     return Arrays.asList(SDK_PROPERTIES_LOADER);
   }
 }

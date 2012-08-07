@@ -44,7 +44,7 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
 
   @NotNull
   @Override
-  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesLoaders() {
+  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
     return Arrays.asList(new JpsIdeaSdkPropertiesSerializer());
   }
 
