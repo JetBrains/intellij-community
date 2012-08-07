@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.MessageType;
@@ -164,6 +165,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private boolean myShadow = false;
   private Layer myLayer;
   private boolean myBlockClicks;
+  private Point myPrevMousePoint = null;
 
   public boolean isInsideBalloon(MouseEvent me) {
     return isInside(new RelativePoint(me));
@@ -177,9 +179,15 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (cmp == myCloseRec) return true;
     if (SwingUtilities.isDescendingFrom(cmp, myComp) || cmp == myComp) return true;
     if (myComp == null || !myComp.isShowing()) return false;
-    if (new Rectangle(myComp.getLocationOnScreen(), myComp.getSize()).contains(target.getScreenPoint())) return true;
+    Rectangle rectangleOnScreen = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
+    if (rectangleOnScreen.contains(target.getScreenPoint())) return true;
 
-    return false;
+    try {
+      return ScreenUtil.isMovementTowards(myPrevMousePoint, target.getScreenPoint(), rectangleOnScreen);
+    }
+    finally {
+      myPrevMousePoint = target.getScreenPoint();
+    }
   }
 
   private final ComponentAdapter myComponentListener = new ComponentAdapter() {

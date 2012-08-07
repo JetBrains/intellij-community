@@ -71,6 +71,7 @@ import com.intellij.psi.search.searches.DefinitionsSearch;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.util.Alarm;
@@ -168,7 +169,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       MouseEvent mouseEvent = e.getMouseEvent();
 
-      if (isMouseOverTooltip(mouseEvent.getLocationOnScreen()) || isMouseMovedTowardTooltip(mouseEvent.getLocationOnScreen())) {
+      if (isMouseOverTooltip(mouseEvent.getLocationOnScreen())
+          || ScreenUtil.isMovementTowards(myPrevMouseLocation, mouseEvent.getLocationOnScreen(), getHintBounds())) {
         myPrevMouseLocation = mouseEvent.getLocationOnScreen();
         return;
       }
@@ -245,63 +247,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private boolean isMouseOverTooltip(@NotNull Point mouseLocationOnScreen) {
     Rectangle bounds = getHintBounds();
     return bounds != null && bounds.contains(mouseLocationOnScreen);
-  }
-
-  private boolean isMouseMovedTowardTooltip(@NotNull Point mouseLocationOnScreen) {
-    Rectangle bounds = getHintBounds();
-    if (bounds == null) {
-      return false;
-    }
-
-    Point prevLocation = myPrevMouseLocation;
-    if (prevLocation == null) {
-      myPrevMouseLocation = mouseLocationOnScreen;
-      return true;
-    }
-    else if (prevLocation.equals(mouseLocationOnScreen)) {
-      return true;
-    }
-
-    int dx = prevLocation.x - mouseLocationOnScreen.x;
-    int dy = prevLocation.y - mouseLocationOnScreen.y;
-
-    // Check if the mouse goes out of the control.
-    if (dx > 0 && bounds.x >= prevLocation.x) return false;
-    if (dx < 0 && bounds.x + bounds.width <= prevLocation.x) return false;
-    if (dy > 0 && bounds.y + bounds.height >= prevLocation.y) return false;
-    if (dy < 0 && bounds.y <= prevLocation.y) return false;
-    if (dx == 0) {
-      return (mouseLocationOnScreen.x >= bounds.x && mouseLocationOnScreen.x < bounds.x + bounds.width)
-             && (dy > 0 ^ bounds.y > mouseLocationOnScreen.y);
-    }
-    if (dy == 0) {
-      return (mouseLocationOnScreen.y >= bounds.y && mouseLocationOnScreen.y < bounds.y + bounds.height)
-             && (dx > 0 ^ bounds.x > mouseLocationOnScreen.x);
-    }
-    
-
-    // Calculate line equation parameters - y = a * x + b
-    float a = (float)dy / dx;
-    float b = mouseLocationOnScreen.y - a * mouseLocationOnScreen.x;
-
-    // Check if crossing point with any tooltip border line is within bounds. Don't bother with floating point inaccuracy here.
-    
-    // Left border.
-    float crossY = a * bounds.x + b;
-    if (crossY >= bounds.y && crossY < bounds.y + bounds.height) return true;
-    
-    // Right border.
-    crossY = a * (bounds.x + bounds.width) + b;
-    if (crossY >= bounds.y && crossY < bounds.y + bounds.height) return true;
-    
-    // Top border.
-    float crossX = (bounds.y - b) / a;
-    if (crossX >= bounds.x && crossX < bounds.x + bounds.width) return true;
-    
-    // Bottom border
-    crossX = (bounds.y + bounds.height - b) / a;
-    if (crossX >= bounds.x && crossX < bounds.x + bounds.width) return true;
-    return false;
   }
 
   @Nullable
