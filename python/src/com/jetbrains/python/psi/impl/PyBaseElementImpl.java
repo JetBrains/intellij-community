@@ -99,7 +99,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   protected <T extends PyElement> T childToPsiNotNull(TokenSet filterSet, int index) {
     final PyElement child = childToPsi(filterSet, index);
     if (child == null) {
-      throw new RuntimeException("child must not be null");
+      throw new RuntimeException("child must not be null: expression text " + getText());
     }
     //noinspection unchecked
     return (T)child;
@@ -109,7 +109,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
   protected <T extends PyElement> T childToPsiNotNull(IElementType elType) {
     final PyElement child = childToPsi(elType);
     if (child == null) {
-      throw new RuntimeException("child must not be null");
+      throw new RuntimeException("child must not be null; expression text " + getText());
     }
     //noinspection unchecked
     return (T)child;
