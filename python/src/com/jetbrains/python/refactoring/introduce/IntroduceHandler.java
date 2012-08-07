@@ -26,6 +26,7 @@ import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -156,7 +157,15 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   protected Collection<String> generateSuggestedNames(PyExpression expression) {
-    Collection<String> candidates = new LinkedHashSet<String>();
+    Collection<String> candidates = new LinkedHashSet<String>() {
+      @Override
+      public boolean add(String s) {
+        if (PyNames.isReserved(s)) {
+          return false;
+        }
+        return super.add(s);
+      }
+    };
     String text = expression.getText();
     if (expression instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)expression).getCallee();
