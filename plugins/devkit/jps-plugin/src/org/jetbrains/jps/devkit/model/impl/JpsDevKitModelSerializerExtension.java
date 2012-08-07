@@ -96,11 +96,11 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
     public void saveProperties(@NotNull JpsSimpleElement<JpsPluginModuleProperties> element, @NotNull Element moduleRootElement) {
       Element component = JpsLoaderBase.findComponent(moduleRootElement, COMPONENT_NAME);
       if (component != null) {
-        String pluginXmlUrl = element.getProperties().getPluginXmlUrl();
+        String pluginXmlUrl = element.getData().getPluginXmlUrl();
         if (pluginXmlUrl != null) {
           component.setAttribute(URL_ATTRIBUTE, pluginXmlUrl);
         }
-        String manifestFileUrl = element.getProperties().getManifestFileUrl();
+        String manifestFileUrl = element.getData().getManifestFileUrl();
         if (manifestFileUrl != null) {
           component.setAttribute(MANIFEST_ATTRIBUTE, manifestFileUrl);
         }

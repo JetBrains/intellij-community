@@ -150,8 +150,8 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final JpsMacroExpander expander = createModuleMacroExpander(myPathVariables, file);
     final Element moduleRoot = loadRootElement(file, expander);
     final String typeId = moduleRoot.getAttributeValue("type");
-    final JpsModulePropertiesSerializer<?> loader = getModulePropertiesSerializer(typeId);
-    final JpsModule module = createModule(name, moduleRoot, loader);
+    final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
+    final JpsModule module = createModule(name, moduleRoot, serializer);
     JpsModuleSerializer.loadRootModel(module, findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
     JpsFacetLoader.loadFacets(module, findComponent(moduleRoot, "FacetManager"), FileUtil.toSystemIndependentName(path));
     return module;

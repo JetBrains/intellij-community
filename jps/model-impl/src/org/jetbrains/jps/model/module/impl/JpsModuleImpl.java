@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsModuleImpl<P>> implements JpsModule {
+public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsModuleImpl<P>> implements JpsTypedModule<P> {
   private static final JpsUrlListRole CONTENT_ROOTS_ROLE = new JpsUrlListRole("content roots");
   private static final JpsUrlListRole EXCLUDED_ROOTS_ROLE = new JpsUrlListRole("excluded roots");
   public static final JpsElementChildRole<JpsDependenciesListImpl> DEPENDENCIES_LIST_CHILD_ROLE = JpsElementChildRoleBase.create("dependencies");
@@ -50,6 +50,12 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
   @NotNull
   public P getProperties() {
     return myContainer.getChild(myModuleType.getPropertiesRole());
+  }
+
+  @Override
+  public <P extends JpsElement> JpsTypedModule<P> asTyped(@NotNull JpsModuleType<P> type) {
+    //noinspection unchecked
+    return myModuleType.equals(type) ? (JpsTypedModule<P>)this : null;
   }
 
   @NotNull
@@ -177,8 +183,9 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
     return model != null ? model.getProject() : null;
   }
 
+  @NotNull
   @Override
-  public JpsModuleType<?> getModuleType() {
+  public JpsModuleType<P> getModuleType() {
     return myModuleType;
   }
 }
