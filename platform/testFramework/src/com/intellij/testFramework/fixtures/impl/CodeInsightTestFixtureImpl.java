@@ -33,6 +33,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -616,6 +617,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         return lookupItem.getLookupString();
       }
     });
+  }
+
+  @Override
+  public void finishLookup() {
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        ((LookupImpl)LookupManager.getActiveLookup(getEditor())).finishLookup(Lookup.NORMAL_SELECT_CHAR);
+      }
+    }, null, null);
   }
 
   @Override

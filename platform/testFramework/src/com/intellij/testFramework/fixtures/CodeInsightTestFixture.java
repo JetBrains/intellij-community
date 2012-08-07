@@ -355,6 +355,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Nullable
   List<String> getLookupElementStrings();
 
+  void finishLookup();
+
   @NotNull
   PsiElement getElementAtCaret();
 
