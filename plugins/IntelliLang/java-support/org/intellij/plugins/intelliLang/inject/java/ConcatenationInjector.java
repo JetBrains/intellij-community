@@ -276,6 +276,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
     private boolean processCommentInjections(PsiVariable owner) {
       PsiElement prev = owner.getFirstChild();
+      prev = prev instanceof PsiComment? prev : PsiTreeUtil.skipSiblingsBackward(owner.getParent(), PsiWhiteSpace.class);
       if (prev instanceof PsiComment) {
         String text = ElementManipulators.getValueText(prev).trim();
         Language language = null;
