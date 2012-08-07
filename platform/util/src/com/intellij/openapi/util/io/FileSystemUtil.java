@@ -67,7 +67,7 @@ public class FileSystemUtil {
     final boolean forceUseNio2 = SystemProperties.getBooleanProperty(FORCE_USE_NIO2_KEY, false);
 
     if (!forceUseNio2) {
-      if (SystemInfo.isWindows) {
+      if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
         try {
           return check(new IdeaWin32MediatorImpl());
         }

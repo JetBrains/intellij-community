@@ -71,7 +71,7 @@ public class IdeaWin32 {
         LOG.info("Native filesystem for Windows is operational");
       }
       catch (Throwable t) {
-        LOG.warn("Failed to initialize native filesystem for Windows", t);
+        LOG.error("Failed to initialize native filesystem for Windows", t);
       }
     }
     ourInstance = instance;
