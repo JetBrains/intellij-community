@@ -17,11 +17,9 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
+import com.intellij.codeInsight.completion.SmartCompletionDecorator;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.MembersGetter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
@@ -55,7 +53,8 @@ class GroovyMembersGetter extends MembersGetter {
 
   @Override
   protected LookupElement createMethodElement(PsiMethod method) {
-    PsiType type = method.getReturnType();
+    PsiSubstitutor substitutor = SmartCompletionDecorator.calculateMethodReturnTypeSubstitutor(method, myExpectedType);
+    PsiType type = substitutor.substitute(method.getReturnType());
     if (!isSuitableType(type)) {
       return null;
     }
@@ -64,6 +63,6 @@ class GroovyMembersGetter extends MembersGetter {
   }
 
   private boolean isSuitableType(PsiType type) {
-    return type != null && TypesUtil.isAssignable(myExpectedType, type, (GroovyPsiElement)myPlace.getParent());
+    return type != null && TypesUtil.isAssignable(myExpectedType, type, (GroovyPsiElement)myPlace.getParent(), false);
   }
 }

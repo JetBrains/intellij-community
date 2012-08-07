@@ -94,11 +94,26 @@ public class GrStubUtils {
   }
 
   public static boolean isGroovyStaticMemberStub(StubElement<?> stub) {
-    StubElement<GrModifierList> type = stub.findChildStubByType(GroovyElementTypes.MODIFIERS);
-    if (type instanceof GrModifierListStub) {
-      return GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.STATIC, ((GrModifierListStub)type).getModifiersFlags());
+    StubElement<?> modifierOwner = stub instanceof GrMethodStub ? stub : stub.getParentStub();
+    StubElement<GrModifierList> type = modifierOwner.findChildStubByType(GroovyElementTypes.MODIFIERS);
+    if (!(type instanceof GrModifierListStub)) {
+      return false;
     }
-    return true;
+    int mask = ((GrModifierListStub)type).getModifiersFlags();
+    if (GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.PRIVATE, mask)) {
+      return false;
+    }
+    if (GrModifierListImpl.hasMaskExplicitModifier(PsiModifier.STATIC, mask)) {
+      return true;
+    }
+
+    StubElement parent = modifierOwner.getParentStub();
+    StubElement classStub = parent == null ? null : parent.getParentStub();
+    if (classStub instanceof GrTypeDefinitionStub &&
+        (((GrTypeDefinitionStub)classStub).isAnnotationType() || ((GrTypeDefinitionStub)classStub).isInterface())) {
+      return true;
+    }
+    return false;
   }
 
   @NotNull

@@ -87,6 +87,18 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
     checkResult()
   }
 
+  public void testGlobalStaticMembers() {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.complete(CompletionType.SMART, 2);
+    assertOrderedEquals(myFixture.lookupElementStrings, 'SUBSTRING', 'createExpected', 'createSubGeneric', 'SUB_RAW')
+  }
+
+  public void testGlobalListCreators() {
+    myFixture.configureByFile(getTestName(false) + ".groovy");
+    myFixture.complete(CompletionType.SMART, 2);
+    assertOrderedEquals(myFixture.lookupElementStrings, 'createGenericList', 'createStringList')
+  }
+
   void testNativeList() {doSmartCompletion('a1', 'a2')};
 
   public void testMembersImportStatically() {
