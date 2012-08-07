@@ -34,6 +34,9 @@ public class ParameterListAnnotator extends PyAnnotator {
             if (hadKeywordContainer) {
               markError(parameter, PyBundle.message("ANN.starred.param.after.kwparam"));
             }
+            if (hadSingleStar) {
+              markError(parameter, "Multiple * arguments are not allowed");
+            }
             hadPositionalContainer = true;
           }
           else if (parameter.isKeywordContainer()) {
@@ -81,6 +84,9 @@ public class ParameterListAnnotator extends PyAnnotator {
 
         @Override
         public void visitSingleStarParameter(PySingleStarParameter param, boolean first, boolean last) {
+          if (hadPositionalContainer || hadSingleStar) {
+            markError(param, "Multiple * arguments are not allowed");
+          }
           hadSingleStar = true;
           if (last) {
             markError(param, PyBundle.message("ANN.named.arguments.after.star"));
