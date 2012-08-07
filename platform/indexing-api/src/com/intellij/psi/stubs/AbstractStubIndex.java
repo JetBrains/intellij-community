@@ -34,9 +34,4 @@ public abstract class AbstractStubIndex<Key, Psi extends PsiElement> implements 
   }
 
   public int getCacheSize() { return 2 * 1024; }
-
-  @Override
-  public boolean isKeyHighlySelective() {
-    return false;
-  }
 }
