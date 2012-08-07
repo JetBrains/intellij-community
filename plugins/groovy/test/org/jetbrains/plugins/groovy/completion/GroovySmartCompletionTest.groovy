@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.completion;
-
-
+package org.jetbrains.plugins.groovy.completion
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
-
 /**
  * @author peter
  */
@@ -80,7 +76,7 @@ public class GroovySmartCompletionTest extends GroovyCompletionTestBase {
   public void testSmartCastCompletionWithoutRParenth() {doSmartTest();}
   public void testSmartCastCompletionWithRParenth() {doSmartTest();}
 
-  public void testDontCompletePrivateMembers() {CamelHumpMatcher.forceStartMatching(getTestRootDisposable());doSmartCompletion "foo1", "foo2"}
+  public void testDontCompletePrivateMembers() {doSmartCompletion "foo1", "foo2", "getFoo1", "getFoo2"}
 
   public void testEnumMembersInAssignment() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED" }
   public void testEnumMembersInAssignmentInsideEnum() {doSmartCompletion "IN_STOCK", "NOWHERE", "ORDERED", "next", "previous" }
