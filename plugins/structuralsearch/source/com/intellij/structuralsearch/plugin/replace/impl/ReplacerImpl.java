@@ -153,6 +153,12 @@ public class ReplacerImpl {
   }
 
   protected void replace(ReplacementInfo info) {
+    PsiElement element = info.getMatch(0);
+    initContextAndHandler(element);
+
+    if (replaceHandler != null) {
+      replaceHandler.prepare(info);
+    }
     reformatAndShortenRefs(doReplace(info));
   }
 
