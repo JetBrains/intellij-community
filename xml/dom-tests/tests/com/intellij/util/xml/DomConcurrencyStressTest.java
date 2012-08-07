@@ -4,7 +4,6 @@
 package com.intellij.util.xml;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -170,7 +169,8 @@ public class DomConcurrencyStressTest extends DomTestCase {
 
     registerExtender(MyAllCustomElement.class, MyAllCustomExtender.class);
 
-    VirtualFile bigXml = LocalFileSystem.getInstance().findFileByPath(PathManagerEx.getTestDataPath() + "/psi/formatter/xml/performance.xml");
+    VirtualFile bigXml = LocalFileSystem.getInstance().findFileByPath(
+      PlatformTestUtil.getCommunityPath() + "/xml/dom-tests/testData/performance.xml");
     assert bigXml != null;
     final XmlFile file = (XmlFile)PsiManager.getInstance(ourProject).findFile(bigXml);
 
