@@ -25,6 +25,7 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,15 +43,15 @@ import java.util.Set;
  */
 public class CommonCodeStyleSettings {
   
-  @NotNull private static final String ARRANGEMENT_ELEMENT_NAME = "arrangementRules";
+  @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangementRules";
   
-  @NotNull private final List<ArrangementRule> myArrangementRules = new ArrayList<ArrangementRule>();
-  private Language          myLanguage;
+  private final List<ArrangementRule> myArrangementRules = new ArrayList<ArrangementRule>();
+  private final Language          myLanguage;
   private CodeStyleSettings myRootSettings;
   private IndentOptions     myIndentOptions;
   private FileType          myFileType;
 
-  private final static String INDENT_OPTIONS_TAG = "indentOptions";
+  @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
   public CommonCodeStyleSettings(Language language, FileType fileType) {
     myLanguage = language;
@@ -64,7 +65,7 @@ public class CommonCodeStyleSettings {
     }
   }
 
-  void setRootSettings(CodeStyleSettings rootSettings) {
+  void setRootSettings(@NotNull CodeStyleSettings rootSettings) {
     myRootSettings = rootSettings;
   }
 
@@ -130,8 +131,7 @@ public class CommonCodeStyleSettings {
     myArrangementRules.addAll(rules);
   }
 
-  public CommonCodeStyleSettings clone(CodeStyleSettings rootSettings) {
-    assert rootSettings != null;
+  public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);
     commonSettings.setRootSettings(rootSettings);
@@ -150,7 +150,7 @@ public class CommonCodeStyleSettings {
   void copyNonDefaultValuesFrom(CommonCodeStyleSettings from) {
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(null);
     PARENT_SETTINGS_INSTALLED =
-      copyFields(this.getClass().getFields(), from, this, new SupportedFieldsDiffFilter(from, getSupportedFields(), defaultSettings));
+      copyFields(getClass().getFields(), from, this, new SupportedFieldsDiffFilter(from, getSupportedFields(), defaultSettings));
   }
 
   private static void copyFields(Field[] fields, Object from, Object to) {
@@ -224,7 +224,7 @@ public class CommonCodeStyleSettings {
       IndentOptions defaultIndentOptions = defaultSettings != null ? defaultSettings.getIndentOptions() : null;
       Element indentOptionsElement = new Element(INDENT_OPTIONS_TAG);
       myIndentOptions.serialize(indentOptionsElement, defaultIndentOptions);
-      if (indentOptionsElement.getChildren().size() > 0) {
+      if (!indentOptionsElement.getChildren().isEmpty()) {
         element.addContent(indentOptionsElement);
       }
     }
@@ -245,8 +245,7 @@ public class CommonCodeStyleSettings {
   }
   
   private static class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
-    
-    private Set<String> mySupportedFieldNames;
+    private final Set<String> mySupportedFieldNames;
 
     public SupportedFieldsDiffFilter(final CommonCodeStyleSettings object,
                                      Set<String> supportedFiledNames,
@@ -918,10 +917,12 @@ public class CommonCodeStyleSettings {
     public boolean LABEL_INDENT_ABSOLUTE = false;
     public boolean USE_RELATIVE_INDENTS = false;
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
@@ -941,6 +942,7 @@ public class CommonCodeStyleSettings {
       XmlSerializer.deserializeInto(this, indentOptionsElement);
     }
 
+    @Override
     public Object clone() {
       try {
         return super.clone();
