@@ -96,6 +96,7 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @Override
   public void disposeComponent() {
+    assertAllPointersDisposed();
   }
 
   @NotNull
@@ -373,7 +374,6 @@ public class VirtualFilePointerManagerImpl extends VirtualFilePointerManager imp
 
   @Override
   public void dispose() {
-    assertAllPointersDisposed();
   }
 
   private void incModificationCounter() {
