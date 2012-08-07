@@ -27,6 +27,7 @@ import org.jetbrains.jps.devkit.model.JpsIdeaSdkType;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties;
 import org.jetbrains.jps.incremental.artifacts.JpsSyntheticArtifactProvider;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
@@ -122,7 +123,7 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
     }
 
     String name = module.getName() + ":plugin";
-    JpsArtifact artifact = JpsArtifactService.getInstance().createArtifact(name, root, DirectoryArtifactType.INSTANCE);
+    JpsArtifact artifact = JpsArtifactService.getInstance().createArtifact(name, root, DirectoryArtifactType.INSTANCE, JpsElementFactory.getInstance().createDummyElement());
 
     JpsTypedLibrary<JpsIdeaSdkProperties> sdk = module.getSdk(JpsIdeaSdkType.INSTANCE);
     if (sdk != null) {

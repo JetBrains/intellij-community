@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.artifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.JpsReferenceableElement;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
@@ -12,7 +13,7 @@ import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
  */
 public interface JpsArtifact extends JpsNamedElement, JpsReferenceableElement<JpsArtifact>, JpsCompositeElement {
   @NotNull
-  JpsArtifactType getArtifactType();
+  JpsArtifactType<?> getArtifactType();
 
   @Nullable
   String getOutputPath();
@@ -31,4 +32,6 @@ public interface JpsArtifact extends JpsNamedElement, JpsReferenceableElement<Jp
   JpsArtifactReference createReference();
 
   void setBuildOnMake(boolean buildOnMake);
+
+  JpsElement getProperties();
 }
