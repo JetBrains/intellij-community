@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.ui.CheckBox;
@@ -207,6 +208,9 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass aClass = classType.resolve();
       if (aClass == null) {
+        return null;
+      }
+      if (PsiTreeUtil.isAncestor(aClass, callExpression, true)) {
         return null;
       }
       for (String ignoredType : ignoredTypes) {

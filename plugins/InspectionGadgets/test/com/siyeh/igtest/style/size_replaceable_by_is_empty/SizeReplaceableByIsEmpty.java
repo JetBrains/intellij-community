@@ -25,4 +25,12 @@ public class SizeReplaceableByIsEmpty {
       return false;
     }
   }
+
+  abstract class MyList<T> implements java.util.List<T>
+  {
+    public boolean isEmpty()
+    {
+      return this.size() == 0;
+    }
+  }
 }
