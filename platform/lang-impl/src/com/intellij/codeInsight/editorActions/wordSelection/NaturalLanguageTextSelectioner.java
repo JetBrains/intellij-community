@@ -42,7 +42,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
   private static TextRange findParagraphRange(String text, int start, int end) {
     int paragraphStart = text.lastIndexOf("\n\n", start);
     int paragraphEnd = text.indexOf("\n\n", end);
-    return new TextRange(Math.max(0, paragraphStart), paragraphEnd < 0 ? text.length() : paragraphEnd);
+    return new TextRange(paragraphStart >= 0 ? paragraphStart + 2 : 0, paragraphEnd < 0 ? text.length() : paragraphEnd);
   }
 
   @Nullable
@@ -63,7 +63,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     int sentenceStart = start;
 
     while (sentenceStart > 0) {
-      if (SENTENCE_END.contains(editorText.charAt(sentenceStart - 1)) || !isNatural(editorText.charAt(sentenceStart - 1))) {
+      if (isSentenceEnd(editorText, sentenceStart - 1) || !isNatural(editorText.charAt(sentenceStart - 1))) {
         break;
       }
       sentenceStart--;
@@ -76,11 +76,15 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
 
     while (sentenceEnd < editorText.length()) {
       sentenceEnd++;
-      if (SENTENCE_END.contains(editorText.charAt(sentenceEnd - 1))) {
+      if (isSentenceEnd(editorText, sentenceEnd - 1)) {
         break;
       }
     }
     return new TextRange(sentenceStart, sentenceEnd);
+  }
+
+  private static boolean isSentenceEnd(String text, final int i) {
+    return SENTENCE_END.contains(text.charAt(i)) && (i + 1 == text.length() || Character.isWhitespace(text.charAt(i + 1)));
   }
 
   private static TextRange findNaturalRange(String editorText, int start, int end) {
@@ -129,7 +133,7 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     }
 
     TextRange paragraph = findParagraphRange(elementText, start, end);
-    if (best.getStartOffset() == start && best.getEndOffset() == end) {
+    if (best.getStartOffset() == start && best.getEndOffset() == end || !paragraph.contains(best)) {
       return Arrays.asList(paragraph.shiftRight(shift));
     }
 
