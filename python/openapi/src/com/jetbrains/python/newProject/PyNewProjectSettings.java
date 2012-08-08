@@ -1,11 +1,13 @@
-package com.jetbrains.python;
+package com.jetbrains.python.newProject;
 
 import com.intellij.openapi.projectRoots.Sdk;
 
 /**
- * User : catherine
+ * Project generation settings selected on the first page of the new project dialog.
+ *
+ * @author catherine
  */
-public class PythonWizardSettingsHolder {
+public class PyNewProjectSettings {
   private Sdk mySdk;
   private boolean myInstallFramework;
 
