@@ -79,6 +79,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return myList.getSelectedIndex();
   }
 
+  @Override
   protected void initUI(final Callback callback, final ModalityState modalityState, boolean allowMultipleSelection) {
     super.initUI(callback, modalityState, allowMultipleSelection);
     if (myOldPopup != null) {
@@ -90,7 +91,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (selEnd > selStart) {
         myTextField.select(selStart, selEnd);
       }
-      rebuildList(myInitialIndex, 0, null, ModalityState.current(), null);
+      rebuildList(myInitialIndex, 0, null, ModalityState.current());
     }
     if (myOldFocusOwner != null) {
       myPreviouslyFocusedComponent = myOldFocusOwner;
@@ -111,11 +112,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return super.isOpenInCurrentWindowRequested() && myMayRequestCurrentWindow;
   }
 
+  @Override
   protected boolean isCheckboxVisible() {
     return true;
   }
 
-  protected boolean isShowListForEmptyPattern() {
+  @Override
+  protected boolean isShowListForEmptyPattern(){
     return myShowListForEmptyPattern;
   }
 
@@ -123,10 +126,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myShowListForEmptyPattern = showListForEmptyPattern;
   }
 
+  @Override
   protected boolean isCloseByFocusLost() {
     return UISettings.getInstance().HIDE_NAVIGATION_ON_FOCUS_LOSS;
   }
 
+  @Override
   protected void showList() {
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
 
@@ -185,6 +190,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
   }
 
+  @Override
   protected void hideList() {
     if (myDropdownPopup != null) {
       myDropdownPopup.cancel();
@@ -192,8 +198,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     }
   }
 
+  @Override
   public void close(final boolean isOk) {
-    if (checkDisposed()) {
+    if (checkDisposed()){
       return;
     }
 
@@ -325,6 +332,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
+  @Override
   public String transformPattern(String pattern) {
     Pattern regex = null;
     if (pattern.indexOf(':') != -1 ||

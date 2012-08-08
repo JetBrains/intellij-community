@@ -38,6 +38,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
@@ -122,7 +123,7 @@ public abstract class ChooseByNameBase {
   private ActionCallback myPostponedOkAction;
 
   private final String[][] myNames = new String[2][];
-  private CalcElementsThread myCalcElementsThread;
+  private volatile CalcElementsThread myCalcElementsThread;
   private static int VISIBLE_LIST_SIZE_LIMIT = 10;
   private static final int MAXIMUM_LIST_SIZE_LIMIT = 30;
   private int myMaximumListSizeLimit = MAXIMUM_LIST_SIZE_LIMIT;
@@ -571,7 +572,7 @@ public abstract class ChooseByNameBase {
           case KeyEvent.VK_ENTER:
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
-              rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current(), e);
+              rebuildList(myList.getSelectedIndex(), REBUILD_DELAY, null, ModalityState.current());
               e.consume();
             }
             break;
@@ -614,7 +615,7 @@ public abstract class ChooseByNameBase {
           if (selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += MAXIMUM_LIST_SIZE_LIMIT;
-              rebuildList(selectedIndex, REBUILD_DELAY, null, ModalityState.current(), e);
+              rebuildList(selectedIndex, REBUILD_DELAY, null, ModalityState.current());
             }
             else {
               doClose(true);
@@ -655,7 +656,7 @@ public abstract class ChooseByNameBase {
     showTextFieldPanel();
 
     if (modalityState != null) {
-      rebuildList(myInitialIndex, 0, null, modalityState, null);
+      rebuildList(myInitialIndex, 0, null, modalityState);
     }
   }
 
@@ -698,7 +699,7 @@ public abstract class ChooseByNameBase {
    */
   public void rebuildList(boolean initial) {
     // TODO this method is public, because the chooser does not listed for the model.
-    rebuildList(initial ? myInitialIndex : 0, REBUILD_DELAY, null, ModalityState.current(), null);
+    rebuildList(initial ? myInitialIndex : 0, REBUILD_DELAY, null, ModalityState.current());
   }
 
   private void updateDocPosition() {
@@ -799,6 +800,7 @@ public abstract class ChooseByNameBase {
     }
   }
 
+  @NotNull
   public String[] getNames(boolean checkboxState) {
     return checkboxState ? myNames[1] : myNames[0];
   }
@@ -883,8 +885,7 @@ public abstract class ChooseByNameBase {
   protected void rebuildList(final int pos,
                              final int delay,
                              @Nullable final Runnable postRunnable,
-                             @NotNull final ModalityState modalityState,
-                             @Nullable final ComponentEvent e) {
+                             @NotNull final ModalityState modalityState) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myListIsUpToDate = false;
     myAlarm.cancelAllRequests();
@@ -1280,7 +1281,7 @@ public abstract class ChooseByNameBase {
             fillInCommonPrefix(pattern);
           }
         };
-        rebuildList(0, 0, postRunnable, ModalityState.current(), e);
+        rebuildList(0, 0, postRunnable, ModalityState.current());
         return;
       }
       if (backStroke != null && keyStroke.equals(backStroke)) {
@@ -1291,7 +1292,7 @@ public abstract class ChooseByNameBase {
           final Pair<String, Integer> last = myHistory.remove(myHistory.size() - 1);
           myTextField.setText(last.first);
           myFuture.add(Pair.create(oldText, oldPos));
-          rebuildList(0, 0, null, ModalityState.current(), e);
+          rebuildList(0, 0, null, ModalityState.current());
         }
         return;
       }
@@ -1303,7 +1304,7 @@ public abstract class ChooseByNameBase {
           final Pair<String, Integer> next = myFuture.remove(myFuture.size() - 1);
           myTextField.setText(next.first);
           myHistory.add(Pair.create(oldText, oldPos));
-          rebuildList(0, 0, null, ModalityState.current(), e);
+          rebuildList(0, 0, null, ModalityState.current());
         }
         return;
       }
@@ -1408,12 +1409,12 @@ public abstract class ChooseByNameBase {
   private class CalcElementsThread implements Runnable {
     private final String myPattern;
     private boolean myCheckboxState;
-    @NotNull private final CalcElementsCallback myCallback;
+    private final CalcElementsCallback myCallback;
     private final ModalityState myModalityState;
 
     private Set<Object> myElements = null;
 
-    private volatile boolean myCancelled = false;
+    private final ProgressIndicator myCancelled = new ProgressIndicatorBase();
     private final boolean myCanCancel;
 
     private CalcElementsThread(String pattern,
@@ -1440,17 +1441,11 @@ public abstract class ChooseByNameBase {
         public void run() {
           try {
             ensureNamesLoaded(myCheckboxState);
-            Computable<Boolean> cancelled = new Computable<Boolean>() {
-              @Override
-              public Boolean compute() {
-                return myCancelled;
-              }
-            };
 
-            addElementsByPattern(myPattern, elements, cancelled);
+            addElementsByPattern(myPattern, elements, myCancelled);
 
             for (Object elem : elements) {
-              if (myCancelled) {
+              if (myCancelled.isCanceled()) {
                 break;
               }
               if (elem instanceof PsiElement) {
@@ -1466,7 +1461,7 @@ public abstract class ChooseByNameBase {
       };
       ApplicationManager.getApplication().runReadAction(action);
 
-      if (myCancelled) {
+      if (myCancelled.isCanceled()) {
         myShowCardAlarm.cancelAllRequests();
         return;
       }
@@ -1494,14 +1489,14 @@ public abstract class ChooseByNameBase {
 
     private void addElementsByPattern(String pattern,
                                       @NotNull final Set<Object> elements,
-                                      @NotNull final Computable<Boolean> cancelled) {
+                                      @NotNull final ProgressIndicator cancelled) {
       myProvider.filterElements(
         ChooseByNameBase.this, pattern, myCheckboxState,
         cancelled,
         new Processor<Object>() {
           @Override
           public boolean process(Object o) {
-            if (cancelled.compute()) return false;
+            if (cancelled.isCanceled()) return false;
             elements.add(o);
 
             if (isOverflow(elements)) {
@@ -1530,7 +1525,7 @@ public abstract class ChooseByNameBase {
 
     private void cancel() {
       if (myCanCancel) {
-        myCancelled = true;
+        myCancelled.cancel();
         clear();
       }
     }
@@ -1609,7 +1604,7 @@ public abstract class ChooseByNameBase {
 
               @Override
               public void run() {
-                final boolean[] overFlow = new boolean[]{false};
+                final boolean[] overFlow = {false};
                 myCalcElementsThread = new CalcElementsThread(text, checkboxState, null, ModalityState.NON_MODAL, true) {
                   @Override
                   protected boolean isOverflow(@NotNull Set<Object> elementsArray) {
@@ -1627,23 +1622,11 @@ public abstract class ChooseByNameBase {
 
                 boolean anyPlace = isSearchInAnyPlace();
                 setSearchInAnyPlace(false);
-                myCalcElementsThread.addElementsByPattern(text, prefixMatchElementsArray, new Computable<Boolean>() {
-                  @Override
-                  @NotNull
-                  public Boolean compute() {
-                    return false;
-                  }
-                });
+                myCalcElementsThread.addElementsByPattern(text, prefixMatchElementsArray, indicator);
                 setSearchInAnyPlace(anyPlace);
 
                 if (anyPlace && !overFlow[0]) {
-                  myCalcElementsThread.addElementsByPattern(text, nonPrefixMatchElementsArray, new Computable<Boolean>() {
-                    @Override
-                    @NotNull
-                    public Boolean compute() {
-                      return false;
-                    }
-                  });
+                  myCalcElementsThread.addElementsByPattern(text, nonPrefixMatchElementsArray, indicator);
                   nonPrefixMatchElementsArray.removeAll(prefixMatchElementsArray);
                 }
 

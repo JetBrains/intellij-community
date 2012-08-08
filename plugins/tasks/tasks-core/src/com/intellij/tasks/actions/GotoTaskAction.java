@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiManager;
@@ -53,13 +53,14 @@ public class GotoTaskAction extends GotoActionBase {
       }
 
       @Override
-      public void filterElements(ChooseByNameBase base,
-                                 String pattern,
+      public void filterElements(@NotNull ChooseByNameBase base,
+                                 @NotNull String pattern,
                                  boolean everywhere,
-                                 Computable<Boolean> cancelled,
-                                 Processor<Object> consumer) {
+                                 @NotNull ProgressIndicator cancelled,
+                                 @NotNull Processor<Object> consumer) {
         Object[] elements = base.getModel().getElementsByName("", false, pattern);
         for (Object element : elements) {
+          cancelled.checkCanceled();
           if (!consumer.process(element)) return;
         }
       }

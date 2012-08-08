@@ -15,17 +15,19 @@
  */
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public interface ChooseByNameItemProvider {
-  List<String> filterNames(ChooseByNameBase base, String[] names, String pattern);
+  @NotNull
+  List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern);
 
-  void filterElements(ChooseByNameBase base,
-                      String pattern,
+  void filterElements(@NotNull ChooseByNameBase base,
+                      @NotNull String pattern,
                       boolean everywhere,
-                      Computable<Boolean> cancelled,
-                      Processor<Object> consumer);
+                      @NotNull ProgressIndicator cancelled,
+                      @NotNull Processor<Object> consumer);
 }
