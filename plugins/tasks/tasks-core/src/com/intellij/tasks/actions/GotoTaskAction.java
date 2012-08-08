@@ -48,8 +48,9 @@ public class GotoTaskAction extends GotoActionBase {
     final Ref<Boolean> shiftPressed = Ref.create(false);
 
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoTaskPopupModel(project), new ChooseByNameItemProvider() {
+      @NotNull
       @Override
-      public List<String> filterNames(ChooseByNameBase base, String[] names, String pattern) {
+      public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
         return ContainerUtil.emptyList();
       }
 
@@ -68,8 +69,10 @@ public class GotoTaskAction extends GotoActionBase {
     }, "", false, 0);
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
-    popup.setAdText("<html>Press SHIFT to merge with current context<br/>Pressing " + KeymapUtil
-      .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) + " would show task description and comments</html>");
+    popup.setAdText("<html>Press SHIFT to merge with current context<br/>" +
+                    "Pressing " +
+                    KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) +
+                    " would show task description and comments</html>");
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
@@ -94,19 +97,17 @@ public class GotoTaskAction extends GotoActionBase {
             taskManager.activateTask(localTask, !shiftPressed.get(), createChangelist);
           }
           else {
+            popup.close(false);
             (new SimpleOpenTaskDialog(project, task)).show();
-
           }
         }
         else if (element == CREATE_NEW_TASK_ACTION) {
           popup.close(false);
           Task task = taskManager.createLocalTask(CREATE_NEW_TASK_ACTION.getTaskName());
-          SimpleOpenTaskDialog simpleOpenTaskDialog = new SimpleOpenTaskDialog(project, task);
-          simpleOpenTaskDialog.showAndGetOk();
+          new SimpleOpenTaskDialog(project, task).show();
         }
       }
     }, null, popup);
-
   }
 
   private static class GotoTaskPopupModel extends SimpleChooseByNameModel {
@@ -166,7 +167,8 @@ public class GotoTaskAction extends GotoActionBase {
     public String getElementName(Object element) {
       if (element instanceof TaskPsiElement) {
         return TaskUtil.getTrimmedSummary(((TaskPsiElement)element).getTask());
-      } else if (element == CREATE_NEW_TASK_ACTION) {
+      }
+      else if (element == CREATE_NEW_TASK_ACTION) {
         return "Create New Task \"" + CREATE_NEW_TASK_ACTION.getActionText() + "\"...";
       }
       return null;
