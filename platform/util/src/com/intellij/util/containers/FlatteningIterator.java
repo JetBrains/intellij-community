@@ -24,6 +24,7 @@ import java.util.Iterator;
 public abstract class FlatteningIterator<Group, Value> implements Iterator<Value> {
   private final Iterator<Group> valuesIterator;
   private Iterator<Value> groupIterator;
+  private Boolean hasNextCache;
 
   public FlatteningIterator(Iterator<Group> groups) {
     valuesIterator = groups;
@@ -32,10 +33,14 @@ public abstract class FlatteningIterator<Group, Value> implements Iterator<Value
 
   @Override
   public boolean hasNext() {
+    if (hasNextCache != null) {
+      return hasNextCache.booleanValue();
+    }
+
     while (!groupIterator.hasNext() && valuesIterator.hasNext()) {
       groupIterator = createValueIterator(valuesIterator.next());
     }
-    return groupIterator.hasNext();
+    return hasNextCache = groupIterator.hasNext();
   }
 
   protected abstract Iterator<Value> createValueIterator(Group group);
@@ -45,6 +50,7 @@ public abstract class FlatteningIterator<Group, Value> implements Iterator<Value
     if (!hasNext()) {
       throw new AssertionError();
     }
+    hasNextCache = null;
     return groupIterator.next();
   }
 
