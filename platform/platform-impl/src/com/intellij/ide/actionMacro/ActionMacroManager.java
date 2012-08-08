@@ -61,8 +61,10 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
@@ -89,7 +91,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
   private String myLastTyping = new String();
   private boolean myLastWasTyping;
-  
+
   public ActionMacroManager(ActionManagerEx actionManagerEx) {
     myActionManager = actionManagerEx;
     myActionManager.addAnActionListener(new AnActionListener() {
@@ -126,8 +128,8 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
   public void readExternal(Element element) throws InvalidDataException {
     myMacros = new ArrayList<ActionMacro>();
     final List macros = element.getChildren(ELEMENT_MACRO);
-    for (Iterator iterator = macros.iterator(); iterator.hasNext();) {
-      Element macroElement = (Element)iterator.next();
+    for (final Object o : macros) {
+      Element macroElement = (Element)o;
       ActionMacro macro = new ActionMacro();
       macro.readExternal(macroElement);
       myMacros.add(macro);
@@ -167,7 +169,8 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     return "ActionMacroManager";
   }
 
-  public void initComponent() { }
+  public void initComponent() {
+  }
 
   public void startRecording(String macroName) {
     LOG.assertTrue(!myIsRecording);
@@ -178,7 +181,6 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
     myWidget = new Widget(statusBar);
     statusBar.addWidget(myWidget);
   }
-
 
 
   private class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
@@ -229,7 +231,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
 
       final NonOpaquePanel top = new NonOpaquePanel(new BorderLayout());
       top.add(tb.getComponent(), BorderLayout.WEST);
-      myText = new JLabel(TYPING_SAMPLE, JLabel.LEFT);
+      myText = new JLabel(TYPING_SAMPLE, SwingConstants.LEFT);
       final Dimension preferredSize = myText.getPreferredSize();
       myText.setPreferredSize(preferredSize);
       myText.setText("Macro recording started...");
@@ -243,7 +245,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
         Disposer.dispose(myBalloon);
         return;
       }
-      
+
       myBalloon = JBPopupFactory.getInstance().createBalloonBuilder(myBalloonComponent)
         .setAnimationCycle(200)
         .setCloseButtonEnabled(true)
@@ -270,14 +272,13 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
           }
         }
       });
-      
+
       myBalloon.show(new PositionTracker<Balloon>(myIcon) {
         @Override
         public RelativePoint recalculateLocation(Balloon object) {
           return new RelativePoint(myIcon, new Point(myIcon.getSize().width / 2, 4));
         }
       }, Balloon.Position.above);
-
     }
 
     @Override
@@ -348,7 +349,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
         return;
       }
 
-      if ("".equals(macroName)) macroName = null;
+      if (macroName.isEmpty()) macroName = null;
     }
     while (macroName != null && !checkCanCreateMacro(macroName));
 
@@ -401,12 +402,12 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
         if (type == Type.message || type == Type.error) {
           if (context != null) {
             frame.getStatusBar().setInfo("Line " + context.getCurrentLine() + ": " + text);
-          } else {
+          }
+          else {
             frame.getStatusBar().setInfo(text);
           }
         }
       }
-
     }, Registry.is("actionSystem.playback.useDirectActionCall"), true, Registry.is("actionSystem.playback.useTypingTargets"));
 
     myIsPlaying = true;
@@ -553,15 +554,16 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       boolean plainType = isChar && !hasActionModifiers;
       final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
 
-      boolean noModifierKeyIsPressed =  e.getKeyCode() != KeyEvent.VK_CONTROL
-                 && e.getKeyCode() != KeyEvent.VK_ALT
-                 && e.getKeyCode() != KeyEvent.VK_META
-                 && e.getKeyCode() != KeyEvent.VK_SHIFT;
+      boolean noModifierKeyIsPressed = e.getKeyCode() != KeyEvent.VK_CONTROL
+                                       && e.getKeyCode() != KeyEvent.VK_ALT
+                                       && e.getKeyCode() != KeyEvent.VK_META
+                                       && e.getKeyCode() != KeyEvent.VK_SHIFT;
 
       if (e.getID() == KeyEvent.KEY_PRESSED && (plainType && !waiting) && !isEnter) {
         myRecordingMacro.appendKeytyped(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
         notifyUser(Character.valueOf(e.getKeyChar()).toString(), true);
-      } else if (e.getID() == KeyEvent.KEY_PRESSED && noModifierKeyIsPressed && (!plainType || isEnter)) {
+      }
+      else if (e.getID() == KeyEvent.KEY_PRESSED && noModifierKeyIsPressed && (!plainType || isEnter)) {
         if ((!myLastActionInputEvent.contains(e) && !waiting) || isEnter) {
           final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
 
@@ -580,7 +582,7 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       }
     }
   }
-  
+
   private void notifyUser(String text, boolean typing) {
     String actualText = text;
     if (typing && myLastWasTyping) {
@@ -591,11 +593,11 @@ public class ActionMacroManager implements ExportableApplicationComponent, Named
       }
       actualText = myLastTyping;
     }
-    
+
     if (myWidget != null) {
       myWidget.notifyUser(RECORDED + actualText);
     }
-    
+
     myLastWasTyping = typing;
 
     if (!typing) {
