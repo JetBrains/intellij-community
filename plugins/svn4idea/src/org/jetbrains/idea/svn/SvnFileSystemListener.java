@@ -37,12 +37,14 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
+import com.intellij.util.Processor;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.ActionWithTempFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
+import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
@@ -241,6 +243,11 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
       final boolean is17 = SvnUtil.is17CopyPart(src);
       if (is17) {
+        SVNStatus srcStatus = getFileStatus(src);
+        SVNStatus dstStatus = getFileStatus(dst);
+        if ((srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus)) && (dstStatus == null || SvnVcs.svnStatusIsUnversioned(dstStatus))) {
+          return false;
+        }
         if (for17move(vcs, src, dst, isUndo)) return false;
       } else {
         if (for16move(vcs, src, dst, isUndo)) return false;
@@ -260,23 +267,47 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
 
   private boolean for17move(SvnVcs vcs, final File src, final File dst, boolean undo) throws SVNException {
     if (undo) {
-      final SVNWCClient wcClient = vcs.createWCClient();
       myUndoingMove = true;
+      final SVNWCClient wcClient = vcs.createWCClient();
       new RepeatSvnActionThroughBusy() {
         @Override
         protected void executeImpl() throws SVNException {
           wcClient.doRevert(dst, true);
         }
       }.execute();
-      new RepeatSvnActionThroughBusy() {
-        @Override
-        protected void executeImpl() throws SVNException {
-          wcClient.doRevert(src, true);
-        }
-      }.execute();
+      copyUnversionedMembersOfDirectory(src, dst);
+      final SVNStatus srcStatus = getFileStatus(src);
+      if (srcStatus == null || SvnVcs.svnStatusIsUnversioned(srcStatus)) {
+        FileUtil.delete(src);
+      } else {
+        new RepeatSvnActionThroughBusy() {
+          @Override
+          protected void executeImpl() throws SVNException {
+            wcClient.doRevert(src, true);
+          }
+        }.execute();
+      }
       restoreFromUndoStorage(dst);
     } else {
       if (doUsualMove(vcs, src)) return true;
+      // check destination directory
+      final SVNStatus dstParentStatus = getFileStatus(dst.getParentFile());
+      if (dstParentStatus == null || SvnVcs.svnStatusIsUnversioned(dstParentStatus)) {
+        try {
+          copyFileOrDir(src, dst);
+        }
+        catch (IOException e) {
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+        }
+        final SVNWCClient wcClient = vcs.createWCClient();
+        new RepeatSvnActionThroughBusy() {
+          @Override
+          protected void executeImpl() throws SVNException {
+            wcClient.doDelete(src, true, false);
+          }
+        }.execute();
+        return false;
+      }
       final SVNCopyClient copyClient = vcs.createCopyClient();
       final SVNCopySource svnCopySource = new SVNCopySource(SVNRevision.UNDEFINED, SVNRevision.WORKING, src);
       new RepeatSvnActionThroughBusy() {
@@ -287,6 +318,40 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       }.execute();
     }
     return false;
+  }
+
+  private void copyUnversionedMembersOfDirectory(final File src, final File dst) throws SVNException {
+    if (src.isDirectory()) {
+      final SVNException[] exc = new SVNException[1];
+      FileUtil.processFilesRecursively(src, new Processor<File>() {
+        @Override
+        public boolean process(File file) {
+          String relativePath = FileUtil.getRelativePath(src, file);
+          File newFile = new File(dst, relativePath);
+          if (!newFile.exists()) {
+            try {
+              copyFileOrDir(src, dst);
+            }
+            catch (IOException e) {
+              exc[0] = new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR), e);
+              return false;
+            }
+          }
+          return true;
+        }
+      });
+      if (exc[0] != null) {
+        throw exc[0];
+      }
+    }
+  }
+
+  private void copyFileOrDir(File src, File dst) throws IOException {
+    if (src.isDirectory()) {
+      FileUtil.copyDir(src, dst);
+    } else {
+      FileUtil.copy(src, dst);
+    }
   }
 
   private boolean doUsualMove(SvnVcs vcs, File src) {
