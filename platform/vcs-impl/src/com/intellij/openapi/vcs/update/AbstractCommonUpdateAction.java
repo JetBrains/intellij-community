@@ -389,8 +389,10 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           doVfsRefresh();
         } finally {
           myProjectLevelVcsManager.stopBackgroundVcsOperation();
-          myProject.getMessageBus().syncPublisher(UpdatedFilesListener.UPDATED_FILES).
-            consume(UpdatedFilesReverseSide.getPathsFromUpdatedFiles(myUpdatedFiles));
+          if (!myProject.isDisposed()) {
+            myProject.getMessageBus().syncPublisher(UpdatedFilesListener.UPDATED_FILES).
+              consume(UpdatedFilesReverseSide.getPathsFromUpdatedFiles(myUpdatedFiles));
+          }
         }
       }
     }
