@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 
 import com.intellij.codeInsight.TailType;
+import com.intellij.codeInsight.TailTypes;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.ModifierChooser;
@@ -46,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
@@ -239,7 +241,8 @@ public class GroovyCompletionData {
       result.addElement(keyword("default", TailType.CASE_COLON));
     }
     if (afterTry(context)) {
-      addKeywords(result, true, "catch", "finally");
+      result.addElement(keyword(PsiKeyword.CATCH, TailTypes.CATCH_LPARENTH));
+      result.addElement(keyword(PsiKeyword.FINALLY, TailTypes.FINALLY_LBRACE));
     }
     if (afterIfOrElse(context)) {
       addKeywords(result, true, "else");
@@ -422,15 +425,12 @@ public class GroovyCompletionData {
         context.getParent().getParent() instanceof GrCaseSection) {
       return true;
     }
-    final PsiElement left = GroovyCompletionUtil.nearestLeftSibling(context);
-    if (left != null && left.getParent() != null &&
-        left.getParent() instanceof GrSwitchStatement &&
-        left.getPrevSibling() != null &&
-        left.getPrevSibling().getNode() != null &&
-        GroovyTokenTypes.mLCURLY.equals(left.getPrevSibling().getNode().getElementType())) {
-      return true;
-    }
-    return false;
+
+    final GrSwitchStatement switchStatement = PsiTreeUtil.getParentOfType(context, GrSwitchStatement.class, true, GrCodeBlock.class);
+    if (switchStatement == null) return false;
+
+    final GrExpression condition = switchStatement.getCondition();
+    return condition == null || !PsiTreeUtil.isAncestor(condition, context, false);
   }
 
   private static boolean afterTry(PsiElement context) {

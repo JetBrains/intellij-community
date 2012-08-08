@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -94,13 +95,26 @@ public abstract class TailType {
   };
 
   protected static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
+    final PsiFile psiFile = getFile(editor);
+    Language language = PsiUtilBase.getLanguageAtOffset(psiFile, tailOffset);
+
+    final Project project = editor.getProject();
+    assert project != null;
+    return CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+  }
+
+  protected static FileType getFileType(Editor editor) {
+    PsiFile psiFile = getFile(editor);
+    return psiFile.getFileType();
+  }
+
+  @NotNull
+  private static PsiFile getFile(Editor editor) {
     Project project = editor.getProject();
     assert project != null;
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     assert psiFile != null;
-    Language language = PsiUtilBase.getLanguageAtOffset(psiFile, tailOffset);
-
-    return CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+    return psiFile;
   }
 
   /**
