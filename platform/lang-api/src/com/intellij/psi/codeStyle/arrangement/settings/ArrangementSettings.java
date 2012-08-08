@@ -29,7 +29,7 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 8/6/12 2:30 PM
  */
-public class ArrangementEntryNodeSettings implements Cloneable {
+public class ArrangementSettings implements Cloneable {
 
   @NotNull private final Set<ArrangementModifier> myModifiers = EnumSet.noneOf(ArrangementModifier.class);
   
@@ -58,8 +58,8 @@ public class ArrangementEntryNodeSettings implements Cloneable {
   }
 
   @Override
-  protected ArrangementEntryNodeSettings clone() {
-    ArrangementEntryNodeSettings result = new ArrangementEntryNodeSettings();
+  protected ArrangementSettings clone() {
+    ArrangementSettings result = new ArrangementSettings();
     result.setType(myType);
     result.myModifiers.addAll(myModifiers);
     return result;
