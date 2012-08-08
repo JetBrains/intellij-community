@@ -173,6 +173,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     final VirtualFile vFile = getViewProvider().getVirtualFile();
     if (!vFile.isValid()) return false;
     if (!getViewProvider().isPhysical()) return true; // "dummy" file
+    if (myManager.getProject().isDisposed()) return false;
     return isPsiUpToDate(vFile);
 
     //FileViewProvider viewProvider = getViewProvider();
