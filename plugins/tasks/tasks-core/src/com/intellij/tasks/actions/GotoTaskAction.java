@@ -18,6 +18,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -128,6 +129,7 @@ public class GotoTaskAction extends GotoActionBase {
     protected Object[] getElementsByName(String name, String pattern) {
       List<Task> tasks = new ArrayList<Task>();
       tasks.addAll(TaskManager.getManager(myProject).getLocalTasks(pattern));
+      ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
       tasks.addAll(ContainerUtil.filter(TaskManager.getManager(myProject).getIssues(pattern), new Condition<Task>() {
         @Override
         public boolean value(Task task) {
