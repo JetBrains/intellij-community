@@ -74,11 +74,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
     }
   };
 
-  private String myDefaultHtmlDoctype = Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
+  private String myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;
 
   private String myCatalogPropertiesFile;
   private XMLCatalogManager myCatalogManager;
-
+  private static final String HTML5_DOCTYPE_ELEMENT = "HTML5";
 
   protected Map<String, Map<String, Resource>> computeStdResources() {
     ResourceRegistrarImpl registrar = new ResourceRegistrarImpl();
@@ -361,7 +361,11 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
     Element child = element.getChild(HTML_DEFAULT_DOCTYPE_ELEMENT);
     if (child != null) {
-      myDefaultHtmlDoctype = child.getText();
+      String text = child.getText();
+      if (FileUtil.toSystemIndependentName(text).endsWith("idea.jar!/resources/html5-schema/html5.rnc")) {
+        text = HTML5_DOCTYPE_ELEMENT;
+      }
+      myDefaultHtmlDoctype = text;
     }
     Element catalogElement = element.getChild(CATALOG_PROPERTIES_ELEMENT);
     if (catalogElement != null) {
@@ -390,7 +394,7 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
       element.addContent(e);
     }
 
-    if (myDefaultHtmlDoctype != null) {
+    if (myDefaultHtmlDoctype != null && !HTML5_DOCTYPE_ELEMENT.equals(myDefaultHtmlDoctype)) {
       final Element e = new Element(HTML_DEFAULT_DOCTYPE_ELEMENT);
       e.setText(myDefaultHtmlDoctype);
       element.addContent(e);
@@ -434,7 +438,15 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
   @NotNull
   public String getDefaultHtmlDoctype(@NotNull Project project) {
     final String doctype = getProjectResources(project).myDefaultHtmlDoctype;
-    return XmlUtil.XHTML_URI.equals(doctype) ? XmlUtil.XHTML4_SCHEMA_LOCATION : doctype;
+    if (XmlUtil.XHTML_URI.equals(doctype)) {
+      return XmlUtil.XHTML4_SCHEMA_LOCATION;
+    }
+    else if (HTML5_DOCTYPE_ELEMENT.equals(doctype)) {
+      return Html5SchemaProvider.HTML5_SCHEMA_LOCATION;
+    }
+    else {
+      return doctype;
+    }
   }
 
   @Override
@@ -464,7 +476,13 @@ public class ExternalResourceManagerImpl extends ExternalResourceManagerEx imple
 
   private void setDefaultHtmlDoctype(String defaultHtmlDoctype) {
     myModificationCount++;
-    myDefaultHtmlDoctype = defaultHtmlDoctype;
+
+    if (Html5SchemaProvider.HTML5_SCHEMA_LOCATION.equals(defaultHtmlDoctype)) {
+      myDefaultHtmlDoctype = HTML5_DOCTYPE_ELEMENT;
+    }
+    else {
+      myDefaultHtmlDoctype = defaultHtmlDoctype;
+    }
     fireExternalResourceChanged();
   }
 
