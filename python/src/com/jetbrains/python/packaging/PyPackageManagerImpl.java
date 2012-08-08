@@ -27,10 +27,12 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.net.HttpConfigurable;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PyRemoteInterpreterException;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
@@ -461,6 +463,13 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public void clearCaches() {
     myPackagesCache = null;
     myExceptionCache = null;
+    VirtualFile libDir = PyProjectScopeBuilder.findLibDir(mySdk);
+    if (libDir != null) {
+      VirtualFile sitePackages = libDir.findChild(PyNames.SITE_PACKAGES);
+      if (sitePackages != null) {
+        sitePackages.refresh(true, true);
+      }
+    }
   }
 
   private static <T> List<T> list(T... xs) {

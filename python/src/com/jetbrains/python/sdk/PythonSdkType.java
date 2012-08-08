@@ -39,6 +39,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.facet.PythonFacetSettings;
@@ -750,7 +751,7 @@ public class PythonSdkType extends SdkType {
     if (pythonSdk != null) {
       final VirtualFile libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
       if (libDir != null && VfsUtilCore.isAncestor(libDir, vFile, false)) {
-        final VirtualFile sitePackages = libDir.findChild("site-packages");
+        final VirtualFile sitePackages = libDir.findChild(PyNames.SITE_PACKAGES);
         if (sitePackages != null && VfsUtilCore.isAncestor(sitePackages, vFile, false)) {
           return false;
         }

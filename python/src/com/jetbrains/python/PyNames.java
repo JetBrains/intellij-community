@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
  */
 @NonNls
 public class PyNames {
+  public static final String SITE_PACKAGES = "site-packages";
+
   private PyNames() {
   }
 
