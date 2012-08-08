@@ -252,14 +252,12 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         });
       }
 
-      final Comparator<PsiField> fieldComparator = new Comparator<PsiField>() {
-        public int compare(final PsiField o1, final PsiField o2) {
-          return -PsiUtilCore.compareElementsByPosition(o1, o2);
-        }
-      };
-
       if (!afterFields.isEmpty()) {
-        Collections.sort(afterFields, fieldComparator);
+        Collections.sort(afterFields, new Comparator<PsiField>() {
+          public int compare(final PsiField o1, final PsiField o2) {
+            return -PsiUtilCore.compareElementsByPosition(o1, o2);
+          }
+        });
         return afterFields.get(0);
       }
 
@@ -270,7 +268,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
           beforeFields.add(fieldWithReference);
         }
       }
-      Collections.sort(beforeFields, fieldComparator);
+      Collections.sort(beforeFields, PsiUtil.BY_POSITION);
       if (!beforeFields.isEmpty()) {
         return beforeFields.get(0).getPrevSibling();
       }
