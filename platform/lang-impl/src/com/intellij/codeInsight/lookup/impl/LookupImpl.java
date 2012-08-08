@@ -437,15 +437,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return true;
   }
 
-  private boolean updateList(boolean onExplicitAction) {
+  private boolean updateList(boolean onExplicitAction, boolean reused) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
     checkValid();
 
+    if (reused) {
+      myOffsets.clearAdditionalPrefix();
+    }
+
     CollectionListModel<LookupElement> listModel = getListModel();
     synchronized (myList) {
-      Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction);
+      Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction || reused);
       List<LookupElement> items = pair.first;
       Integer toSelect = pair.second;
       if (toSelect == null || toSelect < 0 || items.size() > 0 && toSelect >= items.size()) {
@@ -617,7 +621,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     boolean plainMatch = ContainerUtil.or(item.getAllLookupStrings(), new Condition<String>() {
       @Override
       public boolean value(String s) {
-        return StringUtil.startsWithIgnoreCase(s, prefix);
+        return StringUtil.containsIgnoreCase(s, prefix);
       }
     });
     if (!plainMatch) {
@@ -627,7 +631,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myFinishing = true;
     AccessToken token = WriteAction.start();
     try {
-      insertLookupString(item, prefix);
+      insertLookupString(item, myOffsets.getPrefixLength(item, this));
     }
     finally {
       token.finish();
@@ -642,7 +646,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     fireItemSelected(item, completionChar);
   }
 
-  private void insertLookupString(LookupElement item, final String prefix) {
+  private void insertLookupString(LookupElement item, final int prefix) {
     Document document = myEditor.getDocument();
 
     String lookupString = getCaseCorrectedLookupString(item);
@@ -654,7 +658,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
       for (int line = blockStart.line; line <= blockEnd.line; line++) {
         int bs = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockStart.column));
-        int start = bs - prefix.length();
+        int start = bs - prefix;
         int end = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockEnd.column));
         if (start > end) {
           LOG.error("bs=" + bs + "; start=" + start + "; end=" + end +
@@ -663,14 +667,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         }
         document.replaceString(start, end, lookupString);
       }
-      LogicalPosition start = new LogicalPosition(blockStart.line, blockStart.column - prefix.length());
+      LogicalPosition start = new LogicalPosition(blockStart.line, blockStart.column - prefix);
       LogicalPosition end = new LogicalPosition(blockEnd.line, start.column + lookupString.length());
       myEditor.getSelectionModel().setBlockSelection(start, end);
       myEditor.getCaretModel().moveToLogicalPosition(end);
     } else {
       EditorModificationUtil.deleteSelectedText(myEditor);
       final int caretOffset = myEditor.getCaretModel().getOffset();
-      int lookupStart = caretOffset - prefix.length();
+      int lookupStart = caretOffset - prefix;
   
       int len = document.getTextLength();
       LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
@@ -1190,13 +1194,10 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
     final boolean reused = mayCheckReused && checkReused();
-    if (reused) {
-      myOffsets.clearAdditionalPrefix();
-    }
 
     boolean selectionVisible = isSelectionVisible();
 
-    boolean itemsChanged = updateList(onExplicitAction || reused);
+    boolean itemsChanged = updateList(onExplicitAction, reused);
 
     if (isVisible()) {
       LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());

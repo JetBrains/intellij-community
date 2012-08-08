@@ -1323,4 +1323,12 @@ class Foo {
     assert myFixture.file.text.contains('.println();2')
   }
 
+  public void testQuickBackspaceEnter() {
+    myFixture.configureByText 'a.java', '<caret>'
+    type 'cl'
+    assert myFixture.lookupElementStrings == ['class']
+    myFixture.type('\b\n')
+    myFixture.checkResult('class <caret>')
+  }
+
 }
