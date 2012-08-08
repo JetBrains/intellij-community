@@ -1,6 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -65,11 +64,6 @@ public class PythonStringUtil {
   }
 
   @NotNull
-  public static String removeExtension(@NotNull String s) {
-    return removeLastSuffix(s, ".");
-  }
-
-  @NotNull
   public static String removeLastSuffix(@Nullable String s, String separator) {
     if (s != null) {
       int pos = s.lastIndexOf(separator);
@@ -78,20 +72,6 @@ public class PythonStringUtil {
       }
     }
     return "";
-  }
-
-  public static boolean isIdentifier(String s) {
-    if (!StringUtil.isEmpty(s)) {
-      return StringUtil.isJavaIdentifier(s);
-    }
-    return false;
-  }
-
-  public static boolean isDjangoTemplateFileName(String s) {
-    if (!StringUtil.isEmpty(s)) {
-      return PathUtil.isValidFileName(s);
-    }
-    return false;
   }
 
   public static boolean isPath(@Nullable String s) {
@@ -121,14 +101,6 @@ public class PythonStringUtil {
     return false;
   }
 
-  @Nullable
-  public static String removePrefix(@Nullable String s, @Nullable String prefix) {
-    if (s != null && prefix != null && s.startsWith(prefix)) {
-      return s.substring(prefix.length());
-    }
-    return s;
-  }
-
   @NotNull
   public static String getFirstPrefix(String s, String separator) {
     if (s != null) {
@@ -138,25 +110,6 @@ public class PythonStringUtil {
       }
     }
     return s != null ? s : "";
-  }
-
-  /**
-   * Removes first prefix
-   *
-   * @param s
-   * @param separator
-   * @return
-   * @see PythonStringUtil#removeFirstPrefix
-   * @deprecated
-   */
-  public static String getFirstSuffix(String s, String separator) {
-    if (s != null) {
-      int pos = s.indexOf(separator);
-      if (pos != -1) {
-        return s.substring(pos + 1);
-      }
-    }
-    return "";
   }
 
   public static String getLastSuffix(String s, String separator) {
@@ -182,7 +135,7 @@ public class PythonStringUtil {
     Pair<String, String> quotes = null;
     if (isQuoted(s)) {
       quotes = getQuotes(s);
-      s = removeQuotes(s);
+      s = stripQuotesAroundValue(s);
     }
 
     s = removeLastSuffix(s, separator);
@@ -196,21 +149,6 @@ public class PythonStringUtil {
     return s;
   }
 
-
-  /**
-   * Handles unicode and raw strings
-   *
-   * @param text
-   * @return text with quotes and unicode/raw prefix removed (e.g. ur'string' -> string )
-   */
-  private static String removeQuotes(@NotNull String text) {
-    Pair<String, String> quotes = getQuotes(text);
-    if (quotes == null) {
-      return text;
-    }
-
-    return text.substring(quotes.first.length(), text.length() - quotes.second.length());
-  }
 
   public static TextRange lastSuffixTextRange(@NotNull String text, String separator) {
     int offset = text.lastIndexOf(separator) + 1;
@@ -316,36 +254,6 @@ public class PythonStringUtil {
     return null;
   }
 
-  public static String findTagNamePrefix(String text, int offsetInElement) {
-    int i = offsetInElement - 1;
-    while (i >= 0 && isIdentifier(text.substring(i, offsetInElement))) {
-      i--;
-    }
-    int nameStart = i + 1;
-
-    if (nameStart <= offsetInElement) {
-      return text.substring(nameStart, offsetInElement);
-    }
-    else {
-      return "";
-    }
-  }
-
-  public static boolean isAfterTagStart(String text, int offsetInElement) {
-    int i = offsetInElement - 1;
-    while (i >= 0 && isIdentifier(text.substring(i, offsetInElement))) {
-      i--;
-    }
-    while (i >= 0 && Character.isWhitespace(text.charAt(i))) {
-      i--;
-    }
-
-    if (i > 0 && (i + 1) < text.length() && "{%".equals(text.substring(i - 1, i + 1))) {
-      return true;
-    }
-    return false;
-  }
-
   public static TextRange getTextRange(PsiElement element) {
     if (element instanceof PyStringLiteralExpression) {
       final List<TextRange> ranges = ((PyStringLiteralExpression)element).getStringValueTextRanges();
@@ -367,7 +275,7 @@ public class PythonStringUtil {
   }
 
   @Nullable
-  public static String getStringValue(@Nullable Object o) {
+  public static String getStringValue(@Nullable PsiElement o) {
     if (o == null) {
       return null;
     }
@@ -375,25 +283,18 @@ public class PythonStringUtil {
       PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)o;
       return literalExpression.getStringValue();
     }
-    else if (o instanceof PyExpression) {
-      return ((PyExpression)o).getText();
-    }
-    else if (o instanceof LookupElement) {
-      return ((LookupElement)o).getLookupString();
-    }
-    else if (o instanceof PsiElement) {
-      return ((PsiElement)o).getText();
-    }
-    else if (o instanceof String) {
-      return getStringValue((String)o);
-    }
     else {
-      return o.toString();
+      return o.getText();
     }
   }
 
   public static String stripQuotesAroundValue(String text) {
-    return removeQuotes(text);
+    Pair<String, String> quotes = getQuotes(text);
+    if (quotes == null) {
+      return text;
+    }
+
+    return text.substring(quotes.first.length(), text.length() - quotes.second.length());
   }
 
   public static boolean isRawString(String text) {
