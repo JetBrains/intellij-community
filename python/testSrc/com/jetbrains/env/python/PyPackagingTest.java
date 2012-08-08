@@ -11,10 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.packaging.PyExternalProcessException;
-import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,11 +36,11 @@ public class PyPackagingTest extends PyTestCase {
       public boolean process(Sdk sdk) {
         List<PyPackage> packages = null;
         try {
-          packages = PyPackageManager.getInstance(sdk).getPackages();
+          packages = PyPackageManagerImpl.getInstance(sdk).getPackages();
         }
         catch (PyExternalProcessException e) {
           final int retcode = e.getRetcode();
-          if (retcode != PyPackageManager.ERROR_NO_PIP && retcode != PyPackageManager.ERROR_NO_DISTRIBUTE) {
+          if (retcode != PyPackageManagerImpl.ERROR_NO_PIP && retcode != PyPackageManagerImpl.ERROR_NO_DISTRIBUTE) {
             fail(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()));
           }
         }
@@ -64,11 +61,11 @@ public class PyPackagingTest extends PyTestCase {
       public boolean process(Sdk sdk) {
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
-          final String venvSdkHome = PyPackageManager.getInstance(sdk).createVirtualEnv(tempDir.toString(), false);
+          final String venvSdkHome = PyPackageManagerImpl.getInstance(sdk).createVirtualEnv(tempDir.toString(), false);
           final Sdk venvSdk = createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
           assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
-          final List<PyPackage> packages = PyPackageManager.getInstance(venvSdk).getPackages();
+          final List<PyPackage> packages = PyPackageManagerImpl.getInstance(venvSdk).getPackages();
           final PyPackage distribute = findPackage("distribute", packages);
           assertNotNull(distribute);
           assertEquals("distribute", distribute.getName());
@@ -95,10 +92,10 @@ public class PyPackagingTest extends PyTestCase {
       public boolean process(final Sdk sdk) {
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
-          final String venvSdkHome = PyPackageManager.getInstance(sdk).createVirtualEnv(tempDir.getPath(), false);
+          final String venvSdkHome = PyPackageManagerImpl.getInstance(sdk).createVirtualEnv(tempDir.getPath(), false);
           final Sdk venvSdk = createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
-          final PyPackageManager manager = PyPackageManager.getInstance(venvSdk);
+          final PyPackageManagerImpl manager = PyPackageManagerImpl.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.getPackages();
           // TODO: Install Markdown from a local file
           manager.install(list(PyRequirement.fromString("Markdown<2.2"),
