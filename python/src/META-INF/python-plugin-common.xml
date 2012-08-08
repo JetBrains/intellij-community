@@ -414,6 +414,8 @@
 
     <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
                     serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
+    <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
+                        serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
 
     <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>

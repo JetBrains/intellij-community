@@ -352,7 +352,7 @@ public class PyPackagesPanel extends JPanel {
         List<PyPackage> packages = Lists.newArrayList();
         if (selectedSdk != null) {
           try {
-            packages = PyPackageManagerImpl.getInstance(selectedSdk).getPackages();
+            packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(selectedSdk)).getPackages();
           }
           catch (PyExternalProcessException e) {
             // do nothing, we already have an empty list
@@ -421,10 +421,12 @@ public class PyPackagesPanel extends JPanel {
       public void run() {
         PyExternalProcessException exc = null;
         try {
-          myHasDistribute = PyPackageManagerImpl.getInstance(selectedSdk).findPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
-          if (!myHasDistribute)
-            myHasDistribute = PyPackageManagerImpl.getInstance(selectedSdk).findPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
-          myHasPip = PyPackageManagerImpl.getInstance(selectedSdk).findPackage(PyPackageManagerImpl.PACKAGE_PIP) != null;
+          PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(selectedSdk);
+          myHasDistribute = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
+          if (!myHasDistribute) {
+            myHasDistribute = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
+          }
+          myHasPip = packageManager.findPackage(PyPackageManagerImpl.PACKAGE_PIP) != null;
         }
         catch (PyExternalProcessException e) {
           exc = e;
@@ -490,7 +492,7 @@ public class PyPackagesPanel extends JPanel {
       @Override
       public void finished(List<PyExternalProcessException> exceptions) {
         myPackagesTable.setPaintBusy(false);
-        PyPackageManagerImpl packageManager = PyPackageManagerImpl.getInstance(sdk);
+        PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
         if (!exceptions.isEmpty()) {
           final String firstLine = "Install package failed. ";
           final String description = PyPackageManagerImpl.UI.createDescription(exceptions, firstLine);

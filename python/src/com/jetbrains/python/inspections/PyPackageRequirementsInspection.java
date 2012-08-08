@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -106,7 +107,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               unsatisfiedNames.add(req.getName());
             }
             final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
-            if (PyPackageManagerImpl.getInstance(sdk).hasPip()) {
+            if (PyPackageManager.getInstance(sdk).hasPip()) {
               quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
             }
             quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
@@ -166,7 +167,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
           if (PyPackageManagerImpl.PACKAGE_SETUPTOOLS.equals(packageName)) {
             return;
           }
-          final Module module = ModuleUtil.findModuleForPsiElement(packageReferenceExpression);
+          final Module module = ModuleUtilCore.findModuleForPsiElement(packageReferenceExpression);
           if (module != null) {
             Collection<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
             if (requirements != null) {
@@ -186,14 +187,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
                   final PsiFile file = element.getContainingFile();
                   if (file != null) {
                     final VirtualFile virtualFile = file.getVirtualFile();
-                    if (ModuleUtil.moduleContainsFile(module, virtualFile, false)) {
+                    if (ModuleUtilCore.moduleContainsFile(module, virtualFile, false)) {
                       return;
                     }
                   }
                 }
               }
               final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
-              if (sdk != null && PyPackageManagerImpl.getInstance(sdk).hasPip()) {
+              if (sdk != null && PyPackageManager.getInstance(sdk).hasPip()) {
                 quickFixes.add(new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
               }
               quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
@@ -212,7 +213,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                                               @NotNull Set<PyPackage> visited) {
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
     try {
-      final List<PyPackage> packages = PyPackageManagerImpl.getInstance(sdk).getPackages();
+      final List<PyPackage> packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(sdk)).getPackages();
       for (PyRequirement req : requirements) {
         final PyPackage pkg = req.match(packages);
         if (pkg != null && !visited.contains(pkg)) {
@@ -239,7 +240,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
   @Nullable
   private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk,
                                                                  @NotNull Set<String> ignoredPackages) {
-    final PyPackageManagerImpl manager = PyPackageManagerImpl.getInstance(sdk);
+    final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
     List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
     if (requirements != null) {
       final List<PyPackage> packages;
