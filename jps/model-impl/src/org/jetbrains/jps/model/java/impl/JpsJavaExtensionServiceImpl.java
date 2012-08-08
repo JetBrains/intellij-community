@@ -2,13 +2,10 @@ package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElementProperties;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.*;
-import org.jetbrains.jps.model.module.JpsDependencyElement;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleReference;
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.model.module.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -106,9 +103,12 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   public String getSourcePrefix(JpsModule module, String rootUrl) {
     for (JpsModuleSourceRoot root : module.getSourceRoots()) {
       if (root.getUrl().equals(rootUrl)) {
-        final JpsElementProperties properties = root.getProperties();
-        if (properties instanceof JavaSourceRootProperties) {
-          return ((JavaSourceRootProperties)properties).getPackagePrefix();
+        JpsModuleSourceRootType<?> type = root.getRootType();
+        if (type instanceof JavaSourceRootType) {
+          final JpsSimpleElement<JavaSourceRootProperties> properties = root.getProperties((JavaSourceRootType)type);
+          if (properties != null) {
+            return properties.getData().getPackagePrefix();
+          }
         }
       }
     }

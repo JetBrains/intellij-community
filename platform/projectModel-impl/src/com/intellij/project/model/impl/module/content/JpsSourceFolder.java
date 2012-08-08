@@ -17,6 +17,7 @@ package com.intellij.project.model.impl.module.content;
 
 import com.intellij.openapi.roots.SourceFolder;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
@@ -43,12 +44,12 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
 
   @Override
   public String getPackagePrefix() {
-    final JavaSourceRootProperties properties = getJavaProperties();
-    return properties != null ? properties.getPackagePrefix() : "";
+    final JpsSimpleElement<JavaSourceRootProperties> properties = getJavaProperties();
+    return properties != null ? properties.getData().getPackagePrefix() : "";
   }
 
   @Nullable
-  private JavaSourceRootProperties getJavaProperties() {
+  private JpsSimpleElement<JavaSourceRootProperties> getJavaProperties() {
     if (mySourceRoot.getRootType() == JavaSourceRootType.SOURCE) {
       return mySourceRoot.getProperties(JavaSourceRootType.SOURCE);
     }
@@ -60,6 +61,9 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
 
   @Override
   public void setPackagePrefix(String packagePrefix) {
-    mySourceRoot.setProperties((JavaSourceRootType)mySourceRoot.getRootType(), new JavaSourceRootProperties(packagePrefix));
+    JpsSimpleElement<JavaSourceRootProperties> properties = getJavaProperties();
+    if (properties != null) {
+      properties.setData(new JavaSourceRootProperties(packagePrefix));
+    }
   }
 }

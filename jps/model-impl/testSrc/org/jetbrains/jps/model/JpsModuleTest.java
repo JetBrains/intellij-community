@@ -13,16 +13,17 @@ import java.util.List;
 public class JpsModuleTest extends JpsModelTestCase {
   public void testAddSourceRoot() {
     final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
-    final JpsModuleSourceRoot sourceRoot = module.addSourceRoot("file://url", JavaSourceRootType.SOURCE, new JavaSourceRootProperties("com.xxx"));
+    JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties("com.xxx"));
+    final JpsModuleSourceRoot sourceRoot = module.addSourceRoot("file://url", JavaSourceRootType.SOURCE, properties);
 
     assertSameElements(myDispatcher.retrieveAdded(JpsModule.class), module);
     assertSameElements(myDispatcher.retrieveAdded(JpsModuleSourceRoot.class), sourceRoot);
 
     final JpsModuleSourceRoot root = assertOneElement(module.getSourceRoots());
     assertEquals("file://url", root.getUrl());
-    final JavaSourceRootProperties properties = root.getProperties(JavaSourceRootType.SOURCE);
-    assertNotNull(properties);
-    assertEquals("com.xxx", properties.getPackagePrefix());
+    final JpsSimpleElement<JavaSourceRootProperties> properties2 = root.getProperties(JavaSourceRootType.SOURCE);
+    assertNotNull(properties2);
+    assertEquals("com.xxx", properties2.getData().getPackagePrefix());
   }
 
   public void testModifiableModel() {

@@ -21,11 +21,11 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   List<JpsModuleSourceRoot> getSourceRoots();
 
   @NotNull
-  <P extends JpsElementProperties, Type extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
+  <P extends JpsElement, Type extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull Type rootType);
 
   @NotNull
-  <P extends JpsElementProperties>
+  <P extends JpsElement>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType, @NotNull P properties);
 
   void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);

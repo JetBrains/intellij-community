@@ -1,51 +1,50 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
-import org.jetbrains.jps.model.impl.JpsTypedDataImpl;
-import org.jetbrains.jps.model.impl.JpsTypedDataRole;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * @author nik
  */
-public class JpsModuleSourceRootImpl extends JpsCompositeElementBase<JpsModuleSourceRootImpl> implements JpsModuleSourceRoot {
-  private static final JpsTypedDataRole<JpsModuleSourceRootType<?>> TYPED_DATA_ROLE = new JpsTypedDataRole<JpsModuleSourceRootType<?>>();
-  private String myUrl;
+public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeElementBase<JpsModuleSourceRootImpl<P>> implements JpsModuleSourceRoot {
+  private final JpsModuleSourceRootType<P> myRootType;
+  private final String myUrl;
 
-  public <P extends JpsElementProperties> JpsModuleSourceRootImpl(String url, JpsModuleSourceRootType<P> type, P properties) {
+  public JpsModuleSourceRootImpl(String url, JpsModuleSourceRootType<P> type, P properties) {
     super();
-    myContainer.setChild(TYPED_DATA_ROLE, new JpsTypedDataImpl<JpsModuleSourceRootType<?>>(type, properties));
+    myRootType = type;
+    myContainer.setChild(type.getPropertiesRole(), properties);
     myUrl = url;
   }
 
-  private JpsModuleSourceRootImpl(JpsModuleSourceRootImpl original) {
+  private JpsModuleSourceRootImpl(JpsModuleSourceRootImpl<P> original) {
     super(original);
+    myRootType = original.myRootType;
     myUrl = original.myUrl;
   }
 
   @Override
-  public <P extends JpsElementProperties> P getProperties(@NotNull JpsModuleSourceRootType<P> type) {
-    return myContainer.getChild(TYPED_DATA_ROLE).getProperties(type);
+  public <P extends JpsElement> P getProperties(@NotNull JpsModuleSourceRootType<P> type) {
+    if (myRootType.equals(type)) {
+      //noinspection unchecked
+      return (P)myContainer.getChild(myRootType.getPropertiesRole());
+    }
+    return null;
   }
 
   @NotNull
   @Override
-  public JpsElementProperties getProperties() {
-    return myContainer.getChild(TYPED_DATA_ROLE).getProperties();
-  }
-
-  @Override
-  public <P extends JpsElementProperties> void setProperties(JpsModuleSourceRootType<P> type, P properties) {
-    myContainer.getChild(TYPED_DATA_ROLE).setProperties(properties);
+  public P getProperties() {
+    return myContainer.getChild(myRootType.getPropertiesRole());
   }
 
   @NotNull
   @Override
   public JpsModuleSourceRootType<?> getRootType() {
-    return myContainer.getChild(TYPED_DATA_ROLE).getType();
+    return myRootType;
   }
 
   @NotNull
@@ -55,7 +54,7 @@ public class JpsModuleSourceRootImpl extends JpsCompositeElementBase<JpsModuleSo
 
   @NotNull
   @Override
-  public JpsModuleSourceRootImpl createCopy() {
-    return new JpsModuleSourceRootImpl(this);
+  public JpsModuleSourceRootImpl<P> createCopy() {
+    return new JpsModuleSourceRootImpl<P>(this);
   }
 }

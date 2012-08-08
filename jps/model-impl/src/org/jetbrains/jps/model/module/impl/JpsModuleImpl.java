@@ -77,20 +77,17 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties, T extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
+  public <P extends JpsElement, T extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull T rootType) {
     return addSourceRoot(url, rootType, rootType.createDefaultProperties());
   }
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties> JpsModuleSourceRoot addSourceRoot(@NotNull String url,
-                                                                            @NotNull JpsModuleSourceRootType<P> rootType,
-                                                                            @NotNull P properties) {
-    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl(url, rootType, properties);
-    myContainer.getChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE).addChild(root);
-    root.setProperties(rootType, properties);
-    return root;
+  public <P extends JpsElement> JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType,
+                                                                  @NotNull P properties) {
+    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl<P>(url, rootType, properties);
+    return myContainer.getChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE).addChild(root);
   }
 
   @Override
