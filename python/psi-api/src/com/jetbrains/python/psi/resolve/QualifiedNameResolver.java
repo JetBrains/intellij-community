@@ -1,6 +1,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -16,6 +17,8 @@ public interface QualifiedNameResolver {
   QualifiedNameResolver fromElement(@NotNull PsiElement foothold);
 
   QualifiedNameResolver fromModule(@NotNull Module module);
+
+  QualifiedNameResolver fromSdk(@NotNull Project project, @NotNull Sdk sdk);
 
   QualifiedNameResolver withAllModules();
 

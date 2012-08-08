@@ -6,6 +6,7 @@ import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -69,6 +70,13 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   public QualifiedNameResolver fromModule(@NotNull Module module) {
     setModule(module);
     myPsiManager = PsiManager.getInstance(module.getProject());
+    return this;
+  }
+
+  @Override
+  public QualifiedNameResolver fromSdk(@NotNull Project project, @NotNull Sdk sdk) {
+    myPsiManager = PsiManager.getInstance(project);
+    myWithSdk = sdk;
     return this;
   }
 
