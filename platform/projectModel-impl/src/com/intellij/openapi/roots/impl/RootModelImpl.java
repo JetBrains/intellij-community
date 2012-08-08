@@ -177,12 +177,19 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   private void setOrderEntriesFrom(@NotNull RootModelImpl rootModel) {
-    myOrderEntries.clear();
+    removeAllOrderEntries();
     for (OrderEntry orderEntry : rootModel.myOrderEntries) {
       if (orderEntry instanceof ClonableOrderEntry) {
         myOrderEntries.add(((ClonableOrderEntry)orderEntry).cloneEntry(this, myProjectRootManager, myFilePointerManager));
       }
     }
+  }
+
+  private void removeAllOrderEntries() {
+    for (OrderEntry entry : myOrderEntries) {
+      Disposer.dispose((OrderEntryBaseImpl)entry);
+    }
+    myOrderEntries.clear();
   }
 
   @Override
@@ -202,8 +209,11 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   public void removeContentEntry(@NotNull ContentEntry entry) {
     assertWritable();
-    LOG.assertTrue(getContent().contains(entry));
-    getContent().remove(entry);
+    LOG.assertTrue(myContent.contains(entry));
+    if (entry instanceof RootModelComponentBase) {
+      Disposer.dispose((RootModelComponentBase)entry);
+    }
+    myContent.remove(entry);
   }
 
   @Override
@@ -272,6 +282,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   private void removeOrderEntryInternal(OrderEntry entry) {
     LOG.assertTrue(myOrderEntries.contains(entry));
+    Disposer.dispose((OrderEntryBaseImpl)entry);
     myOrderEntries.remove(entry);
   }
 
@@ -310,10 +321,19 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   public void clear() {
     final Sdk jdk = getSdk();
-    myContent.clear();
-    myOrderEntries.clear();
+    removeAllContentEntries();
+    removeAllOrderEntries();
     setSdk(jdk);
     addSourceOrderEntries();
+  }
+
+  private void removeAllContentEntries() {
+    for (ContentEntry entry : myContent) {
+      if (entry instanceof RootModelComponentBase) {
+        Disposer.dispose((RootModelComponentBase)entry);
+      }
+    }
+    myContent.clear();
   }
 
   @Override
@@ -330,7 +350,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     }
 
     if (areContentEntriesChanged()) {
-      getSourceModel().myContent.clear();
+      getSourceModel().removeAllContentEntries();
       for (ContentEntry contentEntry : myContent) {
         ContentEntry cloned = ((ClonableContentEntry)contentEntry).cloneEntry(getSourceModel());
         getSourceModel().myContent.add(cloned);
