@@ -37,7 +37,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,6 +45,7 @@ import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -139,7 +140,7 @@ public class ConversionContextImpl implements ConversionContext {
   }
 
   private File[] findModuleFiles(final Element root) {
-    final Element modulesManager = JDomConvertingUtil.findComponent(root, ModuleManagerImpl.COMPONENT_NAME);
+    final Element modulesManager = JDomSerializationUtil.findComponent(root, ModuleManagerImpl.COMPONENT_NAME);
     if (modulesManager == null) return new File[0];
 
     final Element modules = modulesManager.getChild(ModuleManagerImpl.ELEMENT_MODULES);
@@ -226,7 +227,7 @@ public class ConversionContextImpl implements ConversionContext {
       final ExpandMacroToPathMap pathMap = createExpandMacroMap(moduleSettings);
       for (Element root : roots) {
         final String url = root.getAttributeValue("url");
-        final String path = VfsUtil.urlToPath(url);
+        final String path = VfsUtilCore.urlToPath(url);
         files.add(new File(PathUtil.getLocalPath(pathMap.substitute(path, true))));
       }
     }
@@ -286,7 +287,7 @@ public class ConversionContextImpl implements ConversionContext {
     final File file = PathManager.getOptionsFile("applicationLibraries");
     if (file.exists()) {
       final Element root = JDomConvertingUtil.loadDocument(file).getRootElement();
-      final Element libraryTable = JDomConvertingUtil.findComponent(root, "libraryTable");
+      final Element libraryTable = JDomSerializationUtil.findComponent(root, "libraryTable");
       if (libraryTable != null) {
         return findLibraryInTable(libraryTable, name);
       }
@@ -408,7 +409,8 @@ public class ConversionContextImpl implements ConversionContext {
       state.setPerformedConversionIds(performedConversionsList);
       final ComponentManagerSettings settings = getProjectFileVersionSettings();
       if (settings != null) {
-        final Element element = JDomConvertingUtil.findOrCreateComponentElement(settings.getRootElement(), ProjectFileVersionImpl.COMPONENT_NAME);
+        final Element element =
+          JDomSerializationUtil.findOrCreateComponentElement(settings.getRootElement(), ProjectFileVersionImpl.COMPONENT_NAME);
         XmlSerializer.serializeInto(state, element);
       }
     }
