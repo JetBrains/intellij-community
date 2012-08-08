@@ -18,9 +18,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 

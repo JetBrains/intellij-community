@@ -87,6 +87,8 @@
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
 
     <!-- Run/Debug -->
+    <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
+                        serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
     <applicationService serviceInterface="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"
                         serviceImplementation="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"/>
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>

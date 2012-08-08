@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="python-psi-api" exported="" />
     <orderEntry type="module" module-name="platform-impl" />
+    <orderEntry type="module" module-name="lang-api" />
   </component>
 </module>
 

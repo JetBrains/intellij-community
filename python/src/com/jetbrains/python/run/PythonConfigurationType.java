@@ -16,6 +16,9 @@ import javax.swing.*;
  * @author yole
  */
 public class PythonConfigurationType implements ConfigurationType {
+
+  private final PythonConfigurationFactory myFactory = new PythonConfigurationFactory(this);
+
   public static PythonConfigurationType getInstance() {
     for(ConfigurationType configType: Extensions.getExtensions(CONFIGURATION_TYPE_EP)) {
       if (configType instanceof PythonConfigurationType) {
@@ -51,7 +54,11 @@ public class PythonConfigurationType implements ConfigurationType {
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {
-    return new ConfigurationFactory[]{new PythonConfigurationFactory(this)};
+    return new ConfigurationFactory[]{myFactory};
+  }
+
+  public PythonConfigurationFactory getFactory() {
+    return myFactory;
   }
 
   @NotNull

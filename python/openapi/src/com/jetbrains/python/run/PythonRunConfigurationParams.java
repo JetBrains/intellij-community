@@ -1,8 +1,5 @@
 package com.jetbrains.python.run;
 
-import com.jetbrains.python.debugger.remote.PyPathMappingSettings;
-import org.jetbrains.annotations.Nullable;
-
 /**
  * @author Leonid Shalupov
  */
