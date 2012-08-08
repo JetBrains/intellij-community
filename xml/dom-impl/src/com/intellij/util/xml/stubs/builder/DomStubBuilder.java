@@ -58,6 +58,6 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    return 1;
+    return 2;
   }
 }
