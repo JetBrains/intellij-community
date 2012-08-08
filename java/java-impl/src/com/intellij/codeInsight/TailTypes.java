@@ -106,6 +106,20 @@ public class TailTypes {
       return styleSettings.SPACE_BEFORE_FINALLY_LBRACE;
     }
   };
+  public static final TailType TRY_LBRACE = new BracesTailType() {
+    @Override
+    protected boolean isSpaceBeforeLBrace(CommonCodeStyleSettings styleSettings, Editor editor, int tailOffset) {
+      return styleSettings.SPACE_BEFORE_TRY_LBRACE;
+    }
+  };
+  public static final TailType DO_LBRACE = new BracesTailType() {
+    @Override
+    protected boolean isSpaceBeforeLBrace(CommonCodeStyleSettings styleSettings, Editor editor, int tailOffset) {
+      return styleSettings.SPACE_BEFORE_DO_LBRACE;
+    }
+  };
+
+
 
   private TailTypes() {}
 }

@@ -378,10 +378,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
   private static void addStatementKeywords(CompletionResultSet variant, PsiElement position) {
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.SWITCH), TailTypes.SWITCH_LPARENTH));
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.WHILE), TailTypes.WHILE_LPARENTH));
-    variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.DO), TailType.createSimpleTailType('{')));
+    variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.DO), TailTypes.DO_LBRACE));
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.FOR), TailTypes.FOR_LPARENTH));
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.IF), TailTypes.IF_LPARENTH));
-    variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.TRY), TailType.createSimpleTailType('{')));
+    variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.TRY), TailTypes.TRY_LBRACE));
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.THROW), TailType.INSERT_SPACE));
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.NEW), TailType.INSERT_SPACE));
     variant.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.SYNCHRONIZED), TailTypes.SYNCHRONIZED_LPARENTH));
