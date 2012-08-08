@@ -46,7 +46,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
       PsiScopesUtil.setupAndRunProcessor(processor, contextCall, false);
       PsiExpression[] expressions = expressionList.getExpressions();
       int i = ArrayUtil.find(expressions, innerMethodCall);
-      assert i >= 0;
+      if (i < 0) return null;
       final JavaResolveResult[] results = processor.getResult();
       PsiMethod owner = (PsiMethod)typeParameter.getOwner();
       if (owner == null) return null;
