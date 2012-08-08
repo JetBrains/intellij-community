@@ -233,7 +233,13 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
       for (String eachWord : allWords) {
         if (eachWord.startsWith(optionToCheck)) {
           hits.getNameHits().add(each);
+          break;
         }
+      }
+
+      if (options.isEmpty()) {
+        hits.getNameHits().add(each);
+        hits.getNameFullHits().add(each);
       }
     }
 

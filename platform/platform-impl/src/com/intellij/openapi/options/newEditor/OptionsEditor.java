@@ -867,7 +867,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
       boolean shouldMoveSelection = true;
 
-      if (myHits != null && myHits.getNameFullHits().contains(current)) {
+      if (myHits != null && (myHits.getNameFullHits().contains(current) || myHits.getContentHits().contains(current))) {
         shouldMoveSelection = false;
       }
 
