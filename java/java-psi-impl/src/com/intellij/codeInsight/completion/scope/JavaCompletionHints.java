@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Key;
  * @author yole
  */
 public class JavaCompletionHints {
-  public static final Key<Boolean> JAVA_COMPLETION = Key.create("JAVA_COMPLETION");
   public static final Key<Condition<String>> NAME_FILTER = Key.create("NAME_FILTER");
 
   private JavaCompletionHints() {
