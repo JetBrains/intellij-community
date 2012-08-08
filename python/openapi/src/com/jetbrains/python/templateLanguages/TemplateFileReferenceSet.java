@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author traff
  */
-public abstract class TemplateFileReferenceSet extends FileReferenceSet {
+public class TemplateFileReferenceSet extends FileReferenceSet {
   private final String mySeparatorString;
 
   public TemplateFileReferenceSet(PsiElement element, @Nullable PsiReferenceProvider provider) {
