@@ -40,7 +40,7 @@ import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.documentation.DocStringParameterReference;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
-import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -509,7 +509,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             if (PyPIPackageUtil.INSTANCE.isInPyPI(packageName)) {
               final List<PyRequirement> requirements = Collections.singletonList(new PyRequirement(packageName));
               final String name = "Install package " + packageName;
-              if (PyPackageManager.getInstance(sdk).hasPip()) {
+              if (PyPackageManagerImpl.getInstance(sdk).hasPip()) {
                 actions.add(new PyPackageRequirementsInspection.PyInstallRequirementsFix(name, module, sdk, requirements));
               }
             }

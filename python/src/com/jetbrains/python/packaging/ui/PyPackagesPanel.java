@@ -202,8 +202,8 @@ public class PyPackagesPanel extends JPanel {
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
                     @Override
                     public void run() {
-                      PyPackageManager.UI ui =
-                        new PyPackageManager.UI(myProject, selectedSdk, new PyPackageManager.UI.Listener() {
+                      PyPackageManagerImpl.UI ui =
+                        new PyPackageManagerImpl.UI(myProject, selectedSdk, new PyPackageManagerImpl.UI.Listener() {
                           @Override
                           public void started() {
                             myPackagesTable.setPaintBusy(true);
@@ -222,7 +222,7 @@ public class PyPackagesPanel extends JPanel {
                             else {
                               myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
                                                            "Upgrade Packages Failed",
-                                                           PyPackageManager.UI.createDescription(exceptions, "Upgrade packages failed."));
+                                                           PyPackageManagerImpl.UI.createDescription(exceptions, "Upgrade packages failed."));
                             }
                           }
                         });
@@ -259,7 +259,7 @@ public class PyPackagesPanel extends JPanel {
         boolean upgradeAvailable = false;
         boolean isPipOrDistribute = false;
         boolean isInUserSite = true;
-        final String userSite = PyPackageManager.getUserSite();
+        final String userSite = PyPackageManagerImpl.getUserSite();
         if (isAvailabe) {
           for (int i = 0; i != selected.length; ++i) {
             final int index = selected[i];
@@ -296,7 +296,7 @@ public class PyPackagesPanel extends JPanel {
         final List<PyPackage> packages = getSelectedPackages();
         final Sdk sdk = mySelectedSdk;
         if (sdk != null) {
-          PyPackageManager.UI ui = new PyPackageManager.UI(myProject, sdk, new PyPackageManager.UI.Listener() {
+          PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, sdk, new PyPackageManagerImpl.UI.Listener() {
             @Override
             public void started() {
               myPackagesTable.setPaintBusy(true);
@@ -313,7 +313,7 @@ public class PyPackagesPanel extends JPanel {
               else {
                 myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
                                              "Uninstall Packages Failed",
-                                             PyPackageManager.UI.createDescription(exceptions, "Uninstall packages failed."));
+                                             PyPackageManagerImpl.UI.createDescription(exceptions, "Uninstall packages failed."));
               }
             }
           });
@@ -352,7 +352,7 @@ public class PyPackagesPanel extends JPanel {
         List<PyPackage> packages = Lists.newArrayList();
         if (selectedSdk != null) {
           try {
-            packages = PyPackageManager.getInstance(selectedSdk).getPackages();
+            packages = PyPackageManagerImpl.getInstance(selectedSdk).getPackages();
           }
           catch (PyExternalProcessException e) {
             // do nothing, we already have an empty list
@@ -421,10 +421,10 @@ public class PyPackagesPanel extends JPanel {
       public void run() {
         PyExternalProcessException exc = null;
         try {
-          myHasDistribute = PyPackageManager.getInstance(selectedSdk).findPackage(PyPackageManager.PACKAGE_DISTRIBUTE) != null;
+          myHasDistribute = PyPackageManagerImpl.getInstance(selectedSdk).findPackage(PyPackageManagerImpl.PACKAGE_DISTRIBUTE) != null;
           if (!myHasDistribute)
-            myHasDistribute = PyPackageManager.getInstance(selectedSdk).findPackage(PyPackageManager.PACKAGE_SETUPTOOLS) != null;
-          myHasPip = PyPackageManager.getInstance(selectedSdk).findPackage(PyPackageManager.PACKAGE_PIP) != null;
+            myHasDistribute = PyPackageManagerImpl.getInstance(selectedSdk).findPackage(PyPackageManagerImpl.PACKAGE_SETUPTOOLS) != null;
+          myHasPip = PyPackageManagerImpl.getInstance(selectedSdk).findPackage(PyPackageManagerImpl.PACKAGE_PIP) != null;
         }
         catch (PyExternalProcessException e) {
           exc = e;
@@ -444,10 +444,10 @@ public class PyPackagesPanel extends JPanel {
                 String text = null;
                 if (externalProcessException != null) {
                   final int retCode = externalProcessException.getRetcode();
-                  if (retCode == PyPackageManager.ERROR_NO_PIP) {
+                  if (retCode == PyPackageManagerImpl.ERROR_NO_PIP) {
                     myHasPip = false;
                   }
-                  else if (retCode == PyPackageManager.ERROR_NO_DISTRIBUTE) {
+                  else if (retCode == PyPackageManagerImpl.ERROR_NO_DISTRIBUTE) {
                     myHasDistribute = false;
                   }
                   else {
@@ -481,7 +481,7 @@ public class PyPackagesPanel extends JPanel {
   }
 
   private void installManagementTool(@NotNull final Sdk sdk, final String name) {
-    final PyPackageManager.UI ui = new PyPackageManager.UI(myProject, sdk, new PyPackageManager.UI.Listener() {
+    final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, sdk, new PyPackageManagerImpl.UI.Listener() {
       @Override
       public void started() {
         myPackagesTable.setPaintBusy(true);
@@ -490,12 +490,13 @@ public class PyPackagesPanel extends JPanel {
       @Override
       public void finished(List<PyExternalProcessException> exceptions) {
         myPackagesTable.setPaintBusy(false);
+        PyPackageManagerImpl packageManager = PyPackageManagerImpl.getInstance(sdk);
         if (!exceptions.isEmpty()) {
           final String firstLine = "Install package failed. ";
-          final String description = PyPackageManager.UI.createDescription(exceptions, firstLine);
-          PyPIPackageUtil.showError(myProject, "Failed to install " + name, description);
+          final String description = PyPackageManagerImpl.UI.createDescription(exceptions, firstLine);
+          packageManager.showInstallationError(myProject, "Failed to install " + name, description);
         }
-        PyPackageManager.getInstance(sdk).clearCaches();
+        packageManager.clearCaches();
         updatePackages(sdk);
         for (Consumer<Sdk> listener : myPathChangedListeners) {
           listener.consume(sdk);

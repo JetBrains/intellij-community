@@ -168,7 +168,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     addManageAction();
     String userSiteText = "Install to user's site packages directory";
     if (!PythonSdkType.isRemote(sdk))
-      userSiteText += " (" + PyPackageManager.getUserSite() + ")";
+      userSiteText += " (" + PyPackageManagerImpl.getUserSite() + ")";
     myInstallToUser.setText(userSiteText);
   }
 
@@ -210,7 +210,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           final String repository = pair.getSecond().equals(PyPIPackageUtil.PYPI_URL) ? null : pair.getSecond();
           final List<String> extraArgs = new ArrayList<String>();
           if (myInstallToUser.isSelected()) {
-            extraArgs.add(PyPackageManager.USE_USER_SITE);
+            extraArgs.add(PyPackageManagerImpl.USE_USER_SITE);
           }
           if (myOptionsCheckBox.isEnabled() && myOptionsCheckBox.isSelected()) {
             // TODO: Respect arguments quotation
@@ -227,7 +227,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           else {
             req = new PyRequirement(packageName);
           }
-          final PyPackageManager.UI ui = new PyPackageManager.UI(project, sdk, new PyPackageManager.UI.Listener() {
+          final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(project, sdk, new PyPackageManagerImpl.UI.Listener() {
             @Override
             public void started() {
               setDownloadStatus(true);
@@ -263,7 +263,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         final String firstLine = title + ": Error occurred when installing package " + packageName + ". ";
         pane.showError(firstLine + "<a href=\"xxx\">Details...</a>",
                        title,
-                       PyPackageManager.UI.createDescription(exceptions, firstLine));
+                       PyPackageManagerImpl.UI.createDescription(exceptions, firstLine));
       }
     }
   }

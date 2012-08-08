@@ -106,7 +106,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
               unsatisfiedNames.add(req.getName());
             }
             final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
-            if (PyPackageManager.getInstance(sdk).hasPip()) {
+            if (PyPackageManagerImpl.getInstance(sdk).hasPip()) {
               quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
             }
             quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
@@ -163,12 +163,12 @@ public class PyPackageRequirementsInspection extends PyInspection {
               return;
             }
           }
-          if (PyPackageManager.PACKAGE_SETUPTOOLS.equals(packageName)) {
+          if (PyPackageManagerImpl.PACKAGE_SETUPTOOLS.equals(packageName)) {
             return;
           }
           final Module module = ModuleUtil.findModuleForPsiElement(packageReferenceExpression);
           if (module != null) {
-            Collection<PyRequirement> requirements = PyPackageManager.getRequirements(module);
+            Collection<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
             if (requirements != null) {
               final Sdk sdk = PythonSdkType.findPythonSdk(module);
               if (sdk != null) {
@@ -193,7 +193,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                 }
               }
               final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
-              if (sdk != null && PyPackageManager.getInstance(sdk).hasPip()) {
+              if (sdk != null && PyPackageManagerImpl.getInstance(sdk).hasPip()) {
                 quickFixes.add(new AddToRequirementsFix(module, packageName, LanguageLevel.forElement(importedExpression)));
               }
               quickFixes.add(new IgnoreRequirementFix(Collections.singleton(packageName)));
@@ -212,7 +212,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                                               @NotNull Set<PyPackage> visited) {
     final Set<PyRequirement> results = new HashSet<PyRequirement>(requirements);
     try {
-      final List<PyPackage> packages = PyPackageManager.getInstance(sdk).getPackages();
+      final List<PyPackage> packages = PyPackageManagerImpl.getInstance(sdk).getPackages();
       for (PyRequirement req : requirements) {
         final PyPackage pkg = req.match(packages);
         if (pkg != null && !visited.contains(pkg)) {
@@ -239,8 +239,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
   @Nullable
   private static List<PyRequirement> findUnsatisfiedRequirements(@NotNull Module module, @NotNull Sdk sdk,
                                                                  @NotNull Set<String> ignoredPackages) {
-    final PyPackageManager manager = PyPackageManager.getInstance(sdk);
-    List<PyRequirement> requirements = PyPackageManager.getRequirements(module);
+    final PyPackageManagerImpl manager = PyPackageManagerImpl.getInstance(sdk);
+    List<PyRequirement> requirements = PyPackageManagerImpl.getRequirements(module);
     if (requirements != null) {
       final List<PyPackage> packages;
       try {
@@ -261,11 +261,11 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   private static void setRunningPackagingTasks(@NotNull Module module, boolean value) {
-    module.putUserData(PyPackageManager.RUNNING_PACKAGING_TASKS, value);
+    module.putUserData(PyPackageManagerImpl.RUNNING_PACKAGING_TASKS, value);
   }
 
   private static boolean isRunningPackagingTasks(@NotNull Module module) {
-    final Boolean value = module.getUserData(PyPackageManager.RUNNING_PACKAGING_TASKS);
+    final Boolean value = module.getUserData(PyPackageManagerImpl.RUNNING_PACKAGING_TASKS);
     return value != null && value;
   }
 
@@ -309,7 +309,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (chosen.isEmpty()) {
         return;
       }
-      final PyPackageManager.UI ui = new PyPackageManager.UI(project, mySdk, new PyPackageManager.UI.Listener() {
+      final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(project, mySdk, new PyPackageManagerImpl.UI.Listener() {
         @Override
         public void started() {
           setRunningPackagingTasks(myModule, true);

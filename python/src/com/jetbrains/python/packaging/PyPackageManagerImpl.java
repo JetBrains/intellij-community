@@ -48,7 +48,7 @@ import java.util.*;
 /**
  * @author vlan
  */
-public class PyPackageManager {
+public class PyPackageManagerImpl implements PyPackageManager {
   public static final int OK = 0;
   public static final int ERROR_WRONG_USAGE = 1;
   public static final int ERROR_NO_PIP = 2;
@@ -72,7 +72,7 @@ public class PyPackageManager {
   private static final int TIMEOUT = 10 * 60 * 1000;
 
   // Sdk instances are re-created by ProjectSdksModel on every refresh so we cannot use them as keys for caching
-  private static final Map<String, PyPackageManager> ourInstances = new HashMap<String, PyPackageManager>();
+  private static final Map<String, PyPackageManagerImpl> ourInstances = new HashMap<String, PyPackageManagerImpl>();
   private static final String BUILD_DIR_OPTION = "--build-dir";
   public static final String USE_USER_SITE = "--user";
 
@@ -112,7 +112,7 @@ public class PyPackageManager {
         public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
           final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
           indicator.setText(String.format("Installing package '%s'...", name));
-          final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
+          final PyPackageManagerImpl manager = PyPackageManagerImpl.getInstance(mySdk);
           try {
             manager.installManagement(name);
           }
@@ -135,7 +135,7 @@ public class PyPackageManager {
         public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
           final int size = requirements.size();
           final List<PyExternalProcessException> exceptions = new ArrayList<PyExternalProcessException>();
-          final PyPackageManager manager = PyPackageManager.getInstance(mySdk);
+          final PyPackageManagerImpl manager = PyPackageManagerImpl.getInstance(mySdk);
           for (int i = 0; i < size; i++) {
             final PyRequirement requirement = requirements.get(i);
             if (myListener != null) {
@@ -167,7 +167,7 @@ public class PyPackageManager {
         @Override
         public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
           try {
-            PyPackageManager.getInstance(mySdk).uninstall(packages);
+            PyPackageManagerImpl.getInstance(mySdk).uninstall(packages);
             return list();
           }
           catch (PyExternalProcessException e) {
@@ -216,8 +216,7 @@ public class PyPackageManager {
                                                    @Override
                                                    public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                @NotNull HyperlinkEvent event) {
-                                                     PyPIPackageUtil.showError(myProject, failureTitle,
-                                                                               description);
+                                                     getInstance(mySdk).showInstallationError(myProject, failureTitle, description);
                                                    }
                                                  }));
           }
@@ -289,16 +288,16 @@ public class PyPackageManager {
     }
   }
 
-  private PyPackageManager(@NotNull Sdk sdk) {
+  private PyPackageManagerImpl(@NotNull Sdk sdk) {
     mySdk = sdk;
   }
 
   @NotNull
-  public static PyPackageManager getInstance(@NotNull Sdk sdk) {
+  public static PyPackageManagerImpl getInstance(@NotNull Sdk sdk) {
     final String name = sdk.getName();
-    PyPackageManager manager = ourInstances.get(name);
+    PyPackageManagerImpl manager = ourInstances.get(name);
     if (manager == null) {
-      manager = new PyPackageManager(sdk);
+      manager = new PyPackageManagerImpl(sdk);
       ourInstances.put(name, manager);
     }
     return manager;
@@ -306,6 +305,11 @@ public class PyPackageManager {
 
   public Sdk getSdk() {
     return mySdk;
+  }
+
+  @Override
+  public void install(String requirementString) throws PyExternalProcessException {
+    install(Collections.singletonList(PyRequirement.fromString(requirementString)), Collections.<String>emptyList());
   }
 
   public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs)
@@ -655,5 +659,11 @@ public class PyPackageManager {
       }
     }
     return packages;
+  }
+
+
+  @Override
+  public void showInstallationError(Project project, String title, String description) {
+    PyPIPackageUtil.showError(project, title, description);
   }
 }
