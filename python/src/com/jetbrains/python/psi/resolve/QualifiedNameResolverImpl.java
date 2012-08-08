@@ -28,7 +28,7 @@ import java.util.Set;
  *
  * @author yole
  */
-public class QualifiedNameResolver implements RootVisitor {
+public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameResolver {
   boolean myCheckForPackage = true;
   @Nullable private Module myModule;
   private PsiFile myFootholdFile;
@@ -41,14 +41,15 @@ public class QualifiedNameResolver implements RootVisitor {
   private boolean myWithoutRoots;
   private Sdk myWithSdk;
 
-  public QualifiedNameResolver(@NotNull String qNameString) {
+  public QualifiedNameResolverImpl(@NotNull String qNameString) {
     myQualifiedName = PyQualifiedName.fromDottedString(qNameString);
   }
 
-  public QualifiedNameResolver(@NotNull PyQualifiedName qName) {
+  public QualifiedNameResolverImpl(@NotNull PyQualifiedName qName) {
     myQualifiedName = qName;
   }
 
+  @Override
   public QualifiedNameResolver fromElement(@NotNull PsiElement foothold) {
     if (foothold instanceof PsiDirectory) {
       myFootholdFile = (PsiFile)PyUtil.turnDirIntoInit(foothold);
@@ -64,6 +65,7 @@ public class QualifiedNameResolver implements RootVisitor {
     return this;
   }
 
+  @Override
   public QualifiedNameResolver fromModule(@NotNull Module module) {
     setModule(module);
     myPsiManager = PsiManager.getInstance(module.getProject());
@@ -77,6 +79,7 @@ public class QualifiedNameResolver implements RootVisitor {
     }
   }
 
+  @Override
   public QualifiedNameResolver withAllModules() {
     myVisitAllModules = true;
     return this;
@@ -88,6 +91,7 @@ public class QualifiedNameResolver implements RootVisitor {
    * @param sdk the SDK in which the name should be searched.
    * @return this
    */
+  @Override
   public QualifiedNameResolver withSdk(Sdk sdk) {
     myWithSdk = sdk;
     return this;
@@ -99,6 +103,7 @@ public class QualifiedNameResolver implements RootVisitor {
    * @param relativeLevel if >= 0, we try to resolve at the specified number of levels above the current file.
    * @return this
    */
+  @Override
   public QualifiedNameResolver withRelative(int relativeLevel) {
     myRelativeLevel = relativeLevel;
     return this;
@@ -109,6 +114,7 @@ public class QualifiedNameResolver implements RootVisitor {
    *
    * @return this
    */
+  @Override
   public QualifiedNameResolver withoutRoots() {
     myWithoutRoots = true;
     return this;
@@ -120,6 +126,7 @@ public class QualifiedNameResolver implements RootVisitor {
    *
    * @return
    */
+  @Override
   public QualifiedNameResolver withPlainDirectories() {
     myCheckForPackage = false;
     return this;
@@ -144,6 +151,7 @@ public class QualifiedNameResolver implements RootVisitor {
     return true;
   }
 
+  @Override
   @NotNull
   public List<PsiFileSystemItem> resultsAsList() {
     if (myFootholdFile != null && !myFootholdFile.isValid()) {
@@ -206,12 +214,14 @@ public class QualifiedNameResolver implements RootVisitor {
     return resultList;
   }
 
+  @Override
   @Nullable
   public PsiFileSystemItem firstResult() {
     final List<PsiFileSystemItem> results = resultsAsList();
     return results.size() > 0 ? results.get(0) : null;
   }
 
+  @Override
   @NotNull
   public <T extends PsiElement> List<T> resultsOfType(Class<T> clazz) {
     List<T> result = new ArrayList<T>();
@@ -224,6 +234,7 @@ public class QualifiedNameResolver implements RootVisitor {
     return result;
   } 
 
+  @Override
   @Nullable
   public <T extends PsiElement> T firstResultOfType(Class<T> clazz) {
     final List<T> list = resultsOfType(clazz);

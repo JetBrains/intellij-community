@@ -1,0 +1,41 @@
+package com.jetbrains.python.psi.resolve;
+
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+
+/**
+ * @author yole
+ */
+public interface QualifiedNameResolver {
+  QualifiedNameResolver fromElement(@NotNull PsiElement foothold);
+
+  QualifiedNameResolver fromModule(@NotNull Module module);
+
+  QualifiedNameResolver withAllModules();
+
+  QualifiedNameResolver withSdk(Sdk sdk);
+
+  QualifiedNameResolver withRelative(int relativeLevel);
+
+  QualifiedNameResolver withoutRoots();
+
+  QualifiedNameResolver withPlainDirectories();
+
+  @NotNull
+  List<PsiFileSystemItem> resultsAsList();
+
+  @Nullable
+  PsiFileSystemItem firstResult();
+
+  @NotNull
+  <T extends PsiElement> List<T> resultsOfType(Class<T> clazz);
+
+  @Nullable
+  <T extends PsiElement> T firstResultOfType(Class<T> clazz);
+}

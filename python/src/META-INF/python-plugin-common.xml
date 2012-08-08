@@ -412,6 +412,9 @@
     <projectService serviceInterface="com.jetbrains.python.debugger.PySignatureCacheManager"
                         serviceImplementation="com.jetbrains.python.debugger.PySignatureCacheManagerImpl"/>
 
+    <projectService serviceInterface="com.jetbrains.python.psi.PyPsiFacade"
+                    serviceImplementation="com.jetbrains.python.psi.impl.PyPsiFacadeImpl"/>
+
     <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>

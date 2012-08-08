@@ -204,7 +204,7 @@ public class ResolveImportUtil {
     }
     try {
       beingImported.add(marker);
-      final QualifiedNameResolver visitor = new QualifiedNameResolver(qualifiedName).fromElement(sourceFile);
+      final QualifiedNameResolver visitor = new QualifiedNameResolverImpl(qualifiedName).fromElement(sourceFile);
       if (relativeLevel > 0) {
         // "from ...module import"
         visitor.withRelative(relativeLevel).withoutRoots();
@@ -243,7 +243,7 @@ public class ResolveImportUtil {
       final PyQualifiedName containingPath = findCanonicalImportPath(containingDirectory, null);
       if (containingPath != null && containingPath.getComponentCount() > 0) {
         final PyQualifiedName absolutePath = containingPath.append(qualifiedName.toString());
-        final QualifiedNameResolver absoluteVisitor = new QualifiedNameResolver(absolutePath).fromElement(foothold);
+        final QualifiedNameResolver absoluteVisitor = new QualifiedNameResolverImpl(absolutePath).fromElement(foothold);
         return absoluteVisitor.resultsAsList();
       }
     }
@@ -253,7 +253,7 @@ public class ResolveImportUtil {
   @Nullable
   public static PsiElement resolveModuleInRoots(@NotNull PyQualifiedName moduleQualifiedName, @Nullable PsiElement foothold) {
     if (foothold == null) return null;
-    QualifiedNameResolver visitor = new QualifiedNameResolver(moduleQualifiedName).fromElement(foothold);
+    QualifiedNameResolver visitor = new QualifiedNameResolverImpl(moduleQualifiedName).fromElement(foothold);
     return visitor.firstResult();
   }
 

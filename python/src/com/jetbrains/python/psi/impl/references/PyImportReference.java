@@ -17,10 +17,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -249,7 +246,7 @@ public class PyImportReference extends PyReferenceImpl {
     }
 
     private void fillFromQName(PyQualifiedName thisQName, InsertHandler<LookupElement> insertHandler) {
-      QualifiedNameResolver visitor = new QualifiedNameResolver(thisQName).fromElement(myCurrentFile);
+      QualifiedNameResolver visitor = new QualifiedNameResolverImpl(thisQName).fromElement(myCurrentFile);
       for (PsiDirectory dir : visitor.resultsOfType(PsiDirectory.class)) {
         fillFromDir(dir, insertHandler);
       }

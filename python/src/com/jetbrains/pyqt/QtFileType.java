@@ -11,6 +11,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
+import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +110,7 @@ public abstract class QtFileType implements FileType, INativeFileType {
 
   @Nullable
   private static String findToolInPackage(String toolName, Module module, Sdk sdk, String name) {
-    QualifiedNameResolver visitor = new QualifiedNameResolver(name).fromModule(module).withSdk(sdk);
+    QualifiedNameResolver visitor = new QualifiedNameResolverImpl(name).fromModule(module).withSdk(sdk);
     List<PsiDirectory> elements = visitor.resultsOfType(PsiDirectory.class);
     for (PsiDirectory directory : elements) {
       VirtualFile tool = directory.getVirtualFile().findChild(toolName + ".exe");
