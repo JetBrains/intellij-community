@@ -103,3 +103,13 @@ class c22:
 class c23(c22):
     def foo<warning descr="Method signature does not match signature of base method">(self, arg1, arg2=None)</warning>: # fail
         pass
+
+
+# PY-7157
+class c24:
+    def foo(self, arg1):
+        pass
+
+class c25(c24):
+    def foo(self, arg1, arg2=None): #pass
+        pass
