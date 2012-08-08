@@ -174,7 +174,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           }
         }
       }
-      else if (fileType.isBinary()) {
+      else {
         final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
         if (builder != null) {
           version += builder.getStubVersion();
