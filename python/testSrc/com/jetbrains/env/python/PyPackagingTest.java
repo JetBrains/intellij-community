@@ -36,7 +36,7 @@ public class PyPackagingTest extends PyTestCase {
       public boolean process(Sdk sdk) {
         List<PyPackage> packages = null;
         try {
-          packages = PyPackageManagerImpl.getInstance(sdk).getPackages();
+          packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(sdk)).getPackages();
         }
         catch (PyExternalProcessException e) {
           final int retcode = e.getRetcode();
@@ -61,11 +61,11 @@ public class PyPackagingTest extends PyTestCase {
       public boolean process(Sdk sdk) {
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
-          final String venvSdkHome = PyPackageManagerImpl.getInstance(sdk).createVirtualEnv(tempDir.toString(), false);
+          final String venvSdkHome = ((PyPackageManagerImpl) PyPackageManagerImpl.getInstance(sdk)).createVirtualEnv(tempDir.toString(), false);
           final Sdk venvSdk = createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
           assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
-          final List<PyPackage> packages = PyPackageManagerImpl.getInstance(venvSdk).getPackages();
+          final List<PyPackage> packages = ((PyPackageManagerImpl) PyPackageManagerImpl.getInstance(venvSdk)).getPackages();
           final PyPackage distribute = findPackage("distribute", packages);
           assertNotNull(distribute);
           assertEquals("distribute", distribute.getName());
@@ -92,10 +92,10 @@ public class PyPackagingTest extends PyTestCase {
       public boolean process(final Sdk sdk) {
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
-          final String venvSdkHome = PyPackageManagerImpl.getInstance(sdk).createVirtualEnv(tempDir.getPath(), false);
+          final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).createVirtualEnv(tempDir.getPath(), false);
           final Sdk venvSdk = createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
-          final PyPackageManagerImpl manager = PyPackageManagerImpl.getInstance(venvSdk);
+          final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.getPackages();
           // TODO: Install Markdown from a local file
           manager.install(list(PyRequirement.fromString("Markdown<2.2"),
