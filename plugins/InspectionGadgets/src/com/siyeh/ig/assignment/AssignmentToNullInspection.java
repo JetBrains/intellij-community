@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,13 @@ package com.siyeh.ig.assignment;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.DelegatingFix;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,14 +49,16 @@ public class AssignmentToNullInspection extends BaseInspection {
   }
 
   @Override
-  protected LocalQuickFix buildFix(Object... infos) {
-    if (infos[0] instanceof PsiReferenceExpression) {
-      final PsiElement resolve = ((PsiReferenceExpression)infos[0]).resolve();
-      if (resolve instanceof PsiVariable) {
-        return new AddAnnotationFix(AnnotationUtil.NULLABLE, (PsiVariable)resolve);
-      }
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    final Object info = infos[0];
+    if (!(info instanceof PsiReferenceExpression)) {
+      return null;
     }
-    return null;
+    final PsiElement target = ((PsiReferenceExpression)info).resolve();
+    if (!(target instanceof PsiVariable)) {
+      return null;
+    }
+    return new DelegatingFix(new AddAnnotationFix(AnnotationUtil.NULLABLE, (PsiVariable)target));
   }
 
   @Override

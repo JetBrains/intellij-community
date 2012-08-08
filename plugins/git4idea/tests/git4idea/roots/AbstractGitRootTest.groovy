@@ -15,12 +15,12 @@
  */
 package git4idea.roots
 
-import git4idea.test.GitMockVirtualFile
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import git4idea.test.GitTestPlatformFacade
 import git4idea.test.GitMockProject
-
+import git4idea.test.GitMockVirtualFile
+import git4idea.test.GitTestPlatformFacade
+import org.junit.After
 /**
  * 
  * @author Kirill Likhodedov
@@ -31,6 +31,12 @@ class AbstractGitRootTest {
 
   AbstractGitRootTest() {
     myPlatformFacade = new GitTestPlatformFacade()
+  }
+
+  static File baseDir
+  @After
+  void tearDown() {
+    FileUtil.delete(baseDir)
   }
 
   /**
@@ -61,10 +67,10 @@ class AbstractGitRootTest {
    */
   private static String createDirs(Collection<String> gitRoots) {
     if (gitRoots.empty) {
-      return FileUtil.createTempDirectory("grdt", null);
+      return baseDir = FileUtil.createTempDirectory("grdt", null);
     }
 
-    File baseDir = createBaseTempDir()
+    baseDir = createBaseTempDir()
     int maxDepth = findMaxDepthAboveProject(gitRoots)
     File projectDir = createChild(baseDir, maxDepth)
     gitRoots.each { String path ->

@@ -52,10 +52,10 @@ class GitCrlfProblemsDetectorTest {
     myGit = new GitTestImpl()
 
     cd myRootDir
-    myOldCoreAutoCrlfValue = git("config --global core.autocrlf")
+    myOldCoreAutoCrlfValue = git ("config --global core.autocrlf")
 
-    git "init"
-    git "config --global --unset core.autocrlf"
+    git ("init")
+    git ("config --global --unset core.autocrlf")
 
     GitRepository repository = GitRepositoryImpl.getLightInstance(new GitMockVirtualFile(myRootDir), myProject, myProject)
     ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
@@ -64,20 +64,20 @@ class GitCrlfProblemsDetectorTest {
   @After
   public void tearDown() throws Exception {
     if (!StringUtil.isEmptyOrSpaces(myOldCoreAutoCrlfValue)) {
-      git "config --global core.autocrlf " + myOldCoreAutoCrlfValue;
+      git ("config --global core.autocrlf " + myOldCoreAutoCrlfValue);
     }
     FileUtil.delete(new File(myRootDir))
   }
 
   @Test
   void "core.autocrlf is true = no warning"() {
-    git "config core.autocrlf true"
+    git ("config core.autocrlf true")
     assertFalse "No warning should be done if core.autocrlf is true", detect("temp").shouldWarn()
   }
 
   @Test
   void "core.autocrlf is input = no warning"() {
-    git "config core.autocrlf input"
+    git ("config core.autocrlf input")
     assertFalse "No warning should be done if core.autocrlf is input", detect("temp").shouldWarn()
   }
 
@@ -163,7 +163,7 @@ win6 crlf=input
   }
 
   private GitCrlfProblemsDetector detect(VirtualFile file) {
-    GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit, Collections.<VirtualFile> singleton(file))
+    GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit, Collections.singleton(file))
   }
 
   private void createCrlfFile(String relPath) {

@@ -22,10 +22,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.ui.playback.commands.TypeCommand;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
@@ -33,7 +30,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -84,8 +80,8 @@ public class ActionMacro implements JDOMExternalizable {
   public void readExternal(Element macro) throws InvalidDataException {
     setName(macro.getAttributeValue(ATTRIBUTE_NAME));
     List actions = macro.getChildren();
-    for (Iterator iterator = actions.iterator(); iterator.hasNext();) {
-      Element action = (Element)iterator.next();
+    for (final Object o : actions) {
+      Element action = (Element)o;
       if (ELEMENT_TYPING.equals(action.getName())) {
         Pair<List<Integer>, List<Integer>> codes = parseKeyCodes(action.getAttributeValue(ATTRIBUTE_KEY_CODES));
 
@@ -93,6 +89,7 @@ public class ActionMacro implements JDOMExternalizable {
         if (text == null || text.length() == 0) {
           text = action.getAttributeValue(ATTRIBUTE_TEXT);
         }
+        text = text.replaceAll("&#x20;", " ");
 
         if (!StringUtil.isEmpty(text)) {
           myActions.add(new TypedDescriptor(text, codes.getFirst(), codes.getSecond()));
@@ -100,37 +97,38 @@ public class ActionMacro implements JDOMExternalizable {
       }
       else if (ELEMENT_ACTION.equals(action.getName())) {
         myActions.add(new IdActionDescriptor(action.getAttributeValue(ATTRIBUTE_ID)));
-      } else if (ELEMENT_SHORTCUT.equals(action.getName())) {
+      }
+      else if (ELEMENT_SHORTCUT.equals(action.getName())) {
         myActions.add(new ShortcutActionDesciption(action.getAttributeValue(ATTRIBUTE_TEXT)));
       }
     }
   }
 
-  private Pair<List<Integer>, List<Integer>> parseKeyCodes(String keyCodesText) {
+  private static Pair<List<Integer>, List<Integer>> parseKeyCodes(String keyCodesText) {
     return KeyCodeTypeCommand.parseKeyCodes(keyCodesText);
   }
 
-  public String unparseKeyCodes(Pair<List<Integer>, List<Integer>> keyCodes) {
+  public static String unparseKeyCodes(Pair<List<Integer>, List<Integer>> keyCodes) {
     return KeyCodeTypeCommand.unparseKeyCodes(keyCodes);
   }
 
   public void writeExternal(Element macro) throws WriteExternalException {
     macro.setAttribute(ATTRIBUTE_NAME, myName);
     final ActionDescriptor[] actions = getActions();
-    for (int i = 0; i < actions.length; i++) {
-      ActionDescriptor action = actions[i];
+    for (ActionDescriptor action : actions) {
       Element actionNode = null;
       if (action instanceof TypedDescriptor) {
         actionNode = new Element(ELEMENT_TYPING);
         TypedDescriptor typedDescriptor = (TypedDescriptor)action;
-        final String t = typedDescriptor.getText();
-        actionNode.setText(t);
-        actionNode.setAttribute(ATTRIBUTE_KEY_CODES, unparseKeyCodes(new Pair<List<Integer>, List<Integer>>(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
+        actionNode.setText(typedDescriptor.getText().replaceAll(" ", "&#x20;"));
+        actionNode.setAttribute(ATTRIBUTE_KEY_CODES, unparseKeyCodes(
+          new Pair<List<Integer>, List<Integer>>(typedDescriptor.getKeyCodes(), typedDescriptor.getKeyModifiers())));
       }
       else if (action instanceof IdActionDescriptor) {
         actionNode = new Element(ELEMENT_ACTION);
         actionNode.setAttribute(ATTRIBUTE_ID, ((IdActionDescriptor)action).getActionId());
-      } else if (action instanceof ShortcutActionDesciption) {
+      }
+      else if (action instanceof ShortcutActionDesciption) {
         actionNode = new Element(ELEMENT_SHORTCUT);
         actionNode.setAttribute(ATTRIBUTE_TEXT, ((ShortcutActionDesciption)action).getText());
       }
@@ -231,7 +229,7 @@ public class ActionMacro implements JDOMExternalizable {
     }
 
     public void addChar(char c, int keyCode, @JdkConstants.InputEventMask int modifier) {
-      myText = myText + c;
+      myText += c;
       myKeyCodes.add(keyCode);
       myModifiers.add(modifier);
     }
@@ -268,7 +266,8 @@ public class ActionMacro implements JDOMExternalizable {
           }
         }
         script.append(" ").append(myText).append("\n");
-      } else {
+      }
+      else {
         script.append(myText);
         script.append("\n");
       }
@@ -281,9 +280,8 @@ public class ActionMacro implements JDOMExternalizable {
     public void playBack(DataContext context) {
       Editor editor = PlatformDataKeys.EDITOR.getData(context);
       final TypedAction typedAction = EditorActionManager.getInstance().getTypedAction();
-      char chars[] = myText.toCharArray();
-      for (int i = 0; i < chars.length; i++) {
-        typedAction.actionPerformed(editor, chars[i], context);
+      for (final char aChar : myText.toCharArray()) {
+        typedAction.actionPerformed(editor, aChar, context);
       }
     }
 
@@ -356,7 +354,7 @@ public class ActionMacro implements JDOMExternalizable {
     public void playBack(DataContext context) {
       AnAction action = ActionManager.getInstance().getAction(getActionId());
       if (action == null) return;
-      Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
+      Presentation presentation = action.getTemplatePresentation().clone();
       AnActionEvent event = new AnActionEvent(null, context, "MACRO_PLAYBACK", presentation, ActionManager.getInstance(), 0);
       action.beforeActionPerformedUpdate(event);
       if (!presentation.isEnabled()) {

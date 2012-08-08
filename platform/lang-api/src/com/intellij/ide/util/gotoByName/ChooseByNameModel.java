@@ -46,7 +46,9 @@ public interface ChooseByNameModel {
    * @return the names to show. All items in the returned array must be non-null.
    *
    */
+  @NotNull
   String[] getNames(boolean checkBoxState);
+  @NotNull
   Object[] getElementsByName(String name, boolean checkBoxState, final String pattern);
   @Nullable
   String getElementName(Object element);

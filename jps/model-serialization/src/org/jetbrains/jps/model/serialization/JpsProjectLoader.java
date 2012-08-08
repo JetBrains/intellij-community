@@ -66,6 +66,18 @@ public class JpsProjectLoader extends JpsLoaderBase {
 
   private void loadFromDirectory(File dir) {
     JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
+        String fileName = serializer.getConfigFileName();
+        File configFile = new File(dir, fileName != null ? fileName : "misc.xml");
+        if (configFile.exists()) {
+          Element componentTag = JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
+          if (componentTag != null) {
+            serializer.loadExtension(myProject, componentTag);
+          }
+        }
+      }
+    }
     loadModules(loadRootElement(new File(dir, "modules.xml")), projectSdkType);
     for (File libraryFile : listXmlFiles(new File(dir, "libraries"))) {
       loadProjectLibraries(loadRootElement(libraryFile));
@@ -89,6 +101,14 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private void loadFromIpr(File iprFile) {
     final Element root = loadRootElement(iprFile);
     JpsSdkType<?> projectSdkType = loadProjectRoot(root);
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
+        Element component = JDomSerializationUtil.findComponent(root, serializer.getComponentName());
+        if (component != null) {
+          serializer.loadExtension(myProject, component);
+        }
+      }
+    }
     loadModules(root, projectSdkType);
     loadProjectLibraries(JDomSerializationUtil.findComponent(root, "libraryTable"));
     loadArtifacts(JDomSerializationUtil.findComponent(root, "ArtifactManager"));
@@ -108,9 +128,6 @@ public class JpsProjectLoader extends JpsLoaderBase {
       if (sdkName != null && sdkTypeId != null) {
         sdkType = JpsSdkTableSerializer.getSdkType(sdkTypeId);
         JpsSdkTableSerializer.setSdkReference(myProject.getSdkReferencesTable(), sdkName, sdkType);
-      }
-      for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-        extension.loadProjectRoots(myProject, rootManagerElement);
       }
     }
     return sdkType;

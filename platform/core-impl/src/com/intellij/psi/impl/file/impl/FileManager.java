@@ -46,6 +46,7 @@ public interface FileManager extends Disposable {
   FileViewProvider findCachedViewProvider(@NotNull VirtualFile file);
   void setViewProvider(@NotNull VirtualFile virtualFile, FileViewProvider fileViewProvider);
 
+  @NotNull
   List<PsiFile> getAllCachedFiles();
 
   @NotNull

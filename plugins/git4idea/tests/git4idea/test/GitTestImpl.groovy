@@ -66,9 +66,9 @@ public class GitTestImpl implements Git {
   @Override
   public GitCommandResult config(@NotNull GitRepository repository, String... params) {
     cd repository.getRoot().getPath()
-    String output = git "config " + params.join(" ")
+    String output = git("config " + params.join(" "))
     int exitCode = output.trim().isEmpty() ? 1 : 0
-    return new GitCommandResult(!output.contains("fatal") && exitCode == 0, exitCode, Collections.<String>emptyList(),
+    return new GitCommandResult(!output.contains("fatal") && exitCode == 0, exitCode, Collections.emptyList(),
                                 Arrays.asList(StringUtil.splitByLines(output)))
   }
 
@@ -77,9 +77,9 @@ public class GitTestImpl implements Git {
   GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes, @NotNull Collection<VirtualFile> files) {
     String root = repository.getRoot().getPath()
     cd root
-    String output = git "check-attr " + attributes.join(" ") + " -- " +
-                        files.collect({it -> FileUtil.getRelativePath(root, it.path, (char)'/')}).join(" ")
-    return new GitCommandResult(!output.contains("fatal"), 0, Collections.<String>emptyList(),
+    String output = git("check-attr " + attributes.join(" ") + " -- " +
+                        files.collect({it -> FileUtil.getRelativePath(root, it.path, (char)'/')}).join(" "))
+    return new GitCommandResult(!output.contains("fatal"), 0, Collections.emptyList(),
                                 Arrays.asList(StringUtil.splitByLines(output)))
   }
 

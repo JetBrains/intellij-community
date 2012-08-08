@@ -23,11 +23,10 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.stubs.FileStub;
+
+import java.io.ByteArrayInputStream;
 
 /**
  * @author Dmitry Avdeev
@@ -50,7 +49,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     DomFileElement<? extends DomElement> fileElement = manager.getFileElement(xmlFile);
     if (fileElement == null || !fileElement.getFileDescription().hasStubs()) return null;
 
-    FileStub fileStub = new FileStub(DomService.getInstance().getXmlFileHeader(xmlFile));
+    FileStub fileStub = new FileStub(NanoXmlUtil.parseHeader(new ByteArrayInputStream(content)));
     DomStubBuilderVisitor visitor = new DomStubBuilderVisitor(fileStub);
     visitor.visitDomElement(fileElement.getRootElement());
     return fileStub;
@@ -58,6 +57,6 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    return 1;
+    return 2;
   }
 }

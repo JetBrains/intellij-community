@@ -9,8 +9,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiManager;
@@ -18,6 +18,7 @@ import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.doc.TaskPsiElement;
+import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -47,27 +48,31 @@ public class GotoTaskAction extends GotoActionBase {
     final Ref<Boolean> shiftPressed = Ref.create(false);
 
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, new GotoTaskPopupModel(project), new ChooseByNameItemProvider() {
+      @NotNull
       @Override
-      public List<String> filterNames(ChooseByNameBase base, String[] names, String pattern) {
+      public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
         return ContainerUtil.emptyList();
       }
 
       @Override
-      public void filterElements(ChooseByNameBase base,
-                                 String pattern,
+      public void filterElements(@NotNull ChooseByNameBase base,
+                                 @NotNull String pattern,
                                  boolean everywhere,
-                                 Computable<Boolean> cancelled,
-                                 Processor<Object> consumer) {
+                                 @NotNull ProgressIndicator cancelled,
+                                 @NotNull Processor<Object> consumer) {
         Object[] elements = base.getModel().getElementsByName("", false, pattern);
         for (Object element : elements) {
+          cancelled.checkCanceled();
           if (!consumer.process(element)) return;
         }
       }
     }, "", false, 0);
     popup.setShowListForEmptyPattern(true);
     popup.setSearchInAnyPlace(true);
-    popup.setAdText("<html>Press SHIFT to merge with current context<br/>Pressing " + KeymapUtil
-      .getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) + " would show task description and comments</html>");
+    popup.setAdText("<html>Press SHIFT to merge with current context<br/>" +
+                    "Pressing " +
+                    KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_QUICK_JAVADOC)) +
+                    " would show task description and comments</html>");
     popup.registerAction("shiftPressed", KeyStroke.getKeyStroke("shift pressed SHIFT"), new AbstractAction() {
       public void actionPerformed(ActionEvent e) {
         shiftPressed.set(true);
@@ -92,19 +97,17 @@ public class GotoTaskAction extends GotoActionBase {
             taskManager.activateTask(localTask, !shiftPressed.get(), createChangelist);
           }
           else {
+            popup.close(false);
             (new SimpleOpenTaskDialog(project, task)).show();
-
           }
         }
         else if (element == CREATE_NEW_TASK_ACTION) {
           popup.close(false);
           Task task = taskManager.createLocalTask(CREATE_NEW_TASK_ACTION.getTaskName());
-          SimpleOpenTaskDialog simpleOpenTaskDialog = new SimpleOpenTaskDialog(project, task);
-          simpleOpenTaskDialog.showAndGetOk();
+          new SimpleOpenTaskDialog(project, task).show();
         }
       }
     }, null, popup);
-
   }
 
   private static class GotoTaskPopupModel extends SimpleChooseByNameModel {
@@ -127,6 +130,7 @@ public class GotoTaskAction extends GotoActionBase {
     protected Object[] getElementsByName(String name, String pattern) {
       List<Task> tasks = new ArrayList<Task>();
       tasks.addAll(TaskManager.getManager(myProject).getLocalTasks(pattern));
+      ContainerUtil.sort(tasks, TaskManagerImpl.TASK_UPDATE_COMPARATOR);
       tasks.addAll(ContainerUtil.filter(TaskManager.getManager(myProject).getIssues(pattern), new Condition<Task>() {
         @Override
         public boolean value(Task task) {
@@ -163,7 +167,8 @@ public class GotoTaskAction extends GotoActionBase {
     public String getElementName(Object element) {
       if (element instanceof TaskPsiElement) {
         return TaskUtil.getTrimmedSummary(((TaskPsiElement)element).getTask());
-      } else if (element == CREATE_NEW_TASK_ACTION) {
+      }
+      else if (element == CREATE_NEW_TASK_ACTION) {
         return "Create New Task \"" + CREATE_NEW_TASK_ACTION.getActionText() + "\"...";
       }
       return null;

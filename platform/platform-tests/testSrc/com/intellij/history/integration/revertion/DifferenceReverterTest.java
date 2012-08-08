@@ -216,7 +216,7 @@ public class DifferenceReverterTest extends IntegrationTestCase {
 
     revertChange(1);
 
-    assertSame(f, myRoot.findChild("foo.txt"));
+    assertEquals(f, myRoot.findChild("foo.txt"));
   }
 
   public void testRevertingRenameFromOldRevisionsWhenDirDoesNotExists() throws Exception {

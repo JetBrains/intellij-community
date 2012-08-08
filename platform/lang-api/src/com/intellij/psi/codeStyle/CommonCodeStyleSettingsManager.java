@@ -17,7 +17,6 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
@@ -44,7 +43,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
   private static final String LANGUAGE_ATTR = "language";
 
 
-  CommonCodeStyleSettingsManager(CodeStyleSettings parentSettings) {
+  CommonCodeStyleSettingsManager(@NotNull CodeStyleSettings parentSettings) {
     myParentSettings = parentSettings;
   }
 
@@ -118,7 +117,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
     }
   }
 
-  public CommonCodeStyleSettingsManager clone(CodeStyleSettings parentSettings) {
+  public CommonCodeStyleSettingsManager clone(@NotNull CodeStyleSettings parentSettings) {
     CommonCodeStyleSettingsManager settingsManager = new CommonCodeStyleSettingsManager(parentSettings);
     if (myCommonSettingsMap != null && myCommonSettingsMap.size() > 0) {
       settingsManager.initCommonSettingsMap();

@@ -14,27 +14,22 @@
  *  limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.completion;
-
+package org.jetbrains.plugins.groovy.completion
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings
 import org.jetbrains.plugins.groovy.util.TestUtils
-import com.intellij.codeInsight.completion.impl.CamelHumpMatcher
-
 /**
  * @author Maxim.Medvedev
  */
 public class GroovyCompletionTest extends GroovyCompletionTestBase {
-  @Override
-  protected String getBasePath() {
-    return TestUtils.testDataPath + "groovy/completion/";
-  }
+  final String basePath = TestUtils.testDataPath + "groovy/completion/";
 
   @Override
   protected void setUp() {

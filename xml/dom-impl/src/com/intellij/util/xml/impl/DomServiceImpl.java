@@ -16,7 +16,6 @@
 
 package com.intellij.util.xml.impl;
 
-import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -24,14 +23,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.ObjectStubTree;
-import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -40,7 +36,6 @@ import com.intellij.util.Function;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.structure.DomStructureViewBuilder;
-import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,15 +62,15 @@ public class DomServiceImpl extends DomService {
   @NotNull
   private static XmlFileHeader calcXmlFileHeader(final PsiFile file) {
 
-    if (file.getFileType() == XmlFileType.INSTANCE) {
-      VirtualFile virtualFile = file.getVirtualFile();
-      if (virtualFile instanceof VirtualFileWithId) {
-        ObjectStubTree tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);
-        if (tree != null) {
-          return ((FileStub)tree.getRoot()).getHeader();
-        }
-      }
-    }
+    //if (file.getFileType() == XmlFileType.INSTANCE) {
+    //  VirtualFile virtualFile = file.getVirtualFile();
+    //  if (virtualFile instanceof VirtualFileWithId) {
+    //    ObjectStubTree tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);
+    //    if (tree != null) {
+    //      return ((FileStub)tree.getRoot()).getHeader();
+    //    }
+    //  }
+    //}
     if (file instanceof XmlFile && file.getNode().isParsed()) {
       final XmlDocument document = ((XmlFile)file).getDocument();
       if (document != null) {

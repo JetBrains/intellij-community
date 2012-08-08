@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.ModuleConfigurationEditor;
 import com.intellij.openapi.options.ConfigurationException;
@@ -25,8 +26,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.navigation.History;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
@@ -36,7 +35,7 @@ import java.util.List;
 public abstract class ModuleElementsEditor implements ModuleConfigurationEditor {
   protected final Project myProject;
   protected JComponent myComponent;
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private final CompositeDisposable myDisposables = new CompositeDisposable();
 
   protected History myHistory;
   private final ModuleConfigurationState myState;
@@ -50,6 +49,7 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
     myHistory = history;
   }
 
+  @Override
   public boolean isModified() {
     return getModel() != null && getModel().isChanged();
   }
@@ -63,19 +63,21 @@ public abstract class ModuleElementsEditor implements ModuleConfigurationEditor 
   }
 
   public void canApply() throws ConfigurationException {}
+  @Override
   public void apply() throws ConfigurationException {}
+  @Override
   public void reset() {}
+  @Override
   public void moduleStateChanged() {}
   public void moduleCompileOutputChanged(final String baseUrl, final String moduleName){}
 
+  @Override
   public void disposeUIResources() {
-    for (Disposable disposable : myDisposables) {
-      Disposer.dispose(disposable);
-    }
-    myDisposables.clear();
+    Disposer.dispose(myDisposables);
   }
 
   // caching
+  @Override
   public final JComponent createComponent() {
     if (myComponent == null) {
       myComponent = createComponentImpl();
