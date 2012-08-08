@@ -35,7 +35,6 @@ import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.templateLanguages.TemplatesConfigurationsModel;
 import com.jetbrains.python.templateLanguages.TemplatesService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,9 +67,9 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
         Module module = myFixture.getModule();
         if (module != null && !DjangoFacet.isPresent(module)) {
           DjangoTestCase.addDjangoFacet(module);
-          TemplatesService.getInstance(module).setTemplateLanguage(TemplatesConfigurationsModel.DJANGO);
+          TemplatesService.getInstance(module).setTemplateLanguage(TemplatesService.DJANGO);
         }
-        TemplatesService.getInstance(module).setTemplateLanguage(TemplatesConfigurationsModel.DJANGO);
+        TemplatesService.getInstance(module).setTemplateLanguage(TemplatesService.DJANGO);
       }
     });
   }
