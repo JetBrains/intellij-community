@@ -50,7 +50,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
   private static final PsiElementPattern<PsiElement,?> AFTER_DOT = psiElement().afterLeaf(".");
 
-  public static final LeftNeighbour INSTANCEOF_PLACE = new LeftNeighbour(new OrFilter(
+  private static final LeftNeighbour INSTANCEOF_PLACE = new LeftNeighbour(new OrFilter(
       new ReferenceOnFilter(new ClassFilter(PsiVariable.class)),
       new TextFilter(PsiKeyword.THIS),
       new AndFilter(new TextFilter(")"), new ParentElementFilter(new AndFilter(
@@ -303,17 +303,6 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     }
 
     {
-// instanceof keyword
-      final ElementFilter position = INSTANCEOF_PLACE;
-      final CompletionVariant variant = new CompletionVariant(position);
-      variant.includeScopeClass(PsiExpression.class, true);
-      variant.includeScopeClass(PsiMethod.class);
-      variant.addCompletion(PsiKeyword.INSTANCEOF);
-
-      registerVariant(variant);
-    }
-
-    {
 // Keyword completion in returns  !!!!
       final CompletionVariant variant = new CompletionVariant(PsiMethod.class, new LeftNeighbour(new TextFilter(PsiKeyword.RETURN)));
       variant.addCompletion(PsiKeyword.TRUE, TailType.NONE);
@@ -492,6 +481,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
 
+    if (isInstanceofPlace(position)) {
+      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.INSTANCEOF), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+
     if (isSuitableForClass(position)) {
       for (String s : ModifierChooser.getKeywords(position)) {
         result.addElement(new OverrideableSpace(createKeyword(position, s), TailType.HUMBLE_SPACE_BEFORE_WORD));
@@ -521,6 +514,10 @@ public class JavaCompletionData extends JavaAwareCompletionData {
         new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
       }
     }
+  }
+
+  public static boolean isInstanceofPlace(PsiElement position) {
+    return INSTANCEOF_PLACE.isAcceptable(position, position);
   }
 
   public static boolean isSuitableForClass(PsiElement position) {
