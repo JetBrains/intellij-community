@@ -68,7 +68,7 @@ public class GitTestImpl implements Git {
     cd repository.getRoot().getPath()
     String output = git("config " + params.join(" "))
     int exitCode = output.trim().isEmpty() ? 1 : 0
-    return new GitCommandResult(!output.contains("fatal") && exitCode == 0, exitCode, Collections.<String>emptyList(),
+    return new GitCommandResult(!output.contains("fatal") && exitCode == 0, exitCode, Collections.emptyList(),
                                 Arrays.asList(StringUtil.splitByLines(output)))
   }
 
