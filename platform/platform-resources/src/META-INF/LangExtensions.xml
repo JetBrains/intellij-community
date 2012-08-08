@@ -363,6 +363,9 @@
   <!-- External Tools -->
   <applicationConfigurable instance="com.intellij.tools.ToolConfigurable"/>
   <stepsBeforeRunProvider implementation="com.intellij.tools.ToolBeforeRunTaskProvider"/>
+  <checkinHandlerFactory implementation="com.intellij.tools.ExternalToolsCheckinHandlerFactory"/>
+  <projectService serviceInterface="com.intellij.tools.ToolsProjectConfig"
+                  serviceImplementation="com.intellij.tools.ToolsProjectConfig"/>
 
   <lang.parserDefinition language="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextParserDefinition"/>
   <lang.syntaxHighlighterFactory key="TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory"/>
