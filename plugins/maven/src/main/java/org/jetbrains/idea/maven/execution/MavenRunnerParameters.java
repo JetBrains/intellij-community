@@ -40,13 +40,15 @@ public class MavenRunnerParameters implements Cloneable {
     this(true, "", null, null, null);
   }
 
-  public MavenRunnerParameters(boolean isPomExecution, String workingDirPath,
+  public MavenRunnerParameters(boolean isPomExecution,
+                               @NotNull String workingDirPath,
                                @Nullable List<String> goals,
                                @Nullable Collection<String> explicitEnabledProfiles) {
     this(isPomExecution, workingDirPath, goals, explicitEnabledProfiles, null);
   }
 
-  public MavenRunnerParameters(boolean isPomExecution, String workingDirPath,
+  public MavenRunnerParameters(boolean isPomExecution,
+                               @NotNull String workingDirPath,
                                @Nullable List<String> goals,
                                @Nullable Collection<String> explicitEnabledProfiles,
                                @Nullable Collection<String> explicitDisabledProfiles) {
@@ -84,14 +86,16 @@ public class MavenRunnerParameters implements Cloneable {
     return isPomExecution;
   }
 
+  @NotNull
   public String getWorkingDirPath() {
     return myWorkingDirPath.getPath();
   }
 
-  public void setWorkingDirPath(String workingDirPath) {
+  public void setWorkingDirPath(@NotNull String workingDirPath) {
     myWorkingDirPath = new Path(workingDirPath);
   }
 
+  @NotNull
   public File getWorkingDirFile() {
     return new File(myWorkingDirPath.getPath());
   }
