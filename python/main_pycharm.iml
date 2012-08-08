@@ -34,6 +34,7 @@
     <orderEntry type="module" module-name="rest" />
     <orderEntry type="module" module-name="python-localization" />
     <orderEntry type="module" module-name="python-rest" />
+    <orderEntry type="module" module-name="pycharm-flask" />
   </component>
 </module>
 
