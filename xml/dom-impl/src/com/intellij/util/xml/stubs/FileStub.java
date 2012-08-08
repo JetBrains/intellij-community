@@ -16,41 +16,36 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.stubs.ObjectStubSerializer;
-import com.intellij.psi.stubs.Stub;
-import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
+import com.intellij.util.xml.XmlFileHeader;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/2/12
+ *         Date: 8/8/12
  */
-public class ElementStub extends DomStub {
+public class FileStub extends ElementStub {
 
-  private final List<DomStub> myChildren = new SmartList<DomStub>();
+  private final XmlFileHeader myHeader;
 
-  public ElementStub(@Nullable ElementStub parent, StringRef name) {
-    super(parent, name);
+  public FileStub(StringRef tagName, StringRef tagNamespace, StringRef publicId, StringRef systemId) {
+    super(null, tagName);
+    myHeader = new XmlFileHeader(tagName.getString(),
+                                 tagNamespace == null ? null : tagNamespace.getString(),
+                                 publicId == null ? null : publicId.getString(),
+                                 systemId == null ? null : systemId.getString());
   }
 
-  void addChild(DomStub child) {
-    myChildren.add(child);
+  public FileStub(XmlFileHeader header) {
+    super(null, StringRef.fromString(header.getRootTagLocalName()));
+    myHeader = header;
   }
 
-  @Override
-  public List<? extends Stub> getChildrenStubs() {
-    return myChildren;
+  public XmlFileHeader getHeader() {
+    return myHeader;
   }
 
   @Override
   public ObjectStubSerializer getStubType() {
-    return ElementStubSerializer.INSTANCE;
-  }
-
-  @Override
-  public String toString() {
-    return getName();
+    return FileStubSerializer.INSTANCE;
   }
 }

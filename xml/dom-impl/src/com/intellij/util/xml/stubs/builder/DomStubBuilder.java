@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.stubs;
+package com.intellij.util.xml.stubs.builder;
 
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.project.Project;
@@ -26,6 +26,8 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomService;
+import com.intellij.util.xml.stubs.FileStub;
 
 /**
  * @author Dmitry Avdeev
@@ -47,9 +49,11 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
     DomManager manager = DomManager.getDomManager(project);
     DomFileElement<? extends DomElement> fileElement = manager.getFileElement(xmlFile);
     if (fileElement == null || !fileElement.getFileDescription().hasStubs()) return null;
-    DomStubBuilderVisitor visitor = new DomStubBuilderVisitor();
+
+    FileStub fileStub = new FileStub(DomService.getInstance().getXmlFileHeader(xmlFile));
+    DomStubBuilderVisitor visitor = new DomStubBuilderVisitor(fileStub);
     visitor.visitDomElement(fileElement.getRootElement());
-    return visitor.getRoot();
+    return fileStub;
   }
 
   @Override

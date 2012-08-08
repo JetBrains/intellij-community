@@ -32,7 +32,7 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
 
   @Override
   public void serialize(ElementStub stub, StubOutputStream dataStream) throws IOException {
-    dataStream.writeName(stub.getType());
+    dataStream.writeName(stub.getName());
   }
 
   @Override

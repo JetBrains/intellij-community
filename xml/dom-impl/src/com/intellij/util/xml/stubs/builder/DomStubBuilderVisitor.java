@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.stubs;
+package com.intellij.util.xml.stubs.builder;
 
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.stubs.Stubbed;
@@ -23,6 +23,9 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.stubs.AttributeStub;
+import com.intellij.util.xml.stubs.ElementStub;
+import com.intellij.util.xml.stubs.FileStub;
 
 /**
  * @author Dmitry Avdeev
@@ -30,9 +33,18 @@ import com.intellij.util.xml.DomElementVisitor;
  */
 public class DomStubBuilderVisitor implements DomElementVisitor {
 
+  private ElementStub myRoot;
+
+  public DomStubBuilderVisitor(FileStub fileStub) {
+    myRoot = fileStub;
+  }
+
   @Override
   public void visitDomElement(DomElement element) {
-    if (myRoot == null || element.getChildDescription().getAnnotation(Stubbed.class) != null) {
+
+    if (element.getAnnotation(Stubbed.class) != null ||
+        element.getChildDescription().getAnnotation(Stubbed.class) != null) {
+
       XmlElement xmlElement = element.getXmlElement();
       if (xmlElement instanceof XmlTag) {
         ElementStub old = myRoot;
@@ -44,14 +56,8 @@ public class DomStubBuilderVisitor implements DomElementVisitor {
       }
       else if (xmlElement instanceof XmlAttribute) {
         new AttributeStub(myRoot, StringRef.fromString(((XmlAttribute)xmlElement).getLocalName()),
-                          StringRef.fromString(((XmlAttribute)xmlElement).getValue()));
+                          ((XmlAttribute)xmlElement).getValue());
       }
     }
-  }
-
-  private ElementStub myRoot;
-
-  public ElementStub getRoot() {
-    return myRoot;
   }
 }

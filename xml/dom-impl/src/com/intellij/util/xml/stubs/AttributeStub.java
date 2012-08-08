@@ -28,21 +28,15 @@ import java.util.List;
  */
 public class AttributeStub extends DomStub {
 
-  private final StringRef myName;
-  private final StringRef myValue;
+  private final String myValue;
 
-  public AttributeStub(DomStub parent, StringRef name, StringRef value) {
-    super(parent);
-    myName = name;
+  public AttributeStub(DomStub parent, StringRef name, String value) {
+    super(parent, name);
     myValue = value;
   }
 
-  public String getName() {
-    return myName.getString();
-  }
-
   public String getValue() {
-    return myValue.getString();
+    return myValue;
   }
 
   @Override

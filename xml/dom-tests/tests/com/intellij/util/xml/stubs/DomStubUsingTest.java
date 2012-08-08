@@ -15,17 +15,21 @@
  */
 package com.intellij.util.xml.stubs;
 
-import com.intellij.psi.stubs.SerializationManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/2/12
+ *         Date: 8/8/12
  */
-public class DomElementTypeHolder {
+public class DomStubUsingTest extends DomStubTest {
 
-  static {
-    SerializationManager.getInstance().registerSerializer(ElementStubSerializer.INSTANCE);
-    SerializationManager.getInstance().registerSerializer(AttributeStubSerializer.INSTANCE);
-    SerializationManager.getInstance().registerSerializer(FileStubSerializer.INSTANCE);
+  public void testFoo() throws Exception {
+    PsiFile file = myFixture.configureByFile("foo.xml");
+    DomFileElement<Foo> fileElement = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, Foo.class);
+    assertNotNull(fileElement);
+    Foo foo = fileElement.getRootElement();
   }
 }

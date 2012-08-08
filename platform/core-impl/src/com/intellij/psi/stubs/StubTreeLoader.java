@@ -30,8 +30,10 @@ public abstract class StubTreeLoader {
     return ServiceManager.getService(StubTreeLoader.class);
   }
 
+  @Nullable
   public abstract ObjectStubTree readOrBuild(Project project, final VirtualFile vFile, @Nullable final PsiFile psiFile);
 
+  @Nullable
   public abstract ObjectStubTree readFromVFile(Project project, final VirtualFile vFile);
   
   public abstract void rebuildStubTree(VirtualFile virtualFile);
