@@ -100,12 +100,6 @@ public class MavenRunnerParameters implements Cloneable {
     return new File(myWorkingDirPath.getPath());
   }
 
-  @Nullable
-  public String getPomFilePath() {
-    if (!isPomExecution) return null;
-    return new File(myWorkingDirPath.getPath(), "pom.xml").getPath();
-  }
-
   public List<String> getGoals() {
     return myGoals;
   }

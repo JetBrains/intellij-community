@@ -108,10 +108,7 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
   }
 
   public void checkConfiguration() throws RuntimeConfigurationException {
-    String filePath = mySettings.myRunnerParameters.getPomFilePath();
-    if (filePath == null || !new File(filePath).isFile()) {
-      throw new RuntimeConfigurationError(RunnerBundle.message("maven.run.configuration.error.file.not.found"));
-    }
+
   }
 
   private void updateProjectsFolders() {
