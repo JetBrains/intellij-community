@@ -16,7 +16,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,7 +70,7 @@ public class PyMoveClassOrFunctionDelegate extends MoveHandlerDelegate {
                            @Nullable Editor editor) {
     final PsiNamedElement e = getElementToMove(element);
     if (e instanceof PyClass || e instanceof PyFunction) {
-      if (PyPsiUtils.isTopLevel(e)) {
+      if (PyUtil.isTopLevel(e)) {
         PsiElement targetContainer = null;
         if (editor != null) {
           final Document document = editor.getDocument();

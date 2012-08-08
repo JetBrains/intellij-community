@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -34,6 +35,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
@@ -118,14 +120,6 @@ public class PyUtil {
       }
     }
     return ArrayUtil.toObjectArray(result, aClass);
-  }
-
-  @Nullable
-  public static PyExpression flattenParens(@Nullable PyExpression expr) {
-    while (expr instanceof PyParenthesizedExpression) {
-      expr = ((PyParenthesizedExpression)expr).getContainedExpression();
-    }
-    return expr;
   }
 
   /**
@@ -577,6 +571,19 @@ public class PyUtil {
       return false;
     }
     return f1 == f2;
+  }
+
+  public static boolean isTopLevel(@NotNull PsiElement element) {
+    if (element instanceof StubBasedPsiElement) {
+      final StubElement stub = ((StubBasedPsiElement)element).getStub();
+      if (stub != null) {
+        final StubElement parentStub = stub.getParentStub();
+        if (parentStub != null) {
+          return parentStub.getPsi() instanceof PsiFile;
+        }
+      }
+    }
+    return ScopeUtil.getScopeOwner(element) instanceof PsiFile;
   }
 
   public static class KnownDecoratorProviderHolder {

@@ -17,6 +17,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.NotNull;
 
@@ -228,7 +229,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     if (rightExpression == null) {
       return;
     }
-    PyExpression rhs = PyUtil.flattenParens(rightExpression);
+    PyExpression rhs = PyPsiUtils.flattenParens(rightExpression);
     String param_text = sure(rhs).getText();
     final PyStringLiteralExpression leftExpression = (PyStringLiteralExpression)element.getLeftExpression();
     Pair<StringBuilder, Boolean> converted = convertFormat(leftExpression);

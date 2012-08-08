@@ -26,7 +26,6 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
@@ -244,7 +243,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
       return true;
     }
     if (symbol instanceof PyClass || symbol instanceof PyFunction) {
-      return PyPsiUtils.isTopLevel(symbol);
+      return PyUtil.isTopLevel(symbol);
     }
     // only top-level target expressions are included in VariableNameIndex
     return symbol instanceof PyTargetExpression;

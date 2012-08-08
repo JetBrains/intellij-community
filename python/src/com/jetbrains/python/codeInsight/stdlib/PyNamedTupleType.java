@@ -9,6 +9,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyElementImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -114,7 +115,7 @@ public class PyNamedTupleType extends PyClassType implements PyCallableType {
   @Nullable
   public static PyType fromCall(PyCallExpression call) {
     final String name = PyUtil.strValue(call.getArgument(0, PyExpression.class));
-    final PyExpression fieldNamesExpression = PyUtil.flattenParens(call.getArgument(1, PyExpression.class));
+    final PyExpression fieldNamesExpression = PyPsiUtils.flattenParens(call.getArgument(1, PyExpression.class));
     if (name == null || fieldNamesExpression == null) {
       return null;
     }

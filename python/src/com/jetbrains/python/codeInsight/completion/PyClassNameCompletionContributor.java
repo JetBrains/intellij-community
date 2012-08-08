@@ -20,7 +20,6 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.codeInsight.imports.PythonReferenceImporter;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
@@ -71,7 +70,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
   private static Condition<PsiElement> IS_TOPLEVEL = new Condition<PsiElement>() {
     @Override
     public boolean value(PsiElement element) {
-      return PyPsiUtils.isTopLevel(element);
+      return PyUtil.isTopLevel(element);
     }
   };
 

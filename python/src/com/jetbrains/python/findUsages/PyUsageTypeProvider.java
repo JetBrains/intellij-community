@@ -9,6 +9,7 @@ import com.intellij.usages.impl.rules.UsageTypeProviderEx;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.CallArgumentsMappingImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeReference;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -57,7 +58,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
             if (element == typeExpression) {
               return USAGE_IN_ISINSTANCE;
             }
-            typeExpression = PyUtil.flattenParens(typeExpression);
+            typeExpression = PyPsiUtils.flattenParens(typeExpression);
             if (typeExpression instanceof PySequenceExpression && element.getParent() == typeExpression) {
               return USAGE_IN_ISINSTANCE;
             }

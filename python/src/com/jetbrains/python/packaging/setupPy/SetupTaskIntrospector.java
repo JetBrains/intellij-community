@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -102,7 +103,7 @@ public class SetupTaskIntrospector {
     if (taskClass != null) {
       final PyTargetExpression description = taskClass.findClassAttribute("description", true);
       if (description != null) {
-        final String descriptionText = PyUtil.strValue(PyUtil.flattenParens(description.findAssignedValue()));
+        final String descriptionText = PyUtil.strValue(PyPsiUtils.flattenParens(description.findAssignedValue()));
         if (descriptionText != null) {
           task.setDescription(descriptionText);
         }
@@ -162,12 +163,12 @@ public class SetupTaskIntrospector {
 
   private static Map<String, String> parseNegativeOpt(PyExpression dict) {
     Map<String, String> result = new HashMap<String, String>();
-    dict = PyUtil.flattenParens(dict);
+    dict = PyPsiUtils.flattenParens(dict);
     if (dict instanceof PyDictLiteralExpression) {
       final PyKeyValueExpression[] elements = ((PyDictLiteralExpression)dict).getElements();
       for (PyKeyValueExpression element : elements) {
-        String key = PyUtil.strValue(PyUtil.flattenParens(element.getKey()));
-        String value = PyUtil.strValue(PyUtil.flattenParens(element.getValue()));
+        String key = PyUtil.strValue(PyPsiUtils.flattenParens(element.getKey()));
+        String value = PyUtil.strValue(PyPsiUtils.flattenParens(element.getValue()));
         if (key != null && value != null) {
           result.put(key, value);
         }
@@ -178,7 +179,7 @@ public class SetupTaskIntrospector {
 
   @Nullable
   private static SetupTask.Option createOptionFromTuple(PyExpression tuple, List<String> booleanOptions, Map<String, String> negativeOptMap) {
-    tuple = PyUtil.flattenParens(tuple);
+    tuple = PyPsiUtils.flattenParens(tuple);
     if (tuple instanceof PyTupleExpression) {
       final PyExpression[] elements = ((PyTupleExpression)tuple).getElements();
       if (elements.length == 3) {

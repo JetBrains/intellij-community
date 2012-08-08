@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.Lists;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -13,8 +12,8 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -309,28 +308,15 @@ public class PyPsiUtils {
     final PyExpression[] args = call.getArguments();
     for (int i = 0; i < args.length; i++) {
       PyExpression expression = args[i];
-      if (expression instanceof PyKeywordArgumentImpl) {
-        expression = ((PyKeywordArgumentImpl)expression).getValueExpression();
+      if (expression instanceof PyKeywordArgument) {
+        expression = ((PyKeywordArgument)expression).getValueExpression();
       }
-      expression = PyUtil.flattenParens(expression);
+      expression = flattenParens(expression);
       if (expression == argument) {
         return i;
       }
     }
     return -1;
-  }
-
-  public static boolean isTopLevel(@NotNull PsiElement element) {
-    if (element instanceof StubBasedPsiElement) {
-      final StubElement stub = ((StubBasedPsiElement)element).getStub();
-      if (stub != null) {
-        final StubElement parentStub = stub.getParentStub();
-        if (parentStub != null) {
-          return parentStub.getPsi() instanceof PsiFile;
-        }
-      }
-    }
-    return ScopeUtil.getScopeOwner(element) instanceof PsiFile;
   }
 
   @Nullable
@@ -350,12 +336,12 @@ public class PyPsiUtils {
   }
 
   public static List<PyExpression> getAttributeValuesFromFile(@NotNull PyFile file, @NotNull String name) {
-    List<PyExpression> result = Lists.newArrayList();
+    List<PyExpression> result = ContainerUtil.newArrayList();
     final PyTargetExpression attr = file.findTopLevelAttribute(name);
     if (attr != null) {
-      PyExpression value = PyUtil.flattenParens(attr.findAssignedValue());
+      PyExpression value = flattenParens(attr.findAssignedValue());
       if (value instanceof PySequenceExpression) {
-        result.addAll(Lists.newArrayList(((PySequenceExpression)value).getElements()));
+        result.addAll(ContainerUtil.newArrayList(((PySequenceExpression)value).getElements()));
       }
       else if (value instanceof PyStringLiteralExpression) {
         result.add(value);
@@ -365,13 +351,21 @@ public class PyPsiUtils {
   }
 
   public static List<String> getStringValues(PyExpression[] elements) {
-    List<String> results = Lists.newArrayList();
+    List<String> results = ContainerUtil.newArrayList();
     for (PyExpression element : elements) {
       if (element instanceof PyStringLiteralExpression) {
         results.add(((PyStringLiteralExpression)element).getStringValue());
       }
     }
     return results;
+  }
+
+  @Nullable
+  public static PyExpression flattenParens(@Nullable PyExpression expr) {
+    while (expr instanceof PyParenthesizedExpression) {
+      expr = ((PyParenthesizedExpression)expr).getContainedExpression();
+    }
+    return expr;
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
