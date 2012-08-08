@@ -79,7 +79,7 @@ public class GitTestImpl implements Git {
     cd root
     String output = git("check-attr " + attributes.join(" ") + " -- " +
                         files.collect({it -> FileUtil.getRelativePath(root, it.path, (char)'/')}).join(" "))
-    return new GitCommandResult(!output.contains("fatal"), 0, Collections.<String>emptyList(),
+    return new GitCommandResult(!output.contains("fatal"), 0, Collections.emptyList(),
                                 Arrays.asList(StringUtil.splitByLines(output)))
   }
 
