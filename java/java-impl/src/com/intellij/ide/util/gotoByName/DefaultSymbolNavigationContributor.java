@@ -35,6 +35,7 @@ import java.util.*;
 public class DefaultSymbolNavigationContributor implements ChooseByNameContributor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
 
+  @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
@@ -45,6 +46,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return ArrayUtil.toStringArray(set);
   }
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
@@ -96,6 +98,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
     private final DefaultPsiElementCellRenderer myRenderer = new DefaultPsiElementCellRenderer();
 
+    @Override
     public int compare(PsiModifierListOwner element1, PsiModifierListOwner element2) {
       if (element1 == element2) return 0;
 

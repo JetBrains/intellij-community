@@ -27,11 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 
 public class DefaultClassNavigationContributor implements GotoClassContributor {
+  @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     return PsiShortNamesCache.getInstance(project).getAllClassNames();
   }
 
+  @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
     final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
@@ -49,6 +51,7 @@ public class DefaultClassNavigationContributor implements GotoClassContributor {
     return list.toArray(new NavigationItem[list.size()]);
   }
 
+  @Override
   public String getQualifiedName(final NavigationItem item) {
     if (item instanceof PsiClass) {
       final PsiClass psiClass = (PsiClass)item;

@@ -78,11 +78,13 @@ public abstract class SimpleChooseByNameModel implements ChooseByNameModel {
   public void saveInitialCheckBoxState(boolean state) {
   }
 
+  @NotNull
   @Override
   public String[] getNames(boolean checkBoxState) {
     return getNames();
   }
 
+  @NotNull
   @Override
   public Object[] getElementsByName(String name, boolean checkBoxState, String pattern) {
     return getElementsByName(name, pattern);
