@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
@@ -42,6 +41,7 @@ import git4idea.config.GitVersion;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.crlf.GitCrlfDialog;
 import git4idea.crlf.GitCrlfProblemsDetector;
+import git4idea.crlf.GitCrlfUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -101,7 +101,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     @NotNull
     private ReturnResult warnAboutCrlfIfNeeded() {
       GitVcsSettings settings = GitVcsSettings.getInstance(myProject);
-      if (!Registry.is("git.warn.about.crlf") || !SystemInfo.isWindows || !settings.warnAboutCrlf()) {
+      if (!Registry.is("git.warn.about.crlf") || !settings.warnAboutCrlf()) {
         return ReturnResult.COMMIT;
       }
 
@@ -140,7 +140,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
 
     private void setCoreAutoCrlfAttribute(@NotNull VirtualFile aRoot) {
       try {
-        GitConfigUtil.setValue(myProject, aRoot, GitConfigUtil.CORE_AUTOCRLF, "true", "--global");
+        GitConfigUtil.setValue(myProject, aRoot, GitConfigUtil.CORE_AUTOCRLF, GitCrlfUtil.RECOMMENDED_VALUE, "--global");
       }
       catch (VcsException e) {
         // it is not critical: the user just will get the dialog again next time

@@ -148,7 +148,7 @@ public class GitImpl implements Git {
   @Override
   public GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes,
                                     @NotNull Collection<VirtualFile> files) {
-    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CONFIG);
+    final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.CHECK_ATTR);
     h.addParameters(new ArrayList<String>(attributes));
     h.endOptions();
     h.addRelativeFiles(files);

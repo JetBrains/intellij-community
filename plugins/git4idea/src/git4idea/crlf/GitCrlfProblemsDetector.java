@@ -108,6 +108,10 @@ public class GitCrlfProblemsDetector {
     }
     Collection<String> interestingAttributes = Arrays.asList(GitAttribute.TEXT.getName(), GitAttribute.CRLF.getName());
     GitCommandResult result = myGit.checkAttr(repository, interestingAttributes, files);
+    if (!result.success()) {
+      LOG.warn(String.format("Couldn't git check-attr. Attributes: %s, files: %s", interestingAttributes, files));
+      return Collections.emptyList();
+    }
     GitCheckAttrParser parser = GitCheckAttrParser.parse(result.getOutput());
     Map<String, Collection<GitAttribute>> attributes = parser.getAttributes();
     Collection<VirtualFile> filesWithoutAttrs = new ArrayList<VirtualFile>();
@@ -142,7 +146,8 @@ public class GitCrlfProblemsDetector {
   private Collection<VirtualFile> findFilesWithCrlf(@NotNull Collection<VirtualFile> files) {
     Collection<VirtualFile> filesWithCrlf = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
-      if (CRLF.equals(myPlatformFacade.getFileDocumentManager().getLineSeparator(file, myProject))) {
+      String separator = myPlatformFacade.getLineSeparator(file, true);
+      if (CRLF.equals(separator)) {
         filesWithCrlf.add(file);
       }
     }
@@ -169,10 +174,6 @@ public class GitCrlfProblemsDetector {
       return true;
     }
     GitCommandResult result = myGit.config(repository, GitConfigUtil.CORE_AUTOCRLF);
-    if (!result.success()) {
-      LOG.warn("Couldn't get git config core.autocrlf for " + root);
-      return true;
-    }
     String value = result.getOutputAsJoinedString();
     return value.equalsIgnoreCase("true") || value.equalsIgnoreCase("input");
   }

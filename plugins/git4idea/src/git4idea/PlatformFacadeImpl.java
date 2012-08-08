@@ -20,7 +20,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,6 +30,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,10 +111,10 @@ public class PlatformFacadeImpl implements PlatformFacade {
     return PluginManager.getPlugin(PluginManager.getPluginByClassName(name));
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public FileDocumentManager getFileDocumentManager() {
-    return FileDocumentManager.getInstance();
+  public String getLineSeparator(@NotNull VirtualFile file, boolean detect) {
+    return LoadTextUtil.detectLineSeparator(file, detect);
   }
 
   @NotNull

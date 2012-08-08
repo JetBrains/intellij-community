@@ -70,7 +70,6 @@ public class GitVcsPanel {
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     final GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
     mySyncBranchControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
-    myWarnAboutCrlf.setVisible(SystemInfo.isWindows);
   }
 
   /**

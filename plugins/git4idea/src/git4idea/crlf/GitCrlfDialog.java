@@ -31,10 +31,11 @@ import java.awt.*;
 
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
+import static git4idea.crlf.GitCrlfUtil.*;
 
 /**
  * Warns the user that CRLF line separators are about to be committed to the repository.
- * Provides some additional information and proposes to set {@code git config --global core.autocrlf true}.
+ * Provides some additional information and proposes to set {@code git config --global core.autocrlf true/input}.
  *
  * @author Kirill Likhodedov
  * @see GitCrlfProblemsDetector
@@ -66,10 +67,11 @@ public class GitCrlfDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     JLabel description = new JBLabel(
       "<html>You are about to commit CRLF line separators to the Git repository.<br/>" +
-      "It is recommended to set core.autocrlf Git attribute to <code>true</code> to avoid line separator issues.</html>");
+      "It is recommended to set core.autocrlf Git attribute to <code>" + RECOMMENDED_VALUE +
+      "</code> to avoid line separator issues.</html>");
 
     JLabel additionalDescription = new JBLabel(
-      "<html>Fix and Commit: <code>git config --global core.autocrlf true</code> will be called,<br/>" +
+      "<html>Fix and Commit: <code>git config --global core.autocrlf " + RECOMMENDED_VALUE + "</code> will be called,<br/>" +
       "Commit as Is: the config value won't be set.</html>", UIUtil.ComponentStyle.SMALL);
 
     JLabel readMore = new LinkLabel("Read more", null, new LinkListener() {
