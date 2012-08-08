@@ -34,6 +34,7 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
   public String[] getAnnotations(Project project) {
     final NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     final Collection<String> anns = new ArrayList<String>(manager.getNotNulls());
+    anns.addAll(manager.getNullables());
     anns.add(AnnotationUtil.NLS);
     return ArrayUtil.toStringArray(anns);
   }
@@ -44,7 +45,9 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
     if (manager.getNotNulls().contains(fqName)) {
       return ArrayUtil.toStringArray(manager.getNullables());
     }
-
+    if (manager.getNullables().contains(fqName)) {
+      return ArrayUtil.toStringArray(manager.getNotNulls()); 
+    }
     if (Comparing.strEqual(fqName, AnnotationUtil.NLS)){
       return new String[]{AnnotationUtil.NON_NLS};
     }
