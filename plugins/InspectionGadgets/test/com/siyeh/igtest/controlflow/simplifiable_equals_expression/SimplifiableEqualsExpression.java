@@ -25,4 +25,10 @@ public class SimplifiableEqualsExpression {
       return;
     }
   }
+
+  void bas(String s) {
+    if (s != null && s.equalsIgnoreCase("yes")) {
+      return;
+    }
+  }
 }

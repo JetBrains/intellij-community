@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,20 +43,26 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
   @NotNull
   @Override
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("simplifiable.equals.expression.problem.descriptor");
+    return InspectionGadgetsBundle.message("simplifiable.equals.expression.problem.descriptor", infos[0]);
   }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new SimplifiableEqualsExpressionFix();
+    return new SimplifiableEqualsExpressionFix((String)infos[0]);
   }
 
   private static class SimplifiableEqualsExpressionFix extends InspectionGadgetsFix {
 
+    private final String myMethodName;
+
+    public SimplifiableEqualsExpressionFix(String methodName) {
+      myMethodName = methodName;
+    }
+
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix");
+      return InspectionGadgetsBundle.message("simplifiable.equals.expression.quickfix", myMethodName);
     }
 
     @Override
@@ -84,6 +90,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)operand;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final String referenceName = methodExpression.getReferenceName();
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
@@ -129,7 +136,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
       else {
         newQualifierText = argument.getText();
       }
-      replaceExpression(polyadicExpression, newQualifierText + ".equals(" + qualifier.getText() + ")");
+      replaceExpression(polyadicExpression, newQualifierText + "." + referenceName + "(" + qualifier.getText() + ")");
     }
   }
 
@@ -161,7 +168,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
         if (!isEqualsConstant(rhs, variable)) {
           return;
         }
-        registerError(lhs);
+        registerError(lhs, getMethodName((PsiMethodCallExpression)rhs));
       }
       else if (JavaTokenType.OROR.equals(tokenType)) {
         final PsiExpression[] operands = expression.getOperands();
@@ -188,8 +195,13 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
         if (!isEqualsConstant(operand, variable)) {
           return;
         }
-        registerError(lhs);
+        registerError(lhs, getMethodName((PsiMethodCallExpression)operand));
       }
+    }
+
+    private static String getMethodName(PsiMethodCallExpression methodCallExpression) {
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      return methodExpression.getReferenceName();
     }
 
     private static boolean isEqualsConstant(PsiExpression expression, PsiVariable variable) {
@@ -199,7 +211,7 @@ public class SimplifiableEqualsExpressionInspection extends BaseInspection {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.EQUALS.equals(methodName)) {
+      if (!HardcodedMethodConstants.EQUALS.equals(methodName) && !HardcodedMethodConstants.EQUALS_IGNORE_CASE.equals(methodName)) {
         return false;
       }
       final PsiExpression qualifier = methodExpression.getQualifierExpression();
