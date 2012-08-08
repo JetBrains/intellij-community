@@ -106,7 +106,6 @@
 
     <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
                         serviceImplementation="com.intellij.javaee.ExternalResourceManagerImpl"/>
-    <project.converterProvider implementation="com.intellij.javaee.DefaultHtmlDoctypeConverter"/>
 
     <standardResourceProvider implementation="com.intellij.javaee.InternalResourceProvider"/>
 
