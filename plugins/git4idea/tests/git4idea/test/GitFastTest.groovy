@@ -20,6 +20,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import git4idea.tests.TestDialogManager
+import org.junit.After
 import org.junit.Before
 
 import static junit.framework.Assert.assertEquals
@@ -54,6 +55,11 @@ class GitFastTest {
     myDialogManager = myPlatformFacade.getDialogManager()
     myRepositoryManager = (GitTestRepositoryManager) myPlatformFacade.getRepositoryManager(myProject)
     myVcsHelper = (MockVcsHelper) myPlatformFacade.getVcsHelper(myProject)
+  }
+
+  @After
+  void tearDown() {
+    FileUtil.delete(new File(myProjectDir))
   }
 
   void assertNotificationShown(Notification expected) {

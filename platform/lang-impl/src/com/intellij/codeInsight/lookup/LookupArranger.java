@@ -18,6 +18,7 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -39,12 +40,27 @@ public abstract class LookupArranger {
 
   public abstract LookupArranger createEmptyCopy();
 
-  protected static void addPrefixItems(Lookup lookup, LinkedHashSet<LookupElement> result, boolean exactly, Collection<LookupElement> items) {
-    for (LookupElement element : items) {
-      if (isPrefixItem(lookup, element, exactly)) {
-        result.add(element);
+  protected static void addPrefixItems(Lookup lookup, LinkedHashSet<LookupElement> result, Collection<LookupElement> items) {
+    List<LookupElement> exact = new SmartList<LookupElement>();
+    List<LookupElement> inexact = new SmartList<LookupElement>();
+
+    eachItem:
+    for (LookupElement item : items) {
+      final String pattern = lookup.itemPattern(item);
+      if (pattern.equals(item.getLookupString())) {
+        exact.add(item);
+        continue eachItem;
+      }
+
+      for (String s : item.getAllLookupStrings()) {
+        if (s.equalsIgnoreCase(pattern)) {
+          inexact.add(item);
+          continue eachItem;
+        }
       }
     }
+    result.addAll(exact);
+    result.addAll(inexact);
   }
 
   protected static boolean isPrefixItem(Lookup lookup, LookupElement item, final boolean exactly) {
@@ -81,8 +97,7 @@ public abstract class LookupArranger {
     public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
       LinkedHashSet<LookupElement> result = new LinkedHashSet<LookupElement>();
       List<LookupElement> items = matchingItems(lookup);
-      addPrefixItems(lookup, result, true, items);
-      addPrefixItems(lookup, result, false, items);
+      addPrefixItems(lookup, result, items);
       for (LookupElement item : items) {
         if (CompletionServiceImpl.isStartMatch(item, lookup)) {
           result.add(item);

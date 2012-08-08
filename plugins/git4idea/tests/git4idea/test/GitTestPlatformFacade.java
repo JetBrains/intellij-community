@@ -22,11 +22,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.MockChangeListManager;
 import git4idea.Notificator;
 import git4idea.PlatformFacade;
@@ -34,6 +36,9 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.tests.TestDialogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
 
 /**
  * 
@@ -143,6 +148,17 @@ public class GitTestPlatformFacade implements PlatformFacade {
   @Override
   public IdeaPluginDescriptor getPluginByClassName(@NotNull String name) {
     return null;
+  }
+
+  @NotNull
+  @Override
+  public String getLineSeparator(@NotNull VirtualFile file, boolean detect) {
+    try {
+      return FileUtil.loadFile(new File(file.getPath())).contains("\r\n") ? "\r\n" : "\n";
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull

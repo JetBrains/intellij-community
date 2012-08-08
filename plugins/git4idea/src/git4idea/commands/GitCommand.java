@@ -38,6 +38,7 @@ public class GitCommand {
   public static final GitCommand BLAME = read("blame");
   public static final GitCommand BRANCH = read("branch");
   public static final GitCommand CHECKOUT = write("checkout");
+  public static final GitCommand CHECK_ATTR = read("check-attr");
   public static final GitCommand COMMIT = write("commit");
   public static final GitCommand CONFIG = read("config");
   public static final GitCommand CHERRY_PICK = write("cherry-pick");

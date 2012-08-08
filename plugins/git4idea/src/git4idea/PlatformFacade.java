@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,4 +87,10 @@ public interface PlatformFacade {
   @Nullable
   IdeaPluginDescriptor getPluginByClassName(@NotNull String name);
 
+  /**
+   * Gets line separator of the given virtual file.
+   * If {@code detect} is set {@code true}, and the information about line separator wasn't retrieved yet, loads the file and detects.
+   */
+  @Nullable
+  String getLineSeparator(@NotNull VirtualFile file, boolean detect);
 }

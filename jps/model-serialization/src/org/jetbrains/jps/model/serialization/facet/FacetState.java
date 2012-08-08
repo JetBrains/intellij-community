@@ -28,24 +28,24 @@ import java.util.ArrayList;
 /**
  * @author nik
 */
-@Tag(JpsFacetLoader.FACET_ELEMENT)
+@Tag(JpsFacetSerializer.FACET_TAG)
 public class FacetState {
   private String myFacetType;
   private String myName;
   private Element myConfiguration;
   private List<FacetState> mySubFacets = new ArrayList<FacetState>();
 
-  @Attribute(JpsFacetLoader.TYPE_ATTRIBUTE)
+  @Attribute(JpsFacetSerializer.TYPE_ATTRIBUTE)
   public String getFacetType() {
     return myFacetType;
   }
 
-  @Attribute(JpsFacetLoader.NAME_ATTRIBUTE)
+  @Attribute(JpsFacetSerializer.NAME_ATTRIBUTE)
   public String getName() {
     return myName;
   }
 
-  @Tag(JpsFacetLoader.CONFIGURATION_ELEMENT)
+  @Tag(JpsFacetSerializer.CONFIGURATION_TAG)
   public Element getConfiguration() {
     return myConfiguration;
   }

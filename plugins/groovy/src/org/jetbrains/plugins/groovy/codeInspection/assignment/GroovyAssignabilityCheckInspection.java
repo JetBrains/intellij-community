@@ -49,7 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -182,30 +181,12 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
     }
 
     @Nullable
-    private static String getAttributeName(GrAnnotationNameValuePair pair) {
-      if (pair.getNameIdentifierGroovy() == null) return "value";
-      return pair.getName();
-    }
-
-
-    @Nullable
     private static PsiType inferReturnType(PsiElement position) {
       final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(position);
       if (flowOwner == null) return null;
 
       final PsiElement parent = flowOwner.getParent();
-      if (flowOwner instanceof GrClosableBlock && parent instanceof GrAnnotationNameValuePair) {
-        final PsiClass aClass = ResolveUtil.resolveAnnotation(parent);
-        if (aClass == null) return null;
-        final String name = getAttributeName((GrAnnotationNameValuePair)parent);
-
-        final PsiMethod[] methods = aClass.findMethodsByName(name, false);
-        if (methods.length != 0) {
-          final PsiMethod method = methods[0];
-          return method.getReturnType();
-        }
-      }
-      else if (flowOwner instanceof GrOpenBlock && parent instanceof GrMethod) {
+      if (flowOwner instanceof GrOpenBlock && parent instanceof GrMethod) {
         final GrMethod method = (GrMethod)parent;
         if (method.isConstructor()) return null;
         return method.getReturnType();

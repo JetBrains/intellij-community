@@ -22,8 +22,8 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.fileTypes.StdFileTypes
-import com.intellij.psi.*
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 
@@ -973,6 +973,11 @@ public class ListUtils {
     doTest('\n')
   }
 
+  public void testStaticallyImportedInner() throws Throwable {
+    configure()
+    assertStringItems('AIOInner', 'ArrayIndexOutOfBoundsException')
+  }
+
   public void testClassNameInIfBeforeIdentifier() throws Throwable {
     myFixture.addClass("public class ABCDEFFFFF {}")
     doTest('\n')
@@ -1311,7 +1316,7 @@ public class ListUtils {
 
   public void testListArrayListCast() { doTest('\n') }
   public void testInterfaceImplementationNoCast() { doTest() }
-  public void testStaticallyImportedMethodsBeforeExpression() { doTest('\n') }
+  public void testStaticallyImportedMethodsBeforeExpression() { doTest() }
   public void testInnerChainedReturnType() { doTest() }
   public void testOverwriteGenericsAfterNew() { doTest('\n') }
 

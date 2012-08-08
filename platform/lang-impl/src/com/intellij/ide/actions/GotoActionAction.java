@@ -30,12 +30,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
+  @Override
   public void gotoActionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
@@ -52,11 +54,12 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           final AnAction action = (AnAction)((Map.Entry)element).getKey();
           if (action != null) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
               public void run() {
                 if (component == null || !component.isShowing()) {
                   return;
                 }
-                final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
+                final Presentation presentation = action.getTemplatePresentation().clone();
                 final DataContext context = DataManager.getInstance().getDataContext(component);
                 final AnActionEvent event = new AnActionEvent(e.getInputEvent(), context,
                                                               e.getPlace(), presentation,
@@ -83,7 +86,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     showNavigationPopup(callback, null,
                         ChooseByNamePopup.createPopup(project, model, new DefaultChooseByNameItemProvider(null) {
                               @Override
-                              protected void sortNamesList(String namePattern, List<String> namesList) {
+                              protected void sortNamesList(@NotNull String namePattern, List<String> namesList) {
                               }
                         }, start.first, false, start.second));
   }

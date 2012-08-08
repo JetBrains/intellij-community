@@ -22,9 +22,9 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,12 +34,10 @@ import org.jetbrains.annotations.Nullable;
  * Date: Nov 20, 2002
  */
 public class ReuseVariableDeclarationFix implements IntentionAction {
-  private final PsiVariable myVariable;
-  private final PsiIdentifier myIdentifier;
+  private final PsiLocalVariable myVariable;
 
-  public ReuseVariableDeclarationFix(final PsiVariable variable, final PsiIdentifier identifier) {
+  public ReuseVariableDeclarationFix(final PsiLocalVariable variable) {
     this.myVariable = variable;
-    this.myIdentifier = identifier;
   }
 
   @Override
@@ -56,14 +54,12 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
+    if (myVariable == null || !myVariable.isValid()) {
+      return false;
+    }
     final PsiVariable previousVariable = findPreviousVariable();
-    return myVariable != null &&
-           myVariable.isValid() &&
-           myVariable instanceof PsiLocalVariable &&
-           previousVariable != null &&
+    return previousVariable != null &&
            Comparing.equal(previousVariable.getType(), myVariable.getType()) &&
-           myIdentifier != null &&
-           myIdentifier.isValid() &&
            myVariable.getManager().isInProject(myVariable);
   }
 
@@ -95,9 +91,14 @@ public class ReuseVariableDeclarationFix implements IntentionAction {
     }
     if (scope == null) return null;
 
-    final VariablesNotProcessor proc = new VariablesNotProcessor(myVariable, false);
-    PsiScopesUtil.treeWalkUp(proc, myIdentifier, scope);
-    return proc.size() > 0 ? proc.getResult(0) : null;
+    PsiIdentifier nameIdentifier = myVariable.getNameIdentifier();
+    if (nameIdentifier == null) {
+      return null;
+    }
+
+    final VariablesNotProcessor processor = new VariablesNotProcessor(myVariable, false);
+    PsiScopesUtil.treeWalkUp(processor, nameIdentifier, scope);
+    return processor.size() > 0 ? processor.getResult(0) : null;
   }
 
   @Override

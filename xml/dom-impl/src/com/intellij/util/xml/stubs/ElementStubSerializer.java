@@ -26,26 +26,31 @@ import java.io.IOException;
  * @author Dmitry Avdeev
  *         Date: 8/3/12
  */
-public class TagStubSerializer implements ObjectStubSerializer<TagStub, TagStub> {
+public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, ElementStub> {
 
-  final static ObjectStubSerializer INSTANCE = new TagStubSerializer();
+  final static ObjectStubSerializer INSTANCE = new ElementStubSerializer();
 
   @Override
-  public void serialize(TagStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(ElementStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
   }
 
   @Override
-  public TagStub deserialize(StubInputStream dataStream, TagStub parentStub) throws IOException {
-    return new TagStub(parentStub, dataStream.readName().getString());
+  public ElementStub deserialize(StubInputStream dataStream, ElementStub parentStub) throws IOException {
+    return new ElementStub(parentStub, dataStream.readName());
   }
 
   @Override
-  public void indexStub(TagStub stub, IndexSink sink) {
+  public void indexStub(ElementStub stub, IndexSink sink) {
   }
 
   @Override
   public String getExternalId() {
-    return "TagStubSerializer";
+    return "ElementStubSerializer";
+  }
+
+  @Override
+  public String toString() {
+    return "Element";
   }
 }

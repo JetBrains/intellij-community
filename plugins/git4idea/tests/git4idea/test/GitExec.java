@@ -153,7 +153,7 @@ public class GitExec {
   }
 
   @NotNull
-  private static String run(@NotNull GitRepository repository, @NotNull String command, String... params) throws IOException {
+  public static String run(@NotNull GitRepository repository, @NotNull String command, String... params) throws IOException {
     return new GitTestRunEnv(new File(repository.getRoot().getPath())).run(command, params);
   }
 

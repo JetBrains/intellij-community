@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.serialization.JpsLibraryRootTypeSerializer;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
 
 import java.util.Arrays;
@@ -49,35 +50,10 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     saveJavaModuleExtension(module, rootModel);
   }
 
+  @NotNull
   @Override
-  public void loadProjectRoots(JpsProject project, Element rootManagerElement) {
-    JpsJavaProjectExtension extension = getService().getOrCreateProjectExtension(project);
-    final Element output = rootManagerElement.getChild(OUTPUT_TAG);
-    if (output != null) {
-      String url = output.getAttributeValue(URL_ATTRIBUTE);
-      if (url != null) {
-        extension.setOutputUrl(url);
-      }
-    }
-    String languageLevel = rootManagerElement.getAttributeValue(LANGUAGE_LEVEL_ATTRIBUTE);
-    if (languageLevel != null) {
-      extension.setLanguageLevel(LanguageLevel.valueOf(languageLevel));
-    }
-  }
-
-  @Override
-  public void saveProjectRoots(JpsProject project, Element rootManagerElement) {
-    JpsJavaProjectExtension extension = getService().getProjectExtension(project);
-    if (extension == null) return;
-
-    String outputUrl = extension.getOutputUrl();
-    if (outputUrl != null) {
-      rootManagerElement.addContent(new Element(OUTPUT_TAG).setAttribute(URL_ATTRIBUTE, outputUrl));
-    }
-    LanguageLevel level = extension.getLanguageLevel();
-    rootManagerElement.setAttribute(LANGUAGE_LEVEL_ATTRIBUTE, level.name());
-    rootManagerElement.setAttribute("assert-keyword", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_4) >= 0));
-    rootManagerElement.setAttribute("jdk-15", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_5) >= 0));
+  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+    return Arrays.asList(new JavaProjectExtensionSerializer());
   }
 
   @Override
@@ -244,6 +220,43 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     @Override
     public void save(JpsTestModuleOutputPackagingElement element, Element tag) {
       tag.setAttribute("name", element.getModuleReference().getModuleName());
+    }
+  }
+
+  private static class JavaProjectExtensionSerializer extends JpsProjectExtensionSerializer {
+    public JavaProjectExtensionSerializer() {
+      super(null, "ProjectRootManager");
+    }
+
+    @Override
+    public void loadExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
+      JpsJavaProjectExtension extension = getService().getOrCreateProjectExtension(project);
+      final Element output = componentTag.getChild(OUTPUT_TAG);
+      if (output != null) {
+        String url = output.getAttributeValue(URL_ATTRIBUTE);
+        if (url != null) {
+          extension.setOutputUrl(url);
+        }
+      }
+      String languageLevel = componentTag.getAttributeValue(LANGUAGE_LEVEL_ATTRIBUTE);
+      if (languageLevel != null) {
+        extension.setLanguageLevel(LanguageLevel.valueOf(languageLevel));
+      }
+    }
+
+    @Override
+    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
+      JpsJavaProjectExtension extension = getService().getProjectExtension(project);
+      if (extension == null) return;
+
+      String outputUrl = extension.getOutputUrl();
+      if (outputUrl != null) {
+        componentTag.addContent(new Element(OUTPUT_TAG).setAttribute(URL_ATTRIBUTE, outputUrl));
+      }
+      LanguageLevel level = extension.getLanguageLevel();
+      componentTag.setAttribute(LANGUAGE_LEVEL_ATTRIBUTE, level.name());
+      componentTag.setAttribute("assert-keyword", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_4) >= 0));
+      componentTag.setAttribute("jdk-15", Boolean.toString(level.compareTo(LanguageLevel.JDK_1_5) >= 0));
     }
   }
 }

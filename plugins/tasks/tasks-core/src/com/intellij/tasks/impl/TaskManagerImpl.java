@@ -298,6 +298,17 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   }
 
   @Override
+  public List<LocalTask> getLocalTasks(final String query) {
+    List<LocalTask> tasks = new ArrayList<LocalTask>();
+    for (LocalTask localTask : getLocalTasks()) {
+      if (TaskUtil.getTrimmedSummary(localTask).toLowerCase().contains(query.toLowerCase())) {
+        tasks.add(localTask);
+      }
+    }
+    return tasks;
+  }
+
+  @Override
   public LocalTask addTask(Task issue) {
     LocalTaskImpl task = issue instanceof LocalTaskImpl ? (LocalTaskImpl)issue : new LocalTaskImpl(issue);
     addTask(task);
@@ -378,11 +389,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       changeList = myChangeListManager.addChangeList(name, comment);
     }
     else {
+      getOpenChangelists(task).add(new ChangeListInfo(changeList));
       changeList.setComment(comment);
     }
     myChangeListManager.setDefaultChangeList(changeList);
     task.setAssociatedChangelistId(changeList.getId());
-    getOpenChangelists(task).add(new ChangeListInfo(changeList));
   }
 
   private LocalTask doActivate(Task origin, boolean explicitly) {

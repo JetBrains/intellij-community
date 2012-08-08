@@ -88,6 +88,12 @@ class MockGit implements Git {
 
   @NotNull
   @Override
+  GitCommandResult config(@NotNull GitRepository repository, String... params) {
+    throw new UnsupportedOperationException()
+  }
+
+  @NotNull
+  @Override
   GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @Nullable List<String> additionalParams,
                          @NotNull GitLineHandlerListener... listeners) {
     throw new UnsupportedOperationException()
@@ -185,6 +191,12 @@ class MockGit implements Git {
       return result;
     }
     return FAKE_SUCCESS_RESULT
+  }
+
+  @NotNull
+  @Override
+  GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes, @NotNull Collection<VirtualFile> files) {
+
   }
 
   private void produceOutput(String output, GitLineHandlerListener... listeners) {

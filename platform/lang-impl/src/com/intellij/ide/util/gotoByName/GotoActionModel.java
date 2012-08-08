@@ -235,6 +235,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return UIUtil.getListForeground();
   }
 
+  @NotNull
   public String[] getNames(boolean checkBoxState) {
     final ArrayList<String> result = new ArrayList<String>();
     for (AnAction action : myActionsMap.keySet()) {
@@ -250,6 +251,7 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     return ArrayUtil.toStringArray(result);
   }
 
+  @NotNull
   public Object[] getElementsByName(final String id, final boolean checkBoxState, final String pattern) {
     final HashMap<AnAction, String> map = new HashMap<AnAction, String>();
     final AnAction act = myActionManager.getAction(id);

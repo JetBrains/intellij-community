@@ -15,12 +15,11 @@
  */
 package git4idea.tests;
 
-import com.intellij.openapi.util.SystemInfo;
 import git4idea.config.GitVersion;
+import git4idea.test.GitTestUtil;
 import org.testng.annotations.Test;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 
 import static git4idea.config.GitVersion.Type;
 import static org.testng.Assert.assertEquals;
@@ -53,13 +52,13 @@ public class GitVersionTest {
    */
   @Test
   public void testParse() throws Exception {
-    setWindows(false);
+    GitTestUtil.setWindows(false);
     for (TestGitVersion test : commonTests) {
       GitVersion version = GitVersion.parse(test.output);
       assertEqualVersions(version, test, Type.UNIX);
     }
 
-    setWindows(true);
+    GitTestUtil.setWindows(true);
     for (TestGitVersion test : commonTests) {
       GitVersion version = GitVersion.parse(test.output);
       assertEqualVersions(version, test, Type.CYGWIN);
@@ -73,7 +72,7 @@ public class GitVersionTest {
 
   @Test
   public void testEqualsAndCompare() throws Exception {
-    setWindows(true);
+    GitTestUtil.setWindows(true);
     GitVersion v1 = GitVersion.parse("git version 1.6.3");
     GitVersion v2 = GitVersion.parse("git version 1.7.3");
     GitVersion v3 = GitVersion.parse("git version 1.7.3");
@@ -117,21 +116,6 @@ public class GitVersionTest {
     assertEquals(rev, expected.rev);
     assertEquals(patch, expected.patch);
     assertEquals(type, expectedType);
-  }
-
-  // for testing purposes we test the behavior of windows and unix gits on both platforms
-  // this method sets SystemInfo.isWindows to whatever we want
-  private static void setWindows(boolean windows) throws NoSuchFieldException, IllegalAccessException {
-    Field win = SystemInfo.class.getDeclaredField("isWindows");
-    win.setAccessible(true);
-
-    Field modifiersField = Field.class.getDeclaredField("modifiers");
-    modifiersField.setAccessible(true);
-    modifiersField.setInt(win, win.getModifiers() & ~Modifier.FINAL);
-
-    win.set(null, windows);
-
-    assertEquals(SystemInfo.isWindows, windows);
   }
 
   private static class TestGitVersion {

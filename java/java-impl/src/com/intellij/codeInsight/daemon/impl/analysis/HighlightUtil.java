@@ -662,8 +662,8 @@ public class HighlightUtil {
     if (isIncorrect) {
       String description = JavaErrorMessages.message("variable.already.defined", name);
       HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, identifier, description);
-      if (!(variable instanceof PsiResourceVariable)) {
-        QuickFixAction.registerQuickFixAction(highlightInfo, new ReuseVariableDeclarationFix(variable, identifier));
+      if (variable instanceof PsiLocalVariable) {
+        QuickFixAction.registerQuickFixAction(highlightInfo, new ReuseVariableDeclarationFix((PsiLocalVariable)variable));
       }
       return highlightInfo;
     }

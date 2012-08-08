@@ -96,7 +96,7 @@ public class SwitchTaskAction extends BaseTaskAction {
     DefaultActionGroup group = new DefaultActionGroup();
     final TaskManager manager = TaskManager.getManager(project);
 
-    group.add(new OpenTaskAction());
+    group.add(new GotoTaskAction());
     
     group.addSeparator();
 

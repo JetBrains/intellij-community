@@ -301,9 +301,6 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     if (hintKey == JavaCompletionHints.NAME_FILTER) {
       return (T)myMatcher;
     }
-    if (hintKey == JavaCompletionHints.JAVA_COMPLETION) {
-      return (T)Boolean.TRUE;
-    }
 
     return super.getHint(hintKey);
   }

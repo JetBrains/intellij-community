@@ -159,7 +159,7 @@ public abstract class JavaCodeContextType extends TemplateContextType {
         return false;
       }
 
-      return JavaCompletionData.CLASS_START.isAcceptable(element, element) || JavaCompletionData.isInsideParameterList(element);
+      return JavaCompletionData.isSuitableForClass(element) || JavaCompletionData.isInsideParameterList(element);
     }
   }
 

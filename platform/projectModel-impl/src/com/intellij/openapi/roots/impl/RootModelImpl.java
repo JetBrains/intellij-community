@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -62,7 +63,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   private final ProjectRootManagerImpl myProjectRootManager;
   // have to register all child disposables using this fake object since all clients just call ModifiableModel.dispose()
-  private final Disposable myDisposable = Disposer.newDisposable();
+  private final CompositeDisposable myDisposable = new CompositeDisposable();
 
   RootModelImpl(@NotNull ModuleRootManagerImpl moduleRootManager,
                 ProjectRootManagerImpl projectRootManager,
@@ -177,12 +178,19 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   }
 
   private void setOrderEntriesFrom(@NotNull RootModelImpl rootModel) {
-    myOrderEntries.clear();
+    removeAllOrderEntries();
     for (OrderEntry orderEntry : rootModel.myOrderEntries) {
       if (orderEntry instanceof ClonableOrderEntry) {
         myOrderEntries.add(((ClonableOrderEntry)orderEntry).cloneEntry(this, myProjectRootManager, myFilePointerManager));
       }
     }
+  }
+
+  private void removeAllOrderEntries() {
+    for (OrderEntry entry : myOrderEntries) {
+      Disposer.dispose((OrderEntryBaseImpl)entry);
+    }
+    myOrderEntries.clear();
   }
 
   @Override
@@ -202,8 +210,11 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   public void removeContentEntry(@NotNull ContentEntry entry) {
     assertWritable();
-    LOG.assertTrue(getContent().contains(entry));
-    getContent().remove(entry);
+    LOG.assertTrue(myContent.contains(entry));
+    if (entry instanceof RootModelComponentBase) {
+      Disposer.dispose((RootModelComponentBase)entry);
+    }
+    myContent.remove(entry);
   }
 
   @Override
@@ -272,6 +283,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   private void removeOrderEntryInternal(OrderEntry entry) {
     LOG.assertTrue(myOrderEntries.contains(entry));
+    Disposer.dispose((OrderEntryBaseImpl)entry);
     myOrderEntries.remove(entry);
   }
 
@@ -310,10 +322,19 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   public void clear() {
     final Sdk jdk = getSdk();
-    myContent.clear();
-    myOrderEntries.clear();
+    removeAllContentEntries();
+    removeAllOrderEntries();
     setSdk(jdk);
     addSourceOrderEntries();
+  }
+
+  private void removeAllContentEntries() {
+    for (ContentEntry entry : myContent) {
+      if (entry instanceof RootModelComponentBase) {
+        Disposer.dispose((RootModelComponentBase)entry);
+      }
+    }
+    myContent.clear();
   }
 
   @Override
@@ -330,7 +351,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
     }
 
     if (areContentEntriesChanged()) {
-      getSourceModel().myContent.clear();
+      getSourceModel().removeAllContentEntries();
       for (ContentEntry contentEntry : myContent) {
         ContentEntry cloned = ((ClonableContentEntry)contentEntry).cloneEntry(getSourceModel());
         getSourceModel().myContent.add(cloned);
@@ -756,12 +777,15 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   public <T> T getModuleExtension(@NotNull final Class<T> klass) {
     for (ModuleExtension extension : myExtensions) {
-      if (klass.isAssignableFrom(extension.getClass())) return (T)extension;
+      if (klass.isAssignableFrom(extension.getClass())) {
+        //noinspection unchecked
+        return (T)extension;
+      }
     }
     return null;
   }
 
   void registerOnDispose(@NotNull Disposable disposable) {
-    Disposer.register(myDisposable, disposable);
+    myDisposable.add(disposable);
   }
 }

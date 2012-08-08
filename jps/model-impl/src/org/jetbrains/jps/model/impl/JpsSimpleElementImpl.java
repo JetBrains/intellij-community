@@ -6,39 +6,39 @@ import org.jetbrains.jps.model.*;
 /**
  * @author nik
  */
-public class JpsSimpleElementImpl<P> extends JpsElementBase<JpsSimpleElementImpl<P>> implements JpsSimpleElement<P> {
-  private P myProperties;
+public class JpsSimpleElementImpl<D> extends JpsElementBase<JpsSimpleElementImpl<D>> implements JpsSimpleElement<D> {
+  private D myData;
 
-  public JpsSimpleElementImpl(P properties) {
-    myProperties = properties;
+  public JpsSimpleElementImpl(D data) {
+    myData = data;
   }
 
-  public JpsSimpleElementImpl(JpsSimpleElementImpl<P> original) {
-    myProperties = original.myProperties;
+  private JpsSimpleElementImpl(JpsSimpleElementImpl<D> original) {
+    myData = original.myData;
   }
 
   @NotNull
   @Override
-  public P getProperties() {
-    return myProperties;
+  public D getData() {
+    return myData;
   }
 
   @Override
-  public void setProperties(@NotNull P properties) {
-    if (!myProperties.equals(properties)) {
-      myProperties = properties;
+  public void setData(@NotNull D data) {
+    if (!myData.equals(data)) {
+      myData = data;
       fireElementChanged();
     }
   }
 
   @NotNull
   @Override
-  public JpsSimpleElementImpl<P> createCopy() {
-    return new JpsSimpleElementImpl<P>(this);
+  public JpsSimpleElementImpl<D> createCopy() {
+    return new JpsSimpleElementImpl<D>(this);
   }
 
   @Override
-  public void applyChanges(@NotNull JpsSimpleElementImpl<P> modified) {
-    setProperties(modified.getProperties());
+  public void applyChanges(@NotNull JpsSimpleElementImpl<D> modified) {
+    setData(modified.getData());
   }
 }

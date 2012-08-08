@@ -17,8 +17,8 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,6 +30,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -44,11 +45,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @Override
-  public void filterElements(ChooseByNameBase base,
-                             String pattern,
+  public void filterElements(@NotNull ChooseByNameBase base,
+                             @NotNull String pattern,
                              boolean everywhere,
-                             Computable<Boolean> cancelled,
-                             Processor<Object> consumer) {
+                             @NotNull ProgressIndicator indicator,
+                             @NotNull Processor<Object> consumer) {
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
     String modifiedNamePattern = null;
@@ -57,28 +58,27 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       modifiedNamePattern = "*" + namePattern + (namePattern.endsWith(" ") ? "" : "*");
     }
 
+    ChooseByNameModel model = base.getModel();
     boolean empty = namePattern.isEmpty() ||
-                    namePattern.equals("@") && base.getModel() instanceof GotoClassModel2;    // TODO[yole]: remove implicit dependency
+                    namePattern.equals("@") && model instanceof GotoClassModel2;    // TODO[yole]: remove implicit dependency
     if (empty && !base.canShowListForEmptyPattern()) return;
 
     List<String> namesList = new ArrayList<String>();
     String[] names = base.getNames(everywhere);
-    getNamesByPattern(base, names, cancelled, namesList, namePattern,
+    getNamesByPattern(base, names, indicator, namesList, namePattern,
                       modifiedNamePattern != null ? NameUtil.MatchingCaseSensitivity.ALL : NameUtil.MatchingCaseSensitivity.NONE);
 
     if (modifiedNamePattern != null && namesList.isEmpty()) {
-      getNamesByPattern(base, names, cancelled, namesList, namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+      getNamesByPattern(base, names, indicator, namesList, namePattern, NameUtil.MatchingCaseSensitivity.NONE);
     }
-    if (cancelled.compute()) {
-      throw new ProcessCanceledException();
-    }
+    indicator.checkCanceled();
     sortNamesList(namePattern, namesList);
 
     if (modifiedNamePattern != null) {
       final Set<String> matched = new HashSet<String>(namesList);
       List<String> additionalNamesList = new ArrayList<String>();
       namePattern = modifiedNamePattern;
-      getNamesByPattern(base, names, cancelled, additionalNamesList, namePattern, NameUtil.MatchingCaseSensitivity.NONE);
+      getNamesByPattern(base, names, indicator, additionalNamesList, namePattern, NameUtil.MatchingCaseSensitivity.NONE);
       additionalNamesList = ContainerUtil.filter(additionalNamesList, new Condition<String>() {
         @Override
         public boolean value(String name) {
@@ -90,23 +90,22 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       namesList.addAll(additionalNamesList);
     }
 
-    if (cancelled.compute()) {
-      throw new ProcessCanceledException();
-    }
+    indicator.checkCanceled();
 
     List<Object> sameNameElements = new SmartList<Object>();
     boolean previousElemSeparator = false;
     boolean wasElement = false;
 
     for (String name : namesList) {
-      if (cancelled.compute()) {
-        throw new ProcessCanceledException();
-      }
+      indicator.checkCanceled();
       if (name == ChooseByNameBase.NON_PREFIX_SEPARATOR) {
         previousElemSeparator = wasElement;
         continue;
       }
-      final Object[] elements = base.getModel().getElementsByName(name, everywhere, namePattern);
+      // use interruptible call if possible
+      Object[] elements = model instanceof ContributorsBasedGotoByModel ?
+                                ((ContributorsBasedGotoByModel)model).getElementsByName(name, everywhere, namePattern, indicator)
+                                : model.getElementsByName(name, everywhere, namePattern);
       if (elements.length > 1) {
         sameNameElements.clear();
         for (final Object element : elements) {
@@ -131,12 +130,12 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
-  protected void sortNamesList(String namePattern, List<String> namesList) {
+  protected void sortNamesList(@NotNull String namePattern, List<String> namesList) {
     // Here we sort using namePattern to have similar logic with empty qualified patten case
     Collections.sort(namesList, new MatchesComparator(namePattern));
   }
 
-  private void sortByProximity(ChooseByNameBase base, final List<Object> sameNameElements) {
+  private void sortByProximity(@NotNull ChooseByNameBase base, final List<Object> sameNameElements) {
     final ChooseByNameModel model = base.getModel();
     if (model instanceof Comparator) {
       //noinspection unchecked
@@ -146,7 +145,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
-  private static String getQualifierPattern(ChooseByNameBase base, String pattern) {
+  private static String getQualifierPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
     final String[] separators = base.getModel().getSeparators();
     int lastSeparatorOccurrence = 0;
     for (String separator : separators) {
@@ -155,7 +154,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return pattern.substring(0, lastSeparatorOccurrence);
   }
 
-  public static String getNamePattern(ChooseByNameBase base, String pattern) {
+  public static String getNamePattern(@NotNull ChooseByNameBase base, String pattern) {
     pattern = base.transformPattern(pattern);
 
     ChooseByNameModel model = base.getModel();
@@ -169,7 +168,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return pattern.substring(lastSeparatorOccurrence);
   }
 
-  private static List<String> split(String s, ChooseByNameBase base) {
+  @NotNull
+  private static List<String> split(@NotNull String s, @NotNull ChooseByNameBase base) {
     List<String> answer = new ArrayList<String>();
     for (String token : StringUtil.tokenize(s, StringUtil.join(base.getModel().getSeparators(), ""))) {
       if (!token.isEmpty()) {
@@ -181,14 +181,15 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   private static boolean matchesQualifier(final Object element,
-                                          final String qualifierPattern,
-                                          final ChooseByNameBase base) {
+                                          @NotNull final String qualifierPattern,
+                                          @NotNull final ChooseByNameBase base) {
     final String name = base.getModel().getFullName(element);
     if (name == null) return false;
 
     final List<String> suspects = split(name, base);
     final List<Pair<String, MinusculeMatcher>> patternsAndMatchers =
       ContainerUtil.map2List(split(qualifierPattern, base), new Function<String, Pair<String, MinusculeMatcher>>() {
+        @NotNull
         @Override
         public Pair<String, MinusculeMatcher> fun(String s) {
           return Pair.create(getNamePattern(base, s), buildPatternMatcher(getNamePattern(base, s), NameUtil.MatchingCaseSensitivity.NONE));
@@ -223,18 +224,19 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     return true;
   }
 
+  @NotNull
   @Override
-  public List<String> filterNames(ChooseByNameBase base, String[] names, String pattern) {
-    ArrayList<String> res = new ArrayList<String>();
+  public List<String> filterNames(@NotNull ChooseByNameBase base, @NotNull String[] names, @NotNull String pattern) {
+    List<String> res = new ArrayList<String>();
     getNamesByPattern(base, names, null, res, pattern, NameUtil.MatchingCaseSensitivity.NONE);
     return res;
   }
 
-  private static void getNamesByPattern(ChooseByNameBase base,
-                                        String[] names,
-                                        @Nullable Computable<Boolean> cancelled,
-                                        final List<String> list,
-                                        String pattern,
+  private static void getNamesByPattern(@NotNull ChooseByNameBase base,
+                                        @NotNull String[] names,
+                                        @Nullable ProgressIndicator indicator,
+                                        @NotNull final List<String> list,
+                                        @NotNull String pattern,
                                         NameUtil.MatchingCaseSensitivity caseSensitivity)
     throws ProcessCanceledException {
     if (!base.canShowListForEmptyPattern()) {
@@ -249,7 +251,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
     try {
       for (String name : names) {
-        if (cancelled != null && cancelled.compute()) {
+        if (indicator != null && indicator.isCanceled()) {
           break;
         }
         if (matches(base, pattern, matcher, name)) {
@@ -262,7 +264,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     }
   }
 
-  private static boolean matches(ChooseByNameBase base, String pattern, MinusculeMatcher matcher, String name) {
+  private static boolean matches(@NotNull ChooseByNameBase base, @NotNull String pattern, @NotNull MinusculeMatcher matcher, @Nullable String name) {
     boolean matches = false;
     if (name != null) {
       if (base.getModel() instanceof CustomMatcherModel) {
@@ -284,12 +286,12 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   private static class MatchesComparator implements Comparator<String> {
     private final String myOriginalPattern;
 
-    private MatchesComparator(final String originalPattern) {
+    private MatchesComparator(@NotNull final String originalPattern) {
       myOriginalPattern = originalPattern.trim();
     }
 
     @Override
-    public int compare(final String a, final String b) {
+    public int compare(@NotNull final String a, @NotNull final String b) {
       boolean aStarts = a.startsWith(myOriginalPattern);
       boolean bStarts = b.startsWith(myOriginalPattern);
       if (aStarts && bStarts) return a.compareToIgnoreCase(b);
@@ -301,7 +303,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   private static class PathProximityComparator implements Comparator<Object> {
     private final ChooseByNameModel myModel;
-    private final PsiProximityComparator myProximityComparator;
+    @NotNull private final PsiProximityComparator myProximityComparator;
 
     private PathProximityComparator(final ChooseByNameModel model, @Nullable final PsiElement context) {
       myModel = model;

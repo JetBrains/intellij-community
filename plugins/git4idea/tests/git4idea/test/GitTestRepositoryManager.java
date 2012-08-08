@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * @author Kirill Likhodedov
  */
-class GitTestRepositoryManager implements GitRepositoryManager {
+public class GitTestRepositoryManager implements GitRepositoryManager {
 
   private final Collection<GitRepository> myRepositories = new ArrayList<GitRepository>();
 
@@ -40,7 +40,12 @@ class GitTestRepositoryManager implements GitRepositoryManager {
 
   @Override
   public GitRepository getRepositoryForRoot(@Nullable VirtualFile root) {
-    return myRepositories.iterator().next();
+    for (GitRepository repository : myRepositories) {
+      if (repository.getRoot().equals(root)) {
+        return repository;
+      }
+    }
+    return null;
   }
 
   @Override

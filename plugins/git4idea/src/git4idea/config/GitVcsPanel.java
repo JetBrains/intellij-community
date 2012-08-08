@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.JBCheckBox;
 import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
@@ -39,11 +40,7 @@ public class GitVcsPanel {
 
   private static final String IDEA_SSH = GitBundle.getString("git.vcs.config.ssh.mode.idea"); // IDEA ssh value
   private static final String NATIVE_SSH = GitBundle.getString("git.vcs.config.ssh.mode.native"); // Native SSH value
-  private static final String CRLF_CONVERT_TO_PROJECT = GitBundle.getString("git.vcs.config.convert.project");
-  private static final String CRLF_DO_NOT_CONVERT = GitBundle.getString("git.vcs.config.convert.do.not.convert");
-  private static final String CRLF_ASK = GitBundle.getString("git.vcs.config.convert.ask");
 
-  private final Project myProject;
   private final GitVcsApplicationSettings myAppSettings;
   private final GitVcs myVcs;
 
@@ -54,11 +51,11 @@ public class GitVcsPanel {
   private JCheckBox myAutoUpdateIfPushRejected;
   private JBCheckBox mySyncBranchControl;
   private JCheckBox myAutoCommitOnCherryPick;
+  private JBCheckBox myWarnAboutCrlf;
 
   public GitVcsPanel(@NotNull Project project) {
     myVcs = GitVcs.getInstance(project);
     myAppSettings = GitVcsApplicationSettings.getInstance();
-    myProject = project;
     mySSHExecutableComboBox.addItem(IDEA_SSH);
     mySSHExecutableComboBox.addItem(NATIVE_SSH);
     mySSHExecutableComboBox.setSelectedItem(IDEA_SSH);
@@ -71,7 +68,7 @@ public class GitVcsPanel {
     });
     myGitField.addBrowseFolderListener(GitBundle.getString("find.git.title"), GitBundle.getString("find.git.description"), project,
                                        FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
-    final GitRepositoryManager repositoryManager = ServiceManager.getService(myProject, GitRepositoryManager.class);
+    final GitRepositoryManager repositoryManager = ServiceManager.getService(project, GitRepositoryManager.class);
     mySyncBranchControl.setVisible(repositoryManager != null && repositoryManager.moreThanOneRoot());
   }
 
@@ -124,6 +121,7 @@ public class GitVcsPanel {
     myAutoUpdateIfPushRejected.setSelected(settings.autoUpdateIfPushRejected());
     mySyncBranchControl.setSelected(settings.getSyncSetting() == GitBranchSyncSetting.SYNC);
     myAutoCommitOnCherryPick.setSelected(settings.isAutoCommitOnCherryPick());
+    myWarnAboutCrlf.setSelected(settings.warnAboutCrlf());
   }
 
   /**
@@ -136,7 +134,8 @@ public class GitVcsPanel {
            (settings.isIdeaSsh() != IDEA_SSH.equals(mySSHExecutableComboBox.getSelectedItem())) ||
            !settings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((settings.getSyncSetting() == GitBranchSyncSetting.SYNC) != mySyncBranchControl.isSelected() ||
-           settings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected());
+           settings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
+           settings.warnAboutCrlf() != myWarnAboutCrlf.isSelected());
   }
 
   /**
@@ -154,5 +153,7 @@ public class GitVcsPanel {
 
     settings.setSyncSetting(mySyncBranchControl.isSelected() ? GitBranchSyncSetting.SYNC : GitBranchSyncSetting.DONT);
     settings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
+    settings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
   }
+
 }

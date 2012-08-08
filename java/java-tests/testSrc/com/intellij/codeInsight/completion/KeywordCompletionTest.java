@@ -98,10 +98,12 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNullInMethodCall() throws Exception { doTest(true); }
   public void testNullInMethodCall2() throws Exception { doTest(false); }
   public void testNewInMethodRefs() throws Exception { doTest(false); }
+  public void testSpaceAfterInstanceof() throws Exception { doTest(false); }
   public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() throws Exception { doTest(1, "char"); }
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }
   public void testFinalAfterParameterAnno() throws Exception { doTest(2, "final", "float", "class"); }
+  public void testClassInMethod() throws Exception { doTest(2, "class", "char"); }
 
   public void testTryInExpression() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");

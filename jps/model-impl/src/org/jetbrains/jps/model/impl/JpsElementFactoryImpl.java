@@ -84,7 +84,7 @@ public class JpsElementFactoryImpl extends JpsElementFactory {
 
   @NotNull
   @Override
-  public <P> JpsSimpleElement<P> createSimpleElement(@NotNull P properties) {
-    return new JpsSimpleElementImpl<P>(properties);
+  public <D> JpsSimpleElement<D> createSimpleElement(@NotNull D data) {
+    return new JpsSimpleElementImpl<D>(data);
   }
 }

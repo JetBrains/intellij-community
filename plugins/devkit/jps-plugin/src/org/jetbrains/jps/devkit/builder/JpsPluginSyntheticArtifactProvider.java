@@ -25,8 +25,8 @@ import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.devkit.model.JpsIdeaSdkProperties;
 import org.jetbrains.jps.devkit.model.JpsIdeaSdkType;
 import org.jetbrains.jps.devkit.model.JpsPluginModuleProperties;
+import org.jetbrains.jps.devkit.model.JpsPluginModuleType;
 import org.jetbrains.jps.incremental.artifacts.JpsSyntheticArtifactProvider;
-import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsSimpleElement;
@@ -43,6 +43,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsTypedModule;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,12 +61,9 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
   public List<JpsArtifact> createArtifacts(@NotNull JpsModel model) {
     List<JpsArtifact> artifacts = new ArrayList<JpsArtifact>();
     for (JpsModule module : model.getProject().getModules()) {
-      JpsElement propertiesElement = module.getProperties();
-      if (propertiesElement instanceof JpsSimpleElement) {
-        Object properties = ((JpsSimpleElement)propertiesElement).getProperties();
-        if (properties instanceof JpsPluginModuleProperties) {
-          artifacts.add(createArtifact(module, (JpsPluginModuleProperties)properties));
-        }
+      JpsTypedModule<JpsSimpleElement<JpsPluginModuleProperties>> pluginModule = module.asTyped(JpsPluginModuleType.INSTANCE);
+      if (pluginModule != null) {
+        artifacts.add(createArtifact(module, pluginModule.getProperties().getData()));
       }
     }
     return artifacts;

@@ -50,15 +50,6 @@ public class Java15CompletionData extends JavaCompletionData {
 
       registerVariant(variant);
     }
-
-    {
-      final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, CLASS_START);
-      variant.includeScopeClass(PsiClass.class);
-
-      variant.addCompletion(PsiKeyword.ENUM, TailType.HUMBLE_SPACE_BEFORE_WORD);
-      registerVariant(variant);
-    }
-
   }
 
   protected void initVariantsInClassScope() {

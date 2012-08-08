@@ -50,7 +50,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
   private static final PsiElementPattern<PsiElement,?> AFTER_DOT = psiElement().afterLeaf(".");
 
-  public static final LeftNeighbour INSTANCEOF_PLACE = new LeftNeighbour(new OrFilter(
+  private static final LeftNeighbour INSTANCEOF_PLACE = new LeftNeighbour(new OrFilter(
       new ReferenceOnFilter(new ClassFilter(PsiVariable.class)),
       new TextFilter(PsiKeyword.THIS),
       new AndFilter(new TextFilter(")"), new ParentElementFilter(new AndFilter(
@@ -138,17 +138,6 @@ public class JavaCompletionData extends JavaAwareCompletionData {
         not(psiElement().inside(PsiAnnotation.class)),
         not(START_SWITCH));
 
-  public static final AndFilter CLASS_START = new AndFilter(
-    new OrFilter(
-      END_OF_BLOCK,
-      new PatternFilter(psiElement().afterLeaf(
-        or(
-          psiElement().withoutText(".").inside(psiElement(PsiModifierList.class).withParent(not(psiElement(PsiParameter.class)))).andNot(
-            psiElement().inside(PsiAnnotationParameterList.class)),
-          psiElement().isNull())))
-    ),
-    new PatternFilter(not(psiElement().afterLeaf("@"))));
-
   private static final String[] PRIMITIVE_TYPES = new String[]{
     PsiKeyword.SHORT, PsiKeyword.BOOLEAN,
     PsiKeyword.DOUBLE, PsiKeyword.LONG,
@@ -233,16 +222,6 @@ public class JavaCompletionData extends JavaAwareCompletionData {
   }
 
   protected void initVariantsInFileScope(){
-    {
-      final CompletionVariant variant = new CompletionVariant(PsiJavaFile.class, CLASS_START);
-      variant.includeScopeClass(PsiClass.class);
-
-      variant.addCompletion(PsiKeyword.CLASS);
-      variant.addCompletion(PsiKeyword.INTERFACE);
-
-      registerVariant(variant);
-    }
-
   }
 
   /**
@@ -320,17 +299,6 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 //in annotation methods
       variant = new CompletionVariant(PsiAnnotationMethod.class, position);
       variant.addCompletion(PsiKeyword.DEFAULT);
-      registerVariant(variant);
-    }
-
-    {
-// instanceof keyword
-      final ElementFilter position = INSTANCEOF_PLACE;
-      final CompletionVariant variant = new CompletionVariant(position);
-      variant.includeScopeClass(PsiExpression.class, true);
-      variant.includeScopeClass(PsiMethod.class);
-      variant.addCompletion(PsiKeyword.INSTANCEOF);
-
       registerVariant(variant);
     }
 
@@ -513,10 +481,20 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.FINAL), TailType.HUMBLE_SPACE_BEFORE_WORD));
     }
 
-    if (CLASS_START.isAcceptable(position, position) &&
-        PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class) == null) {
+    if (isInstanceofPlace(position)) {
+      result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.INSTANCEOF), TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+
+    if (isSuitableForClass(position)) {
       for (String s : ModifierChooser.getKeywords(position)) {
         result.addElement(new OverrideableSpace(createKeyword(position, s), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+      result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.CLASS), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      if (PsiTreeUtil.getParentOfType(position, PsiCodeBlock.class, true, PsiMember.class) == null) {
+        result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.INTERFACE), TailType.HUMBLE_SPACE_BEFORE_WORD));
+        if (PsiUtil.getLanguageLevel(position).isAtLeast(LanguageLevel.JDK_1_5)) {
+          result.addElement(new OverrideableSpace(createKeyword(position, PsiKeyword.ENUM), TailType.INSERT_SPACE));
+        }
       }
     }
 
@@ -536,6 +514,27 @@ public class JavaCompletionData extends JavaAwareCompletionData {
         new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
       }
     }
+  }
+
+  public static boolean isInstanceofPlace(PsiElement position) {
+    return INSTANCEOF_PLACE.isAcceptable(position, position);
+  }
+
+  public static boolean isSuitableForClass(PsiElement position) {
+    if (psiElement().afterLeaf("@").accepts(position) ||
+        PsiTreeUtil.getNonStrictParentOfType(position, PsiLiteralExpression.class, PsiComment.class) != null) {
+      return false;
+    }
+
+    if (psiElement().afterLeaf(
+      or(
+        psiElement().withoutText(".").inside(psiElement(PsiModifierList.class).withParent(not(psiElement(PsiParameter.class)))).andNot(
+          psiElement().inside(PsiAnnotationParameterList.class)),
+        psiElement().isNull())).accepts(position)) {
+      return true;
+    }
+
+    return END_OF_BLOCK.isAcceptable(position, position);
   }
 
   static void addExpectedTypeMembers(CompletionParameters parameters, final CompletionResultSet result, PsiElement position) {

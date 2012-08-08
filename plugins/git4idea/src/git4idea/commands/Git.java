@@ -49,6 +49,9 @@ public interface Git {
   GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url, @NotNull String clonedDirectoryName);
 
   @NotNull
+  GitCommandResult config(@NotNull GitRepository repository, String... params);
+
+  @NotNull
   GitCommandResult merge(@NotNull GitRepository repository, @NotNull String branchToMerge, @Nullable List<String> additionalParams,
                          @NotNull GitLineHandlerListener... listeners);
 
@@ -101,4 +104,7 @@ public interface Git {
   @NotNull
   GitCommandResult getUnmergedFiles(@NotNull GitRepository repository);
 
+  @NotNull
+  GitCommandResult checkAttr(@NotNull GitRepository repository, @NotNull Collection<String> attributes,
+                             @NotNull Collection<VirtualFile> files);
 }

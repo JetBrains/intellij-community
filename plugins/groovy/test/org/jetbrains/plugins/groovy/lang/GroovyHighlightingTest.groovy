@@ -1350,11 +1350,15 @@ new Base() {
   Class value()
 }
 
+@interface Other {
+  String value()
+}
+
 @Test({String}) def foo1(){}
 @Test({2.class}) def foo2(){}
-<error descr="Method with signature foo3() is already defined in the class '_'">@Test({<warning descr="Cannot assign 'Integer' to 'Class'">2</warning>}) def foo3()</error>{}
-<error descr="Method with signature foo3() is already defined in the class '_'">@Test({abc}) def foo3()</error>{}
-@Test(String) def foo4(){}
+@Test({2}) def foo3(){}
+@Test({abc}) def foo4(){}
+@Test(String) def foo5(){}
 ''', GroovyAssignabilityCheckInspection)
   }
 

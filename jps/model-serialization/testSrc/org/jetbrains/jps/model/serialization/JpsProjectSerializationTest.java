@@ -1,12 +1,12 @@
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.ide.impl.convert.JDomConvertingUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.module.*;
 
 import java.io.File;
@@ -36,10 +36,17 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals(4, dependencies.size());
     JpsSdkDependency sdkDependency = assertInstanceOf(dependencies.get(0), JpsSdkDependency.class);
     assertSame(JpsJavaSdkType.INSTANCE, sdkDependency.getSdkType());
-    assertEquals("1.5", sdkDependency.getSdkReference().getLibraryName());
+    JpsLibraryReference reference = sdkDependency.getSdkReference();
+    assertNotNull(reference);
+    assertEquals("1.5", reference.getLibraryName());
     assertInstanceOf(dependencies.get(1), JpsModuleSourceDependency.class);
     assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class);
     assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class);
+
+    JpsSdkDependency inheritedSdkDependency = assertInstanceOf(main.getDependenciesList().getDependencies().get(0), JpsSdkDependency.class);
+    JpsLibraryReference projectSdkReference = inheritedSdkDependency.getSdkReference();
+    assertNotNull(projectSdkReference);
+    assertEquals("1.6", projectSdkReference.getLibraryName());
   }
 
   public void testSaveProject() {
@@ -75,13 +82,13 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     }
   }
 
-  private static void doTestSaveModule(JpsModule util, final String moduleFilePath) {
+  private static void doTestSaveModule(JpsModule module, final String moduleFilePath) {
     try {
-      Element actual = new Element("component").setAttribute("name", "NewModuleRootManager");
-      JpsModuleSerializer.saveRootModel(util, actual);
-      File utilIml = getFileInSampleProject(moduleFilePath);
-      Element rootElement = JpsLoaderBase.loadRootElement(utilIml, JpsProjectLoader.createModuleMacroExpander(Collections.<String, String>emptyMap(), utilIml));
-      Element expected = JDomConvertingUtil.findComponent(rootElement, "NewModuleRootManager");
+      Element actual = JDomSerializationUtil.createComponentElement("NewModuleRootManager");
+      JpsModuleSerializer.saveRootModel(module, actual);
+      File imlFile = getFileInSampleProject(moduleFilePath);
+      Element rootElement = loadModuleRootTag(imlFile);
+      Element expected = JDomSerializationUtil.findComponent(rootElement, "NewModuleRootManager");
       PlatformTestUtil.assertElementsEqual(expected, actual);
     }
     catch (Exception e) {

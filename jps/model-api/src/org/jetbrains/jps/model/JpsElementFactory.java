@@ -44,5 +44,5 @@ public abstract class JpsElementFactory {
   public abstract JpsDummyElement createDummyElement();
 
   @NotNull
-  public abstract <P> JpsSimpleElement<P> createSimpleElement(@NotNull P properties);
+  public abstract <D> JpsSimpleElement<D> createSimpleElement(@NotNull D data);
 }

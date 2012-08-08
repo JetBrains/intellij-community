@@ -84,7 +84,7 @@ public class MavenUIUtil {
 
         final Color foreground = selected ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeTextForeground();
 
-        Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+        Color background = selected ? UIUtil.getTreeSelectionBackground(hasFocus) : UIUtil.getTreeTextBackground();
 
         panel.add(baseComponent, BorderLayout.CENTER);
         panel.setBackground(background);

@@ -40,13 +40,13 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     PsiTestUtil.addContentRoot(myModule, root);
 
 
-    assertSame(root, findContentEntry(url).getFile());
+    assertEquals(root, findContentEntry(url).getFile());
 
     root.delete(null);
     assertNotNull(findContentEntry(url));
 
     root = dir.createChildDirectory(null, "root");
-    assertSame(root, findContentEntry(url).getFile());
+    assertEquals(root, findContentEntry(url).getFile());
   }
 
   public void testCreationOfContentRootWithUrl() throws IOException {
@@ -59,7 +59,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     assertNotNull(findContentEntry(url));
 
     root = dir.createChildDirectory(null, "root");
-    assertSame(root, findContentEntry(url).getFile());
+    assertEquals(root, findContentEntry(url).getFile());
   }
 
   private void addContentRoot(final String url) {
@@ -80,7 +80,7 @@ public class ManagingContentRootsTest extends IdeaTestCase {
     addContentRoot(url);
 
 
-    assertSame(root, findContentEntry(url).getFile());
+    assertEquals(root, findContentEntry(url).getFile());
   }
 
   public void testGettingMofifiableModelCorrectlySetsRootModelForContentEntries() throws Exception {

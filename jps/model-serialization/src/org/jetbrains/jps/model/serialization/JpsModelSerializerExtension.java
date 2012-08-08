@@ -5,12 +5,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
-import org.jetbrains.jps.model.serialization.facet.JpsModuleExtensionLoader;
+import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializer;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.Collections;
@@ -28,12 +27,6 @@ public abstract class JpsModelSerializerExtension {
   }
 
   public void saveRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
-  }
-
-  public void loadProjectRoots(JpsProject project, Element rootManagerElement) {
-  }
-
-  public void saveProjectRoots(JpsProject project, Element rootManagerElement) {
   }
 
   public List<JpsLibraryRootTypeSerializer> getLibraryRootTypeSerializers() {
@@ -61,21 +54,26 @@ public abstract class JpsModelSerializerExtension {
   }
 
   @NotNull
+  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
   public List<? extends JpsModulePropertiesSerializer<?>> getModulePropertiesSerializers() {
     return Collections.emptyList();
   }
 
   @NotNull
-  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesLoaders() {
+  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
     return Collections.emptyList();
   }
 
   @NotNull
-  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesLoaders() {
+  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  public List<? extends JpsModuleExtensionLoader<?>> getModuleExtensionLoaders() {
+  public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return Collections.emptyList();
   }
 

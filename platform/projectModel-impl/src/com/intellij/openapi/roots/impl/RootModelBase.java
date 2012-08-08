@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -43,7 +44,7 @@ public abstract class RootModelBase implements ModuleRootModel {
         result.add(file);
       }
     }
-    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override
@@ -56,7 +57,7 @@ public abstract class RootModelBase implements ModuleRootModel {
       result.add(contentEntry.getUrl());
     }
 
-    return ContainerUtil.toArray(result, new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   @Override
@@ -69,7 +70,7 @@ public abstract class RootModelBase implements ModuleRootModel {
         result.add(excludeFolder.getUrl());
       }
     }
-    return ContainerUtil.toArray(result, new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   @Override
@@ -85,7 +86,7 @@ public abstract class RootModelBase implements ModuleRootModel {
         }
       }
     }
-    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override
@@ -106,7 +107,7 @@ public abstract class RootModelBase implements ModuleRootModel {
         }
       }
     }
-    return ContainerUtil.toArray(result, new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   @Override
@@ -128,7 +129,7 @@ public abstract class RootModelBase implements ModuleRootModel {
         }
       }
     }
-    return ContainerUtil.toArray(result, new VirtualFile[result.size()]);
+    return VfsUtilCore.toVirtualFileArray(result);
   }
 
   @Override
@@ -207,7 +208,7 @@ public abstract class RootModelBase implements ModuleRootModel {
       }
     }
 
-    return ContainerUtil.toArray(result, new Module[result.size()]);
+    return result.isEmpty() ? Module.EMPTY_ARRAY : ContainerUtil.toArray(result, new Module[result.size()]);
   }
 
   private static class CollectDependentModules extends RootPolicy<List<String>> {

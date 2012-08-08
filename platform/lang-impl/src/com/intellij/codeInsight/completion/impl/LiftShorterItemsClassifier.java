@@ -65,15 +65,10 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
         toUpdate.addAll(myElements.get(s));
       }
 
-      final char first = string.charAt(0);
-      final SortedSet<String> before = mySortedStrings.descendingSet().tailSet(string, false);
-      for (String s : before) {
-        if (s.charAt(0) != first) {
-          break;
-        }
-
-        if (string.startsWith(s)) {
-          myPrefixes.putValue(string, s);
+      for (int len = 1; len < string.length(); len++) {
+        String shorter = string.substring(0, len);
+        if (myElements.containsKey(shorter)) {
+          myPrefixes.putValue(string, shorter);
         }
       }
     }

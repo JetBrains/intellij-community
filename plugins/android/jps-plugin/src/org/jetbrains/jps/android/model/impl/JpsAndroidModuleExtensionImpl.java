@@ -118,6 +118,10 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
     return manifestFile != null ? manifestFile.getCanonicalFile() : null;
   }
 
+  public JpsAndroidModuleProperties getProperties() {
+    return myProperties;
+  }
+
   @Override
   public File getNativeLibsDir() throws IOException {
     File nativeLibsFolder = findFileByRelativeModulePath(myProperties.LIBS_FOLDER_RELATIVE_PATH, false);

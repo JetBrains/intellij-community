@@ -75,7 +75,7 @@ public class ToolBeforeRunTaskProvider extends BeforeRunTaskProvider<ToolBeforeR
 
   @Override
   public boolean configureTask(RunConfiguration runConfiguration, ToolBeforeRunTask task) {
-    final ToolSelectDialog dialog = new ToolSelectDialog(runConfiguration.getProject(), task);
+    final ToolSelectDialog dialog = new ToolSelectDialog(runConfiguration.getProject(), task.getToolActionId());
     dialog.show();
     if (!dialog.isOK()) {
       return false;

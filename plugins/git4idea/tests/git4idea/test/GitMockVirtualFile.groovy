@@ -42,6 +42,11 @@ class GitMockVirtualFile extends VirtualFile {
     return fromPath(new File(project.getBaseDir().getPath() + "/" + relativePath).getCanonicalPath())
   }
 
+  @NotNull
+  static VirtualFile fromPath(@NotNull String relativePath, @NotNull String basePath) {
+    return fromPath(new File(basePath + "/" + relativePath).getCanonicalPath())
+  }
+
   GitMockVirtualFile(@NotNull String path) {
     myPath = FileUtil.toSystemIndependentName(path);
   }
