@@ -52,7 +52,7 @@ class GitCrlfProblemsDetectorTest {
     myGit = new GitTestImpl()
 
     cd myRootDir
-    myOldCoreAutoCrlfValue = git "config --global core.autocrlf"
+    myOldCoreAutoCrlfValue = git("config --global core.autocrlf")
 
     git "init"
     git "config --global --unset core.autocrlf"
