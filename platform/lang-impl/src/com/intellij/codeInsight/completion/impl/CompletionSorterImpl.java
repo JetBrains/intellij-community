@@ -29,9 +29,11 @@ import java.util.List;
  */
 public class CompletionSorterImpl extends CompletionSorter {
   private final List<ClassifierFactory<LookupElement>> myMembers;
+  private int myHashCode;
 
   CompletionSorterImpl(List<ClassifierFactory<LookupElement>> members) {
     myMembers = members;
+    myHashCode = myMembers.hashCode();
   }
 
   public static ClassifierFactory<LookupElement> weighingFactory(final LookupElementWeigher weigher) {
@@ -107,7 +109,7 @@ public class CompletionSorterImpl extends CompletionSorter {
 
   @Override
   public int hashCode() {
-    return myMembers.hashCode();
+    return myHashCode;
   }
 
   private static Classifier<LookupElement> createClassifier(final int index, final List<ClassifierFactory<LookupElement>> components) {
