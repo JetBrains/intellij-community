@@ -23,7 +23,10 @@ import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,10 +34,21 @@ import java.util.Map;
  */
 class Win32FsCache {
   private final IdeaWin32 myKernel = IdeaWin32.getInstance();
-  private final Map<String, FileInfo> myCache = new THashMap<String, FileInfo>();
+  private Reference<Map<String, FileInfo>> myCache;
 
   void clearCache() {
-    myCache.clear();
+    myCache = null;
+  }
+
+  @NotNull
+  private Map<String, FileInfo> getMap() {
+    Reference<Map<String, FileInfo>> cache = myCache;
+    Map<String, FileInfo> map = cache == null ? null : cache.get();
+    if (map == null) {
+      map = new THashMap<String, FileInfo>();
+      myCache = new SoftReference<Map<String, FileInfo>>(map);
+    }
+    return map;
   }
 
   @NotNull
@@ -44,10 +58,11 @@ class Win32FsCache {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
 
-    ArrayList<String> names = new ArrayList<String>(fileInfo.length);
+    List<String> names = new ArrayList<String>(fileInfo.length);
+    Map<String, FileInfo> map = getMap();
     for (FileInfo info : fileInfo) {
       String name = info.getName();
-      myCache.put(path + "/" + name, info);
+      map.put(path + "/" + name, info);
       names.add(name);
     }
 
@@ -57,13 +72,14 @@ class Win32FsCache {
   @Nullable
   FileInfo getInfo(@NotNull VirtualFile file) {
     String path = file.getPath();
-    FileInfo info = myCache.get(path);
+    Map<String, FileInfo> map = getMap();
+    FileInfo info = map.get(path);
     if (info == null) {
       info = myKernel.getInfo(path);
       if (info == null) {
         return null;
       }
-      myCache.put(path, info);
+      map.put(path, info);
     }
     return info;
   }
