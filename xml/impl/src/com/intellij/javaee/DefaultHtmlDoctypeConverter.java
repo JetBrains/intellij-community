@@ -39,43 +39,45 @@ public class DefaultHtmlDoctypeConverter extends ConverterProvider {
 
     @Override
     public boolean isConversionNeeded() {
-      final Element root = getProjectResources();
-      return root != null && root.getChild("default-html-doctype") != null;
+      return getElementToUpdate() != null;
     }
 
     @Override
     public void preProcessingFinished() throws CannotConvertException {
-      final Element root = getProjectResources();
-      if (root == null) {
-        return;
+      final Element defaultHtmlDoctype = getElementToUpdate();
+
+      if (defaultHtmlDoctype != null) {
+        defaultHtmlDoctype.setText(ExternalResourceManagerImpl.HTML5_DOCTYPE_ELEMENT);
+      }
+    }
+
+    @Nullable
+    private Element getElementToUpdate() {
+      final ComponentManagerSettings settings = myContext.getProjectRootManagerSettings();
+      if (settings == null) {
+        return null;
       }
 
-      final Element defaultHtmlDoctype = root.getChild("default-html-doctype");
+      final Element root = settings.getComponentElement("ProjectResources");
+      if (root == null) {
+        return null;
+      }
+
+      Element defaultHtmlDoctype = root.getChild("default-html-language-level");
       if (defaultHtmlDoctype == null) {
-        return;
+        return null;
       }
 
       String value = defaultHtmlDoctype.getTextTrim();
       value = value != null ? myContext.expandPath(value) : null;
       if (value == null) {
-        return;
+        return null;
       }
 
-      if (FileUtil.toSystemIndependentName(value).endsWith("idea.jar!/resources/html5-schema/html5.rnc")) {
-        value = ExternalResourceManagerImpl.HTML5_DOCTYPE_ELEMENT;
+      if (!FileUtil.toSystemIndependentName(value).endsWith("idea.jar!/resources/html5-schema/html5.rnc")) {
+        return null;
       }
-      final Element newElement = new Element("default-html-language-level");
-      newElement.setText(value);
-      root.addContent(newElement);
-      root.removeContent(defaultHtmlDoctype);
-    }
-
-    @Nullable
-    private Element getProjectResources() {
-      final ComponentManagerSettings settings = myContext.getProjectRootManagerSettings();
-      return settings != null
-             ? settings.getComponentElement("ProjectResources")
-             : null;
+      return defaultHtmlDoctype;
     }
 
     @Override
