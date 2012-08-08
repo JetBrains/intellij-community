@@ -232,10 +232,25 @@ public class MoveClassesOrPackagesUtil {
       LOG.assertTrue(file.getVirtualFile() != null, aClass);
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
       if (file instanceof PsiClassOwner && newPackage != null && !JspPsiUtil.isInJspFile(file)) {
+        // Do not rely on class instance identity retention after setPackageName (Scala)
+        String aClassName = aClass.getName();
         ((PsiClassOwner)file).setPackageName(newPackage.getQualifiedName());
+        newClass = findClassByName((PsiClassOwner)file, aClassName);
+        LOG.assertTrue(newClass != null);
       }
     }
     return newClass;
+  }
+
+  @Nullable
+  private static PsiClass findClassByName(PsiClassOwner file, String name) {
+    PsiClass[] classes = file.getClasses();
+    for (PsiClass aClass : classes) {
+      if (name.equals(aClass.getName())) {
+        return aClass;
+      }
+    }
+    return null;
   }
 
   public static String getPackageName(PackageWrapper aPackage) {
