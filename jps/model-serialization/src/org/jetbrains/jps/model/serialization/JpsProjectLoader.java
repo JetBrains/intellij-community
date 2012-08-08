@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
-import org.jetbrains.jps.model.serialization.facet.JpsFacetLoader;
+import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -153,7 +153,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
     JpsModuleSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
-    JpsFacetLoader.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"), FileUtil.toSystemIndependentName(path));
+    JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"), FileUtil.toSystemIndependentName(path));
     return module;
   }
 

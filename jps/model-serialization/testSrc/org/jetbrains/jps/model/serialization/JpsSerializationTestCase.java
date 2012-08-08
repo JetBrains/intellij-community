@@ -4,6 +4,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
+import org.jdom.Element;
 import org.jetbrains.jps.model.JpsModelTestCase;
 
 import java.io.File;
@@ -45,5 +46,10 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
       }
     }
     return FileUtilRt.toSystemDependentName(file.getAbsolutePath());
+  }
+
+  protected static Element loadModuleRootTag(File imlFile) {
+    return JpsLoaderBase
+      .loadRootElement(imlFile, JpsProjectLoader.createModuleMacroExpander(Collections.<String, String>emptyMap(), imlFile));
   }
 }

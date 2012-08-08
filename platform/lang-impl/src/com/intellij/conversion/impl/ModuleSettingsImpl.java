@@ -32,7 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.facet.JpsFacetLoader;
+import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 
 import java.io.File;
 import java.util.*;
@@ -71,8 +71,8 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   public Collection<? extends Element> getFacetElements(@NotNull String facetTypeId) {
     final Element facetManager = getComponentElement(FacetManagerImpl.COMPONENT_NAME);
     final ArrayList<Element> elements = new ArrayList<Element>();
-    for (Element child : JDOMUtil.getChildren(facetManager, JpsFacetLoader.FACET_ELEMENT)) {
-      if (facetTypeId.equals(child.getAttributeValue(JpsFacetLoader.TYPE_ATTRIBUTE))) {
+    for (Element child : JDOMUtil.getChildren(facetManager, JpsFacetSerializer.FACET_TAG)) {
+      if (facetTypeId.equals(child.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE))) {
         elements.add(child);
       }
     }
