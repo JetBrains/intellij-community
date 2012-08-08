@@ -14,7 +14,7 @@ public class PythonBundledColorSchemeProvider implements BundledColorSchemesProv
   public static final String[] PATHS = {
     "/colorSchemes/WarmNeon",
     "/colorSchemes/monokai",
-    "/colorSchemes/Darcula",
+    //"/colorSchemes/Darcula", //TODO: This color scheme doesn't get to build, see IDEA-89181
     "/colorSchemes/twilight",
   };
 
