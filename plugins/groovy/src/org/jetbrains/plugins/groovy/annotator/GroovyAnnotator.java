@@ -1386,8 +1386,14 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     final GlobalSearchScope resolveScope = value.getResolveScope();
     final PsiManager manager = value.getManager();
 
-    if (value instanceof GrExpression && !(value instanceof GrClosableBlock)) {
-      final PsiType rtype = ((GrExpression)value).getType();
+    if (value instanceof GrExpression) {
+      final PsiType rtype;
+      if (value instanceof GrClosableBlock) {
+        rtype = PsiType.getJavaLangClass(manager, resolveScope);
+      }
+      else {
+        rtype = ((GrExpression)value).getType();
+      }
 
       if (rtype != null && !checkAnnoTypeAssignable(ltype, resolveScope, manager, rtype, skipArrays)) {
         myHolder.createErrorAnnotation(value, GroovyBundle.message("cannot.assign", rtype.getPresentableText(), ltype.getPresentableText()));

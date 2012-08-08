@@ -5,9 +5,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public interface JpsSimpleElement<P> extends JpsElement {
+public interface JpsSimpleElement<D> extends JpsElement {
   @NotNull
-  P getProperties();
+  D getData();
 
-  void setProperties(@NotNull P properties);
+  void setData(@NotNull D data);
 }

@@ -167,7 +167,7 @@ public class JpsSdkTableSerializer {
 
   public static JpsSdkPropertiesSerializer<?> getSdkPropertiesSerializer(String typeId) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsSdkPropertiesSerializer<?> loader : extension.getSdkPropertiesLoaders()) {
+      for (JpsSdkPropertiesSerializer<?> loader : extension.getSdkPropertiesSerializers()) {
         if (loader.getTypeId().equals(typeId)) {
           return loader;
         }
@@ -178,7 +178,7 @@ public class JpsSdkTableSerializer {
 
   public static <P extends JpsSdkProperties> JpsSdkPropertiesSerializer<P> getSdkPropertiesSerializer(JpsSdkType<P> type) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsSdkPropertiesSerializer<?> loader : extension.getSdkPropertiesLoaders()) {
+      for (JpsSdkPropertiesSerializer<?> loader : extension.getSdkPropertiesSerializers()) {
         if (loader.getType().equals(type)) {
           //noinspection unchecked
           return (JpsSdkPropertiesSerializer<P>)loader;
@@ -201,7 +201,7 @@ public class JpsSdkTableSerializer {
 
   public static JpsSdkPropertiesSerializer<?> getLoader(JpsSdkType<?> type) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsSdkPropertiesSerializer<?> loader : extension.getSdkPropertiesLoaders()) {
+      for (JpsSdkPropertiesSerializer<?> loader : extension.getSdkPropertiesSerializers()) {
         if (loader.getType().equals(type)) {
           return loader;
         }

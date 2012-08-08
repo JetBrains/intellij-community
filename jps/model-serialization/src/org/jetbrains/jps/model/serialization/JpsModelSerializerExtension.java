@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSerializer;
-import org.jetbrains.jps.model.serialization.facet.JpsModuleExtensionLoader;
+import org.jetbrains.jps.model.serialization.facet.JpsFacetConfigurationSerializer;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.Collections;
@@ -66,16 +66,16 @@ public abstract class JpsModelSerializerExtension {
   }
 
   @NotNull
-  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesLoaders() {
+  public List<? extends JpsLibraryPropertiesSerializer<?>> getLibraryPropertiesSerializers() {
     return Collections.emptyList();
   }
 
   @NotNull
-  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesLoaders() {
+  public List<? extends JpsSdkPropertiesSerializer<?>> getSdkPropertiesSerializers() {
     return Collections.emptyList();
   }
 
-  public List<? extends JpsModuleExtensionLoader<?>> getModuleExtensionLoaders() {
+  public List<? extends JpsFacetConfigurationSerializer<?>> getFacetConfigurationSerializers() {
     return Collections.emptyList();
   }
 

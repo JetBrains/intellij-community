@@ -188,7 +188,7 @@ public class JpsLibraryTableSerializer {
   private static JpsLibraryPropertiesSerializer<?> getLibraryPropertiesSerializer(@Nullable String typeId) {
     if (typeId != null) {
       for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-        for (JpsLibraryPropertiesSerializer<?> loader : extension.getLibraryPropertiesLoaders()) {
+        for (JpsLibraryPropertiesSerializer<?> loader : extension.getLibraryPropertiesSerializers()) {
           if (loader.getTypeId().equals(typeId)) {
             return loader;
           }
@@ -200,7 +200,7 @@ public class JpsLibraryTableSerializer {
 
   private static <P extends JpsElementProperties> JpsLibraryPropertiesSerializer<P> getLibraryPropertiesSerializer(@NotNull JpsLibraryType<P> type) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
-      for (JpsLibraryPropertiesSerializer<?> loader : extension.getLibraryPropertiesLoaders()) {
+      for (JpsLibraryPropertiesSerializer<?> loader : extension.getLibraryPropertiesSerializers()) {
         if (loader.getType().equals(type)) {
           //noinspection unchecked
           return (JpsLibraryPropertiesSerializer<P>)loader;

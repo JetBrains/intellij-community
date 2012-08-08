@@ -3,6 +3,13 @@
   <xi:include href="/META-INF/XmlActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="/META-INF/DomPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/relaxng-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.javaee.DefaultHtmlDoctypeInitialConfigurator</implementation-class>
+    </component>
+  </application-components>
+
   <extensionPoints>
 
     <extensionPoint name="xml.startTagEndToken"

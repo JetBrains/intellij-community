@@ -22,7 +22,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileBasedIndex implementation="com.intellij.util.xml.DomFileIndex"/>
 
-    <filetype.stubBuilder filetype="XML" implementationClass="com.intellij.util.xml.stubs.DomStubBuilder"/>
+    <filetype.stubBuilder filetype="XML" implementationClass="com.intellij.util.xml.stubs.builder.DomStubBuilder"/>
     <stubElementTypeHolder class="com.intellij.util.xml.stubs.DomElementTypeHolder"/>
 
     <applicationService serviceInterface="com.intellij.util.xml.impl.DomApplicationComponent"

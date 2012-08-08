@@ -65,8 +65,12 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
 
   JpsProject getProject();
 
+  @NotNull
   JpsModuleType<?> getModuleType();
 
   @NotNull
   JpsElement getProperties();
+
+  @Nullable
+  <P extends JpsElement> JpsTypedModule<P> asTyped(@NotNull JpsModuleType<P> type);
 }

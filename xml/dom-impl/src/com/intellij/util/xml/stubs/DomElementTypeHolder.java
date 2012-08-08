@@ -24,7 +24,8 @@ import com.intellij.psi.stubs.SerializationManager;
 public class DomElementTypeHolder {
 
   static {
-    SerializationManager.getInstance().registerSerializer(TagStubSerializer.INSTANCE);
+    SerializationManager.getInstance().registerSerializer(ElementStubSerializer.INSTANCE);
     SerializationManager.getInstance().registerSerializer(AttributeStubSerializer.INSTANCE);
+    SerializationManager.getInstance().registerSerializer(FileStubSerializer.INSTANCE);
   }
 }

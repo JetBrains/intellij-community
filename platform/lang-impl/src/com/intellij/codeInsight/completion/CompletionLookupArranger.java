@@ -51,6 +51,7 @@ public class CompletionLookupArranger extends LookupArranger {
   private static final int MAX_PREFERRED_COUNT = 5;
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
+  private static final UISettings ourUISettings = UISettings.getInstance();
   private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
   static {
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
@@ -131,7 +132,7 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private static boolean isAlphaSorted() {
-    return UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
+    return ourUISettings.SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
   }
 
   @Override
@@ -154,8 +155,7 @@ public class CompletionLookupArranger extends LookupArranger {
     }
 
     LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
-    addPrefixItems(lookup, model, true, byRelevance);
-    addPrefixItems(lookup, model, false, byRelevance);
+    addPrefixItems(lookup, model, byRelevance);
 
     myFrozenItems.retainAll(items);
     model.addAll(myFrozenItems);

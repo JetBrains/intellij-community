@@ -1,1 +1,4 @@
-<foo/>
+<foo>
+  <bar attribute="xxx"></bar>
+  <bar></bar>
+</foo>

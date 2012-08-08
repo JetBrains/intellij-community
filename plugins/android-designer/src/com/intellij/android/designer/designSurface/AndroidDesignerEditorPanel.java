@@ -421,6 +421,12 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         }, null));
       }
     }
+    else if ((info.myThrowable instanceof ClassNotFoundException || info.myThrowable instanceof NoClassDefFoundError) &&
+             myParseTime &&
+             !info.myThrowable.toString().contains("jetbrains") &&
+             !info.myThrowable.toString().contains("intellij")) {
+      info.myShowLog = false;
+    }
     else {
       List<FixableIssueMessage> warnMessages = null;
       boolean renderError = info.myThrowable instanceof RenderingException;

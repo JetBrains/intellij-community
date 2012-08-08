@@ -16,6 +16,7 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.stubs.ObjectStubBase;
+import com.intellij.util.io.StringRef;
 
 /**
  * @author Dmitry Avdeev
@@ -23,17 +24,17 @@ import com.intellij.psi.stubs.ObjectStubBase;
  */
 public abstract class DomStub extends ObjectStubBase<DomStub> {
 
-  private final String myName;
+  protected final StringRef myName;
 
-  public DomStub(DomStub parent, String name) {
+  public DomStub(DomStub parent, StringRef name) {
     super(parent);
-    myName = name;
     if (parent != null) {
-      ((TagStub)parent).addChild(this);
+      ((ElementStub)parent).addChild(this);
     }
+    myName = name;
   }
 
   public String getName() {
-    return myName;
+    return myName.getString();
   }
 }

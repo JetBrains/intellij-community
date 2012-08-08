@@ -1,9 +1,20 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.xml.stubs;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.stubs.ObjectStubTree;
-import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomFileDescription;
@@ -12,29 +23,13 @@ import com.intellij.util.xml.impl.DomManagerImpl;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/3/12
+ *         Date: 8/8/12
  */
-public class DomStubsTest extends LightPlatformCodeInsightFixtureTestCase {
-
-  public void testDomLoading() throws Exception {
-
-    PsiFile psiFile = myFixture.configureByFile("foo.xml");
-
-    StubTreeLoader loader = StubTreeLoader.getInstance();
-    VirtualFile file = psiFile.getVirtualFile();
-    assertTrue(loader.canHaveStub(file));
-    ObjectStubTree stubTree = loader.readFromVFile(getProject(), file);
-    assertNotNull(stubTree);
-  }
+public abstract class DomStubTest extends LightPlatformCodeInsightFixtureTestCase {
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public DomStubsTest() {
+  public DomStubTest() {
     IdeaTestCase.initPlatformPrefix();
-  }
-
-  @Override
-  protected boolean isCommunity() {
-    return true;
   }
 
   private static final DomFileDescription<Foo> DOM_FILE_DESCRIPTION = new DomFileDescription<Foo>(Foo.class, "foo") {
@@ -43,6 +38,11 @@ public class DomStubsTest extends LightPlatformCodeInsightFixtureTestCase {
       return true;
     }
   };
+
+  @Override
+  protected boolean isCommunity() {
+    return true;
+  }
 
   @Override
   public void setUp() throws Exception {
