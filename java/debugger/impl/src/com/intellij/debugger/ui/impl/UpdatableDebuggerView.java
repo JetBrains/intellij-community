@@ -19,6 +19,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextListener;
 import com.intellij.debugger.impl.DebuggerStateManager;
 import com.intellij.debugger.ui.DebuggerView;
+import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -28,13 +29,12 @@ import com.intellij.openapi.util.Disposer;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 
 public abstract class UpdatableDebuggerView extends JPanel implements DebuggerView {
   private final Project myProject;
   private final DebuggerStateManager myStateManager;
   private volatile boolean myRefreshNeeded = true;
-  private final java.util.List<Disposable> myDisposables = new ArrayList<Disposable>();
+  private final CompositeDisposable myDisposables = new CompositeDisposable();
   private volatile boolean myUpdateEnabled;
 
   protected UpdatableDebuggerView(final Project project, final DebuggerStateManager stateManager) {
@@ -104,10 +104,7 @@ public abstract class UpdatableDebuggerView extends JPanel implements DebuggerVi
   }
 
   public void dispose() {
-    for (Disposable disposable : myDisposables) {
-      Disposer.dispose(disposable);
-    }
-    myDisposables.clear();
+    Disposer.dispose(myDisposables);
   }
 
   protected void overrideShortcut(final JComponent forComponent, final String actionId, final ShortcutSet shortcutSet) {

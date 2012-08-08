@@ -27,6 +27,7 @@ import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
+import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -56,7 +57,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   
   private final ProgramRunner myRunner;
   private final Project myProject;
-  private final ArrayList<Disposable> myDisposeables = new ArrayList<Disposable>();
+  private final CompositeDisposable myDisposeables = new CompositeDisposable();
   private final ArrayList<AnAction> myRunnerActions = new ArrayList<AnAction>();
   private final Icon myRerunIcon = DEFAULT_RERUN_ICON;
   private final boolean myReuseProhibited = false;
@@ -96,10 +97,9 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     myRunnerActions.add(action);
   }
 
+  @Override
   public void dispose() {
-    for (Disposable disposable : myDisposeables) {
-      disposable.dispose();
-    }
+    Disposer.dispose(myDisposeables);
   }
 
   private RunContentDescriptor createDescriptor() {
@@ -168,8 +168,10 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     consoleContent.setActions(consoleActions, ActionPlaces.UNKNOWN, console.getComponent());
   }
 
+  @Override
   public void addLogConsole(final String name, final String path, final long skippedContent) {
     final LogConsoleImpl log = new LogConsoleImpl(myProject, new File(path), skippedContent, name, false){
+      @Override
       public boolean isActive() {
         final Content content = myUi.findContent(path);
         return content != null && content.isSelected();
@@ -182,12 +184,14 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     addAdditionalTabComponent(log, path);
 
     myUi.addListener(new ContentManagerAdapter() {
+      @Override
       public void selectionChanged(final ContentManagerEvent event) {
         log.stateChanged(new ChangeEvent(myUi));
       }
     }, log);
   }
 
+  @Override
   public void removeLogConsole(final String path) {
     final Content content = myUi.findContent(path);
     if (content != null) {
@@ -203,6 +207,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     restartAction.registerShortcut(component);
     actionGroup.add(restartAction);
     contentDescriptor.setRestarter(new Runnable() {
+      @Override
       public void run() {
         restartAction.restart();
       }
@@ -257,6 +262,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     return descriptor;
   }
 
+  @Override
   public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
     final Content content = myUi.createContent(id, (ComponentWithActions)tabComponent, tabComponent.getTabTitle(),
                                                AllIcons.Debugger.Console, tabComponent.getPreferredFocusableComponent());
@@ -267,6 +273,7 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     myAdditionalContent.put(tabComponent, content);
 
     myDisposeables.add(new Disposable(){
+      @Override
       public void dispose() {
         if (!myUi.isDisposed()) {
           removeAdditionalTabComponent(tabComponent);
@@ -275,9 +282,9 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
     });
   }
 
+  @Override
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {
     Disposer.dispose(component);
-    myDisposeables.remove(component);
     final Content content = myAdditionalContent.remove(component);
     myUi.removeContent(content, true);
   }
@@ -292,10 +299,12 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
       myAdditionalDisposable = additionalDisposable;
     }
 
+    @Override
     public boolean isContentReuseProhibited() {
       return myReuseProhibited;
     }
 
+    @Override
     public void dispose() {
       Disposer.dispose(myAdditionalDisposable);
       super.dispose();
