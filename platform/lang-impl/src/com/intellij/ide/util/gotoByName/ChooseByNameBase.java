@@ -639,7 +639,7 @@ public abstract class ChooseByNameBase {
       public void valueChanged(ListSelectionEvent e) {
         if (myList.getSelectedValue() != NON_PREFIX_SEPARATOR) {
           myPreviousSelectionIndex = myList.getSelectedIndex();
-          choosenElementMightChange();
+          chosenElementMightChange();
           updateDocumentation();
         }
         else {
@@ -919,7 +919,7 @@ public abstract class ChooseByNameBase {
                   myListIsUpToDate = true;
                   setElementsToList(pos, elements);
                   myList.repaint();
-                  choosenElementMightChange();
+                  chosenElementMightChange();
 
                   if (elements.isEmpty() && myTextFieldPanel != null) {
                     myTextFieldPanel.hideHint();
@@ -1221,7 +1221,7 @@ public abstract class ChooseByNameBase {
     return uniqueElement == null ? Collections.emptyList() : Collections.singletonList(uniqueElement);
   }
 
-  protected void choosenElementMightChange() {
+  protected void chosenElementMightChange() {
   }
 
   protected final class MyTextField extends JTextField implements PopupOwner, TypeSafeDataProvider {

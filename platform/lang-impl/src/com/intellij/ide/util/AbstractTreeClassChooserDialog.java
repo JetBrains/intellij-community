@@ -251,7 +251,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
       }
 
       @Override
-      protected void choosenElementMightChange() {
+      protected void chosenElementMightChange() {
         handleSelectionChanged();
       }
     };

@@ -239,7 +239,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       protected void showTextFieldPanel() {
       }
 
-      protected void choosenElementMightChange() {
+      protected void chosenElementMightChange() {
         handleSelectionChanged();
       }
     };
