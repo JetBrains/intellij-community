@@ -150,6 +150,8 @@ public class UnixProcessManager {
       }
       result = false;
     }
+
+    //TODO[traff]: check that processes were really terminated.
     return result;
   }
 
