@@ -17,7 +17,6 @@ package com.siyeh.ig;
 
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -77,12 +76,12 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Nullable
-  protected LocalQuickFix buildFix(Object... infos) {
+  protected InspectionGadgetsFix buildFix(Object... infos) {
     return null;
   }
 
   @NotNull
-  protected LocalQuickFix[] buildFixes(Object... infos) {
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     return InspectionGadgetsFix.EMPTY_ARRAY;
   }
 

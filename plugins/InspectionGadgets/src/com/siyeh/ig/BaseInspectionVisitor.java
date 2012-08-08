@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.TextRange;
@@ -184,11 +183,9 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     if (location.getTextLength() == 0 && !(location instanceof PsiFile)) {
       return;
     }
-    final LocalQuickFix[] fixes = createFixes(infos);
-    for (LocalQuickFix fix : fixes) {
-      if (fix instanceof InspectionGadgetsFix) {
-        ((InspectionGadgetsFix)fix).setOnTheFly(onTheFly);
-      }
+    final InspectionGadgetsFix[] fixes = createFixes(infos);
+    for (InspectionGadgetsFix fix : fixes) {
+      fix.setOnTheFly(onTheFly);
     }
     final String description = inspection.buildErrorString(infos);
     holder.registerProblem(location, description, highlightType, fixes);
@@ -199,11 +196,9 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
     if (location.getTextLength() == 0 || length == 0) {
       return;
     }
-    final LocalQuickFix[] fixes = createFixes(infos);
-    for (LocalQuickFix fix : fixes) {
-      if (fix instanceof InspectionGadgetsFix) {
-        ((InspectionGadgetsFix)fix).setOnTheFly(onTheFly);
-      }
+    final InspectionGadgetsFix[] fixes = createFixes(infos);
+    for (InspectionGadgetsFix fix : fixes) {
+      fix.setOnTheFly(onTheFly);
     }
     final String description = inspection.buildErrorString(infos);
     final TextRange range = new TextRange(offset, offset + length);
@@ -211,19 +206,19 @@ public abstract class BaseInspectionVisitor extends JavaElementVisitor {
   }
 
   @NotNull
-  private LocalQuickFix[] createFixes(Object... infos) {
+  private InspectionGadgetsFix[] createFixes(Object... infos) {
     if (!onTheFly && inspection.buildQuickFixesOnlyForOnTheFlyErrors()) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    final LocalQuickFix[] fixes = inspection.buildFixes(infos);
+    final InspectionGadgetsFix[] fixes = inspection.buildFixes(infos);
     if (fixes.length > 0) {
       return fixes;
     }
-    final LocalQuickFix fix = inspection.buildFix(infos);
+    final InspectionGadgetsFix fix = inspection.buildFix(infos);
     if (fix == null) {
       return InspectionGadgetsFix.EMPTY_ARRAY;
     }
-    return new LocalQuickFix[]{fix};
+    return new InspectionGadgetsFix[]{fix};
   }
 
   @Override
