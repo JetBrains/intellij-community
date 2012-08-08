@@ -201,7 +201,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
     // here we have an unqualified expr. it may be defined:
     // ...in current file
-    final ResolveProcessor processor = new ResolveProcessor(referencedName);
+    ResolveProcessor processor = new ResolveProcessor(referencedName);
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment
     final PsiElement realContext = PyPsiUtils.getRealContext(myElement);
@@ -224,9 +224,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             if (owner instanceof PyClass) {
               final ScopeOwner classOwner = ScopeUtil.getScopeOwner(owner);
               if (classOwner != null) {
-                final ResolveProcessor outerProcessor = new ResolveProcessor(referencedName);
-                PyResolveUtil.scopeCrawlUp(outerProcessor, classOwner, referencedName, roof);
-                uexpr = outerProcessor.getResult();
+                processor = new ResolveProcessor(referencedName);
+                PyResolveUtil.scopeCrawlUp(processor, classOwner, referencedName, roof);
+                uexpr = processor.getResult();
               }
             }
             else if (!isCythonLevel(myElement)) {

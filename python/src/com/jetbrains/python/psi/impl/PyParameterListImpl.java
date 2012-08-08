@@ -67,6 +67,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     PyParameter[] params = getParameters();
     final PyParameter[] otherParams = other.getParameters();
     if (hasPositionalContainer() || hasKeywordContainer()) {
+      // TODO: Check required arguments count of the current parameters list
       return true;
     }
     final PyFunction otherFunction = other.getContainingFunction();
@@ -85,7 +86,21 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       }
       return otherParams.length == specialParamsCount;
     }
-    return params.length == otherParams.length;
+    final int optionalCount = optionalParametersCount(params);
+    final int otherOptionalCount = optionalParametersCount(otherParams);
+    final int requiredCount = params.length - optionalCount;
+    final int otherRequiredCount = otherParams.length - otherOptionalCount;
+    return requiredCount <= otherRequiredCount && params.length >= otherRequiredCount && optionalCount >= otherOptionalCount;
+  }
+
+  private static int optionalParametersCount(@NotNull PyParameter[] parameters) {
+    int n = 0;
+    for (PyParameter parameter : parameters) {
+      if (parameter.getDefaultValue() != null) {
+        n++;
+      }
+    }
+    return n;
   }
 
   @Override
