@@ -280,7 +280,7 @@ class PyDB:
         self._lock_running_thread_ids = threading.Lock()
         self._finishDebuggingSession = False
         self.force_post_mortem_stop = 0
-        self.signature_factory = SignatureFactory()
+        self.signature_factory = None
 
         #this is a dict of thread ids pointing to thread ids. Whenever a command is passed to the java end that
         #acknowledges that a thread was created, the thread id should be passed here -- and if at some time we do not
@@ -1125,6 +1125,7 @@ def processCommandLine(argv):
     setup['port'] = 0
     setup['file'] = ''
     setup['multiproc'] = False
+    setup['save-signatures'] = False
     i = 0
     del argv[0]
     while (i < len(argv)):
@@ -1156,6 +1157,9 @@ def processCommandLine(argv):
         elif (argv[i] == '--multiproc'):
             del argv[i]
             setup['multiproc'] = True
+        elif (argv[i] == '--save-signatures'):
+            del argv[i]
+            setup['save-signatures'] = True
         else:
             raise ValueError("unexpected option " + argv[i])
     return setup
@@ -1442,6 +1446,9 @@ if __name__ == '__main__':
 
 
     debugger = PyDB()
+
+    if setup['save-signatures']:
+       debugger.signature_factory = SignatureFactory()
 
     debugger.connect(host, port)
 
