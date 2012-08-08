@@ -53,6 +53,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
+import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -237,27 +238,28 @@ public class MavenProjectsManagerWatcher {
 
   public synchronized void addManagedFilesWithProfiles(List<VirtualFile> files, List<String> explicitProfiles) {
     myProjectsTree.addManagedFilesWithProfiles(files, explicitProfiles);
-    scheduleUpdateAll();
+    scheduleUpdateAll(false, true);
   }
 
   @TestOnly
   public synchronized void resetManagedFilesAndProfilesInTests(List<VirtualFile> files, List<String> explicitProfiles) {
     myProjectsTree.resetManagedFilesAndProfiles(files, explicitProfiles);
-    scheduleUpdateAll();
+    scheduleUpdateAll(false, true);
   }
 
   public synchronized void removeManagedFiles(List<VirtualFile> files) {
     myProjectsTree.removeManagedFiles(files);
-    scheduleUpdateAll();
+    scheduleUpdateAll(false, true);
   }
 
   public synchronized void setExplicitProfiles(Collection<String> profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
-    scheduleUpdateAll();
-  }
 
-  private void scheduleUpdateAll() {
-    scheduleUpdateAll(false, true);
+    if(myManager.getImportingSettings().isImportAutomatically()) {
+      scheduleUpdateAll(false, true);
+    } else {
+      myProjectsTree.updateAll(false, myGeneralSettings, new MavenProgressIndicator());
+    }
   }
 
   public void scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
