@@ -22,10 +22,13 @@ package com.intellij.openapi.fileTypes;
 import com.intellij.ide.highlighter.custom.AbstractCustomLexer;
 import com.intellij.ide.highlighter.custom.tokens.*;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,15 +43,7 @@ public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory 
       @NotNull
       @Override
       public Lexer getHighlightingLexer() {
-        ArrayList<TokenParser> tokenParsers = new ArrayList<TokenParser>();
-        tokenParsers.add(new WhitespaceParser());
-
-        tokenParsers.addAll(BraceTokenParser.getBraces());
-        tokenParsers.addAll(BraceTokenParser.getParens());
-        tokenParsers.addAll(BraceTokenParser.getBrackets());
-        tokenParsers.addAll(BraceTokenParser.getAngleBrackets());
-
-        return new AbstractCustomLexer(tokenParsers);
+        return createPlainTextLexer();
       }
 
       @NotNull
@@ -57,5 +52,17 @@ public class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory 
         return EMPTY;
       }
     };
+  }
+
+  public static Lexer createPlainTextLexer() {
+    ArrayList<TokenParser> tokenParsers = new ArrayList<TokenParser>();
+    tokenParsers.add(new WhitespaceParser());
+
+    tokenParsers.addAll(BraceTokenParser.getBraces());
+    tokenParsers.addAll(BraceTokenParser.getParens());
+    tokenParsers.addAll(BraceTokenParser.getBrackets());
+    tokenParsers.addAll(BraceTokenParser.getAngleBrackets());
+
+    return new MergingLexerAdapter(new AbstractCustomLexer(tokenParsers), TokenSet.create(CustomHighlighterTokenType.CHARACTER));
   }
 }
