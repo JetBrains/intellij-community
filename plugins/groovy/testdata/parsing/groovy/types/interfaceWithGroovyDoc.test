@@ -1,0 +1,42 @@
+interface Usage {
+    /**
+     * doc
+     */
+    void foo();
+}
+-----
+Groovy script
+  Interface definition
+    Modifiers
+      <empty list>
+    PsiElement(interface)('interface')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('Usage')
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n    ')
+      GrDocComment
+        PsiElement(GDOC_COMMENT_START)('/**')
+        PsiWhiteSpace('\n     ')
+        PsiElement(GDOC_LEADING_ASTERISKS)('*')
+        PsiElement(GDOC_COMMENT_DATA)(' doc')
+        PsiWhiteSpace('\n     ')
+        PsiElement(GDOC_COMMENT_END)('*/')
+      PsiElement(new line)('\n    ')
+      Method
+        Modifiers
+          <empty list>
+        Built in type
+          PsiElement(void)('void')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('foo')
+        PsiElement(()('(')
+        Parameter list
+          <empty list>
+        PsiElement())(')')
+        Throw clause
+          <empty list>
+      PsiElement(;)(';')
+      PsiElement(new line)('\n')
+      PsiElement(})('}')
