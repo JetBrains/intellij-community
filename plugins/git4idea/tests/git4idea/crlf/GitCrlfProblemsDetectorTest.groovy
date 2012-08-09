@@ -52,10 +52,12 @@ class GitCrlfProblemsDetectorTest {
     myGit = new GitTestImpl()
 
     cd myRootDir
-    myOldCoreAutoCrlfValue = git ("config --global core.autocrlf")
+    if (isGlobalCommandPossible()) {
+      myOldCoreAutoCrlfValue = git ("config --global core.autocrlf")
+      git ("config --global --unset core.autocrlf")
+    }
 
     git ("init")
-    git ("config --global --unset core.autocrlf")
 
     GitRepository repository = GitRepositoryImpl.getLightInstance(new GitMockVirtualFile(myRootDir), myProject, myProject)
     ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
@@ -67,6 +69,10 @@ class GitCrlfProblemsDetectorTest {
       git ("config --global core.autocrlf " + myOldCoreAutoCrlfValue);
     }
     FileUtil.delete(new File(myRootDir))
+  }
+
+  private boolean isGlobalCommandPossible() {
+    return System.getenv("HOME") != null;
   }
 
   @Test
