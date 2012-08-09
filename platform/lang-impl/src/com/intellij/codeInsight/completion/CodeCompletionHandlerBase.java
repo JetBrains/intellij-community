@@ -122,6 +122,10 @@ public class CodeCompletionHandlerBase {
       }
     }
 
+    if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
+      throw new AssertionError();
+    }
+
     if (editor.isViewer()) {
       editor.getDocument().fireReadOnlyModificationAttempt();
       return;
@@ -188,6 +192,10 @@ public class CodeCompletionHandlerBase {
               }
 
               throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
+            }
+
+            if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
+              throw new AssertionError();
             }
 
             final Ref<CompletionContributor> current = Ref.create(null);

@@ -119,7 +119,7 @@ public class EditorWindow extends UserDataHolderBase implements EditorEx {
     }
   }
 
-  private boolean isValid() {
+  public boolean isValid() {
     return !isDisposed() && !myInjectedFile.getProject().isDisposed() && myInjectedFile.isValid() && myDocumentWindow.isValid();
   }
 
