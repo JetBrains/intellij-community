@@ -8,14 +8,11 @@ import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -53,7 +50,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -66,7 +66,7 @@ import java.util.List;
 
 public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListener, TypeSafeDataProvider {
   private static final Logger LOG = Logger.getInstance(IdeErrorsDialog.class.getName());
-  public static final boolean INTERNAL_MODE = ApplicationManagerEx.getApplicationEx().isInternal();
+  private final boolean myInternalMode;
   @NonNls private static final String ACTIVE_TAB_OPTION = IdeErrorsDialog.class.getName() + "activeTab";
   public static DataKey<String> CURRENT_TRACE_KEY = DataKey.create("current_stack_trace_key");
   public static final int COMPONENTS_WIDTH = 670;
@@ -105,6 +105,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   public IdeErrorsDialog(MessagePool messagePool, @Nullable LogMessage defaultMessage) {
     super(JOptionPane.getRootFrame(), false);
     myMessagePool = messagePool;
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    myInternalMode = app != null && app.isInternal();
     setTitle(DiagnosticBundle.message("error.list.title"));
     init();
     rebuildHeaders();
@@ -113,7 +115,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
     setCancelButtonText(CommonBundle.message("close.action.name"));
     setModal(false);
-    if (INTERNAL_MODE) {
+    if (myInternalMode) {
       if (ourDevelopersList.isEmpty()) {
         loadDevelopersAsynchronously();
       } else {
@@ -269,8 +271,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         }
       }
     };
-    if (!INTERNAL_MODE) {
-      myDetailsTabForm = new DetailsTabForm(null);
+    if (!myInternalMode) {
+      myDetailsTabForm = new DetailsTabForm(null, myInternalMode);
       myCommentsTabForm = new CommentsTabForm();
       myCommentsTabForm.addCommentsListener(commentsListener);
       myTabs.addTab(DiagnosticBundle.message("error.comments.tab.title"), myCommentsTabForm.getContentPane());
@@ -281,7 +283,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       if (analyzePlatformAction != null) {
         myAnalyzeAction = new AnalyzeAction(analyzePlatformAction);
       }
-      myDetailsTabForm = new DetailsTabForm(myAnalyzeAction);
+      myDetailsTabForm = new DetailsTabForm(myAnalyzeAction, myInternalMode);
       myDetailsTabForm.setCommentsAreaVisible(true);
       myDetailsTabForm.addCommentsListener(commentsListener);
     }
@@ -297,7 +299,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     int activeTabIndex = Integer.parseInt(PropertiesComponent.getInstance().getValue(ACTIVE_TAB_OPTION, "0"));
     if (activeTabIndex >= myTabs.getTabCount() || activeTabIndex < 0) {
-      activeTabIndex = 0; // may happen if INTERNAL_MODE changed since last open
+      activeTabIndex = 0; // may happen if myInternalMode changed since last open
     }
 
     myTabs.setSelectedIndex(activeTabIndex);
@@ -512,7 +514,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void updateAssigneePane(AbstractMessage message) {
     final ErrorReportSubmitter submitter = getSubmitter(message.getThrowable());
-    myDetailsTabForm.setAssigneeVisible(submitter instanceof ITNReporter && INTERNAL_MODE);
+    myDetailsTabForm.setAssigneeVisible(submitter instanceof ITNReporter && myInternalMode);
   }
 
   private void updateInfoLabel(AbstractMessage message) {
@@ -644,7 +646,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private void updateTabs() {
     myMute = true;
     try {
-      if (INTERNAL_MODE) {
+      if (myInternalMode) {
         boolean hasAttachment = false;
         for (ArrayList<AbstractMessage> merged : myMergedMessages) {
           final AbstractMessage message = merged.get(0);
@@ -744,10 +746,10 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     final int selectedIndex = myTabs.getSelectedIndex();
     JComponent result;
     if (selectedIndex == 0) {
-      result = INTERNAL_MODE ? myDetailsTabForm.getPreferredFocusedComponent() : myCommentsTabForm.getPreferredFocusedComponent();
+      result = myInternalMode ? myDetailsTabForm.getPreferredFocusedComponent() : myCommentsTabForm.getPreferredFocusedComponent();
     }
     else if (selectedIndex == 1) {
-      result = INTERNAL_MODE ? myAttachmentsTabForm.getPreferredFocusedComponent() : myDetailsTabForm.getPreferredFocusedComponent();
+      result = myInternalMode ? myAttachmentsTabForm.getPreferredFocusedComponent() : myDetailsTabForm.getPreferredFocusedComponent();
     }
     else {
       result = myAttachmentsTabForm.getPreferredFocusedComponent();
