@@ -46,8 +46,13 @@ public class PyMethodOverridingInspection extends PyInspection {
       // real work
       for (PsiElement psiElement : PySuperMethodsSearch.search(function)) {
         if (psiElement instanceof PyFunction) {
-          if (! function.getParameterList().isCompatibleTo(((PyFunction)psiElement).getParameterList())) {
-            registerProblem(function.getParameterList(), PyBundle.message("INSP.signature.mismatch"));
+          final PyFunction baseMethod = (PyFunction)psiElement;
+          final PyClass baseClass = baseMethod.getContainingClass();
+          if (!function.getParameterList().isCompatibleTo(baseMethod.getParameterList())) {
+            final String msg = PyBundle.message("INSP.signature.mismatch",
+                                                cls.getName() + "." + name + "()",
+                                                baseClass != null ? baseClass.getName() : "");
+            registerProblem(function.getParameterList(), msg);
           }
         }
       }

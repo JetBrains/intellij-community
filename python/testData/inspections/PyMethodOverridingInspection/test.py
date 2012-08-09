@@ -7,7 +7,7 @@ class c2(c1):
         pass
 
 class c3(c1):
-    def foo<warning descr="Method signature does not match signature of base method">(self)</warning>:
+    def foo<warning descr="Signature of method 'c3.foo()' does not match signature of base method in class 'c1'">(self)</warning>:
         pass
 
 class c4(c1):
@@ -43,7 +43,7 @@ class c9(c8):
     def __new__(self, p, q): # different but ok because __new__ is special
         pass
 
-    def foo<warning descr="Method signature does not match signature of base method">(self, s, t)</warning>:
+    def foo<warning descr="Signature of method 'c9.foo()' does not match signature of base method in class 'c8'">(self, s, t)</warning>:
         pass
 
 class c10:
@@ -101,7 +101,7 @@ class c22:
         raise NotImplementedError()
 
 class c23(c22):
-    def foo<warning descr="Method signature does not match signature of base method">(self, arg1, arg2=None)</warning>: # fail
+    def foo<warning descr="Signature of method 'c23.foo()' does not match signature of base method in class 'c22'">(self, arg1, arg2=None)</warning>: # fail
         pass
 
 
@@ -121,7 +121,7 @@ class c26:
         pass
 
 class c27(c26):
-    def foo<warning descr="Method signature does not match signature of base method">(self, arg1=None)</warning>: #fail
+    def foo<warning descr="Signature of method 'c27.foo()' does not match signature of base method in class 'c26'">(self, arg1=None)</warning>: #fail
         pass
 
 
@@ -131,5 +131,5 @@ class c28:
         pass
 
 class c29(c28):
-    def foo<warning descr="Method signature does not match signature of base method">(self, p1, **kwargs)</warning>:  #fail
+    def foo<warning descr="Signature of method 'c29.foo()' does not match signature of base method in class 'c28'">(self, p1, **kwargs)</warning>:  #fail
         pass
