@@ -15,31 +15,27 @@
  */
 package com.intellij.ui.popup.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
-import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.File;
 
-public class MasterDetailPopupBuilder {
+public class MasterDetailPopupBuilder implements MasterController {
 
   private static final Color BORDER_COLOR = Gray._135;
   private Project myProject;
@@ -52,7 +48,6 @@ public class MasterDetailPopupBuilder {
   private JLabel myPathLabel;
 
   private JBPopup myPopup;
-  private Alarm myUpdateAlarm;
   private JComponent myChooserComponent;
   private ActionToolbar myActionToolbar;
   private boolean myAddDetailViewToEast = true;
@@ -60,6 +55,8 @@ public class MasterDetailPopupBuilder {
   private boolean myCancelOnWindowDeactivation = true;
   private Runnable myDoneRunnable;
   private boolean myCancelOnClickOutside;
+
+  private final DetailController myDetailController = new DetailController(this);
 
 
   public String getDimensionServiceKey() {
@@ -75,6 +72,7 @@ public class MasterDetailPopupBuilder {
 
   public MasterDetailPopupBuilder setDetailView(DetailView detailView) {
     myDetailView = detailView;
+    myDetailController.setDetailView(myDetailView);
     return this;
   }
 
@@ -86,48 +84,6 @@ public class MasterDetailPopupBuilder {
     myProject = project;
   }
 
-  private String getTitle2Text(String fullText) {
-    int labelWidth = myPathLabel.getWidth();
-    if (fullText == null || fullText.length() == 0) return " ";
-    while (myPathLabel.getFontMetrics(myPathLabel.getFont()).stringWidth(fullText) > labelWidth) {
-      int sep = fullText.indexOf(File.separatorChar, 4);
-      if (sep < 0) return fullText;
-      fullText = "..." + fullText.substring(sep);
-    }
-
-    return fullText;
-  }
-
-  private void doUpdateDetailView() {
-    final Object[] values = getSelectedItems();
-    ItemWrapper wrapper = null;
-    if (values != null && values.length == 1) {
-      wrapper = (ItemWrapper)values[0];
-      myPathLabel.setText(getTitle2Text(wrapper.footerText()));
-    }
-    else {
-      myPathLabel.setText(" ");
-    }
-    final ItemWrapper wrapper1 = wrapper;
-    myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(new Runnable() {
-      public void run() {
-        doUpdateDetailViewWithItem(wrapper1);
-      }
-    }, 100);
-  }
-
-  protected void doUpdateDetailViewWithItem(ItemWrapper wrapper1) {
-    if (wrapper1 != null) {
-      wrapper1.updateDetailView(myDetailView);
-    }
-    else {
-      myDetailView.clearEditor();
-      myDetailView.setDetailPanel(null);
-      myDetailView.setCurrentItem(null);
-    }
-  }
-
   public JBPopup createMasterDetailPopup() {
 
     setupRenderer();
@@ -137,8 +93,6 @@ public class MasterDetailPopupBuilder {
 
     final Font font = myPathLabel.getFont();
     myPathLabel.setFont(font.deriveFont((float)10));
-
-    myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
     if (myDetailView == null) {
       myDetailView = new DetailViewImpl(myProject);
@@ -204,27 +158,33 @@ public class MasterDetailPopupBuilder {
 
     if (myDoneRunnable != null) {
 
-      final JButton done = new JButton("Done");
-                  done.setMnemonic('o');
-                  done.addActionListener(new ActionListener() {
-                    @Override
-                    public void actionPerformed(ActionEvent event) {
-                      myDoneRunnable.run();
-                    }
-                  });
-
-
-      builder.setCommandButton(new ActiveComponent() {
+      ActionListener actionListener = new ActionListener() {
         @Override
-        public void setActive(boolean active) {
-          //To change body of implemented methods use File | Settings | File Templates.
+        public void actionPerformed(ActionEvent event) {
+          myDoneRunnable.run();
         }
+      };
+      //native button is pretty enough
+      if (SystemInfo.isMacOSLion || SystemInfo.isMacOSMountainLion) {
+        final JButton done = new JButton("Done");
+        done.setMnemonic('o');
+        done.addActionListener(actionListener);
 
-        @Override
-        public JComponent getComponent() {
-          return done;
-        }
-      });
+        builder.setCommandButton(new ActiveComponent() {
+          @Override
+          public void setActive(boolean active) {
+            //To change body of implemented methods use File | Settings | File Templates.
+          }
+
+          @Override
+          public JComponent getComponent() {
+            return done;
+          }
+        });
+      }
+      else {
+        builder.setCommandButton(new InplaceButton("Close", AllIcons.Actions.CloseNew, actionListener));
+      }
     }
 
     String title = myDelegate.getTitle();
@@ -291,6 +251,7 @@ public class MasterDetailPopupBuilder {
     return null;
   }
 
+  @Override
   public ItemWrapper[] getSelectedItems() {
     Object[] values = new Object[0];
     if (myChooserComponent instanceof JList) {
@@ -304,16 +265,6 @@ public class MasterDetailPopupBuilder {
       items[i] = (ItemWrapper)values[i];
     }
     return items;
-  }
-
-  private void updateDetailViewLater() {
-    //noinspection SSBasedInspection
-    //SwingUtilities.invokeLater(new Runnable() {
-    //  public void run() {
-    //    doUpdateDetailView();
-    //  }
-    //});
-    doUpdateDetailView();
   }
 
   public void setAddDetailViewToEast(boolean addDetailViewToEast) {
@@ -336,6 +287,11 @@ public class MasterDetailPopupBuilder {
 
   public void setCancelOnClickOutside(boolean cancelOnClickOutside) {
     myCancelOnClickOutside = cancelOnClickOutside;
+  }
+
+  @Override
+  public JLabel getPathLabel() {
+    return myPathLabel;
   }
 
   public static boolean allowedToRemoveItems(Object[] values) {
@@ -395,32 +351,13 @@ public class MasterDetailPopupBuilder {
 
   public MasterDetailPopupBuilder setTree(final JTree tree) {
     setChooser(tree);
-
-    tree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
-      @Override
-      public void valueChanged(TreeSelectionEvent event) {
-        updateDetailViewLater();
-      }
-    });
-
+    myDetailController.setTree(tree);
     return this;
   }
 
   public MasterDetailPopupBuilder setList(final JBList list) {
     setChooser(list);
-    final ListSelectionModel listSelectionModel = list.getSelectionModel();
-    listSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-
-    listSelectionModel.addListSelectionListener(new ListSelectionListener() {
-      public void valueChanged(final ListSelectionEvent e) {
-        updateDetailViewLater();
-      }
-    });
-
-
-    if (list.getModel().getSize() == 0) {
-      list.clearSelection();
-    }
+    myDetailController.setList(list);
     return this;
   }
 
@@ -487,18 +424,7 @@ public class MasterDetailPopupBuilder {
         add(accessory, BorderLayout.WEST);
       }
 
-      myRenderer = new ColoredListCellRenderer() {
-        @Override
-        protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-          if (value instanceof ItemWrapper) {
-            final ItemWrapper wrapper = (ItemWrapper)value;
-            wrapper.setupRenderer(this, myProject, selected);
-            if (accessory != null) {
-              wrapper.updateAccessoryView(accessory);
-            }
-          }
-        }
-      };
+      myRenderer = new ItemWrapperListRenderer(myProject, accessory);
       add(myRenderer, BorderLayout.CENTER);
     }
 
