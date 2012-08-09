@@ -135,7 +135,7 @@ public class IoTestUtil {
   }
 
   private static File getFullLinkPath(final String link) {
-    File linkFile = new File(link);
+    File linkFile = new File(FileUtil.toSystemDependentName(link));
     if (!linkFile.isAbsolute()) {
       linkFile = new File(FileUtil.getTempDirectory(), link);
     }
