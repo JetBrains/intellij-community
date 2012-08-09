@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,28 +19,42 @@ import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.IntroduceVariableFix;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MethodCallInLoopConditionInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.call.in.loop.condition.display.name");
+    return InspectionGadgetsBundle.message("method.call.in.loop.condition.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "method.call.in.loop.condition.problem.descriptor");
+    return InspectionGadgetsBundle.message("method.call.in.loop.condition.problem.descriptor");
   }
 
+  @Override
+  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new IntroduceVariableFix(true);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MethodCallInLoopConditionVisitor();
   }
 
-  private static class MethodCallInLoopConditionVisitor
-    extends BaseInspectionVisitor {
+  private static class MethodCallInLoopConditionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitForStatement(@NotNull PsiForStatement statement) {
@@ -63,8 +77,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
     }
 
     @Override
-    public void visitDoWhileStatement(
-      @NotNull PsiDoWhileStatement statement) {
+    public void visitDoWhileStatement(@NotNull PsiDoWhileStatement statement) {
       super.visitDoWhileStatement(statement);
       final PsiExpression condition = statement.getCondition();
       if (condition == null) {
@@ -74,8 +87,7 @@ public class MethodCallInLoopConditionInspection extends BaseInspection {
     }
 
     private void checkForMethodCalls(PsiExpression condition) {
-      final PsiElementVisitor visitor =
-        new JavaRecursiveElementVisitor() {
+      final PsiElementVisitor visitor = new JavaRecursiveElementVisitor() {
 
           @Override
           public void visitMethodCallExpression(
