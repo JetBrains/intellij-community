@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.renderer;
 
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,8 +38,10 @@ public class ArrangementNodeRenderingContext {
     = new EnumMap<NodeType, Stack<ArrangementNodeRenderer<?>>>(NodeType.class);
   private final Map<NodeType, Stack<ArrangementNodeRenderer<?>>> myBusy
     = new EnumMap<NodeType, Stack<ArrangementNodeRenderer<?>>>(NodeType.class);
+  @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
 
-  public ArrangementNodeRenderingContext() {
+  public ArrangementNodeRenderingContext(@NotNull ArrangementStandardSettingsAware filter) {
+    myDisplayManager = new ArrangementNodeDisplayManager(filter);
     for (NodeType type : NodeType.values()) {
       myFree.put(type, new Stack<ArrangementNodeRenderer<?>>());
       myBusy.put(type, new Stack<ArrangementNodeRenderer<?>>());
@@ -83,9 +86,18 @@ public class ArrangementNodeRenderingContext {
   public void reset() {
     for (Map.Entry<NodeType, Stack<ArrangementNodeRenderer<?>>> entry : myBusy.entrySet()) {
       myFree.get(entry.getKey()).addAll(entry.getValue());
+      for (ArrangementNodeRenderer<?> renderer : entry.getValue()) {
+        renderer.reset();
+      }
+      entry.getValue().clear();
     }
   }
-  
+
+  @NotNull
+  public ArrangementNodeDisplayManager getDisplayManager() {
+    return myDisplayManager;
+  }
+
   @SuppressWarnings("unchecked")
   private enum NodeType {
     AND
@@ -103,7 +115,7 @@ public class ArrangementNodeRenderingContext {
         public <T extends ArrangementSettingsNode> ArrangementNodeRenderer<T> createRenderer(
           @NotNull ArrangementNodeRenderingContext context)
         {
-          return (ArrangementNodeRenderer<T>)new ArrangementAtomRenderer();
+          return (ArrangementNodeRenderer<T>)new ArrangementAtomRenderer(context.getDisplayManager());
         }
       },
     OR
