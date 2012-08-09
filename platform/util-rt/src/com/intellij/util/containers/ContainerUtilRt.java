@@ -33,36 +33,44 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class ContainerUtilRt {
   private static final int ARRAY_COPY_THRESHOLD = 20;
 
+  @NotNull
   public static <K, V> HashMap<K, V> newHashMap() {
     return new HashMap<K, V>();
   }
 
+  @NotNull
   public static <K, V> HashMap<K, V> newHashMap(Map<K, V> map) {
     return new HashMap<K, V>(map);
   }
 
+  @NotNull
   public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
     return new TreeMap<K, V>();
   }
 
+  @NotNull
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
     return new LinkedHashMap<K, V>();
   }
 
+  @NotNull
   public static <T> LinkedList<T> newLinkedList() {
     return new LinkedList<T>();
   }
 
+  @NotNull
   public static <T> ArrayList<T> newArrayList() {
     return new ArrayList<T>();
   }
 
+  @NotNull
   public static <E> ArrayList<E> newArrayList(E... array) {
     ArrayList<E> list = new ArrayList<E>(computeArrayListCapacity(array.length));
     Collections.addAll(list, array);
     return list;
   }
 
+  @NotNull
   public static <E> ArrayList<E> newArrayList(Iterable<? extends E> iterable) {
     ArrayList<E> list = newArrayList();
     for (E anIterable : iterable) {
@@ -71,38 +79,46 @@ public class ContainerUtilRt {
     return list;
   }
 
+  @NotNull
   public static <T> HashSet<T> newHashSet() {
     return new HashSet<T>();
   }
 
+  @NotNull
   public static <T> HashSet<T> newHashSet(T... elements) {
     HashSet<T> set = newHashSet();
     Collections.addAll(set, elements);
     return set;
   }
 
+  @NotNull
   public static <T> HashSet<T> newHashSet(Iterable<? extends T> iterable) {
     return newHashSet(iterable.iterator());
   }
 
+  @NotNull
   public static <T> HashSet<T> newHashSet(Iterator<? extends T> iterator) {
     HashSet<T> set = newHashSet();
     while (iterator.hasNext()) set.add(iterator.next());
     return set;
   }
 
+  @NotNull
   public static <T> TreeSet<T> newTreeSet() {
     return new TreeSet<T>();
   }
 
+  @NotNull
   public static <T> TreeSet<T> newTreeSet(Comparator<? super T> comparator) {
     return new TreeSet<T>(comparator);
   }
 
+  @NotNull
   public static <T> ArrayList<T> newArrayListWithExpectedSize(int size) {
     return new ArrayList<T>(size);
   }
 
+  @NotNull
   public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
     return new ArrayList<T>(computeArrayListCapacity(size));
   }
