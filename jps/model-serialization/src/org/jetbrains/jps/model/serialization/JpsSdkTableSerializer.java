@@ -4,10 +4,14 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
 import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 
 import java.util.ArrayList;
@@ -23,16 +27,16 @@ public class JpsSdkTableSerializer {
     new JpsLibraryRootTypeSerializer("classPath", JpsOrderRootType.COMPILED, true),
     new JpsLibraryRootTypeSerializer("sourcePath", JpsOrderRootType.SOURCES, true)
   };
-  private static final JpsSdkPropertiesSerializer<JpsSdkProperties> JPS_JAVA_SDK_PROPERTIES_LOADER =
-    new JpsSdkPropertiesSerializer<JpsSdkProperties>("JavaSDK", JpsJavaSdkType.INSTANCE) {
+  private static final JpsSdkPropertiesSerializer<JpsDummyElement> JPS_JAVA_SDK_PROPERTIES_LOADER =
+    new JpsSdkPropertiesSerializer<JpsDummyElement>("JavaSDK", JpsJavaSdkType.INSTANCE) {
       @NotNull
       @Override
-      public JpsSdkProperties loadProperties(String homePath, String version, Element propertiesElement) {
-        return new JpsSdkProperties(homePath, version);
+      public JpsDummyElement loadProperties(Element propertiesElement) {
+        return JpsElementFactory.getInstance().createDummyElement();
       }
 
       @Override
-      public void saveProperties(@NotNull JpsSdkProperties properties, @NotNull Element element) {
+      public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element element) {
       }
     };
   private static final String JDK_TAG = "jdk";
@@ -57,11 +61,10 @@ public class JpsSdkTableSerializer {
 
   public static void saveSdks(JpsLibraryCollection libraryCollection, Element sdkListElement) {
     for (JpsLibrary library : libraryCollection.getLibraries()) {
-      JpsLibraryType<?> type = library.getType();
-      if (type instanceof JpsSdkType<?>) {
+      JpsElement properties = library.getProperties();
+      if (properties instanceof JpsSdk<?>) {
         Element sdkTag = new Element(JDK_TAG);
-        //noinspection unchecked
-        saveSdk((JpsTypedLibrary)library, (JpsSdkType)type, sdkTag);
+        saveSdk((JpsSdk<?>)properties, sdkTag);
         sdkListElement.addContent(sdkTag);
       }
     }
@@ -84,17 +87,17 @@ public class JpsSdkTableSerializer {
     return library;
   }
 
-  private static <P extends JpsSdkProperties> void saveSdk(JpsTypedLibrary<P> library, JpsSdkType<P> type, Element sdkTag) {
+  private static <P extends JpsElement> void saveSdk(final JpsSdk<P> sdk, Element sdkTag) {
+    JpsLibrary library = sdk.getParent();
     sdkTag.setAttribute("version", "2");
     setAttributeValue(sdkTag, NAME_TAG, library.getName());
-    JpsSdkPropertiesSerializer<P> serializer = getSdkPropertiesSerializer(type);
+    JpsSdkPropertiesSerializer<P> serializer = getSdkPropertiesSerializer(sdk.getSdkType());
     setAttributeValue(sdkTag, TYPE_TAG, serializer.getTypeId());
-    P properties = library.getProperties();
-    String versionString = properties.getVersionString();
+    String versionString = sdk.getVersionString();
     if (versionString != null) {
       setAttributeValue(sdkTag, VERSION_TAG, versionString);
     }
-    setAttributeValue(sdkTag, HOME_PATH_TAG, properties.getHomePath());
+    setAttributeValue(sdkTag, HOME_PATH_TAG, sdk.getHomePath());
 
     Element rootsTag = new Element(ROOTS_TAG);
     for (JpsLibraryRootTypeSerializer rootTypeSerializer : getRootTypeSerializers()) {
@@ -111,7 +114,7 @@ public class JpsSdkTableSerializer {
     sdkTag.addContent(rootsTag);
 
     Element additionalTag = new Element(ADDITIONAL_TAG);
-    serializer.saveProperties(properties, additionalTag);
+    serializer.saveProperties(sdk.getSdkProperties(), additionalTag);
     sdkTag.addContent(additionalTag);
   }
 
@@ -157,12 +160,12 @@ public class JpsSdkTableSerializer {
     return serializers;
   }
 
-  private static <P extends JpsSdkProperties> JpsLibrary createSdk(String name, JpsSdkPropertiesSerializer<P> loader, Element sdkElement) {
+  private static <P extends JpsElement> JpsLibrary createSdk(String name, JpsSdkPropertiesSerializer<P> loader, Element sdkElement) {
     String versionString = getAttributeValue(sdkElement, VERSION_TAG);
     String homePath = getAttributeValue(sdkElement, HOME_PATH_TAG);
     Element propertiesTag = sdkElement.getChild(ADDITIONAL_TAG);
-    P properties = loader.loadProperties(homePath, versionString, propertiesTag);
-    return JpsElementFactory.getInstance().createLibrary(name, loader.getType(), properties);
+    P properties = loader.loadProperties(propertiesTag);
+    return JpsElementFactory.getInstance().createSdk(name, homePath, versionString, loader.getType(), properties);
   }
 
   public static JpsSdkPropertiesSerializer<?> getSdkPropertiesSerializer(String typeId) {
@@ -176,7 +179,7 @@ public class JpsSdkTableSerializer {
     return JPS_JAVA_SDK_PROPERTIES_LOADER;
   }
 
-  public static <P extends JpsSdkProperties> JpsSdkPropertiesSerializer<P> getSdkPropertiesSerializer(JpsSdkType<P> type) {
+  public static <P extends JpsElement> JpsSdkPropertiesSerializer<P> getSdkPropertiesSerializer(JpsSdkType<P> type) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsSdkPropertiesSerializer<?> loader : extension.getSdkPropertiesSerializers()) {
         if (loader.getType().equals(type)) {
@@ -216,7 +219,7 @@ public class JpsSdkTableSerializer {
     if (sdkType instanceof JpsJavaSdkTypeWrapper) {
       JpsLibrary jpsLibrary = reference.resolve();
       if (jpsLibrary != null) {
-        String name = ((JpsJavaSdkTypeWrapper)sdkType).getJavaSdkName((JpsSdkProperties)jpsLibrary.getProperties());
+        String name = ((JpsJavaSdkTypeWrapper)sdkType).getJavaSdkName(((JpsSdk<?>)jpsLibrary.getProperties()).getSdkProperties());
         if (name != null) {
           table.setSdkReference(JpsJavaSdkType.INSTANCE, JpsElementFactory.getInstance().createSdkReference(name, JpsJavaSdkType.INSTANCE));
         }

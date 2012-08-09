@@ -1,19 +1,16 @@
 package org.jetbrains.jps.model.java;
 
-import org.jetbrains.jps.model.library.JpsSdkProperties;
-import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 
 /**
  * @author nik
  */
-public class JpsJavaSdkType extends JpsSdkType<JpsSdkProperties>  {
+public class JpsJavaSdkType extends JpsSdkType<JpsDummyElement>  {
   public static final JpsJavaSdkType INSTANCE = new JpsJavaSdkType();
 
-  public JpsSdkProperties createCopy(JpsSdkProperties properties) {
-    return new JpsSdkProperties(properties);
-  }
-
-  public static String getJavaExecutable(JpsSdkProperties properties) {
-    return properties.getHomePath() + "/bin/java";
+  public static String getJavaExecutable(JpsSdk<?> sdk) {
+    return sdk.getHomePath() + "/bin/java";
   }
 }

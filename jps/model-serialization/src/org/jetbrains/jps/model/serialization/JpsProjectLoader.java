@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
-import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactSerializer;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;

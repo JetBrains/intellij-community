@@ -5,7 +5,7 @@ import org.jetbrains.jps.model.JpsElementCreator;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
 import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
-import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 
 /**

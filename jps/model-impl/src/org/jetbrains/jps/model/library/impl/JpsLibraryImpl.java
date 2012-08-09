@@ -16,28 +16,30 @@ import java.util.List;
 /**
  * @author nik
  */
-public class JpsLibraryImpl<P extends JpsElementProperties> extends JpsNamedCompositeElementBase<JpsLibraryImpl<P>> implements JpsTypedLibrary<P> {
-  private static final JpsTypedDataRole<JpsLibraryType<?>> TYPED_DATA_ROLE = new JpsTypedDataRole<JpsLibraryType<?>>();
-
+public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeElementBase<JpsLibraryImpl<P>> implements JpsTypedLibrary<P> {
+  private final JpsLibraryType<P> myLibraryType;
+  
   public JpsLibraryImpl(@NotNull String name, @NotNull JpsLibraryType<P> type, @NotNull P properties) {
     super(name);
-    myContainer.setChild(TYPED_DATA_ROLE, new JpsTypedDataImpl<JpsLibraryType<?>>(type, properties));
+    myLibraryType = type;
+    myContainer.setChild(myLibraryType.getPropertiesRole(), properties);
   }
 
   private JpsLibraryImpl(@NotNull JpsLibraryImpl<P> original) {
     super(original);
+    myLibraryType = original.myLibraryType;
   }
 
   @Override
   @NotNull
   public JpsLibraryType<P> getType() {
-    return (JpsLibraryType<P>)myContainer.getChild(TYPED_DATA_ROLE).getType();
+    return myLibraryType;
   }
 
   @NotNull
   @Override
   public P getProperties() {
-    return (P)myContainer.getChild(TYPED_DATA_ROLE).getProperties();
+    return myContainer.getChild(myLibraryType.getPropertiesRole());
   }
 
   @NotNull

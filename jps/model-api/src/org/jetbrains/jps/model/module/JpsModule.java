@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 import java.util.List;
 
@@ -43,7 +45,7 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   JpsModuleReference createReference();
 
   @NotNull
-  <P extends JpsElementProperties, Type extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  <P extends JpsElement, Type extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addModuleLibrary(@NotNull String name, @NotNull Type type);
 
   void addModuleLibrary(@NotNull JpsLibrary library);
@@ -58,8 +60,8 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   JpsLibraryReference getSdkReference(@NotNull JpsSdkType<?> type);
 
   @Nullable
-  <P extends JpsSdkProperties>
-  JpsTypedLibrary<P> getSdk(@NotNull JpsSdkType<P> type);
+  <P extends JpsElement>
+  JpsSdk<P> getSdk(@NotNull JpsSdkType<P> type);
 
   void delete();
 

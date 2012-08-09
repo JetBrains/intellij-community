@@ -39,11 +39,11 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.SourceToFormMapping;
 import org.jetbrains.jps.javac.*;
+import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.LanguageLevel;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
-import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import javax.tools.*;
@@ -494,12 +494,12 @@ public class JavaBuilder extends ModuleLevelBuilder {
     String javaHome = SystemProperties.getJavaHome();
     int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
 
-    for (JpsTypedLibrary<JpsSdkProperties> sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
-      final String version = sdk.getProperties().getVersionString();
+    for (JpsSdk<?> sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
+      final String version = sdk.getVersionString();
       final int ver = convertToNumber(version);
       if (ver > javaVersion) {
         javaVersion = ver;
-        javaHome = sdk.getProperties().getHomePath();
+        javaHome = sdk.getHomePath();
       }
     }
 
@@ -658,10 +658,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     String bytecodeTarget = null;
     int chunkSdkVersion = -1;
     for (JpsModule module : chunk.getModules()) {
-      final JpsTypedLibrary<JpsSdkProperties> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
+      final JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
       if (sdk != null) {
-        final JpsSdkProperties sdkProperties = sdk.getProperties();
-        final int moduleSdkVersion = convertToNumber(sdkProperties.getVersionString());
+        final int moduleSdkVersion = convertToNumber(sdk.getVersionString());
         if (moduleSdkVersion != 0 /*could determine the version*/&& (chunkSdkVersion < 0 || chunkSdkVersion > moduleSdkVersion)) {
           chunkSdkVersion = moduleSdkVersion;
         }
@@ -757,8 +756,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     int javaVersion = convertToNumber(SystemProperties.getJavaVersion());
     if (!USE_EMBEDDED_JAVAC) {
       // in case of external javac, run compiler from the newest jdk that is used in the project
-      for (JpsTypedLibrary<JpsSdkProperties> sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
-        final String version = sdk.getProperties().getVersionString();
+      for (JpsSdk<?> sdk : context.getProjectDescriptor().getProjectJavaSdks()) {
+        final String version = sdk.getVersionString();
         final int ver = convertToNumber(version);
         if (ver > javaVersion) {
           javaVersion = ver;

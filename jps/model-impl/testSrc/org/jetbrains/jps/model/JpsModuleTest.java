@@ -2,7 +2,6 @@ package org.jetbrains.jps.model;
 
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
@@ -96,7 +95,7 @@ public class JpsModuleTest extends JpsModelTestCase {
   }
 
   public void testSdkDependency() {
-    JpsLibrary sdk = myModel.getGlobal().getLibraryCollection().addLibrary("sdk", JpsJavaSdkType.INSTANCE, new JpsSdkProperties("", ""));
+    JpsLibrary sdk = myModel.getGlobal().addSdk("sdk", null, null, JpsJavaSdkType.INSTANCE, JpsElementFactory.getInstance().createDummyElement());
     final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, sdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);

@@ -1,8 +1,8 @@
 package org.jetbrains.jps.model.library.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementCollection;
-import org.jetbrains.jps.model.JpsElementProperties;
 import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryCollection;
@@ -23,14 +23,14 @@ public class JpsLibraryCollectionImpl implements JpsLibraryCollection {
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  public <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addLibrary(@NotNull String name, @NotNull LibraryType type) {
     return addLibrary(name, type, type.createDefaultProperties());
   }
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties> JpsTypedLibrary<P> addLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type,
+  public <P extends JpsElement> JpsTypedLibrary<P> addLibrary(@NotNull String name, @NotNull JpsLibraryType<P> type,
                                                                         @NotNull P properties) {
     return myCollection.addChild(new JpsLibraryImpl<P>(name, type, properties));
   }

@@ -5,24 +5,25 @@ import com.android.sdklib.SdkConstants;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
-import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 
 public class AndroidPlatform {
-  private final JpsTypedLibrary<JpsAndroidSdkProperties> mySdk;
+  private final JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> mySdk;
   private final IAndroidTarget myTarget;
   private final int myPlatformToolsRevision;
   private final int mySdkToolsRevision;
 
-  public AndroidPlatform(@NotNull JpsTypedLibrary<JpsAndroidSdkProperties> sdk, @NotNull IAndroidTarget target) {
+  public AndroidPlatform(@NotNull JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> sdk, @NotNull IAndroidTarget target) {
     mySdk = sdk;
     myTarget = target;
-    final String homePath = sdk.getProperties().getHomePath();
+    final String homePath = sdk.getHomePath();
     myPlatformToolsRevision = AndroidCommonUtils.parsePackageRevision(homePath, SdkConstants.FD_PLATFORM_TOOLS);
     mySdkToolsRevision = AndroidCommonUtils.parsePackageRevision(homePath, SdkConstants.FD_TOOLS);
   }
 
   @NotNull
-  public JpsTypedLibrary<JpsAndroidSdkProperties> getSdk() {
+  public JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> getSdk() {
     return mySdk;
   }
 
