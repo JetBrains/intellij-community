@@ -234,8 +234,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
           final int prevSize = myCoordinates.size();
           for (Pair<MavenArtifactInfo, MavenRepositoryInfo> each : artifacts) {
             myCoordinates.put(each.first.getGroupId() + ":" + each.first.getArtifactId() + ":" + each.first.getVersion(), each);
-            if (each.second != null && !myRepositories.containsKey(each.second.getUrl())) {
-              myRepositories.put(each.second.getUrl(), each.second);
+            String url = each.second != null? each.second.getUrl() : null;
+            if (StringUtil.isNotEmpty(url) && !myRepositories.containsKey(url)) {
+              myRepositories.put(url, each.second);
             }
           }
           String title = getTitle();

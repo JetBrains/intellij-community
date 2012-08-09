@@ -20,7 +20,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -149,7 +149,7 @@ public class MavenModuleImporter {
     String encoding = myMavenProject.getEncoding();
     if (encoding != null) {
       try {
-        EncodingManager.getInstance().setEncoding(myMavenProject.getDirectoryFile(), Charset.forName(encoding));
+        EncodingProjectManager.getInstance(myModule.getProject()).setEncoding(myMavenProject.getDirectoryFile(), Charset.forName(encoding));
       }
       catch (UnsupportedCharsetException ignored) {/**/}
       catch (IllegalCharsetNameException ignored) {/**/}

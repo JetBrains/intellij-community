@@ -234,4 +234,62 @@ public class ScreenUtil {
       rect.y = (int)screen.getMinY();
     }
   }
+
+  /**
+   *
+   * @param prevLocation - previous location on screen
+   * @param location - current location on screen
+   * @param bounds - area to check if location shifted towards or not. Also in screen coordinates
+   * @return true if movement from prevLocation to location is towards specified rectangular area
+   */
+  public static boolean isMovementTowards(final Point prevLocation, final Point location, final Rectangle bounds) {
+    if (bounds == null) {
+      return false;
+    }
+    if (prevLocation == null || prevLocation.equals(location)) {
+      return true;
+    }
+
+    int dx = prevLocation.x - location.x;
+    int dy = prevLocation.y - location.y;
+
+    // Check if the mouse goes out of the control.
+    if (dx > 0 && bounds.x >= prevLocation.x) return false;
+    if (dx < 0 && bounds.x + bounds.width <= prevLocation.x) return false;
+    if (dy > 0 && bounds.y + bounds.height >= prevLocation.y) return false;
+    if (dy < 0 && bounds.y <= prevLocation.y) return false;
+    if (dx == 0) {
+      return (location.x >= bounds.x && location.x < bounds.x + bounds.width)
+             && (dy > 0 ^ bounds.y > location.y);
+    }
+    if (dy == 0) {
+      return (location.y >= bounds.y && location.y < bounds.y + bounds.height)
+             && (dx > 0 ^ bounds.x > location.x);
+    }
+
+
+    // Calculate line equation parameters - y = a * x + b
+    float a = (float)dy / dx;
+    float b = location.y - a * location.x;
+
+    // Check if crossing point with any tooltip border line is within bounds. Don't bother with floating point inaccuracy here.
+
+    // Left border.
+    float crossY = a * bounds.x + b;
+    if (crossY >= bounds.y && crossY < bounds.y + bounds.height) return true;
+
+    // Right border.
+    crossY = a * (bounds.x + bounds.width) + b;
+    if (crossY >= bounds.y && crossY < bounds.y + bounds.height) return true;
+
+    // Top border.
+    float crossX = (bounds.y - b) / a;
+    if (crossX >= bounds.x && crossX < bounds.x + bounds.width) return true;
+
+    // Bottom border
+    crossX = (bounds.y + bounds.height - b) / a;
+    if (crossX >= bounds.x && crossX < bounds.x + bounds.width) return true;
+
+    return false;
+  }
 }
