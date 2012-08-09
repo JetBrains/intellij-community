@@ -543,6 +543,14 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (hasUnresolvedAncestors(cls)) {
             return true;
           }
+          if (cls.getDecoratorList() != null) {
+            return true;
+          }
+          for (PyClass base : cls.iterateAncestorClasses()) {
+            if (base.getDecoratorList() != null) {
+              return true;
+            }
+          }
         }
       }
       if (qtype instanceof CythonBuiltinType ||

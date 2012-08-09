@@ -155,7 +155,13 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-7173
   public void testDecoratedFunction() {
+    doTest();
+  }
+
+  // PY-7173
+  public void testDecoratedClass() {
     doTest();
   }
 
