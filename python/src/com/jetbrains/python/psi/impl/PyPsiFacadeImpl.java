@@ -6,6 +6,8 @@ import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,5 +34,10 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
   @Override
   public PyClass findClass(String qName) {
     return PyClassNameIndex.findClass(qName, myProject);
+  }
+
+  @Override
+  public PyClassType createClassType(PyClass pyClass, boolean isDefinition) {
+    return new PyClassTypeImpl(pyClass, isDefinition);
   }
 }

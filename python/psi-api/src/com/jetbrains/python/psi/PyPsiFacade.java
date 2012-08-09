@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
+import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -20,4 +21,5 @@ public abstract class PyPsiFacade {
   @Nullable
   public abstract PyClass findClass(String qName);
 
+  public abstract PyClassType createClassType(PyClass pyClass, boolean isDefinition);
 }
