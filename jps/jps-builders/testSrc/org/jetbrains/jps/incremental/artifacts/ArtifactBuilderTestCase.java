@@ -35,8 +35,7 @@ import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
-import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -52,7 +51,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   private ProjectDescriptor myDescriptor;
   private File myProjectDir;
   private TestArtifactBuilderLogger myArtifactBuilderLogger;
-  private JpsTypedLibrary<JpsSdkProperties> myJdk;
+  private JpsSdk<?> myJdk;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -130,7 +129,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
       myJdk = initJdk("1.6");
     }
     final JpsModule module = myJpsProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
-    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, myJdk.createReference());
+    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, myJdk.getParent().createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
     if (srcPaths.length > 0) {
       for (String srcPath : srcPaths) {

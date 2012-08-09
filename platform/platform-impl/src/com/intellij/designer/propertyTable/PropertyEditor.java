@@ -40,6 +40,7 @@ public abstract class PropertyEditor {
     return null;
   }
 
+  @Nullable
   public abstract Object getValue() throws Exception;
 
   public abstract void updateUI();

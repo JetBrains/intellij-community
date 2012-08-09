@@ -89,14 +89,16 @@ public abstract class Property<T extends PropertiesContainer> {
   public void setValue(@NotNull T container, @Nullable Object value) throws Exception {
   }
 
+  public boolean showAsDefault(@NotNull T container) throws Exception {
+    return isRecursiveDefault(container);
+  }
+
   public final boolean isRecursiveDefault(@NotNull T container) throws Exception {
+    if (!isDefaultValue(container)) return false;
     for (Property<T> child : getChildren(container)) {
-      boolean isDefault = child.isRecursiveDefault(container);
-      if (!isDefault) {
-        return false;
-      }
+      if (!child.isRecursiveDefault(container)) return false;
     }
-    return isDefaultValue(container);
+    return true;
   }
 
   public boolean isDefaultValue(@NotNull T container) throws Exception {
@@ -152,10 +154,6 @@ public abstract class Property<T extends PropertiesContainer> {
 
   public void setDeprecated(boolean deprecated) {
     myDeprecated = deprecated;
-  }
-
-  public boolean showAsDefault(@NotNull T container) throws Exception {
-    return isRecursiveDefault(container);
   }
 
   @NotNull

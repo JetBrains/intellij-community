@@ -38,10 +38,10 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
-import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -336,8 +336,8 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
                                                  AndroidJpsBundle.message("android.jps.cannot.delete.file", outFilePath)));
     }
 
-    final JpsTypedLibrary<JpsAndroidSdkProperties> sdk = platform.getSdk();
-    final String jdkName = sdk.getProperties().getJdkName();
+    final JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> sdk = platform.getSdk();
+    final String jdkName = sdk.getSdkProperties().getData().getJdkName();
     final JpsLibrary javaSdk = context.getProjectDescriptor().jpsModel.getGlobal().getLibraryCollection().findLibrary(jdkName);
     if (javaSdk == null || !javaSdk.getType().equals(JpsJavaSdkType.INSTANCE)) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle.message("android.jps.errors.java.sdk.not.specified", jdkName)));
@@ -346,7 +346,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
 
     // todo: pass additional vm params and max heap size from settings
 
-    final List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable((JpsSdkProperties)javaSdk.getProperties()),
+    final List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable((JpsSdk<?>)javaSdk.getProperties()),
                                                                                AndroidDxRunner.class.getName(),
                                                                                Collections.<String>emptyList(), classPath,
                                                                                Arrays.asList("-Xmx1024M"), programParamList);
@@ -462,7 +462,7 @@ public class AndroidDexBuilder extends ProjectLevelBuilder {
     context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.proguard", module.getName())));
 
     final Map<AndroidCompilerMessageKind, List<String>> messages =
-      AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getSdkToolsRevision(), platform.getSdk().getProperties().getHomePath(),
+      AndroidCommonUtils.launchProguard(platform.getTarget(), platform.getSdkToolsRevision(), platform.getSdk().getHomePath(),
                                         proguardCfgPaths, includeSystemProguardCfg, inputJarOsPath, externalJarOsPaths,
                                         outputJarPath, logsDirOsPath);
     AndroidJpsUtil.addMessages(context, messages, BUILDER_NAME, module.getName());

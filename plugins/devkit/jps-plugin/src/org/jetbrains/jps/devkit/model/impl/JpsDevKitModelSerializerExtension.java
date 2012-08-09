@@ -48,7 +48,7 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
     return Arrays.asList(new JpsIdeaSdkPropertiesSerializer());
   }
 
-  private static class JpsIdeaSdkPropertiesSerializer extends JpsSdkPropertiesSerializer<JpsIdeaSdkProperties> {
+  private static class JpsIdeaSdkPropertiesSerializer extends JpsSdkPropertiesSerializer<JpsSimpleElement<JpsIdeaSdkProperties>> {
     private static final String SANDBOX_HOME_FIELD = "mySandboxHome";
     private static final String JDK_NAME_ATTRIBUTE = "sdk";
 
@@ -58,20 +58,20 @@ public class JpsDevKitModelSerializerExtension extends JpsModelSerializerExtensi
 
     @NotNull
     @Override
-    public JpsIdeaSdkProperties loadProperties(String homePath, String version, @Nullable Element propertiesElement) {
+    public JpsSimpleElement<JpsIdeaSdkProperties> loadProperties(@Nullable Element propertiesElement) {
       String sandboxHome = null;
       String jdkName = null;
       if (propertiesElement != null) {
         sandboxHome = JDOMExternalizerUtil.readField(propertiesElement, SANDBOX_HOME_FIELD);
         jdkName = propertiesElement.getAttributeValue(JDK_NAME_ATTRIBUTE);
       }
-      return new JpsIdeaSdkProperties(homePath, version, sandboxHome, jdkName);
+      return JpsElementFactory.getInstance().createSimpleElement(new JpsIdeaSdkProperties(sandboxHome, jdkName));
     }
 
     @Override
-    public void saveProperties(@NotNull JpsIdeaSdkProperties properties, @NotNull Element element) {
-      JDOMExternalizerUtil.writeField(element, SANDBOX_HOME_FIELD, properties.getSandboxHome());
-      element.setAttribute(JDK_NAME_ATTRIBUTE, properties.getJdkName());
+    public void saveProperties(@NotNull JpsSimpleElement<JpsIdeaSdkProperties> properties, @NotNull Element element) {
+      JDOMExternalizerUtil.writeField(element, SANDBOX_HOME_FIELD, properties.getData().getSandboxHome());
+      element.setAttribute(JDK_NAME_ATTRIBUTE, properties.getData().getJdkName());
     }
   }
 

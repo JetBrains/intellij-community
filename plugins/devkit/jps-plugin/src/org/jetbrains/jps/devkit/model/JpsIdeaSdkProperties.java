@@ -16,25 +16,17 @@
 package org.jetbrains.jps.devkit.model;
 
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
 
 /**
  * @author nik
  */
-public class JpsIdeaSdkProperties extends JpsSdkProperties {
+public class JpsIdeaSdkProperties {
   private final String mySandboxHome;
   private final String myJdkName;
 
-  public JpsIdeaSdkProperties(String homePath, String versionString, String sandboxHome, String jdkName) {
-    super(homePath, versionString);
+  public JpsIdeaSdkProperties(String sandboxHome, String jdkName) {
     mySandboxHome = sandboxHome;
     myJdkName = jdkName;
-  }
-
-  public JpsIdeaSdkProperties(JpsIdeaSdkProperties properties) {
-    super(properties);
-    mySandboxHome = properties.mySandboxHome;
-    myJdkName = properties.myJdkName;
   }
 
   @Nullable

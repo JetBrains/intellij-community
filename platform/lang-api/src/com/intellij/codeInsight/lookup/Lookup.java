@@ -69,6 +69,4 @@ public interface Lookup {
   PrefixMatcher itemMatcher(@NotNull LookupElement item);
 
   boolean isSelectionTouched();
-
-  boolean prefixMatches(@NotNull LookupElement item);
 }

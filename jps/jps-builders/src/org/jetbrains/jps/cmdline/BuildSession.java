@@ -29,13 +29,15 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.jps.model.serialization.JpsSdkPropertiesSerializer;
@@ -538,7 +540,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             final SdkLibrary sdkLibrary = (SdkLibrary)library;
             final JpsSdkPropertiesSerializer<?> loader = JpsSdkTableSerializer.getSdkPropertiesSerializer(sdkLibrary.getTypeName());
             if (loader != null) {
-              jpsLibrary = addLibrary(model, sdkLibrary, loader);
+              jpsLibrary = addSdk(model, sdkLibrary, loader);
             }
             else {
               LOG.info("Sdk type " + sdkLibrary.getTypeName() + " not registered");
@@ -567,12 +569,13 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private static <P extends JpsSdkProperties> JpsLibrary addLibrary(JpsModel model, SdkLibrary sdkLibrary, JpsSdkPropertiesSerializer<P> loader) {
+  private static <P extends JpsElement> JpsTypedLibrary<JpsSdk<P>> addSdk(JpsModel model, SdkLibrary sdkLibrary,
+                                                                          JpsSdkPropertiesSerializer<P> loader) {
     try {
       final String xml = sdkLibrary.getAdditionalDataXml();
       final Element element = xml != null ? JDOMUtil.loadDocument(xml).getRootElement() : null;
-      return model.getGlobal().getLibraryCollection().addLibrary(sdkLibrary.getName(), loader.getType(), loader.loadProperties(sdkLibrary.getHomePath(), sdkLibrary.getVersion(),
-                                                                                                                        element));
+      return model.getGlobal().addSdk(sdkLibrary.getName(), sdkLibrary.getHomePath(), sdkLibrary.getVersion(), loader.getType(),
+                                      loader.loadProperties(element));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

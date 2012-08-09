@@ -24,6 +24,7 @@ import com.intellij.util.*;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.stubs.DomStub;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +43,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl> extends UserDataHolderBase implements InvocationHandler, DomElement,
+public abstract class DomInvocationHandler<T extends AbstractDomChildDescriptionImpl, Stub extends DomStub> extends UserDataHolderBase implements InvocationHandler, DomElement,
                                                                                                                             SemElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomInvocationHandler");
   public static final Method ACCEPT_METHOD = ReflectionUtil.getMethod(DomElement.class, "accept", DomElementVisitor.class);
@@ -61,16 +62,19 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final InvocationCache myInvocationCache;
   private volatile Converter myScalarConverter = null;
   private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
+  @Nullable private final Stub myStub;
 
   protected DomInvocationHandler(Type type, DomParentStrategy parentStrategy,
                                  final EvaluatedXmlName tagName,
                                  final T childDescription,
                                  final DomManagerImpl manager,
-                                 boolean dynamic) {
+                                 boolean dynamic,
+                                 @Nullable Stub stub) {
     myManager = manager;
     myParentStrategy = parentStrategy;
     myTagName = tagName;
     myChildDescription = childDescription;
+    myStub = stub;
     myLastModCount = manager.getPsiModificationCount();
 
     myType = narrowType(type);
@@ -566,7 +570,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         return semElement;
       }
     }
-    return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager);
+    return new IndexedElementInvocationHandler(evaluatedXmlName, description, index, new VirtualDomParentStrategy(this), myManager, null);
   }
 
   @NotNull
@@ -583,7 +587,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
         return myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
       }
     }
-    return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new VirtualDomParentStrategy(this));
+    return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new VirtualDomParentStrategy(this), null);
   }
 
   @Nullable
@@ -693,7 +697,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public final DomElement addCollectionChild(final CollectionChildDescriptionImpl description, final Type type, int index) throws IncorrectOperationException {
     final EvaluatedXmlName name = createEvaluatedXmlName(description.getXmlName());
     final XmlTag tag = addEmptyTag(name, index);
-    final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, description, this);
+    final CollectionElementInvocationHandler handler = new CollectionElementInvocationHandler(type, tag, description, this, null);
     myManager.fireEvent(new DomEvent(getProxy(), false));
     getManager().getTypeChooserManager().getTypeChooser(description.getType()).distinguishTag(tag, type);
     handler.addRequiredChildren();

@@ -17,6 +17,7 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
@@ -64,7 +65,9 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
         if (parentFile == null) {
           throw new FileNotFoundException(rootPath);
         }
-        rootFile = parentFile;
+        if (!parentFile.getPath().equals(PathManager.getSystemPath()) || !rootFile.mkdir()) {
+          rootFile = parentFile;
+        }
       }
 
       myFSRootPath = rootFile.getAbsolutePath();

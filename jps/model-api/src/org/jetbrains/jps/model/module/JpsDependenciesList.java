@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
-import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 import java.util.List;
 

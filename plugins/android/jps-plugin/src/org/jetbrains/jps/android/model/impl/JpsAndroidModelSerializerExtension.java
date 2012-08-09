@@ -23,6 +23,8 @@ import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.android.model.JpsAndroidSdkProperties;
 import org.jetbrains.jps.android.model.JpsAndroidSdkType;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.JpsSdkPropertiesSerializer;
@@ -50,11 +52,11 @@ public class JpsAndroidModelSerializerExtension extends JpsModelSerializerExtens
         XmlSerializer.serializeInto(((JpsAndroidModuleExtensionImpl)extension).getProperties(), facetConfigurationTag);
       }
     });
-  private static final JpsSdkPropertiesSerializer<JpsAndroidSdkProperties> SDK_PROPERTIES_LOADER =
-    new JpsSdkPropertiesSerializer<JpsAndroidSdkProperties>("Android SDK", JpsAndroidSdkType.INSTANCE) {
+  private static final JpsSdkPropertiesSerializer<JpsSimpleElement<JpsAndroidSdkProperties>> SDK_PROPERTIES_LOADER =
+    new JpsSdkPropertiesSerializer<JpsSimpleElement<JpsAndroidSdkProperties>>("Android SDK", JpsAndroidSdkType.INSTANCE) {
       @NotNull
       @Override
-      public JpsAndroidSdkProperties loadProperties(String homePath, String version, @Nullable Element propertiesElement) {
+      public JpsSimpleElement<JpsAndroidSdkProperties> loadProperties(@Nullable Element propertiesElement) {
         String buildTarget;
         String jdkName;
         if (propertiesElement != null) {
@@ -65,16 +67,16 @@ public class JpsAndroidModelSerializerExtension extends JpsModelSerializerExtens
           buildTarget = null;
           jdkName = null;
         }
-        return new JpsAndroidSdkProperties(homePath, version, buildTarget, jdkName);
+        return JpsElementFactory.getInstance().createSimpleElement(new JpsAndroidSdkProperties(buildTarget, jdkName));
       }
 
       @Override
-      public void saveProperties(@NotNull JpsAndroidSdkProperties properties, @NotNull Element element) {
-        String jdkName = properties.getJdkName();
+      public void saveProperties(@NotNull JpsSimpleElement<JpsAndroidSdkProperties> properties, @NotNull Element element) {
+        String jdkName = properties.getData().getJdkName();
         if (jdkName != null) {
           element.setAttribute("jdk", jdkName);
         }
-        String buildTarget = properties.getBuildTargetHashString();
+        String buildTarget = properties.getData().getBuildTargetHashString();
         if (buildTarget != null) {
           element.setAttribute("sdk", buildTarget);
         }

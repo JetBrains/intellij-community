@@ -15,25 +15,16 @@
  */
 package org.jetbrains.jps.android.model;
 
-import org.jetbrains.jps.model.library.JpsSdkProperties;
-
 /**
  * @author nik
  */
-public class JpsAndroidSdkProperties extends JpsSdkProperties {
+public class JpsAndroidSdkProperties {
   private final String myBuildTargetHashString;
   private final String myJdkName;
 
-  public JpsAndroidSdkProperties(String homePath, String versionString, String buildTarget, String jdkName) {
-    super(homePath, versionString);
+  public JpsAndroidSdkProperties(String buildTarget, String jdkName) {
     myBuildTargetHashString = buildTarget;
     myJdkName = jdkName;
-  }
-
-  public JpsAndroidSdkProperties(JpsAndroidSdkProperties properties) {
-    super(properties);
-    myBuildTargetHashString = properties.myBuildTargetHashString;
-    myJdkName = properties.myJdkName;
   }
 
   public String getJdkName() {

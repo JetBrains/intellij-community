@@ -1,14 +1,17 @@
 package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsLibraryType;
-import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl;
 import org.jetbrains.jps.model.library.impl.JpsSdkReferenceImpl;
+import org.jetbrains.jps.model.library.impl.sdk.JpsSdkImpl;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -39,10 +42,17 @@ public class JpsElementFactoryImpl extends JpsElementFactory {
 
 
   @Override
-  public <P extends JpsElementProperties> JpsTypedLibrary<P> createLibrary(@NotNull String name,
+  public <P extends JpsElement> JpsTypedLibrary<P> createLibrary(@NotNull String name,
                                                                    @NotNull JpsLibraryType<P> type,
                                                                    @NotNull P properties) {
     return new JpsLibraryImpl<P>(name, type, properties);
+  }
+
+  @Override
+  public <P extends JpsElement> JpsTypedLibrary<JpsSdk<P>> createSdk(@NotNull String name, @Nullable String homePath,
+                                                                     @Nullable String versionString, @NotNull JpsSdkType<P> type,
+                                                                     @NotNull P properties) {
+    return createLibrary(name, type, new JpsSdkImpl<P>(homePath, versionString, type, properties));
   }
 
   @NotNull

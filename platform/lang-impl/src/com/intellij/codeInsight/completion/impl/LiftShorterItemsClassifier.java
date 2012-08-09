@@ -18,10 +18,10 @@ package com.intellij.codeInsight.completion.impl;
 import com.intellij.codeInsight.completion.CompletionLookupArranger;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.*;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -136,32 +136,46 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
 
   @Override
   public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
-    return liftShorterElements(source, new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY), context);
+    return liftShorterElements(source, null, context);
   }
 
-  private List<LookupElement> liftShorterElements(Iterable<LookupElement> source, THashSet<LookupElement> lifted, ProcessingContext context) {
+  private Iterable<LookupElement> liftShorterElements(final Iterable<LookupElement> source,
+                                                      @Nullable final THashSet<LookupElement> lifted, final ProcessingContext context) {
     final Set<LookupElement> srcSet = new THashSet<LookupElement>(source instanceof Collection ? ((Collection)source).size() : myCount, TObjectHashingStrategy.IDENTITY);
     ContainerUtil.addAll(srcSet, source);
     final Set<LookupElement> processed = new THashSet<LookupElement>(srcSet.size(), TObjectHashingStrategy.IDENTITY);
 
     final Set<LookupElement[]> arraysProcessed = new THashSet<LookupElement[]>(myInterned.size(), TObjectHashingStrategy.IDENTITY);
 
-    boolean forSorting = context.get(CompletionLookupArranger.PURE_RELEVANCE) != Boolean.TRUE;
-    final List<LookupElement> result = new ArrayList<LookupElement>(srcSet.size());
-    for (LookupElement element : myNext.classify(source, context)) {
-      if (processed.add(element)) {
-        List<LookupElement> shorter = addShorterElements(srcSet, processed, arraysProcessed, null, myToLiftForPreselection.get(element));
-        if (forSorting) {
-          shorter = addShorterElements(srcSet, processed, arraysProcessed, shorter, myToLiftForSorting.get(element));
-        }
-        if (shorter != null) {
-          lifted.addAll(shorter);
-          ContainerUtil.addAll(result, myNext.classify(shorter, context));
-        }
-        result.add(element);
+    final boolean forSorting = context.get(CompletionLookupArranger.PURE_RELEVANCE) != Boolean.TRUE;
+    final Iterable<LookupElement> next = myNext.classify(source, context);
+    return new Iterable<LookupElement>() {
+      @Override
+      public Iterator<LookupElement> iterator() {
+        Iterator<LookupElement> base = FilteringIterator.create(next.iterator(), new Condition<LookupElement>() {
+          @Override
+          public boolean value(LookupElement element) {
+            return processed.add(element);
+          }
+        });
+        return new FlatteningIterator<LookupElement, LookupElement>(base) {
+          @Override
+          protected Iterator<LookupElement> createValueIterator(LookupElement element) {
+            List<LookupElement> shorter = addShorterElements(srcSet, processed, arraysProcessed, null, myToLiftForPreselection.get(element));
+            if (forSorting) {
+              shorter = addShorterElements(srcSet, processed, arraysProcessed, shorter, myToLiftForSorting.get(element));
+            }
+            if (shorter != null) {
+              if (lifted != null) {
+                lifted.addAll(shorter);
+              }
+              return ContainerUtil.concat(myNext.classify(shorter, context), Collections.singletonList(element)).iterator();
+            }
+            return Collections.singletonList(element).iterator();
+          }
+        };
       }
-    }
-    return result;
+    };
   }
 
   @Nullable
@@ -188,7 +202,7 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   @Override
   public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
     final THashSet<LookupElement> lifted = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
-    liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, context);
+    CollectionFactory.arrayList(liftShorterElements(new ArrayList<LookupElement>(map.keySet()), lifted, context));
     if (!lifted.isEmpty()) {
       for (LookupElement element : map.keySet()) {
         final StringBuilder builder = map.get(element);

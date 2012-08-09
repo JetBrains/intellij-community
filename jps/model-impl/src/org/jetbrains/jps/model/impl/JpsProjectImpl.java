@@ -52,7 +52,7 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  public <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addLibrary(@NotNull String name, @NotNull LibraryType libraryType) {
     return myLibraryCollection.addLibrary(name, libraryType);
   }

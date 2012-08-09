@@ -283,7 +283,6 @@ public abstract class PropertyTable extends JBTable {
       Property selection = initialSelection != null ? initialSelection : getSelectionProperty();
       myContainers = new ArrayList<PropertiesContainer>(containers);
       fillProperties();
-      sortPropertiesAndCreateGroups();
       myModel.fireTableDataChanged();
 
       restoreSelection(selection);
@@ -293,12 +292,18 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private void sortPropertiesAndCreateGroups() {
+  private void sortPropertiesAndCreateGroups(List<Property> rootProperties) {
     if (!mySorted && !myShowGroups) return;
 
-    Collections.sort(myProperties, new Comparator<Property>() {
+    Collections.sort(rootProperties, new Comparator<Property>() {
       @Override
       public int compare(Property o1, Property o2) {
+        if (o1.getParent() != null || o2.getParent() != null) {
+          if (o1.getParent() == o2) return -1;
+          if (o2.getParent() == o1) return 1;
+          return 0;
+        }
+
         if (myShowGroups) {
           int result = getGroupComparator().compare(o1.getGroup(), o2.getGroup());
           if (result != 0) return result;
@@ -308,16 +313,16 @@ public abstract class PropertyTable extends JBTable {
     });
 
     if (myShowGroups) {
-      for (int i = 0; i < myProperties.size() - 1; i++) {
-        Property prev = i == 0 ? null : myProperties.get(i - 1);
-        Property each = myProperties.get(i);
+      for (int i = 0; i < rootProperties.size() - 1; i++) {
+        Property prev = i == 0 ? null : rootProperties.get(i - 1);
+        Property each = rootProperties.get(i);
 
         String eachGroup = each.getGroup();
         String prevGroup = prev == null ? null : prev.getGroup();
 
         if (prevGroup != null || eachGroup != null) {
           if (!StringUtil.equalsIgnoreCase(eachGroup, prevGroup)) {
-            myProperties.add(i, new GroupProperty(each.getGroup()));
+            rootProperties.add(i, new GroupProperty(each.getGroup()));
             i++;
           }
         }
@@ -378,7 +383,16 @@ public abstract class PropertyTable extends JBTable {
     int size = myContainers.size();
 
     if (size > 0) {
-      fillProperties(myContainers.get(0), myProperties);
+      List<Property> rootProperties = new ArrayList<Property>();
+      for (Property each : (Iterable<? extends Property>)myContainers.get(0).getProperties()) {
+        addIfNeeded(getCurrentComponent(), each, rootProperties);
+      }
+      sortPropertiesAndCreateGroups(rootProperties);
+
+      for (Property property : rootProperties) {
+        myProperties.add(property);
+        addExpandedChildren(getCurrentComponent(), property, myProperties);
+      }
 
       if (size > 1) {
         for (Iterator<Property> I = myProperties.iterator(); I.hasNext(); ) {
@@ -388,35 +402,35 @@ public abstract class PropertyTable extends JBTable {
         }
 
         for (int i = 1; i < size; i++) {
-          List<Property> properties = new ArrayList<Property>();
-          fillProperties(myContainers.get(i), properties);
+          List<Property> otherProperties = new ArrayList<Property>();
+          fillProperties(myContainers.get(i), otherProperties);
 
           for (Iterator<Property> I = myProperties.iterator(); I.hasNext(); ) {
-            Property property = I.next();
+            Property addedProperty = I.next();
 
-            int index = findFullPathProperty(properties, property);
+            int index = findFullPathProperty(otherProperties, addedProperty);
             if (index == -1) {
               I.remove();
               continue;
             }
 
-            Property testProperty = properties.get(index);
-            if (!property.getClass().equals(testProperty.getClass())) {
+            Property testProperty = otherProperties.get(index);
+            if (!addedProperty.getClass().equals(testProperty.getClass())) {
               I.remove();
               continue;
             }
 
-            List<Property> children = getChildren(property);
+            List<Property> addedChildren = getChildren(addedProperty);
             List<Property> testChildren = getChildren(testProperty);
-            int pSize = children.size();
+            int addedChildrenSize = addedChildren.size();
 
-            if (pSize != testChildren.size()) {
+            if (addedChildrenSize != testChildren.size()) {
               I.remove();
               continue;
             }
 
-            for (int j = 0; j < pSize; j++) {
-              if (!children.get(j).getName().equals(testChildren.get(j).getName())) {
+            for (int j = 0; j < addedChildrenSize; j++) {
+              if (!addedChildren.get(j).getName().equals(testChildren.get(j).getName())) {
                 I.remove();
                 break;
               }
@@ -427,31 +441,36 @@ public abstract class PropertyTable extends JBTable {
     }
   }
 
-  private void fillProperties(PropertiesContainer<?> container, List<Property> properties) {
-    for (Property property : container.getProperties()) {
-      addProperty(container, property, properties);
+  private void fillProperties(PropertiesContainer<?> component, List<Property> properties) {
+    for (Property each : component.getProperties()) {
+      if (addIfNeeded(component, each, properties)) {
+        addExpandedChildren(component, each, properties);
+      }
     }
   }
 
-  private void addProperty(PropertiesContainer<?> container, Property property, List<Property> properties) {
-    if (property.isExpert() && !myShowExpertProperties) {
-      try {
-        if (property.isRecursiveDefault(container)) {
-          return;
-        }
-      }
-      catch (Throwable e) {
-        return;
-      }
-    }
-
-    properties.add(property);
-
+  private void addExpandedChildren(PropertiesContainer<?> component, Property property, List<Property> properties) {
     if (isExpanded(property)) {
       for (Property child : getChildren(property)) {
-        addProperty(container, child, properties);
+        if (addIfNeeded(component, child,properties)) {
+          addExpandedChildren(component, child, properties);
+        }
       }
     }
+  }
+
+  private boolean addIfNeeded(PropertiesContainer<?> component, Property property, List<Property> properties) {
+    if (property.isExpert() && !myShowExpertProperties) {
+      try {
+        if (property.isRecursiveDefault(component)) {
+          return false;
+        }
+      }
+      catch (Throwable ignore) {
+      }
+    }
+    properties.add(property);
+    return true;
   }
 
   @Nullable

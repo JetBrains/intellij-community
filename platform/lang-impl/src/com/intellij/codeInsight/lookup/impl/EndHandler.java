@@ -38,5 +38,6 @@ public class EndHandler extends EditorActionHandler {
 
     lookup.markSelectionTouched();
     ListScrollingUtil.moveEnd(lookup.getList());
+    lookup.refreshUi(false, true);
   }
 }

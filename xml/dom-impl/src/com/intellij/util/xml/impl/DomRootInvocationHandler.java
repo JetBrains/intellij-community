@@ -12,22 +12,25 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomNameStrategy;
 import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.stubs.ElementStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 /**
  * @author peter
  */
-public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl> {
+public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl, ElementStub> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomRootInvocationHandler");
   private final DomFileElementImpl<?> myParent;
 
   public DomRootInvocationHandler(final Class aClass,
                                   final RootDomParentStrategy strategy,
                                   @NotNull final DomFileElementImpl fileElement,
-                                  @NotNull final EvaluatedXmlName tagName
+                                  @NotNull final EvaluatedXmlName tagName,
+                                  @Nullable ElementStub stub
   ) {
     super(aClass, strategy, tagName, new AbstractDomChildDescriptionImpl(aClass) {
       @NotNull
@@ -38,7 +41,7 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
       public int compareTo(final AbstractDomChildDescriptionImpl o) {
         throw new UnsupportedOperationException();
       }
-    }, fileElement.getManager(), true);
+    }, fileElement.getManager(), true, stub);
     myParent = fileElement;
   }
 

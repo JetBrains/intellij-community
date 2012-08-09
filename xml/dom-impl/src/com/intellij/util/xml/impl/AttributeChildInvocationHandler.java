@@ -14,6 +14,7 @@ import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,14 +22,15 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class AttributeChildInvocationHandler extends DomInvocationHandler<AttributeChildDescriptionImpl> {
+public class AttributeChildInvocationHandler extends DomInvocationHandler<AttributeChildDescriptionImpl, AttributeStub> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.AttributeChildInvocationHandler");
 
   protected AttributeChildInvocationHandler(final EvaluatedXmlName attributeName,
                                             final AttributeChildDescriptionImpl description,
                                             final DomManagerImpl manager,
-                                            final DomParentStrategy strategy) {
-    super(description.getType(), strategy, attributeName, description, manager, false);
+                                            final DomParentStrategy strategy,
+                                            @Nullable AttributeStub stub) {
+    super(description.getType(), strategy, attributeName, description, manager, false, stub);
   }
 
   public void acceptChildren(DomElementVisitor visitor) {

@@ -11,8 +11,7 @@ import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
-import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.IOException;
@@ -34,7 +33,7 @@ public final class ProjectDescriptor {
   public ModuleRootsIndex rootsIndex;
   private final ArtifactRootsIndex myArtifactRootsIndex;
   private int myUseCounter = 1;
-  private Set<JpsTypedLibrary<JpsSdkProperties>> myProjectJavaSdks;
+  private Set<JpsSdk<?>> myProjectJavaSdks;
   private CompilerEncodingConfiguration myEncodingConfiguration;
 
   public ProjectDescriptor(Project project,
@@ -52,13 +51,11 @@ public final class ProjectDescriptor {
     myLoggingManager = loggingManager;
     rootsIndex = new ModuleRootsIndex(jpsProject, dataManager);
     myArtifactRootsIndex = new ArtifactRootsIndex(jpsModel, project, dataManager, rootsIndex);
-    myProjectJavaSdks = new HashSet<JpsTypedLibrary<JpsSdkProperties>>();
+    myProjectJavaSdks = new HashSet<JpsSdk<?>>();
     myEncodingConfiguration = new CompilerEncodingConfiguration(project.getFilePathToCharset(), project.getProjectCharset(), rootsIndex);
     for (JpsModule module : jpsProject.getModules()) {
-      final JpsTypedLibrary<JpsSdkProperties> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
-      if (sdk != null && !myProjectJavaSdks.contains(sdk) &&
-          sdk.getProperties().getVersionString() != null &&
-          sdk.getProperties().getHomePath() != null) {
+      final JpsSdk<?> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
+      if (sdk != null && !myProjectJavaSdks.contains(sdk) && sdk.getVersionString() != null && sdk.getHomePath() != null) {
         myProjectJavaSdks.add(sdk);
       }
     }
@@ -68,7 +65,7 @@ public final class ProjectDescriptor {
     return myEncodingConfiguration;
   }
 
-  public Set<JpsTypedLibrary<JpsSdkProperties>> getProjectJavaSdks() {
+  public Set<JpsSdk<?>> getProjectJavaSdks() {
     return myProjectJavaSdks;
   }
 

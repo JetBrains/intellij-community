@@ -16,23 +16,19 @@
 package org.jetbrains.jps.devkit.model;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
-import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 /**
  * @author nik
  */
-public class JpsIdeaSdkType extends JpsSdkType<JpsIdeaSdkProperties> implements JpsJavaSdkTypeWrapper {
+public class JpsIdeaSdkType extends JpsSdkType<JpsSimpleElement<JpsIdeaSdkProperties>> implements JpsJavaSdkTypeWrapper {
   public static final JpsIdeaSdkType INSTANCE = new JpsIdeaSdkType();
 
   @Override
-  public JpsIdeaSdkProperties createCopy(JpsIdeaSdkProperties properties) {
-    return new JpsIdeaSdkProperties(properties);
-  }
-
-  @Override
-  public String getJavaSdkName(@NotNull JpsSdkProperties properties) {
-    return properties instanceof JpsIdeaSdkProperties ? ((JpsIdeaSdkProperties)properties).getJdkName() : null;
+  public String getJavaSdkName(@NotNull JpsElement properties) {
+    return ((JpsIdeaSdkProperties)((JpsSimpleElement<?>)properties).getData()).getJdkName();
   }
 }

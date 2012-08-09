@@ -12,6 +12,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.stubs.FileStub;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,13 +118,15 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
   protected DomFileElementImpl(final XmlFile file,
                                final Class<T> rootElementClass,
                                final EvaluatedXmlNameImpl rootTagName,
-                               final DomManagerImpl manager, final DomFileDescription<T> fileDescription) {
+                               final DomManagerImpl manager, final DomFileDescription<T> fileDescription,
+                               FileStub stub) {
     myFile = file;
     myRootElementClass = rootElementClass;
     myRootTagName = rootTagName;
     myManager = manager;
     myFileDescription = fileDescription;
-    myRootHandler = new DomRootInvocationHandler(rootElementClass, new RootDomParentStrategy(this), this, rootTagName);
+    myRootHandler = new DomRootInvocationHandler(rootElementClass, new RootDomParentStrategy(this), this, rootTagName,
+                                                 stub == null ? null : stub.getRootTagStub());
   }
 
   @NotNull

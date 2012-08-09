@@ -41,7 +41,7 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaModuleType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModule;
 
@@ -123,9 +123,9 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
     String name = module.getName() + ":plugin";
     JpsArtifact artifact = JpsArtifactService.getInstance().createArtifact(name, root, DirectoryArtifactType.INSTANCE, JpsElementFactory.getInstance().createDummyElement());
 
-    JpsTypedLibrary<JpsIdeaSdkProperties> sdk = module.getSdk(JpsIdeaSdkType.INSTANCE);
+    JpsSdk<JpsSimpleElement<JpsIdeaSdkProperties>> sdk = module.getSdk(JpsIdeaSdkType.INSTANCE);
     if (sdk != null) {
-      String sandboxHome = sdk.getProperties().getSandboxHome();
+      String sandboxHome = sdk.getSdkProperties().getData().getSandboxHome();
       if (sandboxHome != null) {
         artifact.setOutputPath(sandboxHome + "/plugins/" + module.getName());
       }
