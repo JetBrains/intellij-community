@@ -389,7 +389,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return;
         }
         if (refex.getQualifier() != null) {
-          final PyClassType object_type = PyBuiltinCache.getInstance(node).getObjectType();
+          final PyClassTypeImpl object_type = (PyClassTypeImpl)PyBuiltinCache.getInstance(node).getObjectType();
           if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) return;
         }
         else {
@@ -446,7 +446,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 return;
               }
               addCreateMemberFromUsageFixes(qtype, reference, ref_text, actions);
-              if (qtype instanceof PyClassType) {
+              if (qtype instanceof PyClassTypeImpl) {
                 if (reference instanceof PyOperatorReference) {
                   description = PyBundle.message("INSP.unresolved.operator.ref",
                                                  qtype.getName(), refname,
@@ -530,7 +530,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return true;
         }
       }
-      if (qtype instanceof PyClassType) {
+      if (qtype instanceof PyClassTypeImpl) {
         PyClass cls = ((PyClassType)qtype).getPyClass();
         if (cls != null) {
           if (overridesGetAttr(cls)) {
@@ -562,7 +562,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
     private static void addCreateMemberFromUsageFixes(PyType qtype, PsiReference reference, String refText, List<LocalQuickFix> actions) {
       PsiElement element = reference.getElement();
-      if (qtype instanceof PyClassType) {
+      if (qtype instanceof PyClassTypeImpl) {
         PyClass cls = ((PyClassType)qtype).getPyClass();
         if (cls != null) {
           if (!PyBuiltinCache.getInstance(element).hasInBuiltins(cls)) {
@@ -597,7 +597,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               PyExpression callexpr = ((PyAssignmentStatement)statement).getAssignedValue();
               if (callexpr instanceof PyCallExpression) {
                 PyType type = myTypeEvalContext.getType(callexpr);
-                if (type != null && type instanceof PyClassType) {
+                if (type != null && type instanceof PyClassTypeImpl) {
                   String name = ((PyCallExpression)callexpr).getCallee().getText();
                   if (name != null && name.equals("property")) {
                     actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));

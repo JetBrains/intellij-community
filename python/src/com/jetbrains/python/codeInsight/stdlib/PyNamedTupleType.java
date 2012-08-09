@@ -12,10 +12,7 @@ import com.jetbrains.python.psi.impl.PyElementImpl;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +23,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyNamedTupleType extends PyClassType implements PyCallableType {
+public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType {
   private final String myName;
   private final boolean myDefinition;
   private final PsiElement myDeclaration;

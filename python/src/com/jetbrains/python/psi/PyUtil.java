@@ -41,10 +41,7 @@ import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyTupleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.refactoring.classes.extractSuperclass.PyExtractSuperclassHelper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -398,7 +395,7 @@ public class PyUtil {
         if ("__class__".equals(attr_name)) {
           PyType qual_type = context.getType(qualifier);
           if (qual_type instanceof PyClassType) {
-            return new PyClassType(((PyClassType)qual_type).getPyClass(), true); // always as class, never instance
+            return new PyClassTypeImpl(((PyClassType)qual_type).getPyClass(), true); // always as class, never instance
           }
         }
         else if ("__dict__".equals(attr_name)) {

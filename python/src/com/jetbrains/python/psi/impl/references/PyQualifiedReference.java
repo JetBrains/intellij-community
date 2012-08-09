@@ -307,7 +307,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         Collection<PyClass> classes = PyClassNameIndexInsensitive.find(className, getElement().getProject());
         classes = filterByImports(classes, myElement.getContainingFile());
         if (classes.size() == 1) {
-          final PyClassType classType = new PyClassType(classes.iterator().next(), false);
+          final PyClassType classType = new PyClassTypeImpl(classes.iterator().next(), false);
           return getTypeCompletionVariants(myElement, classType);
         }
       }

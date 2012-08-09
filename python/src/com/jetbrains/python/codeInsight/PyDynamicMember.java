@@ -8,7 +8,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyElementImpl;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -182,7 +182,7 @@ public class PyDynamicMember {
       if (myTypeCallback != null) {
         return myTypeCallback.fun(myContext);
       }
-      return new PyClassType(myClass, !myResolveToInstance);
+      return new PyClassTypeImpl(myClass, !myResolveToInstance);
     }
   }
 }

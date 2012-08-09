@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
@@ -54,7 +54,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context) {
-    return new PyClassType(this, true);
+    return new PyClassTypeImpl(this, true);
   }
 
   private class NewStyleCachedValueProvider implements CachedValueProvider<Boolean> {

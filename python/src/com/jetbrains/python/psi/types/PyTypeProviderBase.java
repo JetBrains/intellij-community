@@ -49,7 +49,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
     @Override
     public PyType getType(@Nullable PyQualifiedExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context) {
       if (qualifierType instanceof PyClassType) {
-        return new PyClassType(((PyClassType)qualifierType).getPyClass(), false);
+        return new PyClassTypeImpl(((PyClassType)qualifierType).getPyClass(), false);
       }
       return null;
     }

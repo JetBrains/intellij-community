@@ -169,7 +169,7 @@ public class PyTypeParser {
     if (anchorFile instanceof PyFile) {
       final PyClass aClass = ((PyFile)anchorFile).findTopLevelClass(type);
       if (aClass != null) {
-        final PyType t = new PyClassType(aClass, false);
+        final PyType t = new PyClassTypeImpl(aClass, false);
         types.put(whole, t);
         return t;
       }
@@ -195,7 +195,7 @@ public class PyTypeParser {
     if (StringUtil.isJavaIdentifier(type)) {
       final Collection<PyClass> classes = PyClassNameIndex.find(type, anchor.getProject(), true);
       if (classes.size() == 1) {
-        final PyType t = new PyClassType(classes.iterator().next(), false);
+        final PyType t = new PyClassTypeImpl(classes.iterator().next(), false);
         types.put(whole, t);
         return t;
       }
@@ -243,7 +243,7 @@ public class PyTypeParser {
       final Collection<PyClass> classes = PyClassNameIndex.find(shortName, anchor.getProject(), true);
       for (PyClass aClass : classes) {
         if (qName.equals(aClass.getQualifiedName())) {
-          final PyType t = new PyClassType(aClass, false);
+          final PyType t = new PyClassTypeImpl(aClass, false);
           types.put(classRange.shiftRight(offset), t);
           fullRanges.put(t, whole);
           return t;
@@ -253,7 +253,7 @@ public class PyTypeParser {
       for (PyClass aClass : classes) {
         final String name = aClass.getQualifiedName();
         if (name != null && name.startsWith("_")) {
-          final PyType t = new PyClassType(aClass, false);
+          final PyType t = new PyClassTypeImpl(aClass, false);
           types.put(classRange.shiftRight(offset), t);
           fullRanges.put(t, whole);
           return t;

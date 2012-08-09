@@ -347,7 +347,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     if (exceptClass instanceof PyReferenceExpression) {
       final PsiElement element = ((PyReferenceExpression)exceptClass).getReference().resolve();
       if (element instanceof PyClass) {
-        return new PyClassType((PyClass) element, false);
+        return new PyClassTypeImpl((PyClass) element, false);
       }
     }
     return null;

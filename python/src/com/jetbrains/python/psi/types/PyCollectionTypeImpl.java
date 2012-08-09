@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class PyCollectionTypeImpl extends PyClassType implements PyCollectionType {
+public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectionType {
   private final PyType myElementType;
 
   public PyCollectionTypeImpl(@Nullable PyClass source, boolean isDefinition, PyType elementType) {
