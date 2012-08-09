@@ -18,7 +18,6 @@ package com.intellij.ide.util;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -27,6 +26,7 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.navigation.ItemPresentation;
@@ -123,6 +123,8 @@ public class FileStructurePopup implements Disposable {
   private final boolean myDaemonUpdateEnabled;
   private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<Pair<String, JCheckBox>>();
   private final TreeExpander myTreeExpander;
+  private Ref<Boolean> myAlwaysExpand = Ref.create(true);
+
 
 
   public FileStructurePopup(StructureViewModel structureViewModel,
@@ -205,7 +207,11 @@ public class FileStructurePopup implements Disposable {
     myAbstractTreeBuilder = new FilteringTreeBuilder(myTree, filter, myFilteringStructure, null) {
       @Override
       public void initRootNode() {
+      }
 
+      @Override
+      public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+        return myAlwaysExpand.get();
       }
 
       @Override
@@ -225,7 +231,30 @@ public class FileStructurePopup implements Disposable {
       }
     };
 
-    myTreeExpander = new DefaultTreeExpander(myTree);
+    myTreeExpander = new TreeExpander() {
+      @Override
+      public void expandAll() {
+      }
+
+      @Override
+      public boolean canExpand() {
+        return false;
+      }
+
+      @Override
+      public void collapseAll() {
+        TreeUtil.collapseAll(myTree, 0);
+        final int[] rows = myTree.getSelectionRows();
+        if (rows != null && rows.length > 0) {
+          TreeUtil.showRowCentered(myTree, rows[0], false);
+        }
+      }
+
+      @Override
+      public boolean canCollapse() {
+        return true;
+      }
+    };
 
     //myAbstractTreeBuilder.getUi().setPassthroughMode(true);
     myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
@@ -316,6 +345,7 @@ public class FileStructurePopup implements Disposable {
                   @Override
                   public void run() {
                     selectPsiElement(myInitialPsiElement);
+                    myAlwaysExpand.set(false);
                   }
                 });
               }
@@ -860,7 +890,7 @@ public class FileStructurePopup implements Disposable {
           }
           return "";
         }
-      }, true);
+      }, false);
     }
 
     @Override
