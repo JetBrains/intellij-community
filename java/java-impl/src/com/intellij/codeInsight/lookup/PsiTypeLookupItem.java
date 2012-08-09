@@ -154,6 +154,11 @@ public class PsiTypeLookupItem extends LookupItem {
   }
 
   public static PsiTypeLookupItem createLookupItem(@NotNull PsiType type, @Nullable PsiElement context) {
+    final boolean diamond = isDiamond(type);
+    return createLookupItem(type, context, diamond);
+  }
+
+  public static PsiTypeLookupItem createLookupItem(@NotNull PsiType type, @Nullable PsiElement context, boolean isDiamond) {
     final PsiType original = type;
     int dim = 0;
     while (type instanceof PsiArrayType) {
@@ -161,13 +166,13 @@ public class PsiTypeLookupItem extends LookupItem {
       dim++;
     }
 
-    PsiTypeLookupItem item = doCreateItem(type, context, dim);
+    PsiTypeLookupItem item = doCreateItem(type, context, dim, isDiamond);
 
     item.setAttribute(TYPE, original);
     return item;
   }
 
-  private static PsiTypeLookupItem doCreateItem(final PsiType type, PsiElement context, int bracketsCount) {
+  private static PsiTypeLookupItem doCreateItem(final PsiType type, PsiElement context, int bracketsCount, boolean diamond) {
     if (type instanceof PsiClassType) {
       PsiClassType.ClassResolveResult classResolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = classResolveResult.getElement();
@@ -175,14 +180,6 @@ public class PsiTypeLookupItem extends LookupItem {
       if (psiClass != null) {
         final PsiSubstitutor substitutor = classResolveResult.getSubstitutor();
 
-        boolean diamond = false;
-        if (type instanceof PsiClassReferenceType) {
-          final PsiReferenceParameterList parameterList = ((PsiClassReferenceType)type).getReference().getParameterList();
-          if (parameterList != null) {
-            final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
-            diamond = typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType;
-          }
-        }
         PsiClass resolved = JavaPsiFacade.getInstance(psiClass.getProject()).getResolveHelper().resolveReferencedClass(psiClass.getName(), context);
 
         Set<String> allStrings = new HashSet<String>();
@@ -206,6 +203,18 @@ public class PsiTypeLookupItem extends LookupItem {
 
     }
     return new PsiTypeLookupItem(type, type.getPresentableText(), false, bracketsCount);
+  }
+
+  private static boolean isDiamond(PsiType type) {
+    boolean diamond = false;
+    if (type instanceof PsiClassReferenceType) {
+      final PsiReferenceParameterList parameterList = ((PsiClassReferenceType)type).getReference().getParameterList();
+      if (parameterList != null) {
+        final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+        diamond = typeParameterElements.length == 1 && typeParameterElements[0].getType() instanceof PsiDiamondType;
+      }
+    }
+    return diamond;
   }
 
   @NotNull
