@@ -165,7 +165,7 @@ public class SvnConfigurable implements Configurable {
   }
 
   public String getDisplayName() {
-    return null;
+    return SvnVcs.VCS_NAME;
   }
 
   public String getHelpTopic() {

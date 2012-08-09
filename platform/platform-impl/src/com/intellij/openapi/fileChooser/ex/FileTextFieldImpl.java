@@ -32,7 +32,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -484,7 +483,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       result.closedPath = typed.endsWith(myFinder.getSeparator()) && typedText.length() > myFinder.getSeparator().length();
       final String currentParentText = result.current.getAbsolutePath();
 
-      if (!StringUtilRt.toUpperCase(typedText).startsWith(StringUtilRt.toUpperCase(currentParentText))) return;
+      if (!StringUtil.toUpperCase(typedText).startsWith(StringUtil.toUpperCase(currentParentText))) return;
 
       String prefix = typedText.substring(currentParentText.length());
       if (prefix.startsWith(myFinder.getSeparator())) {
@@ -531,7 +530,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
           boolean toPreselectFixed = false;
           if (result.effectivePrefix.length() > 0) {
             for (LookupFile each : result.myToComplete) {
-              String eachName = StringUtilRt.toUpperCase(each.getName());
+              String eachName = StringUtil.toUpperCase(each.getName());
               if (!eachName.startsWith(result.effectivePrefix)) continue;
               int diff = result.effectivePrefix.compareTo(eachName);
               currentDiff = Math.max(diff, currentDiff);
@@ -721,7 +720,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       if (SystemInfo.isFileSystemCaseSensitive) {
         toRemoveExistingName = name.startsWith(prefix) && prefix.length() > 0;
       } else {
-        toRemoveExistingName = StringUtilRt.toUpperCase(name).startsWith(StringUtilRt.toUpperCase(prefix)) && prefix.length() > 0;
+        toRemoveExistingName = StringUtil.toUpperCase(name).startsWith(StringUtil.toUpperCase(prefix)) && prefix.length() > 0;
       }
     } else {
       toRemoveExistingName = true;

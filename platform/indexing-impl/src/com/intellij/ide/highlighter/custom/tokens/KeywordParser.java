@@ -17,7 +17,7 @@
 package com.intellij.ide.highlighter.custom.tokens;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 import gnu.trove.THashSet;
@@ -81,7 +81,7 @@ public class KeywordParser extends TokenParser {
 
     final Set<String> result = new THashSet<String>();
     for (String s : keywordSet) {
-      result.add(StringUtilRt.toUpperCase(s));
+      result.add(StringUtil.toUpperCase(s));
     }
     return result;
   }
@@ -97,7 +97,7 @@ public class KeywordParser extends TokenParser {
     }
 
     String keyword = matcher.group(1);
-    String testKeyword = myIgnoreCase ? StringUtilRt.toUpperCase(keyword) : keyword;
+    String testKeyword = myIgnoreCase ? StringUtil.toUpperCase(keyword) : keyword;
     for (int i = 0; i < CustomHighlighterTokenType.KEYWORD_TYPE_COUNT; i++) {
       if (myKeywordSets.get(i).contains(testKeyword)) {
         myTokenInfo.updateData(position, position + keyword.length(), getToken(i));

@@ -15,6 +15,8 @@
  */
 package com.intellij.util.containers;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Arrays;
 
 public class IntArrayList implements Cloneable {
@@ -42,7 +44,7 @@ public class IntArrayList implements Cloneable {
     int oldCapacity = myData.length;
     if (minCapacity > oldCapacity){
       int[] oldData = myData;
-      int newCapacity = (oldCapacity * 3) / 2 + 1;
+      int newCapacity = oldCapacity * 3 / 2 + 1;
       if (newCapacity < minCapacity){
         newCapacity = minCapacity;
       }
@@ -58,7 +60,7 @@ public class IntArrayList implements Cloneable {
       Arrays.fill(myData, fromIndex, toIndex, value);
   }
 
-  public void add(int[] values) {
+  public void add(@NotNull int[] values) {
     int length = values.length;
     ensureCapacity(mySize + length);
     System.arraycopy(values, 0, myData, mySize, length);
@@ -91,6 +93,7 @@ public class IntArrayList implements Cloneable {
     return -1;
   }
 
+  @Override
   public Object clone() {
     try{
       IntArrayList v = (IntArrayList)super.clone();
@@ -104,13 +107,15 @@ public class IntArrayList implements Cloneable {
     }
   }
 
+  @NotNull
   public int[] toArray() {
     int[] result = new int[mySize];
     System.arraycopy(myData, 0, result, 0, mySize);
     return result;
   }
 
-  public int[] toArray(int[] a) {
+  @NotNull
+  public int[] toArray(@NotNull int[] a) {
     if (a.length < mySize){
       a = new int[mySize];
     }
@@ -119,6 +124,8 @@ public class IntArrayList implements Cloneable {
 
     return a;
   }
+
+  @NotNull
   public int[] toArray(int startIndex, int length) {
     int[] result = new int[length];
     System.arraycopy(myData, startIndex, result, 0, length);
@@ -181,7 +188,7 @@ public class IntArrayList implements Cloneable {
   protected void removeRange(int fromIndex, int toIndex) {
     int numMoved = mySize - toIndex;
     System.arraycopy(myData, toIndex, myData, fromIndex, numMoved);
-    mySize -= (toIndex - fromIndex);
+    mySize -= toIndex - fromIndex;
   }
 
   private void checkRange(int index) {

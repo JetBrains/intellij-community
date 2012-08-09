@@ -18,6 +18,11 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,7 +33,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 7/20/12 2:31 PM
  */
-public class JavaRearranger implements Rearranger<JavaElementArrangementEntry> {
+public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, ArrangementStandardSettingsAware {
 
   @NotNull
   @Override
@@ -40,5 +45,29 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry> {
     List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();
     root.accept(new JavaArrangementVisitor(result, document, ranges));
     return result;
+  }
+
+  @Override
+  public boolean isNameFilterEnabled(@NotNull ArrangementSettings settings) {
+    // TODO den implement 
+    return true;
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull ArrangementEntryType type, @NotNull ArrangementSettings settings) {
+    // TODO den implement 
+    return true;
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull ArrangementModifier modifier, @NotNull ArrangementSettings settings) {
+    // TODO den implement 
+    return true;
+  }
+
+  @Override
+  public boolean isEnabled(@NotNull ArrangementEntrySortType type, @NotNull ArrangementSettings settings) {
+    // TODO den implement 
+    return true;
   }
 }

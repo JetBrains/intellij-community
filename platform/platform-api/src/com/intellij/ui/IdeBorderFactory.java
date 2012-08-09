@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,11 @@ public class IdeBorderFactory {
   }
 
   public static Border createRoundedBorder() {
-    return new RoundedLineBorder(getBorderColor(), BORDER_ROUNDNESS);
+    return createRoundedBorder(BORDER_ROUNDNESS);
+  }
+  
+  public static Border createRoundedBorder(int arcSize) {
+    return new RoundedLineBorder(getBorderColor(), arcSize);
   }
 
   public static Border createEmptyBorder(Insets insets) {

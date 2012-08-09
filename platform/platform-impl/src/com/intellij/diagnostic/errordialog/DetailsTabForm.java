@@ -29,10 +29,10 @@ public class DetailsTabForm {
   private Integer myAssigneeId;
   private boolean myProcessEvents = true;
 
-  public DetailsTabForm(@Nullable Action analyzeAction) {
+  public DetailsTabForm(@Nullable Action analyzeAction, boolean internalMode) {
     myCommentsArea.setTitle(DiagnosticBundle.message("error.dialog.comment.prompt"));
     myDetailsPane.setBackground(UIUtil.getTextFieldBackground());
-    myDetailsPane.setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, IdeErrorsDialog.INTERNAL_MODE ? 500 : 205));
+    myDetailsPane.setPreferredSize(new Dimension(IdeErrorsDialog.COMPONENTS_WIDTH, internalMode ? 500 : 205));
     myDetailsHolder.setBorder(IdeBorderFactory.createBorder());
     if (analyzeAction != null) {
       myAnalyzeStacktraceButton.setAction(analyzeAction);

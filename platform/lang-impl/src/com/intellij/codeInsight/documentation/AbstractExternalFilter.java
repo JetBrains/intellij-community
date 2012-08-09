@@ -25,7 +25,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,7 +87,7 @@ public abstract class AbstractExternalFilter {
     protected abstract String convertReference(String root, String href);
 
     public String refFilter(final String root, String read) {
-      String toMatch = StringUtilRt.toUpperCase(read);
+      String toMatch = StringUtil.toUpperCase(read);
       StringBuilder ready = new StringBuilder();
       int prev = 0;
       Matcher matcher = mySelector.matcher(toMatch);
@@ -256,7 +255,7 @@ public abstract class AbstractExternalFilter {
         }
       }
     }
-    while (read != null && !startSection.matcher(StringUtilRt.toUpperCase(read)).find());
+    while (read != null && !startSection.matcher(StringUtil.toUpperCase(read)).find());
 
     if (input instanceof MyReader && contentEncoding != null) {
       if (contentEncoding != null && !contentEncoding.equals("UTF-8") && !contentEncoding.equals(((MyReader)input).getEncoding())) { //restart page parsing with correct encoding
@@ -282,7 +281,7 @@ public abstract class AbstractExternalFilter {
       boolean skip = false;
       
       do {
-        if (StringUtilRt.toUpperCase(read).contains(H2) && !read.toUpperCase().contains("H2")) { // read=class name in <H2>
+        if (StringUtil.toUpperCase(read).contains(H2) && !read.toUpperCase().contains("H2")) { // read=class name in <H2>
           data.append(H2);
           skip = true;
         }
@@ -294,19 +293,19 @@ public abstract class AbstractExternalFilter {
           appendLine(data, read);
         }
       }
-      while (((read = buf.readLine()) != null) && !StringUtilRt.toUpperCase(read).trim().equals(DL) &&
+      while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).trim().equals(DL) &&
              !StringUtil.containsIgnoreCase(read, "<div class=\"description\""));
 
       data.append(DL);
 
       StringBuffer classDetails = new StringBuffer();
 
-      while (((read = buf.readLine()) != null) && !StringUtilRt.toUpperCase(read).equals(HR) && !StringUtilRt.toUpperCase(read).equals(P)) {
+      while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(HR) && !StringUtil.toUpperCase(read).equals(P)) {
         if (reachTheEnd(data, read, classDetails)) return;
         appendLine(classDetails, read);
       }
 
-      while (((read = buf.readLine()) != null) && !StringUtilRt.toUpperCase(read).equals(P) && !StringUtilRt.toUpperCase(read).equals(HR)) {
+      while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(P) && !StringUtil.toUpperCase(read).equals(HR)) {
         if (reachTheEnd(data, read, classDetails)) return;
         appendLine(data, read.replaceAll(DT, DT + BR));
       }
@@ -321,7 +320,7 @@ public abstract class AbstractExternalFilter {
     while (((read = buf.readLine()) != null) &&
            !endSection.matcher(read).find() &&
            StringUtil.indexOfIgnoreCase(read, greatestEndSection, 0) == -1) {
-      if (!StringUtilRt.toUpperCase(read).contains(HR)
+      if (!StringUtil.toUpperCase(read).contains(HR)
           && !StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">")
           && !StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">")) {
         appendLine(data, read);

@@ -21,7 +21,7 @@ package com.intellij.ui.speedSearch;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 
 import javax.swing.*;
@@ -76,8 +76,8 @@ public class NameFilteringListModel<T> extends FilteringListModel<T> {
     super.addToFiltered(elt);
 
     if (myNamer != null) {
-      String filterString = StringUtilRt.toUpperCase(myPattern.compute());
-      String candidateString = StringUtilRt.toUpperCase(myNamer.fun(elt));
+      String filterString = StringUtil.toUpperCase(myPattern.compute());
+      String candidateString = StringUtil.toUpperCase(myNamer.fun(elt));
       int index = getSize() - 1;
 
       if (myFullMatchIndex == -1 && filterString.equals(candidateString)) {

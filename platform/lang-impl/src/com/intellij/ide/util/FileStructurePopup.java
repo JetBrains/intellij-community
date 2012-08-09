@@ -27,6 +27,7 @@ import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.ide.structureView.newStructureView.TreeModelWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.navigation.ItemPresentation;
@@ -123,6 +124,8 @@ public class FileStructurePopup implements Disposable {
   private final boolean myDaemonUpdateEnabled;
   private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<Pair<String, JCheckBox>>();
   private final TreeExpander myTreeExpander;
+  private Ref<Boolean> myAlwaysExpand = Ref.create(true);
+
 
 
   public FileStructurePopup(StructureViewModel structureViewModel,
@@ -205,7 +208,11 @@ public class FileStructurePopup implements Disposable {
     myAbstractTreeBuilder = new FilteringTreeBuilder(myTree, filter, myFilteringStructure, null) {
       @Override
       public void initRootNode() {
+      }
 
+      @Override
+      public boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
+        return myAlwaysExpand.get();
       }
 
       @Override
@@ -316,6 +323,7 @@ public class FileStructurePopup implements Disposable {
                   @Override
                   public void run() {
                     selectPsiElement(myInitialPsiElement);
+                    myAlwaysExpand.set(false);
                   }
                 });
               }
@@ -860,7 +868,7 @@ public class FileStructurePopup implements Disposable {
           }
           return "";
         }
-      }, true);
+      }, false);
     }
 
     @Override
