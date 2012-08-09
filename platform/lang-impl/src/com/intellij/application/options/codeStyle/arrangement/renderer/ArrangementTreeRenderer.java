@@ -16,6 +16,8 @@
 package com.intellij.application.options.codeStyle.arrangement.renderer;
 
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +33,12 @@ import java.awt.*;
  */
 public class ArrangementTreeRenderer implements TreeCellRenderer {
 
-  @NotNull private final ArrangementNodeRenderingContext myContext   = new ArrangementNodeRenderingContext();
+  @NotNull private final TIntObjectHashMap<Component> myRowRenderers = new TIntObjectHashMap<Component>();
+  @NotNull private final ArrangementNodeRenderingContext myContext;
+
+  public ArrangementTreeRenderer(@NotNull ArrangementStandardSettingsAware filter) {
+    myContext = new ArrangementNodeRenderingContext(filter);
+  }
 
   @Override
   public Component getTreeCellRendererComponent(JTree tree,
@@ -42,8 +49,17 @@ public class ArrangementTreeRenderer implements TreeCellRenderer {
                                                 int row,
                                                 boolean hasFocus)
   {
+    Component result = myRowRenderers.get(row);
+    if (result == null) {
+      HierarchicalArrangementSettingsNode node = (HierarchicalArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
+      result = myContext.getRenderer(node.getCurrent()).getRendererComponent(node.getCurrent());
+      myRowRenderers.put(row, result);
+    }
+    return result;
+  }
+
+  public void onTreeRepaintStart() {
+    myRowRenderers.clear();
     myContext.reset();
-    HierarchicalArrangementSettingsNode node = (HierarchicalArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
-    return myContext.getRenderer(node.getCurrent()).getRendererComponent(node.getCurrent());
   }
 }

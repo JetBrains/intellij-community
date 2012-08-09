@@ -54,19 +54,19 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   }
 
   @Override
-  public boolean isEnabled(@NotNull ArrangementEntryType type, @NotNull ArrangementSettings settings) {
+  public boolean isSupported(@NotNull ArrangementEntryType type) {
     // TODO den implement 
     return true;
   }
 
   @Override
-  public boolean isEnabled(@NotNull ArrangementModifier modifier, @NotNull ArrangementSettings settings) {
+  public boolean isSupported(@NotNull ArrangementModifier modifier) {
     // TODO den implement 
     return true;
   }
 
   @Override
-  public boolean isEnabled(@NotNull ArrangementEntrySortType type, @NotNull ArrangementSettings settings) {
+  public boolean isSupported(@NotNull ArrangementEntrySortType type) {
     // TODO den implement 
     return true;
   }

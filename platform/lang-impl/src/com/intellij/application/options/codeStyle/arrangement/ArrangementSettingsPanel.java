@@ -57,7 +57,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   }
 
   private void init() {
-    final ArrangementTreeRenderer renderer = new ArrangementTreeRenderer();
+    final ArrangementTreeRenderer renderer = new ArrangementTreeRenderer(myFilter);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel model = new DefaultTreeModel(root);
     Tree tree = new Tree(model) {
@@ -72,6 +72,12 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       @Override
       public void setSelectionPath(TreePath path) {
         // Don't allow selection in order to avoid standard selection background drawing.
+      }
+
+      @Override
+      public void paint(Graphics g) {
+        renderer.onTreeRepaintStart();
+        super.paint(g);
       }
     };
 

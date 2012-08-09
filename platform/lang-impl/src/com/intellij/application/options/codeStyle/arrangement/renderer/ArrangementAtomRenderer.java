@@ -16,10 +16,10 @@
 package com.intellij.application.options.codeStyle.arrangement.renderer;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,10 +34,29 @@ public class ArrangementAtomRenderer implements ArrangementNodeRenderer<Arrangem
 
   private static final int PADDING = 2;
 
-  private final JPanel myRenderer = new JPanel(new GridBagLayout());
-  private final JLabel myLabel    = new JLabel();
+  @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout());
+  @NotNull private final ArrangementNodeDisplayManager myDisplayValueManager;
 
-  public ArrangementAtomRenderer() {
+  @NotNull private final JLabel myLabel = new JLabel() {
+    @Override
+    public Dimension getMinimumSize() {
+      return getPreferredSize();
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return getPreferredSize();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return mySize == null ? super.getPreferredSize() : mySize;
+    }
+  };
+  @Nullable private Dimension mySize;
+
+  public ArrangementAtomRenderer(@NotNull ArrangementNodeDisplayManager manager) {
+    myDisplayValueManager = manager;
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
     
@@ -60,14 +79,14 @@ public class ArrangementAtomRenderer implements ArrangementNodeRenderer<Arrangem
   @NotNull
   @Override
   public JComponent getRendererComponent(@NotNull ArrangementSettingsAtomNode node) {
-    // TODO den delegate to the dedicated method
-    myLabel.setText(node.getValue().toString().toLowerCase());
+    myLabel.setText(myDisplayValueManager.getDisplayValue(node));
+    mySize = new Dimension(myDisplayValueManager.getMaxWidth(node.getType()), myLabel.getPreferredSize().height);
     return myRenderer;
   }
 
   @Override
   public void reset() {
-    myRenderer.invalidate();
+    myLabel.invalidate();
   }
 
   @Override
