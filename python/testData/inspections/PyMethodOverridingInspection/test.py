@@ -125,3 +125,11 @@ class c27(c26):
         pass
 
 
+# PY-7159
+class c28:
+    def foo(self):
+        pass
+
+class c29(c28):
+    def foo<warning descr="Method signature does not match signature of base method">(self, p1, **kwargs)</warning>:  #fail
+        pass
