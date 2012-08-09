@@ -52,9 +52,6 @@ public class PyDocStubIntention extends BaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
     PyFunction function = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyFunction.class);
-    PythonDocumentationProvider.inserDocStub(function, project, editor);
-
-
+    PythonDocumentationProvider.insertDocStub(function, project, editor);
   }
-
 }

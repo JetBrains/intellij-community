@@ -1,14 +1,13 @@
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.impl.PyElementImpl;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -131,7 +130,7 @@ public class PyDynamicMember {
       return myTarget;
     }
     PyClass targetClass =
-      myTypeName != null && myTypeName.indexOf('.') > 0 ? PyClassNameIndex.findClass(myTypeName, context.getProject()) : null;
+      myTypeName != null && myTypeName.indexOf('.') > 0 ? PyPsiFacade.getInstance(context.getProject()).findClass(myTypeName) : null;
     final PsiElement resolveTarget = findResolveTarget(context);
     if (resolveTarget instanceof PyFunction) {
       return resolveTarget;
@@ -168,7 +167,7 @@ public class PyDynamicMember {
     return myFunction;
   }
 
-  private class MyInstanceElement extends PyElementImpl implements PyExpression {
+  private class MyInstanceElement extends ASTWrapperPsiElement implements PyTypedElement {
     private final PyClass myClass;
     private final PsiElement myContext;
 
@@ -182,7 +181,7 @@ public class PyDynamicMember {
       if (myTypeCallback != null) {
         return myTypeCallback.fun(myContext);
       }
-      return new PyClassType(myClass, !myResolveToInstance);
+      return PyPsiFacade.getInstance(getProject()).createClassType(myClass, !myResolveToInstance);
     }
   }
 }

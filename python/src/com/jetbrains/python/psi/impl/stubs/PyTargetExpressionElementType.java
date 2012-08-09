@@ -66,7 +66,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
         initializer = ((PyReferenceExpression) callee).asQualifiedName();
       }
     }
-    return new PyTargetExpressionStubImpl(name, initializerType, initializer, parentStub);
+    return new PyTargetExpressionStubImpl(name, initializerType, initializer, psi.getQualifier() != null, parentStub);
   }
 
   public void serialize(final PyTargetExpressionStub stub, final StubOutputStream stream)
@@ -80,6 +80,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     }
     else {
       PyQualifiedName.serialize(stub.getInitializer(), stream);
+      stream.writeBoolean(stub.isQualified());
     }
   }
 
@@ -98,7 +99,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       throw new IOException("Unknown custom stub type " + typeName);
     }
     PyQualifiedName initializer = PyQualifiedName.deserialize(stream);
-    return new PyTargetExpressionStubImpl(name, initializerType, initializer, parentStub);
+    boolean isQualified = stream.readBoolean();
+    return new PyTargetExpressionStubImpl(name, initializerType, initializer, isQualified, parentStub);
   }
 
   public boolean shouldCreateStub(final ASTNode node) {

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class PyLiteralCollectionType extends PyClassType implements PyCollectionType {
+public class PyLiteralCollectionType extends PyClassTypeImpl implements PyCollectionType {
   private final PySequenceExpression mySequence;
 
   public PyLiteralCollectionType(@Nullable PyClass source, boolean isDefinition, PySequenceExpression sequence) {

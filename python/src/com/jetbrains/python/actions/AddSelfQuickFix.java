@@ -32,7 +32,7 @@ public class AddSelfQuickFix implements LocalQuickFix {
   @NonNls
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return "Add parameter";
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

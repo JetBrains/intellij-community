@@ -49,25 +49,10 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
         if (node.isCalleeText(PyNames.SET) && isInBuiltins(callee)) {
           PyExpression[] arguments = node.getArguments();
           if (arguments.length == 1) {
-            PyExpression argument= arguments[0];
-            PyElement[] elements = {};
-            if (argument instanceof PyStringLiteralExpression) {
-              return;
-            }
-            if ((argument instanceof PySequenceExpression || (argument instanceof PyParenthesizedExpression &&
-                          ((PyParenthesizedExpression)argument).getContainedExpression() instanceof PyTupleExpression))) {
-
-              if (argument instanceof PySequenceExpression)
-                elements = ((PySequenceExpression)argument).getElements();
-              if (argument instanceof PyParenthesizedExpression) {
-                PyExpression tuple = ((PyParenthesizedExpression)argument).getContainedExpression();
-                if (tuple instanceof PyTupleExpression)
-                  elements = ((PyTupleExpression)(tuple)).getElements();
-              }
-            }
+            PyElement[] elements = getSetCallArguments(node);
             if (elements.length != 0)
                 registerProblem(node, PyBundle.message("INSP.NAME.set.function.to.literal"),
-                                                 new ReplaceFunctionWithSetLiteralQuickFix(elements));
+                                                 new ReplaceFunctionWithSetLiteralQuickFix());
           }
         }
       }
@@ -86,5 +71,22 @@ public class PySetFunctionToLiteralInspection extends PyInspection {
       }
       return false;
     }
+  }
+
+  public static PyElement[] getSetCallArguments(PyCallExpression node) {
+    PyExpression argument = node.getArguments()[0];
+    if (argument instanceof PyStringLiteralExpression) {
+      return PyElement.EMPTY_ARRAY;
+    }
+    if ((argument instanceof PySequenceExpression || (argument instanceof PyParenthesizedExpression &&
+                  ((PyParenthesizedExpression)argument).getContainedExpression() instanceof PyTupleExpression))) {
+
+      if (argument instanceof PySequenceExpression)
+        return ((PySequenceExpression)argument).getElements();
+      PyExpression tuple = ((PyParenthesizedExpression)argument).getContainedExpression();
+      if (tuple instanceof PyTupleExpression)
+        return ((PyTupleExpression)(tuple)).getElements();
+    }
+    return PyElement.EMPTY_ARRAY;
   }
 }

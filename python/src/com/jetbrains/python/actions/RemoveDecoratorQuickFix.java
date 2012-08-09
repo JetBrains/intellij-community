@@ -20,7 +20,7 @@ public class RemoveDecoratorQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return getName();
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

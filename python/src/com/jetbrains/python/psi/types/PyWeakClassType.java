@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author traff
  */
-public class PyWeakClassType extends PyClassType implements PyWeakType {
+public class PyWeakClassType extends PyClassTypeImpl implements PyWeakType {
   public PyWeakClassType(@Nullable PyClass source, boolean is_definition) {
     super(source, is_definition);
   }

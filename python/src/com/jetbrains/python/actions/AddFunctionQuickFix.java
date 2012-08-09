@@ -43,7 +43,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return "Create function in module";
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

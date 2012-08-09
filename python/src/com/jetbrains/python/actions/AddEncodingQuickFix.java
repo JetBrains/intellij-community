@@ -38,7 +38,7 @@ public class AddEncodingQuickFix implements LocalQuickFix {
   @NonNls
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return getName();
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

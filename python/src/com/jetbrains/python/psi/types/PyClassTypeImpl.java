@@ -32,7 +32,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyClassType extends UserDataHolderBase implements PyCallableType {
+public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType {
 
   @Nullable protected final PyClass myClass;
   protected final boolean myIsDefinition;
@@ -53,17 +53,17 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
    * @param source        PyClass which defines this type. For builtin or external classes, skeleton files contain the definitions.
    * @param is_definition whether this type describes an instance or a definition of the class.
    */
-  public PyClassType(@Nullable PyClass source, boolean is_definition) {
+  public PyClassTypeImpl(@Nullable PyClass source, boolean is_definition) {
     myClass = source != null ? CompletionUtil.getOriginalElement(source) : null;
     myIsDefinition = is_definition;
   }
 
-  public PyClassType(@NotNull Project project, String classQualifiedName, boolean isDefinition) {
+  public PyClassTypeImpl(@NotNull Project project, String classQualifiedName, boolean isDefinition) {
     myClass = PyClassNameIndex.findClass(classQualifiedName, project);
     myIsDefinition = isDefinition;
   }
 
-  public <T> PyClassType withUserData(Key<T> key, T value) {
+  public <T> PyClassTypeImpl withUserData(Key<T> key, T value) {
     putUserData(key, value);
     return this;
   }
@@ -71,7 +71,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   /**
    * @return a PyClass which defined this type.
    */
-  @Nullable
+  @Override@Nullable
   public PyClass getPyClass() {
     return myClass;
   }
@@ -79,15 +79,15 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   /**
    * @return whether this type refers to an instance or a definition of the class.
    */
-  public boolean isDefinition() {
+  @Override public boolean isDefinition() {
     return myIsDefinition;
   }
 
-  public PyClassType toInstance() {
-    return myIsDefinition ? new PyClassType(myClass, false) : this;
+  @Override public PyClassType toInstance() {
+    return myIsDefinition ? new PyClassTypeImpl(myClass, false) : this;
   }
 
-  @Nullable
+  @Override@Nullable
   public String getClassQName() {
     return myClass == null ? null : myClass.getQualifiedName();
   }
@@ -148,7 +148,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
           if (derived_class != null) {
             final Iterator<PyClass> base_it = derived_class.iterateAncestorClasses().iterator();
             if (base_it.hasNext()) {
-              return new PyClassType(base_it.next(), true).resolveMember(name, location, direction, resolveContext);
+              return new PyClassTypeImpl(base_it.next(), true).resolveMember(name, location, direction, resolveContext);
             }
             else {
               return null; // no base classes = super() cannot proxy anything meaningful from a base class
@@ -202,7 +202,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     for (PyClassRef superClass : myClass.iterateAncestors()) {
       final PyClass pyClass = superClass.getPyClass();
       if (pyClass != null) {
-        PsiElement superMember = resolveByMembersProviders(new PyClassType(pyClass, isDefinition()), name);
+        PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name);
 
         if (superMember != null) {
           return ResolveResultList.to(superMember);
@@ -225,7 +225,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       if (metaclass instanceof PyReferenceExpression) {
         final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
         if (result.getElement() instanceof PyClass) {
-          return new PyClassType((PyClass)result.getElement(), false);
+          return new PyClassTypeImpl((PyClass)result.getElement(), false);
         }
       }
     }
@@ -236,7 +236,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
     if (isDefinition()) {
-      return new PyClassType(getPyClass(), false);
+      return new PyClassTypeImpl(getPyClass(), false);
     }
     return null;
   }
@@ -392,7 +392,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
       return;
     }
     for (PyClass ancestor : myClass.getSuperClasses()) {
-      Object[] ancestry = (new PyClassType(ancestor, myIsDefinition)).getCompletionVariants(name, expressionHook, context);
+      Object[] ancestry = (new PyClassTypeImpl(ancestor, myIsDefinition)).getCompletionVariants(name, expressionHook, context);
       for (Object ob : ancestry) {
         String inheritedName = ob.toString();
         if (!namesAlready.contains(inheritedName) && !isClassPrivate(inheritedName)) {
@@ -448,7 +448,7 @@ public class PyClassType extends UserDataHolderBase implements PyCallableType {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    PyClassType classType = (PyClassType)o;
+    PyClassTypeImpl classType = (PyClassTypeImpl)o;
 
     if (myIsDefinition != classType.myIsDefinition) return false;
     if (myClass != null ? !myClass.equals(classType.myClass) : classType.myClass != null) return false;

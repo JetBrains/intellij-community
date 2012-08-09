@@ -18,9 +18,6 @@ import org.jetbrains.annotations.NotNull;
  * For consistency, always use """triple double quotes""" around docstrings.
  */
 public class ConvertDocstringQuickFix implements LocalQuickFix {
-  public ConvertDocstringQuickFix() {
-  }
-
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.convert.single.quoted.docstring");
@@ -28,7 +25,7 @@ public class ConvertDocstringQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return getName();
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

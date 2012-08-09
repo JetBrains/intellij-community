@@ -158,7 +158,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
                   final PyType elementType = ((PyCollectionType)t).getElementType(context);
                   return new PyCollectionTypeImpl(cls, false, elementType);
                 }
-                return new PyClassType(cls, false);
+                return new PyClassTypeImpl(cls, false);
               }
             }
             if (t != null && !(t instanceof PyNoneType)) {
@@ -172,7 +172,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             }
           }
           if (cls != null) {
-            return new PyClassType(cls, false);
+            return new PyClassTypeImpl(cls, false);
           }
           final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, this);
           if (providedType != null) {
@@ -260,7 +260,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         if (secondClass != null && secondClass.isSubclass(firstClass)) {
           final Iterator<PyClass> iterator = firstClass.iterateAncestorClasses().iterator();
           if (iterator.hasNext()) {
-            return new PyClassType(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()
+            return new PyClassTypeImpl(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()
           }
         }
       }
@@ -276,11 +276,11 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
     final PyClass[] supers = pyClass.getSuperClasses();
     if (supers.length > 0) {
       if (supers.length == 1) {
-        return new PyClassType(supers[0], false);
+        return new PyClassTypeImpl(supers[0], false);
       }
       List<PyType> superTypes = new ArrayList<PyType>();
       for (PyClass aSuper : supers) {
-        superTypes.add(new PyClassType(aSuper, false));
+        superTypes.add(new PyClassTypeImpl(aSuper, false));
       }
       return PyUnionType.union(superTypes);
     }

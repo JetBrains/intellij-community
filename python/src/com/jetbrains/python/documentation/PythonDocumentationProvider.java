@@ -492,7 +492,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return result;
   }
 
-  public static void inserDocStub(PyFunction function, PyStatementList insertPlace, Project project, Editor editor) {
+  public static void insertDocStub(PyFunction function, PyStatementList insertPlace, Project project, Editor editor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(insertPlace, PsiWhiteSpace.class);
     String ws = "\n";
@@ -504,10 +504,16 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     String docContent = ws + generateDocumentationContentStub(function, ws, true);
     PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
     if (insertPlace.getStatements().length != 0) {
-      PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(function),
-                                                        PyFunction.class, "def " + function.getName() + function.getParameterList().getText()
-                                                        +":\n\t"+ string.getText() + "\n\t" + insertPlace.getText());
-      function.replace(func);
+      if (!insertPlace.getText().contains("\n")) {
+        PyFunction func = elementGenerator.createFromText(LanguageLevel.forElement(function),
+                                                          PyFunction.class,
+                                                          "def " + function.getName() + function.getParameterList().getText()
+                                                          + ":\n\t" + string.getText() + "\n\t" + insertPlace.getText());
+        function.replace(func);
+      }
+      else {
+        insertPlace.addBefore(string, insertPlace.getStatements()[0]);
+      }
     }
     PyStringLiteralExpression docstring = function.getDocStringExpression();
     if (editor != null && docstring != null) {
@@ -517,8 +523,8 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
   }
 
-  public static void inserDocStub(PyFunction function, Project project, Editor editor) {
-    inserDocStub(function, function.getStatementList(), project, editor);
+  public static void insertDocStub(PyFunction function, Project project, Editor editor) {
+    insertDocStub(function, function.getStatementList(), project, editor);
   }
 
   public String generateDocumentationContentStub(PyFunction element, boolean checkReturn) {

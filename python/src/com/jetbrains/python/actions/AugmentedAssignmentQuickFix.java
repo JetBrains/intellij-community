@@ -24,10 +24,6 @@ import java.util.List;
  * for instance, i = i + 1   --> i +=1
  */
 public class AugmentedAssignmentQuickFix implements LocalQuickFix {
-
-  public AugmentedAssignmentQuickFix() {
-  }
-
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.augment.assignment");
@@ -35,7 +31,7 @@ public class AugmentedAssignmentQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return getName();
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

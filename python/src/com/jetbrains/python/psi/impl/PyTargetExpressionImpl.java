@@ -347,7 +347,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     if (exceptClass instanceof PyReferenceExpression) {
       final PsiElement element = ((PyReferenceExpression)exceptClass).getReference().resolve();
       if (element instanceof PyClass) {
-        return new PyClassType((PyClass) element, false);
+        return new PyClassTypeImpl((PyClass) element, false);
       }
     }
     return null;
@@ -363,10 +363,18 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   public Icon getIcon(final int flags) {
-    if (getQualifier() != null || PsiTreeUtil.<PsiElement>getParentOfType(this, PyFunction.class, PyClass.class) instanceof PyClass) {
+    if (isQualified() || PsiTreeUtil.getStubOrPsiParentOfType(this, PyDocStringOwner.class) instanceof PyClass) {
       return PlatformIcons.FIELD_ICON;
     }
     return PlatformIcons.VARIABLE_ICON;
+  }
+
+  public boolean isQualified() {
+    PyTargetExpressionStub stub = getStub();
+    if (stub != null) {
+      return stub.isQualified();
+    }
+    return getQualifier() != null;
   }
 
   @Nullable

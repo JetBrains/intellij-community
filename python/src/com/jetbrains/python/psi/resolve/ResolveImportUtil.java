@@ -593,23 +593,6 @@ public class ResolveImportUtil {
     return null;
   }
 
-  public static enum PointInImport {
-    /**
-     * The reference is not inside an import statement.
-     */
-    NONE,
-
-    /**
-     * The reference is inside import and refers to a module
-     */
-    AS_MODULE,
-
-    /**
-     * The reference is inside import and refers to a name imported from a module
-     */
-    AS_NAME
-  }
-
   /**
    * @param element what we test (identifier, reference, import element, etc)
    * @return the how the element relates to an enclosing import statement, if any

@@ -14,6 +14,7 @@ public interface PyClassMembersProvider {
   ExtensionPointName<PyClassMembersProvider> EP_NAME = ExtensionPointName.create("Pythonid.pyClassMembersProvider");
 
   Collection<PyDynamicMember> getMembers(PyClassType clazz);
+
   @Nullable
   PsiElement resolveMember(PyClassType clazz, String name);
 }

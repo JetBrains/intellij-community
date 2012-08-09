@@ -5,7 +5,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.PyPsiFacade;
+import com.jetbrains.python.psi.resolve.PointInImport;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -17,10 +18,10 @@ import java.util.Collections;
 public abstract class PyModuleMembersProvider {
   public static final ExtensionPointName<PyModuleMembersProvider> EP_NAME = ExtensionPointName.create("Pythonid.pyModuleMembersProvider");
 
-  public Collection<PyDynamicMember> getMembers(PyFile module, ResolveImportUtil.PointInImport point) {
+  public Collection<PyDynamicMember> getMembers(PyFile module, PointInImport point) {
     final VirtualFile vFile = module.getVirtualFile();
     if (vFile != null) {
-      final String qName = ResolveImportUtil.findShortestImportableName(module, vFile);
+      final String qName = PyPsiFacade.getInstance(module.getProject()).findShortestImportableName(module, vFile);
       if (qName != null) {
         return getMembersByQName(module, qName, point);
       }
@@ -30,7 +31,7 @@ public abstract class PyModuleMembersProvider {
 
   @Nullable
   public PsiElement resolveMember(PyFile module, String name) {
-    for (PyDynamicMember o : getMembers(module, ResolveImportUtil.PointInImport.NONE)) {
+    for (PyDynamicMember o : getMembers(module, PointInImport.NONE)) {
       if (o.getName().equals(name)) {
         return o.resolve(module);
       }
@@ -38,5 +39,5 @@ public abstract class PyModuleMembersProvider {
     return null;
   }
 
-  protected abstract Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName, ResolveImportUtil.PointInImport point);
+  protected abstract Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName, PointInImport point);
 }

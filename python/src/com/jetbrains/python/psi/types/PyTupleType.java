@@ -13,7 +13,7 @@ import java.util.Arrays;
 /**
  * @author yole
  */
-public class PyTupleType extends PyClassType implements PySubscriptableType {
+public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType {
   private final PyType[] myElementTypes;
 
   public PyTupleType(PsiElement anchor, PyType[] elementTypes) {

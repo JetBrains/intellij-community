@@ -41,7 +41,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return "Add field to class";
   }
 
   @Nullable

@@ -173,7 +173,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
             if (initType != null && !(initType instanceof PyNoneType)) {
               return initType;
             }
-            return new PyClassType(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
+            return new PyClassTypeImpl(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
           }
         }
         if (isKeywordContainer()) {
@@ -186,7 +186,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
         if (anno != null) {
           final PyClass pyClass = anno.resolveToClass();
           if (pyClass != null) {
-            return new PyClassType(pyClass, false);
+            return new PyClassTypeImpl(pyClass, false);
           }
         }
 

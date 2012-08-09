@@ -4,6 +4,7 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -14,11 +15,6 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to add 'from __future__ import with_statement'' if python version is less than 2.6
  */
 public class UnresolvedRefAddFutureImportQuickFix implements LocalQuickFix {
-  private PyReferenceExpression myElement;
-  public UnresolvedRefAddFutureImportQuickFix(PyReferenceExpression element) {
-    myElement = element;
-  }
-
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.unresolved.reference.add.future");
@@ -26,14 +22,15 @@ public class UnresolvedRefAddFutureImportQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return getName();
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    PyFile file = (PyFile)myElement.getContainingFile();
+    PsiElement element = descriptor.getPsiElement();
+    PyFile file = (PyFile)element.getContainingFile();
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    PyFromImportStatement statement = elementGenerator.createFromText(LanguageLevel.forElement(myElement), PyFromImportStatement.class, 
+    PyFromImportStatement statement = elementGenerator.createFromText(LanguageLevel.forElement(element), PyFromImportStatement.class,
                                                                   "from __future__ import with_statement");
     file.addBefore(statement, file.getStatements().get(0));
   }

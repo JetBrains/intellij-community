@@ -208,7 +208,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       if (anno != null) {
         PyClass pyClass = anno.resolveToClass();
         if (pyClass != null) {
-          return new PyClassType(pyClass, false);
+          return new PyClassTypeImpl(pyClass, false);
         }
       }
     }

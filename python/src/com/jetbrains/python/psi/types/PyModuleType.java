@@ -231,7 +231,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     Set<String> names_already = context.get(CTX_NAMES);
     List<Object> result = new ArrayList<Object>();
 
-    ResolveImportUtil.PointInImport point = ResolveImportUtil.getPointInImport(location);
+    PointInImport point = ResolveImportUtil.getPointInImport(location);
     for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
       for (PyDynamicMember member : provider.getMembers(myModule, point)) {
         final String name = member.getName();
@@ -239,7 +239,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
 
-    if (point == ResolveImportUtil.PointInImport.NONE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when not imported from, add regular attributes
+    if (point == PointInImport.NONE || point == PointInImport.AS_NAME) { // when not imported from, add regular attributes
       final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(location, new Condition<PsiElement>() {
         @Override
         public boolean value(PsiElement psiElement) {
@@ -247,7 +247,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                  PsiTreeUtil.getParentOfType(psiElement, PyImportStatementBase.class) instanceof PyFromImportStatement;
         }
       }, new PyUtil.UnderscoreFilter(0));
-      processor.setPlainNamesOnly(point  == ResolveImportUtil.PointInImport.AS_NAME); // no parens after imported function names
+      processor.setPlainNamesOnly(point  == PointInImport.AS_NAME); // no parens after imported function names
       myModule.processDeclarations(processor, ResolveState.initial(), null, location);
       if (names_already != null) {
         for (LookupElement le : processor.getResultList()) {
@@ -263,7 +263,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       }
     }
     if (PyUtil.isPackage(myModule)) { // our module is a dir, not a single file
-      if (point == ResolveImportUtil.PointInImport.AS_MODULE || point == ResolveImportUtil.PointInImport.AS_NAME) { // when imported from somehow, add submodules
+      if (point == PointInImport.AS_MODULE || point == PointInImport.AS_NAME) { // when imported from somehow, add submodules
         result.addAll(getSubModuleVariants(myModule.getContainingDirectory(), location, names_already));
       }
       else {

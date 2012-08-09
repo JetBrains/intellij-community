@@ -23,10 +23,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyLiteralCollectionType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyUnionType;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -186,13 +183,13 @@ public class PyBuiltinCache {
   /**
    * Stores the most often used types, returned by getNNNType().
    */
-  private final Map<String, PyClassType> myTypeCache = new HashMap<String, PyClassType>();
+  private final Map<String, PyClassTypeImpl> myTypeCache = new HashMap<String, PyClassTypeImpl>();
   private final Map<String, Ref<PyType>> myStdlibTypeCache = new HashMap<String, Ref<PyType>>();
   private long myModStamp = -1;
 
   @Nullable
-  public PyClassType getObjectType(@NonNls String name) {
-    PyClassType val;
+  public PyClassTypeImpl getObjectType(@NonNls String name) {
+    PyClassTypeImpl val;
     synchronized (myTypeCache) {
       if (myBuiltinsFile != null) {
         if (myBuiltinsFile.getModificationStamp() != myModStamp) {
@@ -205,7 +202,7 @@ public class PyBuiltinCache {
     if (val == null) {
       PyClass cls = getClass(name);
       if (cls != null) { // null may happen during testing
-        val = new PyClassType(cls, false);
+        val = new PyClassTypeImpl(cls, false);
         val.assertValid(name);
         synchronized (myTypeCache) {
           myTypeCache.put(name, val);

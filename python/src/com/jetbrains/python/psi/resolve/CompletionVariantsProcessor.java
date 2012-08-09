@@ -72,7 +72,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       }
       else if (element instanceof PyTargetExpression) {
         final PyTargetExpression expr = (PyTargetExpression)element;
-        if (expr.getQualifier() != null || ScopeUtil.getScopeOwner(expr) instanceof PyClass) {
+        if (expr.isQualified() || ScopeUtil.getScopeOwner(expr) instanceof PyClass) {
           cls = expr.getContainingClass();
         }
       }

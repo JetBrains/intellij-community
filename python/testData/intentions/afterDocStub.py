@@ -5,5 +5,7 @@ def foo(a, b):
     :param b:
     :return:
     """
+    print a
+    print b
     if True:
         return
