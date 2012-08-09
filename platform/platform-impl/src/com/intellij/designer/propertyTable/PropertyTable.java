@@ -200,7 +200,7 @@ public abstract class PropertyTable extends JBTable {
         @Override
         public void run() throws Exception {
           for (PropertiesContainer component : myContainers) {
-            if (!property.isDefaultValue(component)) {
+            if (!property.isRecursiveDefault(component)) {
               property.setDefaultValue(component);
             }
           }
@@ -452,7 +452,7 @@ public abstract class PropertyTable extends JBTable {
   private void addExpandedChildren(PropertiesContainer<?> component, Property property, List<Property> properties) {
     if (isExpanded(property)) {
       for (Property child : getChildren(property)) {
-        if (addIfNeeded(component, child,properties)) {
+        if (addIfNeeded(component, child, properties)) {
           addExpandedChildren(component, child, properties);
         }
       }
@@ -462,7 +462,7 @@ public abstract class PropertyTable extends JBTable {
   private boolean addIfNeeded(PropertiesContainer<?> component, Property property, List<Property> properties) {
     if (property.isExpert() && !myShowExpertProperties) {
       try {
-        if (property.isDefaultValue(component)) {
+        if (property.isRecursiveDefault(component)) {
           return false;
         }
       }
@@ -576,7 +576,7 @@ public abstract class PropertyTable extends JBTable {
 
   public boolean isDefault(Property property) throws Exception {
     for (PropertiesContainer component : myContainers) {
-      if (!property.isDefaultValue(component)) {
+      if (!property.isRecursiveDefault(component)) {
         return false;
       }
     }
@@ -1161,7 +1161,12 @@ public abstract class PropertyTable extends JBTable {
 
       boolean isDefault = true;
       try {
-        isDefault = isDefault(property);
+        for (PropertiesContainer container : myContainers) {
+          if (!property.showAsDefault(container)) {
+            isDefault = false;
+            break;
+          }
+        }
       }
       catch (Exception e) {
         LOG.debug(e);
