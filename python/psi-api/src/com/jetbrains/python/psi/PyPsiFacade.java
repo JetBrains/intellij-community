@@ -4,6 +4,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -15,5 +16,8 @@ public abstract class PyPsiFacade {
 
   public abstract QualifiedNameResolver qualifiedNameResolver(String qNameString);
   public abstract QualifiedNameResolver qualifiedNameResolver(PyQualifiedName qualifiedName);
+
+  @Nullable
+  public abstract PyClass findClass(String qName);
 
 }
