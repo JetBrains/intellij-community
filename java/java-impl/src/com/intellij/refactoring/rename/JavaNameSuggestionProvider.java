@@ -16,7 +16,6 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.NameUtil;
@@ -132,7 +131,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
         for (int i = 0; i < words.length; i++) {
           String word = words[i];
           if (i > 0) buffer.append('_');
-          buffer.append(StringUtilRt.toUpperCase(word));
+          buffer.append(StringUtil.toUpperCase(word));
         }
         return new String[] {buffer.toString()};
       }

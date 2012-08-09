@@ -28,7 +28,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -128,7 +128,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
 
   @Nullable
   public static String getType(@NotNull String text) {
-    String upcased = StringUtilRt.toUpperCase(text);
+    String upcased = StringUtil.toUpperCase(text);
     if (ERROR_PATTERN.matcher(upcased).matches()) return ERROR;
     if (WARNING_PATTERN.matcher(upcased).matches() || WARN_PATTERN.matcher(upcased).matches()) return WARNING;
     if (INFO_PATTERN.matcher(upcased).matches()) return INFO;

@@ -80,7 +80,8 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   }
 
   public void testSelfLink() throws Exception {
-    final File selfLinkFile = createTempLink(myTempDir.getPath() + "/self_link", myTempDir.getPath() + "/self_link");
+    String target = new File(myTempDir.getPath(), "self_link").getPath();
+    final File selfLinkFile = createTempLink(target, target);
     final VirtualFile selfLinkVFile = refreshAndFind(selfLinkFile);
     assertNotNull(selfLinkVFile);
     assertBrokenLink(selfLinkVFile);

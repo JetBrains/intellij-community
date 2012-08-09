@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ public class JavaCodeStyleMainPanel extends TabbedLanguageCodeStylePanel {
     super.initTabs(settings);
     addTab(new JavaDocFormattingPanel(settings));
     addTab(new CodeStyleImportsPanelWrapper(settings));
+    addTab(new JavaArrangementPanel(settings));
     for (CodeStyleSettingsProvider provider : Extensions.getExtensions(CodeStyleSettingsProvider.EXTENSION_POINT_NAME)) {
       if (provider.getLanguage() == JavaLanguage.INSTANCE && !provider.hasSettingsPage()) {
         createTab(provider);

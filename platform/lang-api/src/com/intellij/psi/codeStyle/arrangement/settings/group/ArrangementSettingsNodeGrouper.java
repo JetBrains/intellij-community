@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.formatter;
-
-import com.intellij.openapi.editor.LineWrapPositionStrategy;
-import com.intellij.openapi.editor.PsiAwareDefaultLineWrapPositionStrategy;
-import com.intellij.psi.TokenType;
-import com.intellij.psi.xml.XmlElementType;
+package com.intellij.psi.codeStyle.arrangement.settings.group;
 
 /**
- * {@link LineWrapPositionStrategy} for markup languages like XML, HTML etc.
+ * // TODO den add doc
  * 
  * @author Denis Zhdanov
- * @since 5/11/11 7:42 PM
+ * @since 8/8/12 12:29 PM
  */
-public class MarkupLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
-
-  public MarkupLineWrapPositionStrategy() {
-    super(true, XmlElementType.XML_TEXT, TokenType.WHITE_SPACE);
-  }
+public interface ArrangementSettingsNodeGrouper {
 }

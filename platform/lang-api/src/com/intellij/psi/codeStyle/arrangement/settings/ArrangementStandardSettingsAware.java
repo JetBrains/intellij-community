@@ -21,31 +21,23 @@ import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * // TODO den add doc
  * Strategy that defines what subset of standard arrangement settings can be used during defining arrangement settings. 
  * 
  * @author Denis Zhdanov
  * @since 8/6/12 2:26 PM
  */
-public interface ArrangementSettingsFilter {
+public interface ArrangementStandardSettingsAware {
   
   // TODO den add doc
-  boolean isSupported(@NotNull ArrangementEntryType type);
+  boolean isNameFilterEnabled(@NotNull ArrangementSettings settings);
+  
+  // TODO den add doc
+  boolean isEnabled(@NotNull ArrangementEntryType type, @NotNull ArrangementSettings settings);
+  
+  // TODO den add doc
+  boolean isEnabled(@NotNull ArrangementModifier modifier, @NotNull ArrangementSettings settings);
 
   // TODO den add doc
-  boolean isSupported(@NotNull ArrangementModifier modifier);
-
-  // TODO den add doc
-  boolean isSupported(@NotNull ArrangementEntrySortType type);
-  
-  // TODO den add doc
-  boolean isNameFilterSupported();
-  
-  // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementEntryType type, @NotNull ArrangementEntryNodeSettings settings);
-  
-  // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementModifier modifier, @NotNull ArrangementEntryNodeSettings settings);
-
-  // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementEntrySortType type, @NotNull ArrangementEntryNodeSettings settings);
+  boolean isEnabled(@NotNull ArrangementEntrySortType type, @NotNull ArrangementSettings settings);
 }
