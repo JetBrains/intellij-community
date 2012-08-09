@@ -243,6 +243,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) return classType;
+      assert aClass.isValid();
       if (aClass instanceof PsiTypeParameter) {
         final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
         if (containsInMap(typeParameter)) {
