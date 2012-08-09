@@ -113,3 +113,15 @@ class c24:
 class c25(c24):
     def foo(self, arg1, arg2=None): #pass
         pass
+
+
+# PY-7162
+class c26:
+    def foo(self, arg1, arg2=None):
+        pass
+
+class c27(c26):
+    def foo<warning descr="Method signature does not match signature of base method">(self, arg1=None)</warning>: #fail
+        pass
+
+

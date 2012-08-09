@@ -90,7 +90,7 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     final int otherOptionalCount = optionalParametersCount(otherParams);
     final int requiredCount = params.length - optionalCount;
     final int otherRequiredCount = otherParams.length - otherOptionalCount;
-    return requiredCount <= otherRequiredCount && params.length >= otherRequiredCount && optionalCount >= otherOptionalCount;
+    return requiredCount <= otherRequiredCount && params.length >= otherParams.length && optionalCount >= otherOptionalCount;
   }
 
   private static int optionalParametersCount(@NotNull PyParameter[] parameters) {
