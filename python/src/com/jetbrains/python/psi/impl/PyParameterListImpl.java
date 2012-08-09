@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
@@ -70,11 +71,13 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     final int otherOptionalCount = optionalParametersCount(otherParams);
     final int requiredCount = requiredParametersCount(this);
     final int otherRequiredCount = requiredParametersCount(other);
+    if (other.hasPositionalContainer() || other.hasKeywordContainer()) {
+      if (otherParams.length == specialParametersCount(other)) {
+        return true;
+      }
+    }
     if (hasPositionalContainer() || hasKeywordContainer()) {
       return requiredCount <= otherRequiredCount;
-    }
-    if (other.hasPositionalContainer() || other.hasKeywordContainer()) {
-      return otherParams.length == specialParametersCount(other);
     }
     return requiredCount <= otherRequiredCount && params.length >= otherParams.length && optionalCount >= otherOptionalCount;
   }
@@ -90,7 +93,6 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
   }
 
   private static int specialParametersCount(@NotNull PyParameterList parameterList) {
-    final PyFunction function = parameterList.getContainingFunction();
     int n = 0;
     if (parameterList.hasPositionalContainer()) {
       n++;
@@ -98,8 +100,20 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     if (parameterList.hasKeywordContainer()) {
       n++;
     }
-    if (function != null && function.asMethod() != null) {
-      n++;
+    final PyFunction function = parameterList.getContainingFunction();
+    if (function != null) {
+      if (function.asMethod() != null) {
+        n++;
+      }
+    }
+    else {
+      final PyParameter[] parameters = parameterList.getParameters();
+      if (parameters.length > 0) {
+        final PyParameter first = parameters[0];
+        if (PyNames.CANONICAL_SELF.equals(first.getName())) {
+          n++;
+        }
+      }
     }
     return n;
   }
