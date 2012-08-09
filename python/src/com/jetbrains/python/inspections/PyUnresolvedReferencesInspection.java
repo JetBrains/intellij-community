@@ -51,6 +51,7 @@ import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -671,12 +672,26 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return callExpression != null && node == callExpression.getCallee();
     }
 
-    private static boolean overridesGetAttr(PyClass cls) {
-      PyFunction method = cls.findMethodByName(PyNames.GETATTR, true);
+    @Nullable
+    private static PsiElement resolveClassMember(@NotNull PyClass cls, @NotNull String name) {
+      final TypeEvalContext context = TypeEvalContext.fastStubOnly(null);
+      final PyType type = cls.getType(context);
+      if (type != null) {
+        final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
+                                                                              PyResolveContext.noImplicits().withTypeEvalContext(context));
+        if (results != null && !results.isEmpty()) {
+          return results.get(0).getElement();
+        }
+      }
+      return null;
+    }
+
+    private static boolean overridesGetAttr(@NotNull PyClass cls) {
+      PsiElement method = resolveClassMember(cls, PyNames.GETATTR);
       if (method != null) {
         return true;
       }
-      method = cls.findMethodByName(PyNames.GETATTRIBUTE, true);
+      method = resolveClassMember(cls, PyNames.GETATTRIBUTE);
       if (method != null && !PyBuiltinCache.getInstance(cls).hasInBuiltins(method)) {
         return true;
       }
