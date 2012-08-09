@@ -363,40 +363,38 @@ public class PyPackageRequirementsInspection extends PyInspection {
   }
 
   private static class AddToRequirementsFix implements LocalQuickFix {
-    @Nullable private final PyListLiteralExpression mySetupPyRequires;
-    @Nullable private final VirtualFile myRequirementsTxt;
-    @Nullable private final PyArgumentList mySetupArgumentList;
     @NotNull private final String myPackageName;
     @NotNull private final LanguageLevel myLanguageLevel;
+    @NotNull private Module myModule;
 
     private AddToRequirementsFix(@NotNull Module module, @NotNull String packageName, @NotNull LanguageLevel languageLevel) {
       myPackageName = packageName;
       myLanguageLevel = languageLevel;
-      myRequirementsTxt = PyPackageUtil.findRequirementsTxt(module);
-      mySetupPyRequires = PyPackageUtil.findSetupPyRequires(module);
-      final PyFile setupPy = PyPackageUtil.findSetupPy(module);
+      myModule = module;
+    }
+
+    @Nullable
+    private PyArgumentList findSetupArgumentList() {
+      final PyFile setupPy = PyPackageUtil.findSetupPy(myModule);
       if (setupPy != null) {
         final PyCallExpression setupCall = PyPackageUtil.findSetupCall(setupPy);
         if (setupCall != null) {
-          mySetupArgumentList = setupCall.getArgumentList();
-        }
-        else {
-          mySetupArgumentList = null;
+          return setupCall.getArgumentList();
         }
       }
-      else {
-        mySetupArgumentList = null;
-      }
+      return null;
     }
 
     @NotNull
     @Override
     public String getName() {
       final String target;
-      if (myRequirementsTxt != null) {
-        target = myRequirementsTxt.getName();
+      final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(myModule);
+      final PyListLiteralExpression setupPyRequires = PyPackageUtil.findSetupPyRequires(myModule);
+      if (requirementsTxt != null) {
+        target = requirementsTxt.getName();
       }
-      else if (mySetupPyRequires != null || mySetupArgumentList != null) {
+      else if (setupPyRequires != null || findSetupArgumentList() != null) {
         target = "setup.py";
       }
       else {
@@ -413,15 +411,17 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
+      final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(myModule);
+      final PyListLiteralExpression setupPyRequires = PyPackageUtil.findSetupPyRequires(myModule);
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
-              if (myRequirementsTxt != null) {
-                if (myRequirementsTxt.isWritable()) {
-                  final Document document = FileDocumentManager.getInstance().getDocument(myRequirementsTxt);
+              if (requirementsTxt != null) {
+                if (requirementsTxt.isWritable()) {
+                  final Document document = FileDocumentManager.getInstance().getDocument(requirementsTxt);
                   if (document != null) {
                     document.insertString(0, myPackageName + "\n");
                   }
@@ -429,17 +429,18 @@ public class PyPackageRequirementsInspection extends PyInspection {
               }
               else {
                 final PyElementGenerator generator = PyElementGenerator.getInstance(project);
-                if (mySetupPyRequires != null) {
-                  if (mySetupPyRequires.getContainingFile().isWritable()) {
+                final PyArgumentList argumentList = findSetupArgumentList();
+                if (setupPyRequires != null) {
+                  if (setupPyRequires.getContainingFile().isWritable()) {
                     final String text = String.format("'%s'", myPackageName);
                     final PyExpression generated = generator.createExpressionFromText(myLanguageLevel, text);
-                    mySetupPyRequires.add(generated);
+                    setupPyRequires.add(generated);
                   }
                 }
-                else if (mySetupArgumentList != null) {
+                else if (argumentList != null) {
                   final PyKeywordArgument requiresArg = generateRequiresKwarg(generator);
                   if (requiresArg != null) {
-                    mySetupArgumentList.addArgument(requiresArg);
+                    argumentList.addArgument(requiresArg);
                   }
                 }
               }
