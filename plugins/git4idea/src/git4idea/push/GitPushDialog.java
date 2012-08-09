@@ -301,7 +301,7 @@ public class GitPushDialog extends DialogWrapper {
     if (savedValue == null) {
       return currentDestBranchValue != null;
     }
-    return !savedValue.equals(myDestBranchInfoOnRefresh.get());
+    return !savedValue.equals(currentDestBranchValue);
   }
 
   private class RepositoryCheckboxListener implements Consumer<Boolean> {
