@@ -31,7 +31,7 @@ import java.awt.*;
  */
 public class ArrangementTreeRenderer implements TreeCellRenderer {
 
-  @NotNull private final ArrangementNodeRenderingContext myContext = new ArrangementNodeRenderingContext();
+  @NotNull private final ArrangementNodeRenderingContext myContext   = new ArrangementNodeRenderingContext();
 
   @Override
   public Component getTreeCellRendererComponent(JTree tree,
@@ -44,6 +44,6 @@ public class ArrangementTreeRenderer implements TreeCellRenderer {
   {
     myContext.reset();
     HierarchicalArrangementSettingsNode node = (HierarchicalArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
-    return myContext.getRenderer(node.getCurrent()).getRendererComponent(node.getCurrent()); 
+    return myContext.getRenderer(node.getCurrent()).getRendererComponent(node.getCurrent());
   }
 }

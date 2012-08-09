@@ -47,4 +47,9 @@ public class ArrangementSettingsAtomNode implements ArrangementSettingsNode {
   public void invite(@NotNull ArrangementSettingsNodeVisitor visitor) {
     visitor.visit(this);
   }
+
+  @Override
+  public String toString() {
+    return myType + ": " + myValue;
+  }
 }

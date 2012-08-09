@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * // TODO den add doc
+ * 
  * @author Denis Zhdanov
  * @since 8/8/12 1:23 PM
  */
@@ -46,5 +48,10 @@ public class HierarchicalArrangementSettingsNode {
 
   public void addChild(@NotNull HierarchicalArrangementSettingsNode child) {
     myChildren.add(child);
+  }
+
+  @Override
+  public String toString() {
+    return myCurrent.toString();
   }
 }

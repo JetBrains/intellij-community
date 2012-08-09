@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.model;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -53,6 +54,11 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
   @Override
   public void invite(@NotNull ArrangementSettingsNodeVisitor visitor) {
     visitor.visit(this);
+  }
+
+  @Override
+  public String toString() {
+    return StringUtil.join(myOperands, myOperator == Operator.AND ? " and " : " or ");
   }
 
   public enum Operator {

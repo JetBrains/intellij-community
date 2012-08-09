@@ -83,6 +83,10 @@ public class ArrangementNodeRenderingContext {
   public void reset() {
     for (Map.Entry<NodeType, Stack<ArrangementNodeRenderer<?>>> entry : myBusy.entrySet()) {
       myFree.get(entry.getKey()).addAll(entry.getValue());
+      for (ArrangementNodeRenderer<?> renderer : entry.getValue()) {
+        renderer.reset();
+      }
+      entry.getValue().clear();
     }
   }
   

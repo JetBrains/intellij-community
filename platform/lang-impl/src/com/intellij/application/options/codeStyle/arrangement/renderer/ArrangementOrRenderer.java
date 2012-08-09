@@ -26,9 +26,15 @@ import javax.swing.*;
  */
 public class ArrangementOrRenderer extends JPanel implements ArrangementNodeRenderer<ArrangementSettingsCompositeNode> {
 
+  @NotNull
   @Override
   public JComponent getRendererComponent(@NotNull ArrangementSettingsCompositeNode node) {
     // TODO den implement 
     return new JLabel("xxx");
+  }
+
+  @Override
+  public void reset() {
+    // TODO den implement 
   }
 }

@@ -16,7 +16,9 @@
 package com.intellij.application.options.codeStyle.arrangement.renderer;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
+import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,32 +30,48 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 8/8/12 10:06 AM
  */
-public class ArrangementAtomRenderer extends JPanel implements ArrangementNodeRenderer<ArrangementSettingsAtomNode> {
+public class ArrangementAtomRenderer implements ArrangementNodeRenderer<ArrangementSettingsAtomNode> {
 
   private static final int PADDING = 2;
 
-  private final JPanel myRenderer = new JPanel(new BorderLayout());
+  private final JPanel myRenderer = new JPanel(new GridBagLayout());
   private final JLabel myLabel    = new JLabel();
-  
+
   public ArrangementAtomRenderer() {
-    JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setOpaque(false);
-    labelPanel.add(myLabel, BorderLayout.CENTER);
+    myLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
+    
+    JPanel labelPanel = new JPanel(new GridBagLayout());
+    myLabel.setBackground(Color.red);
+    labelPanel.add(myLabel, constraints);
     labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
-
-    JPanel borderPanel = new JPanel(new BorderLayout());
-    borderPanel.add(labelPanel, BorderLayout.CENTER);
-    borderPanel.setBorder(IdeBorderFactory.createRoundedBorder(myLabel.getFont().getSize()));
-    borderPanel.setOpaque(false);
-
+    labelPanel.setOpaque(false);
+    
+    JPanel roundBorderPanel = new JPanel(new GridBagLayout());
+    roundBorderPanel.add(labelPanel);
+    roundBorderPanel.setBorder(IdeBorderFactory.createRoundedBorder(myLabel.getFont().getSize()));
+    roundBorderPanel.setOpaque(false);
+    
     myRenderer.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
-    myRenderer.add(borderPanel, BorderLayout.CENTER);
+    myRenderer.add(roundBorderPanel, constraints);
+    myRenderer.setOpaque(false);
   }
 
+  @NotNull
   @Override
   public JComponent getRendererComponent(@NotNull ArrangementSettingsAtomNode node) {
     // TODO den delegate to the dedicated method
-    myLabel.setText(node.getValue().toString());
+    myLabel.setText(node.getValue().toString().toLowerCase());
     return myRenderer;
+  }
+
+  @Override
+  public void reset() {
+    myRenderer.invalidate();
+  }
+
+  @Override
+  public String toString() {
+    return myLabel.getText();
   }
 }
