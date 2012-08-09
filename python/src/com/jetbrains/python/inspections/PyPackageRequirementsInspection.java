@@ -143,12 +143,6 @@ public class PyPackageRequirementsInspection extends PyInspection {
       }
     }
 
-    @Nullable
-    private static Sdk findPythonSdk(@NotNull PsiElement element) {
-      final Module module = ModuleUtil.findModuleForPsiElement(element);
-      return PythonSdkType.findPythonSdk(module);
-    }
-
     private void checkPackageNameInRequirements(@NotNull PyQualifiedExpression importedExpression) {
       final List<PyExpression> expressions = PyResolveUtil.unwindQualifiers(importedExpression);
       if (!expressions.isEmpty()) {
