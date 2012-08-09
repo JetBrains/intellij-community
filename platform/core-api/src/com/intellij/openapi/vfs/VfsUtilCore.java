@@ -179,21 +179,31 @@ public class VfsUtilCore {
                                                @Nullable Set<VirtualFile> visitedSymLinks) {
     if (!file.isValid()) return;
     if (!visitor.visitFile(file)) return;
+
+    boolean visitChildren = true;
     if (file.isSymLink()) {
       if (!visitor.followSymLinks()) return;
       if (visitedSymLinks == null) {
         visitedSymLinks = new HashSet<VirtualFile>();
       }
-      if (!visitedSymLinks.add(file)) {
-        visitor.afterChildrenVisited(file);
-        return;
+      if (!visitedSymLinks.add(file) || isInvalidLink(file)) {
+        visitChildren = false;
       }
     }
-    VirtualFile[] children = file.getChildren();
-    for (VirtualFile child : children) {
-      visitChildrenRecursively(child, visitor, visitedSymLinks);
+
+    if (visitChildren) {
+      VirtualFile[] children = file.getChildren();
+      for (VirtualFile child : children) {
+        visitChildrenRecursively(child, visitor, visitedSymLinks);
+      }
     }
+
     visitor.afterChildrenVisited(file);
+  }
+
+  private static boolean isInvalidLink(@NotNull VirtualFile link) {
+    final VirtualFile target = link.getCanonicalFile();
+    return target == null || target == link || isAncestor(target, link, true);
   }
 
   @NotNull
