@@ -70,13 +70,13 @@ class GitCrlfProblemsDetectorTest {
   }
 
   @Test
-  void "core.autocrlf is true = no warning"() {
+  void "autocrlf is true = warning"() {
     git ("config core.autocrlf true")
     assertFalse "No warning should be done if core.autocrlf is true", detect("temp").shouldWarn()
   }
 
   @Test
-  void "core.autocrlf is input = no warning"() {
+  void "autocrlf is input = no warning"() {
     git ("config core.autocrlf input")
     assertFalse "No warning should be done if core.autocrlf is input", detect("temp").shouldWarn()
   }
@@ -88,7 +88,7 @@ class GitCrlfProblemsDetectorTest {
   }
 
   @Test
-  void "file with CRLF, no attrs, core.autocrlf is false = warning"() {
+  void "file with CRLF, no attrs, autocrlf is false = warning"() {
     createCrlfFile("win")
     assertFalse "Warning should be done for a CRLF file with core.autocrlf = false", detect("temp").shouldWarn()
   }
