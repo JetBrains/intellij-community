@@ -45,6 +45,7 @@ import com.intellij.rt.coverage.data.LineCoverage;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -74,6 +75,8 @@ public class SrcFileAnnotator implements Disposable {
   private SoftReference<TIntIntHashMap> myOldToNewLines;
   private SoftReference<byte[]> myOldContent;
   private final static Object LOCK = new Object();
+  
+  private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, this);
 
   public SrcFileAnnotator(final PsiFile file, final Editor editor) {
     myFile = file;
@@ -414,7 +417,8 @@ public class SrcFileAnnotator implements Disposable {
           }
         }
         final List<RangeHighlighter> highlighters = rangeHighlighters;
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        myUpdateAlarm.cancelAllRequests();
+        myUpdateAlarm.addRequest(new Runnable() {
           @Override
           public void run() {
             final TIntIntHashMap newToOldLineMapping = getNewToOldLineMapping(suite.getLastCoverageTimeStamp());
@@ -437,7 +441,7 @@ public class SrcFileAnnotator implements Disposable {
               });
             }
           }
-        });
+        }, 100);
       }
     };
     myDocument.addDocumentListener(documentListener);
