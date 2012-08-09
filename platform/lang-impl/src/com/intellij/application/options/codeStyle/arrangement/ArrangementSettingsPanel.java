@@ -80,6 +80,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         super.paint(g);
       }
     };
+    
+    tree.addMouseListener(renderer);
+    tree.addMouseMotionListener(renderer);
 
     // TODO den remove
     List<ArrangementSettingsNode> children = new ArrayList<ArrangementSettingsNode>();
