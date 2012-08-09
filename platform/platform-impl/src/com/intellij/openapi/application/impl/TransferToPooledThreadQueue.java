@@ -30,17 +30,19 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
  * Usage: {@link #offer(Object)} } : schedules element for processing in a pooled thread
  */
 public class TransferToPooledThreadQueue<T> extends TransferToEDTQueue<T> {
-  private final ScheduledThreadPoolExecutor myExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor("Encoding detection thread");
+  private final ScheduledThreadPoolExecutor myExecutor;
 
   public TransferToPooledThreadQueue(@NonNls @NotNull String name,
                                      @NotNull Condition<?> shutUpCondition,
                                      int maxUnitOfWorkThresholdMs,
                                      @NotNull Processor<T> processor) {
     super(name, processor, shutUpCondition, maxUnitOfWorkThresholdMs);
+    myExecutor = ConcurrencyUtil.newSingleScheduledThreadExecutor(name);
   }
 
   @Override
   protected void schedule(@NotNull Runnable updateRunnable) {
     myExecutor.execute(updateRunnable);
   }
+
 }
