@@ -182,7 +182,8 @@ public class GitPushDialog extends DialogWrapper {
       LOG.info("collectInfoToPush...");
       myPushSpecs = pushSpecsForCurrentOrEnteredBranches();
       myGitCommitsToPush = myPusher.collectCommitsToPush(myPushSpecs);
-      LOG.info("collectInfoToPush | Collected commits to push: " + logMessageForCommits(myGitCommitsToPush));
+      LOG.info(String.format("collectInfoToPush | Collected commits to push. Push spec: %s, commits: %s",
+                             myPushSpecs, logMessageForCommits(myGitCommitsToPush)));
       return null;
     }
     catch (VcsException e) {
@@ -210,15 +211,15 @@ public class GitPushDialog extends DialogWrapper {
       String remoteName = currentBranch.getTrackedRemoteName(repository.getProject(), repository.getRoot());
       String trackedBranchName = currentBranch.getTrackedBranchName(repository.getProject(), repository.getRoot());
       GitRemote remote = GitUtil.findRemoteByName(repository, remoteName);
-      GitBranch tracked = findRemoteBranchByName(repository, remote, trackedBranchName);
-      if (remote == null || tracked == null) {
+      GitBranch targetBranch = findRemoteBranchByName(repository, remote, trackedBranchName);
+      if (remote == null || targetBranch == null) {
         Pair<GitRemote,GitBranch> remoteAndBranch = GitUtil.findMatchingRemoteBranch(repository, currentBranch);
         if (remoteAndBranch == null) {
           remote = myRefspecPanel.getSelectedRemote();
-          tracked = GitPusher.NO_TARGET_BRANCH;
+          targetBranch = GitPusher.NO_TARGET_BRANCH;
         } else {
           remote = remoteAndBranch.getFirst();
-          tracked = remoteAndBranch.getSecond();
+          targetBranch = remoteAndBranch.getSecond();
         }
       }
 
@@ -232,10 +233,10 @@ public class GitPushDialog extends DialogWrapper {
           }
           manualBranch = new GitBranch(manualBranchName, false, true);
         }
-        tracked = manualBranch;
+        targetBranch = manualBranch;
       }
 
-      GitPushSpec pushSpec = new GitPushSpec(remote, currentBranch, tracked);
+      GitPushSpec pushSpec = new GitPushSpec(remote, currentBranch, targetBranch);
       defaultSpecs.put(repository, pushSpec);
     }
     return defaultSpecs;
