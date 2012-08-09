@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.XmlTagValueImpl;
 import com.intellij.psi.meta.PsiMetaData;
@@ -35,6 +36,7 @@ import java.util.Map;
  * @author peter
  */
 public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.IncludedXmlTag");
   public IncludedXmlTag(@NotNull XmlTag original, @Nullable PsiElement parent) {
     super(original, parent);
   }
@@ -61,7 +63,9 @@ public class IncludedXmlTag extends IncludedXmlElement<XmlTag> implements XmlTag
   @NotNull
   @NonNls
   public String getNamespace() {
-    return getOriginal().getNamespace();
+    XmlTag original = getOriginal();
+    LOG.assertTrue(original.isValid());
+    return original.getNamespace();
   }
 
   @Override
