@@ -58,44 +58,44 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   @Override
-  public void addElement(LookupElement element) {
+  public void addElement(LookupElement added) {
     myCount++;
 
-    final Set<LookupElement> toUpdate = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
-    toUpdate.add(element);
-
-    final Set<String> strings = getAllLookupStrings(element);
+    final Set<String> strings = getAllLookupStrings(added);
     for (String string : strings) {
       if (string.length() == 0) continue;
 
-      myElements.putValue(string, element);
+      myElements.putValue(string, added);
       mySortedStrings.add(string);
       final NavigableSet<String> after = mySortedStrings.tailSet(string, false);
       for (String s : after) {
         if (!s.startsWith(string)) {
           break;
         }
-        toUpdate.addAll(myElements.get(s));
+        for (LookupElement longer : myElements.get(s)) {
+          addShorterItem(added, longer);
+        }
       }
     }
-    myNext.addElement(element);
+    myNext.addElement(added);
 
-    for (LookupElement lookupElement : toUpdate) {
-      recalculateToLift(lookupElement);
-    }
+    calculateToLift(added);
   }
 
-  private void recalculateToLift(LookupElement element) {
-    final THashSet<LookupElement> forPreselection = loadItems(element, myToLiftForPreselection);
-    final THashSet<LookupElement> forSorting = loadItems(element, myToLiftForSorting);
+  private void addShorterItem(LookupElement shorter, LookupElement longer) {
+    Map<LookupElement, LookupElement[]> map = myCondition.shouldLift(shorter, longer) ? myToLiftForPreselection : myToLiftForSorting;
+    THashSet<LookupElement> toLift = loadItems(longer, map);
+    toLift.add(shorter);
+    saveItems(longer, toLift, map);
+  }
+
+  private void calculateToLift(LookupElement element) {
+    final THashSet<LookupElement> forPreselection = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
+    final THashSet<LookupElement> forSorting = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
     for (String string : getAllLookupStrings(element)) {
       for (int len = 1; len < string.length(); len++) {
         String prefix = string.substring(0, len);
         for (LookupElement shorterElement : myElements.get(prefix)) {
-          if (forSorting.contains(shorterElement) || forPreselection.contains(shorterElement)) {
-            continue;
-          }
-
           if (myCondition.shouldLift(shorterElement, element)) {
             forPreselection.add(shorterElement);
           } else {
@@ -110,8 +110,8 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   private static THashSet<LookupElement> loadItems(LookupElement key, final Map<LookupElement, LookupElement[]> map) {
-    final THashSet<LookupElement> forPreselection = new THashSet<LookupElement>(TObjectHashingStrategy.IDENTITY);
     LookupElement[] items = map.get(key);
+    final THashSet<LookupElement> forPreselection = new THashSet<LookupElement>(items == null ? 2 : items.length * 2, TObjectHashingStrategy.IDENTITY);
     if (items != null) {
       Collections.addAll(forPreselection, items);
     }
@@ -119,7 +119,6 @@ public class LiftShorterItemsClassifier extends Classifier<LookupElement> {
   }
 
   private void saveItems(LookupElement key, THashSet<LookupElement> items, final Map<LookupElement, LookupElement[]> map) {
-    map.remove(key);
     if (!items.isEmpty()) {
       map.put(key, internItems(items));
     }
