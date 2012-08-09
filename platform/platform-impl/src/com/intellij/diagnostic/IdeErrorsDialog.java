@@ -129,7 +129,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          myDevelopers[0] = DevelopersLoader.fetchDevelopers();
+          myDevelopers[0] = DevelopersLoader.fetchDevelopers(indicator);
         } catch (IOException e) {
           //Notifications.Bus.register("Error reporter", NotificationDisplayType.BALLOON);
           //Notifications.Bus.notify(new Notification("Error reporter", "Communication error",
