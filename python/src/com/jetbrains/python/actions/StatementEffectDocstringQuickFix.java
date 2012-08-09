@@ -15,10 +15,6 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to move misplaced docstring
  */
 public class StatementEffectDocstringQuickFix implements LocalQuickFix {
-
-  public StatementEffectDocstringQuickFix() {
-  }
-
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.statement.effect.move.docstring");
@@ -26,7 +22,7 @@ public class StatementEffectDocstringQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return getName();
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

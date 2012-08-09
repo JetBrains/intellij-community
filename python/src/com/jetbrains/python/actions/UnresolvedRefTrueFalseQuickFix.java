@@ -31,7 +31,7 @@ public class UnresolvedRefTrueFalseQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return "Replace with True or False";
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

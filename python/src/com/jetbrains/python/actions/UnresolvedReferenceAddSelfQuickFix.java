@@ -31,7 +31,7 @@ public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPr
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return "Add 'self'";
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

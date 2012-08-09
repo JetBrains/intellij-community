@@ -55,7 +55,7 @@ public class DocstringQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return "Fix docstring";
   }
 
   @Nullable

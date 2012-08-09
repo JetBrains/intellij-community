@@ -19,10 +19,6 @@ import org.jetbrains.annotations.NotNull;
  * QuickFix to replace statement that has no effect with function call
  */
 public class CompatibilityPrintCallQuickFix implements LocalQuickFix {
-
-  public CompatibilityPrintCallQuickFix() {
-  }
-
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.statement.effect");
@@ -30,7 +26,7 @@ public class CompatibilityPrintCallQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return getName();
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {

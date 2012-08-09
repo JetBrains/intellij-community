@@ -26,7 +26,7 @@ public class ReplaceExceptPartQuickFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INTN.Family.migration.to.python3");
+    return getName();
   }
 
   @Override

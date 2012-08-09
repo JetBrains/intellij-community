@@ -65,7 +65,7 @@ public class PyStatementEffectInspection extends PyInspection {
       if (checkStringLiteral(expression))
         return;
       registerProblem(expression, "Statement seems to have no effect",
-                      new StatementEffectIntroduceVariableQuickFix(expression));
+                      new StatementEffectIntroduceVariableQuickFix());
     }
 
     private boolean checkStringLiteral(PyExpression expression) {

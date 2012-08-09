@@ -18,11 +18,6 @@ import org.jetbrains.annotations.NotNull;
  * Quickfix to introduce variable if statement seems to have no effect
  */
 public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
-  PsiElement myExpression;
-  public StatementEffectIntroduceVariableQuickFix(PyExpression expression) {
-    myExpression = expression;
-  }
-
   @NotNull
   public String getName() {
     return PyBundle.message("QFIX.introduce.variable");
@@ -31,19 +26,20 @@ public class StatementEffectIntroduceVariableQuickFix implements LocalQuickFix {
   @NonNls
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return getName();
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
-    if (myExpression != null && myExpression.isValid()) {
+    PsiElement expression = descriptor.getPsiElement();
+    if (expression != null && expression.isValid()) {
       final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(myExpression), PyAssignmentStatement.class,
-                                                         "var = " + myExpression.getText());
+      final PyAssignmentStatement assignment = elementGenerator.createFromText(LanguageLevel.forElement(expression), PyAssignmentStatement.class,
+                                                         "var = " + expression.getText());
       
-      myExpression = myExpression.replace(assignment);
-      myExpression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(myExpression);
-      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(myExpression);
-      builder.replaceElement(((PyAssignmentStatement)myExpression).getLeftHandSideExpression(), "var");
+      expression = expression.replace(assignment);
+      expression = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(expression);
+      final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(expression);
+      builder.replaceElement(((PyAssignmentStatement)expression).getLeftHandSideExpression(), "var");
       builder.run();
     }
   }

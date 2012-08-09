@@ -51,7 +51,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
 
   @NotNull
   public String getFamilyName() {
-    return "GenerateBinaryStubs";
+    return "Generate binary stubs";
   }
 
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {

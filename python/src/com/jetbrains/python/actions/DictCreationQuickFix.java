@@ -35,7 +35,7 @@ public class DictCreationQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INSP.GROUP.python");
+    return getName();
   }
 
   @Override

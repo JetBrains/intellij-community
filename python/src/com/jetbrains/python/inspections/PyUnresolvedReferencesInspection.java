@@ -395,7 +395,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         else {
           if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON26)) {
             if ("with".equals(refname)) {
-              actions.add(new UnresolvedRefAddFutureImportQuickFix(refex));
+              actions.add(new UnresolvedRefAddFutureImportQuickFix());
             }
           }
           if (ref_text.equals("true") || ref_text.equals("false")) {
