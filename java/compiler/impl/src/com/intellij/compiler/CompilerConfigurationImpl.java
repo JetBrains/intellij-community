@@ -178,7 +178,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       previous = myModuleBytecodeTarget.put(module.getName(), level);
     }
     if (!Comparing.equal(previous, level)) {
-      final Project project = module.getProject();
+      //final Project project = module.getProject(); // todo[jeka] so what?
     }
   }
 
@@ -187,7 +187,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   public String getBytecodeTargetLevel(Module module) {
     final String level = myModuleBytecodeTarget.get(module.getName());
     if (level != null) {
-      return "".equals(level)? null : level;
+      return level.isEmpty() ? null : level;
     }
     return myBytecodeTargetLevel;
   }
