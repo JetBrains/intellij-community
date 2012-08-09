@@ -118,7 +118,7 @@ public class JpsLibraryTableSerializer {
     if (libraryName != null) {
       libraryElement.setAttribute(NAME_ATTRIBUTE, libraryName);
     }
-    saveProperties((JpsTypedLibrary<? extends JpsElementProperties>)library, libraryElement);
+    saveProperties((JpsTypedLibrary<?>)library, libraryElement);
     List<Element> jarDirectoryElements = new ArrayList<Element>();
     for (JpsLibraryRootTypeSerializer serializer : getSortedSerializers()) {
       List<JpsLibraryRoot> roots = library.getRoots(serializer.getType());
