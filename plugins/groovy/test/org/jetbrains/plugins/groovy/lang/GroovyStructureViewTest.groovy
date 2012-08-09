@@ -16,11 +16,11 @@
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
+import com.intellij.ide.util.InheritedMembersNodeProvider
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.Consumer
-import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
-import com.intellij.ide.structureView.impl.java.JavaInheritedMembersNodeProvider
 
+import static com.intellij.testFramework.PlatformTestUtil.assertTreeEqual
 /**
  * @author peter
  */
@@ -63,7 +63,7 @@ class Bar extends Foo {
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
       public void consume(StructureViewComponent component) {
-        component.setActionActive(JavaInheritedMembersNodeProvider.ID, true);
+        component.setActionActive(InheritedMembersNodeProvider.ID, true);
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   Foo(int, int)
@@ -113,7 +113,7 @@ class Foo {
     myFixture.testStructureView(new Consumer<StructureViewComponent>() {
       @Override
       public void consume(StructureViewComponent component) {
-        component.setActionActive(JavaInheritedMembersNodeProvider.ID, false);
+        component.setActionActive(InheritedMembersNodeProvider.ID, false);
         assertTreeEqual(component.getTree(), """-a.groovy
  -Foo
   foo(): void

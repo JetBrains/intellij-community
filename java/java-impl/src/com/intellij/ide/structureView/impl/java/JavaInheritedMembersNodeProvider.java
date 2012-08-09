@@ -15,36 +15,18 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.impl.AddAllMembersProcessor;
-import com.intellij.ide.util.FileStructureNodeProvider;
-import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
-import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
+import com.intellij.ide.util.InheritedMembersNodeProvider;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.openapi.actionSystem.Shortcut;
-import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class JavaInheritedMembersNodeProvider implements FileStructureNodeProvider {
-  @NonNls public static final String ID = "SHOW_INHERITED";
-
-    public String getCheckBoxText() {
-      return IdeBundle.message("file.structure.toggle.show.inherited");
-    }
-
-    public Shortcut[] getShortcut() {
-      return KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");
-    }
-
+public class JavaInheritedMembersNodeProvider extends InheritedMembersNodeProvider {
   @Override
   public Collection<TreeElement> provideNodes(TreeElement node) {
     if (node instanceof JavaClassTreeElement) {
@@ -80,15 +62,5 @@ public class JavaInheritedMembersNodeProvider implements FileStructureNodeProvid
       return array;
     }
     return Collections.emptyList();
-  }
-
-  @NotNull
-  public ActionPresentation getPresentation() {
-    return new ActionPresentationData(IdeBundle.message("action.structureview.show.inherited"), null, AllIcons.Hierarchy.Supertypes);
-  }
-
-  @NotNull
-  public String getName() {
-    return ID;
   }
 }
