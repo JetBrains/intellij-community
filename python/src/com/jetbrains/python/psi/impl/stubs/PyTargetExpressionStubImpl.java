@@ -15,6 +15,7 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
   private final String myName;
   private final InitializerType myInitializerType;
   private final PyQualifiedName myInitializer;
+  private final boolean myQualified;
 
   private final CustomTargetExpressionStub myCustomStub;
 
@@ -23,16 +24,20 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
     myName = name;
     myInitializerType = InitializerType.Custom;
     myInitializer = null;
+    myQualified = false;
     myCustomStub = customStub;
   }
   
   public PyTargetExpressionStubImpl(final String name, final InitializerType initializerType,
-                                    final PyQualifiedName initializer, final StubElement parentStub) {
+                                    final PyQualifiedName initializer,
+                                    final boolean qualified,
+                                    final StubElement parentStub) {
     super(parentStub, PyElementTypes.TARGET_EXPRESSION);
     myName = name;
     assert initializerType != InitializerType.Custom;
     myInitializerType = initializerType;
     myInitializer = initializer;
+    myQualified = qualified;
     myCustomStub = null;
   }
 
@@ -46,6 +51,11 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
 
   public PyQualifiedName getInitializer() {
     return myInitializer;
+  }
+
+  @Override
+  public boolean isQualified() {
+    return myQualified;
   }
 
   @Nullable

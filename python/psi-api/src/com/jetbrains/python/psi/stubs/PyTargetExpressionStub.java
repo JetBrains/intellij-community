@@ -41,6 +41,8 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression> {
   @Nullable
   PyQualifiedName getInitializer();
 
+  boolean isQualified();
+
   @Nullable
   <T extends CustomTargetExpressionStub> T getCustomStub(Class<T> stubClass);
 }
