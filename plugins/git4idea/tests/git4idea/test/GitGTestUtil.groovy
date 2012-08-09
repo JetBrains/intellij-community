@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil
 class GitGTestUtil {
 
   static String toAbsolute(String relPath, Project project) {
+    new File(toAbsolute(Collections.singletonList(relPath), project)[0]).mkdir()
     toAbsolute(Collections.singletonList(relPath), project)[0]
   }
 

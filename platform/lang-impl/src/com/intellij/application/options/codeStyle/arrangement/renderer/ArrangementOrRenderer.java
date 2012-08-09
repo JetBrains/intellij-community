@@ -13,12 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.application.options.codeStyle.arrangement.renderer;
+
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
  * @author Denis Zhdanov
- * @since 8/6/12 5:02 PM
+ * @since 8/8/12 3:02 PM
  */
-public enum ArrangementMatcherKey {
-  TYPE, MODIFIER
+public class ArrangementOrRenderer extends JPanel implements ArrangementNodeRenderer<ArrangementSettingsCompositeNode> {
+
+  @Override
+  public JComponent getRendererComponent(@NotNull ArrangementSettingsCompositeNode node) {
+    // TODO den implement 
+    return new JLabel("xxx");
+  }
 }

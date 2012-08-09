@@ -44,6 +44,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -77,6 +78,7 @@ public class DirectoryChooser extends DialogWrapper {
     myFilterExisting = propertiesComponent.isValueSet(FILTER_NON_EXISTING) && propertiesComponent.isTrueValue(FILTER_NON_EXISTING);
     myTabbedPaneWrapper = new TabbedPaneWrapper(getDisposable());
     myChooseByNamePanel = new ChooseByNamePanel(project, new GotoClassModel2(project){
+      @NotNull
       @Override
       public String[] getNames(boolean checkBoxState) {
         return super.getNames(false);

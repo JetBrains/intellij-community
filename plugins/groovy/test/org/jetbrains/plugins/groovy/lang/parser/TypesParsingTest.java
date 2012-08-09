@@ -35,5 +35,6 @@ public class TypesParsingTest extends GroovyParsingTestCase {
   public void testNewlineBeforeClassBrace() throws Throwable { doTest(); }
   public void testNewlineBeforeExtends() throws Throwable { doTest(); }
   public void testStaticInitializer() throws Throwable { doTest(); }
+  public void testInterfaceWithGroovyDoc() throws Throwable { doTest(); }
 
 }

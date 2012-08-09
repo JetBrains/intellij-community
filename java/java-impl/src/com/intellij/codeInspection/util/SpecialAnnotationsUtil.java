@@ -219,7 +219,7 @@ public class SpecialAnnotationsUtil {
         @NonNls final String name = psiAnnotation.getQualifiedName();
         if (name == null) continue;
         if (name.startsWith("java.") || name.startsWith("javax.") || 
-            (name.startsWith("org.jetbrains.") && !AnnotationUtil.isJetbrainsAnnotation(StringUtil.getShortName(name)))) continue;
+            (name.startsWith("org.jetbrains.") && AnnotationUtil.isJetbrainsAnnotation(StringUtil.getShortName(name)))) continue;
         if (!processor.process(name)) break;
       }
     }

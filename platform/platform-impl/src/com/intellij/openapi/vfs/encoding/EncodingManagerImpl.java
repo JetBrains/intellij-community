@@ -87,7 +87,7 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
   private final TransferToPooledThreadQueue<Reference<Document>> myChangedDocuments = new TransferToPooledThreadQueue<Reference<Document>>(
-    "Loading documents",
+    "Encoding detection thread",
     ApplicationManager.getApplication().getDisposed(),
     -1, // drain the whole queue, do not reschedule
     new Processor<Reference<Document>>() {

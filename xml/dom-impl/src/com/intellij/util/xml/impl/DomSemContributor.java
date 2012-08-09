@@ -121,7 +121,7 @@ public class DomSemContributor extends SemContributor {
 
           final DomManagerImpl myDomManager = parent.getManager();
           return new IndexedElementInvocationHandler(parent.createEvaluatedXmlName(description.getXmlName()), (FixedChildDescriptionImpl)description, index,
-                                              new PhysicalDomParentStrategy(tag, myDomManager), myDomManager);
+                                              new PhysicalDomParentStrategy(tag, myDomManager), myDomManager, null);
         }
         return null;
       }
@@ -136,7 +136,7 @@ public class DomSemContributor extends SemContributor {
 
         final DomCollectionChildDescription description = findChildrenDescription(parent.getGenericInfo().getCollectionChildrenDescriptions(), tag, parent);
         if (description != null) {
-          return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent);
+          return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent, null);
         }
         return null;
       }
@@ -177,7 +177,7 @@ public class DomSemContributor extends SemContributor {
 
           AbstractCollectionChildDescription desc = (AbstractCollectionChildDescription)customDescription;
           Type type = customDescription.getType();
-          return new CollectionElementInvocationHandler(type, tag, desc, parent);
+          return new CollectionElementInvocationHandler(type, tag, desc, parent, null);
         }
 
         return null;
@@ -204,7 +204,7 @@ public class DomSemContributor extends SemContributor {
                 final DomManagerImpl myDomManager = handler.getManager();
                 final AttributeChildInvocationHandler attributeHandler =
                   new AttributeChildInvocationHandler(evaluatedXmlName, description, myDomManager,
-                                                      new PhysicalDomParentStrategy(attribute, myDomManager));
+                                                      new PhysicalDomParentStrategy(attribute, myDomManager), null);
                 result.set(attributeHandler);
                 return false;
               }

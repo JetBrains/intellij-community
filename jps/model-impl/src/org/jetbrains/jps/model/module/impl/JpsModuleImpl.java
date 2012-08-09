@@ -3,10 +3,15 @@ package org.jetbrains.jps.model.module.impl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.impl.*;
+import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
+import org.jetbrains.jps.model.impl.JpsNamedCompositeElementBase;
+import org.jetbrains.jps.model.impl.JpsUrlListRole;
 import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryRole;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
@@ -77,20 +82,17 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties, T extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
+  public <P extends JpsElement, T extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull T rootType) {
     return addSourceRoot(url, rootType, rootType.createDefaultProperties());
   }
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties> JpsModuleSourceRoot addSourceRoot(@NotNull String url,
-                                                                            @NotNull JpsModuleSourceRootType<P> rootType,
-                                                                            @NotNull P properties) {
-    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl(url, rootType, properties);
-    myContainer.getChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE).addChild(root);
-    root.setProperties(rootType, properties);
-    return root;
+  public <P extends JpsElement> JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType,
+                                                                  @NotNull P properties) {
+    final JpsModuleSourceRootImpl root = new JpsModuleSourceRootImpl<P>(url, rootType, properties);
+    return myContainer.getChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE).addChild(root);
   }
 
   @Override
@@ -106,7 +108,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties> JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<P> type, @NotNull P properties) {
+  public <P extends JpsElement> JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<P> type, @NotNull P properties) {
     return myContainer.getChild(JpsFacetRole.COLLECTION_ROLE).addChild(new JpsFacetImpl(type, name, properties));
   }
 
@@ -142,9 +144,11 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
   }
 
   @Override
-  public <P extends JpsSdkProperties> JpsTypedLibrary<P> getSdk(@NotNull JpsSdkType<P> type) {
+  public <P extends JpsElement> JpsSdk<P> getSdk(@NotNull JpsSdkType<P> type) {
     final JpsLibraryReference reference = getSdkReference(type);
-    return reference != null ? (JpsTypedLibrary<P>)reference.resolve() : null;
+    if (reference == null) return null;
+    JpsLibrary library = reference.resolve();
+    return library != null ? (JpsSdk<P>)library.getProperties() : null;
   }
 
   @Override
@@ -161,7 +165,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
 
   @NotNull
   @Override
-  public <P extends JpsElementProperties, Type extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  public <P extends JpsElement, Type extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addModuleLibrary(@NotNull String name, @NotNull Type type) {
     return myLibraryCollection.addLibrary(name, type);
   }

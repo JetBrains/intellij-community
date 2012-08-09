@@ -12,7 +12,7 @@ public class GetFixedChildInvocation implements Invocation {
     myPair = pair;
   }
 
-  public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
     return handler.getFixedChild(myPair).getProxy();
   }
 }

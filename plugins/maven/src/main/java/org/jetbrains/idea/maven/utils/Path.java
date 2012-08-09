@@ -18,16 +18,18 @@ package org.jetbrains.idea.maven.utils;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.PathUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class Path {
   private final String path;
 
-  public Path(String path) {
+  public Path(@NotNull String path) {
     path = PathUtil.getCanonicalPath(path);
     path = FileUtil.toSystemIndependentName(path);
     this.path = path;
   }
 
+  @NotNull
   public String getPath() {
     return path;
   }

@@ -30,13 +30,14 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryRoot;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.*;
 
 import java.io.*;
@@ -204,7 +205,7 @@ class AndroidJpsUtil {
 
   private static void addAnnotationsJarIfNecessary(@NotNull AndroidPlatform platform, @NotNull Set<String> libs) {
     if (platform.needToAddAnnotationsJarToClasspath()) {
-      final String sdkHomePath = platform.getSdk().getProperties().getHomePath();
+      final String sdkHomePath = platform.getSdk().getHomePath();
       final String annotationsJarPath = FileUtil.toSystemIndependentName(sdkHomePath) + AndroidCommonUtils.ANNOTATIONS_JAR_RELATIVE_PATH;
 
       if (new File(annotationsJarPath).exists()) {
@@ -307,19 +308,19 @@ class AndroidJpsUtil {
   }
 
   @Nullable
-  public static IAndroidTarget parseAndroidTarget(@NotNull JpsTypedLibrary<JpsAndroidSdkProperties> sdk,
+  public static IAndroidTarget parseAndroidTarget(@NotNull JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> sdk,
                                                   @NotNull CompileContext context,
                                                   @NotNull String builderName) {
-    JpsAndroidSdkProperties sdkProperties = sdk.getProperties();
+    JpsAndroidSdkProperties sdkProperties = sdk.getSdkProperties().getData();
     final String targetHashString = sdkProperties.getBuildTargetHashString();
     if (targetHashString == null) {
       context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
-                                                 "Cannot parse SDK " + sdk.getName() + ": build target is not specified"));
+                                                 "Cannot parse SDK " + sdk.getParent().getName() + ": build target is not specified"));
       return null;
     }
 
     final MessageBuildingSdkLog log = new MessageBuildingSdkLog();
-    final SdkManager manager = AndroidCommonUtils.createSdkManager(sdkProperties.getHomePath(), log);
+    final SdkManager manager = AndroidCommonUtils.createSdkManager(sdk.getHomePath(), log);
 
     if (manager == null) {
       final String message = log.getErrorMessage();
@@ -332,7 +333,7 @@ class AndroidJpsUtil {
     final IAndroidTarget target = manager.getTargetFromHashString(targetHashString);
     if (target == null) {
       context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
-                                                 "Cannot parse SDK '" + sdk.getName() + "': unknown target " + targetHashString));
+                                                 "Cannot parse SDK '" + sdk.getParent().getName() + "': unknown target " + targetHashString));
       return null;
     }
     return target;
@@ -413,7 +414,7 @@ class AndroidJpsUtil {
   public static AndroidPlatform getAndroidPlatform(@NotNull JpsModule module,
                                                    @NotNull CompileContext context,
                                                    @NotNull String builderName) {
-    final JpsTypedLibrary<JpsAndroidSdkProperties> sdk = module.getSdk(JpsAndroidSdkType.INSTANCE);
+    final JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> sdk = module.getSdk(JpsAndroidSdkType.INSTANCE);
     if (sdk == null) {
       context.processMessage(new CompilerMessage(builderName, BuildMessage.Kind.ERROR,
                                                  AndroidJpsBundle.message("android.jps.errors.sdk.not.specified", module.getName())));

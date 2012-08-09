@@ -31,7 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +96,9 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     new GrWhileBodyFixer(),
     new GrForBodyFixer(),
     new GrSwitchBodyFixer(),
-    new GrListFixer());
+    new GrListFixer(),
+    new GrMethodCallWithSingleClosureArgFixer()
+  );
 
   private int myFirstErrorOffset = Integer.MAX_VALUE;
   private static final int MAX_ATTEMPTS = 20;
@@ -197,17 +199,16 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
     atCaret = GroovyRefactoringUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
 
-//    atCaret = CodeInsightUtil.findElementInRange(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset(), atCaret.getClass());
-
-
     if (atCaret != null && new GroovyPlainEnterProcessor().doEnter(editor, atCaret, isModified(editor))) return;
 
     if (!isModified(editor)) {
       plainEnter(editor);
-    } else {
+    }
+    else {
       if (myFirstErrorOffset == Integer.MAX_VALUE) {
         editor.getCaretModel().moveToOffset(rangeMarker.getEndOffset());
-      } else {
+      }
+      else {
         editor.getCaretModel().moveToOffset(myFirstErrorOffset);
       }
     }
@@ -251,7 +252,10 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
     if (atCaret instanceof PsiWhiteSpace) return null;
     if (atCaret == null) return null;
 
-    final GrCodeBlock codeBlock = PsiTreeUtil.getParentOfType(atCaret, GrCodeBlock.class, false, GrControlStatement.class);
+    GrCodeBlock codeBlock = PsiTreeUtil.getParentOfType(atCaret, GrCodeBlock.class, false, GrControlStatement.class);
+    if (codeBlock instanceof GrClosableBlock && "{}".equals(codeBlock.getText())) {
+      codeBlock = PsiTreeUtil.getParentOfType(codeBlock, GrCodeBlock.class, true, GrControlStatement.class);
+    }
     if (codeBlock != null) {
       for (GrStatement statement : codeBlock.getStatements()) {
         if (PsiTreeUtil.isAncestor(statement, atCaret, true)) {
@@ -323,6 +327,7 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
   protected static boolean isModified(@NotNull final Editor editor) {
     final Long timestamp = editor.getUserData(SMART_ENTER_TIMESTAMP);
+    assert timestamp != null;
     return editor.getDocument().getModificationStamp() != timestamp.longValue();
   }
 
@@ -337,6 +342,6 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessor {
 
       psiChild = psiChild.getNextSibling();
     }
-    return PsiUtilBase.toPsiElementArray(result);
+    return PsiUtilCore.toPsiElementArray(result);
   }
 }

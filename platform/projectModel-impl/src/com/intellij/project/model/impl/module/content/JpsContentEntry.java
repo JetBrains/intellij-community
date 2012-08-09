@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -142,7 +143,8 @@ public class JpsContentEntry implements ContentEntry, Disposable {
 
   private SourceFolder addSourceFolder(final String url, boolean isTestSource, String packagePrefix) {
     final JavaSourceRootType rootType = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, rootType, new JavaSourceRootProperties(packagePrefix));
+    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, rootType, JpsElementFactory.getInstance()
+      .createSimpleElement(new JavaSourceRootProperties(packagePrefix)));
     final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
     mySourceFolders.add(sourceFolder);
     return sourceFolder;

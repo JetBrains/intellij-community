@@ -42,6 +42,11 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertInstanceOf(dependencies.get(1), JpsModuleSourceDependency.class);
     assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class);
     assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class);
+
+    JpsSdkDependency inheritedSdkDependency = assertInstanceOf(main.getDependenciesList().getDependencies().get(0), JpsSdkDependency.class);
+    JpsLibraryReference projectSdkReference = inheritedSdkDependency.getSdkReference();
+    assertNotNull(projectSdkReference);
+    assertEquals("1.6", projectSdkReference.getLibraryName());
   }
 
   public void testSaveProject() {

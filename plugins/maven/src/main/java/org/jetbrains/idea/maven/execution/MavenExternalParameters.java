@@ -198,10 +198,6 @@ public class MavenExternalParameters {
       }
     }
 
-    if (parameters.getPomFilePath() != null) {
-      addOption(parametersList, "f", parameters.getPomFilePath());
-    }
-
     for (String goal : parameters.getGoals()) {
       parametersList.add(goal);
     }

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
@@ -133,7 +134,7 @@ public class ProjectPaths {
         for (JpsModuleSourceRoot root : module.getSourceRoots()) {
           if (root.getRootType().equals(JavaSourceRootType.SOURCE) ||
               kind.isTestsIncluded() && root.getRootType().equals(JavaSourceRootType.TEST_SOURCE)) {
-            JavaSourceRootProperties properties = (JavaSourceRootProperties)root.getProperties();
+            JavaSourceRootProperties properties = (JavaSourceRootProperties)((JpsSimpleElement<?>)root.getProperties()).getData();
             String prefix = properties.getPackagePrefix();
             if (!prefix.isEmpty()) {
               prefix = prefix.replace('.', '/');

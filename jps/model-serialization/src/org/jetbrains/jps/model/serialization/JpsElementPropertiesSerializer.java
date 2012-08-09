@@ -1,8 +1,5 @@
 package org.jetbrains.jps.model.serialization;
 
-import org.jetbrains.jps.model.JpsElementProperties;
-import org.jetbrains.jps.model.JpsElementType;
-
 /**
  * @author nik
  */

@@ -9,7 +9,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
-import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.ArrayList;
@@ -53,7 +53,7 @@ public class JpsModuleSerializer {
         final String packagePrefix = StringUtil.notNullize(sourceElement.getAttributeValue(PACKAGE_PREFIX_ATTRIBUTE));
         final boolean testSource = Boolean.parseBoolean(sourceElement.getAttributeValue(IS_TEST_SOURCE_ATTRIBUTE));
         final JavaSourceRootType rootType = testSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-        module.addSourceRoot(sourceUrl, rootType, new JavaSourceRootProperties(packagePrefix));
+        module.addSourceRoot(sourceUrl, rootType, JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(packagePrefix)));
       }
       for (Element excludeElement : getChildren(contentElement, EXCLUDE_FOLDER_TAG)) {
         module.getExcludeRootsList().addUrl(excludeElement.getAttributeValue(URL_ATTRIBUTE));
@@ -122,12 +122,15 @@ public class JpsModuleSerializer {
         if (FileUtil.startsWith(root.getUrl(), url)) {
           Element sourceElement = new Element(SOURCE_FOLDER_TAG);
           sourceElement.setAttribute(URL_ATTRIBUTE, root.getUrl());
-          sourceElement.setAttribute(IS_TEST_SOURCE_ATTRIBUTE, Boolean.toString(root.getRootType().equals(JavaSourceRootType.TEST_SOURCE)));
-          JpsElementProperties properties = root.getProperties();
-          if (properties instanceof JavaSourceRootProperties) {
-            String packagePrefix = ((JavaSourceRootProperties)properties).getPackagePrefix();
-            if (packagePrefix.length() > 0) {
-              sourceElement.setAttribute(PACKAGE_PREFIX_ATTRIBUTE, packagePrefix);
+          JpsModuleSourceRootType<?> type = root.getRootType();
+          sourceElement.setAttribute(IS_TEST_SOURCE_ATTRIBUTE, Boolean.toString(type.equals(JavaSourceRootType.TEST_SOURCE)));
+          if (type instanceof JavaSourceRootType) {
+            JpsSimpleElement<JavaSourceRootProperties> properties = root.getProperties((JavaSourceRootType)type);
+            if (properties != null) {
+              String packagePrefix = properties.getData().getPackagePrefix();
+              if (packagePrefix.length() > 0) {
+                sourceElement.setAttribute(PACKAGE_PREFIX_ATTRIBUTE, packagePrefix);
+              }
             }
           }
           contentElement.addContent(sourceElement);

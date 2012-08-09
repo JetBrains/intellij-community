@@ -5,7 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
 import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.artifact.JpsArtifactPropertiesSerializer;
@@ -30,12 +29,6 @@ public abstract class JpsModelSerializerExtension {
   public void saveRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
   }
 
-  public void loadProjectRoots(JpsProject project, Element rootManagerElement) {
-  }
-
-  public void saveProjectRoots(JpsProject project, Element rootManagerElement) {
-  }
-
   public List<JpsLibraryRootTypeSerializer> getLibraryRootTypeSerializers() {
     return Collections.emptyList();
   }
@@ -58,6 +51,11 @@ public abstract class JpsModelSerializerExtension {
 
   public String getLibraryTableLevelId(JpsElementReference<? extends JpsCompositeElement> reference) {
     return null;
+  }
+
+  @NotNull
+  public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+    return Collections.emptyList();
   }
 
   @NotNull

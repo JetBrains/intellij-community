@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 
 import java.util.*;
@@ -28,15 +29,15 @@ public class JpsLibraryTableSerializer {
   private static final String ROOT_TAG = "root";
   private static final String RECURSIVE_ATTRIBUTE = "recursive";
   private static final String LIBRARY_TAG = "library";
-  private static final JpsLibraryPropertiesSerializer<DummyJpsElementProperties> JAVA_LIBRARY_PROPERTIES_SERIALIZER =
-    new JpsLibraryPropertiesSerializer<DummyJpsElementProperties>(JpsJavaLibraryType.INSTANCE, null) {
+  private static final JpsLibraryPropertiesSerializer<JpsDummyElement> JAVA_LIBRARY_PROPERTIES_SERIALIZER =
+    new JpsLibraryPropertiesSerializer<JpsDummyElement>(JpsJavaLibraryType.INSTANCE, null) {
       @Override
-      public DummyJpsElementProperties loadProperties(@Nullable Element propertiesElement) {
-        return DummyJpsElementProperties.INSTANCE;
+      public JpsDummyElement loadProperties(@Nullable Element propertiesElement) {
+        return JpsElementFactory.getInstance().createDummyElement();
       }
 
       @Override
-      public void saveProperties(DummyJpsElementProperties properties, Element element) {
+      public void saveProperties(JpsDummyElement properties, Element element) {
       }
     };
   private static final String MODULE_LEVEL = "module";
@@ -141,7 +142,7 @@ public class JpsLibraryTableSerializer {
     libraryElement.addContent(jarDirectoryElements);
   }
 
-  private static <P extends JpsElementProperties> void saveProperties(JpsTypedLibrary<P> library, Element libraryElement) {
+  private static <P extends JpsElement> void saveProperties(JpsTypedLibrary<P> library, Element libraryElement) {
     JpsLibraryType<P> type = library.getType();
     if (!type.equals(JpsJavaLibraryType.INSTANCE)) {
       JpsLibraryPropertiesSerializer<P> serializer = getLibraryPropertiesSerializer(type);
@@ -154,7 +155,7 @@ public class JpsLibraryTableSerializer {
     }
   }
 
-  private static <P extends JpsElementProperties> JpsLibrary createLibrary(String name, JpsLibraryPropertiesSerializer<P> loader,
+  private static <P extends JpsElement> JpsLibrary createLibrary(String name, JpsLibraryPropertiesSerializer<P> loader,
                                                                            final Element propertiesElement) {
     return JpsElementFactory.getInstance().createLibrary(name, loader.getType(), loader.loadProperties(propertiesElement));
   }
@@ -198,7 +199,7 @@ public class JpsLibraryTableSerializer {
     return JAVA_LIBRARY_PROPERTIES_SERIALIZER;
   }
 
-  private static <P extends JpsElementProperties> JpsLibraryPropertiesSerializer<P> getLibraryPropertiesSerializer(@NotNull JpsLibraryType<P> type) {
+  private static <P extends JpsElement> JpsLibraryPropertiesSerializer<P> getLibraryPropertiesSerializer(@NotNull JpsLibraryType<P> type) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsLibraryPropertiesSerializer<?> loader : extension.getLibraryPropertiesSerializers()) {
         if (loader.getType().equals(type)) {

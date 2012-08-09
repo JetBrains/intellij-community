@@ -36,31 +36,39 @@ public class LookupOffsets {
 
   private boolean myStableStart;
   private RangeMarker myLookupStartMarker;
+  private int myRemovedPrefix;
   private RangeMarker myLookupOriginalStartMarker;
   private final Editor myEditor;
 
   public LookupOffsets(Editor editor) {
     myEditor = editor;
-    int caret = editor.getCaretModel().getOffset();
+    int caret = getPivotOffset();
     myLookupOriginalStartMarker = editor.getDocument().createRangeMarker(caret, caret);
     myLookupOriginalStartMarker.setGreedyToLeft(true);
     updateLookupStart(0);
   }
 
-  int updateLookupStart(int myMinPrefixLength) {
-    int offset = myEditor.getSelectionModel().hasSelection()
-                 ? myEditor.getSelectionModel().getSelectionStart()
-                 : myEditor.getCaretModel().getOffset();
-    int start = Math.max(offset - myMinPrefixLength - myAdditionalPrefix.length(), 0);
+  private void updateLookupStart(int minPrefixLength) {
+    int offset = getPivotOffset();
+    int start = offset - minPrefixLength - myAdditionalPrefix.length() + myRemovedPrefix;
+    if (start < 0) {
+      LOG.error("Invalid start offset: o=" + offset + ", mpl=" + minPrefixLength + ", ap=" + myAdditionalPrefix + ", rp=" + myRemovedPrefix);
+      return;
+    }
     if (myLookupStartMarker != null) {
       if (myLookupStartMarker.isValid() && myLookupStartMarker.getStartOffset() == start && myLookupStartMarker.getEndOffset() == start) {
-        return start;
+        return;
       }
       myLookupStartMarker.dispose();
     }
     myLookupStartMarker = myEditor.getDocument().createRangeMarker(start, start);
     myLookupStartMarker.setGreedyToLeft(true);
-    return start;
+  }
+
+  private int getPivotOffset() {
+    return myEditor.getSelectionModel().hasSelection()
+                 ? myEditor.getSelectionModel().getSelectionStart()
+                 : myEditor.getCaretModel().getOffset();
   }
 
   public String getAdditionalPrefix() {
@@ -75,6 +83,7 @@ public class LookupOffsets {
   public boolean truncatePrefix() {
     final int len = myAdditionalPrefix.length();
     if (len == 0) {
+      myRemovedPrefix++;
       return false;
     }
     myAdditionalPrefix = myAdditionalPrefix.substring(0, len - 1);
@@ -90,22 +99,24 @@ public class LookupOffsets {
 
     int minPrefixLength = items.isEmpty() ? 0 : Integer.MAX_VALUE;
     for (final LookupElement item : items) {
-      minPrefixLength = Math.min(lookup.itemMatcher(item).getPrefix().length(), minPrefixLength);
+      if (!(item instanceof EmptyLookupItem)) {
+        minPrefixLength = Math.min(lookup.itemMatcher(item).getPrefix().length(), minPrefixLength);
+      }
     }
 
     updateLookupStart(minPrefixLength);
   }
 
-  public int getLookupStart(String disposeTrace) {
+  int getLookupStart(String disposeTrace) {
     LOG.assertTrue(myLookupStartMarker.isValid(), disposeTrace);
     return myLookupStartMarker.getStartOffset();
   }
 
-  public int getLookupOriginalStart() {
+  int getLookupOriginalStart() {
     return myLookupOriginalStartMarker.isValid() ? myLookupOriginalStartMarker.getStartOffset() : -1;
   }
 
-  public boolean performGuardedChange(Runnable change, @Nullable final String debug) {
+  boolean performGuardedChange(Runnable change, @Nullable final String debug) {
     assert myLookupStartMarker != null : "null start before";
     assert myLookupStartMarker.isValid() : "invalid start";
     final Document document = myEditor.getDocument();
@@ -128,7 +139,7 @@ public class LookupOffsets {
   }
 
 
-  public void setInitialPrefix(String presentPrefix, boolean explicitlyInvoked) {
+  void setInitialPrefix(String presentPrefix, boolean explicitlyInvoked) {
     if (myAdditionalPrefix.length() == 0 && myInitialPrefix == null && !explicitlyInvoked) {
       myInitialPrefix = presentPrefix;
     }
@@ -137,8 +148,9 @@ public class LookupOffsets {
     }
   }
 
-  public void clearAdditionalPrefix() {
+  void clearAdditionalPrefix() {
     myAdditionalPrefix = "";
+    myRemovedPrefix = 0;
   }
 
   void restorePrefix(int lookupStart) {
@@ -153,5 +165,9 @@ public class LookupOffsets {
       myLookupStartMarker = null;
     }
     myLookupOriginalStartMarker.dispose();
+  }
+
+  public int getPrefixLength(LookupElement item, LookupImpl lookup) {
+    return lookup.itemPattern(item).length() - myRemovedPrefix;
   }
 }

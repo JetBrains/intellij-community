@@ -24,7 +24,9 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -32,6 +34,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -52,6 +55,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     myContributors = contributors;
   }
 
+  @Override
   public ListCellRenderer getListCellRenderer() {
     return new NavigationItemListCellRenderer() {
       @Override
@@ -67,6 +71,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     };
   }
 
+  @NotNull
+  @Override
   public String[] getNames(final boolean checkBoxState) {
     final Set<String> names = new ConcurrentHashSet<String>();
 
@@ -107,6 +113,45 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
     return answer;
   }
 
+  @NotNull
+  public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern, @NotNull ProgressIndicator canceled) {
+    final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
+
+    Processor<ChooseByNameContributor> processor = new Processor<ChooseByNameContributor>() {
+      @Override
+      public boolean process(ChooseByNameContributor contributor) {
+        try {
+          for (NavigationItem item : contributor.getItemsByName(name, pattern, myProject, checkBoxState)) {
+            if (item == null) {
+              PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
+              if (pluginId != null) {
+                LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
+              }
+              else {
+                LOG.error("null item from contributor " + contributor + " for name " + name);
+              }
+              continue;
+            }
+
+            if (acceptItem(item)) {
+              items.add(item);
+            }
+          }
+        }
+        catch (ProcessCanceledException ex) {
+          // index corruption detected, ignore
+        }
+        catch (Exception ex) {
+          LOG.error(ex);
+        }
+        return true;
+      }
+    };
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, false, processor);
+
+    return ArrayUtil.toObjectArray(items);
+  }
+
   /**
    * Get elements by name from contributors.
    *
@@ -117,51 +162,18 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModel 
    *  which {@link #acceptItem(NavigationItem) returns true.
    *
    */
+  @NotNull
+  @Override
   public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
-    final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
-
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), ProgressManager.getInstance().getProgressIndicator(), false,
-                                                new Processor<ChooseByNameContributor>() {
-                                                  @Override
-                                                  public boolean process(ChooseByNameContributor contributor) {
-                                                    try {
-                                                      for (NavigationItem item : contributor
-                                                        .getItemsByName(name, pattern, myProject, checkBoxState)) {
-                                                        if (item == null) {
-                                                          final PluginId pluginId =
-                                                            PluginManager.getPluginByClassName(contributor.getClass().getName());
-                                                          if (pluginId != null) {
-                                                            LOG.error(new PluginException(
-                                                              "null item from contributor " + contributor + " for name " + name, pluginId));
-                                                          }
-                                                          else {
-                                                            LOG.error("null item from contributor " + contributor + " for name " + name);
-                                                          }
-                                                          continue;
-                                                        }
-
-                                                        if (acceptItem(item)) {
-                                                          items.add(item);
-                                                        }
-                                                      }
-                                                    }
-                                                    catch (ProcessCanceledException ex) {
-                                                      // index corruption detected, ignore
-                                                    }
-                                                    catch (Exception ex) {
-                                                      LOG.error(ex);
-                                                    }
-                                                    return true;
-                                                  }
-                                                });
-    
-    return ArrayUtil.toObjectArray(items);
+    return getElementsByName(name, checkBoxState, pattern, new ProgressIndicatorBase());
   }
 
+  @Override
   public String getElementName(Object element) {
     return ((NavigationItem)element).getName();
   }
 
+  @Override
   public String getHelpId() {
     return null;
   }

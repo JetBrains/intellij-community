@@ -15,8 +15,13 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.psi.stubs.ObjectStubTree;
+import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.semantic.SemElement;
 import com.intellij.util.SmartList;
@@ -24,6 +29,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.stubs.FileStub;
+import com.intellij.util.xml.stubs.builder.DomStubBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,7 +111,20 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     final XmlName xmlName = DomImplUtil.createXmlName(description.getRootTagName(), rootElementClass, null);
     assert xmlName != null;
     final EvaluatedXmlNameImpl rootTagName1 = EvaluatedXmlNameImpl.createEvaluatedXmlName(xmlName, xmlName.getNamespaceKey(), false);
-    DomFileElementImpl<T> result = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName1, myDomManager, description);
+
+    VirtualFile file = myXmlFile.getVirtualFile();
+    FileStub stub = null;
+    if (file instanceof VirtualFileWithId) {
+      ApplicationManager.getApplication().assertReadAccessAllowed();
+      if (!Boolean.TRUE.equals(myXmlFile.getUserData(DomStubBuilder.BUILDING_DOM_STUBS))) {
+        ObjectStubTree stubTree = StubTreeLoader.getInstance().readOrBuild(myXmlFile.getProject(), file, myXmlFile);
+        if (stubTree != null) {
+          stub = (FileStub)stubTree.getRoot();
+        }
+      }
+    }
+
+    DomFileElementImpl<T> result = new DomFileElementImpl<T>(myXmlFile, rootElementClass, rootTagName1, myDomManager, description, stub);
     if (sb != null) {
       sb.append("success " + result + "\n");
     }

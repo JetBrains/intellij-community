@@ -22,12 +22,12 @@ import java.io.File;
 
 public class IdeaGatewayTest extends IntegrationTestCase {
   public void testFindingFile() throws Exception {
-    assertSame(myRoot, myGateway.findVirtualFile(myRoot.getPath()));
+    assertEquals(myRoot, myGateway.findVirtualFile(myRoot.getPath()));
     assertNull(myGateway.findVirtualFile(myRoot.getPath() + "/nonexistent"));
   }
 
   public void testGettingDirectory() throws Exception {
-    assertSame(myRoot, myGateway.findOrCreateFileSafely(myRoot.getPath(), true));
+    assertEquals(myRoot, myGateway.findOrCreateFileSafely(myRoot.getPath(), true));
   }
 
   public void testCreatingDirectory() throws Exception {

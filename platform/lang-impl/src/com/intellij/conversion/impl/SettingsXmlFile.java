@@ -24,6 +24,7 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +57,6 @@ class SettingsXmlFile {
 
   @Nullable 
   public Element findComponent(String componentName) {
-    return JDomConvertingUtil.findComponent(myRootElement, componentName);
+    return JDomSerializationUtil.findComponent(myRootElement, componentName);
   }
 }

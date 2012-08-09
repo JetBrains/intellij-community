@@ -18,12 +18,15 @@ package org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors;
 import com.intellij.codeInsight.editorActions.smartEnter.EnterProcessor;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
 /**
@@ -37,13 +40,12 @@ public class GroovyPlainEnterProcessor implements EnterProcessor {
     if (block != null) {
       PsiElement firstElement = block.getFirstChild().getNextSibling();
 
-      editor.getCaretModel().moveToOffset(firstElement != null ?
-              firstElement.getTextRange().getStartOffset() - 1 :
-              block.getTextRange().getEndOffset());
+      final int offset = firstElement != null ? firstElement.getTextRange().getStartOffset() - 1 : block.getTextRange().getEndOffset();
+      editor.getCaretModel().moveToOffset(offset);
     }
 
-    EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE)
-      .execute(editor, ((EditorEx)editor).getDataContext());
+    final EditorActionHandler endterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_START_NEW_LINE);
+    endterHandler.execute(editor, ((EditorEx)editor).getDataContext());
     return true;
   }
 
@@ -52,6 +54,11 @@ public class GroovyPlainEnterProcessor implements EnterProcessor {
     GrStatement body = null;
 
     if (element instanceof GrMethod) return ((GrMethod)element).getBlock();
+
+    if (element instanceof GrMethodCall) {
+      final GrClosableBlock[] arguments = ((GrMethodCall)element).getClosureArguments();
+      if (arguments.length > 0) return arguments[0]; else return null;
+    }
 
     if (element instanceof GrIfStatement) {
       body = ((GrIfStatement)element).getThenBranch();

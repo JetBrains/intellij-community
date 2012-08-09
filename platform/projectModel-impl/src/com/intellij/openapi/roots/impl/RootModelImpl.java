@@ -16,6 +16,7 @@
 
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -62,7 +63,7 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
 
   private final ProjectRootManagerImpl myProjectRootManager;
   // have to register all child disposables using this fake object since all clients just call ModifiableModel.dispose()
-  private final Disposable myDisposable = Disposer.newDisposable();
+  private final CompositeDisposable myDisposable = new CompositeDisposable();
 
   RootModelImpl(@NotNull ModuleRootManagerImpl moduleRootManager,
                 ProjectRootManagerImpl projectRootManager,
@@ -776,12 +777,15 @@ public class RootModelImpl extends RootModelBase implements ModifiableRootModel 
   @Override
   public <T> T getModuleExtension(@NotNull final Class<T> klass) {
     for (ModuleExtension extension : myExtensions) {
-      if (klass.isAssignableFrom(extension.getClass())) return (T)extension;
+      if (klass.isAssignableFrom(extension.getClass())) {
+        //noinspection unchecked
+        return (T)extension;
+      }
     }
     return null;
   }
 
   void registerOnDispose(@NotNull Disposable disposable) {
-    Disposer.register(myDisposable, disposable);
+    myDisposable.add(disposable);
   }
 }

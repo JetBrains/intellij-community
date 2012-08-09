@@ -56,7 +56,8 @@ public class TextEditor extends PropertyEditor {
   public JComponent getComponent(@Nullable PropertiesContainer container,
                                  @Nullable PropertyContext context, Object value,
                                  @Nullable InplaceContext inplaceContext) {
-    setEditorValue(value);
+    setEditorValue(container, value);
+
     if (inplaceContext == null) {
       myTextField.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     }
@@ -79,7 +80,7 @@ public class TextEditor extends PropertyEditor {
     return myTextField.getText();
   }
 
-  protected void setEditorValue(Object value) {
+  protected void setEditorValue(@Nullable PropertiesContainer container, @Nullable Object value) {
     myTextField.setText(value == null ? "" : value.toString());
   }
 

@@ -118,6 +118,10 @@ public class MoveMembersTest extends MultiFileTestCase {
   public void testEscalateVisibility1() throws Exception {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }
+  
+  public void testMultipleWithDependencies() throws Exception {
+    doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
+  }
 
   @Override
   protected String getTestRoot() {

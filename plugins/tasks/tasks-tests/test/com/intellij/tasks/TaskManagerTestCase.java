@@ -2,7 +2,7 @@ package com.intellij.tasks;
 
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.util.Collections;
@@ -12,8 +12,9 @@ import java.util.Collections;
  */
 public abstract class TaskManagerTestCase extends LightCodeInsightFixtureTestCase {
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected TaskManagerTestCase() {
-    super(UsefulTestCase.IDEA_MARKER_CLASS, "PlatformLangXml");
+    IdeaTestCase.initPlatformPrefix();
   }
 
   protected TaskManagerImpl myManager;

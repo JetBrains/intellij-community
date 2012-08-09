@@ -16,8 +16,12 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.stubs.ObjectStubSerializer;
+import com.intellij.psi.stubs.Stub;
 import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.XmlFileHeader;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -42,6 +46,12 @@ public class FileStub extends ElementStub {
 
   public XmlFileHeader getHeader() {
     return myHeader;
+  }
+
+  @Nullable
+  public ElementStub getRootTagStub() {
+    List<? extends Stub> stubs = getChildrenStubs();
+    return stubs.isEmpty() ? null : (ElementStub)stubs.get(0);
   }
 
   @Override

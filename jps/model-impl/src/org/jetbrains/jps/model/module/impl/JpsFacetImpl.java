@@ -2,12 +2,11 @@ package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementCollection;
-import org.jetbrains.jps.model.JpsElementProperties;
-import org.jetbrains.jps.model.impl.*;
 import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
-import org.jetbrains.jps.model.impl.JpsTypedDataRole;
+import org.jetbrains.jps.model.impl.JpsNamedCompositeElementBase;
 import org.jetbrains.jps.model.module.JpsFacet;
 import org.jetbrains.jps.model.module.JpsFacetReference;
 import org.jetbrains.jps.model.module.JpsFacetType;
@@ -17,17 +16,18 @@ import org.jetbrains.jps.model.module.JpsModule;
  * @author nik
  */
 public class JpsFacetImpl extends JpsNamedCompositeElementBase<JpsFacetImpl> implements JpsFacet {
-  private static final JpsTypedDataRole<JpsFacetType<?>> TYPED_DATA_ROLE = new JpsTypedDataRole<JpsFacetType<?>>();
   private static final JpsElementChildRole<JpsFacetReference> PARENT_FACET_REFERENCE = JpsElementChildRoleBase.create("parent facet");
+  private final JpsFacetType<?> myFacetType;
 
-  public <P extends JpsElementProperties>JpsFacetImpl(JpsFacetType<?> facetType, @NotNull String name, @NotNull P properties) {
+  public <P extends JpsElement>JpsFacetImpl(JpsFacetType<?> facetType, @NotNull String name, @NotNull P properties) {
     super(name);
-    myContainer.setChild(TYPED_DATA_ROLE, new JpsTypedDataImpl<JpsFacetType<?>>(facetType, properties));
+    myFacetType = facetType;
     myContainer.setChild(JpsFacetRole.COLLECTION_ROLE);
   }
 
-  private JpsFacetImpl(JpsNamedCompositeElementBase<JpsFacetImpl> original) {
+  private JpsFacetImpl(JpsFacetImpl original) {
     super(original);
+    myFacetType = original.myFacetType;
   }
 
   @NotNull
@@ -39,11 +39,7 @@ public class JpsFacetImpl extends JpsNamedCompositeElementBase<JpsFacetImpl> imp
   @Override
   @NotNull
   public JpsFacetType<?> getType() {
-    return myContainer.getChild(TYPED_DATA_ROLE).getType();
-  }
-
-  public <P extends JpsElementProperties> P getProperties(@NotNull JpsFacetType<P> type) {
-    return myContainer.getChild(TYPED_DATA_ROLE).getProperties(type);
+    return myFacetType;
   }
 
   @Override

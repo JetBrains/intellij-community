@@ -38,7 +38,7 @@ public class IdentifierParser extends TokenParser {
     return true;
   }
 
-  private boolean isIdentifierPart(final char c) {
+  protected boolean isIdentifierPart(final char c) {
     return Character.isJavaIdentifierPart(c) || c == '-';
   }
 }

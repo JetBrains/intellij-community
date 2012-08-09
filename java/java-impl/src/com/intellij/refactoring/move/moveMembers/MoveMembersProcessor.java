@@ -156,11 +156,12 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       if (targetClass == null) return;
 
       // collect anchors to place moved members at
-      final Map<PsiMember, PsiElement> anchors = new HashMap<PsiMember, PsiElement>();
+      final Map<PsiMember, SmartPsiElementPointer<PsiElement>> anchors = new HashMap<PsiMember, SmartPsiElementPointer<PsiElement>>();
       for (PsiMember member : myMembersToMove) {
         final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
         if (handler != null) {
-          anchors.put(member, handler.getAnchor(member, targetClass));
+          final PsiElement anchor = handler.getAnchor(member, targetClass);
+          anchors.put(member, anchor == null ? null : SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(anchor));
         }
       }
 
@@ -192,7 +193,8 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
         final RefactoringElementListener elementListener = getTransaction().getElementListener(member);
         final MoveMemberHandler handler = MoveMemberHandler.EP_NAME.forLanguage(member.getLanguage());
         if (handler != null) {
-          PsiMember newMember = handler.doMove(myOptions, member, anchors.get(member), targetClass);
+          final SmartPsiElementPointer<PsiElement> pointer = anchors.get(member);
+          PsiMember newMember = handler.doMove(myOptions, member, pointer != null ? pointer.getElement() : null, targetClass);
           elementListener.elementMoved(newMember);
 
           fixModifierList(member, newMember, usages);

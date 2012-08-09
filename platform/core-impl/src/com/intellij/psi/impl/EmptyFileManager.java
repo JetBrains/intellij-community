@@ -94,6 +94,7 @@ class EmptyFileManager implements FileManager {
     }
   }
 
+  @NotNull
   @Override
   public List<PsiFile> getAllCachedFiles() {
     return Collections.emptyList();

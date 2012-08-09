@@ -239,7 +239,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       protected void showTextFieldPanel() {
       }
 
-      protected void choosenElementMightChange() {
+      protected void chosenElementMightChange() {
         handleSelectionChanged();
       }
     };
@@ -342,6 +342,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
   private final class MyGotoFileModel implements ChooseByNameModel {
     private final int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
+    @NotNull
     public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
       GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
       final PsiFile[] psiFiles = FilenameIndex.getFilesByName(myProject, name, scope);
@@ -379,6 +380,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       return new GotoFileCellRenderer(myMaxSize);
     }
 
+    @NotNull
     public String[] getNames(final boolean checkBoxState) {
       final String[] fileNames;
       if (myFileType != null && myProject != null) {

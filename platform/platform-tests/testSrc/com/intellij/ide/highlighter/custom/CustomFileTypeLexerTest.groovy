@@ -15,18 +15,24 @@
  */
 package com.intellij.ide.highlighter.custom
 
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.Nullable
+import com.intellij.lexer.Lexer
+import com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory
 import com.intellij.testFramework.LexerTestCase
 import junit.framework.TestCase
-
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.Nullable
 /**
  * @author peter
  */
 class CustomFileTypeLexerTest extends TestCase {
 
-  protected void doTest(SyntaxTable table, @NonNls String text, @Nullable String expected) {
-    assertEquals(expected, LexerTestCase.printTokens(text, 0, new CustomFileTypeLexer(table)));
+  private void doTest(SyntaxTable table, @NonNls String text, @Nullable String expected) {
+    def lexer = new CustomFileTypeLexer(table)
+    doTest(lexer, text, expected);
+  }
+
+  private void doTest(Lexer lexer, String text, String expected) {
+    assertEquals(expected, LexerTestCase.printTokens(text, 0, lexer))
   }
 
   private SyntaxTable createGenericTable() {
@@ -319,6 +325,18 @@ WHITESPACE (' ')
 KEYWORD_2 ('e')
 WHITESPACE (' ')
 KEYWORD_2 ('foo{}')
+'''
+  }
+
+  public void testPlainText() {
+    doTest PlainTextSyntaxHighlighterFactory.createPlainTextLexer(), 'ab.@c  (<def>)', '''\
+CHARACTER ('ab.@c')
+WHITESPACE ('  ')
+L_PARENTH ('(')
+L_BROCKET ('<')
+CHARACTER ('def')
+R_BROCKET ('>')
+R_PARENTH (')')
 '''
   }
 

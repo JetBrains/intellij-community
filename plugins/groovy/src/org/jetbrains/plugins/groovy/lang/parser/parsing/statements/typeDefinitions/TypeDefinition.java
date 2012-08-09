@@ -314,6 +314,8 @@ public class TypeDefinition implements GroovyElementTypes {
       return false;
     }
 
+    Separators.parse(builder);
+
     while (!builder.eof() && builder.getTokenType() != mRCURLY) {
       if (!InterfaceMember.parse(builder, interfaceName, parser)) builder.advanceLexer();
       if (builder.getTokenType() == mRCURLY) break;

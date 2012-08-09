@@ -17,13 +17,14 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
+import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.File;
@@ -51,7 +52,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     Utils.setSystemRoot(FileUtil.createTempDirectory("compile-server", null));
   }
 
-  protected JpsTypedLibrary<JpsSdkProperties> initJdk(final String name) {
+  protected JpsSdk<?> initJdk(final String name) {
     try {
       return initJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
     }
@@ -60,12 +61,13 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     }
   }
 
-  protected JpsTypedLibrary<JpsSdkProperties> initJdk(final String name, final String path) {
-    JpsSdkProperties properties = new JpsSdkProperties(System.getProperty("java.home"), System.getProperty("java.version"));
-    JpsTypedLibrary<JpsSdkProperties> jdk = myModel.getGlobal().getLibraryCollection().addLibrary(name, JpsJavaSdkType.INSTANCE,
-                                                                                                  properties);
+  protected JpsSdk<?> initJdk(final String name, final String path) {
+    String homePath = System.getProperty("java.home");
+    String versionString = System.getProperty("java.version");
+    JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk = myModel.getGlobal().addSdk(name, homePath, versionString, JpsJavaSdkType.INSTANCE,
+                                                                              JpsElementFactory.getInstance().createDummyElement());
     jdk.addRoot(JpsPathUtil.pathToUrl(path), JpsOrderRootType.COMPILED);
-    return jdk;
+    return jdk.getProperties();
   }
 
   protected String getProjectName() {

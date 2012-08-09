@@ -289,7 +289,7 @@ public class LookupCellRenderer implements ListCellRenderer {
                       final SimpleColoredComponent nameComponent) {
     final SimpleTextAttributes base = new SimpleTextAttributes(style, foreground);
 
-    final String prefix = myLookup.itemPattern(item);
+    final String prefix = item instanceof EmptyLookupItem ? "" : myLookup.itemPattern(item);
     if (prefix.length() > 0) {
       Iterable<TextRange> ranges = new MinusculeMatcher("*" + prefix, NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(name);
       if (ranges != null) {

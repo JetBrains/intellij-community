@@ -36,7 +36,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
     myType = type;
   }
 
-  public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
     Set<XmlTag> set = CollectionFactory.troveSet();
     for (final CollectionChildDescriptionImpl qname : myQnames) {
       set.addAll(qname.getTagsGetter().fun(handler));
@@ -73,7 +73,7 @@ class AddToCompositeCollectionInvocation implements Invocation {
         newTag = (XmlTag)tag.addAfter(emptyTag, lastTag);
       }
 
-      return new CollectionElementInvocationHandler(myType, newTag, myMainDescription, handler).getProxy();
+      return new CollectionElementInvocationHandler(myType, newTag, myMainDescription, handler, null).getProxy();
     }
     finally {
       manager.setChanging(b);

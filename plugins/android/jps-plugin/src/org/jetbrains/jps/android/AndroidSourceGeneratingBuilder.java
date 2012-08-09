@@ -477,7 +477,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
       final AndroidPlatform platform = moduleData.getPlatform();
       final IAndroidTarget target = platform.getTarget();
-      final String sdkLocation = platform.getSdk().getProperties().getHomePath();
+      final String sdkLocation = platform.getSdk().getHomePath();
       final String filePath = file.getPath();
 
       File tmpOutputDirectory = null;

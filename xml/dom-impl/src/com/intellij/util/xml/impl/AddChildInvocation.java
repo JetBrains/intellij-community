@@ -1,7 +1,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.util.Function;
-import com.intellij.util.xml.DomElement;
 
 import java.lang.reflect.Type;
 
@@ -24,7 +23,7 @@ public class AddChildInvocation implements Invocation{
     myType = type;
   }
 
-  public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
     return handler.addCollectionChild(myDescription, myClassGetter.fun(args), myIndexGetter.fun(args));
   }
 }

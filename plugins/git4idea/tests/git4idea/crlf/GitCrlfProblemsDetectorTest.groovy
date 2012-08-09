@@ -163,7 +163,7 @@ win6 crlf=input
   }
 
   private GitCrlfProblemsDetector detect(VirtualFile file) {
-    GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit, Collections.<VirtualFile> singleton(file))
+    GitCrlfProblemsDetector.detect(myProject, myPlatformFacade, myGit, Collections.singleton(file))
   }
 
   private void createCrlfFile(String relPath) {

@@ -354,7 +354,7 @@ public class AndroidPackagingBuilder extends ProjectLevelBuilder {
 
     final File classesDexFile = new File(intArtifactsDir.getPath(), AndroidCommonUtils.CLASSES_FILE_NAME);
 
-    final String sdkPath = platform.getSdk().getProperties().getHomePath();
+    final String sdkPath = platform.getSdk().getHomePath();
     final String outputPath = AndroidJpsUtil.getApkPath(extension, moduleOutputDir);
     if (outputPath == null) {
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, AndroidJpsBundle

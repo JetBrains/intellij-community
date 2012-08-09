@@ -66,7 +66,6 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       CaretModel caretModel = editor.getCaretModel();
       int offset = context.getTailOffset();
       PsiFile file = context.getFile();
-      assert file != null;
       PsiElement elementAt = file.findElementAt(context.getStartOffset());
       assert elementAt != null;
       PsiElement parent = elementAt.getParent();
@@ -92,15 +91,24 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
       if (PsiTreeUtil.getParentOfType(elementAt, GrImportStatement.class) != null) return;
 
       if (parameters.length == 1) {
-        if ((context.getCompletionChar() != '(' && context.getCompletionChar() != ' ') && 
+        if ((context.getCompletionChar() != '(' && context.getCompletionChar() != ' ') &&
             TypesUtil.isClassType(parameters[0].getType(), GroovyCommonClassNames.GROOVY_LANG_CLOSURE)) {
           int afterBrace;
           final int nonWs = CharArrayUtil.shiftForward(charsSequence, offset, " \t");
           if (nonWs < document.getTextLength() && charsSequence.charAt(nonWs) == '{') {
             afterBrace = nonWs + 1;
-          } else {
-            document.insertString(offset, " {}");
-            afterBrace = offset + 2;
+          }
+          else {
+            if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
+              //smart enter invoked
+              document.insertString(offset, " {\n}");
+              afterBrace = offset + 1;  //position caret before '{' for smart enter
+              context.setTailOffset(afterBrace);
+            }
+            else {
+              document.insertString(offset, " {}");
+              afterBrace = offset + 2;
+            }
           }
           caretModel.moveToOffset(afterBrace);
           return;

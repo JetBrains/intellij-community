@@ -5,6 +5,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.stubs.ElementStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,12 +15,14 @@ import java.util.List;
 /**
  * @author peter
  */
-public class CollectionElementInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl>{
+public class CollectionElementInvocationHandler extends DomInvocationHandler<AbstractDomChildDescriptionImpl, ElementStub>{
 
   public CollectionElementInvocationHandler(final Type type, @NotNull final XmlTag tag,
                                             final AbstractCollectionChildDescription description,
-                                            final DomInvocationHandler parent) {
-    super(type, new PhysicalDomParentStrategy(tag, parent.getManager()), description.createEvaluatedXmlName(parent, tag), (AbstractDomChildDescriptionImpl)description, parent.getManager(), true);
+                                            final DomInvocationHandler parent,
+                                            @Nullable ElementStub stub) {
+    super(type, new PhysicalDomParentStrategy(tag, parent.getManager()), description.createEvaluatedXmlName(parent, tag),
+          (AbstractDomChildDescriptionImpl)description, parent.getManager(), true, stub);
   }
 
   protected Type narrowType(@NotNull final Type nominalType) {

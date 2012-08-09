@@ -16,6 +16,7 @@
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.scopeChooser.PackageSetChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
@@ -345,7 +346,16 @@ public class ProjectSettingsPanel {
         }
 
         public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, int row, int column) {
-          myScopeChooser = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName(), false, false);
+          myScopeChooser = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName(), false, false){
+            @Override
+            protected NamedScope[] createModel() {
+              final NamedScope[] model = super.createModel();
+              final ArrayList<NamedScope> filteredScopes = new ArrayList<NamedScope>(Arrays.asList(model));
+              CustomScopesProviderEx.filterNoSettingsScopes(myProject, filteredScopes);
+              return filteredScopes.toArray(new NamedScope[filteredScopes.size()]);
+            }
+          };
+          
           ((JBComboBoxTableCellEditorComponent)myScopeChooser.getChildComponent()).setCell(table, row, column);
           return myScopeChooser;
         }

@@ -18,6 +18,8 @@ package com.intellij.codeInsight.lookup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FlatteningIterator;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -48,10 +50,10 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   }
 
   @Override
-  public Iterable<T> classify(Iterable<T> source, ProcessingContext context) {
+  public Iterable<T> classify(final Iterable<T> source, final ProcessingContext context) {
     List<T> nulls = null;
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
-    for (T t : myNext.classify(source, context)) {
+    for (T t : source) {
       final Comparable weight = getWeight(t);
       if (weight == null) {
         if (nulls == null) nulls = new SmartList<T>();
@@ -65,41 +67,17 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
       }
     }
 
-    final Collection<List<T>> values = myNegated ? map.descendingMap().values() : map.values();
-    final List<T> lastGroup = nulls == null ? Collections.<T>emptyList() : nulls;
+    final List<List<T>> values = new ArrayList<List<T>>();
+    values.addAll(myNegated ? map.descendingMap().values() : map.values());
+    ContainerUtil.addIfNotNull(values, nulls);
 
     return new Iterable<T>() {
-
       @Override
       public Iterator<T> iterator() {
-        return new Iterator<T>() {
-          private Iterator<List<T>> valuesIterator = values.iterator();
-          private Iterator<T> groupIterator = Collections.<T>emptyList().iterator();
-          private boolean passedLast;
-
+        return new FlatteningIterator<List<T>, T>(values.iterator()) {
           @Override
-          public boolean hasNext() {
-            while (!groupIterator.hasNext() && valuesIterator.hasNext()) {
-              groupIterator = valuesIterator.next().iterator();
-            }
-            if (!groupIterator.hasNext() && !valuesIterator.hasNext() && !passedLast) {
-              passedLast = true;
-              groupIterator = lastGroup.iterator();
-            }
-            return groupIterator.hasNext();
-          }
-
-          @Override
-          public T next() {
-            if (!hasNext()) {
-              throw new AssertionError();
-            }
-            return groupIterator.next();
-          }
-
-          @Override
-          public void remove() {
-            throw new UnsupportedOperationException();
+          protected Iterator<T> createValueIterator(List<T> group) {
+            return myNext.classify(group, context).iterator();
           }
         };
       }

@@ -51,6 +51,7 @@ public class RunContentDescriptor implements Disposable {
     myIcon = icon;
     DataManager.registerDataProvider(myComponent, new DataProvider() {
 
+      @Override
       public Object getData(@NonNls final String dataId) {
         if (RunContentManager.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
           return RunContentDescriptor.this;
@@ -69,6 +70,7 @@ public class RunContentDescriptor implements Disposable {
     return myExecutionConsole;
   }
 
+  @Override
   public void dispose() {
     if (myExecutionConsole != null) {
       Disposer.dispose(myExecutionConsole);

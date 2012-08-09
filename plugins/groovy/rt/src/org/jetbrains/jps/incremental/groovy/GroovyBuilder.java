@@ -27,8 +27,7 @@ import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.javac.OutputFileObject;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
-import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
@@ -209,9 +208,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   }
 
   private static String getJavaExecutable(ModuleChunk chunk) {
-    JpsTypedLibrary<JpsSdkProperties> sdk = chunk.getModules().iterator().next().getSdk(JpsJavaSdkType.INSTANCE);
+    JpsSdk<?> sdk = chunk.getModules().iterator().next().getSdk(JpsJavaSdkType.INSTANCE);
     if (sdk != null) {
-      return JpsJavaSdkType.getJavaExecutable(sdk.getProperties());
+      return JpsJavaSdkType.getJavaExecutable(sdk);
     }
     return SystemProperties.getJavaHome() + "/bin/java";
   }

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionSorterImpl;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.EmptyLookupItem;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -29,6 +30,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -42,6 +44,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.*;
 
 public class CompletionLookupArranger extends LookupArranger {
@@ -52,6 +55,20 @@ public class CompletionLookupArranger extends LookupArranger {
   public static final Key<Boolean> PURE_RELEVANCE = Key.create("PURE_RELEVANCE");
   public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private static final UISettings ourUISettings = UISettings.getInstance();
+  private static final Classifier<LookupElement> TAIL_CLASSIFIER = new Classifier<LookupElement>() {
+    @Override
+    public void addElement(LookupElement element) {
+    }
+
+    @Override
+    public Iterable<LookupElement> classify(Iterable<LookupElement> source, ProcessingContext context) {
+      return sortByPresentation(source);
+    }
+
+    @Override
+    public void describeItems(LinkedHashMap<LookupElement, StringBuilder> map, ProcessingContext context) {
+    }
+  };
   private final List<LookupElement> myFrozenItems = new ArrayList<LookupElement>();
   static {
     Disposer.register(ApplicationManager.getApplication(), new Disposable() {
@@ -75,7 +92,7 @@ public class CompletionLookupArranger extends LookupArranger {
     myLocation = new CompletionLocation(parameters);
   }
 
-  private MultiMap<CompletionSorterImpl, LookupElement> groupInputBySorter(List<LookupElement> source) {
+  private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(List<LookupElement> source) {
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>();
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
@@ -94,7 +111,7 @@ public class CompletionLookupArranger extends LookupArranger {
     for (LookupElement item : myItems) {
       map.put(item, new StringBuilder());
     }
-    final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(new ArrayList<LookupElement>(map.keySet()));
+    final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupItemsBySorter(new ArrayList<LookupElement>(map.keySet()));
 
     if (inputBySorter.size() > 1) {
       for (LookupElement element : map.keySet()) {
@@ -119,16 +136,28 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
+    super.addElement(lookup, element, presentation);
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     if (classifier == null) {
-      myClassifiers.put(sorter, classifier = sorter.buildClassifier());
+      myClassifiers.put(sorter, classifier = sorter.buildClassifier(TAIL_CLASSIFIER));
     }
     classifier.addElement(element);
 
     final String invariant = presentation.getItemText() + "###" + presentation.getTailText() + "###" + presentation.getTypeText();
     element.putUserData(PRESENTATION_INVARIANT, invariant);
-    super.addElement(lookup, element, presentation);
+  }
+
+  private static List<LookupElement> sortByPresentation(Iterable<LookupElement> source) {
+    ArrayList<LookupElement> result = ContainerUtil.newArrayList(source);
+    ContainerUtil.sort(result, new Comparator<LookupElement>() {
+      public int compare(LookupElement o1, LookupElement o2) {
+        String invariant = PRESENTATION_INVARIANT.get(o1);
+        assert invariant != null;
+        return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
+      }
+    });
+    return result;
   }
 
   private static boolean isAlphaSorted() {
@@ -137,53 +166,122 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
-    List<LookupElement> items = matchingItems(lookup);
-    Collections.sort(items, new Comparator<LookupElement>() {
-      public int compare(LookupElement o1, LookupElement o2) {
-        String invariant = PRESENTATION_INVARIANT.get(o1);
-        assert invariant != null;
-        return invariant.compareToIgnoreCase(PRESENTATION_INVARIANT.get(o2));
+    List<LookupElement> items = getMatchingItems();
+    MultiMap<CompletionSorterImpl, LookupElement> itemsBySorter = groupItemsBySorter(items);
+
+    List<LookupElement> listModel = isAlphaSorted() ?
+                                    sortByPresentation(items) :
+                                    fillModelByRelevance((LookupImpl)lookup, items, itemsBySorter);
+
+    int toSelect = getItemToSelect(lookup, listModel, itemsBySorter, onExplicitAction);
+
+    addDummyItems(items.size() - listModel.size(), listModel);
+
+    return new Pair<List<LookupElement>, Integer>(listModel, toSelect);
+  }
+
+  private static void addDummyItems(int count, List<LookupElement> listModel) {
+    for (int i = count; i > 0; i--) {
+      listModel.add(new EmptyLookupItem("loading...", true));
+    }
+  }
+
+  private List<LookupElement> fillModelByRelevance(LookupImpl lookup,
+                                                   List<LookupElement> items,
+                                                   MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
+    Iterator<LookupElement> byRelevance = sortByRelevance(inputBySorter).iterator();
+
+    final LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
+
+    addPrefixItems(model);
+    addFrozenItems(items, model);
+    addSomeItems(model, byRelevance, new Condition<LookupElement>() {
+      @Override
+      public boolean value(LookupElement lastAdded) {
+        return model.size() >= MAX_PREFERRED_COUNT;
       }
     });
+    addCurrentlySelectedItemToTop(lookup, items, model);
 
-    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(items);
+    freezeTopItems(lookup, model);
 
-    final List<LookupElement> byRelevance = new ArrayList<LookupElement>();
-    for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
-      ProcessingContext context = createContext(false);
-      ContainerUtil.addAll(byRelevance, myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context));
+    ensureCurrentSelectionAdded(lookup, items, model, byRelevance);
+    ensureEverythingVisibleAdded(lookup, model, byRelevance);
+
+    return new ArrayList<LookupElement>(model);
+  }
+
+  private static void ensureEverythingVisibleAdded(LookupImpl lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {
+    JList list = lookup.getList();
+    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+    final int limit = Math.max(list.getLastVisibleIndex(), model.size()) + list.getVisibleRowCount() * 3;
+    addSomeItems(model, byRelevance, new Condition<LookupElement>() {
+      @Override
+      public boolean value(LookupElement lastAdded) {
+        return !testMode && model.size() >= limit;
+      }
+    });
+  }
+
+  private static void ensureCurrentSelectionAdded(LookupImpl lookup,
+                                                  List<LookupElement> items,
+                                                  LinkedHashSet<LookupElement> model,
+                                                  Iterator<LookupElement> byRelevance) {
+    final LookupElement currentItem = lookup.getCurrentItem();
+    if (ContainerUtil.indexOfIdentity(items, currentItem) >= 0 && !model.contains(currentItem)) {
+      addSomeItems(model, byRelevance, new Condition<LookupElement>() {
+        @Override
+        public boolean value(LookupElement lastAdded) {
+          return lastAdded == currentItem;
+        }
+      });
     }
+  }
 
-    LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
-    addPrefixItems(lookup, model, byRelevance);
+  private void freezeTopItems(LookupImpl lookup, LinkedHashSet<LookupElement> model) {
+    myFrozenItems.clear();
+    if (lookup.isShown()) {
+      myFrozenItems.addAll(model);
+    }
+  }
 
+  private void addFrozenItems(List<LookupElement> items, LinkedHashSet<LookupElement> model) {
     myFrozenItems.retainAll(items);
     model.addAll(myFrozenItems);
+  }
 
-    if (!isAlphaSorted()) {
-      for (int i = 0; i < byRelevance.size() && model.size() < MAX_PREFERRED_COUNT; i++) {
-        model.add(byRelevance.get(i));
-      }
+  private void addPrefixItems(LinkedHashSet<LookupElement> model) {
+    ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(true))));
+    ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(false))));
+  }
+
+  private static void addCurrentlySelectedItemToTop(Lookup lookup, List<LookupElement> items, LinkedHashSet<LookupElement> model) {
+    if (!lookup.isSelectionTouched()) {
       LookupElement lastSelection = lookup.getCurrentItem();
       if (ContainerUtil.indexOfIdentity(items, lastSelection) >= 0) {
         model.add(lastSelection);
       }
     }
+  }
 
-    myFrozenItems.clear();
-
-    if (((LookupImpl)lookup).isShown()) {
-      myFrozenItems.addAll(model);
+  private static void addSomeItems(LinkedHashSet<LookupElement> model, Iterator<LookupElement> iterator, Condition<LookupElement> stopWhen) {
+    while (iterator.hasNext()) {
+      LookupElement item = iterator.next();
+      model.add(item);
+      if (stopWhen.value(item)) {
+        break;
+      }
     }
+  }
 
-    if (isAlphaSorted()) {
-      model.addAll(items);
-    } else  {
-      model.addAll(byRelevance);
+  private Iterable<LookupElement> sortByRelevance(MultiMap<CompletionSorterImpl, LookupElement> inputBySorter) {
+    final List<Iterable<LookupElement>> byClassifier = ContainerUtil.newArrayList();
+    for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
+      ProcessingContext context = createContext(false);
+      byClassifier.add(myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context));
     }
-    ArrayList<LookupElement> listModel = new ArrayList<LookupElement>(model);
-
-    return new Pair<List<LookupElement>, Integer>(listModel, getItemToSelect(lookup, listModel, inputBySorter, onExplicitAction));
+    //noinspection unchecked
+    return ContainerUtil.concat(byClassifier.toArray(new Iterable[byClassifier.size()]));
   }
 
   private ProcessingContext createContext(boolean pureRelevance) {
@@ -201,7 +299,9 @@ public class CompletionLookupArranger extends LookupArranger {
     return new CompletionLookupArranger(myParameters, myProcess);
   }
 
-  private int getItemToSelect(Lookup lookup, List<LookupElement> items, MultiMap<CompletionSorterImpl, LookupElement> inputBySorter, boolean onExplicitAction) {
+  private int getItemToSelect(Lookup lookup, List<LookupElement> items,
+                              MultiMap<CompletionSorterImpl, LookupElement> itemsBySorter,
+                              boolean onExplicitAction) {
     if (items.isEmpty() || !lookup.isFocused()) {
       return 0;
     }
@@ -211,6 +311,14 @@ public class CompletionLookupArranger extends LookupArranger {
       int old = ContainerUtil.indexOfIdentity(items, lastSelection);
       if (old >= 0) {
         return old;
+      }
+
+      Object selectedValue = ((LookupImpl)lookup).getList().getSelectedValue();
+      if (selectedValue instanceof EmptyLookupItem && ((EmptyLookupItem)selectedValue).isLoading()) {
+        int index = ((LookupImpl)lookup).getList().getSelectedIndex();
+        if (index >= 0 && index < items.size()) {
+          return index;
+        }
       }
 
       for (int i = 0; i < items.size(); i++) {
@@ -233,7 +341,7 @@ public class CompletionLookupArranger extends LookupArranger {
     final CompletionPreselectSkipper[] skippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
       ProcessingContext context = createContext(true);
-      for (LookupElement element : myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context)) {
+      for (LookupElement element : myClassifiers.get(sorter).classify(itemsBySorter.get(sorter), context)) {
         if (!shouldSkip(skippers, element)) {
           return items.indexOf(element);
         }
@@ -338,15 +446,11 @@ public class CompletionLookupArranger extends LookupArranger {
     return false;
   }
 
-  public static String composeContextWithValue(final StatisticsInfo info) {
-    return info.getContext() + "###" + info.getValue();
-  }
-
   @Override
-  public void prefixChanged() {
+  public void prefixChanged(Lookup lookup) {
     myPrefixChanges++;
     myFrozenItems.clear();
-    super.prefixChanged();
+    super.prefixChanged(lookup);
   }
 
   static class StatisticsUpdate implements Disposable {

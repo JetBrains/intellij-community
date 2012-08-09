@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.Semaphore;
 import gnu.trove.Equality;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -149,4 +150,17 @@ public class TransferToEDTQueue<T> {
     long finish = System.currentTimeMillis();
     int i  = 0;
   }
+
+  public void waitFor() {
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    schedule(new Runnable() {
+      @Override
+      public void run() {
+        semaphore.up();
+      }
+    });
+    semaphore.waitFor();
+  }
+
 }

@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.simple.BracesTailType;
 import com.intellij.codeInsight.completion.simple.ParenthesesTailType;
 import com.intellij.codeInsight.completion.simple.RParenthTailType;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 public class TailTypes {
@@ -103,10 +102,24 @@ public class TailTypes {
     }
   };
   public static final TailType FINALLY_LBRACE = new BracesTailType() {
-    protected boolean isSpaceBeforeLBrace(final CodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
+    protected boolean isSpaceBeforeLBrace(final CommonCodeStyleSettings styleSettings, final Editor editor, final int tailOffset) {
       return styleSettings.SPACE_BEFORE_FINALLY_LBRACE;
     }
   };
+  public static final TailType TRY_LBRACE = new BracesTailType() {
+    @Override
+    protected boolean isSpaceBeforeLBrace(CommonCodeStyleSettings styleSettings, Editor editor, int tailOffset) {
+      return styleSettings.SPACE_BEFORE_TRY_LBRACE;
+    }
+  };
+  public static final TailType DO_LBRACE = new BracesTailType() {
+    @Override
+    protected boolean isSpaceBeforeLBrace(CommonCodeStyleSettings styleSettings, Editor editor, int tailOffset) {
+      return styleSettings.SPACE_BEFORE_DO_LBRACE;
+    }
+  };
+
+
 
   private TailTypes() {}
 }

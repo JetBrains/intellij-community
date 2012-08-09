@@ -16,23 +16,19 @@
 package org.jetbrains.jps.android.model;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
-import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 /**
  * @author nik
  */
-public class JpsAndroidSdkType extends JpsSdkType<JpsAndroidSdkProperties> implements JpsJavaSdkTypeWrapper {
+public class JpsAndroidSdkType extends JpsSdkType<JpsSimpleElement<JpsAndroidSdkProperties>> implements JpsJavaSdkTypeWrapper {
   public static final JpsAndroidSdkType INSTANCE = new JpsAndroidSdkType();
 
   @Override
-  public JpsAndroidSdkProperties createCopy(JpsAndroidSdkProperties properties) {
-    return new JpsAndroidSdkProperties(properties);
-  }
-
-  @Override
-  public String getJavaSdkName(@NotNull JpsSdkProperties properties) {
-    return properties instanceof JpsAndroidSdkProperties ? ((JpsAndroidSdkProperties)properties).getJdkName() : null;
+  public String getJavaSdkName(@NotNull JpsElement properties) {
+    return ((JpsAndroidSdkProperties)((JpsSimpleElement<?>)properties).getData()).getJdkName();
   }
 }

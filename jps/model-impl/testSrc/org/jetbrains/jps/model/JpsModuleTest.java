@@ -2,7 +2,6 @@ package org.jetbrains.jps.model;
 
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsSdkProperties;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
@@ -13,16 +12,17 @@ import java.util.List;
 public class JpsModuleTest extends JpsModelTestCase {
   public void testAddSourceRoot() {
     final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
-    final JpsModuleSourceRoot sourceRoot = module.addSourceRoot("file://url", JavaSourceRootType.SOURCE, new JavaSourceRootProperties("com.xxx"));
+    JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties("com.xxx"));
+    final JpsModuleSourceRoot sourceRoot = module.addSourceRoot("file://url", JavaSourceRootType.SOURCE, properties);
 
     assertSameElements(myDispatcher.retrieveAdded(JpsModule.class), module);
     assertSameElements(myDispatcher.retrieveAdded(JpsModuleSourceRoot.class), sourceRoot);
 
     final JpsModuleSourceRoot root = assertOneElement(module.getSourceRoots());
     assertEquals("file://url", root.getUrl());
-    final JavaSourceRootProperties properties = root.getProperties(JavaSourceRootType.SOURCE);
-    assertNotNull(properties);
-    assertEquals("com.xxx", properties.getPackagePrefix());
+    final JpsSimpleElement<JavaSourceRootProperties> properties2 = root.getProperties(JavaSourceRootType.SOURCE);
+    assertNotNull(properties2);
+    assertEquals("com.xxx", properties2.getData().getPackagePrefix());
   }
 
   public void testModifiableModel() {
@@ -95,7 +95,7 @@ public class JpsModuleTest extends JpsModelTestCase {
   }
 
   public void testSdkDependency() {
-    JpsLibrary sdk = myModel.getGlobal().getLibraryCollection().addLibrary("sdk", JpsJavaSdkType.INSTANCE, new JpsSdkProperties("", ""));
+    JpsLibrary sdk = myModel.getGlobal().addSdk("sdk", null, null, JpsJavaSdkType.INSTANCE, JpsElementFactory.getInstance().createDummyElement());
     final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, sdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);

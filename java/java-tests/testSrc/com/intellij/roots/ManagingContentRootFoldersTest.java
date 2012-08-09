@@ -63,7 +63,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     String url = dir.getUrl();
 
     ContentFolder f = entry.addSourceFolder(dir, false);
-    assertSame(dir, f.getFile());
+    assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
 
     dir.delete(null);
@@ -71,7 +71,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     assertEquals(url, f.getUrl());
 
     dir = root.createChildDirectory(null, "src");
-    assertSame(dir, f.getFile());
+    assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
   }
 
@@ -86,7 +86,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     assertEquals(url, f.getUrl());
 
     dir = root.createChildDirectory(null, "src");
-    assertSame(dir, f.getFile());
+    assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
   }
 
@@ -95,7 +95,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     String url = dir.getUrl();
 
     ContentFolder f = entry.addSourceFolder(url, false);
-    assertSame(dir, f.getFile());
+    assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
   }
 
@@ -104,7 +104,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     String url = dir.getUrl();
 
     ContentFolder f = entry.addExcludeFolder(dir);
-    assertSame(dir, f.getFile());
+    assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
 
     dir.delete(null);
@@ -112,7 +112,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     assertEquals(url, f.getUrl());
 
     dir = root.createChildDirectory(null, "src");
-    assertSame(dir, f.getFile());
+    assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
   }
 
@@ -126,7 +126,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     assertEquals(url, f.getUrl());
 
     dir = root.createChildDirectory(null, "src");
-    assertSame(dir, f.getFile());
+    assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
   }
 
@@ -135,7 +135,7 @@ public class ManagingContentRootFoldersTest extends IdeaTestCase {
     String url = dir.getUrl();
 
     ContentFolder f = entry.addExcludeFolder(url);
-    assertSame(dir, f.getFile());
+    assertEquals(dir, f.getFile());
     assertEquals(url, f.getUrl());
   }
 }

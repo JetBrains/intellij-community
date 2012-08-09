@@ -26,7 +26,7 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
 
 
   @NotNull
-  <P extends JpsElementProperties, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
+  <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>
   JpsLibrary addLibrary(@NotNull String name, @NotNull LibraryType libraryType);
 
   @NotNull

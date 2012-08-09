@@ -13,7 +13,7 @@ public class SetInvocation implements Invocation {
     myConverter = converter;
   }
 
-  public Object invoke(final DomInvocationHandler<?> handler, final Object[] args) throws Throwable {
+  public Object invoke(final DomInvocationHandler<?, ?> handler, final Object[] args) throws Throwable {
     handler.assertValid();
     final SubTag annotation = handler.getAnnotation(SubTag.class);
     final Object arg = args[0];

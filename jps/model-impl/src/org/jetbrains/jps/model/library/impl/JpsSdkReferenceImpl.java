@@ -7,7 +7,7 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
-import org.jetbrains.jps.model.library.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 
 /**
  * @author nik

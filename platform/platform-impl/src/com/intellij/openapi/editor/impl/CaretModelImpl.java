@@ -538,20 +538,20 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
       Runnable runnable = new Runnable() {
         @Override
         public void run() {
-          mySkipChangeRequests = true;
-          try {
-            FoldRegion[] allCollapsedAt = myEditor.getFoldingModel().fetchCollapsedAt(offset);
-            for (FoldRegion foldRange : allCollapsedAt) {
-              foldRange.setExpanded(true);
-            }
-          }
-          finally {
-            mySkipChangeRequests = false;
+          FoldRegion[] allCollapsedAt = myEditor.getFoldingModel().fetchCollapsedAt(offset);
+          for (FoldRegion foldRange : allCollapsedAt) {
+            foldRange.setExpanded(true);
           }
         }
       };
 
-      myEditor.getFoldingModel().runBatchFoldingOperation(runnable, false);
+      mySkipChangeRequests = true;
+      try {
+        myEditor.getFoldingModel().runBatchFoldingOperation(runnable, false);
+      }
+      finally {
+        mySkipChangeRequests = false;
+      }
     }
 
     myEditor.setLastColumnNumber(myLogicalCaret.column);

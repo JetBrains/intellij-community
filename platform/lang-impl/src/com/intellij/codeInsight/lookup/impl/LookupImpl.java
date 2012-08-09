@@ -17,7 +17,10 @@
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CodeCompletionFeatures;
+import com.intellij.codeInsight.completion.CompletionLookupArranger;
+import com.intellij.codeInsight.completion.PrefixMatcher;
+import com.intellij.codeInsight.completion.ShowHideIntentionIconLookupAction;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -149,6 +152,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   private boolean myResizePending;
   private int myMaximumHeight = Integer.MAX_VALUE;
   private boolean myFinishing;
+  private boolean myUpdating;
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
@@ -316,7 +320,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     final List<LookupElement> items = getItems();
 
     synchronized (myList) {
-      myPresentableArranger.prefixChanged();
+      myPresentableArranger.prefixChanged(this);
       getListModel().removeAll();
     }
 
@@ -365,11 +369,12 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   public List<LookupElement> getItems() {
     synchronized (myList) {
-      List<LookupElement> elements = getListModel().toList();
-      if (elements.size() == 1 && elements.get(0) instanceof EmptyLookupItem) {
-        return Collections.emptyList();
-      }
-      return elements;
+      return ContainerUtil.findAll(getListModel().toList(), new Condition<LookupElement>() {
+        @Override
+        public boolean value(LookupElement element) {
+          return !(element instanceof EmptyLookupItem);
+        }
+      });
     }
   }
 
@@ -393,7 +398,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     checkValid();
     myOffsets.appendPrefix(c);
     synchronized (myList) {
-      myPresentableArranger.prefixChanged();
+      myPresentableArranger.prefixChanged(this);
     }
     requestResize();
     refreshUi(false, true);
@@ -426,7 +431,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     boolean shouldUpdate;
     synchronized (myList) {
       shouldUpdate = myPresentableArranger == myArranger;
-      myPresentableArranger.prefixChanged();
+      myPresentableArranger.prefixChanged(this);
     }
     requestResize();
     if (shouldUpdate) {
@@ -437,7 +442,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return true;
   }
 
-  private boolean updateList(boolean onExplicitAction) {
+  private boolean updateList(boolean onExplicitAction, boolean reused) {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
@@ -445,7 +450,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     CollectionListModel<LookupElement> listModel = getListModel();
     synchronized (myList) {
-      Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction);
+      Pair<List<LookupElement>, Integer> pair = myPresentableArranger.arrangeItems(this, onExplicitAction || reused);
       List<LookupElement> items = pair.first;
       Integer toSelect = pair.second;
       if (toSelect == null || toSelect < 0 || items.size() > 0 && toSelect >= items.size()) {
@@ -479,7 +484,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     synchronized (myList) {
       if (myPresentableArranger != myArranger) {
         myPresentableArranger = myArranger;
-        myPresentableArranger.prefixChanged();
+        myOffsets.clearAdditionalPrefix();
+        myPresentableArranger.prefixChanged(this);
         return true;
       }
       return false;
@@ -493,7 +499,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   private void addEmptyItem(CollectionListModel<LookupElement> model) {
-    LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"));
+    LookupItem<String> item = new EmptyLookupItem(myCalculating ? " " : LangBundle.message("completion.no.suggestions"), false);
     myMatchers.put(item, new CamelHumpMatcher(""));
     model.add(item);
 
@@ -513,19 +519,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     String prefix = itemMatcher(element).getPrefix();
     String additionalPrefix = getAdditionalPrefix();
     return additionalPrefix.isEmpty() ? prefix : prefix + additionalPrefix;
-  }
-
-  @Override
-  public boolean prefixMatches(@NotNull final LookupElement item) {
-    PrefixMatcher matcher = myMatchers.get(item);
-    if (matcher == null) {
-      return false;
-    }
-
-    if (getAdditionalPrefix().length() > 0) {
-      matcher = matcher.cloneWithPrefix(itemPattern(item));
-    }
-    return matcher.prefixMatches(item);
   }
 
   @Override
@@ -617,7 +610,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     boolean plainMatch = ContainerUtil.or(item.getAllLookupStrings(), new Condition<String>() {
       @Override
       public boolean value(String s) {
-        return StringUtil.startsWithIgnoreCase(s, prefix);
+        return StringUtil.containsIgnoreCase(s, prefix);
       }
     });
     if (!plainMatch) {
@@ -627,7 +620,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     myFinishing = true;
     AccessToken token = WriteAction.start();
     try {
-      insertLookupString(item, prefix);
+      insertLookupString(item, myOffsets.getPrefixLength(item, this));
     }
     finally {
       token.finish();
@@ -642,7 +635,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     fireItemSelected(item, completionChar);
   }
 
-  private void insertLookupString(LookupElement item, final String prefix) {
+  private void insertLookupString(LookupElement item, final int prefix) {
     Document document = myEditor.getDocument();
 
     String lookupString = getCaseCorrectedLookupString(item);
@@ -654,7 +647,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
       for (int line = blockStart.line; line <= blockEnd.line; line++) {
         int bs = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockStart.column));
-        int start = bs - prefix.length();
+        int start = bs - prefix;
         int end = myEditor.logicalPositionToOffset(new LogicalPosition(line, blockEnd.column));
         if (start > end) {
           LOG.error("bs=" + bs + "; start=" + start + "; end=" + end +
@@ -663,14 +656,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         }
         document.replaceString(start, end, lookupString);
       }
-      LogicalPosition start = new LogicalPosition(blockStart.line, blockStart.column - prefix.length());
+      LogicalPosition start = new LogicalPosition(blockStart.line, blockStart.column - prefix);
       LogicalPosition end = new LogicalPosition(blockEnd.line, start.column + lookupString.length());
       myEditor.getSelectionModel().setBlockSelection(start, end);
       myEditor.getCaretModel().moveToLogicalPosition(end);
     } else {
       EditorModificationUtil.deleteSelectedText(myEditor);
       final int caretOffset = myEditor.getCaretModel().getOffset();
-      int lookupStart = caretOffset - prefix.length();
+      int lookupStart = caretOffset - prefix;
   
       int len = document.getTextLength();
       LOG.assertTrue(lookupStart >= 0 && lookupStart <= len,
@@ -886,6 +879,20 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         return true;
       }
     }.installOn(myList);
+
+    final Alarm alarm = new Alarm(this);
+    myScrollPane.getVerticalScrollBar().addAdjustmentListener(new AdjustmentListener() {
+      @Override
+      public void adjustmentValueChanged(AdjustmentEvent e) {
+        if (!myShown || myUpdating) return;
+        alarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            refreshUi(false, false);
+          }
+        }, 300);
+      }
+    });
   }
 
   private void updateHint(@NotNull final LookupElement item) {
@@ -1021,6 +1028,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     for (int i = 1; i < listModel.getSize(); i++) {
       LookupElement item = (LookupElement)listModel.getElementAt(i);
+      if (item instanceof EmptyLookupItem) return false;
       if (!oldPrefix.equals(itemMatcher(item).getPrefix())) return false;
 
       final String lookupString = getCaseCorrectedLookupString(item);
@@ -1189,14 +1197,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   }
 
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
-    final boolean reused = mayCheckReused && checkReused();
-    if (reused) {
-      myOffsets.clearAdditionalPrefix();
+    assert !myUpdating;
+    myUpdating = true;
+    try {
+      doRefreshUi(mayCheckReused, onExplicitAction);
     }
+    finally {
+      myUpdating = false;
+    }
+  }
+
+  private void doRefreshUi(boolean mayCheckReused, boolean onExplicitAction) {
+    final boolean reused = mayCheckReused && checkReused();
 
     boolean selectionVisible = isSelectionVisible();
 
-    boolean itemsChanged = updateList(onExplicitAction || reused);
+    boolean itemsChanged = updateList(onExplicitAction, reused);
 
     if (isVisible()) {
       LOG.assertTrue(!ApplicationManager.getApplication().isUnitTestMode());
