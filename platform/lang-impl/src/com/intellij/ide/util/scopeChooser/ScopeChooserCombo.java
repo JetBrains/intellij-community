@@ -394,7 +394,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
         result.add(new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, openFiles)){
           @Override
           public String getDisplayName() {
-            return "Selected files";
+            return "Selected Files";
           }
         });
       }
