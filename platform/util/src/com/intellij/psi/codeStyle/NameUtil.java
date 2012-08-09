@@ -16,7 +16,6 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -282,7 +281,7 @@ public class NameUtil {
     buffer.append(prefix);
 
     if (upperCaseStyle) {
-      startWord = StringUtilRt.toUpperCase(startWord);
+      startWord = StringUtil.toUpperCase(startWord);
     }
     else {
       if (prefix.length() == 0 || StringUtil.endsWithChar(prefix, '_')) {
@@ -298,7 +297,7 @@ public class NameUtil {
       String word = words[i];
       String prevWord = words[i - 1];
       if (upperCaseStyle) {
-        word = StringUtilRt.toUpperCase(word);
+        word = StringUtil.toUpperCase(word);
         if (prevWord.charAt(prevWord.length() - 1) != '_' && word.charAt(0) != '_') {
           word = "_" + word;
         }
@@ -322,7 +321,7 @@ public class NameUtil {
     if (isArray) {
       suggestion = StringUtil.pluralize(suggestion);
       if (upperCaseStyle) {
-        suggestion = StringUtilRt.toUpperCase(suggestion);
+        suggestion = StringUtil.toUpperCase(suggestion);
       }
     }
     return suggestion;

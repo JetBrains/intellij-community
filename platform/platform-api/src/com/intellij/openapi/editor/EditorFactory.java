@@ -36,7 +36,6 @@ public abstract class EditorFactory implements ApplicationComponent {
    *
    * @return the editor factory instance.
    */
-  @Nullable
   public static EditorFactory getInstance() {
     final Application application = ApplicationManager.getApplication();
     return application == null ? null : application.getComponent(EditorFactory.class);
@@ -82,7 +81,7 @@ public abstract class EditorFactory implements ApplicationComponent {
    * Creates an editor for the specified document associated with the specified project.
    *
    * @param document the document to create the editor for.
-   * @param project the project with which the editor is associated.
+   * @param project  the project with which the editor is associated.
    * @return the editor instance.
    * @see Editor#getProject()
    * @see #releaseEditor(Editor)
@@ -93,7 +92,7 @@ public abstract class EditorFactory implements ApplicationComponent {
    * Creates an editor for the specified document associated with the specified project.
    *
    * @param document the document to create the editor for.
-   * @param project the project for which highlighter should be created
+   * @param project  the project for which highlighter should be created
    * @param fileType the file type according to which the editor contents is highlighted.
    * @param isViewer true if read-only editor should be created
    * @return the editor instance.
@@ -106,8 +105,8 @@ public abstract class EditorFactory implements ApplicationComponent {
    * Creates an editor for the specified document associated with the specified project.
    *
    * @param document the document to create the editor for.
-   * @param project the project for which highlighter should be created
-   * @param file the file according to which the editor contents is highlighted.
+   * @param project  the project for which highlighter should be created
+   * @param file     the file according to which the editor contents is highlighted.
    * @param isViewer true if read-only editor should be created
    * @return the editor instance.
    * @see Editor#getProject()
@@ -119,7 +118,7 @@ public abstract class EditorFactory implements ApplicationComponent {
    * Creates a read-only editor for the specified document associated with the specified project.
    *
    * @param document the document to create the editor for.
-   * @param project the project with which the editor is associated.
+   * @param project  the project with which the editor is associated.
    * @return the editor instance.
    * @see Editor#getProject()
    * @see #releaseEditor(Editor)
@@ -141,7 +140,8 @@ public abstract class EditorFactory implements ApplicationComponent {
    *                 for this document should be returned.
    * @return the list of editors.
    */
-  @NotNull public abstract Editor[] getEditors(@NotNull Document document, @Nullable Project project);
+  @NotNull
+  public abstract Editor[] getEditors(@NotNull Document document, @Nullable Project project);
 
   /**
    * Returns the list of all editors for the specified document.
@@ -149,14 +149,16 @@ public abstract class EditorFactory implements ApplicationComponent {
    * @param document the document for which editors are requested.
    * @return the list of editors.
    */
-  @NotNull public abstract Editor[] getEditors(@NotNull Document document);
+  @NotNull
+  public abstract Editor[] getEditors(@NotNull Document document);
 
   /**
    * Returns the list of all currently open editors.
    *
    * @return the list of editors.
    */
-  @NotNull public abstract Editor[] getAllEditors();
+  @NotNull
+  public abstract Editor[] getAllEditors();
 
   /**
    * Registers a listener for receiving notifications when editor instances are created
@@ -171,7 +173,7 @@ public abstract class EditorFactory implements ApplicationComponent {
    * Registers a listener for receiving notifications when editor instances are created and released
    * and removes the listener when the <code>'parentDisposable'</code> gets disposed.
    *
-   * @param listener the listener instance.
+   * @param listener         the listener instance.
    * @param parentDisposable the Disposable which triggers the removal of the listener
    */
   public abstract void addEditorFactoryListener(@NotNull EditorFactoryListener listener, @NotNull Disposable parentDisposable);

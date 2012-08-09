@@ -70,8 +70,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.*;
 
@@ -223,17 +225,23 @@ public class GroovyCompletionUtil {
   }
 
 
-  public static List<LookupElement> getCompletionVariants(GroovyResolveResult[] candidates, boolean afterNew, PrefixMatcher matcher) {
+  public static List<LookupElement> getCompletionVariants(GroovyResolveResult[] candidates,
+                                                          boolean afterNew,
+                                                          PrefixMatcher matcher,
+                                                          PsiElement position) {
     List<LookupElement> result = CollectionFactory.arrayList();
     for (GroovyResolveResult candidate : candidates) {
-      result.addAll(createLookupElements(candidate, afterNew, matcher));
+      result.addAll(createLookupElements(candidate, afterNew, matcher, position));
       ProgressManager.checkCanceled();
     }
 
     return result;
   }
 
-  public static List<? extends LookupElement> createLookupElements(GroovyResolveResult candidate, boolean afterNew, PrefixMatcher matcher) {
+  public static List<? extends LookupElement> createLookupElements(GroovyResolveResult candidate,
+                                                                   boolean afterNew,
+                                                                   PrefixMatcher matcher,
+                                                                   @Nullable PsiElement position) {
     final PsiElement element = candidate.getElement();
     final PsiElement context = candidate.getCurrentFileResolveContext();
     if (context instanceof GrImportStatement && element != null) {
@@ -276,7 +284,7 @@ public class GroovyCompletionUtil {
     }
 
     LookupElementBuilder builder = LookupElementBuilder.create(element instanceof PsiPackage ? element : candidate, name);
-    return Arrays.asList(setupLookupBuilder(element, candidate.getSubstitutor(), builder));
+    return Arrays.asList(setupLookupBuilder(element, candidate.getSubstitutor(), builder, position));
   }
 
   public static LookupElement createClassLookupItem(PsiClass psiClass) {
@@ -289,18 +297,21 @@ public class GroovyCompletionUtil {
     assert element != null;
     final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
     LookupElementBuilder builder = LookupElementBuilder.create(resolveResult, importedName).withPresentableText(importedName);
-    return Arrays.asList(setupLookupBuilder(element, substitutor, builder));
+    return Arrays.asList(setupLookupBuilder(element, substitutor, builder, null));
   }
 
   public static LookupElement createLookupElement(PsiNamedElement o) {
-    return setupLookupBuilder(o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, o.getName()));
+    return setupLookupBuilder(o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, o.getName()), null);
   }
 
-  private static LookupElementBuilder setupLookupBuilder(PsiElement element, PsiSubstitutor substitutor, LookupElementBuilder builder) {
+  private static LookupElementBuilder setupLookupBuilder(PsiElement element,
+                                                         PsiSubstitutor substitutor,
+                                                         LookupElementBuilder builder,
+                                                         @Nullable PsiElement position) {
     builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .withInsertHandler(GroovyInsertHandler.INSTANCE);
     builder = setTailText(element, builder, substitutor);
-    builder = setTypeText(element, builder, substitutor);
+    builder = setTypeText(element, builder, substitutor, position);
     return builder;
   }
 
@@ -339,10 +350,15 @@ public class GroovyCompletionUtil {
   }
 
 
-  private static LookupElementBuilder setTypeText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor) {
+  private static LookupElementBuilder setTypeText(PsiElement element, LookupElementBuilder builder, PsiSubstitutor substitutor, @Nullable PsiElement position) {
     PsiType type = null;
     if (element instanceof GrVariable) {
-      type = ((GrVariable)element).getTypeGroovy();
+      if (position != null && GroovyRefactoringUtil.isLocalVariable(element)) {
+        type = TypeInferenceHelper.getInferredType(position, ((GrVariable)element).getName());
+      }
+      else {
+        type = ((GrVariable)element).getTypeGroovy();
+      }
     }
     else if (element instanceof PsiVariable) {
       type = ((PsiVariable)element).getType();
@@ -514,7 +530,7 @@ public class GroovyCompletionUtil {
       if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
         List<LookupElement> result = new ArrayList<LookupElement>();
         for (PsiMethod method : ((PsiClass)resolved).getMethods()) {
-          result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher));
+          result.addAll(createLookupElements(new GroovyResolveResultImpl(method, true), false, matcher, null));
         }
         return result;
       }

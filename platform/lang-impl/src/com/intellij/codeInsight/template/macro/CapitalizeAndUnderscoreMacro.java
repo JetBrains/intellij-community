@@ -20,7 +20,7 @@ import com.intellij.codeInsight.template.Expression;
 import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,7 +45,7 @@ public class CapitalizeAndUnderscoreMacro extends MacroBase {
         } else {
           insertUnderscore = true;
         }
-        buf.append(StringUtilRt.toUpperCase(word));
+        buf.append(StringUtil.toUpperCase(word));
       }
       return new TextResult(buf.toString());
     }

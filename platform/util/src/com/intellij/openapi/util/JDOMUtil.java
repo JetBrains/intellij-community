@@ -16,7 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
@@ -230,7 +230,7 @@ public class JDOMUtil {
         if (Verifier.isXMLCharacter(each)) {
           result.append((char)each);
         } else {
-          result.append("0x").append(StringUtilRt.toUpperCase(Long.toHexString(each)));
+          result.append("0x").append(StringUtil.toUpperCase(Long.toHexString(each)));
         }
       }
       catch (IOException e) {

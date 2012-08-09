@@ -625,7 +625,7 @@ class A {
     configure "List<String> l = new ArrLi<caret>"
     myFixture.completeBasic()
     myFixture.type '\n'
-    myFixture.checkResult "List<String> l = new ArrayList<String>(<caret>)"
+    myFixture.checkResult "List<String> l = new ArrayList<>(<caret>)"
   }
 
   public void testAfterNewWithInner() {
@@ -1170,13 +1170,6 @@ class Base {
 new Base().&prefixMethod<caret>''')
   }
 
-  private void doBasicTest(String before, String after) {
-    myFixture.configureByText('_a.groovy', before)
-    myFixture.completeBasic()
-    assertNull(myFixture.lookupElements)
-    myFixture.checkResult(after)
-  }
-
   public void testFieldPointer() {
     doBasicTest '''\
 class Base {
@@ -1409,4 +1402,39 @@ import java.lang.annotation.Target;
     myFixture.assertPreferredCompletionItems  0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
   }
 
+  void testDiamondCompletion1() {
+    doSmartTest('''\
+interface Base<T>{}
+
+class Inh<T> implements Base<T>{}
+
+Base<String> b = new In<caret>
+''', '''\
+interface Base<T>{}
+
+class Inh<T> implements Base<T>{}
+
+Base<String> b = new Inh<>()<caret>
+''')
+  }
+
+  void testDiamondCompletion2() {
+    doSmartTest('''\
+interface Base<T>{}
+
+class Inh<T> implements Base<T>{}
+
+def foo(Base<String> b){}
+
+foo(new In<caret>)
+''', '''\
+interface Base<T>{}
+
+class Inh<T> implements Base<T>{}
+
+def foo(Base<String> b){}
+
+foo(new Inh<String>()<caret>)
+''')
+  }
 }

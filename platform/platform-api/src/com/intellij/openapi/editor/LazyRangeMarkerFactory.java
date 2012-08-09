@@ -149,18 +149,18 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
 
     @Override
     public int getStartOffset() {
-      return myDelegate != null ? myDelegate.getStartOffset() : myInitialOffset;
+      return myDelegate == null ? myInitialOffset : myDelegate.getStartOffset();
     }
 
 
     @Override
     public int getEndOffset() {
-      return myDelegate != null ? myDelegate.getEndOffset() : myInitialOffset;
+      return myDelegate == null ? myInitialOffset : myDelegate.getEndOffset();
     }
 
     @Override
     public boolean isValid() {
-      return myDelegate != null ? myDelegate.isValid() : myFile.isValid();
+      return myDelegate == null ? myFile.isValid() && FileDocumentManager.getInstance().getDocument(myFile) != null : myDelegate.isValid();
     }
 
     @Override

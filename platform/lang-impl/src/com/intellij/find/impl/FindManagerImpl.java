@@ -52,7 +52,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -682,7 +681,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     if (isTailUpper) {
-      buffer.append(StringUtilRt.toUpperCase(toReplace.substring(1)));
+      buffer.append(StringUtil.toUpperCase(toReplace.substring(1)));
     }
     else if (isTailLower) {
       buffer.append(toReplace.substring(1).toLowerCase());
