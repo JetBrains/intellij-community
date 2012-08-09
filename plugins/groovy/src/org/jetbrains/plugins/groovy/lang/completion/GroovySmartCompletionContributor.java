@@ -50,7 +50,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesProvider;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.lang.psi.impl.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
 import java.util.Arrays;
 import java.util.List;
@@ -106,9 +108,6 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
 
               if (o instanceof PsiElement) {
                 type = getTypeByElement((PsiElement)o, position);
-              }
-              else if (o instanceof GroovyResolveResult) {
-                type = getTypeByElement(((GroovyResolveResult)o).getElement(), position);
               }
               else if (o instanceof String) {
                 if ("true".equals(o) || "false".equals(o)) {
@@ -371,7 +370,12 @@ public class GroovySmartCompletionContributor extends CompletionContributor {
       return PsiUtil.getSmartReturnType((PsiMethod)element);
     }
     if (element instanceof GrVariable) {
-      return ((GrVariable)element).getTypeGroovy();
+      if (GroovyRefactoringUtil.isLocalVariable(element)) {
+        return TypeInferenceHelper.getInferredType(context, ((GrVariable)element).getName());
+      }
+      else {
+        return ((GrVariable)element).getTypeGroovy();
+      }
     }
 /*    if(element instanceof PsiKeyword){
       return getKeywordItemType(context, element.getText());

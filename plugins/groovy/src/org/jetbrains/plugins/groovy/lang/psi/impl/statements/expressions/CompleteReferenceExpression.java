@@ -76,7 +76,7 @@ public class CompleteReferenceExpression {
     final CompleteReferenceProcessor processor = new CompleteReferenceProcessor(refExpr, consumer, matcher, parameters);
     getVariantsImpl(refExpr, processor);
     final GroovyResolveResult[] candidates = processor.getCandidates();
-    for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(candidates, JavaClassNameCompletionContributor.AFTER_NEW.accepts(refExpr), matcher)) {
+    for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(candidates, JavaClassNameCompletionContributor.AFTER_NEW.accepts(refExpr), matcher, refExpr)) {
       consumer.consume(o);
     }
   }
@@ -474,7 +474,7 @@ public class CompleteReferenceExpression {
     private void processPropertyFromField(GrField field, GroovyResolveResult resolveResult) {
       if (field.getGetters().length != 0 || field.getSetter() != null || !myPropertyNames.add(field.getName()) || myIsMap) return;
 
-      for (LookupElement element : GroovyCompletionUtil.createLookupElements(resolveResult, false, myMatcher)) {
+      for (LookupElement element : GroovyCompletionUtil.createLookupElements(resolveResult, false, myMatcher, null)) {
         myConsumer.consume(((LookupElementBuilder)element).withIcon(GroovyIcons.PROPERTY));
       }
 
