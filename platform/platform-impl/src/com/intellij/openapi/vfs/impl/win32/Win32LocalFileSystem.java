@@ -19,7 +19,6 @@ import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,10 +57,6 @@ public class Win32LocalFileSystem extends LocalFileSystemBase {
   @NotNull
   @Override
   public String[] list(@NotNull VirtualFile file) {
-    if (isInvalidSymLink(file)) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
     return myFsCache.list(file.getPath());
   }
 

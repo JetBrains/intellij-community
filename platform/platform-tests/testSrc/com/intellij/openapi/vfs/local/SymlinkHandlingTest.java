@@ -19,6 +19,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -94,7 +95,6 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertTrue(dotLinkVFile.isSymLink());
     assertTrue(dotLinkVFile.isDirectory());
     assertEquals(myTempDir.getPath(), dotLinkVFile.getCanonicalPath());
-    assertEquals(0, dotLinkVFile.getChildren().length);
     assertVisitedPaths(dotLinkVFile.getPath());
   }
 
@@ -105,24 +105,27 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertNotNull(upLinkVFile);
     assertTrue(upLinkVFile.isSymLink());
     assertTrue(upLinkVFile.isDirectory());
-    assertEquals(0, upLinkVFile.getChildren().length);
     assertEquals(upDir.getPath(), upLinkVFile.getCanonicalPath());
     assertVisitedPaths(upDir.getPath(), upLinkVFile.getPath());
+
+    final File nestedLinksFile = new File(upDir.getPath() + StringUtil.repeat(File.separator + upLinkFile.getName(), 4));
+    assertTrue(nestedLinksFile.getPath(), nestedLinksFile.isDirectory());
+    final VirtualFile nestedLinksVFile = refreshAndFind(nestedLinksFile);
+    assertNotNull(nestedLinksFile.getPath(), nestedLinksVFile);
+    assertEquals(upLinkVFile.getCanonicalFile(), nestedLinksVFile.getCanonicalFile());
   }
 
   public void testMutualRecursiveLinks() throws Exception {
     final File circularDir1 = createTempDirectory(myTempDir, "dir1.", ".tmp");
     final File circularDir2 = createTempDirectory(myTempDir, "dir2.", ".tmp");
-    final File circularLink1 = createTempLink(circularDir2.getPath(), circularDir1 + "/link");
-    final File circularLink2 = createTempLink(circularDir1.getPath(), circularDir2 + "/link");
+    final File circularLink1 = createTempLink(circularDir2.getPath(), circularDir1 + "/link1");
+    final File circularLink2 = createTempLink(circularDir1.getPath(), circularDir2 + "/link2");
     final VirtualFile circularLink1VFile = refreshAndFind(circularLink1);
     final VirtualFile circularLink2VFile = refreshAndFind(circularLink2);
     assertNotNull(circularLink1VFile);
     assertNotNull(circularLink2VFile);
-    assertEquals(1, circularLink1VFile.getChildren().length);
-    assertEquals(1, circularLink2VFile.getChildren().length);
-    assertEquals(0, circularLink1VFile.getChildren()[0].getChildren().length);
-    assertEquals(0, circularLink2VFile.getChildren()[0].getChildren().length);
+    assertVisitedPaths(circularDir1.getPath(), circularLink1.getPath(), circularLink1.getPath() + "/" + circularLink2.getName(),
+                       circularDir2.getPath(), circularLink2.getPath(), circularLink2.getPath() + "/" + circularLink1.getName());
   }
 
   public void testDuplicateLinks() throws Exception {
