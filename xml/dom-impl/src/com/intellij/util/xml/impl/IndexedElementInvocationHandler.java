@@ -9,7 +9,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.stubs.ElementStub;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.List;
@@ -17,7 +19,7 @@ import java.util.List;
 /**
  * @author peter
  */
-public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedChildDescriptionImpl>{
+public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedChildDescriptionImpl, ElementStub>{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.IndexedElementInvocationHandler");
   private final int myIndex;
 
@@ -25,8 +27,9 @@ public class IndexedElementInvocationHandler extends DomInvocationHandler<FixedC
                                          final FixedChildDescriptionImpl description,
                                          final int index,
                                          final DomParentStrategy strategy,
-                                         final DomManagerImpl manager) {
-    super(description.getType(), strategy, tagName, description, manager, strategy.getXmlElement() != null);
+                                         final DomManagerImpl manager,
+                                         @Nullable ElementStub stub) {
+    super(description.getType(), strategy, tagName, description, manager, strategy.getXmlElement() != null, stub);
     myIndex = index;
   }
 
