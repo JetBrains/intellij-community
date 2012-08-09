@@ -549,6 +549,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           (qtype instanceof CythonType && reference instanceof PyOperatorReference)) {
         return true;
       }
+      if (qtype instanceof PyFunctionType) {
+        final PyFunction function = ((PyFunctionType)qtype).getFunction();
+        if (function.getDecoratorList() != null) {
+          return true;
+        }
+      }
       return false;
     }
 
