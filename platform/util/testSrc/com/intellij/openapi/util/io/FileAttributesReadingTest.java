@@ -30,6 +30,7 @@ import java.util.Arrays;
 
 import static com.intellij.openapi.util.io.IoTestUtil.assertTimestampsEqual;
 import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 public class FileAttributesReadingTest {
@@ -66,7 +67,7 @@ public class FileAttributesReadingTest {
 
   @Test
   public void regularFile() throws Exception {
-    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
+    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt");
     FileUtil.writeToFile(file, myTestData);
 
     assertFileAttributes(file);
@@ -100,7 +101,7 @@ public class FileAttributesReadingTest {
 
   @Test
   public void badNames() throws Exception {
-    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
+    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt");
     FileUtil.writeToFile(file, myTestData);
 
     assertFileAttributes(new File(file.getPath() + StringUtil.repeat(File.separator, 3)));
@@ -110,7 +111,7 @@ public class FileAttributesReadingTest {
                                   File.separator + ".." + File.separator + myTempDirectory.getName() + File.separator + file.getName()));
 
     if (SystemInfo.isUnix) {
-      final File backSlashFile = FileUtil.createTempFile(myTempDirectory, "test\\", "\\txt", true);
+      final File backSlashFile = FileUtil.createTempFile(myTempDirectory, "test\\", "\\txt");
       FileUtil.writeToFile(backSlashFile, myTestData);
       assertFileAttributes(backSlashFile);
     }
@@ -132,7 +133,7 @@ public class FileAttributesReadingTest {
   public void linkToFile() throws Exception {
     assumeTrue(SystemInfo.areSymLinksSupported);
 
-    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
+    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt");
     FileUtil.writeToFile(file, myTestData);
     assertTrue(file.setLastModified(file.lastModified() - 5000));
     assertTrue(file.setWritable(false, false));
@@ -153,7 +154,7 @@ public class FileAttributesReadingTest {
   public void doubleLink() throws Exception {
     assumeTrue(SystemInfo.areSymLinksSupported);
 
-    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);
+    final File file = FileUtil.createTempFile(myTempDirectory, "test.", ".txt");
     FileUtil.writeToFile(file, myTestData);
     assertTrue(file.setLastModified(file.lastModified() - 5000));
     assertTrue(file.setWritable(false, false));
@@ -252,7 +253,7 @@ public class FileAttributesReadingTest {
           prefix, ".dir"),
         prefix, ".dir"),
       prefix, ".dir");
-    final File file = FileUtil.createTempFile(dir, prefix, ".txt", true);
+    final File file = FileUtil.createTempFile(dir, prefix, ".txt");
     assertTrue(file.exists());
     FileUtil.writeToFile(file, myTestData);
 
@@ -266,7 +267,7 @@ public class FileAttributesReadingTest {
   public void subst() throws Exception {
     assumeTrue(SystemInfo.isWindows);
 
-    FileUtil.createTempFile(myTempDirectory, "test.", ".txt", true);  // just to populate a directory
+    FileUtil.createTempFile(myTempDirectory, "test.", ".txt");  // just to populate a directory
     final File substRoot = IoTestUtil.createSubst(myTempDirectory.getPath());
     try {
       final FileAttributes attributes = getAttributes(substRoot);
@@ -276,6 +277,27 @@ public class FileAttributesReadingTest {
     finally {
       IoTestUtil.deleteSubst(substRoot.getPath());
     }
+  }
+
+  @Test
+  public void hardLink() throws Exception {
+    final File target = FileUtil.createTempFile(myTempDirectory, "test.", ".txt");
+    final File link = IoTestUtil.createHardLink(target.getPath(), myTempDirectory.getPath() + "/link");
+
+    FileAttributes attributes = getAttributes(link);
+    assertEquals(FileAttributes.Type.FILE, attributes.type);
+    assertEquals(target.length(), attributes.length);
+    assertTimestampsEqual(target.lastModified(), attributes.lastModified);
+
+    FileUtil.writeToFile(target, myTestData);
+    assertTrue(target.setLastModified(attributes.lastModified - 5000));
+    assertTrue(target.length() > 0);
+    assertTimestampsEqual(attributes.lastModified - 5000, target.lastModified());
+
+    attributes = getAttributes(link);
+    assertEquals(FileAttributes.Type.FILE, attributes.type);
+    assertEquals(target.length(), attributes.length);
+    assertTimestampsEqual(target.lastModified(), attributes.lastModified);
   }
 
   @NotNull
