@@ -56,12 +56,7 @@ public class DefaultFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isInSdkClasses(@NotNull VirtualFile file) {
-    return false;
-  }
-
-  @Override
-  public boolean isInLibrarySource(@NotNull VirtualFile file) {
+  public boolean isInLibrarySource(VirtualFile file) {
     return false;
   }
 

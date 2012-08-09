@@ -19,12 +19,9 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
-import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -57,11 +54,6 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
   @Override
   public boolean isInLibraryClasses(@NotNull VirtualFile file) {
     return myFileIndex.isInLibraryClasses(file);
-  }
-
-  @Override
-  public boolean isInSdkClasses(@NotNull VirtualFile file) {
-    return ContainerUtil.findInstance(myFileIndex.getOrderEntriesForFile(file), JdkOrderEntry.class) != null;
   }
 
   @Override

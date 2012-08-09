@@ -37,13 +37,13 @@ public abstract class FileIndexFacade {
     return ServiceManager.getService(project, FileIndexFacade.class);
   }
 
-  public abstract boolean isInContent(@NotNull VirtualFile file);
-  public abstract boolean isInSource(@NotNull VirtualFile file);
-  public abstract boolean isInSourceContent(@NotNull VirtualFile file);
-  public abstract boolean isInLibraryClasses(@NotNull VirtualFile file);
-  public abstract boolean isInSdkClasses(@NotNull VirtualFile file);
-  public abstract boolean isInLibrarySource(@NotNull VirtualFile file);
-  public abstract boolean isExcludedFile(@NotNull VirtualFile file);
+  public abstract boolean isInContent(VirtualFile file);
+  public abstract boolean isInSource(VirtualFile file);
+  public abstract boolean isInSourceContent(VirtualFile file);
+  public abstract boolean isInLibraryClasses(VirtualFile file);
+
+  public abstract boolean isInLibrarySource(VirtualFile file);
+  public abstract boolean isExcludedFile(VirtualFile file);
 
   @Nullable
   public abstract Module getModuleForFile(VirtualFile file);

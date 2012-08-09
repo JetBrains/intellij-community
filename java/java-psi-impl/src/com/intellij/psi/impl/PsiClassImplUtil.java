@@ -994,12 +994,6 @@ public class PsiClassImplUtil {
     final VirtualFile vfile2 = file2.getViewProvider().getVirtualFile();
     boolean lib1 = fileIndex.isInLibraryClasses(vfile1);
     boolean lib2 = fileIndex.isInLibraryClasses(vfile2);
-    if (aClass instanceof PsiCompiledElement && another instanceof PsiCompiledElement && lib1 && lib2) {
-      if (fileIndex.isInSdkClasses(vfile1) && fileIndex.isInSdkClasses(vfile2)) {
-        return true;
-      }
-      return vfile1.equals(vfile2);
-    }
 
     return (fileIndex.isInSource(vfile1) || lib1) && (fileIndex.isInSource(vfile2) || lib2);
   }
