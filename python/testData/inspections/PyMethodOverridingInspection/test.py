@@ -133,3 +133,12 @@ class c28:
 class c29(c28):
     def foo<warning descr="Signature of method 'c29.foo()' does not match signature of base method in class 'c28'">(self, p1, **kwargs)</warning>:  #fail
         pass
+
+
+class c30:
+    def foo(self, arg1, arg2=None, arg3=None, arg4=None):
+        pass
+
+class c31(c30):
+    def foo(self, arg1, arg2=None, arg3=None, **kwargs): #pass
+        pass
