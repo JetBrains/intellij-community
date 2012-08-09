@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.testFramework.LightPlatformLangTestCase;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -345,8 +346,13 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     assertNotNull(vDir);
 
     final Set<String> expectedSet = new HashSet<String>(expected.length + 1, 1);
-    ContainerUtil.addAll(expectedSet, myTempDir.getPath());
-    ContainerUtil.addAll(expectedSet, expected);
+    ContainerUtil.addAll(expectedSet, FileUtil.toSystemIndependentName(myTempDir.getPath()));
+    ContainerUtil.addAll(expectedSet, ContainerUtil.map(expected, new Function<String, String>() {
+      @Override
+      public String fun(String path) {
+        return FileUtil.toSystemIndependentName(path);
+      }
+    }));
 
     final Set<String> actualSet = new HashSet<String>();
     VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor(true) {
