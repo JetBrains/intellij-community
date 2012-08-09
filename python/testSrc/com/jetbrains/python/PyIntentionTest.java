@@ -250,6 +250,14 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testDocStub() {
+    doDocStubTest();
+  }
+
+  public void testOneLineDocStub() {
+    doDocStubTest();
+  }
+
+  private void doDocStubTest() {
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
     codeInsightSettings.JAVADOC_STUB_ON_ENTER = true;
     PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(myFixture.getProject());

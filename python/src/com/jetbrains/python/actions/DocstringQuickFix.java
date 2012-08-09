@@ -77,13 +77,14 @@ public class DocstringQuickFix implements LocalQuickFix {
     PyStringLiteralExpression docStringExpression = docStringOwner.getDocStringExpression();
     if (docStringExpression == null && myMissing == null && myUnexpected == null) {
       if (docStringOwner instanceof PyFunction) {
-        PythonDocumentationProvider.inserDocStub((PyFunction)docStringOwner, project, getEditor(project, docStringOwner.getContainingFile()));
+        PythonDocumentationProvider.insertDocStub((PyFunction)docStringOwner, project,
+                                                  getEditor(project, docStringOwner.getContainingFile()));
       }
       if (docStringOwner instanceof PyClass) {
         PyFunction init = ((PyClass)docStringOwner).findInitOrNew(false);
         if (init == null) return;
-        PythonDocumentationProvider.inserDocStub(init, ((PyClass)docStringOwner).getStatementList(),
-                                                 project, getEditor(project, docStringOwner.getContainingFile()));
+        PythonDocumentationProvider.insertDocStub(init, ((PyClass)docStringOwner).getStatementList(),
+                                                  project, getEditor(project, docStringOwner.getContainingFile()));
       }
       return;
     }
