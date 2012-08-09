@@ -129,6 +129,9 @@ public class AttributeChildInvocationHandler extends DomInvocationHandler<Attrib
 
   @Nullable
   protected String getValue() {
+    if (myStub != null) {
+      return myStub.getValue();
+    }
     final XmlAttribute attribute = (XmlAttribute)getXmlElement();
     if (attribute != null) {
       final XmlAttributeValue value = attribute.getValueElement();

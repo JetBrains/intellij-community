@@ -16,7 +16,6 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.stubs.ObjectStubSerializer;
-import com.intellij.psi.stubs.Stub;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +39,7 @@ public class ElementStub extends DomStub {
   }
 
   @Override
-  public List<? extends Stub> getChildrenStubs() {
+  public List<DomStub> getChildrenStubs() {
     return myChildren;
   }
 

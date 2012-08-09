@@ -20,7 +20,8 @@ public class DomStubBuilderTest extends DomStubTest {
     doTest("foo.xml", "File:foo\n" +
                       "  Element:foo\n" +
                       "    Element:bar\n" +
-                      "      Attribute:attribute:xxx\n" +
+                      "      Attribute:int:666\n" +
+                      "      Attribute:string:xxx\n" +
                       "    Element:bar\n");
   }
 
