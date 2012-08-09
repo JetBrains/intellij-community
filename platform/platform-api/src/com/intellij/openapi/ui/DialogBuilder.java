@@ -86,7 +86,9 @@ public class DialogBuilder implements Disposable {
 
   public void setCenterPanel(JComponent centerPanel) { myCenterPanel = centerPanel; }
   public void setTitle(String title) { myTitle = title; }
-  public void setPreferedFocusComponent(JComponent component) { myPreferedFocusComponent = component; }
+  @Deprecated
+  public void setPreferedFocusComponent(JComponent component) { setPreferredFocusComponent(component); }
+  public void setPreferredFocusComponent(JComponent component) { myPreferedFocusComponent = component; }
   public void setDimensionServiceKey(@NonNls String dimensionServiceKey) { myDimensionServiceKey = dimensionServiceKey; }
 
   public void addAction(Action action) {

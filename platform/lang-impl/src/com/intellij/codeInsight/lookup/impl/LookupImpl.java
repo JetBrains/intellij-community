@@ -523,11 +523,15 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
   @Override
   @NotNull
   public PrefixMatcher itemMatcher(@NotNull LookupElement item) {
-    PrefixMatcher matcher = myMatchers.get(item);
+    PrefixMatcher matcher = itemMatcherNullable(item);
     if (matcher == null) {
       throw new AssertionError("Item not in lookup: item=" + item + "; lookup items=" + getItems());
     }
     return matcher;
+  }
+
+  public PrefixMatcher itemMatcherNullable(LookupElement item) {
+    return myMatchers.get(item);
   }
 
   // in layered pane coordinate system.
@@ -1091,6 +1095,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     })) {
       return;
+    }
+    synchronized (myList) {
+      myPresentableArranger.prefixChanged(this);
     }
     refreshUi(true, true);
   }

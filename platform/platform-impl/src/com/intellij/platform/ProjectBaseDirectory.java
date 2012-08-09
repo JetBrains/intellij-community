@@ -18,12 +18,13 @@ package com.intellij.platform;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class ProjectBaseDirectory {
-  public static ProjectBaseDirectory getInstance(Project project) {
+  public static ProjectBaseDirectory getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, ProjectBaseDirectory.class);
   }
 

@@ -50,6 +50,10 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
   @Nullable
   private static PsiMethod findOverridingMethod(PsiClass inheritor, @NotNull PsiClass parentClass, PsiMethod method) {
+    if (!inheritor.isInheritor(parentClass, true)) {
+      return null;
+    }
+
     PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY);
     MethodSignature signature = method.getSignature(substitutor);
     PsiMethod found = MethodSignatureUtil.findMethodBySuperSignature(inheritor, signature, false);
