@@ -231,6 +231,14 @@ public class CommandMerger {
     return !myCurrentActions.isEmpty();
   }
 
+  public boolean isPhysical() {
+    if (myAllAffectedDocuments.isEmpty()) return false;
+    for (DocumentReference each : myAllAffectedDocuments) {
+      if (each.getFile() == null) return false;
+    }
+    return true;
+  }
+
   public boolean isUndoAvailable(@NotNull Collection<DocumentReference> refs) {
     if (hasNonUndoableActions()) {
       return false;
@@ -251,9 +259,16 @@ public class CommandMerger {
   }
 
   public boolean hasChangesOf(DocumentReference ref) {
+    return hasChangesOf(ref, false);
+  }
+
+  public boolean hasChangesOf(DocumentReference ref, boolean onlyDirectChanges) {
     for (UndoableAction action : myCurrentActions) {
       DocumentReference[] refs = action.getAffectedDocuments();
-      if (refs == null || ArrayUtil.contains(ref, refs)) return true;
+      if (refs == null) {
+        if (!onlyDirectChanges) return true;
+      }
+      else if (ArrayUtil.contains(ref, refs)) return true;
     }
     return hasActions() && myAdditionalAffectedDocuments.contains(ref);
   }

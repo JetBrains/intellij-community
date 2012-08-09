@@ -19,7 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.*;
@@ -29,6 +29,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.FragmentContent;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.*;
@@ -44,15 +45,18 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.psi.ExternalChangeAction;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class UndoManagerImpl extends UndoManager implements ProjectComponent, ApplicationComponent, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoManagerImpl");
@@ -83,6 +87,12 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   private static final int UNDO = 1;
   private static final int REDO = 2;
   private int myCurrentOperationState = NONE;
+
+  private DocumentReference myOriginatorReference;
+
+  public static boolean isRefresh() {
+    return ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class);
+  }
 
   public static int getGlobalUndoLimit() {
     return Registry.intValue("undo.globalUndoLimit", 10);
@@ -224,7 +234,7 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
       myCurrentActionProject = project;
     }
 
-    commandStarted(undoConfirmationPolicy);
+    commandStarted(undoConfirmationPolicy, myProject == project);
 
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
@@ -240,15 +250,37 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     LOG.assertTrue(myCommandLevel == 0 || !(myCurrentActionProject instanceof DummyProject));
   }
 
-  private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy) {
+  private void commandStarted(UndoConfirmationPolicy undoConfirmationPolicy, boolean recordOriginalReference) {
     if (myCommandLevel == 0) {
       myCurrentMerger = new CommandMerger(this, CommandProcessor.getInstance().isUndoTransparentActionInProgress());
+
+      if (recordOriginalReference && myProject != null) {
+        Editor editor = null;
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+        }
+        else {
+          Component component = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
+          if (component != null) {
+            editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(component));
+          }
+        }
+
+        if (editor != null) {
+          Document document = editor.getDocument();
+          VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+          if (file != null && file.isValid()) {
+            myOriginatorReference = DocumentReferenceManager.getInstance().create(file);
+          }
+        }
+      }
     }
     LOG.assertTrue(myCurrentMerger != null, String.valueOf(myCommandLevel));
     myCurrentMerger.setBeforeState(getCurrentState());
     myCurrentMerger.mergeUndoConfirmationPolicy(undoConfirmationPolicy);
 
     myCommandLevel++;
+
   }
 
   private void commandFinished(String commandName, Object groupId) {
@@ -256,9 +288,10 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     myCommandLevel--;
     if (myCommandLevel > 0) return;
 
-    if (myProject != null && !myCurrentMerger.isGlobal() && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent()) {
+    if (myProject != null && myCurrentMerger.hasActions() && !myCurrentMerger.isTransparent() && myCurrentMerger.isPhysical()) {
       addFocusedDocumentAsAffected();
     }
+    myOriginatorReference = null;
 
     myCurrentMerger.setAfterState(getCurrentState());
     myMerger.commandFinished(commandName, groupId, myCurrentMerger);
@@ -267,16 +300,9 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
   }
 
   private void addFocusedDocumentAsAffected() {
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(DataManager.getInstance().getDataContext());
-    if (psiFile == null) return;
+    if (myOriginatorReference == null || myCurrentMerger.hasChangesOf(myOriginatorReference, true)) return;
 
-
-    VirtualFile file = psiFile.getVirtualFile();
-    if (file == null) return;
-
-    final DocumentReference[] refs = new DocumentReference[]{DocumentReferenceManager.getInstance().create(file)};
-    if (myCurrentMerger.hasChangesOf(refs[0])) return;
-
+    final DocumentReference[] refs = new DocumentReference[]{myOriginatorReference};
     myCurrentMerger.addAction(new BasicUndoableAction() {
       @Override
       public void undo() throws UnexpectedUndoException {
@@ -323,11 +349,13 @@ public class UndoManagerImpl extends UndoManager implements ProjectComponent, Ap
     if (myCommandLevel == 0) {
       LOG.assertTrue(action instanceof NonUndoableAction,
                      "Undoable actions allowed inside commands only (see com.intellij.openapi.command.CommandProcessor.executeCommand())");
-      commandStarted(UndoConfirmationPolicy.DEFAULT);
+      commandStarted(UndoConfirmationPolicy.DEFAULT, false);
       myCurrentMerger.addAction(action);
       commandFinished("", null);
       return;
     }
+
+    if (isRefresh()) myOriginatorReference = null;
 
     myCurrentMerger.addAction(action);
   }

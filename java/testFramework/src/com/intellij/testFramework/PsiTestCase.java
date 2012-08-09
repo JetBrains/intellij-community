@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -226,6 +227,10 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   public com.intellij.openapi.editor.Document getDocument(PsiFile file) {
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
+  }
+
+  public com.intellij.openapi.editor.Document getDocument(VirtualFile file) {
+    return FileDocumentManager.getInstance().getDocument(file);
   }
 
   public void commitDocument(com.intellij.openapi.editor.Document document) {
