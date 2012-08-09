@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProvider;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.LineMarkersPass;
+import com.intellij.lang.Language;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.navigation.GotoRelatedProvider;
 import com.intellij.psi.PsiElement;
@@ -37,13 +38,18 @@ public class RelatedItemLineMarkerGotoAdapter extends GotoRelatedProvider {
   public List<? extends GotoRelatedItem> getItems(@NotNull PsiElement context) {
     List<PsiElement> parents = new ArrayList<PsiElement>();
     PsiElement current = context;
+    Set<Language> languages = new HashSet<Language>();
     while (current != null) {
       parents.add(current);
+      languages.add(current.getLanguage());
       if (current instanceof PsiFile) break;
       current = current.getParent();
     }
 
-    List<LineMarkerProvider> providers = LineMarkersPass.getMarkerProviders(context.getLanguage(), context.getProject());
+    List<LineMarkerProvider> providers = new ArrayList<LineMarkerProvider>();
+    for (Language language : languages) {
+      providers.addAll(LineMarkersPass.getMarkerProviders(language, context.getProject()));
+    }
     List<GotoRelatedItem> items = new ArrayList<GotoRelatedItem>();
     for (LineMarkerProvider provider : providers) {
       if (provider instanceof RelatedItemLineMarkerProvider) {
