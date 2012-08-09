@@ -36,21 +36,21 @@ public class IoTestUtil {
   public static File createTempLink(@NotNull final String target, @NotNull final String link) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows || SystemInfo.isUnix);
 
+    final File targetFile = new File(FileUtil.toSystemDependentName(target));
     final File linkFile = getFullLinkPath(link);
 
     final ProcessBuilder command;
     if (SystemInfo.isWindows) {
-      command = new File(target).isDirectory()
-                ? new ProcessBuilder("cmd", "/C", "mklink", "/D", linkFile.getAbsolutePath(), target)
-                : new ProcessBuilder("cmd", "/C", "mklink", linkFile.getAbsolutePath(), target);
+      command = targetFile.isDirectory()
+                ? new ProcessBuilder("cmd", "/C", "mklink", "/D", linkFile.getPath(), targetFile.getPath())
+                : new ProcessBuilder("cmd", "/C", "mklink", linkFile.getPath(), targetFile.getPath());
     }
     else {
-      command = new ProcessBuilder("ln", "-s", target, linkFile.getAbsolutePath());
+      command = new ProcessBuilder("ln", "-s", targetFile.getPath(), linkFile.getPath());
     }
     final int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
 
-    final File targetFile = new File(target);
     final boolean shouldExist = targetFile.exists() || SystemInfo.isWindows && SystemInfo.JAVA_VERSION.startsWith("1.6");
     assertEquals("target=" + target + ", link=" + linkFile, shouldExist, linkFile.exists());
     return linkFile;
@@ -59,14 +59,15 @@ public class IoTestUtil {
   public static File createHardLink(@NotNull final String target, @NotNull final String link) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows || SystemInfo.isUnix);
 
+    final File targetFile = new File(FileUtil.toSystemDependentName(target));
     final File linkFile = getFullLinkPath(link);
 
     final ProcessBuilder command;
     if (SystemInfo.isWindows) {
-      command = new ProcessBuilder("fsutil", "hardlink", "create", linkFile.getPath(), target);
+      command = new ProcessBuilder("fsutil", "hardlink", "create", linkFile.getPath(), targetFile.getPath());
     }
     else {
-      command = new ProcessBuilder("ln", target, linkFile.getPath());
+      command = new ProcessBuilder("ln", targetFile.getPath(), linkFile.getPath());
     }
     final int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
@@ -78,14 +79,14 @@ public class IoTestUtil {
   public static File createJunction(@NotNull final String target, @NotNull final String junction) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows);
 
-    final File targetFile = new File(target);
+    final File targetFile = new File(FileUtil.toSystemDependentName(target));
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
 
     final String exePath = getJunctionExePath();
 
     final File junctionFile = getFullLinkPath(junction);
 
-    final ProcessBuilder command = new ProcessBuilder(exePath, junctionFile.getAbsolutePath(), target);
+    final ProcessBuilder command = new ProcessBuilder(exePath, junctionFile.getPath(), targetFile.getPath());
     final int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
 
@@ -96,12 +97,12 @@ public class IoTestUtil {
   public static File createSubst(@NotNull final String target) throws InterruptedException, IOException {
     assertTrue(SystemInfo.isWindows);
 
-    final File targetFile = new File(target);
+    final File targetFile = new File(FileUtil.toSystemDependentName(target));
     assertTrue(targetFile.getPath(), targetFile.isDirectory());
 
     final String substRoot = getFirstFreeDriveLetter() + ":";
 
-    final ProcessBuilder command = new ProcessBuilder("subst", substRoot, target);
+    final ProcessBuilder command = new ProcessBuilder("subst", substRoot, targetFile.getPath());
     final int res = runCommand(command);
     assertEquals(command.command().toString(), 0, res);
 
