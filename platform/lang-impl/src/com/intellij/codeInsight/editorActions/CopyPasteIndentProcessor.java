@@ -100,27 +100,29 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
         //calculate to indent
         String initialText = document.getText(TextRange.create(0, bounds.getStartOffset())) +
                    document.getText(TextRange.create(bounds.getEndOffset(), document.getTextLength()));
-        final DocumentImpl initialDocument = new DocumentImpl(initialText);
-        int lineNumber = initialDocument.getTextLength() > caretOffset? initialDocument.getLineNumber(caretOffset)
-                                                                      : initialDocument.getLineCount() - 1;
-        final int offset = getLineStartSafeOffset(initialDocument, lineNumber);
-        final int caretColumn = caretOffset - offset;
+        int toIndent = 0;
+        if (initialText.length() > 0) {
+          final DocumentImpl initialDocument = new DocumentImpl(initialText);
+          int lineNumber = initialDocument.getTextLength() > caretOffset? initialDocument.getLineNumber(caretOffset)
+                                                                        : initialDocument.getLineCount() - 1;
+          final int offset = getLineStartSafeOffset(initialDocument, lineNumber);
+          final int caretColumn = caretOffset - offset;
 
-        int toIndent;
-        if (bounds.getStartOffset() != offset) {         //selection
-          startLine += 1;
-          toIndent = Math.abs(bounds.getStartOffset() - offset);
-        }
-        else {
-          String toString = initialDocument.getText(TextRange.create(offset, initialDocument.getLineEndOffset(lineNumber)));
-          toIndent = StringUtil.findFirst(toString, new CharFilter() {
-            @Override
-            public boolean accept(char ch) {
-              return ch != ' ';
+          if (bounds.getStartOffset() != offset) {         //selection
+            startLine += 1;
+            toIndent = Math.abs(bounds.getStartOffset() - offset);
+          }
+          else {
+            String toString = initialDocument.getText(TextRange.create(offset, initialDocument.getLineEndOffset(lineNumber)));
+            toIndent = StringUtil.findFirst(toString, new CharFilter() {
+              @Override
+              public boolean accept(char ch) {
+                return ch != ' ';
+              }
+            });
+            if (toIndent < 0 || toString.startsWith("\n")) {
+              toIndent = caretColumn;
             }
-          });
-          if (toIndent < 0 || toString.startsWith("\n")) {
-            toIndent = caretColumn;
           }
         }
 
@@ -143,8 +145,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
     //System.out.println("--- after indent ---\n" + document.getText());
   }
 
-  public static int getLineStartSafeOffset(final Document document, int line) {
-    if (line < 0) return 0;
+  private static int getLineStartSafeOffset(final Document document, int line) {
     if (line >= document.getLineCount()) return document.getTextLength();
     return document.getLineStartOffset(line);
   }
