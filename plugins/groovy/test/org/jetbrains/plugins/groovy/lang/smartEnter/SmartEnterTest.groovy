@@ -3,16 +3,14 @@ package org.jetbrains.plugins.groovy.lang.smartEnter
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.util.TestUtils
-
-
 /**
  * User: Dmitry.Krasilschikov
  * Date: 05.08.2008
  */
-public class SmartEnterTest extends LightCodeInsightFixtureTestCase {
+public class SmartEnterTest extends LightGroovyTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/actions/smartEnter/"
 
@@ -58,6 +56,16 @@ class Foo {
     }
 }
 ''')}
+
+  public void testSmartEnterInClosureArg() {
+    doTextTest('''\
+[1, 2, 3].each<caret>
+''', '''\
+[1, 2, 3].each {
+    <caret>
+}
+''')
+  }
 
   private void doTextTest(String before, String after) {
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, before)
