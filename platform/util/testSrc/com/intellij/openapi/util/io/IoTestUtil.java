@@ -16,7 +16,6 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -136,9 +135,10 @@ public class IoTestUtil {
   }
 
   private static File getFullLinkPath(final String link) {
-    final boolean isAbsolute = SystemInfo.isUnix && StringUtil.startsWithChar(link, '/') ||
-                               SystemInfo.isWindows && link.matches("^[c-zC-Z]:[/\\\\].*$");
-    final File linkFile = isAbsolute ? new File(link) : new File(FileUtil.getTempDirectory(), link);
+    File linkFile = new File(link);
+    if (!linkFile.isAbsolute()) {
+      linkFile = new File(FileUtil.getTempDirectory(), link);
+    }
     assertTrue(link, !linkFile.exists() || linkFile.delete());
     final File parentDir = linkFile.getParentFile();
     assertTrue("link=" + link + ", parent=" + parentDir, parentDir != null && (parentDir.isDirectory() || parentDir.mkdirs()));
