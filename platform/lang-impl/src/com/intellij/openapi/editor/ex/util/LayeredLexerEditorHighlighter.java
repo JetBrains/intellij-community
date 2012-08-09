@@ -38,6 +38,7 @@ import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.util.*;
 
 /**
@@ -211,7 +212,7 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
 
     private void setElementLight(final int i, final int startOffset, final int endOffset, final int data) {
       super.setElementAt(i, startOffset, endOffset, data);
-      myRanges = reallocateArray(myRanges, i+1);
+      myRanges = LayeredLexerEditorHighlighter.reallocateArray(myRanges, i + 1);
     }
 
     @Override
@@ -252,6 +253,24 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       for (int i = startOffset; i < startOffset + len; i++) {
         updateMappingForToken(i);
       }
+    }
+
+    @NotNull
+    private <T> T[] insert(@NotNull T[] array, @NotNull T[] insertArray, int startIndex, int insertLength) {
+      T[] newArray = LayeredLexerEditorHighlighter.reallocateArray(array, mySegmentCount + insertLength);
+      if (startIndex < mySegmentCount) {
+        System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
+      }
+      System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
+      return newArray;
+    }
+
+    @NotNull
+    private <T> T[] remove(@NotNull T[] array, int startIndex, int endIndex) {
+      if (endIndex < mySegmentCount) {
+        System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
+      }
+      return array;
     }
 
     @Override
@@ -554,4 +573,16 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return myBaseIterator.getDocument();
     }
   }
+
+  @SuppressWarnings({"unchecked"})
+  @NotNull
+  protected static <T> T[] reallocateArray(@NotNull T[] array, int index) {
+    if (index < array.length) return array;
+
+    T[] newArray = (T[])Array.newInstance(array.getClass().getComponentType(), SegmentArray.calcCapacity(array.length, index));
+
+    System.arraycopy(array, 0, newArray, 0, array.length);
+    return newArray;
+  }
+
 }

@@ -18,8 +18,6 @@ package com.intellij.openapi.editor.ex.util;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Array;
-
 /**
  * This class is a data structure specialized for working with the indexed segments, i.e. it holds numerous mappings like
  * {@code 'index <-> (start; end)'} and provides convenient way for working with them, e.g. find index by particular offset that
@@ -64,62 +62,24 @@ public class SegmentArray {
     System.arraycopy(data.myEnds, 0, myEnds, startOffset, len);
   }
 
+  static int calcCapacity(int currentArraySize, int index) {
+    if (currentArraySize == 0) {
+      currentArraySize = 16;
+    }
+    else {
+      currentArraySize = currentArraySize * 12 / 10;
+    }
+    if (index >= currentArraySize) {
+      currentArraySize = index * 12 / 10;
+    }
+    return currentArraySize;
+  }
+
   @NotNull
   protected static int[] reallocateArray(@NotNull int[] array, int index) {
     if (index < array.length) return array;
 
-    int newArraySize = array.length;
-    if (newArraySize == 0) {
-      newArraySize = 16;
-    }
-    else {
-      newArraySize = newArraySize * 12 / 10;
-    }
-    if (index >= newArraySize) {
-      newArraySize = index * 12 / 10;
-    }
-    int[] newArray = new int[newArraySize];
-    System.arraycopy(array, 0, newArray, 0, array.length);
-    return newArray;
-  }
-
-  @SuppressWarnings({"unchecked"})
-  @NotNull
-  protected static <T> T[] reallocateArray(@NotNull T[] array, int index) {
-    if (index < array.length) return array;
-
-    int newArraySize = array.length;
-    if (newArraySize == 0) {
-      newArraySize = 16;
-    }
-    else {
-      newArraySize = newArraySize * 12 / 10;
-    }
-    if (index >= newArraySize) {
-      newArraySize = index * 12 / 10;
-    }
-
-    T[] newArray = (T[])Array.newInstance(array.getClass().getComponentType(), newArraySize);
-
-    System.arraycopy(array, 0, newArray, 0, array.length);
-    return newArray;
-  }
-
-  @NotNull
-  protected static short[] reallocateArray(@NotNull short[] array, int index) {
-    if (index < array.length) return array;
-
-    int newArraySize = array.length;
-    if (newArraySize == 0) {
-      newArraySize = 16;
-    }
-    else {
-      newArraySize = newArraySize * 12 / 10;
-    }
-    if (index >= newArraySize) {
-      newArraySize = index * 12 / 10;
-    }
-    short[] newArray = new short[newArraySize];
+    int[] newArray = new int[calcCapacity(array.length, index)];
     System.arraycopy(array, 0, newArray, 0, array.length);
     return newArray;
   }
@@ -200,31 +160,6 @@ public class SegmentArray {
     return array;
   }
 
-  @NotNull
-  protected <T> T[] remove(@NotNull T[] array, int startIndex, int endIndex) {
-    if (endIndex < mySegmentCount) {
-      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
-    }
-    return array;
-  }
-
-
-  @NotNull
-  protected short[] remove(@NotNull short[] array, int startIndex, int endIndex) {
-    if (endIndex < mySegmentCount) {
-      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
-    }
-    return array;
-  }
-
-  @NotNull
-  protected long[] remove(@NotNull long[] array, int startIndex, int endIndex) {
-    if (endIndex < mySegmentCount) {
-      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
-    }
-    return array;
-  }
-
   protected void insert(@NotNull SegmentArray segmentArray, int startIndex) {
     myStarts = insert(myStarts, segmentArray.myStarts, startIndex, segmentArray.getSegmentCount());
     myEnds = insert(myEnds, segmentArray.myEnds, startIndex, segmentArray.getSegmentCount());
@@ -234,26 +169,6 @@ public class SegmentArray {
   @NotNull
   protected int[] insert(@NotNull int[] array, @NotNull int[] insertArray, int startIndex, int insertLength) {
     int[] newArray = reallocateArray(array, mySegmentCount + insertLength);
-    if (startIndex < mySegmentCount) {
-      System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
-    }
-    System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
-    return newArray;
-  }
-
-  @NotNull
-  protected <T> T[] insert(@NotNull T[] array, @NotNull T[] insertArray, int startIndex, int insertLength) {
-    T[] newArray = reallocateArray(array, mySegmentCount + insertLength);
-    if (startIndex < mySegmentCount) {
-      System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
-    }
-    System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
-    return newArray;
-  }
-
-  @NotNull
-  protected short[] insert(@NotNull short[] array, @NotNull short[] insertArray, int startIndex, int insertLength) {
-    short[] newArray = reallocateArray(array, mySegmentCount + insertLength);
     if (startIndex < mySegmentCount) {
       System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
     }
@@ -274,7 +189,6 @@ public class SegmentArray {
     }
     return myEnds[index];
   }
-
 
   public int getSegmentCount() {
     return mySegmentCount;

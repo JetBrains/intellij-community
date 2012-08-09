@@ -74,6 +74,24 @@ public class SegmentArrayWithData extends SegmentArray {
     super.insert(segmentArray, startIndex);
   }
 
+  @NotNull
+  private short[] insert(@NotNull short[] array, @NotNull short[] insertArray, int startIndex, int insertLength) {
+    short[] newArray = reallocateArray(array, mySegmentCount + insertLength);
+    if (startIndex < mySegmentCount) {
+      System.arraycopy(newArray, startIndex, newArray, startIndex + insertLength, mySegmentCount - startIndex);
+    }
+    System.arraycopy(insertArray, 0, newArray, startIndex, insertLength);
+    return newArray;
+  }
+
+  @NotNull
+  private short[] remove(@NotNull short[] array, int startIndex, int endIndex) {
+    if (endIndex < mySegmentCount) {
+      System.arraycopy(array, endIndex, array, startIndex, mySegmentCount - endIndex);
+    }
+    return array;
+  }
+
   public short getSegmentData(int index) {
     if(index < 0 || index >= mySegmentCount) {
       throw new IndexOutOfBoundsException("Wrong index: " + index);
@@ -86,5 +104,15 @@ public class SegmentArrayWithData extends SegmentArray {
     if (data < 0 && data > Short.MAX_VALUE) throw new IndexOutOfBoundsException("data out of short range" + data);
     myData[index] = (short)data;
   }
+
+  @NotNull
+  private static short[] reallocateArray(@NotNull short[] array, int index) {
+    if (index < array.length) return array;
+
+    short[] newArray = new short[calcCapacity(array.length, index)];
+    System.arraycopy(array, 0, newArray, 0, array.length);
+    return newArray;
+  }
+
 }
 
