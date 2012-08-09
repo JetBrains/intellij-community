@@ -167,7 +167,11 @@ public abstract class GroovyCompilerBase implements TranslatingCompiler {
     parameters.setMainClass(GroovycRunner.class.getName());
 
     final VirtualFile finalOutputDir = getMainOutput(compileContext, module, tests);
-    LOG.assertTrue(finalOutputDir != null, "No output directory for module " + module.getName() + (tests ? " tests" : " production"));
+    if (finalOutputDir == null) {
+      compileContext.addMessage(CompilerMessageCategory.ERROR, "No output directory for module " + module.getName() + (tests ? " tests" : " production"), null, -1, -1);
+      return;
+    }
+
     final Charset ideCharset = EncodingProjectManager.getInstance(myProject).getDefaultCharset();
     String encoding = ideCharset != null && !Comparing.equal(CharsetToolkit.getDefaultSystemCharset(), ideCharset) ? ideCharset.name() : null;
     Set<String> paths2Compile = ContainerUtil.map2Set(toCompile, new Function<VirtualFile, String>() {
