@@ -1,6 +1,6 @@
 package com.jetbrains.python.refactoring.introduce.constant;
 
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
@@ -45,7 +45,7 @@ public class PyIntroduceConstantHandler extends IntroduceHandler {
   protected Collection<String> generateSuggestedNames(@NotNull final PyExpression expression) {
     Collection<String> names = new HashSet<String>();
     for (String name : super.generateSuggestedNames(expression)) {
-      names.add(StringUtilRt.toUpperCase(name));
+      names.add(StringUtil.toUpperCase(name));
     }
     return names;
   }
