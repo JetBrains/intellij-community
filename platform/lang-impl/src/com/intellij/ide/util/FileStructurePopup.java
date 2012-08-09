@@ -18,6 +18,7 @@ package com.intellij.ide.util;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -231,30 +232,7 @@ public class FileStructurePopup implements Disposable {
       }
     };
 
-    myTreeExpander = new TreeExpander() {
-      @Override
-      public void expandAll() {
-      }
-
-      @Override
-      public boolean canExpand() {
-        return false;
-      }
-
-      @Override
-      public void collapseAll() {
-        TreeUtil.collapseAll(myTree, 0);
-        final int[] rows = myTree.getSelectionRows();
-        if (rows != null && rows.length > 0) {
-          TreeUtil.showRowCentered(myTree, rows[0], false);
-        }
-      }
-
-      @Override
-      public boolean canCollapse() {
-        return true;
-      }
-    };
+    myTreeExpander = new DefaultTreeExpander(myTree);
 
     //myAbstractTreeBuilder.getUi().setPassthroughMode(true);
     myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
