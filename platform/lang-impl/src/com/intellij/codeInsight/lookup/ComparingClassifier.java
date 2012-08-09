@@ -53,7 +53,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
   public Iterable<T> classify(final Iterable<T> source, final ProcessingContext context) {
     List<T> nulls = null;
     TreeMap<Comparable, List<T>> map = new TreeMap<Comparable, List<T>>();
-    for (T t : myNext.classify(source, context)) {
+    for (T t : source) {
       final Comparable weight = getWeight(t);
       if (weight == null) {
         if (nulls == null) nulls = new SmartList<T>();
@@ -67,20 +67,21 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
       }
     }
 
-    final Collection<List<T>> values = myNegated ? map.descendingMap().values() : map.values();
+    final List<List<T>> values = new ArrayList<List<T>>();
+    values.addAll(myNegated ? map.descendingMap().values() : map.values());
+    ContainerUtil.addIfNotNull(values, nulls);
 
-    Iterable<T> iterable = new Iterable<T>() {
+    return new Iterable<T>() {
       @Override
       public Iterator<T> iterator() {
         return new FlatteningIterator<List<T>, T>(values.iterator()) {
           @Override
           protected Iterator<T> createValueIterator(List<T> group) {
-            return group.iterator();
+            return myNext.classify(group, context).iterator();
           }
         };
       }
     };
-    return nulls == null ? iterable : ContainerUtil.concat(iterable, nulls);
   }
 
   @Override

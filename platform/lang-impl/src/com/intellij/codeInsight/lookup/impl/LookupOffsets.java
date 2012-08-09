@@ -99,7 +99,9 @@ public class LookupOffsets {
 
     int minPrefixLength = items.isEmpty() ? 0 : Integer.MAX_VALUE;
     for (final LookupElement item : items) {
-      minPrefixLength = Math.min(lookup.itemMatcher(item).getPrefix().length(), minPrefixLength);
+      if (!(item instanceof EmptyLookupItem)) {
+        minPrefixLength = Math.min(lookup.itemMatcher(item).getPrefix().length(), minPrefixLength);
+      }
     }
 
     updateLookupStart(minPrefixLength);

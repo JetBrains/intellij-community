@@ -20,8 +20,15 @@ import com.intellij.codeInsight.lookup.LookupItem;
 /**
  * @author peter
 */
-class EmptyLookupItem extends LookupItem<String> {
-  public EmptyLookupItem(final String s) {
+public class EmptyLookupItem extends LookupItem<String> {
+  private final boolean myLoading;
+
+  public EmptyLookupItem(final String s, boolean loading) {
     super(s, "           ");
+    myLoading = loading;
+  }
+
+  public boolean isLoading() {
+    return myLoading;
   }
 }

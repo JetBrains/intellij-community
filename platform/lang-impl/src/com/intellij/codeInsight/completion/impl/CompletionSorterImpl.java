@@ -112,15 +112,17 @@ public class CompletionSorterImpl extends CompletionSorter {
     return myHashCode;
   }
 
-  private static Classifier<LookupElement> createClassifier(final int index, final List<ClassifierFactory<LookupElement>> components) {
+  private static Classifier<LookupElement> createClassifier(final int index,
+                                                            final List<ClassifierFactory<LookupElement>> components,
+                                                            Classifier<LookupElement> tail) {
     if (index == components.size()) {
-      return ClassifierFactory.listClassifier();
+      return tail;
     }
 
-    return components.get(index).createClassifier(createClassifier(index + 1, components));
+    return components.get(index).createClassifier(createClassifier(index + 1, components, tail));
   }
 
-  public Classifier<LookupElement> buildClassifier() {
-    return createClassifier(0, myMembers);
+  public Classifier<LookupElement> buildClassifier(Classifier<LookupElement> tail) {
+    return createClassifier(0, myMembers, tail);
   }
 }
