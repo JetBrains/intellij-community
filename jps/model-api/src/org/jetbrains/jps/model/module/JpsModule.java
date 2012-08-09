@@ -33,7 +33,7 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   void removeSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType rootType);
 
   @NotNull
-  <P extends JpsElementProperties>
+  <P extends JpsElement>
   JpsFacet addFacet(@NotNull String name, @NotNull JpsFacetType<P> type, @NotNull P properties);
 
   @NotNull
