@@ -52,6 +52,11 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
   }
 
   @Override
+  public JpsElementType<P> getType() {
+    return myModuleType;
+  }
+
+  @Override
   @NotNull
   public P getProperties() {
     return myContainer.getChild(myModuleType.getPropertiesRole());

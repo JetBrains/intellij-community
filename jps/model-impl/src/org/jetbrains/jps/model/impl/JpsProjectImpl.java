@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.library.impl.JpsLibraryRole;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
+import org.jetbrains.jps.model.module.JpsTypedModule;
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleRole;
 import org.jetbrains.jps.model.module.impl.JpsSdkReferencesTableImpl;
@@ -63,6 +64,12 @@ public class JpsProjectImpl extends JpsRootElementBase<JpsProjectImpl> implement
     return myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).getElements();
   }
 
+  @Override
+  @NotNull
+  public <P extends JpsElement> Iterable<JpsTypedModule<P>> getModules(JpsModuleType<P> type) {
+    return myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).getElementsOfType(type);
+  }
+  
   @Override
   public void addModule(@NotNull JpsModule module) {
     myContainer.getChild(JpsModuleRole.MODULE_COLLECTION_ROLE).addChild(module);

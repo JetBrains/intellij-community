@@ -7,6 +7,7 @@ import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
+import org.jetbrains.jps.model.module.JpsTypedModule;
 
 import java.util.List;
 
@@ -24,6 +25,9 @@ public interface JpsProject extends JpsCompositeElement, JpsReferenceableElement
   @NotNull
   List<JpsModule> getModules();
 
+  @NotNull
+  <P extends JpsElement>
+  Iterable<JpsTypedModule<P>> getModules(JpsModuleType<P> type);
 
   @NotNull
   <P extends JpsElement, LibraryType extends JpsLibraryType<P> & JpsElementTypeWithDefaultProperties<P>>

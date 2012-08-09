@@ -1,5 +1,6 @@
 package org.jetbrains.jps.model;
 
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.*;
@@ -23,6 +24,13 @@ public class JpsModuleTest extends JpsModelTestCase {
     final JpsSimpleElement<JavaSourceRootProperties> properties2 = root.getProperties(JavaSourceRootType.SOURCE);
     assertNotNull(properties2);
     assertEquals("com.xxx", properties2.getData().getPackagePrefix());
+  }
+
+  public void testGetModulesOfType() {
+    JpsProject project = myModel.getProject();
+    JpsModule module = project.addModule("m", JpsJavaModuleType.INSTANCE);
+    Iterable<JpsTypedModule<JpsDummyElement>> modules = project.getModules(JpsJavaModuleType.INSTANCE);
+    assertSameElements(ContainerUtil.newArrayList(modules), module);
   }
 
   public void testModifiableModel() {
