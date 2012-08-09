@@ -21,10 +21,16 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 /**
+ * // TODO den add doc
+ * 
  * @author Denis Zhdanov
  * @since 8/8/12 11:17 AM
  */
 public interface ArrangementNodeRenderer<T extends ArrangementSettingsNode> {
 
+  @NotNull
   JComponent getRendererComponent(@NotNull T node);
+  
+  // TODO den add doc
+  void reset();
 }

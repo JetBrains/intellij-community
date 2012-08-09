@@ -222,21 +222,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
-    if (isInvalidSymLink(file)) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
-    }
-
     final String[] names = convertToIOFile(file).list();
     return names == null ? ArrayUtil.EMPTY_STRING_ARRAY : names;
-  }
-
-  // todo[r.sh] drop the restriction in favor of VfsUtilCore.visitChildrenRecursively()
-  protected static boolean isInvalidSymLink(@NotNull final VirtualFile file) {
-    if (!file.isSymLink()) return false;
-    final VirtualFile target = file.getCanonicalFile();
-    return target == null ||
-           target == file ||
-           FileUtil.isAncestor(convertToIOFile(target), convertToIOFile(file), true);
   }
 
   @Override

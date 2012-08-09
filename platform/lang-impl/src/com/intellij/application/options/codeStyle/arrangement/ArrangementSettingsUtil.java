@@ -15,17 +15,19 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * // TODO den add doc
@@ -48,24 +50,21 @@ public class ArrangementSettingsUtil {
   }
   
   @NotNull
-  public static Map<ArrangementSettingType, List<?>> buildAvailableOptions(@NotNull ArrangementSettings settings,
-                                                                          @NotNull ArrangementStandardSettingsAware filter)
-  {
+  public static Map<ArrangementSettingType, List<?>> buildAvailableOptions(@NotNull ArrangementStandardSettingsAware filter) {
     Map<ArrangementSettingType, List<?>> result = new EnumMap<ArrangementSettingType, List<?>>(ArrangementSettingType.class);
-    processData(settings, filter, result, ArrangementEntryType.values(), ENTRY_TYPE_HELPER);
-    processData(settings, filter, result, ArrangementModifier.values(), MODIFIER_HELPER);
+    processData(filter, result, ArrangementEntryType.values(), ENTRY_TYPE_HELPER);
+    processData(filter, result, ArrangementModifier.values(), MODIFIER_HELPER);
     return result;
   }
 
-  private static <T> void processData(@NotNull ArrangementSettings settings,
-                                      @NotNull ArrangementStandardSettingsAware filter,
+  private static <T> void processData(@NotNull ArrangementStandardSettingsAware filter,
                                       Map<ArrangementSettingType, List<?>> result,
                                       @NotNull T[] values,
                                       @NotNull Helper<T> helper)
   {
     List<T> data = null;
     for (T v : values) {
-      if (!helper.isEnabled(v, settings, filter)) {
+      if (!helper.isSupported(v, filter)) {
         continue;
       }
       if (data == null) {
@@ -74,31 +73,38 @@ public class ArrangementSettingsUtil {
       data.add(v);
     }
     if (data != null) {
-      result.put(ArrangementSettingType.TYPE, data);
+      result.put(helper.getType(), data);
     }
   }
-  
+
   private interface Helper<T> {
-    boolean isEnabled(@NotNull T data, @NotNull ArrangementSettings settings, @NotNull ArrangementStandardSettingsAware filter);
+    @NotNull ArrangementSettingType getType();
+    boolean isSupported(@NotNull T data, @NotNull ArrangementStandardSettingsAware filter);
   }
-  
+
   private static class EntryTypeHelper implements Helper<ArrangementEntryType> {
+    @NotNull
     @Override
-    public boolean isEnabled(@NotNull ArrangementEntryType data,
-                             @NotNull ArrangementSettings settings,
-                             @NotNull ArrangementStandardSettingsAware filter)
-    {
-      return filter.isEnabled(data, settings);
+    public ArrangementSettingType getType() {
+      return ArrangementSettingType.TYPE;
+    }
+
+    @Override
+    public boolean isSupported(@NotNull ArrangementEntryType data, @NotNull ArrangementStandardSettingsAware filter) {
+      return filter.isSupported(data);
     }
   }
   
   private static class ModifierHelper implements Helper<ArrangementModifier> {
+    @NotNull
     @Override
-    public boolean isEnabled(@NotNull ArrangementModifier data,
-                             @NotNull ArrangementSettings settings,
-                             @NotNull ArrangementStandardSettingsAware filter)
-    {
-      return filter.isEnabled(data, settings);
+    public ArrangementSettingType getType() {
+      return ArrangementSettingType.MODIFIER;
+    }
+
+    @Override
+    public boolean isSupported(@NotNull ArrangementModifier data, @NotNull ArrangementStandardSettingsAware filter) {
+      return filter.isSupported(data);
     }
   }
 }

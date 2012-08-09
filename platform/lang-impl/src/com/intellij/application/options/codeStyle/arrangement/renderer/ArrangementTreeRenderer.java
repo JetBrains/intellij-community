@@ -16,12 +16,18 @@
 package com.intellij.application.options.codeStyle.arrangement.renderer;
 
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
 /**
  * // TODO den add doc
@@ -29,9 +35,15 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 8/8/12 12:21 PM
  */
-public class ArrangementTreeRenderer implements TreeCellRenderer {
+public class ArrangementTreeRenderer implements TreeCellRenderer, MouseListener, MouseMotionListener {
 
-  @NotNull private final ArrangementNodeRenderingContext myContext = new ArrangementNodeRenderingContext();
+  @NotNull private final TIntObjectHashMap<Component> myRowRenderers = new TIntObjectHashMap<Component>();
+  @NotNull private final ArrangementNodeRenderingContext myContext;
+  @Nullable JComponent myComponentUnderMouse;
+
+  public ArrangementTreeRenderer(@NotNull ArrangementStandardSettingsAware filter) {
+    myContext = new ArrangementNodeRenderingContext(filter);
+  }
 
   @Override
   public Component getTreeCellRendererComponent(JTree tree,
@@ -42,8 +54,45 @@ public class ArrangementTreeRenderer implements TreeCellRenderer {
                                                 int row,
                                                 boolean hasFocus)
   {
+    Component result = myRowRenderers.get(row);
+    if (result == null) {
+      HierarchicalArrangementSettingsNode node = (HierarchicalArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
+      result = myContext.getRenderer(node.getCurrent()).getRendererComponent(node.getCurrent());
+      myRowRenderers.put(row, result);
+    }
+    return result;
+  }
+
+  public void onTreeRepaintStart() {
+    myRowRenderers.clear();
     myContext.reset();
-    HierarchicalArrangementSettingsNode node = (HierarchicalArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
-    return myContext.getRenderer(node.getCurrent()).getRendererComponent(node.getCurrent()); 
+  }
+
+  @Override
+  public void mouseClicked(MouseEvent e) {
+  }
+
+  @Override
+  public void mousePressed(MouseEvent e) {
+  }
+
+  @Override
+  public void mouseReleased(MouseEvent e) {
+  }
+
+  @Override
+  public void mouseEntered(MouseEvent e) {
+  }
+
+  @Override
+  public void mouseExited(MouseEvent e) {
+  }
+
+  @Override
+  public void mouseDragged(MouseEvent e) {
+  }
+
+  @Override
+  public void mouseMoved(MouseEvent e) {
   }
 }

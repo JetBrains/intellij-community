@@ -255,7 +255,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
   }
 
   private static void feedLookupElements(PsiNamedElement psi, boolean afterNew, Consumer<LookupElement> consumer, PrefixMatcher matcher) {
-    for (LookupElement element : GroovyCompletionUtil.createLookupElements(new GroovyResolveResultImpl(psi, true), afterNew, matcher)) {
+    for (LookupElement element : GroovyCompletionUtil.createLookupElements(new GroovyResolveResultImpl(psi, true), afterNew, matcher, null)) {
       consumer.consume(element);
     }
   }
@@ -353,8 +353,7 @@ public class GrCodeReferenceElementImpl extends GrReferenceElementImpl<GrCodeRef
           ResolverProcessor classProcessor = CompletionProcessor.createClassCompletionProcessor(this);
           ResolveUtil.treeWalkUp(this, classProcessor, false);
 
-          for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(classProcessor.getCandidates(),
-                                                                            afterNew, matcher)) {
+          for (LookupElement o : GroovyCompletionUtil.getCompletionVariants(classProcessor.getCandidates(), afterNew, matcher, this)) {
             consumer.consume(o);
           }
         }

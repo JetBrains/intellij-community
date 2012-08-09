@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2010 Bas Leijdekkers
+ * Copyright 2008-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,15 +34,13 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
   @Nls
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "redundant.string.format.call.display.name");
+    return InspectionGadgetsBundle.message("redundant.string.format.call.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "redundant.string.format.call.problem.descriptor");
+    return InspectionGadgetsBundle.message("redundant.string.format.call.problem.descriptor");
   }
 
   @Override
@@ -53,6 +51,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
   private static class RedundantStringFormatCallFix
     extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message(
@@ -60,18 +59,15 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiElement grandParent = parent.getParent();
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression lastArgument = arguments[arguments.length - 1];
       methodCallExpression.replace(lastArgument);
@@ -83,18 +79,13 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
     return new RedundantStringFormatCallVisitor();
   }
 
-  private static class RedundantStringFormatCallVisitor
-    extends BaseInspectionVisitor {
+  private static class RedundantStringFormatCallVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls
-      final String methodName =
-        methodExpression.getReferenceName();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
       if (!"format".equals(methodName)) {
         return;
       }
@@ -103,35 +94,24 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       if (arguments.length > 2 || arguments.length == 0) {
         return;
       }
-      final PsiExpression qualifier =
-        methodExpression.getQualifierExpression();
-      if (qualifier == null) {
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
         return;
       }
-      if (!(qualifier instanceof PsiReference)) {
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
         return;
       }
-      final PsiReference referenceExpression =
-        (PsiReference)qualifier;
-      final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiClass)) {
-        return;
-      }
-      final PsiClass aClass = (PsiClass)target;
       final String className = aClass.getQualifiedName();
       if (!CommonClassNames.JAVA_LANG_STRING.equals(className)) {
         return;
       }
       final PsiExpression firstArgument = arguments[0];
       final PsiType firstType = firstArgument.getType();
-      if (firstType == null) {
+      if (firstType == null || containsPercentN(firstArgument)) {
         return;
       }
-      if (containsPercentN(firstArgument)) {
-        return;
-      }
-      if (firstType.equalsToText(CommonClassNames.JAVA_LANG_STRING) &&
-          arguments.length == 1) {
+      if (firstType.equalsToText(CommonClassNames.JAVA_LANG_STRING) && arguments.length == 1) {
         registerMethodCallError(expression);
       }
       else if (firstType.equalsToText("java.util.Locale")) {
@@ -143,8 +123,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
         if (secondType == null) {
           return;
         }
-        if (secondType.equalsToText(
-          CommonClassNames.JAVA_LANG_STRING)) {
+        if (secondType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
           registerMethodCallError(expression);
         }
       }
@@ -155,17 +134,13 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
         return false;
       }
       if (expression instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literalExpression =
-          (PsiLiteralExpression)expression;
-        @NonNls final String expressionText =
-          literalExpression.getText();
+        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
+        @NonNls final String expressionText = literalExpression.getText();
         return expressionText.contains("%n");
       }
       if (expression instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression polyadicExpression =
-          (PsiPolyadicExpression)expression;
-        final IElementType tokenType =
-          polyadicExpression.getOperationTokenType();
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        final IElementType tokenType = polyadicExpression.getOperationTokenType();
         if (!tokenType.equals(JavaTokenType.PLUS)) {
           return false;
         }

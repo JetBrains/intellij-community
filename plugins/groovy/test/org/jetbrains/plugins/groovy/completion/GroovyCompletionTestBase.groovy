@@ -29,6 +29,13 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     checkResult();
   }
 
+  protected void doSmartTest(String before, String after) {
+    myFixture.configureByText('_a.groovy', before)
+    myFixture.complete(CompletionType.SMART)
+    assertNull(myFixture.lookupElements)
+    myFixture.checkResult(after)
+  }
+
   protected void checkResult() {
     myFixture.checkResultByFile(getTestName(false) + "_after.groovy", true);
   }
@@ -37,13 +44,21 @@ abstract public class GroovyCompletionTestBase extends LightCodeInsightFixtureTe
     myFixture.testCompletion(getTestName(false) + ".groovy", getTestName(false) + "_after.groovy");
   }
 
-  public void doVariantableTest(String... variants) throws Throwable {
+  protected void doBasicTest(String before, String after) {
+    myFixture.configureByText('_a.groovy', before)
+    myFixture.completeBasic()
+    assertNull(myFixture.lookupElements)
+    myFixture.checkResult(after)
+  }
+
+
+  public void doVariantableTest(String... variants) {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.BASIC);
     assertOrderedEquals(myFixture.lookupElementStrings, variants);
   }
 
-  public void doSmartCompletion(String... variants) throws Exception {
+  public void doSmartCompletion(String... variants) {
     myFixture.configureByFile(getTestName(false) + ".groovy");
     myFixture.complete(CompletionType.SMART);
     final List<String> list = myFixture.lookupElementStrings;

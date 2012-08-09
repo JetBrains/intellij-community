@@ -135,17 +135,31 @@ throw new RuntimeException()
   }
 
   void testAnonymousClassCompletion() {
-    myFixture.configureByText('_a.groovy', '''\
+    doSmartTest('''\
 Runnable r = new Run<caret>
-''')
-    myFixture.complete(CompletionType.SMART)
-    myFixture.checkResult('''\
+''', '''\
 Runnable r = new Runnable() {
     @Override
     void run() {
         <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
     }
 }
+''')
+  }
+
+  void testReassignedVar() {
+    doSmartTest('''\
+def foo(int x){}
+def aaaa = '123'
+aaaa = 123
+
+foo(aaa<caret>)
+''', '''\
+def foo(int x){}
+def aaaa = '123'
+aaaa = 123
+
+foo(aaaa<caret>)
 ''')
   }
 }

@@ -17,7 +17,10 @@ package com.intellij.application.options.codeStyle.arrangement.renderer;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,32 +31,76 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 8/8/12 10:06 AM
  */
-public class ArrangementAtomRenderer extends JPanel implements ArrangementNodeRenderer<ArrangementSettingsAtomNode> {
+public class ArrangementAtomRenderer implements ArrangementNodeRenderer<ArrangementSettingsAtomNode> {
 
   private static final int PADDING = 2;
 
-  private final JPanel myRenderer = new JPanel(new BorderLayout());
-  private final JLabel myLabel    = new JLabel();
-  
-  public ArrangementAtomRenderer() {
-    JPanel labelPanel = new JPanel(new BorderLayout());
-    labelPanel.setOpaque(false);
-    labelPanel.add(myLabel, BorderLayout.CENTER);
+  @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout());
+  @NotNull private final ArrangementNodeDisplayManager myDisplayValueManager;
+
+  @NotNull private final JLabel myLabel = new JLabel() {
+    @Override
+    public Dimension getMinimumSize() {
+      return getPreferredSize();
+    }
+
+    @Override
+    public Dimension getMaximumSize() {
+      return getPreferredSize();
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      return mySize == null ? super.getPreferredSize() : mySize;
+    }
+  };
+  @Nullable private Dimension mySize;
+
+  public ArrangementAtomRenderer(@NotNull ArrangementNodeDisplayManager manager) {
+    myDisplayValueManager = manager;
+    myLabel.setHorizontalAlignment(SwingConstants.CENTER);
+    GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
+    
+    JPanel labelPanel = new JPanel(new GridBagLayout());
+    myLabel.setBackground(Color.red);
+    labelPanel.add(myLabel, constraints);
     labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
+    labelPanel.setOpaque(false);
 
-    JPanel borderPanel = new JPanel(new BorderLayout());
-    borderPanel.add(labelPanel, BorderLayout.CENTER);
-    borderPanel.setBorder(IdeBorderFactory.createRoundedBorder(myLabel.getFont().getSize()));
-    borderPanel.setOpaque(false);
-
+    final int arcSize = myLabel.getFont().getSize();
+    JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
+      @Override
+      public void paint(Graphics g) {
+        Rectangle bounds = getBounds();
+        g.setColor(UIUtil.getTabbedPaneBackground());
+        g.fillRoundRect(0, 0, bounds.width, bounds.height, arcSize, arcSize);
+        super.paint(g);
+      }
+    };
+    roundBorderPanel.add(labelPanel);
+    roundBorderPanel.setBorder(IdeBorderFactory.createRoundedBorder(arcSize));
+    roundBorderPanel.setOpaque(false);
+    
     myRenderer.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
-    myRenderer.add(borderPanel, BorderLayout.CENTER);
+    myRenderer.add(roundBorderPanel, constraints);
+    myRenderer.setOpaque(false);
+  }
+
+  @NotNull
+  @Override
+  public JComponent getRendererComponent(@NotNull ArrangementSettingsAtomNode node) {
+    myLabel.setText(myDisplayValueManager.getDisplayValue(node));
+    mySize = new Dimension(myDisplayValueManager.getMaxWidth(node.getType()), myLabel.getPreferredSize().height);
+    return myRenderer;
   }
 
   @Override
-  public JComponent getRendererComponent(@NotNull ArrangementSettingsAtomNode node) {
-    // TODO den delegate to the dedicated method
-    myLabel.setText(node.getValue().toString());
-    return myRenderer;
+  public void reset() {
+    myLabel.invalidate();
+  }
+
+  @Override
+  public String toString() {
+    return myLabel.getText();
   }
 }
