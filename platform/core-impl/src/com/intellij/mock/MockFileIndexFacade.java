@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,22 +38,22 @@ public class MockFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isInContent(VirtualFile file) {
+  public boolean isInContent(@NotNull VirtualFile file) {
     return true;
   }
 
   @Override
-  public boolean isInSource(VirtualFile file) {
+  public boolean isInSource(@NotNull VirtualFile file) {
     return true;
   }
 
   @Override
-  public boolean isInSourceContent(VirtualFile file) {
+  public boolean isInSourceContent(@NotNull VirtualFile file) {
     return true;
   }
 
   @Override
-  public boolean isInLibraryClasses(VirtualFile file) {
+  public boolean isInLibraryClasses(@NotNull VirtualFile file) {
     for (VirtualFile libraryRoot : myLibraryRoots) {
       if (VfsUtilCore.isAncestor(libraryRoot, file, false)) {
         return true;
@@ -62,17 +63,17 @@ public class MockFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isInSdkClasses(VirtualFile file) {
+  public boolean isInSdkClasses(@NotNull VirtualFile file) {
     return false;
   }
 
   @Override
-  public boolean isInLibrarySource(VirtualFile file) {
+  public boolean isInLibrarySource(@NotNull VirtualFile file) {
     return false;
   }
 
   @Override
-  public boolean isExcludedFile(VirtualFile file) {
+  public boolean isExcludedFile(@NotNull VirtualFile file) {
     return false;
   }
 

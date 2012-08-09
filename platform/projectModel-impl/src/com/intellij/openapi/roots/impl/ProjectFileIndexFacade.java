@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -39,36 +40,36 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
     myFileIndex = rootManager.getFileIndex();
   }
 
-  public boolean isInContent(final VirtualFile file) {
+  public boolean isInContent(@NotNull final VirtualFile file) {
     return myFileIndex.isInContent(file);
   }
 
   @Override
-  public boolean isInSource(VirtualFile file) {
+  public boolean isInSource(@NotNull VirtualFile file) {
     return myFileIndex.isInSource(file);
   }
 
   @Override
-  public boolean isInSourceContent(VirtualFile file) {
+  public boolean isInSourceContent(@NotNull VirtualFile file) {
     return myFileIndex.isInSourceContent(file);
   }
 
   @Override
-  public boolean isInLibraryClasses(VirtualFile file) {
+  public boolean isInLibraryClasses(@NotNull VirtualFile file) {
     return myFileIndex.isInLibraryClasses(file);
   }
 
   @Override
-  public boolean isInSdkClasses(VirtualFile file) {
+  public boolean isInSdkClasses(@NotNull VirtualFile file) {
     return ContainerUtil.findInstance(myFileIndex.getOrderEntriesForFile(file), JdkOrderEntry.class) != null;
   }
 
   @Override
-  public boolean isInLibrarySource(VirtualFile file) {
+  public boolean isInLibrarySource(@NotNull VirtualFile file) {
     return myFileIndex.isInLibrarySource(file);
   }
 
-  public boolean isExcludedFile(final VirtualFile file) {
+  public boolean isExcludedFile(@NotNull final VirtualFile file) {
     return myFileIndex.isIgnored(file);
   }
 

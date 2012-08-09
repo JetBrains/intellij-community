@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.ProjectBaseDirectory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -29,42 +30,42 @@ public class DefaultFileIndexFacade extends FileIndexFacade {
   private final Project myProject;
   private final VirtualFile myBaseDir;
 
-  public DefaultFileIndexFacade(final Project project) {
+  public DefaultFileIndexFacade(@NotNull final Project project) {
     super(project);
     myProject = project;
     myBaseDir = project.getBaseDir();
   }
 
-  public boolean isInContent(final VirtualFile file) {
+  public boolean isInContent(@NotNull final VirtualFile file) {
     return VfsUtil.isAncestor(getBaseDir(), file, false);
   }
 
   @Override
-  public boolean isInSource(VirtualFile file) {
+  public boolean isInSource(@NotNull VirtualFile file) {
     return isInContent(file);
   }
 
   @Override
-  public boolean isInSourceContent(VirtualFile file) {
+  public boolean isInSourceContent(@NotNull VirtualFile file) {
     return isInContent(file);
   }
 
   @Override
-  public boolean isInLibraryClasses(VirtualFile file) {
+  public boolean isInLibraryClasses(@NotNull VirtualFile file) {
     return false;
   }
 
   @Override
-  public boolean isInSdkClasses(VirtualFile file) {
+  public boolean isInSdkClasses(@NotNull VirtualFile file) {
     return false;
   }
 
   @Override
-  public boolean isInLibrarySource(VirtualFile file) {
+  public boolean isInLibrarySource(@NotNull VirtualFile file) {
     return false;
   }
 
-  public boolean isExcludedFile(final VirtualFile file) {
+  public boolean isExcludedFile(@NotNull final VirtualFile file) {
     return false;
   }
 
