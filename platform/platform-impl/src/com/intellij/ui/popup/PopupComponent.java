@@ -103,9 +103,11 @@ public interface PopupComponent {
 
       final Window wnd = owner instanceof Window ? (Window)owner: SwingUtilities.getWindowAncestor(owner);
       if (wnd instanceof Frame) {
-        myDialog = new JDialog((Frame)wnd, false);
+        myDialog = new JDialog((Frame)wnd);
+      } else if (wnd instanceof Dialog) {
+        myDialog = new JDialog((Dialog)wnd);
       } else {
-        myDialog = new JDialog((Dialog)wnd, false);
+        myDialog = new JDialog();
       }
 
       myDialog.getContentPane().setLayout(new BorderLayout());
