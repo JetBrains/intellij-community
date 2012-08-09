@@ -17,7 +17,7 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +68,7 @@ public abstract class LogFilterModel {
   public boolean isApplicable(String line) {
     if (getCustomFilter() != null) {
       final Pattern pattern = getCustomPattern();
-      if (pattern != null && !pattern.matcher(StringUtilRt.toUpperCase(line)).matches()) return false;
+      if (pattern != null && !pattern.matcher(StringUtil.toUpperCase(line)).matches()) return false;
     }
     return true;
   }

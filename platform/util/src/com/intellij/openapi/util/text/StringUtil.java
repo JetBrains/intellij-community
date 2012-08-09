@@ -2290,6 +2290,9 @@ public class StringUtil extends StringUtilRt {
   public static char toUpperCase(char a) {
     return StringUtilRt.toUpperCase(a);
   }
+  public static String toUpperCase(String a) {
+    return StringUtilRt.toUpperCase(a);
+  }
 
   public static char toLowerCase(final char a) {
     return StringUtilRt.toLowerCase(a);

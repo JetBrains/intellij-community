@@ -51,7 +51,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -704,7 +703,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     }
     if (sameCase) return lookupString;
     if (isAllLower) return lookupString.toLowerCase();
-    if (isAllUpper) return StringUtilRt.toUpperCase(lookupString);
+    if (isAllUpper) return StringUtil.toUpperCase(lookupString);
     return lookupString;
   }
 
