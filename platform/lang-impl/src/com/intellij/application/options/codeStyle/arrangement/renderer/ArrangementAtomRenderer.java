@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement.renderer;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,10 +66,19 @@ public class ArrangementAtomRenderer implements ArrangementNodeRenderer<Arrangem
     labelPanel.add(myLabel, constraints);
     labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
     labelPanel.setOpaque(false);
-    
-    JPanel roundBorderPanel = new JPanel(new GridBagLayout());
+
+    final int arcSize = myLabel.getFont().getSize();
+    JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
+      @Override
+      public void paint(Graphics g) {
+        Rectangle bounds = getBounds();
+        g.setColor(UIUtil.getTabbedPaneBackground());
+        g.fillRoundRect(0, 0, bounds.width, bounds.height, arcSize, arcSize);
+        super.paint(g);
+      }
+    };
     roundBorderPanel.add(labelPanel);
-    roundBorderPanel.setBorder(IdeBorderFactory.createRoundedBorder(myLabel.getFont().getSize()));
+    roundBorderPanel.setBorder(IdeBorderFactory.createRoundedBorder(arcSize));
     roundBorderPanel.setOpaque(false);
     
     myRenderer.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
