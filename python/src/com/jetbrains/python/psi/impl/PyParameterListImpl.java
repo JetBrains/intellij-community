@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.stubs.PyParameterListStub;
@@ -68,26 +69,15 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
     final PyParameter[] otherParams = other.getParameters();
     final int optionalCount = optionalParametersCount(params);
     final int otherOptionalCount = optionalParametersCount(otherParams);
-    final int requiredCount = params.length - optionalCount;
-    final int otherRequiredCount = otherParams.length - otherOptionalCount;
+    final int requiredCount = requiredParametersCount(this);
+    final int otherRequiredCount = requiredParametersCount(other);
+    if (other.hasPositionalContainer() || other.hasKeywordContainer()) {
+      if (otherParams.length == specialParametersCount(other)) {
+        return true;
+      }
+    }
     if (hasPositionalContainer() || hasKeywordContainer()) {
       return requiredCount <= otherRequiredCount;
-    }
-    final PyFunction otherFunction = other.getContainingFunction();
-    final boolean otherHasArgs = other.hasPositionalContainer();
-    final boolean otherHasKwargs = other.hasKeywordContainer();
-    if (otherHasArgs || otherHasKwargs) {
-      int specialParamsCount = 0;
-      if (otherHasArgs) {
-        specialParamsCount++;
-      }
-      if (otherHasKwargs) {
-        specialParamsCount++;
-      }
-      if (otherFunction != null && otherFunction.asMethod() != null) {
-        specialParamsCount++;
-      }
-      return otherParams.length == specialParamsCount;
     }
     return requiredCount <= otherRequiredCount && params.length >= otherParams.length && optionalCount >= otherOptionalCount;
   }
@@ -100,6 +90,37 @@ public class PyParameterListImpl extends PyBaseElementImpl<PyParameterListStub> 
       }
     }
     return n;
+  }
+
+  private static int specialParametersCount(@NotNull PyParameterList parameterList) {
+    int n = 0;
+    if (parameterList.hasPositionalContainer()) {
+      n++;
+    }
+    if (parameterList.hasKeywordContainer()) {
+      n++;
+    }
+    final PyFunction function = parameterList.getContainingFunction();
+    if (function != null) {
+      if (function.asMethod() != null) {
+        n++;
+      }
+    }
+    else {
+      final PyParameter[] parameters = parameterList.getParameters();
+      if (parameters.length > 0) {
+        final PyParameter first = parameters[0];
+        if (PyNames.CANONICAL_SELF.equals(first.getName())) {
+          n++;
+        }
+      }
+    }
+    return n;
+  }
+
+  private static int requiredParametersCount(@NotNull PyParameterList parameterList) {
+    final PyParameter[] parameters = parameterList.getParameters();
+    return parameters.length - optionalParametersCount(parameters) - specialParametersCount(parameterList);
   }
 
   @Override
