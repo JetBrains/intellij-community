@@ -36,7 +36,9 @@ public interface QuickFix<D extends CommonProblemDescriptor> {
   String getName();
 
   /**
-   * @return text to appear in "Apply Fix" statement when multiple Quick Fixes exist
+   * @return text to appear in "Apply Fix" popup when multiple Quick Fixes exist (in the results of batch code inspection). For example,
+   * if the name of the quickfix is "Create template &lt;filename&gt", the return value of getFamilyName() should be "Create template".
+   * If the name of the quickfix does not depend on a specific element, simply return getName().
    */
   @NotNull String getFamilyName();
 
