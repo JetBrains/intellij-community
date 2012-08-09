@@ -81,7 +81,7 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
         AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
         try {
-          isInheritor = candidate.isInheritor(clazz, false);
+          isInheritor = candidate.isValid() && candidate.isInheritor(clazz, false);
         }
         finally {
           accessToken.finish();
