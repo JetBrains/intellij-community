@@ -320,7 +320,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     final List<LookupElement> items = getItems();
 
     synchronized (myList) {
-      myPresentableArranger.prefixChanged();
+      myPresentableArranger.prefixChanged(this);
       getListModel().removeAll();
     }
 
@@ -398,7 +398,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     checkValid();
     myOffsets.appendPrefix(c);
     synchronized (myList) {
-      myPresentableArranger.prefixChanged();
+      myPresentableArranger.prefixChanged(this);
     }
     requestResize();
     refreshUi(false, true);
@@ -431,7 +431,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     boolean shouldUpdate;
     synchronized (myList) {
       shouldUpdate = myPresentableArranger == myArranger;
-      myPresentableArranger.prefixChanged();
+      myPresentableArranger.prefixChanged(this);
     }
     requestResize();
     if (shouldUpdate) {
@@ -447,10 +447,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       ApplicationManager.getApplication().assertIsDispatchThread();
     }
     checkValid();
-
-    if (reused) {
-      myOffsets.clearAdditionalPrefix();
-    }
 
     CollectionListModel<LookupElement> listModel = getListModel();
     synchronized (myList) {
@@ -488,7 +484,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     synchronized (myList) {
       if (myPresentableArranger != myArranger) {
         myPresentableArranger = myArranger;
-        myPresentableArranger.prefixChanged();
+        myOffsets.clearAdditionalPrefix();
+        myPresentableArranger.prefixChanged(this);
         return true;
       }
       return false;
@@ -522,19 +519,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     String prefix = itemMatcher(element).getPrefix();
     String additionalPrefix = getAdditionalPrefix();
     return additionalPrefix.isEmpty() ? prefix : prefix + additionalPrefix;
-  }
-
-  @Override
-  public boolean prefixMatches(@NotNull final LookupElement item) {
-    PrefixMatcher matcher = myMatchers.get(item);
-    if (matcher == null) {
-      return false;
-    }
-
-    if (getAdditionalPrefix().length() > 0) {
-      matcher = matcher.cloneWithPrefix(itemPattern(item));
-    }
-    return matcher.prefixMatches(item);
   }
 
   @Override

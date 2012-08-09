@@ -92,7 +92,7 @@ public class CompletionLookupArranger extends LookupArranger {
     myLocation = new CompletionLocation(parameters);
   }
 
-  private MultiMap<CompletionSorterImpl, LookupElement> groupInputBySorter(List<LookupElement> source) {
+  private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(List<LookupElement> source) {
     MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = new MultiMap<CompletionSorterImpl, LookupElement>();
     for (LookupElement element : source) {
       inputBySorter.putValue(obtainSorter(element), element);
@@ -111,7 +111,7 @@ public class CompletionLookupArranger extends LookupArranger {
     for (LookupElement item : myItems) {
       map.put(item, new StringBuilder());
     }
-    final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(new ArrayList<LookupElement>(map.keySet()));
+    final MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupItemsBySorter(new ArrayList<LookupElement>(map.keySet()));
 
     if (inputBySorter.size() > 1) {
       for (LookupElement element : map.keySet()) {
@@ -136,6 +136,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
+    super.addElement(lookup, element, presentation);
     CompletionSorterImpl sorter = obtainSorter(element);
     Classifier<LookupElement> classifier = myClassifiers.get(sorter);
     if (classifier == null) {
@@ -145,12 +146,11 @@ public class CompletionLookupArranger extends LookupArranger {
 
     final String invariant = presentation.getItemText() + "###" + presentation.getTailText() + "###" + presentation.getTypeText();
     element.putUserData(PRESENTATION_INVARIANT, invariant);
-    super.addElement(lookup, element, presentation);
   }
 
   private static List<LookupElement> sortByPresentation(Iterable<LookupElement> source) {
     ArrayList<LookupElement> result = ContainerUtil.newArrayList(source);
-    Collections.sort(result, new Comparator<LookupElement>() {
+    ContainerUtil.sort(result, new Comparator<LookupElement>() {
       public int compare(LookupElement o1, LookupElement o2) {
         String invariant = PRESENTATION_INVARIANT.get(o1);
         assert invariant != null;
@@ -166,14 +166,14 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public Pair<List<LookupElement>, Integer> arrangeItems(@NotNull Lookup lookup, boolean onExplicitAction) {
-    List<LookupElement> items = matchingItems(lookup);
-    MultiMap<CompletionSorterImpl, LookupElement> inputBySorter = groupInputBySorter(items);
+    List<LookupElement> items = getMatchingItems();
+    MultiMap<CompletionSorterImpl, LookupElement> itemsBySorter = groupItemsBySorter(items);
 
     List<LookupElement> listModel = isAlphaSorted() ?
                                     sortByPresentation(items) :
-                                    fillModelByRelevance((LookupImpl)lookup, items, inputBySorter);
+                                    fillModelByRelevance((LookupImpl)lookup, items, itemsBySorter);
 
-    int toSelect = getItemToSelect(lookup, listModel, inputBySorter, onExplicitAction);
+    int toSelect = getItemToSelect(lookup, listModel, itemsBySorter, onExplicitAction);
 
     addDummyItems(items.size() - listModel.size(), listModel);
 
@@ -193,7 +193,7 @@ public class CompletionLookupArranger extends LookupArranger {
 
     final LinkedHashSet<LookupElement> model = new LinkedHashSet<LookupElement>();
 
-    addPrefixItems(lookup, items, model);
+    addPrefixItems(model);
     addFrozenItems(items, model);
     addSomeItems(model, byRelevance, new Condition<LookupElement>() {
       @Override
@@ -250,9 +250,9 @@ public class CompletionLookupArranger extends LookupArranger {
     model.addAll(myFrozenItems);
   }
 
-  private void addPrefixItems(Lookup lookup, List<LookupElement> items, LinkedHashSet<LookupElement> model) {
-    ContainerUtil.addAll(model, sortByRelevance(groupInputBySorter(getPrefixItems(lookup, true, items))));
-    ContainerUtil.addAll(model, sortByRelevance(groupInputBySorter(getPrefixItems(lookup, false, items))));
+  private void addPrefixItems(LinkedHashSet<LookupElement> model) {
+    ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(true))));
+    ContainerUtil.addAll(model, sortByRelevance(groupItemsBySorter(getPrefixItems(false))));
   }
 
   private static void addCurrentlySelectedItemToTop(Lookup lookup, List<LookupElement> items, LinkedHashSet<LookupElement> model) {
@@ -299,7 +299,9 @@ public class CompletionLookupArranger extends LookupArranger {
     return new CompletionLookupArranger(myParameters, myProcess);
   }
 
-  private int getItemToSelect(Lookup lookup, List<LookupElement> items, MultiMap<CompletionSorterImpl, LookupElement> inputBySorter, boolean onExplicitAction) {
+  private int getItemToSelect(Lookup lookup, List<LookupElement> items,
+                              MultiMap<CompletionSorterImpl, LookupElement> itemsBySorter,
+                              boolean onExplicitAction) {
     if (items.isEmpty() || !lookup.isFocused()) {
       return 0;
     }
@@ -339,7 +341,7 @@ public class CompletionLookupArranger extends LookupArranger {
     final CompletionPreselectSkipper[] skippers = CompletionPreselectSkipper.EP_NAME.getExtensions();
     for (CompletionSorterImpl sorter : myClassifiers.keySet()) {
       ProcessingContext context = createContext(true);
-      for (LookupElement element : myClassifiers.get(sorter).classify(inputBySorter.get(sorter), context)) {
+      for (LookupElement element : myClassifiers.get(sorter).classify(itemsBySorter.get(sorter), context)) {
         if (!shouldSkip(skippers, element)) {
           return items.indexOf(element);
         }
@@ -445,10 +447,10 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   @Override
-  public void prefixChanged() {
+  public void prefixChanged(Lookup lookup) {
     myPrefixChanges++;
     myFrozenItems.clear();
-    super.prefixChanged();
+    super.prefixChanged(lookup);
   }
 
   static class StatisticsUpdate implements Disposable {
