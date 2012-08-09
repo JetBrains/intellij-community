@@ -584,6 +584,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final XmlAttribute attribute = tag.getAttribute(description.getXmlName().getLocalName(), ns.equals(tag.getNamespace())? null:ns);
       
       if (attribute != null) {
+        LOG.assertTrue(attribute.isValid());
         return myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
       }
     }
