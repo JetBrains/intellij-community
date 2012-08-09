@@ -5,13 +5,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsLibraryType;
-import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryReferenceImpl;
 import org.jetbrains.jps.model.library.impl.JpsSdkReferenceImpl;
 import org.jetbrains.jps.model.library.impl.sdk.JpsSdkImpl;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.model.module.JpsModuleType;
@@ -70,8 +71,8 @@ public class JpsElementFactoryImpl extends JpsElementFactory {
 
   @NotNull
   @Override
-  public JpsLibraryReference createSdkReference(@NotNull String sdkName, @NotNull JpsSdkType<?> sdkType) {
-    return new JpsSdkReferenceImpl(sdkName, sdkType, createGlobalReference());
+  public <P extends JpsElement> JpsSdkReference<P> createSdkReference(@NotNull String sdkName, @NotNull JpsSdkType<P> sdkType) {
+    return new JpsSdkReferenceImpl<P>(sdkName, sdkType, createGlobalReference());
   }
 
   @NotNull

@@ -3,9 +3,12 @@ package org.jetbrains.jps.model.module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryCollection;
+import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 
 import java.util.List;
 
@@ -57,7 +60,8 @@ public interface JpsModule extends JpsNamedElement, JpsReferenceableElement<JpsM
   JpsSdkReferencesTable getSdkReferencesTable();
 
   @Nullable
-  JpsLibraryReference getSdkReference(@NotNull JpsSdkType<?> type);
+  <P extends JpsElement>
+  JpsSdkReference<P> getSdkReference(@NotNull JpsSdkType<P> type);
 
   @Nullable
   <P extends JpsElement>

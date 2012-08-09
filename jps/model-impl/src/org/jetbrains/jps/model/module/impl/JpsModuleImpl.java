@@ -7,11 +7,15 @@ import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
 import org.jetbrains.jps.model.impl.JpsNamedCompositeElementBase;
 import org.jetbrains.jps.model.impl.JpsUrlListRole;
-import org.jetbrains.jps.model.library.*;
+import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.JpsLibraryCollection;
+import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.impl.JpsLibraryCollectionImpl;
 import org.jetbrains.jps.model.library.impl.JpsLibraryRole;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
@@ -136,8 +140,8 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
   }
 
   @Override
-  public JpsLibraryReference getSdkReference(@NotNull JpsSdkType<?> type) {
-    JpsLibraryReference sdkReference = getSdkReferencesTable().getSdkReference(type);
+  public <P extends JpsElement> JpsSdkReference<P> getSdkReference(@NotNull JpsSdkType<P> type) {
+    JpsSdkReference<P> sdkReference = getSdkReferencesTable().getSdkReference(type);
     if (sdkReference != null) {
       return sdkReference;
     }
@@ -150,10 +154,10 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
 
   @Override
   public <P extends JpsElement> JpsSdk<P> getSdk(@NotNull JpsSdkType<P> type) {
-    final JpsLibraryReference reference = getSdkReference(type);
+    final JpsSdkReference<P> reference = getSdkReference(type);
     if (reference == null) return null;
-    JpsLibrary library = reference.resolve();
-    return library != null ? (JpsSdk<P>)library.getProperties() : null;
+    JpsTypedLibrary<JpsSdk<P>> library = reference.resolve();
+    return library != null ? library.getProperties() : null;
   }
 
   @Override

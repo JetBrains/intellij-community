@@ -3,10 +3,12 @@ package org.jetbrains.jps.model.library.impl.sdk;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.library.impl.JpsLibraryImpl;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 
 /**
  * @author nik
@@ -42,15 +44,20 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   }
 
   @Override
+  public JpsSdkReference<P> createReference() {
+    return JpsElementFactory.getInstance().createSdkReference(getParent().getName(), mySdkType);
+  }
+
+  @Override
   public JpsSdkType<P> getSdkType() {
     return mySdkType;
   }
 
   @NotNull
   @Override
-  public JpsLibraryImpl<JpsSdkImpl<P>> getParent() {
+  public JpsLibraryImpl<JpsSdk<P>> getParent() {
     //noinspection unchecked
-    return (JpsLibraryImpl<JpsSdkImpl<P>>)super.getParent();
+    return (JpsLibraryImpl<JpsSdk<P>>)super.getParent();
   }
 
   @Override

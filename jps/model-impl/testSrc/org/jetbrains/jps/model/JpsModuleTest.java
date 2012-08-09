@@ -3,6 +3,7 @@ package org.jetbrains.jps.model;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.List;
@@ -13,7 +14,8 @@ import java.util.List;
 public class JpsModuleTest extends JpsModelTestCase {
   public void testAddSourceRoot() {
     final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
-    JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties("com.xxx"));
+    JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(
+      new JavaSourceRootProperties("com.xxx"));
     final JpsModuleSourceRoot sourceRoot = module.addSourceRoot("file://url", JavaSourceRootType.SOURCE, properties);
 
     assertSameElements(myDispatcher.retrieveAdded(JpsModule.class), module);
@@ -103,12 +105,12 @@ public class JpsModuleTest extends JpsModelTestCase {
   }
 
   public void testSdkDependency() {
-    JpsLibrary sdk = myModel.getGlobal().addSdk("sdk", null, null, JpsJavaSdkType.INSTANCE, JpsElementFactory.getInstance().createDummyElement());
+    JpsSdk<JpsDummyElement> sdk = myModel.getGlobal().addSdk("sdk", null, null, JpsJavaSdkType.INSTANCE, JpsElementFactory.getInstance().createDummyElement()).getProperties();
     final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, sdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
 
     final JpsSdkDependency dependency = assertInstanceOf(assertOneElement(module.getDependenciesList().getDependencies()), JpsSdkDependency.class);
-    assertSame(sdk, dependency.resolveSdk());
+    assertSame(sdk.getParent(), dependency.resolveSdk());
   }
 }

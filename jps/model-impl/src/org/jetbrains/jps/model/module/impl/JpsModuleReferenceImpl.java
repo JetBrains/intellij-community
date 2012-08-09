@@ -2,7 +2,7 @@ package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase;
+import org.jetbrains.jps.model.impl.JpsNamedElementReferenceImpl;
 import org.jetbrains.jps.model.impl.JpsProjectElementReference;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 /**
  * @author nik
  */
-public class JpsModuleReferenceImpl extends JpsNamedElementReferenceBase<JpsModule, JpsModuleReferenceImpl> implements JpsModuleReference {
+public class JpsModuleReferenceImpl extends JpsNamedElementReferenceImpl<JpsModule, JpsModuleReferenceImpl> implements JpsModuleReference {
   public JpsModuleReferenceImpl(String elementName) {
     super(JpsModuleRole.MODULE_COLLECTION_ROLE, elementName, new JpsProjectElementReference());
   }

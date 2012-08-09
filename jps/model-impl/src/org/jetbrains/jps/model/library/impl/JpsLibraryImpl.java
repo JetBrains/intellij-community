@@ -96,10 +96,12 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
   @NotNull
   @Override
   public JpsLibraryReference createReference() {
+    return new JpsLibraryReferenceImpl(getName(), createParentReference());
+  }
+
+  private JpsElementReference<JpsCompositeElement> createParentReference() {
     //noinspection unchecked
-    final JpsElementReference<JpsCompositeElement> parentReference =
-      ((JpsReferenceableElement<JpsCompositeElement>)getParent().getParent()).createReference();
-    return new JpsLibraryReferenceImpl(getName(), parentReference);
+    return ((JpsReferenceableElement<JpsCompositeElement>)getParent().getParent()).createReference();
   }
 
   @Override

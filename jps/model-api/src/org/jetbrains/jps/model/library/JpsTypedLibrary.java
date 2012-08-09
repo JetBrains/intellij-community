@@ -11,4 +11,8 @@ public interface JpsTypedLibrary<P extends JpsElement> extends JpsLibrary, JpsTy
   @NotNull
   @Override
   JpsLibraryType<P> getType();
+
+  @NotNull
+  @Override
+  P getProperties();
 }
