@@ -286,3 +286,9 @@ class C:
 # PY-7126
 def test_unused_empty_function(<weak_warning descr="Parameter 'x' value is not used">x</weak_warning>):
     pass
+
+
+# PY-7178
+class C(object):
+    def __getattr__(self, name): # pass
+        return 42
