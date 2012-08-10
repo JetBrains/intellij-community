@@ -37,7 +37,7 @@ public class PyBroadExceptionInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  private static boolean equalsException(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+  public static boolean equalsException(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final PyType type = cls.getType(context);
     return "Exception".equals(cls.getName()) && type != null && type.isBuiltin(context);
   }
