@@ -124,7 +124,7 @@ public class ChangeType {
   }
 
   @Nullable
-  private RangeHighlighter addLine(final ChangeHighlighterHolder markup, int line, TextDiffType type, SeparatorPlacement placement) {
+  private RangeHighlighter addLine(final ChangeHighlighterHolder markup, int line, final TextDiffType type, SeparatorPlacement placement) {
     RangeHighlighter highlighter = markup.addLineHighlighter(line, LAYER, type, myApplied);
     if (highlighter == null) {
       return null;
@@ -136,7 +136,12 @@ public class ChangeType {
         Graphics2D g2 = (Graphics2D)g;
         Color color = myDiffType.getPolygonColor(markup.getEditor());
         if (color != null) {
-          DiffUtil.drawDoubleShadowedLine(g2, x1, x2, y, color);
+          if (type.isApplied()) {
+            UIUtil.drawBoldDottedLine(g2, x1, x2, y, null, color, false);
+          }
+          else {
+            DiffUtil.drawDoubleShadowedLine(g2, x1, x2, y, color);
+          }
         }
       }
     });
