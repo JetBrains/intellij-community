@@ -51,10 +51,6 @@ public class JBLoadingPanel extends JPanel {
     super.add(myDecorator.getComponent(), BorderLayout.CENTER);
   }
 
-  public JBLoadingPanel(@NotNull Disposable parent) {
-    this(null, parent);
-  }
-
   public void setLoadingText(String text) {
     myDecorator.setLoadingText(text);
   }
@@ -83,12 +79,6 @@ public class JBLoadingPanel extends JPanel {
 
   public boolean removeListener(@NotNull JBLoadingPanelListener listener) {
     return myListeners.remove(listener);
-  }
-
-  @Override
-  public void addNotify() {
-    super.addNotify();
-    myDecorator.startLoading(false);
   }
 
   public JPanel getContentPanel() {
