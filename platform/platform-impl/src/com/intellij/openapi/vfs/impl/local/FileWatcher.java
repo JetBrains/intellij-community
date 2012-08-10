@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -452,6 +453,10 @@ public class FileWatcher {
             }
 
             synchronized (LOCK) {
+              if (isWindowsOverflow(path, kind)) {
+                resetRoot(path);
+                continue;
+              }
               final Collection<String> watchedPaths = checkWatchable(path, !(kind == ChangeKind.DIRTY || kind == ChangeKind.RECDIRTY));
               if (!watchedPaths.isEmpty()) {
                 onPathChange(kind, watchedPaths);
@@ -611,5 +616,20 @@ public class FileWatcher {
         ((NewVirtualFile)root).markDirtyRecursively();
       }
     }
+
+    notifyOnEvent();
+  }
+
+  private static boolean isWindowsOverflow(final String path, final ChangeKind changeKind) {
+    return SystemInfo.isWindows && changeKind == ChangeKind.RECDIRTY && path.length() == 3 && Character.isLetter(path.charAt(0));
+  }
+
+  private void resetRoot(final String path) {
+    final NewVirtualFile root = myManagingFS.findRoot(path, LocalFileSystem.getInstance());
+    if (root != null) {
+      root.markDirtyRecursively();
+    }
+
+    notifyOnEvent();
   }
 }
