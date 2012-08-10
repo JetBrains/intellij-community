@@ -17,6 +17,7 @@ package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -118,6 +119,23 @@ public class CollectionFactory {
   @NotNull
   public static <K, V> THashMap<K, V> troveMap() {
     return new THashMap<K, V>();
+  }
+
+  @NotNull
+  public static <K, V> IdentityHashMap<K, V> identityHashMap() {
+    return new IdentityHashMap<K, V>();
+  }
+
+  @NotNull
+  public static <K> THashSet<K> identityTroveSet() {
+    //noinspection unchecked
+    return new THashSet<K>(TObjectHashingStrategy.IDENTITY);
+  }
+
+  @NotNull
+  public static <K> THashSet<K> identityTroveSet(int initialCapacity) {
+    //noinspection unchecked
+    return new THashSet<K>(initialCapacity, TObjectHashingStrategy.IDENTITY);
   }
 
   @NotNull
