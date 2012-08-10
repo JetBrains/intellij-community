@@ -8,7 +8,9 @@ import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +37,11 @@ public class PyBroadExceptionInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
+  private static boolean equalsException(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    final PyType type = cls.getType(context);
+    return "Exception".equals(cls.getName()) && type != null && type.isBuiltin(context);
+  }
+
   private static class Visitor extends PyInspectionVisitor {
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
@@ -48,30 +55,26 @@ public class PyBroadExceptionInspection extends PyInspection {
       if (exceptClass == null) {
         registerProblem(node.getFirstChild(), "Too broad exception clause");
       }
-      else if ("Exception".equals(exceptClass.getName())) {
-        PyExpression target = node.getTarget();
-        if (target != null && isExceptionUsed(node, target.getText()))
-          return;
-        if (exceptClass instanceof PyReferenceExpression) {
-          PyReferenceExpression exceptClassRef = (PyReferenceExpression)exceptClass;
-          PyType classRefType = myTypeEvalContext.getType(exceptClassRef);
-          if (classRefType != null) {
-            if (classRefType.isBuiltin(myTypeEvalContext))
-              registerProblem(exceptClassRef, "Too broad exception clause");
+      if (exceptClass != null) {
+        final PyType type = exceptClass.getType(myTypeEvalContext);
+        if (type instanceof PyClassType) {
+          final PyClass cls = ((PyClassType)type).getPyClass();
+          final PyExpression target = node.getTarget();
+          if (cls != null && equalsException(cls, myTypeEvalContext) &&
+              (target == null || !isExceptionUsed(node, target.getText()))) {
+            registerProblem(exceptClass, "Too broad exception clause");
           }
         }
       }
     }
 
-    /**
-     * detects reraising of exception
-     * @param node
-     * @return
-     */
     private static boolean reRaised(PyExceptPart node) {
-      for (PyStatement st : node.getStatementList().getStatements()) {
-        if (st instanceof PyRaiseStatement)
-          return true;
+      final PyStatementList statementList = node.getStatementList();
+      if (statementList != null) {
+        for (PyStatement st : statementList.getStatements()) {
+          if (st instanceof PyRaiseStatement)
+            return true;
+        }
       }
       return false;
     }
