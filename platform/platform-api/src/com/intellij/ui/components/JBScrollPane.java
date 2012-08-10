@@ -21,7 +21,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.plaf.ScrollBarUI;
 import javax.swing.plaf.ScrollPaneUI;
@@ -71,13 +70,6 @@ public class JBScrollPane extends JScrollPane {
     updateViewportBorder();
   }
 
-  @Override
-  public void setBorder(final Border border) {
-    if (border == null) {
-      super.setBorder(IdeBorderFactory.createEmptyBorder(0));
-    }
-  }
-
   private void updateViewportBorder() {
     setViewportBorder(new ViewportBorder(myViewportBorderWidth >= 0 ? myViewportBorderWidth : 1));
   }
@@ -94,6 +86,14 @@ public class JBScrollPane extends JScrollPane {
   @Override
   public JScrollBar createHorizontalScrollBar() {
     return new MyScrollBar(Adjustable.HORIZONTAL);
+  }
+
+  public boolean isHaveBorder() {
+    return getBorder() != null;
+  }
+
+  public void setHaveBorder(boolean haveBorder) {
+    setBorder(haveBorder ? IdeBorderFactory.createBorder() : null);
   }
 
   @Override
