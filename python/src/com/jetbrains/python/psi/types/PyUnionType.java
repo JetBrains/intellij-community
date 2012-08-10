@@ -132,6 +132,20 @@ public class PyUnionType implements PyType {
     }
   }
 
+  @Nullable
+  public static PyType createWeakType(@Nullable PyType type) {
+    if (type == null) {
+      return null;
+    }
+    else if (type instanceof PyUnionType) {
+      final PyUnionType unionType = (PyUnionType)type;
+      if (unionType.isWeak()) {
+        return unionType;
+      }
+    }
+    return union(type, null);
+  }
+
   public boolean isWeak() {
     for (PyType member : myMembers) {
       if (member == null) {
