@@ -14,8 +14,8 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -118,7 +118,7 @@ class HgTrackFileNamesAccrossRevisionsCommand {
   }
 
   private Set<String> parseFileList(String fileListString) {
-    if (StringUtils.isEmpty(fileListString)) {
+    if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptySet();
     } else {
       return new HashSet<String>(Arrays.asList(fileListString.split(" ")));
@@ -126,7 +126,7 @@ class HgTrackFileNamesAccrossRevisionsCommand {
   }
 
   private Map<String, String> parseCopiesFileList(String fileListString) {
-    if (StringUtils.isEmpty(fileListString)) {
+    if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptyMap();
     } else {
       Map<String, String> copies = new HashMap<String, String>();

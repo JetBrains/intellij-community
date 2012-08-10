@@ -13,13 +13,14 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class HgShowConfigCommand {
@@ -58,9 +59,9 @@ public class HgShowConfigCommand {
 
     Map<String, String> options = new HashMap<String, String>();
     for (String line : result.getOutputLines()) {
-      String[] option = StringUtils.splitPreserveAllTokens(line, '=');
-      if (option.length == 2) {
-        options.put(option[0].trim(), option[1].trim());
+      List<String> option = StringUtil.split(line, "=", true, false);
+      if (option.size() == 2) {
+        options.put(option.get(0).trim(), option.get(1).trim());
       }
     }
     return options;
