@@ -43,10 +43,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -69,7 +69,6 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -77,9 +76,9 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author peter
@@ -152,15 +151,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     ApplicationManager.getApplication().assertIsDispatchThread();
     Disposer.register(this, offsetMap);
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-
-    if (!myLookup.isAvailableToUser()) {
-      scheduleAdvertising();
-    }
-
-    if (hasModifiers) {
+    if (hasModifiers && !ApplicationManager.getApplication().isUnitTestMode()) {
       trackModifiers();
     }
   }
@@ -235,58 +226,38 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
   }
 
 
-  private void scheduleAdvertising() {
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        if (isOutdated()) return; //tests?
-        final List<CompletionContributor> list =
-          ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
-            public List<CompletionContributor> compute() {
-              if (isOutdated()) {
-                return Collections.emptyList();
+  void scheduleAdvertising() {
+    if (myLookup.isAvailableToUser()) {
+      return;
+    }
+    final List<CompletionContributor> list = CompletionContributor.forParameters(myParameters);
+    for (final CompletionContributor contributor : list) {
+      if (myLookup.getAdvertisementText() != null) return;
+      if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
+
+      @SuppressWarnings("deprecation") String s = contributor.advertise(myParameters);
+      if (myLookup.getAdvertisementText() != null) return;
+
+      if (s != null) {
+        myLookup.setAdvertisementText(s);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+            public void run() {
+              if (isAutopopupCompletion() && !myLookup.isAvailableToUser()) {
+                return;
+              }
+              if (!CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class)) {
+                return;
+              }
+              if (CompletionServiceImpl.getCompletionPhase().indicator != CompletionProgressIndicator.this) {
+                return;
               }
 
-              return CompletionContributor.forParameters(myParameters);
+              updateLookup();
             }
-          });
-        for (final CompletionContributor contributor : list) {
-          if (myLookup.getAdvertisementText() != null) return;
-          if (!myLookup.isCalculating() && !myLookup.isVisible()) return;
-
-          String s = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-            @Nullable
-            public String compute() {
-              if (isOutdated()) {
-                return null;
-              }
-
-              return contributor.advertise(myParameters);
-            }
-          });
-          if (myLookup.getAdvertisementText() != null) return;
-
-          if (s != null) {
-            myLookup.setAdvertisementText(s);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-                public void run() {
-                  if (isAutopopupCompletion() && !myLookup.isAvailableToUser()) {
-                    return;
-                  }
-                  if (!CompletionServiceImpl.isPhase(CompletionPhase.BgCalculation.class, CompletionPhase.ItemsCalculated.class)) {
-                    return;
-                  }
-                  if (CompletionServiceImpl.getCompletionPhase().indicator != CompletionProgressIndicator.this) {
-                    return;
-                  }
-
-                  updateLookup();
-                }
-              }, myQueue.getModalityState());
-            return;
-          }
-        }
+          }, myQueue.getModalityState());
+        return;
       }
-    });
+    }
   }
 
   @Override
@@ -731,6 +702,38 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       }
     }
     return false;
+  }
+
+  AtomicReference<LookupElement[]> startCompletion(final CompletionInitializationContext initContext) {
+    boolean sync = ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup;
+    final CompletionThreading strategy = sync ? new SyncCompletion() : new AsyncCompletion();
+
+    strategy.startThread(ProgressWrapper.wrap(this), new Runnable() {
+      @Override
+      public void run() {
+        scheduleAdvertising();
+      }
+    });
+    final WeighingDelegate weigher = strategy.delegateWeighing(this);
+
+    final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
+    class CalculateItems implements Runnable {
+      @Override
+      public void run() {
+        duringCompletion(initContext);
+        ProgressManager.checkCanceled();
+
+        LookupElement[] result = CompletionService.getCompletionService().performCompletion(myParameters, weigher);
+        ProgressManager.checkCanceled();
+
+        weigher.waitFor();
+        ProgressManager.checkCanceled();
+
+        data.set(result);
+      }
+    }
+    strategy.startThread(this, new CalculateItems());
+    return data;
   }
 
   private static class ModifierTracker extends KeyAdapter {
