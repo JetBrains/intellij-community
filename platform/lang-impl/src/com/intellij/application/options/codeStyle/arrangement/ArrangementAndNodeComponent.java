@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.renderer;
+package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * // TODO den add doc
@@ -30,36 +34,61 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 8/8/12 10:51 AM
  */
-public class ArrangementAndRenderer extends JPanel implements ArrangementNodeRenderer<ArrangementSettingsCompositeNode> {
+public class ArrangementAndNodeComponent extends JPanel implements ArrangementNodeComponent {
 
   private static final int BUBBLE_CONNECTOR_LENGTH = 10;
 
-  @NotNull private final ArrangementNodeRenderingContext myContext;
+  @NotNull private final List<ArrangementNodeComponent> myComponents = new ArrayList<ArrangementNodeComponent>();
+  @Nullable private Rectangle myScreenBounds;
 
-  public ArrangementAndRenderer(@NotNull ArrangementNodeRenderingContext context) {
-    myContext = context;
+  public ArrangementAndNodeComponent(@NotNull ArrangementSettingsCompositeNode node, @NotNull ArrangementNodeComponentFactory factory) {
     setLayout(null);
-    setOpaque(true);
+    int x = 0;
+    for (ArrangementSettingsNode operand : node.getOperands()) {
+      ArrangementNodeComponent component = factory.getComponent(operand);
+      myComponents.add(component);
+      JComponent uiComponent = component.getUiComponent();
+      Dimension size = uiComponent.getPreferredSize();
+      add(uiComponent);
+      uiComponent.setBounds(x, 0, size.width, size.height);
+      x += size.width + BUBBLE_CONNECTOR_LENGTH;
+    }
   }
 
   @NotNull
   @Override
-  public JComponent getRendererComponent(@NotNull ArrangementSettingsCompositeNode node) {
-    removeAll();
-    int x = 0;
-    for (ArrangementSettingsNode operand : node.getOperands()) {
-      JComponent component = myContext.getRenderer(operand).getRendererComponent(operand);
-      Dimension size = component.getPreferredSize();
-      add(component);
-      component.setBounds(x, 0, size.width, size.height);
-      x += size.width + BUBBLE_CONNECTOR_LENGTH;
-    }
+  public JComponent getUiComponent() {
     return this;
   }
 
+  @Nullable
   @Override
-  public void reset() {
-    invalidate();
+  public Rectangle getScreenBounds() {
+    return myScreenBounds;
+  }
+
+  @Override
+  public void setScreenBounds(@Nullable Rectangle bounds) {
+    myScreenBounds = bounds;
+  }
+
+  @Override
+  public ArrangementNodeComponent getComponentAt(@NotNull RelativePoint point) {
+    if (myScreenBounds == null) {
+      return null;
+    }
+    Point screenPoint = point.getScreenPoint();
+    if (!myScreenBounds.contains(screenPoint)) {
+      return null;
+    }
+
+    for (ArrangementNodeComponent component : myComponents) {
+      Rectangle screenBounds = component.getScreenBounds();
+      if (screenBounds != null && screenBounds.contains(screenPoint)) {
+        return component;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -90,6 +119,11 @@ public class ArrangementAndRenderer extends JPanel implements ArrangementNodeRen
 
   @Override
   public void paint(Graphics g) {
+    Point point = ArrangementSettingsUtil.getLocationOnScreen(this);
+    if (point != null) {
+      Rectangle bounds = getBounds();
+      myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
+    }
     super.paint(g);
     
     Component[] components = getComponents();
@@ -100,14 +134,21 @@ public class ArrangementAndRenderer extends JPanel implements ArrangementNodeRen
     // Draw node connectors.
     int x = 0;
     g.setColor(UIManager.getColor("Tree.hash"));
-    for (int i = 0; i < components.length - 1; i++) {
+    for (int i = 0; i < components.length; i++) {
       Component component = components[i];
       Rectangle bounds = component.getBounds();
+      if (myScreenBounds != null && i < myComponents.size()) {
+        myComponents.get(i).setScreenBounds(new Rectangle(
+          myScreenBounds.x + bounds.x, myScreenBounds.y + bounds.y, bounds.width, bounds.height
+        ));
+      }
       int y = bounds.y + bounds.height / 2;
       // TODO den shift y for the component
       x += bounds.width;
       // TODO den use right 'y'
-      g.drawLine(x, y, x + BUBBLE_CONNECTOR_LENGTH, y);
+      if (i < components.length - 1) {
+        g.drawLine(x, y, x + BUBBLE_CONNECTOR_LENGTH, y);
+      }
       x += BUBBLE_CONNECTOR_LENGTH;
     }
   }

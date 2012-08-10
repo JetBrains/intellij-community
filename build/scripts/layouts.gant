@@ -224,12 +224,6 @@ public def layoutCommunityPlugins(String home) {
       fileset(dir: "$home/plugins/maven/maven2-server-impl/lib")
     }
 
-    layoutPlugin("gradle") {
-      jar("gradle.jar") {
-        module("gradle")
-      }
-    }
-
     layoutPlugin("rearranger") {
       jar("rearranger.jar") {
         module("rearranger")

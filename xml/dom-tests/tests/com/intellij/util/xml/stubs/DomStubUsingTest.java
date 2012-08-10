@@ -20,9 +20,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.GenericAttributeValue;
 
 import java.util.List;
 
@@ -35,9 +38,7 @@ public class DomStubUsingTest extends DomStubTest {
   public void testFoo() throws Exception {
 
     DomFileElement<Foo> fileElement = prepare("foo.xml");
-    PsiFile file;
-
-    file = fileElement.getFile();
+    PsiFile file = fileElement.getFile();
     assertFalse(file.getNode().isParsed());
 
     Foo foo = fileElement.getRootElement();
@@ -56,6 +57,29 @@ public class DomStubUsingTest extends DomStubTest {
     assertEquals(666, integer.intValue());
 
     assertFalse(file.getNode().isParsed());
+
+    Bar emptyBar = bars.get(1);
+    GenericAttributeValue<String> string = emptyBar.getString();
+    assertNull(string.getXmlElement());
+
+    assertFalse(file.getNode().isParsed());
+  }
+
+  public void testAccessingPsi() throws Exception {
+    DomFileElement<Foo> element = prepare("foo.xml");
+    assertNotNull(element.getXmlElement());
+
+    XmlTag tag = element.getRootTag();
+    assertNotNull(tag);
+
+    Foo foo = element.getRootElement();
+    assertNotNull(foo.getXmlTag());
+
+    Bar bar = foo.getBars().get(0);
+    assertNotNull(bar.getXmlElement());
+
+    XmlAttribute attribute = bar.getString().getXmlAttribute();
+    assertNotNull(attribute);
   }
 
   private DomFileElement<Foo> prepare(String path) {

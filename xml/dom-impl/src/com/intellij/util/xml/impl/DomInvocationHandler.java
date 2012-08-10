@@ -582,9 +582,8 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
     if (myStub != null && description.getAnnotation(Stubbed.class) != null) {
       AttributeStub stub = myStub.getAttributeStub(description.getXmlName());
-      if (stub != null) {
-        return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, new StubParentStrategy(stub), stub);
-      }
+      StubParentStrategy strategy = StubParentStrategy.createAttributeStrategy(stub, myStub);
+      return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, strategy, stub);
     }
     final XmlTag tag = getXmlTag();
     
@@ -755,7 +754,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, final NotNullFunction<DomInvocationHandler, List<XmlTag>> tagsGetter) {
     if (myStub != null && description.getAnnotation(Stubbed.class) != null) {
       XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
-      List<DomStub> stubs = myStub.getChildrenByName(xmlName);
+      List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName());
       return ContainerUtil.map(stubs, new Function<DomStub, DomElement>() {
         @Override
         public DomElement fun(DomStub stub) {
