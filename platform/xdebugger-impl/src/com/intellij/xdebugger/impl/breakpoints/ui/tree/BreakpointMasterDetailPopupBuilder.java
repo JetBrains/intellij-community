@@ -33,8 +33,8 @@ import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.HashSet;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -257,14 +257,14 @@ public class BreakpointMasterDetailPopupBuilder {
     boolean found = false;
     for (BreakpointItem breakpoint : breakpoints) {
       if (breakpoint.getBreakpoint() == myInitialBreakpoint) {
-        myTreeController.selectBreakpointItem(breakpoint);
+        myTreeController.selectBreakpointItem(breakpoint, null);
         found = true;
         break;
       }
     }
 
     if (!found && !breakpoints.isEmpty()) {
-      myTreeController.selectBreakpointItem(null);
+      myTreeController.selectFirstBreakpointItem();
     }
   }
 
