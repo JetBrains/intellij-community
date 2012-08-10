@@ -283,3 +283,7 @@ def test_unused_params_in_empty_function_4(x, y, z):
     """Docstring."""
     raise Exception()
 
+# PY-7028
+def test_unused_params_in_empty_function_5(x, y, z):
+    """Docstring."""
+    return

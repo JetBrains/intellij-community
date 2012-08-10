@@ -411,20 +411,26 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       return true;
     }
     else if (statements.length == 1) {
-      if (isStringLiteral(statements[0]) || isPassOrRaise(statements[0])) {
+      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturn(statements[0])) {
         return true;
       }
     }
     else if (statements.length == 2) {
-      if (isStringLiteral(statements[0]) && (isPassOrRaise(statements[1]))) {
+      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturn(statements[1]))) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean isPassOrRaise(PyStatement stmt) {
-    return stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement;
+  private static boolean isPassOrRaiseOrEmptyReturn(PyStatement stmt) {
+    if (stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement) {
+      return true;
+    }
+    if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
+      return true;
+    }
+    return false;
   }
 
   private static boolean isStringLiteral(PyStatement stmt) {
