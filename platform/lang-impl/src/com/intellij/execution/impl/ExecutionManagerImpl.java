@@ -232,6 +232,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                 @NotNull final ExecutionTarget target,
                                 @NotNull final RunnerAndConfigurationSettings configuration,
                                 @Nullable final ProcessHandler handler) {
+    if (ProgramRunnerUtil.getRunner(executor.getId(), configuration) == null)
+      return;
     RunManagerImpl runManager = RunManagerImpl.getInstanceImpl(project);
     final RunManagerConfig config = runManager.getConfig();
     final List<ProcessHandler> allHandlers = new ArrayList<ProcessHandler>();
