@@ -8,6 +8,7 @@ import org.jetbrains.jps.model.library.JpsLibrary;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
 
   private void loadGlobalSettings() {
     try {
-      JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), getTestDataFileAbsolutePath(OPTIONS_DIR));
+      JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), Collections.<String, String>emptyMap(), getTestDataFileAbsolutePath(OPTIONS_DIR));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

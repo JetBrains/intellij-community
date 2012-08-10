@@ -563,6 +563,8 @@ public class BuildManager implements ApplicationComponent{
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.Builder cmdBuilder =
       CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder();
 
+    cmdBuilder.setGlobalOptionsPath(PathManager.getOptionsPath());
+
     if (!data.isEmpty()) {
       for (Map.Entry<String, String> entry : data.entrySet()) {
         final String var = entry.getKey();
