@@ -48,15 +48,20 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
 
   public abstract List<DomStub> getChildrenStubs();
 
+  public int getChildIndex(DomStub child) {
+    List<DomStub> stubs = getChildrenByName(child.getName());
+    return stubs.indexOf(child);
+  }
+
   public String getName() {
     return myName.getString();
   }
 
-  public List<DomStub> getChildrenByName(final XmlName name) {
+  public List<DomStub> getChildrenByName(final String localName) {
     return ContainerUtil.filter(getChildrenStubs(), new Condition<DomStub>() {
       @Override
       public boolean value(DomStub stub) {
-        return stub.getName().equals(name.getLocalName());
+        return stub.getName().equals(localName);
       }
     });
   }

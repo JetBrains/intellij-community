@@ -16,9 +16,11 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomParentStrategy;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
@@ -26,7 +28,32 @@ import org.jetbrains.annotations.NotNull;
  */
 public class StubParentStrategy implements DomParentStrategy {
 
-  private final DomStub myStub;
+  public static StubParentStrategy createAttributeStrategy(@Nullable AttributeStub stub, @NotNull DomStub parent) {
+    if (stub == null) {
+      return new StubParentStrategy(parent) {
+        @Override
+        public DomInvocationHandler getParentHandler() {
+          return myStub.getHandler();
+        }
+
+        @Override
+        public XmlElement getXmlElement() {
+          return null;
+        }
+      };
+    }
+    else {
+      return new StubParentStrategy(stub) {
+        @Override
+        public XmlElement getXmlElement() {
+          XmlTag tag = myStub.getParentStub().getHandler().getXmlTag();
+          return tag == null ? null : tag.getAttribute(myStub.getName());
+        }
+      };
+    }
+  }
+
+  protected final DomStub myStub;
 
   public StubParentStrategy(DomStub stub) {
     myStub = stub;
@@ -40,8 +67,14 @@ public class StubParentStrategy implements DomParentStrategy {
 
   @Override
   public XmlElement getXmlElement() {
+    DomStub parentStub = myStub.getParentStub();
+    if (parentStub == null) return null;
+    int index = parentStub.getChildIndex(myStub);
+    XmlTag tag = parentStub.getHandler().getXmlTag();
+    if (tag == null) return null;
+    XmlTag[] subTags = tag.findSubTags(myStub.getName());
 
-    return null;
+    return index < 0 || index >= subTags.length ? null : subTags[index];
   }
 
   @NotNull
@@ -64,6 +97,6 @@ public class StubParentStrategy implements DomParentStrategy {
 
   @Override
   public String checkValidity() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 }
