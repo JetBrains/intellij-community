@@ -15,21 +15,25 @@
 
 package org.jetbrains.plugins.groovy.util;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.*;
+import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
+import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.junit.Assert;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Utility class, that contains various methods for testing
@@ -139,4 +143,42 @@ public abstract class TestUtils {
 
     return input;
   }
+
+  public static void checkCompletionContains(JavaCodeInsightTestFixture fixture, PsiFile file, String ... expectedVariants) {
+    fixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    checkCompletionContains(fixture, expectedVariants);
+  }
+
+  public static void checkCompletionContains(JavaCodeInsightTestFixture fixture, String ... expectedVariants) {
+    LookupElement[] lookupElements = fixture.completeBasic();
+
+    Assert.assertNotNull(lookupElements);
+
+    Set<String> missedVariants = CollectionFactory.hashSet(expectedVariants);
+
+    for (LookupElement lookupElement : lookupElements) {
+      String lookupString = lookupElement.getLookupString();
+      missedVariants.remove(lookupString);
+
+      Object object = lookupElement.getObject();
+      if (object instanceof ResolveResult) {
+        object = ((ResolveResult)object).getElement();
+      }
+
+      if (object instanceof PsiMethod) {
+        missedVariants.remove(lookupString + "()");
+      }
+      else if (object instanceof PsiVariable) {
+        missedVariants.remove('@' + lookupString);
+      }
+      else if (object instanceof NamedArgumentDescriptor) {
+        missedVariants.remove(lookupString + ':');
+      }
+    }
+
+    if (missedVariants.size() > 0) {
+      Assert.assertTrue("Some completion variants are missed " + missedVariants, false);
+    }
+  }
+
 }
