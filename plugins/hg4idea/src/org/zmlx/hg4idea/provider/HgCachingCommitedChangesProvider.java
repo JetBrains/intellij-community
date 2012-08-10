@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.provider;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
@@ -27,7 +28,6 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.vcsUtil.VcsUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgContentRevision;
@@ -97,7 +97,7 @@ public class HgCachingCommitedChangesProvider
     String revisionPath = dataInput.readUTF();
     HgRevisionNumber revisionNumber = readRevisionNumber(dataInput);
 
-    if (!StringUtils.isEmpty(revisionPath)) {
+    if (!StringUtil.isEmpty(revisionPath)) {
       VirtualFile root = ((HgRepositoryLocation) repositoryLocation).getRoot();
       return new HgContentRevision(
         project,

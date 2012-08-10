@@ -657,7 +657,14 @@ public class VfsUtil extends VfsUtilCore {
 
   @NotNull
   public static String getReadableUrl(@NotNull final VirtualFile file) {
-    return file.isInLocalFileSystem() ? file.getPresentableUrl() : file.getUrl();
+    String url = null;
+    if (file.isInLocalFileSystem()) {
+      url = file.getPresentableUrl();
+    }
+    if (url == null) {
+      url = file.getUrl();
+    }
+    return url;
   }
 
   @Nullable

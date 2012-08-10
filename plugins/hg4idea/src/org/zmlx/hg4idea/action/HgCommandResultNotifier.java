@@ -16,13 +16,13 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgErrorUtil;
 
 import java.util.List;
 
@@ -42,7 +42,7 @@ public final class HgCommandResultNotifier {
     }
     if (HgErrorUtil.isAbort(result)) {
       VcsImplUtil.showErrorMessage(
-        myProject, "<html>" + StringUtils.join(err, "<br>") + "</html>", "Error"
+        myProject, "<html>" + StringUtil.join(err, "<br>") + "</html>", "Error"
       );
     } else if (successTitle != null && successDescription != null) {
       Notifications.Bus.notify(new Notification(HgVcs.NOTIFICATION_GROUP_ID, successTitle, successDescription, NotificationType.INFORMATION), myProject);

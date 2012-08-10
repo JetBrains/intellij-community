@@ -178,6 +178,12 @@ public class FileUtilRt {
 
   @NotNull
   public static File createTempFile(@NonNls File dir,
+                                    @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
+    return createTempFile(dir, prefix, suffix, true, true);
+  }
+
+  @NotNull
+  public static File createTempFile(@NonNls File dir,
                                     @NotNull @NonNls String prefix, @Nullable @NonNls String suffix,
                                     boolean create) throws IOException {
     return createTempFile(dir, prefix, suffix, create, true);

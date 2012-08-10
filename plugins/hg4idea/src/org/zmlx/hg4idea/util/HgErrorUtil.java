@@ -12,7 +12,7 @@
 // limitations under the License.
 package org.zmlx.hg4idea.util;
 
-import org.apache.commons.lang.StringUtils;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
@@ -27,7 +27,7 @@ public final class HgErrorUtil {
       return true;
     }
     String line = getLastErrorLine(result);
-    return StringUtils.isNotBlank(line) && StringUtils.contains(line, "abort:");
+    return !StringUtil.isEmptyOrSpaces(line) && line.contains("abort:");
   }
 
   public static boolean isAuthorizationError(HgCommandResult result) {
@@ -35,9 +35,9 @@ public final class HgErrorUtil {
       return true;
     }
     String line = getLastErrorLine(result);
-    return StringUtils.isNotBlank(line) && (
-      StringUtils.contains(line, "authorization required")
-        || StringUtils.contains(line, "authorization failed")
+    return !StringUtil.isEmptyOrSpaces(line) && (
+      line.contains("authorization required")
+        || line.contains("authorization failed")
     );
   }
 

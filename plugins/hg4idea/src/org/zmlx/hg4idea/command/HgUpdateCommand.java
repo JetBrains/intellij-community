@@ -13,8 +13,8 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
@@ -57,10 +57,10 @@ public class HgUpdateCommand {
       arguments.add("--clean");
     }
 
-    if (StringUtils.isNotBlank(revision)) {
+    if (!StringUtil.isEmptyOrSpaces(revision)) {
       arguments.add("--rev");
       arguments.add(revision);
-    } else if (StringUtils.isNotBlank(branch)) {
+    } else if (!StringUtil.isEmptyOrSpaces(branch)) {
       arguments.add(branch);
     }
 

@@ -222,8 +222,9 @@ public class JavaDebuggerSupport extends DebuggerSupport {
 
     @Override
     public void addListener(final BreakpointsListener listener, Project project) {
-      final MyBreakpointManagerListener listener1 = new MyBreakpointManagerListener(listener);
-      DebuggerManagerEx.getInstanceEx(getCurrentProject()).getBreakpointManager().addBreakpointManagerListener(listener1);
+      BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getCurrentProject()).getBreakpointManager();
+      final MyBreakpointManagerListener listener1 = new MyBreakpointManagerListener(listener, breakpointManager);
+      breakpointManager.addBreakpointManagerListener(listener1);
       myListeners.add(listener1);
     }
 
@@ -231,6 +232,8 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     public void removeListener(BreakpointsListener listener) {
       for (MyBreakpointManagerListener managerListener : myListeners) {
         if (managerListener.myListener == listener) {
+          BreakpointManager manager = managerListener.myBreakpointManager;
+          manager.removeBreakpointManagerListener(managerListener);
           myListeners.remove(managerListener);
           break;
         }
@@ -295,9 +298,12 @@ public class JavaDebuggerSupport extends DebuggerSupport {
     private static class MyBreakpointManagerListener implements BreakpointManagerListener {
 
       private final BreakpointsListener myListener;
+      public BreakpointManager myBreakpointManager;
 
-      public MyBreakpointManagerListener(BreakpointsListener listener) {
+
+      public MyBreakpointManagerListener(BreakpointsListener listener, BreakpointManager breakpointManager) {
         myListener = listener;
+        myBreakpointManager = breakpointManager;
       }
 
       @Override

@@ -16,11 +16,11 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -88,7 +88,7 @@ public class HgIntegrateEnvironment implements UpdateEnvironment {
         String warnings = new HgHeadMerger(project, hgMergeCommand)
           .merge(repo, updatedFiles, incomingRevision).getWarnings();
 
-        if (!StringUtils.isBlank(warnings)) {
+        if (!StringUtil.isEmptyOrSpaces(warnings)) {
           //noinspection ThrowableInstanceNeverThrown
           VcsException warning = new VcsException(warnings);
           warning.setIsWarning(true);

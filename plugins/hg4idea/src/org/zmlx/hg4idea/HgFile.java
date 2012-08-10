@@ -12,17 +12,15 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.google.common.base.Objects;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -86,34 +84,37 @@ public class HgFile {
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (object == this) {
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
     }
-    if (!(object instanceof HgFile)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    HgFile that = (HgFile) object;
-    return new EqualsBuilder()
-      .append(vcsRoot, that.vcsRoot)
-      .append(file, that.file)
-      .isEquals();
+
+    HgFile that = (HgFile)o;
+
+    if (!vcsRoot.equals(that.vcsRoot)) {
+      return false;
+    }
+    if (file != null ? !FileUtil.filesEqual(file, that.file) : that.file != null) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder()
-      .append(vcsRoot)
-      .append(file)
-      .toHashCode();
+    return Objects.hashCode(vcsRoot, file);
   }
 
   @Override
   public String toString() {
-    return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE)
-      .append("repo", vcsRoot)
-      .append("file", file)
-      .append("relativePath", getRelativePath())
+    return Objects.toStringHelper(HgFile.class)
+      .add("repo", vcsRoot)
+      .add("file", file)
+      .add("relativePath", getRelativePath())
       .toString();
   }
 }

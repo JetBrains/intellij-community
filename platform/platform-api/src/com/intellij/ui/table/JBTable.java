@@ -165,6 +165,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     return Math.max(myRowHeight, myMinRowHeight);
   }
 
+  public void setShowColumns(boolean value) {
+    JTableHeader tableHeader = getTableHeader();
+    tableHeader.setVisible(value);
+    tableHeader.setPreferredSize(value ? null : new Dimension());
+  }
+
   @Override
   public void setRowHeight(int rowHeight) {
     myRowHeight = rowHeight;

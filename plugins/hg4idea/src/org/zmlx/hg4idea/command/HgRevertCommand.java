@@ -13,10 +13,10 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
-import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -37,7 +37,7 @@ public class HgRevertCommand {
     final List<String> options = new LinkedList<String>();
     if (vcsRevisionNumber != null && !HgRevisionNumber.NULL_REVISION_NUMBER.equals(vcsRevisionNumber)) {
       options.add("--rev");
-      if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
+      if (!StringUtil.isEmptyOrSpaces(vcsRevisionNumber.getChangeset())) {
         options.add(vcsRevisionNumber.getChangeset());
       }
       else {

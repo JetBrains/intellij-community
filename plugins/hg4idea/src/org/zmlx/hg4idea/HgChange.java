@@ -12,15 +12,14 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 
 public final class HgChange {
 
-  private HgFile beforeFile;
-  private HgFile afterFile;
-  private HgFileStatusEnum status;
+  @NotNull private HgFile beforeFile;
+  @NotNull private HgFile afterFile;
+  @NotNull private HgFileStatusEnum status;
 
   public HgChange(@NotNull HgFile hgFile, @NotNull HgFileStatusEnum status) {
     this.beforeFile = hgFile;
@@ -55,29 +54,34 @@ public final class HgChange {
     this.status = status;
   }
 
+
   @Override
-  public boolean equals(Object object) {
-    if (object == this) {
+  public boolean equals(Object o) {
+    if (this == o) {
       return true;
     }
-    if (!(object instanceof HgChange)) {
+    if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    HgChange that = (HgChange) object;
-    return new EqualsBuilder()
-      .append(beforeFile, that.beforeFile)
-      .append(afterFile, that.afterFile)
-      .append(status, that.status)
-      .isEquals();
+
+    HgChange change = (HgChange)o;
+
+    if (!afterFile.equals(change.afterFile)) {
+      return false;
+    }
+    if (!beforeFile.equals(change.beforeFile)) {
+      return false;
+    }
+    if (status != change.status) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder()
-      .append(beforeFile)
-      .append(afterFile)
-      .append(status)
-      .toHashCode();
+    return Objects.hashCode(beforeFile, afterFile, status);
   }
 
   @Override

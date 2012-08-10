@@ -71,7 +71,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" name="Velocity" level="project" />
   </component>
 </module>
 

@@ -15,57 +15,41 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.DebuggerBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.ui.popup.util.DetailView;
-import com.intellij.ui.popup.util.ItemWrapper;
+import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.util.*;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
-import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointMasterDetailPopupBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.util.Collection;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.List;
 
 public class BreakpointChooser {
-  private Project myProject;
 
   private DetailView myDetailView;
 
-  private ActionToolbar myActionToolbar;
-  private BreakpointItem myBreakpointItem;
-
   private Delegate myDelegate;
-  private final ComboBoxAction myComboBoxAction;
-  private BreakpointMasterDetailPopupBuilder myPopupBuilder;
 
-  private Object mySelectedBreakpoint;
+  private final ComboBox myComboBox;
+
+  private DetailController myDetailController;
+  private JBList myList;
 
   public void setDetailView(DetailView detailView) {
     myDetailView = detailView;
+    myDetailController.setDetailView(new MyDetailView(myDetailView.getEditorState()));
   }
 
   public Object getSelectedBreakpoint() {
-    return mySelectedBreakpoint;
-  }
-
-  public BreakpointItem getBreakpointItem() {
-    return myBreakpointItem;
-  }
-
-  public void setSelectedBreakpoint(Object selectedBreakpoint) {
-    mySelectedBreakpoint = selectedBreakpoint;
-    myBreakpointItem = selectedBreakpoint != null ? new JavaBreakpointItem(null, (Breakpoint)selectedBreakpoint) : null;
-    updatePresentation(myComboBoxAction.getTemplatePresentation(), myBreakpointItem);
+    return ((BreakpointItem)myComboBox.getSelectedItem()).getBreakpoint();
   }
 
   private void pop(DetailView.PreviewEditorState pushed) {
@@ -79,97 +63,57 @@ public class BreakpointChooser {
     }
   }
   public interface Delegate {
-    void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup);
+    void breakpointChosen(Project project, BreakpointItem breakpointItem);
   }
 
-  public BreakpointChooser(Project project, Delegate delegate, Breakpoint baseBreakpoint) {
-    myProject = project;
+  public BreakpointChooser(final Project project, Delegate delegate, Breakpoint baseBreakpoint, List<BreakpointItem> breakpointItems) {
     myDelegate = delegate;
 
-    myPopupBuilder = new BreakpointMasterDetailPopupBuilder(myProject);
-    myPopupBuilder.setPlainView(true);
-
-    myComboBoxAction = new ComboBoxAction() {
-
+    BreakpointItem breakpointItem = null;
+    for (BreakpointItem item : breakpointItems) {
+      if (item.getBreakpoint() == baseBreakpoint) {
+        breakpointItem = item;
+        break;
+      }
+    }
+    myDetailController = new DetailController(new MasterController() {
+      JLabel fake = new JLabel();
       @Override
-      public void update(AnActionEvent e) {
-        final Presentation presentation = e.getPresentation();
-        updatePresentation(presentation, BreakpointChooser.this.myBreakpointItem);
+      public ItemWrapper[] getSelectedItems() {
+        return new ItemWrapper[]{((BreakpointItem)myList.getSelectedValue())};
       }
 
       @Override
-      protected ComboBoxButton createComboBoxButton(final Presentation presentation) {
-        return new ComboBoxButton(presentation) {
-          @Override
-          protected JBPopup createPopup(final Runnable onDispose) {
-            final DetailView.PreviewEditorState pushed = myDetailView.getEditorState();
-            myPopupBuilder.setIsViewer(true);
-            myPopupBuilder.setAddDetailViewToEast(false);
-            myPopupBuilder.setDetailView(new MyDetailView(pushed));
-            myPopupBuilder.setCallback(new BreakpointMasterDetailPopupBuilder.BreakpointChosenCallback() {
-              @Override
-              public void breakpointChosen(Project project, BreakpointItem breakpointItem, JBPopup popup, boolean withEnterOrDoubleClick) {
-                popup.cancel();
-                myBreakpointItem = breakpointItem;
-                mySelectedBreakpoint = breakpointItem.getBreakpoint();
-                updatePresentation(myComboBoxAction.getTemplatePresentation(), myBreakpointItem);
-                updatePresentation(presentation, myBreakpointItem);
-
-                if (myDelegate != null) {
-                  myDelegate.breakpointChosen(project, breakpointItem, popup);
-                }
-              }
-            });
-            myPopupBuilder.setIsViewer(true);
-            JBPopup popup = myPopupBuilder.createPopup();
-            popup.addListener(new JBPopupListener() {
-              @Override
-              public void beforeShown(LightweightWindowEvent event) {
-                //To change body of implemented methods use File | Settings | File Templates.
-              }
-
-              @Override
-              public void onClosed(LightweightWindowEvent event) {
-                onDispose.run();
-                pop(pushed);
-              }
-            });
-            return popup;
-          }
-
-
-        };
+      public JLabel getPathLabel() {
+        return fake;
       }
+    });
 
-      @NotNull
+    final ItemWrapperListRenderer listRenderer = new ItemWrapperListRenderer(project, null);
+
+    ComboBoxModel model = new CollectionComboBoxModel(breakpointItems, breakpointItem);
+    myComboBox = new ComboBox(model) {
       @Override
-      protected DefaultActionGroup createPopupActionGroup(JComponent button) {
-        assert false : "should not be here";
-        return null;
+      protected JBList createJBList(ComboBoxModel model) {
+        myList = super.createJBList(model);
+        myDetailController.setList(myList);
+        myList.setCellRenderer(listRenderer);
+        return myList;
       }
     };
-    setSelectedBreakpoint(baseBreakpoint);
-    myActionToolbar = ActionManager.getInstance().createActionToolbar("asdad", new DefaultActionGroup(myComboBoxAction), true);
-    myActionToolbar.setLayoutPolicy(ActionToolbar.WRAP_LAYOUT_POLICY);
-  }
+    myComboBox.setRenderer(listRenderer);
 
-  public void setBreakpointItems(Collection<BreakpointItem> items) {
-    myPopupBuilder.setBreakpointItems(items);
-  }
-
-  private void updatePresentation(Presentation presentation, BreakpointItem breakpointItem) {
-    if (breakpointItem != null && breakpointItem.getBreakpoint() != null) {
-      presentation.setIcon(breakpointItem.getIcon());
-      presentation.setText(breakpointItem.getDisplayText());
-    }
-    else {
-      presentation.setText(DebuggerBundle.message("value.none"));
-    }
-
+    myComboBox.setSwingPopup(false);
+    myComboBox.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent event) {
+        myDelegate.breakpointChosen(project, ((BreakpointItem)myComboBox.getSelectedItem()));
+      }
+    });
   }
 
   public JComponent getComponent() {
-    return myActionToolbar.getComponent();
+    return myComboBox;
   }
 
   private class MyDetailView implements DetailView {

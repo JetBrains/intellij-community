@@ -89,8 +89,20 @@ public abstract class Property<T extends PropertiesContainer> {
   public void setValue(@NotNull T container, @Nullable Object value) throws Exception {
   }
 
+  public boolean showAsDefault(@NotNull T container) throws Exception {
+    return isRecursiveDefault(container);
+  }
+
+  public final boolean isRecursiveDefault(@NotNull T container) throws Exception {
+    if (!isDefaultValue(container)) return false;
+    for (Property<T> child : getChildren(container)) {
+      if (!child.isRecursiveDefault(container)) return false;
+    }
+    return true;
+  }
+
   public boolean isDefaultValue(@NotNull T container) throws Exception {
-    return false;
+    return true;
   }
 
   public void setDefaultValue(@NotNull T container) throws Exception {
