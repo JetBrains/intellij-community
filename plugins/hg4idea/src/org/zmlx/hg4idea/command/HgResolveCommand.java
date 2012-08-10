@@ -13,11 +13,11 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.vcsUtil.VcsFileUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -73,7 +73,7 @@ public class HgResolveCommand {
   private static Map<HgFile, HgResolveStatusEnum> handleResult(VirtualFile repo, HgCommandResult result) {
     final Map<HgFile, HgResolveStatusEnum> resolveStatus = new HashMap<HgFile, HgResolveStatusEnum>();
     for (String line : result.getOutputLines()) {
-      if (StringUtils.isBlank(line) || line.length() < ITEM_COUNT) {
+      if (StringUtil.isEmptyOrSpaces(line) || line.length() < ITEM_COUNT) {
         continue;
       }
       final HgResolveStatusEnum status = HgResolveStatusEnum.valueOf(line.charAt(0));

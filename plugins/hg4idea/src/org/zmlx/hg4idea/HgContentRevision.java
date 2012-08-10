@@ -13,12 +13,12 @@
 package org.zmlx.hg4idea;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,7 @@ public class HgContentRevision implements ContentRevision {
 
   @Nullable
   public String getContent() throws VcsException {
-    if (StringUtils.isBlank(content)) {
+    if (StringUtil.isEmptyOrSpaces(content)) {
       if (myRevisionNumber.isWorkingVersion()) {
         content = VcsUtil.getFileContent(myHgFile.getFile().getPath());
       } else {

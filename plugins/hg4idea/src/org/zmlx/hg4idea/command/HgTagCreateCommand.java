@@ -13,8 +13,8 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -35,7 +35,7 @@ public class HgTagCreateCommand {
   }
 
   public void execute(HgCommandResultHandler resultHandler) throws HgCommandException {
-    if (StringUtils.isBlank(tagName)) {
+    if (StringUtil.isEmptyOrSpaces(tagName)) {
       throw new HgCommandException("tag name is empty");
     }
     new HgCommandExecutor(project).execute(repo, "tag", Arrays.asList(tagName), resultHandler);
