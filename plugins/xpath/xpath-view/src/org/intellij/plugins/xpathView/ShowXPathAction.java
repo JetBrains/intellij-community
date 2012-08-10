@@ -134,7 +134,7 @@ public class ShowXPathAction extends XPathAction {
 
         final Point point = editor.visualPositionToXY(editor.getCaretModel().getVisualPosition());
         point.y += editor.getLineHeight() / 2;
-        HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY, 0, false,
-                                                         new HintHint(editor, point).setAwtTooltip(true).setContentActive(true).setExplicitClose(true));
+      HintHint hintHint = new HintHint(editor, point).setAwtTooltip(true).setContentActive(true).setExplicitClose(true).setShowImmediately(true);
+      HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, HintManagerImpl.HIDE_BY_ANY_KEY, 0, false, hintHint);
     }
 }
