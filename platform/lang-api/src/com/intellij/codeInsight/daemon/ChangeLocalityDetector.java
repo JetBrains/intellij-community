@@ -27,9 +27,14 @@ public interface ChangeLocalityDetector {
   /**
    * @param changedElement
    * @return the psi element (ancestor of the changedElement) which should be re-highlighted, or null if unsure.
-   * e.g. in Java we re-highlight enclosing code block only when element inside has changed.
-   * Note: do not traverse PSI tree upwards here,
-   *       since this ChangeLocalityDetector will be called for the changed element and all its parents anyway.
+   * Examples:
+   *  - in Java, when the statement has changed, re-highlight the enclosing code block only.
+   *  - in (hypothetical) framework which stores its annotations in comments, e.g. "// @someAnnotation",
+   *    when that special comment has changed, re-highlight the whole file.
+   *
+   * Note: for the performance sake, do not traverse PSI tree upwards here, since this method will be called for the
+   *       changed element and all its parents anyway.
+   *       So the parent check is enough, e.g: {@code changedElement.getParent() instanceof PsiCodeBlock}
    */
   @Nullable
   PsiElement getChangeHighlightingDirtyScopeFor(@NotNull PsiElement changedElement);
