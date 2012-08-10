@@ -114,10 +114,10 @@ public class SegmentArray {
       newArraySize = 16;
     }
     else {
-      newArraySize = newArraySize * 12 / 10;
+      newArraySize += newArraySize / 5;
     }
     if (index >= newArraySize) {
-      newArraySize = index * 12 / 10;
+      newArraySize = index + index / 5;
     }
     short[] newArray = new short[newArraySize];
     System.arraycopy(array, 0, newArray, 0, array.length);
