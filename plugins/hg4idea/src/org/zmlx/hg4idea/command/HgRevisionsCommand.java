@@ -65,7 +65,7 @@ abstract class HgRevisionsCommand {
     HgCommandExecutor executor, VirtualFile repo, String template, int limit, HgFile hgFile
   );
 
-  public final List<HgFileRevision> execute(HgFile hgFile, int limit, boolean includeFiles) {
+  public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) {
     if ((limit <= 0 && limit != -1) || hgFile == null || hgFile.getRepo() == null) {
       return Collections.emptyList();
     }
@@ -113,7 +113,7 @@ abstract class HgRevisionsCommand {
             parents.add(HgRevisionNumber.getInstance(parentParts[0], parentParts[1]));
           }
         }
-        HgRevisionNumber vcsRevisionNumber = HgRevisionNumber.getInstance(
+        final HgRevisionNumber vcsRevisionNumber = HgRevisionNumber.getInstance(
           revisionString,
           changeset,
           parents

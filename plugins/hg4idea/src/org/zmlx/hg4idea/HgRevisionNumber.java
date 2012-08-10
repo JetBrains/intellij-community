@@ -12,8 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.google.common.base.Objects;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import java.util.Collections;
 import java.util.List;
@@ -136,10 +136,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder()
-      .append(revision)
-      .append(changeset)
-      .toHashCode();
+    return Objects.hashCode(revision, changeset);
   }
 
   @Override
