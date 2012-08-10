@@ -68,14 +68,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     JpsSdkType<?> projectSdkType = loadProjectRoot(loadRootElement(new File(dir, "misc.xml")));
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsProjectExtensionSerializer serializer : extension.getProjectExtensionSerializers()) {
-        String fileName = serializer.getConfigFileName();
-        File configFile = new File(dir, fileName != null ? fileName : "misc.xml");
-        if (configFile.exists()) {
-          Element componentTag = JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
-          if (componentTag != null) {
-            serializer.loadExtension(myProject, componentTag);
-          }
-        }
+        loadComponents(dir, "misc.xml", serializer, myProject);
       }
     }
     loadModules(loadRootElement(new File(dir, "modules.xml")), projectSdkType);

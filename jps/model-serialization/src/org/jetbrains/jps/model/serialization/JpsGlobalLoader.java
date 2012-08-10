@@ -29,20 +29,32 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   private void load(File optionsDir) {
     loadGlobalLibraries(optionsDir);
     loadSdks(optionsDir);
+    for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
+      for (JpsGlobalExtensionSerializer serializer : extension.getGlobalExtensionSerializers()) {
+        loadComponents(optionsDir, "other.xml", serializer, myGlobal);
+      }
+    }
   }
 
   private void loadSdks(File optionsDir) {
-    final Element root = loadRootElement(new File(optionsDir, "jdk.table.xml"));
-    JpsSdkTableSerializer.loadSdks(JDomSerializationUtil.findComponent(root, SDK_TABLE_COMPONENT_NAME), myGlobal.getLibraryCollection());
+    File sdkTableFile = new File(optionsDir, "jdk.table.xml");
+    if (sdkTableFile.exists()) {
+      final Element root = loadRootElement(sdkTableFile);
+      JpsSdkTableSerializer.loadSdks(JDomSerializationUtil.findComponent(root, SDK_TABLE_COMPONENT_NAME), myGlobal.getLibraryCollection());
+    }
+    else {
+      LOG.debug("Cannot load SDK table: " + sdkTableFile.getAbsolutePath() + " doesn't exist");
+    }
   }
 
   private void loadGlobalLibraries(File optionsDir) {
     File file = new File(optionsDir, "applicationLibraries.xml");
-    if (!file.exists()) {
-      LOG.debug("Cannot load global libraries: " + file.getAbsolutePath() + " doesn't exist");
-      return;
+    if (file.exists()) {
+      final Element root = loadRootElement(file);
+      JpsLibraryTableSerializer.loadLibraries(JDomSerializationUtil.findComponent(root, "libraryTable"), myGlobal.getLibraryCollection());
     }
-    final Element root = loadRootElement(file);
-    JpsLibraryTableSerializer.loadLibraries(JDomSerializationUtil.findComponent(root, "libraryTable"), myGlobal.getLibraryCollection());
+    else {
+      LOG.debug("Cannot load global libraries: " + file.getAbsolutePath() + " doesn't exist");
+    }
   }
 }
