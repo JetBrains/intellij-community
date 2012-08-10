@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ProcessingContext;
@@ -81,7 +82,7 @@ public class ExtendsClassChecker extends DomCustomAnnotationChecker<ExtendClass>
                                                                    final boolean allowEnum,
                                                                    final DomElementAnnotationHolder holder) {
     final Project project = element.getManager().getProject();
-    PsiClass extendClass = JavaPsiFacade.getInstance(project).findClass(name, value.getResolveScope());
+    PsiClass extendClass = JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project));
     final SmartList<DomElementProblemDescriptor> list = new SmartList<DomElementProblemDescriptor>();
     if (extendClass != null) {
       if (!name.equals(value.getQualifiedName()) && !value.isInheritor(extendClass, true)) {
