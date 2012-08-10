@@ -22,7 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
@@ -234,8 +234,8 @@ public class GroovyImportOptimizer implements ImportOptimizer {
       final Set<GrImportStatement> usedImports = new HashSet<GrImportStatement>();
       final Set<String> implicitlyImportedClasses = new LinkedHashSet<String>();
       final Set<String> innerClasses = new HashSet<String>();
-      Map<String, String> aliasImported = ContainerUtilRt.newHashMap();
-      Map<String, String> annotatedImports = ContainerUtilRt.newHashMap();
+      Map<String, String> aliasImported = ContainerUtil.newHashMap();
+      Map<String, String> annotatedImports = ContainerUtil.newHashMap();
 
       processFile(myFile, simplyImportedClasses, staticallyImportedMembers, usedImports, implicitlyImportedClasses, innerClasses, aliasImported, annotatedImports);
       final List<GrImportStatement> oldImports = PsiUtil.getValidImportStatements(file);
