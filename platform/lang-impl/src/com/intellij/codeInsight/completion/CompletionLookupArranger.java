@@ -181,8 +181,9 @@ public class CompletionLookupArranger extends LookupArranger {
   }
 
   private static void addDummyItems(int count, List<LookupElement> listModel) {
+    EmptyLookupItem dummy = new EmptyLookupItem("loading...", true);
     for (int i = count; i > 0; i--) {
-      listModel.add(new EmptyLookupItem("loading...", true));
+      listModel.add(dummy);
     }
   }
 
