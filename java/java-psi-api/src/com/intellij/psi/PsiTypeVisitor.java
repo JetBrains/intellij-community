@@ -70,6 +70,7 @@ public class PsiTypeVisitor<A> {
   
   @Nullable
   public A visitLambdaExpressionType(PsiLambdaExpressionType lambdaExpressionType) {
-    return visitType(LambdaUtil.getFunctionInterfaceType(lambdaExpressionType.getExpression()));
+    final PsiLambdaExpression lambdaExpression = lambdaExpressionType.getExpression();
+    return visitType(lambdaExpression.getFunctionalInterfaceType());
   }
 }

@@ -11,19 +11,21 @@ interface SameArgsI<T> {
 
 class InferenceFromArgs {
 
-    private static <E> void bar(A<? extends E> a, I<? super E, Integer> i) { }
+    private static <E> void bar(A<E> a, I<E, Integer> i) { }
+    private static <E> void bazz(I<? super E, Integer> i) { }
 
     void foo(B<Integer> b) {
-        bar(b, (k, v) -> {int i = k; int j = v; return Math.max(i, j);});
+         bar(null, <error descr="Cyclic inference">(k, v) -> v</error>);
+         bar(null, null);
+         bar(b, (k, v) ->  {return v;});
+         bar(b, (k, v) -> {<error descr="Incompatible types. Found: 'java.lang.Integer', required: 'java.lang.String'">String i = k;</error> return v;});
+         bar(b, (k, v) -> {Integer  i = k; return v;});
+
+         bazz(<error descr="Cyclic inference">(k, v) -> v</error>);
+         bazz((k, v) -> {<error descr="Incompatible types. Found: 'E', required: 'int'">int i = k;</error> return v;});
     }
 
     public static <T> SameArgsI<T> max() {
         return (a, b) -> b;
     }
 }
-
-
-
-
-
-

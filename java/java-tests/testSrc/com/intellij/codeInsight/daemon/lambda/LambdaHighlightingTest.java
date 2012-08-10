@@ -48,6 +48,10 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testWildcardBounds() throws Exception {
     doTest();
   }
+
+  public void testInferenceOnMethodCallSite() throws Exception {
+    doTest();
+  }
   
   public void testAmbiguity1() throws Exception {
     doTest();

@@ -239,6 +239,23 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitLambdaExpression(PsiLambdaExpression expression) {
     myHolder.add(HighlightUtil.checkLambdaFeature(expression));
+    if (!myHolder.hasErrorResults()) {
+      if (LambdaUtil.isValidLambdaContext(expression.getParent())) {
+        final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+        if (functionalInterfaceType != null) {
+          final String notFunctionalMessage = LambdaUtil.checkInterfaceFunctional(functionalInterfaceType);
+          if (notFunctionalMessage != null) {
+            myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, notFunctionalMessage));
+          } else {
+            if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType)) {
+              myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, "Cyclic inference")); //todo[ann] append not inferred type params info
+            }
+          }
+        }
+      } else {
+        myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, "Lambda expression not expected here"));
+      }
+    }
   }
 
   @Override

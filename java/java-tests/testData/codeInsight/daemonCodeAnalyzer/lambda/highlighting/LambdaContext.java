@@ -6,8 +6,8 @@ class Test {
     void foo(Object x) {}
 
     void bar() {
-        foo(<error descr="Operator '!' cannot be applied to '<lambda expression>'">!(int x)-> {}</error>);
-        foo(<error descr="Lambda expression is not expected here">(int x)-> { } instanceof Object</error> );
+        foo(!<error descr="Lambda expression not expected here">(int x)-> {}</error>);
+        foo(<error descr="Lambda expression not expected here">(int x)-> { }</error> instanceof Object );
     }
 
     I bazz() {

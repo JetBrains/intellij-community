@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.infos;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ik, dsl
  */
 public class MethodCandidateInfo extends CandidateInfo{
+  public static final Key<PsiMethod> CURRENT_CANDIDATE = Key.create("CURRENT_CANDIDATE");
   @ApplicabilityLevelConstant private int myApplicabilityLevel = 0;
   private final PsiElement myArgumentList;
   private final PsiType[] myArgumentTypes;
@@ -90,7 +92,13 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
-        myCalcedSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
+        myArgumentList.putUserData(CURRENT_CANDIDATE, getElement());
+        try {
+          myCalcedSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
+        }
+        finally {
+          myArgumentList.putUserData(CURRENT_CANDIDATE, null);
+        }
       }
       else {
         PsiTypeParameter[] typeParams = method.getTypeParameters();
