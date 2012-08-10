@@ -10,7 +10,9 @@ import org.jetbrains.jps.model.artifact.JpsArtifactType;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -22,6 +24,18 @@ public class JpsArtifactServiceImpl extends JpsArtifactService {
   public List<JpsArtifact> getArtifacts(@NotNull JpsProject project) {
     JpsElementCollectionImpl<JpsArtifact> collection = project.getContainer().getChild(JpsArtifactRole.ARTIFACT_COLLECTION_ROLE);
     return collection != null ? collection.getElements() : Collections.<JpsArtifact>emptyList();
+  }
+
+  @Override
+  public List<JpsArtifact> getSortedArtifacts(@NotNull JpsProject project) {
+    List<JpsArtifact> artifacts = new ArrayList<JpsArtifact>(getArtifacts(project));
+    Collections.sort(artifacts, new Comparator<JpsArtifact>() {
+      @Override
+      public int compare(JpsArtifact o1, JpsArtifact o2) {
+        return o1.getName().compareToIgnoreCase(o2.getName());
+      }
+    });
+    return artifacts;
   }
 
   @Override

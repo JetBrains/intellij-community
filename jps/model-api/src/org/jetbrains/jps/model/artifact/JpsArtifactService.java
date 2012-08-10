@@ -22,6 +22,8 @@ public abstract class JpsArtifactService {
 
   public abstract List<JpsArtifact> getArtifacts(@NotNull JpsProject project);
 
+  public abstract List<JpsArtifact> getSortedArtifacts(@NotNull JpsProject project);
+
   public abstract <P extends JpsElement> JpsArtifact addArtifact(@NotNull JpsProject project, @NotNull String name,
                                                                  @NotNull JpsCompositePackagingElement rootElement,
                                           @NotNull JpsArtifactType<P> type, @NotNull P properties);
