@@ -5,9 +5,9 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -75,7 +75,7 @@ public class PyConsoleUtil {
   }
 
   public static boolean isMultilineStarts(String line, String substring) {
-    return StringUtils.countMatches(line, substring) % 2 == 1;
+    return StringUtil.getOccurrenceCount(line, substring) % 2 == 1;
   }
 
   public static void scrollDown(final Editor currentEditor) {

@@ -36,7 +36,6 @@
     <orderEntry type="module" module-name="JavaScriptDebugger" />
     <orderEntry type="module" module-name="ChromeConnector" />
     <orderEntry type="module" module-name="FirefoxConnector" />
-    <orderEntry type="library" name="Velocity" level="project" />
     <orderEntry type="module" module-name="python-openapi" exported="" />
   </component>
   <component name="copyright">
