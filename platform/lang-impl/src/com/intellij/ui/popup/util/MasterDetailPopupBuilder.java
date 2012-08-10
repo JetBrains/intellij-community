@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -338,6 +339,8 @@ public class MasterDetailPopupBuilder implements MasterController {
     }
     else {
       final Object[] items = getSelectedItems();
+      JTree tree = (JTree)myChooserComponent;
+      TreeUtil.removeSelected(tree);
       for (Object item : items) {
         ((ItemWrapper)item).removed(project);
       }
