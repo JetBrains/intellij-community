@@ -14,18 +14,18 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.util.HgUtil;
-import org.zmlx.hg4idea.util.HgChangesetUtil;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgChangesetUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -101,7 +101,7 @@ abstract class HgRevisionsCommand {
         String parentsString = attributes[PARENTS_INDEX];
 
         List<HgRevisionNumber> parents = new ArrayList<HgRevisionNumber>(2);
-        if (StringUtils.isEmpty(parentsString)) {
+        if (StringUtil.isEmpty(parentsString)) {
           Long revision = Long.valueOf(revisionString);
           HgRevisionNumber parentRevision = HgRevisionNumber.getLocalInstance(String.valueOf(revision - 1));
           parents.add(parentRevision);
@@ -161,7 +161,7 @@ abstract class HgRevisionsCommand {
   }
 
   private Set<String> parseFileList(String fileListString) {
-    if (StringUtils.isEmpty(fileListString)) {
+    if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptySet();
     } else {
       return new HashSet<String>(Arrays.asList(fileListString.split(" ")));
@@ -169,7 +169,7 @@ abstract class HgRevisionsCommand {
   }
 
   private Map<String, String> parseCopiesFileList(String fileListString) {
-    if (StringUtils.isEmpty(fileListString)) {
+    if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptyMap();
     } else {
       Map<String, String> copies = new HashMap<String, String>();

@@ -13,8 +13,8 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgRevisionNumber;
 
@@ -47,7 +47,7 @@ public class HgHeadsCommand {
 
     @Override
     protected void addArguments(List<String> args) {
-      if (StringUtils.isNotEmpty(branch)) {
+      if (!StringUtil.isEmpty(branch)) {
         args.add(branch);
       }
     }

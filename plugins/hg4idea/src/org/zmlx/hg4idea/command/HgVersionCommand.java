@@ -12,7 +12,6 @@
 // limitations under the License.
 package org.zmlx.hg4idea.command;
 
-import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.execution.ShellCommandException;
 
@@ -22,7 +21,7 @@ import java.util.Arrays;
 public class HgVersionCommand {
 
   public boolean isValid(String executable, boolean isRunViaBash) {
-    String hgExecutable = StringUtils.trim(executable);
+    String hgExecutable = executable == null ? null : executable.trim();
     ShellCommand shellCommand = new ShellCommand(isRunViaBash);
     try {
       return !shellCommand
