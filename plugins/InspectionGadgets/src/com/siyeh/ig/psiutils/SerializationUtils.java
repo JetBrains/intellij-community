@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,17 +24,14 @@ import org.jetbrains.annotations.Nullable;
 
 public class SerializationUtils {
 
-  private SerializationUtils() {
-  }
+  private SerializationUtils() {}
 
   public static boolean isSerializable(@Nullable PsiClass aClass) {
-    return InheritanceUtil.isInheritor(aClass,
-                                       CommonClassNames.JAVA_IO_SERIALIZABLE);
+    return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_IO_SERIALIZABLE);
   }
 
   public static boolean isExternalizable(@Nullable PsiClass aClass) {
-    return InheritanceUtil.isInheritor(aClass,
-                                       CommonClassNames.JAVA_IO_EXTERNALIZABLE);
+    return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_IO_EXTERNALIZABLE);
   }
 
   public static boolean isDirectlySerializable(@NotNull PsiClass aClass) {
@@ -42,8 +39,7 @@ public class SerializationUtils {
     if (implementsList == null) {
       return false;
     }
-    final PsiJavaCodeReferenceElement[] interfaces =
-      implementsList.getReferenceElements();
+    final PsiJavaCodeReferenceElement[] interfaces = implementsList.getReferenceElements();
     for (PsiJavaCodeReferenceElement aInterfaces : interfaces) {
       final PsiClass implemented = (PsiClass)aInterfaces.resolve();
       if (implemented == null) {
@@ -58,8 +54,7 @@ public class SerializationUtils {
   }
 
   public static boolean hasReadObject(@NotNull PsiClass aClass) {
-    final PsiMethod[] methods =
-      aClass.findMethodsByName("readObject", false);
+    final PsiMethod[] methods = aClass.findMethodsByName("readObject", false);
     for (final PsiMethod method : methods) {
       if (isReadObject(method)) {
         return true;
@@ -68,11 +63,30 @@ public class SerializationUtils {
     return false;
   }
 
+  public static boolean hasReadResolve(@NotNull PsiClass aClass) {
+    final PsiMethod[] methods = aClass.findMethodsByName("readResolve", true);
+    for (PsiMethod method : methods) {
+      if (isReadResolve(method)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public static boolean hasWriteObject(@NotNull PsiClass aClass) {
-    final PsiMethod[] methods =
-      aClass.findMethodsByName("writeObject", false);
+    final PsiMethod[] methods = aClass.findMethodsByName("writeObject", false);
     for (final PsiMethod method : methods) {
       if (isWriteObject(method)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean hasWriteReplace(@NotNull PsiClass aClass) {
+    final PsiMethod[] methods = aClass.findMethodsByName("writeReplace", true);
+    for (PsiMethod method : methods) {
+      if (isWriteReplace(method)) {
         return true;
       }
     }
@@ -84,10 +98,8 @@ public class SerializationUtils {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClassType type = factory.createTypeByFQClassName(
-      "java.io.ObjectInputStream", scope);
-    return MethodUtils.methodMatches(method, null,
-                                     PsiType.VOID, "readObject", type);
+    final PsiClassType type = factory.createTypeByFQClassName("java.io.ObjectInputStream", scope);
+    return MethodUtils.methodMatches(method, null, PsiType.VOID, "readObject", type);
   }
 
   public static boolean isWriteObject(@NotNull PsiMethod method) {
@@ -95,20 +107,16 @@ public class SerializationUtils {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClassType type = factory.createTypeByFQClassName(
-      "java.io.ObjectOutputStream", scope);
-    return MethodUtils.methodMatches(method, null,
-                                     PsiType.VOID, "writeObject", type);
+    final PsiClassType type = factory.createTypeByFQClassName("java.io.ObjectOutputStream", scope);
+    return MethodUtils.methodMatches(method, null, PsiType.VOID, "writeObject", type);
   }
 
   public static boolean isReadResolve(@NotNull PsiMethod method) {
-    return MethodUtils.simpleMethodMatches(method, null,
-                                           CommonClassNames.JAVA_LANG_OBJECT, "readResolve");
+    return MethodUtils.simpleMethodMatches(method, null, CommonClassNames.JAVA_LANG_OBJECT, "readResolve");
   }
 
   public static boolean isWriteReplace(@NotNull PsiMethod method) {
-    return MethodUtils.simpleMethodMatches(method, null,
-                                           CommonClassNames.JAVA_LANG_OBJECT, "writeReplace");
+    return MethodUtils.simpleMethodMatches(method, null, CommonClassNames.JAVA_LANG_OBJECT, "writeReplace");
   }
 
   public static boolean isProbablySerializable(PsiType type) {
@@ -132,10 +140,8 @@ public class SerializationUtils {
       if (isExternalizable(psiClass)) {
         return true;
       }
-      if (InheritanceUtil.isInheritor(psiClass,
-                                      CommonClassNames.JAVA_UTIL_COLLECTION) ||
-          InheritanceUtil.isInheritor(psiClass,
-                                      CommonClassNames.JAVA_UTIL_MAP)) {
+      if (InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_COLLECTION) ||
+          InheritanceUtil.isInheritor(psiClass, CommonClassNames.JAVA_UTIL_MAP)) {
         final PsiType[] parameters = classTYpe.getParameters();
         for (PsiType parameter : parameters) {
           if (!isProbablySerializable(parameter)) {

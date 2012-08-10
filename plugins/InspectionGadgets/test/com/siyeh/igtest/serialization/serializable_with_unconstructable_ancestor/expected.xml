@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SerializableWithUnconstructableAncestor.java</file>
+    <line>6</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Serializable class with unconstructable ancestor</problem_class>
+    <description>&lt;code&gt;SerializableWithUnconstructableAncestor&lt;/code&gt; has a non-serializable ancestor 'NonserializableGrandParent' without no-arg constructor #loc</description>
+  </problem>
+
+  <problem>
+    <file>SerializableWithUnconstructableAncestor.java</file>
+    <line>14</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Serializable class with unconstructable ancestor</problem_class>
+    <description>&lt;code&gt;SerializableParent&lt;/code&gt; has a non-serializable ancestor 'NonserializableGrandParent' without no-arg constructor #loc</description>
+  </problem>
+</problems>

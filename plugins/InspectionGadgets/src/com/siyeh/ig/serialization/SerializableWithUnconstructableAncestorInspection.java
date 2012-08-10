@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -28,74 +25,67 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SerializableWithUnconstructableAncestorInspection
-  extends BaseInspection {
+public class SerializableWithUnconstructableAncestorInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getID() {
     return "SerializableClassWithUnconstructableAncestor";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "serializable.with.unconstructable.ancestor.display.name");
+    return InspectionGadgetsBundle.message("serializable.with.unconstructable.ancestor.display.name");
   }
 
+  @Override
   @NotNull
   public String buildErrorString(Object... infos) {
     final PsiClass ancestor = (PsiClass)infos[0];
-    return InspectionGadgetsBundle.message(
-      "serializable.with.unconstructable.ancestor.problem.descriptor",
-      ancestor.getName());
+    return InspectionGadgetsBundle.message("serializable.with.unconstructable.ancestor.problem.descriptor", ancestor.getName());
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new SerializableWithUnconstructableAncestorVisitor();
   }
 
-  private static class SerializableWithUnconstructableAncestorVisitor
-    extends BaseInspectionVisitor {
+  private static class SerializableWithUnconstructableAncestorVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
       if (aClass.isInterface() || aClass.isAnnotationType()) {
         return;
       }
-      if (!SerializationUtils.isSerializable(aClass)) {
+      if (!SerializationUtils.isSerializable(aClass) || SerializationUtils.hasWriteReplace(aClass)) {
         return;
       }
       PsiClass ancestor = aClass.getSuperClass();
-      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>(16);
-      while (ancestor != null &&
-             SerializationUtils.isSerializable(ancestor)) {
+      final Set<PsiClass> visitedClasses = new HashSet<PsiClass>(8);
+      while (ancestor != null && SerializationUtils.isSerializable(ancestor)) {
+        if (SerializationUtils.hasWriteReplace(ancestor)) {
+          return;
+        }
         ancestor = ancestor.getSuperClass();
         if (!visitedClasses.add(ancestor)) {
           return;
         }
       }
-      if (ancestor == null) {
-        return;  // can't happen, since Object isn't serializable,
-        //// but I don't trust the PSI as far as I can throw it
-      }
-      if (classHasNoArgConstructor(ancestor)) {
+      if (ancestor == null || classHasNoArgConstructor(ancestor)) {
         return;
       }
       registerClassError(aClass, ancestor);
     }
 
-    private static boolean classHasNoArgConstructor(PsiClass ancestor) {
+    private static boolean classHasNoArgConstructor(PsiClass aClass) {
       boolean hasConstructor = false;
       boolean hasNoArgConstructor = false;
-      for (final PsiMethod method : ancestor.getConstructors()) {
+      for (final PsiMethod constructor : aClass.getConstructors()) {
         hasConstructor = true;
-        final PsiParameterList parameterList =
-          method.getParameterList();
+        final PsiParameterList parameterList = constructor.getParameterList();
         if (parameterList.getParametersCount() == 0 &&
-            (method.hasModifierProperty(PsiModifier.PUBLIC) ||
-             method.hasModifierProperty(
-               PsiModifier.PROTECTED))) {
+            (constructor.hasModifierProperty(PsiModifier.PUBLIC) || constructor.hasModifierProperty(PsiModifier.PROTECTED))) {
           hasNoArgConstructor = true;
         }
       }

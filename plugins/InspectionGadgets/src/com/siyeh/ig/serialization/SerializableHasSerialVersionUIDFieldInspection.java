@@ -78,11 +78,8 @@ public class SerializableHasSerialVersionUIDFieldInspection extends Serializable
       if (!SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      final PsiMethod[] methods = aClass.findMethodsByName("writeReplace", true);
-      for (PsiMethod method : methods) {
-        if (SerializationUtils.isWriteReplace(method)) {
-          return;
-        }
+      if (SerializationUtils.hasWriteReplace(aClass)) {
+        return;
       }
       if (isIgnoredSubclass(aClass)) {
         return;
