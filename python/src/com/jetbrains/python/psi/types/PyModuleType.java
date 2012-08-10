@@ -350,6 +350,9 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @Override
   public void assertValid(String message) {
+    if (myModule != null && !myModule.isValid()) {
+      throw new PsiInvalidElementAccessException(myModule, myModule.getClass().toString() + ": " + message);
+    }
   }
 
   @NotNull

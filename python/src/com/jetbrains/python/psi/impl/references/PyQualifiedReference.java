@@ -68,6 +68,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     }
     //
     if (qualifierType != null && !(qualifierType instanceof PyTypeReference)) {
+      qualifierType.assertValid("qualifier: " + qualifier);
       // resolve within the type proper
       AccessDirection ctx = AccessDirection.of(myElement);
       final List<? extends RatedResolveResult> membersOfQualifier = qualifierType.resolveMember(referencedName, qualifier, ctx, myContext);
