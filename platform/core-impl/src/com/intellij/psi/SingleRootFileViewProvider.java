@@ -62,7 +62,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
   @NotNull private final VirtualFile myVirtualFile;
   private final boolean myEventSystemEnabled;
   private final boolean myPhysical;
-  @NotNull private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
+  private final AtomicReference<PsiFile> myPsiFile = new AtomicReference<PsiFile>();
   private volatile Content myContent;
   private volatile SoftReference<Document> myDocument;
   @NotNull private final Language myBaseLanguage;
@@ -178,7 +178,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
 
   public void beforeDocumentChanged() {
     final PsiFileImpl psiFile = (PsiFileImpl)getCachedPsi(getBaseLanguage());
-    if (psiFile != null && psiFile.isContentsLoaded() && getContent()instanceof DocumentContent) {
+    if (psiFile != null && psiFile.isContentsLoaded() && getContent() instanceof DocumentContent) {
       setContent(new PsiFileContent(psiFile, getModificationStamp()));
     }
   }
