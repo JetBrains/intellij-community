@@ -386,12 +386,14 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public void createChangeList(LocalTask task, String name, String comment) {
     LocalChangeList changeList = myChangeListManager.findChangeList(name);
     if (changeList == null) {
+      myChangeListManager.removeChangeListListener(myChangeListListener);
       changeList = myChangeListManager.addChangeList(name, comment);
+      myChangeListManager.addChangeListListener(myChangeListListener);
     }
     else {
-      getOpenChangelists(task).add(new ChangeListInfo(changeList));
       changeList.setComment(comment);
     }
+    getOpenChangelists(task).add(new ChangeListInfo(changeList));
     myChangeListManager.setDefaultChangeList(changeList);
     task.setAssociatedChangelistId(changeList.getId());
   }
