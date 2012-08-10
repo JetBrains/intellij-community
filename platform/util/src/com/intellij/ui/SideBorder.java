@@ -67,16 +67,16 @@ public class SideBorder extends LineBorder {
     g.setColor(getLineColor());
     for(i = 0; i < getThickness(); i++){
       if ((mySideMask & LEFT) != 0){
-        drawLine(c, g, x + i, y + i, x + i, height - i - i - 1);
+        drawLine(c, g, x + i, y + i, x + i, y + height - i - i - 1);
       }
       if ((mySideMask & TOP) != 0){
-        drawLine(c, g, x + i, y + i, width - i - i - 1, y + i);
+        drawLine(c, g, x + i, y + i, x + width - i - i - 1, y + i);
       }
       if ((mySideMask & RIGHT) != 0){
-        drawLine(c, g, width - i - i - 1, y + i, width - i - i - 1, height - i - i - 1);
+        drawLine(c, g, x + width - i - i - 1, y + i, x + width - i - i - 1, y + height - i - i - 1);
       }
       if ((mySideMask & BOTTOM) != 0){
-        drawLine(c, g, x + i, height - i - i - 1, width - i - i - 1, height - i - i - 1);
+        drawLine(c, g, x + i, y + height - i - i - 1, x + width - i - i - 1, y + height - i - i - 1);
       }
     }
     g.setColor(oldColor);

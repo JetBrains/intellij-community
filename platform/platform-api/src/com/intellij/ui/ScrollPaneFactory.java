@@ -49,7 +49,7 @@ public class ScrollPaneFactory {
   public static JScrollPane createScrollPane(Component view, boolean withoutBorder) {
     JBScrollPane scrollPane = new JBScrollPane(view);
     if (withoutBorder) {
-      scrollPane.setBorder(null);
+      scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(0));
     }
     return scrollPane;
 
