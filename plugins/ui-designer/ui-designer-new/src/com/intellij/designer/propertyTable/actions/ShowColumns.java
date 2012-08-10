@@ -43,6 +43,6 @@ public class ShowColumns extends ToggleAction {
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    myTable.showColumns(state);
+    myTable.setShowColumns(state);
   }
 }

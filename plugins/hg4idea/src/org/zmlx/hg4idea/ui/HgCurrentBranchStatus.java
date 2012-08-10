@@ -12,9 +12,9 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -40,13 +40,13 @@ public class HgCurrentBranchStatus extends JLabel implements CustomStatusBarWidg
     if (length > 2) {
       parentsBuffer.delete(length - 2, length);
     }
-    String statusText = StringUtils.isNotBlank(branch)
+    String statusText = !StringUtil.isEmptyOrSpaces(branch)
       ? HgVcsMessages.message("hg4idea.status.currentSituationtext", branch, parentsBuffer.toString()) : "";
 
-    String toolTipText = StringUtils.isNotBlank(statusText)
+    String toolTipText = !StringUtil.isEmptyOrSpaces(statusText)
       ? HgVcsMessages.message("hg4idea.status.currentSituation.description") : "";
 
-    setVisible(StringUtils.isNotBlank(branch));
+    setVisible(!StringUtil.isEmptyOrSpaces(branch));
     setText(statusText);
     setToolTipText(toolTipText);
   }

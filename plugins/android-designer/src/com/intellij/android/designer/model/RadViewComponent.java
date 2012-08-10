@@ -96,7 +96,7 @@ public class RadViewComponent extends RadVisualComponent {
   }
 
   public String getId() {
-    String idValue = myTag.getAttributeValue("id", SdkConstants.NS_RESOURCES);
+    String idValue = getTag().getAttributeValue("id", SdkConstants.NS_RESOURCES);
     return StringUtil.isEmpty(idValue) ? null : idValue;
   }
 

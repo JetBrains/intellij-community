@@ -15,9 +15,9 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
-import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.command.HgShowConfigCommand;
 
 import javax.swing.*;
@@ -104,7 +104,7 @@ public class HgPullDialog extends DialogWrapper {
   }
 
   private void onChangePullSource() {
-    setOKActionEnabled(StringUtils.isNotBlank(sourceTxt.getText()));
+    setOKActionEnabled(!StringUtil.isEmptyOrSpaces(sourceTxt.getText()));
   }
 
   @Override

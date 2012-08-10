@@ -49,10 +49,9 @@ public class ScrollPaneFactory {
   public static JScrollPane createScrollPane(Component view, boolean withoutBorder) {
     JBScrollPane scrollPane = new JBScrollPane(view);
     if (withoutBorder) {
-      scrollPane.setBorder(null);
+      scrollPane.setBorder(IdeBorderFactory.createEmptyBorder(0)); // set empty border, because setting null doesn't always take effect
     }
     return scrollPane;
-
   }
 
   public static JScrollPane createScrollPane(Component view, @MagicConstant(flagsFromClass = SideBorder.class) int borders) {

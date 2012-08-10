@@ -12,15 +12,14 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.google.common.base.Objects;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgCatCommand;
@@ -31,13 +30,13 @@ import java.io.UnsupportedEncodingException;
 public class HgContentRevision implements ContentRevision {
 
   private final Project myProject;
-  private final HgFile myHgFile;
+  @NotNull private final HgFile myHgFile;
   @NotNull private final HgRevisionNumber myRevisionNumber;
 
   private FilePath filePath;
   private String content;
 
-  public HgContentRevision(Project project, HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
+  public HgContentRevision(Project project, @NotNull HgFile hgFile, @NotNull HgRevisionNumber revisionNumber) {
     myProject = project;
     myHgFile = hgFile;
     myRevisionNumber = revisionNumber;
@@ -45,7 +44,7 @@ public class HgContentRevision implements ContentRevision {
 
   @Nullable
   public String getContent() throws VcsException {
-    if (StringUtils.isBlank(content)) {
+    if (StringUtil.isEmptyOrSpaces(content)) {
       if (myRevisionNumber.isWorkingVersion()) {
         content = VcsUtil.getFileContent(myHgFile.getFile().getPath());
       } else {
@@ -90,26 +89,28 @@ public class HgContentRevision implements ContentRevision {
   }
 
   @Override
-  public int hashCode() {
-    return new HashCodeBuilder()
-      .append(myHgFile)
-      .append(myRevisionNumber)
-      .toHashCode();
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    HgContentRevision revision = (HgContentRevision)o;
+
+    if (!myHgFile.equals(revision.myHgFile)) {
+      return false;
+    }
+    if (!myRevisionNumber.equals(revision.myRevisionNumber)) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override
-  public boolean equals(Object object) {
-    if (object == this) {
-      return true;
-    }
-    if (!(object instanceof HgContentRevision)) {
-      return false;
-    }
-    HgContentRevision that = (HgContentRevision) object;
-    return new EqualsBuilder()
-      .append(myHgFile, that.myHgFile)
-      .append(myRevisionNumber, that.myRevisionNumber)
-      .isEquals();
+  public int hashCode() {
+    return Objects.hashCode(myHgFile, myRevisionNumber);
   }
-
 }

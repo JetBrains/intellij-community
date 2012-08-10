@@ -62,7 +62,7 @@ public class HgMqRebaseAction extends HgAbstractGlobalAction {
         //    new HgCommandResultNotifier(project).process(result, null, null);
         //
         //    String currentBranch = new HgTagBranchCommand(project, repository).getCurrentBranch();
-        //    if (StringUtils.isBlank(currentBranch)) {
+        //    if (StringUtil.isEmptyOrSpaces(currentBranch)) {
         //      return;
         //    }
         //

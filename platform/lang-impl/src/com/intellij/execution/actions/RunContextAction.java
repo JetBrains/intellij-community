@@ -46,17 +46,11 @@ public class RunContextAction extends BaseRunConfigurationAction {
     }
     runManager.setSelectedConfiguration(configuration);
     Project project = context.getProject();
-    if (configuration.isSingleton()) {
-      ExecutionTarget activeTarget = ExecutionTargetManager.getActiveTarget(project);
-      ExecutionManager.getInstance(project).restartRunProfile(project,
-                                                              myExecutor,
-                                                              activeTarget,
-                                                              configuration,
-                                                              null);
-    } else
-    {
-      ProgramRunnerUtil.executeConfiguration(project, configuration, myExecutor);
-    }
+    ExecutionManager.getInstance(project).restartRunProfile(project,
+                                                            myExecutor,
+                                                            ExecutionTargetManager.getActiveTarget(project),
+                                                            configuration,
+                                                            null);
   }
 
   @Override

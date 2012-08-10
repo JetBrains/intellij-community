@@ -81,14 +81,14 @@ public class EvaluatedXmlNameImpl implements EvaluatedXmlName {
 
     if (myEqualToParent != that.myEqualToParent) return false;
     if (myNamespaceKey != null ? !myNamespaceKey.equals(that.myNamespaceKey) : that.myNamespaceKey != null) return false;
-    if (myXmlName != null ? !myXmlName.equals(that.myXmlName) : that.myXmlName != null) return false;
+    if (!myXmlName.equals(that.myXmlName)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myXmlName != null ? myXmlName.hashCode() : 0;
+    int result = myXmlName.hashCode();
     result = 31 * result + (myNamespaceKey != null ? myNamespaceKey.hashCode() : 0);
     result = 31 * result + (myEqualToParent ? 1 : 0);
     return result;

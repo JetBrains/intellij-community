@@ -14,10 +14,10 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgChange;
 import org.zmlx.hg4idea.HgFile;
@@ -156,7 +156,7 @@ public class HgStatusCommand {
       return changes;
     }
     for (String line : result.getOutputLines()) {
-      if (StringUtils.isBlank(line) || line.length() < ITEM_COUNT) {
+      if (StringUtil.isEmptyOrSpaces(line) || line.length() < ITEM_COUNT) {
         LOG.warn("Unexpected line in status '" + line + '\'');
         continue;
       }

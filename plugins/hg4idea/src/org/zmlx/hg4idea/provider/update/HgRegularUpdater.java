@@ -15,11 +15,11 @@ package org.zmlx.hg4idea.provider.update;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
@@ -69,7 +69,7 @@ public class HgRegularUpdater implements HgUpdater {
     HgShowConfigCommand configCommand = new HgShowConfigCommand(project);
     String defaultPath = configCommand.getDefaultPath(repository);
 
-    if (StringUtils.isBlank(defaultPath)) {
+    if (StringUtil.isEmptyOrSpaces(defaultPath)) {
       throw new VcsException(HgVcsMessages.message("hg4idea.warning.no-default-update-path", repository.getPath()));
     }
 
@@ -250,7 +250,7 @@ public class HgRegularUpdater implements HgUpdater {
   }
 
   private void handlePossibleWarning(List<VcsException> exceptions, String possibleWarning) {
-    if (!StringUtils.isBlank(possibleWarning)) {
+    if (!StringUtil.isEmptyOrSpaces(possibleWarning)) {
       reportWarning(exceptions, possibleWarning);
     }
   }

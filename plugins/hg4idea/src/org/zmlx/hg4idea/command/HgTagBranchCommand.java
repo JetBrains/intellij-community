@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -55,7 +54,7 @@ public class HgTagBranchCommand {
     if (output == null || output.isEmpty()) {
       return null;
     }
-    return StringUtils.trim(output.get(0));
+    return output.get(0).trim();
   }
 
   public void listBranches(final Consumer<List<HgTagBranch>> branchListConsumer) {

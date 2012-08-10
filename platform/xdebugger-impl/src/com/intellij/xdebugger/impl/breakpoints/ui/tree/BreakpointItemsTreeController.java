@@ -161,12 +161,10 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
 
   public void rebuildTree(Collection<BreakpointItem> items) {
     List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints();
-    Collection<BreakpointItem> allBreakpoints = items;
-
-    buildTree(allBreakpoints);
-
+    TreePath path = myTreeView.getSelectionPath();
+    buildTree(items);
     if (selectedBreakpoints.size() > 0) {
-      selectBreakpointItem(selectedBreakpoints.get(0));
+      selectBreakpointItem(selectedBreakpoints.get(0), path);
     }
   }
 
@@ -189,18 +187,23 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     return list;
   }
 
-  public void selectBreakpointItem(@Nullable final BreakpointItem breakpoint) {
+  public void selectBreakpointItem(@Nullable final BreakpointItem breakpoint, TreePath path) {
     BreakpointItemNode node = myNodes.get(breakpoint);
     if (node != null) {
       TreeUtil.selectNode(myTreeView, node);
     }
-    else if (breakpoint == null) {
-      TreeUtil.selectPath(myTreeView, TreeUtil.getFirstLeafNodePath(myTreeView));
+    else {
+      TreeUtil.selectPath(myTreeView, path);
     }
   }
 
   public CheckedTreeNode getRoot() {
     return myRoot;
+  }
+
+  public void selectFirstBreakpointItem() {
+    TreeUtil.selectPath(myTreeView, TreeUtil.getFirstLeafNodePath(myTreeView));
+
   }
 
   private static class TreeNodeComparator implements Comparator<TreeNode> {
