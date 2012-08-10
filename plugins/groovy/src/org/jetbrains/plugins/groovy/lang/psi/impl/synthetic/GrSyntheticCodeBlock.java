@@ -142,4 +142,9 @@ public class GrSyntheticCodeBlock extends LightElement implements PsiCodeBlock {
   public boolean isValid() {
     return myCodeBlock.isValid();
   }
+
+  @Override
+  public void delete() throws IncorrectOperationException {
+    myCodeBlock.delete();
+  }
 }

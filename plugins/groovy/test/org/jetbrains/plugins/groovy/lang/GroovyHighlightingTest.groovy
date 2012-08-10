@@ -1398,4 +1398,20 @@ interface Foo {
 ''')
   }
 
+  void testAbstractMethodWithBody() {
+    testHighlighting('''\
+interface A {
+  def foo(){}
+}
+
+abstract class B {
+  abstract foo(){}
+}
+
+class X {
+  def foo(){}
+}
+''')
+  }
+
 }

@@ -19,10 +19,7 @@ package org.jetbrains.plugins.groovy.annotator;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateConstructorMatchingSuperFix;
-import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
@@ -54,6 +51,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
+import org.jetbrains.plugins.groovy.annotator.intentions.CreateFieldFromUsageFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.CreateMethodFromUsageFix;
+import org.jetbrains.plugins.groovy.annotator.intentions.CreateParameterFromUsageFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicMethodFix;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicPropertyFix;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
@@ -556,6 +556,17 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
           constructor = nodes.get(constructor);
         }
         while (constructor != circleStart);
+      }
+    }
+  }
+
+  @Override
+  public void visitOpenBlock(GrOpenBlock block) {
+    if (block.getParent() instanceof GrMethod) {
+      final GrMethod method = (GrMethod)block.getParent();
+      if (method.hasModifierProperty(ABSTRACT)) {
+        final Annotation annotation = myHolder.createErrorAnnotation(block, GroovyBundle.message("abstract.methods.must.not.have.body"));
+        registerMakeAbstractMethodNotAbstractFix(annotation, method, true);
       }
     }
   }
@@ -1576,19 +1587,22 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
   }
 
-  private static void registerAbstractMethodFix(Annotation annotation, GrMethod method, boolean makeClassAbstract) {
+  private static void registerMakeAbstractMethodNotAbstractFix(Annotation annotation, GrMethod method, boolean makeClassAbstract) {
     if (method.getBlock() == null) {
       annotation.registerFix(new AddMethodBodyFix(method));
     }
     else {
-      annotation.registerFix(new GrModifierFix(method, method.getModifierList(), ABSTRACT, false, false));
+      annotation.registerFix(new DeleteMethodBodyFix(method));
     }
+    annotation.registerFix(new GrModifierFix(method, method.getModifierList(), ABSTRACT, false, false));
     if (makeClassAbstract) {
       final PsiClass containingClass = method.getContainingClass();
-      LOG.assertTrue(containingClass != null);
-      final GrModifierList list = (GrModifierList)containingClass.getModifierList();
-      LOG.assertTrue(list != null);
-      annotation.registerFix(new GrModifierFix(containingClass, list, ABSTRACT, false, true));
+      if (containingClass != null) {
+        final GrModifierList list = (GrModifierList)containingClass.getModifierList();
+        if (list != null && !list.hasModifierProperty(ABSTRACT)) {
+          annotation.registerFix(new GrModifierFix(containingClass, list, ABSTRACT, false, true));
+        }
+      }
     }
   }
 
@@ -1609,7 +1623,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     if (method.getParent() instanceof GroovyFileBase) {
       if (isMethodAbstract) {
         final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("script.method.cannot.have.modifier.abstract"));
-        registerAbstractMethodFix(annotation, method, false);
+        registerMakeAbstractMethodNotAbstractFix(annotation, method, false);
       }
 
       checkModifierIsNotAllowed(modifiersList, NATIVE, GroovyBundle.message("script.cannot.have.modifier.native"), holder);
@@ -1630,7 +1644,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
           if (isMethodAbstract) {
             final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("anonymous.class.cannot.have.abstract.method"));
-            registerAbstractMethodFix(annotation, method, false);
+            registerMakeAbstractMethodNotAbstractFix(annotation, method, false);
           }
         }
         //class
@@ -1640,7 +1654,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
 
           if (!typeDefModifiersList.hasExplicitModifier(ABSTRACT) && isMethodAbstract) {
             final Annotation annotation = holder.createErrorAnnotation(modifiersList, GroovyBundle.message("only.abstract.class.can.have.abstract.method"));
-            registerAbstractMethodFix(annotation, method, true);
+            registerMakeAbstractMethodNotAbstractFix(annotation, method, true);
           }
         }
       }
