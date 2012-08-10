@@ -6,13 +6,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.actions.AddCallSuperQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.jetbrains.python.PyNames.*;
 
 /**
  * User: catherine
@@ -43,11 +44,11 @@ public class PyMissingConstructorInspection extends PyInspection {
     @Override
     public void visitPyClass(final PyClass node) {
       PsiElement[] superClasses = node.getSuperClassExpressions();
-      if (superClasses.length == 0 || (superClasses.length == 1 && PyNames.OBJECT.equals(superClasses[0].getText())))
+      if (superClasses.length == 0 || (superClasses.length == 1 && OBJECT.equals(superClasses[0].getText())))
         return;
 
       if (!superHasConstructor(node)) return;
-      PyFunction initMethod = node.findMethodByName(PyNames.INIT, false);
+      PyFunction initMethod = node.findMethodByName(INIT, false);
       if (initMethod != null) {
         if (isExceptionClass(node, myTypeEvalContext) || hasConstructorCall(node, initMethod)) {
           return;
@@ -60,11 +61,12 @@ public class PyMissingConstructorInspection extends PyInspection {
       }
     }
 
-    private static boolean superHasConstructor(PyClass node) {
-      for (PyClass s : node.iterateAncestorClasses()) {
-        if (!PyNames.OBJECT.equals(s.getName()) && !PyNames.FAKE_OLD_BASE.equals(s.getName()) &&
-            node.getName() != null && !node.getName().equals(s.getName())
-            && s.findMethodByName(PyNames.INIT, false) != null) {
+    private static boolean superHasConstructor(@NotNull PyClass cls) {
+      for (PyClass c : cls.iterateAncestorClasses()) {
+        final String name = c.getName();
+        final String className = cls.getName();
+        if (!OBJECT.equals(name) && !FAKE_OLD_BASE.equals(name) && className != null &&
+            !className.equals(name) && c.findMethodByName(INIT, false) != null) {
           return true;
         }
       }
@@ -117,11 +119,11 @@ public class PyMissingConstructorInspection extends PyInspection {
               if (innerCallee != null) {
                 tmp = innerCallee.getName();
               }
-              if (PyNames.SUPER.equals(tmp) && (PyNames.INIT.equals(callee.getName()))) {
+              if (SUPER.equals(tmp) && (INIT.equals(callee.getName()))) {
                 PyExpression[] args = ((PyCallExpression)qualifier).getArguments();
                 if (args.length > 0) {
                   String firstArg = args[0].getText();
-                  if (firstArg.equals(cl.getName()) || firstArg.equals(PyNames.CANONICAL_SELF+"."+PyNames.CLASS))
+                  if (firstArg.equals(cl.getName()) || firstArg.equals(CANONICAL_SELF+"."+ CLASS))
                       return true;
                   for (PyClass s : cl.iterateAncestorClasses()) {
                     if (firstArg.equals(s.getName()))
@@ -132,7 +134,7 @@ public class PyMissingConstructorInspection extends PyInspection {
                   return true;
               }
             }
-            if (PyNames.INIT.equals(callee.getName())) {
+            if (INIT.equals(callee.getName())) {
               return isSuperClassCall(cl, qualifier);
             }
           }
