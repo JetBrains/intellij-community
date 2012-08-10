@@ -59,6 +59,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.ReferenceRange;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.LightweightHint;
+import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
@@ -368,18 +369,12 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
       // real middle matching variants are added only with prefix of length >=2
       addWatchedPrefix(myParameters.getOffset() - item.getPrefixMatcher().getPrefix().length(), StandardPatterns.string().withLength(2));
 
-      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      new Alarm(Alarm.ThreadToUse.SHARED_THREAD, this).addRequest(new Runnable() {
+        @Override
         public void run() {
-          try {
-            Thread.sleep(300);
-          }
-          catch (InterruptedException ignore) {
-          }
-          finally {
-            myFreezeSemaphore.up();
-          }
+          myFreezeSemaphore.up();
         }
-      });
+      }, 300);
     }
     myQueue.queue(myUpdate);
   }
