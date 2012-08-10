@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,7 @@ public class ClassOnlyUsedInOnePackageInspection extends BaseGlobalInspection {
   @NotNull
   @Override
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "class.only.used.in.one.package.display.name");
+    return InspectionGadgetsBundle.message("class.only.used.in.one.package.display.name");
   }
 
   @Nullable
@@ -56,12 +55,11 @@ public class ClassOnlyUsedInOnePackageInspection extends BaseGlobalInspection {
     if (!(owner instanceof RefPackage)) {
       return null;
     }
-    final Set<RefClass> dependencies =
-      DependencyUtils.calculateDependenciesForClass(refClass);
+    final Set<RefClass> dependencies = DependencyUtils.calculateDependenciesForClass(refClass);
     RefPackage otherPackage = null;
     for (RefClass dependency : dependencies) {
       final RefPackage refPackage = RefJavaUtil.getPackage(dependency);
-      if (refClass.getModule() == refPackage) {
+      if (owner == refPackage) {
         return null;
       }
       if (otherPackage != refPackage) {
@@ -73,11 +71,10 @@ public class ClassOnlyUsedInOnePackageInspection extends BaseGlobalInspection {
         }
       }
     }
-    final Set<RefClass> dependents =
-      DependencyUtils.calculateDependentsForClass(refClass);
+    final Set<RefClass> dependents = DependencyUtils.calculateDependentsForClass(refClass);
     for (RefClass dependent : dependents) {
       final RefPackage refPackage = RefJavaUtil.getPackage(dependent);
-      if (refClass.getModule() == refPackage) {
+      if (owner == refPackage) {
         return null;
       }
       if (otherPackage != refPackage) {
