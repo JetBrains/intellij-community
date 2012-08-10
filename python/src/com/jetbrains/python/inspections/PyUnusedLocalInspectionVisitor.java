@@ -274,13 +274,15 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             else if (ignoreUnusedParameters(func, functionsWithInheritors)) {
               continue;
             }
-            Boolean isEmpty = emptyFunctions.get(func);
-            if (isEmpty == null) {
-              isEmpty = isEmptyFunction(func);
-              emptyFunctions.put(func, isEmpty);
-            }
-            if (isEmpty) {
-              continue;
+            if (func.asMethod() != null) {
+              Boolean isEmpty = emptyFunctions.get(func);
+              if (isEmpty == null) {
+                isEmpty = isEmptyFunction(func);
+                emptyFunctions.put(func, isEmpty);
+              }
+              if (isEmpty) {
+                continue;
+              }
             }
           }
           final LocalQuickFix[] fixes = mayBeField

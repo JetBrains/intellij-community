@@ -264,26 +264,25 @@ def test_only_name_in_local_class():
 
 
 # PY-7028
-def test_unused_params_in_empty_function_1(x, y, z):
+class C:
+    def test_unused_params_in_empty_method_1(self, x, y, z):
+        pass
+
+    def test_unused_params_in_empty_method_2(self, x, y, z):
+        raise Exception()
+
+    def test_unused_params_in_empty_method_3(self, x, y, z):
+        """Docstring."""
+
+    def test_unused_params_in_empty_method_4(self, x, y, z):
+        """Docstring."""
+        raise Exception()
+
+    def test_unused_params_in_empty_method_5(self, x, y, z):
+        """Docstring."""
+        return
+
+
+# PY-7126
+def test_unused_empty_function(<weak_warning descr="Parameter 'x' value is not used">x</weak_warning>):
     pass
-
-
-# PY-7028
-def test_unused_params_in_empty_function_2(x, y, z):
-    raise Exception()
-
-
-# PY-7028
-def test_unused_params_in_empty_function_3(x, y, z):
-    """Docstring."""
-
-
-# PY-7028
-def test_unused_params_in_empty_function_4(x, y, z):
-    """Docstring."""
-    raise Exception()
-
-# PY-7028
-def test_unused_params_in_empty_function_5(x, y, z):
-    """Docstring."""
-    return
