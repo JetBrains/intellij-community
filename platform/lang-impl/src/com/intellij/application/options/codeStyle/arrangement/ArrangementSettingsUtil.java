@@ -24,6 +24,8 @@ import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettin
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -77,6 +79,25 @@ public class ArrangementSettingsUtil {
     }
   }
 
+  @Nullable
+  public static Point getLocationOnScreen(@NotNull JComponent component) {
+    int dx = 0;
+    int dy = 0;
+    for (Container c = component; c != null; c = c.getParent()) {
+      if (c.isShowing()) {
+        Point locationOnScreen = c.getLocationOnScreen();
+        locationOnScreen.translate(dx, dy);
+        return locationOnScreen;
+      }
+      else {
+        Point location = c.getLocation();
+        dx += location.x;
+        dy += location.y;
+      }
+    }
+    return null;
+  }
+  
   private interface Helper<T> {
     @NotNull ArrangementSettingType getType();
     boolean isSupported(@NotNull T data, @NotNull ArrangementStandardSettingsAware filter);

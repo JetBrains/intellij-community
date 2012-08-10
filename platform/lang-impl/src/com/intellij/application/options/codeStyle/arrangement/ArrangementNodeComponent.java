@@ -13,28 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.renderer;
+package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
+ * // TODO den add doc
+ * 
  * @author Denis Zhdanov
- * @since 8/8/12 3:02 PM
+ * @since 8/10/12 11:22 AM
  */
-public class ArrangementOrRenderer extends JPanel implements ArrangementNodeRenderer<ArrangementSettingsCompositeNode> {
+public interface ArrangementNodeComponent {
 
+  // TODO den add doc
   @NotNull
-  @Override
-  public JComponent getRendererComponent(@NotNull ArrangementSettingsCompositeNode node) {
-    // TODO den implement 
-    return new JLabel("xxx");
-  }
+  JComponent getUiComponent();
 
-  @Override
-  public void reset() {
-    // TODO den implement 
-  }
+  // TODO den add doc
+  @Nullable
+  ArrangementNodeComponent getComponentAt(@NotNull RelativePoint point);
+  
+  // TODO den add doc
+  @Nullable
+  Rectangle getScreenBounds();
+  
+  void setScreenBounds(@Nullable Rectangle bounds);
 }

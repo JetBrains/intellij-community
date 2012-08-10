@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.renderer;
+package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,13 +32,23 @@ import java.awt.*;
  * @author Denis Zhdanov
  * @since 8/8/12 10:06 AM
  */
-public class ArrangementAtomRenderer implements ArrangementNodeRenderer<ArrangementSettingsAtomNode> {
+public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
   private static final int PADDING = 2;
 
-  @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout());
-  @NotNull private final ArrangementNodeDisplayManager myDisplayValueManager;
-
+  @Nullable private Rectangle myScreenBounds;
+  @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
+    @Override
+    public void paint(Graphics g) {
+      Point point = ArrangementSettingsUtil.getLocationOnScreen(this);
+      if (point != null) {
+        Rectangle bounds = myRenderer.getBounds();
+        myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
+      }
+      super.paint(g);
+    }
+  };
+  
   @NotNull private final JLabel myLabel = new JLabel() {
     @Override
     public Dimension getMinimumSize() {
@@ -56,11 +67,13 @@ public class ArrangementAtomRenderer implements ArrangementNodeRenderer<Arrangem
   };
   @Nullable private Dimension mySize;
 
-  public ArrangementAtomRenderer(@NotNull ArrangementNodeDisplayManager manager) {
-    myDisplayValueManager = manager;
+  public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager, @NotNull ArrangementSettingsAtomNode node) {
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
+    myLabel.setText(manager.getDisplayValue(node));
+    mySize = new Dimension(manager.getMaxWidth(node.getType()), myLabel.getPreferredSize().height);
     
+    GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
+
     JPanel labelPanel = new JPanel(new GridBagLayout());
     myLabel.setBackground(Color.red);
     labelPanel.add(myLabel, constraints);
@@ -71,8 +84,15 @@ public class ArrangementAtomRenderer implements ArrangementNodeRenderer<Arrangem
     JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
       @Override
       public void paint(Graphics g) {
+        Color color;
+        if (myScreenBounds != null && myScreenBounds.contains(MouseInfo.getPointerInfo().getLocation())) {
+          color = UIUtil.getTreeSelectionBackground();
+        }
+        else {
+          color = UIUtil.getTabbedPaneBackground();
+        }
         Rectangle bounds = getBounds();
-        g.setColor(UIUtil.getTabbedPaneBackground());
+        g.setColor(color);
         g.fillRoundRect(0, 0, bounds.width, bounds.height, arcSize, arcSize);
         super.paint(g);
       }
@@ -88,17 +108,26 @@ public class ArrangementAtomRenderer implements ArrangementNodeRenderer<Arrangem
 
   @NotNull
   @Override
-  public JComponent getRendererComponent(@NotNull ArrangementSettingsAtomNode node) {
-    myLabel.setText(myDisplayValueManager.getDisplayValue(node));
-    mySize = new Dimension(myDisplayValueManager.getMaxWidth(node.getType()), myLabel.getPreferredSize().height);
+  public JComponent getUiComponent() {
     return myRenderer;
   }
 
+  @Nullable
   @Override
-  public void reset() {
-    myLabel.invalidate();
+  public Rectangle getScreenBounds() {
+    return myScreenBounds;
   }
 
+  @Override
+  public void setScreenBounds(@Nullable Rectangle screenBounds) {
+    myScreenBounds = screenBounds;
+  }
+
+  @Override
+  public ArrangementNodeComponent getComponentAt(@NotNull RelativePoint point) {
+    return (myScreenBounds != null && myScreenBounds.contains(point.getScreenPoint())) ? this : null;
+  }
+  
   @Override
   public String toString() {
     return myLabel.getText();
