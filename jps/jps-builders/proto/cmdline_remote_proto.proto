@@ -56,6 +56,7 @@ message Message {
       repeated GlobalLibrary global_library = 2;
       optional string global_encoding = 3;
       optional string ignored_files_patterns = 4;
+      required string global_options_path = 5;
     }
 
     message ParametersMessage {

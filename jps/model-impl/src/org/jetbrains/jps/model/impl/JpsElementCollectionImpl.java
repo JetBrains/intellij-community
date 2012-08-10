@@ -1,6 +1,8 @@
 package org.jetbrains.jps.model.impl;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 
@@ -36,6 +38,20 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
   @Override
   public List<E> getElements() {
     return myElements;
+  }
+
+  public <X extends E, P extends JpsElement> Iterable<X> getElementsOfType(@NotNull final JpsElementType<P> type) {
+    return new Iterable<X>() {
+      @Override
+      public Iterator<X> iterator() {
+        return new FilteringIterator<E, X>(myElements.iterator(), new Condition<E>() {
+          @Override
+          public boolean value(E e) {
+            return e instanceof JpsTypedElement && ((JpsTypedElement<?>)e).getType().equals(type);
+          }
+        });
+      }
+    };
   }
 
   @NotNull

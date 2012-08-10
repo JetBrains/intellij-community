@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.jps.model.JpsElement;
 
 import java.io.File;
 import java.io.IOException;
@@ -21,6 +22,20 @@ public abstract class JpsLoaderBase {
 
   protected Element loadRootElement(final File file) {
     return loadRootElement(file, myMacroExpander);
+  }
+
+  protected <E extends JpsElement> void loadComponents(File dir,
+                                                       final String defaultFileName,
+                                                       JpsElementExtensionSerializerBase<E> serializer,
+                                                       final E element) {
+    String fileName = serializer.getConfigFileName();
+    File configFile = new File(dir, fileName != null ? fileName : defaultFileName);
+    if (configFile.exists()) {
+      Element componentTag = JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
+      if (componentTag != null) {
+        serializer.loadExtension(element, componentTag);
+      }
+    }
   }
 
   protected static Element loadRootElement(final File file, final JpsMacroExpander macroExpander) {

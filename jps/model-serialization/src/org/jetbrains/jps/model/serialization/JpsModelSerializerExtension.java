@@ -49,12 +49,18 @@ public abstract class JpsModelSerializerExtension {
     return null;
   }
 
+  @Nullable
   public String getLibraryTableLevelId(JpsElementReference<? extends JpsCompositeElement> reference) {
     return null;
   }
 
   @NotNull
   public List<? extends JpsProjectExtensionSerializer> getProjectExtensionSerializers() {
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  public List<? extends JpsGlobalExtensionSerializer> getGlobalExtensionSerializers() {
     return Collections.emptyList();
   }
 

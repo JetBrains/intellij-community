@@ -23,4 +23,6 @@ public interface JpsSdk<P extends JpsElement> extends JpsElement {
   JpsSdkType<P> getSdkType();
 
   P getSdkProperties();
+
+  JpsSdkReference<P> createReference();
 }

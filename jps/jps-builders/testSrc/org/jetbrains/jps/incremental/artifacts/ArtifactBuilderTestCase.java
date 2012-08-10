@@ -28,6 +28,7 @@ import org.jetbrains.jps.incremental.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
+import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
@@ -51,7 +52,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   private ProjectDescriptor myDescriptor;
   private File myProjectDir;
   private TestArtifactBuilderLogger myArtifactBuilderLogger;
-  private JpsSdk<?> myJdk;
+  private JpsSdk<JpsDummyElement> myJdk;
 
   protected void setUp() throws Exception {
     super.setUp();
@@ -129,7 +130,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
       myJdk = initJdk("1.6");
     }
     final JpsModule module = myJpsProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
-    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, myJdk.getParent().createReference());
+    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, myJdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
     if (srcPaths.length > 0) {
       for (String srcPath : srcPaths) {
