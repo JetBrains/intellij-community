@@ -90,7 +90,8 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     @Override
     @NotNull
     public String getText(UsageView view) {
-      return myDir.getPresentableUrl();
+      String url = myDir.getPresentableUrl();
+      return url != null ? url : "<invalid>";
     }
 
     @Override
