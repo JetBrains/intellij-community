@@ -50,9 +50,10 @@ class MergeConflict extends ChangeSide implements DiffRangeMarker.RangeInvalidLi
     myRightChange = rightChange;
   }
 
-  public MergeConflict deriveSideForNotAppliedChange(TextRange baseRange, @Nullable ConflictChange originalChange, ConflictChange otherChange) {
+  public MergeConflict deriveSideForNotAppliedChange(TextRange baseRange, @Nullable ConflictChange leftChange,
+                                                     @Nullable ConflictChange rightChange) {
     ChangeHighlighterHolder highlighterHolder = new ChangeHighlighterHolder();
-    MergeConflict mergeConflict = new MergeConflict(baseRange, myMergeList, highlighterHolder, originalChange, otherChange);
+    MergeConflict mergeConflict = new MergeConflict(baseRange, myMergeList, highlighterHolder, leftChange, rightChange);
     highlighterHolder.highlight(mergeConflict, myCommonHighlighterHolder.getEditor(), ChangeType.CONFLICT);
     return mergeConflict;
   }
