@@ -187,10 +187,10 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
 
   public ToolbarDecorator setToolbarPosition(ActionToolbarPosition position) {
     myToolbarPosition = position;
-    myActionsPanelBorder = new CustomLineBorder(0,
-                                    myToolbarPosition == ActionToolbarPosition.RIGHT ? 1 : 0,
-                                    myToolbarPosition == ActionToolbarPosition.TOP ? 1 : 0,
-                                    myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
+    myActionsPanelBorder = new CustomLineBorder(myToolbarPosition == ActionToolbarPosition.BOTTOM ? 1 : 0,
+                                                myToolbarPosition == ActionToolbarPosition.RIGHT ? 1 : 0,
+                                                myToolbarPosition == ActionToolbarPosition.TOP ? 1 : 0,
+                                                myToolbarPosition == ActionToolbarPosition.LEFT ? 1 : 0);
     return this;
   }
 

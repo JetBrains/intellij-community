@@ -144,6 +144,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
     };
 
     myTable = new JBTable(myTableModel);
+    myTable.setShowColumns(false);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myTable.setStriped(true);
     new DoubleClickListener() {
