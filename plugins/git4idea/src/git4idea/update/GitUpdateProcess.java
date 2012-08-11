@@ -199,8 +199,10 @@ public class GitUpdateProcess {
       notifyImportantError(myProject, "Error updating " + rootName,
                            "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
     } finally {
-      LOG.assertTrue(compoundResult != null, "Updaters were checked for non-emptiness");
-      if (incomplete || !compoundResult.isSuccess()) {
+      // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
+      // But if updater.update() fails with exception for the first root, then the value would not be assigned.
+      // In this case we don't restore local changes either, because update failed.
+      if (incomplete || compoundResult == null || !compoundResult.isSuccess()) {
         mySaver.notifyLocalChangesAreNotRestored();
       }
       else {
