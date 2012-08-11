@@ -54,7 +54,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
     if (result == null) {
       final FileEditorManager manager = FileEditorManager.getInstance(project);
       Editor editor = manager.getSelectedTextEditor();
-      if (editor != null && WindowManager.getInstance().getStatusBar(editor.getComponent()) == myStatusBar) {
+      if (editor != null && WindowManager.getInstance().getStatusBar(editor.getComponent(), project) == myStatusBar) {
         result = editor;
       }
     }
@@ -65,7 +65,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   protected boolean isOurEditor(Editor editor) {
     return editor != null &&
            editor.getComponent().isShowing() &&
-           WindowManager.getInstance().getStatusBar(editor.getComponent()) == myStatusBar;
+           WindowManager.getInstance().getStatusBar(editor.getComponent(), editor.getProject()) == myStatusBar;
   }
 
   @Nullable
