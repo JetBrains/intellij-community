@@ -115,7 +115,7 @@ class GitLogParser {
     RAW_BODY("B");
 
     private String myPlaceholder;
-    private GitLogOption(String placeholder) { myPlaceholder = placeholder; }
+    GitLogOption(String placeholder) { myPlaceholder = placeholder; }
     private String getPlaceholder() { return myPlaceholder; }
   }
 
@@ -134,7 +134,8 @@ class GitLogParser {
     myFormat = makeFormatFromOptions(options);
     myOptions = options;
     myNameStatusOption = nameStatusOption;
-    mySupportsRawBody = GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(GitVcs.getInstance(project).getVersion());
+    GitVcs vcs = GitVcs.getInstance(project);
+    mySupportsRawBody = vcs != null && GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(vcs.getVersion());
   }
 
   private static String makeFormatFromOptions(GitLogOption[] options) {
