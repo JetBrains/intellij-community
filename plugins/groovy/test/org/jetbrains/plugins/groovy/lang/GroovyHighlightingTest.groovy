@@ -1401,11 +1401,11 @@ interface Foo {
   void testAbstractMethodWithBody() {
     testHighlighting('''\
 interface A {
-  def foo(){}
+  def foo()<error descr="Abstract methods must not have body">{}</error>
 }
 
 abstract class B {
-  abstract foo(){}
+  abstract foo()<error descr="Abstract methods must not have body">{}</error>
 }
 
 class X {
