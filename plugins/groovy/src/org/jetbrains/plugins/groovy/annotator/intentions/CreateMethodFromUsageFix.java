@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.editor.expressions.ChooseTypeExpression;
+import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -66,6 +66,7 @@ public class CreateMethodFromUsageFix implements IntentionAction {
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final JVMElementFactory factory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
+    assert factory != null;
     PsiMethod method = factory.createMethod(myRefExpression.getReferenceName(), PsiType.VOID);
     if (PsiUtil.isInStaticContext(myRefExpression, myTargetClass)) {
       method.getModifierList().setModifierProperty(PsiModifier.STATIC, true);
