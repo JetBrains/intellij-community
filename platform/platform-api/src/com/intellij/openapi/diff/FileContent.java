@@ -20,7 +20,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -69,7 +68,7 @@ public class FileContent extends DiffContent {
     return myFile.getFileType().isBinary();
   }
 
-  public static FileContent createFromTempFile(Project project, String name, String ext, byte[] content) throws IOException {
+  public static FileContent createFromTempFile(Project project, String name, String ext, @NotNull byte[] content) throws IOException {
     final File tempFile = FileUtil.createTempFile(name, ext);
     tempFile.deleteOnExit();
     FileUtil.writeToFile(tempFile, content);

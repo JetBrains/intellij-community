@@ -218,10 +218,11 @@ public class ShowDiffAction extends AnAction implements DumbAware {
                                               fileName,
                                               ArrayUtil.EMPTY_BYTE_ARRAY);
     } else {
+      byte[] content = ((BinaryContentRevision)contentRevision).getBinaryContent();
       fileContent = FileContent.createFromTempFile(project,
                                               contentRevision.getFile().getName(),
                                               contentRevision.getFile().getName(),
-                                              ((BinaryContentRevision)contentRevision).getBinaryContent());
+                                              content == null ? ArrayUtil.EMPTY_BYTE_ARRAY : content);
     }
     return fileContent;
   }
