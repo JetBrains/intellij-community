@@ -111,6 +111,14 @@ public class HgRevisionNumber implements VcsRevisionNumber {
       return 0;
     }
 
+    // One of the revisions is local. Local is "greater" than any from the history.
+    if (changeset.isEmpty()) {
+      return 1;
+    }
+    if (other.changeset.isEmpty()) {
+      return -1;
+    }
+
     // compare revision numbers.
     final int revCompare = java.lang.Long.valueOf(getRevisionNumber()).compareTo(java.lang.Long.valueOf(other.getRevisionNumber()));
     if (revCompare != 0) {
