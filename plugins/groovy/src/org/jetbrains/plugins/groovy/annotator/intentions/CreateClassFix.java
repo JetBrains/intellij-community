@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,7 +30,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.NewGroovyClassAction;
-import org.jetbrains.plugins.groovy.editor.expressions.ChooseTypeExpression;
+import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -44,6 +43,8 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import static com.intellij.openapi.module.ModuleUtilCore.findModuleForPsiElement;
 
 /**
  * @author ilyas
@@ -66,7 +67,7 @@ public abstract class CreateClassFix {
           qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
           name = myRefElement.getReferenceName();
           assert name != null;
-          module = ModuleUtil.findModuleForPsiElement(file);
+          module = findModuleForPsiElement(file);
         }
         finally {
           accessToken.finish();
@@ -139,7 +140,7 @@ public abstract class CreateClassFix {
         final String qualifier = groovyFile instanceof GroovyFile ? groovyFile.getPackageName() : "";
         final PsiManager manager = PsiManager.getInstance(project);
         final String name = myRefElement.getReferenceName();
-        final Module module = ModuleUtil.findModuleForPsiElement(file);
+        final Module module = findModuleForPsiElement(file);
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module, getText());
         if (targetDirectory == null) return;
 

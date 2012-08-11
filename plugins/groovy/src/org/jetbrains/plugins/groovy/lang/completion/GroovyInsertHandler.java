@@ -27,19 +27,28 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterInfo;
+import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterProvider;
+import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureTemplateBuilder;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+
+import java.util.HashMap;
 
 /**
  * @author ven
@@ -99,14 +108,19 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
             afterBrace = nonWs + 1;
           }
           else {
+            if (isSpaceBeforeClosure(file)) {
+              document.insertString(offset, " ");
+              offset++;
+            }
+            if (processClosureWithParams(context, method, document, offset)) return;
             if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
               //smart enter invoked
-              document.insertString(offset, " {\n}");
+              document.insertString(offset, "{\n}");
               afterBrace = offset + 1;  //position caret before '{' for smart enter
               context.setTailOffset(afterBrace);
             }
             else {
-              document.insertString(offset, " {}");
+              document.insertString(offset, "{}");
               afterBrace = offset + 2;
             }
           }
@@ -161,6 +175,27 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
     if (obj instanceof PsiPackage) {
       AutoPopupController.getInstance(context.getProject()).scheduleAutoPopup(context.getEditor(), null);
     }
+  }
+
+  private static boolean isSpaceBeforeClosure(PsiFile file) {
+    return CodeStyleSettingsManager.getSettings(file.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).SPACE_BEFORE_CLOSURE_LBRACE;
+  }
+
+
+  private static boolean processClosureWithParams(InsertionContext context, PsiMethod method, Document document, int offset) {
+    return false;
+
+    //stub for closure generating
+    /*document.insertString(offset, "{\n}");
+    PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
+    final GrClosableBlock closure = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset + 1, GrClosableBlock.class, false);
+    if (closure == null) return true;
+    final HashMap<String, String> parameters = new HashMap<String, String>();
+    parameters.put("obj", "java.lang.String");
+    parameters.put("i", "int");
+
+    ClosureTemplateBuilder.runTemplate(parameters, closure, context.getProject(), context.getEditor());
+    return true;*/
   }
 
   private static boolean isAnnotationNameValuePair(Object obj, PsiElement parent) {

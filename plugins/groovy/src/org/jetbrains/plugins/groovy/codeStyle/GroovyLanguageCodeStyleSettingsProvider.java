@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.formatter;
+package org.jetbrains.plugins.groovy.codeStyle;
 
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.SmartIndentOptionsEditor;
@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 
 import javax.swing.*;
 
@@ -44,10 +43,9 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                 @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showAllStandardOptions();
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES", "Use flying geese braces",
-                                CodeStyleSettingsCustomizable.WRAPPING_BRACES);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP", "Align when multiple", "List and map literals");
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_NAMED_ARGS_IN_MAP", "Align named arguments", "List and map literals");
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES",     "Use flying geese braces", CodeStyleSettingsCustomizable.WRAPPING_BRACES);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP", "Align when multiple",     "List and map literals");
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_NAMED_ARGS_IN_MAP",     "Align named arguments",   "List and map literals");
       return;
     }
     if (settingsType == SettingsType.SPACING_SETTINGS) {
@@ -119,6 +117,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       );
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT", "In named argument after ':'", CodeStyleSettingsCustomizable.SPACES_OTHER);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_LIST_OR_MAP", "List and maps literals", CodeStyleSettingsCustomizable.SPACES_WITHIN);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_BEFORE_CLOSURE_LBRACE", "Closure left brace in method calls", CodeStyleSettingsCustomizable.SPACES_BEFORE_LEFT_BRACE);
       return;
     }
     consumer.showAllStandardOptions();
@@ -220,6 +219,10 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "  public static <T1, T2> void foo(int x, int y) {\n" +
     "    for (int i = 0; i < x; i++) {\n" +
     "      y += (y ^ 0x123) << 2\n" +
+    "    }\n" +
+    "    \n" +
+    "    10.times {\n" +
+    "      print it\n" +
     "    }\n" +
     "    int j = 0\n" +
     "    while (j < 10) {\n" +
