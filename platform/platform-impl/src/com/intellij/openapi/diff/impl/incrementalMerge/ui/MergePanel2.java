@@ -548,7 +548,9 @@ public class MergePanel2 implements DiffViewer {
 
   public void setColorScheme(EditorColorsScheme scheme) {
     for (Editor editor : getEditors()) {
-      ((EditorEx)editor).setColorsScheme(scheme);
+      if (editor != null) {
+        ((EditorEx)editor).setColorsScheme(scheme);
+      }
     }
     myPanel.setColorScheme(scheme);
   }

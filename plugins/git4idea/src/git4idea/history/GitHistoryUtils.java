@@ -194,7 +194,7 @@ public class GitHistoryUtils {
       return null;
     }
     final List<Change> changes = record.parseChanges(project, root);
-    boolean exists = ! FileStatus.DELETED.equals(changes.get(0).getFileStatus());
+    boolean exists = changes.isEmpty() || !FileStatus.DELETED.equals(changes.get(0).getFileStatus());
     record.setUsedHandler(h);
     return new ItemLatestState(new GitRevisionNumber(record.getHash(), record.getDate()), exists, false);
   }
