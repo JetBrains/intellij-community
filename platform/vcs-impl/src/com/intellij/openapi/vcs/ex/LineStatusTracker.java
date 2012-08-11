@@ -397,7 +397,6 @@ public class LineStatusTracker {
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
-                  FileDocumentManager.getInstance().saveDocument(e.getDocument());
                   boolean[] stillEmpty = new boolean[1];
                   synchronized (myLock) {
                     stillEmpty[0] = myRanges.isEmpty();
