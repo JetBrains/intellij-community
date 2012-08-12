@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.annotate;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -43,8 +43,15 @@ import java.util.List;
  *         Time: 2:41 PM
  */
 public class ShowAllAffectedGenericAction extends AnAction {
-  public ShowAllAffectedGenericAction() {
-    super("Show all affected files", null, AllIcons.Vcs.AllRevisions);
+
+  private static final String ACTION_ID = "VcsHistory.ShowAllAffected";
+
+ // use getInstance()
+  private ShowAllAffectedGenericAction() {
+  }
+
+  public static ShowAllAffectedGenericAction getInstance() {
+    return (ShowAllAffectedGenericAction)ActionManager.getInstance().getAction(ACTION_ID);
   }
 
   @Override

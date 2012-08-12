@@ -172,6 +172,11 @@
       <reference ref="Vcs.UpdateProject"/>
     </group>
 
+    <group id="Vcs.History">
+      <action id="VcsHistory.ShowAllAffected" class="com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction"
+              icon="AllIcons.Vcs.AllRevisions" />
+    </group>
+
     <action id="ChangesView.Browse" class="com.intellij.openapi.vcs.changes.actions.BrowseChangesAction"/>
 
     <action id="Diff.PrevChange" class="com.intellij.openapi.vcs.changes.actions.ShowPrevChangeAction"

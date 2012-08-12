@@ -143,7 +143,7 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
   @Override
   protected void addActionsTo(DefaultActionGroup group) {
     super.addActionsTo(group);
-    ShowAllAffectedGenericAction showCommit = new ShowAllAffectedGenericAction();
+    ShowAllAffectedGenericAction showCommit = ShowAllAffectedGenericAction.getInstance();
     showCommit.registerCustomShortcutSet(new CustomShortcutSet(
       CommonShortcuts.DOUBLE_CLICK_1.getShortcuts()[0]), myTree);
     group.addAction(showCommit);

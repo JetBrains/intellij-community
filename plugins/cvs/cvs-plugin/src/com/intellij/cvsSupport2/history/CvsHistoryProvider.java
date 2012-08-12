@@ -246,7 +246,7 @@ public class CvsHistoryProvider implements VcsHistoryProvider {
   }
 
   public AnAction[] getAdditionalActions(final Runnable refresher) {
-    return new AnAction[]{new ShowAllAffectedGenericAction()};
+    return new AnAction[]{ ShowAllAffectedGenericAction.getInstance() };
   }
 
   public boolean supportsHistoryForDirectories() {

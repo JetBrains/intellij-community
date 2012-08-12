@@ -302,7 +302,9 @@
     <action id="Vcs.QuickListPopupAction">
       <keyboard-shortcut first-keystroke="ctrl V" />
     </action>
-
+    <action id="VcsHistory.ShowAllAffected">
+      <keyboard-shortcut first-keystroke="meta ctrl A" />
+    </action>
 
     <action id="EditorSelectWord">
       <keyboard-shortcut first-keystroke="alt UP"/>

@@ -909,6 +909,9 @@
   <action id="Vcs.QuickListPopupAction">
     <keyboard-shortcut first-keystroke="alt BACK_QUOTE"/>
   </action>
+  <action id="VcsHistory.ShowAllAffected">
+    <keyboard-shortcut first-keystroke="alt shift A" />
+  </action>
 
   <action id="Jdbc.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>
   <action id="Jpa.OpenConsole"><keyboard-shortcut first-keystroke="control shift F10"/></action>

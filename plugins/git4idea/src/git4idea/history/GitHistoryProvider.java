@@ -63,7 +63,7 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   public AnAction[] getAdditionalActions(Runnable refresher) {
-    return new AnAction[]{new ShowAllAffectedGenericAction(), new GitCopyHistoryRevisionNumberAction()};
+    return new AnAction[]{ ShowAllAffectedGenericAction.getInstance(), new GitCopyHistoryRevisionNumberAction()};
   }
 
   public boolean isDateOmittable() {
