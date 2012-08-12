@@ -47,4 +47,18 @@ class FooTest extends geb.junit4.GebReportingTest {
     TestUtils.checkCompletionContains(myFixture, "\$()", "to()", "go()", "currentWindow", "verifyAt()", "title")
   }
 
+  void testFieldNameCompletion() {
+    myFixture.configureByText("FooTest.groovy", """
+class FooTest extends geb.Page {
+
+    static <caret>
+
+    static content = {}
+}
+""")
+
+    TestUtils.checkCompletionContains(myFixture, "at", "url")
+    assert !myFixture.getLookupElementStrings().contains("content")
+  }
+
 }
