@@ -236,6 +236,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   public abstract static class TableModel<T> {
 
     public abstract int getColumnCount();
+    @Nullable
     public abstract String getColumnName(int columnIndex);
     public abstract Object getField(T o, int columnIndex);
 

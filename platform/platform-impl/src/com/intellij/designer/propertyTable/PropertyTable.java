@@ -216,7 +216,7 @@ public abstract class PropertyTable extends JBTable {
         @Override
         public void run() throws Exception {
           for (PropertiesContainer component : myContainers) {
-            if (!property.isRecursiveDefault(component)) {
+            if (!property.isDefaultRecursively(component)) {
               property.setDefaultValue(component);
             }
           }
@@ -478,7 +478,7 @@ public abstract class PropertyTable extends JBTable {
   private boolean addIfNeeded(PropertiesContainer<?> component, Property property, List<Property> properties) {
     if (property.isExpert() && !myShowExpertProperties) {
       try {
-        if (property.isRecursiveDefault(component)) {
+        if (property.isDefaultRecursively(component)) {
           return false;
         }
       }
@@ -592,7 +592,7 @@ public abstract class PropertyTable extends JBTable {
 
   public boolean isDefault(Property property) throws Exception {
     for (PropertiesContainer component : myContainers) {
-      if (!property.isRecursiveDefault(component)) {
+      if (!property.isDefaultRecursively(component)) {
         return false;
       }
     }
