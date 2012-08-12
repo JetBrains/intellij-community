@@ -116,17 +116,17 @@ public class GitContentRevision implements ContentRevision {
     return myFile.hashCode() + myRevision.hashCode();
   }
 
-  public static ContentRevision createMultipleParentsRevision(Project project,
-                                                              final FilePath file,
-                                                              final List<GitRevisionNumber> revisions) throws VcsException {
-    final GitContentRevision contentRevision = createRevisionImpl(file, revisions.get(0), project, null);
-    if (revisions.size() == 1) {
+  public static ContentRevision createMultipleParentsRevision(@NotNull Project project, @NotNull final FilePath file,
+                                                              @NotNull GitRevisionNumber currentRevision,
+                                                              @NotNull final List<GitRevisionNumber> parentRevisions) throws VcsException {
+    final GitContentRevision contentRevision = createRevisionImpl(file, currentRevision, project, null);
+    if (parentRevisions.size() == 1) {
       return contentRevision;
     } else {
       if (contentRevision instanceof GitBinaryContentRevision) {
-        return new GitBinaryMultipleContentsRevision(file, revisions, (GitBinaryContentRevision) contentRevision);
+        return new GitBinaryMultipleContentsRevision(file, parentRevisions, (GitBinaryContentRevision) contentRevision);
       } else {
-        return new GitMultipleContentsRevision(file, revisions, contentRevision);
+        return new GitMultipleContentsRevision(file, parentRevisions, contentRevision);
       }
     }
   }
