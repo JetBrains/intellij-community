@@ -84,6 +84,8 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.dgm.DGMMemberContributor"/>
 
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebSpockTestMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebPageMemberContributor"/>
+
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
 
@@ -150,6 +152,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.geb.GebContentDeclarationSearcher"/>
+
     <testFramework implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework"/>
     <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>

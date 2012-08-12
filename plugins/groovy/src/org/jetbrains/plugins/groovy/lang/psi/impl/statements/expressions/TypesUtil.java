@@ -29,6 +29,7 @@ import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -676,7 +677,7 @@ public class TypesUtil {
   public static Map<String, PsiClass> getSuperClassesWithCache(@NotNull PsiClass aClass) {
     Map<String, PsiClass> superClassNames = PARENT_CACHE_KEY.getCachedValue(aClass);
     if (superClassNames == null) {
-      Set<PsiClass> superClasses = new HashSet<PsiClass>();
+      Set<PsiClass> superClasses = new THashSet<PsiClass>();
       superClasses.add(aClass);
       InheritanceUtil.getSuperClasses(aClass, superClasses, true);
 
