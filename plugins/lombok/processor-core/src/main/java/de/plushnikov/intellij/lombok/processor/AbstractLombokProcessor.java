@@ -18,6 +18,10 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
    */
   private final String supportedAnnotation;
   /**
+   * Anntotation class this processor supports
+   */
+  private final Class<? extends Annotation> supportedAnnotationClass;
+  /**
    * Kind of output elements this processor supports
    */
   private final Class<?> supportedClass;
@@ -29,6 +33,7 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
    * @param supportedClass           kind of output elements this processor supports
    */
   protected AbstractLombokProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+    this.supportedAnnotationClass = supportedAnnotationClass;
     this.supportedAnnotation = supportedAnnotationClass.getName();
     this.supportedClass = supportedClass;
   }
@@ -37,6 +42,12 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
   @Override
   public String getSupportedAnnotation() {
     return supportedAnnotation;
+  }
+
+  @NotNull
+  @Override
+  public Class<? extends Annotation> getSupportedAnnotationClass() {
+    return supportedAnnotationClass;
   }
 
   public <Psi extends PsiElement> boolean acceptAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull Class<Psi> type) {

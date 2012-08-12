@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import de.plushnikov.intellij.lombok.problem.LombokProblem;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 
 /**
@@ -15,6 +16,8 @@ public interface LombokProcessor {
 
   @NotNull
   String getSupportedAnnotation();
+
+  Class<? extends Annotation> getSupportedAnnotationClass();
 
   Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
 }
