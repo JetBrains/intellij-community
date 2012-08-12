@@ -80,9 +80,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     final Language language = viewProvider.getTemplateDataLanguage();
     final CharSequence chars = chameleon.getChars();
 
-    final Lexer baseLexer = createBaseLexer(viewProvider);
-    final CharSequence templateText = createTemplateText(chars, baseLexer);
-    final PsiFile templateFile = createFromText(language, templateText, file.getManager());
+    final PsiFile templateFile = createTemplateFile(file, language, chars, viewProvider);
 
     final TreeElement parsed = ((PsiFileImpl)templateFile).calcTreeElement();
     Lexer langLexer = LanguageParserDefinitions.INSTANCE.forLanguage(language).createLexer(file.getProject());
@@ -110,6 +108,15 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     DebugUtil.checkTreeStructure(originalFile.getNode());
 
     return childNode;
+  }
+
+  protected PsiFile createTemplateFile(final PsiFile file,
+                                     final Language language,
+                                     final CharSequence chars,
+                                     final TemplateLanguageFileViewProvider viewProvider) {
+    final Lexer baseLexer = createBaseLexer(viewProvider);
+    final CharSequence templateText = createTemplateText(chars, baseLexer);
+    return createFromText(language, templateText, file.getManager());
   }
 
   private CharSequence createTemplateText(CharSequence buf, Lexer lexer) {
@@ -176,7 +183,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
     return new OuterLanguageElementImpl(outerElementType, table.intern(buffer, tokenStart, tokenEnd));
   }
 
-  private PsiFile createFromText(final Language language, CharSequence text, PsiManager manager) {
+  protected PsiFile createFromText(final Language language, CharSequence text, PsiManager manager) {
     @NonNls
     final LightVirtualFile virtualFile = new LightVirtualFile("foo", createTemplateFakeFileType(language), text, LocalTimeCounter.currentTime());
 
