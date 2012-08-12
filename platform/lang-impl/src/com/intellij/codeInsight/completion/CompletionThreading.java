@@ -117,7 +117,7 @@ class AsyncCompletion implements CompletionThreading {
             if (next != null && !next.compute()) {
               return;
             }
-            ProgressManager.checkCanceled();
+            indicator.checkCanceled();
           }
         }
         catch (InterruptedException e) {
