@@ -117,7 +117,7 @@ public class RemoteUtil {
   }
 
   public static <T> T handleRemoteResult(Object value, Object requestor) throws Exception {
-    return handleRemoteResult(value, Object.class, requestor.getClass().getClassLoader(), false);
+    return RemoteUtil.<T>handleRemoteResult(value, Object.class, requestor.getClass().getClassLoader(), false);
   }
 
   private static <T> T handleRemoteResult(Object value, Class<?> methodReturnType, ClassLoader classLoader, boolean substituteClassLoader) throws Exception {
