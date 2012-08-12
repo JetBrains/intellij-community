@@ -697,41 +697,32 @@ public class GitHistoryUtils {
     gitCommitConsumer.consume(gitCommit);
   }
 
-  private static GitCommit createCommit(Project project, SymbolicRefsI refs, VirtualFile root, GitLogRecord record) throws VcsException {
-    GitCommit gitCommit;
+  @NotNull
+  private static GitCommit createCommit(@NotNull Project project, @Nullable SymbolicRefsI refs, @NotNull VirtualFile root,
+                                        @NotNull GitLogRecord record) throws VcsException {
     final Collection<String> currentRefs = record.getRefs();
     List<String> locals = new ArrayList<String>();
     List<String> remotes = new ArrayList<String>();
     List<String> tags = new ArrayList<String>();
     final String s = parseRefs(refs, currentRefs, locals, remotes, tags);
-    gitCommit = new GitCommit(root, AbstractHash.create(record.getShortHash()), new SHAHash(record.getHash()), record.getAuthorName(),
+
+    GitCommit gitCommit = new GitCommit(root, AbstractHash.create(record.getShortHash()), new SHAHash(record.getHash()), record.getAuthorName(),
                                       record.getCommitterName(),
                                       record.getDate(), record.getSubject(), record.getFullMessage(),
                                       new HashSet<String>(Arrays.asList(record.getParentsShortHashes())), record.getFilePaths(root),
                                       record.getAuthorEmail(),
                                       record.getCommitterEmail(), tags, locals, remotes,
-                                      record.parseChanges(project, root), record.getAuthorTimeStamp() * 1000
-    );
+                                      record.parseChanges(project, root), record.getAuthorTimeStamp() * 1000);
     gitCommit.setCurrentBranch(s);
-    /*final String current = refs.getCurrent().getName();
-    gitCommit.setOnLocal((current != null) && (! current.startsWith(GitBranch.REFS_REMOTES_PREFIX)) &&
-                         (! current.startsWith("remotes/")) && branches.contains(current));
-    String remoteName = refs.getTrackedRemoteName();
-    if (".".equals(remoteName)) {
-      gitCommit.setOnTracked(gitCommit.isOnLocal());
-    } else {
-      remoteName = remoteName.startsWith("refs/") ? remoteName.substring("refs/".length()) : remoteName;
-      gitCommit.setOnTracked(remoteName != null && branches.contains(remoteName));
-    }*/
     return gitCommit;
   }
 
-  private static String parseRefs(SymbolicRefsI refs,
-                                Collection<String> currentRefs,
-                                List<String> locals,
-                                List<String> remotes,
-                                List<String> tags) {
-    if (refs == null) return null;
+  @Nullable
+  private static String parseRefs(@Nullable SymbolicRefsI refs, Collection<String> currentRefs, List<String> locals,
+                                List<String> remotes, List<String> tags) {
+    if (refs == null) {
+      return null;
+    }
     for (String ref : currentRefs) {
       final SymbolicRefs.Kind kind = refs.getKind(ref);
       if (SymbolicRefs.Kind.LOCAL.equals(kind)) {
@@ -742,7 +733,9 @@ public class GitHistoryUtils {
         tags.add(ref);
       }
     }
-    if (refs.getCurrent() != null && currentRefs.contains(refs.getCurrent().getName())) return refs.getCurrent().getName();
+    if (refs.getCurrent() != null && currentRefs.contains(refs.getCurrent().getName())) {
+      return refs.getCurrent().getName();
+    }
     return null;
   }
 
@@ -818,35 +811,27 @@ public class GitHistoryUtils {
     return result;
   }
 
-  public static List<GitCommit> commitsDetails(Project project,
-                                                 FilePath path, SymbolicRefsI refs,
-                                                 final Collection<String> commitsIds) throws VcsException {
-    // adjust path using change manager
-    path = getLastCommitName(project, path);
-    final VirtualFile root = GitUtil.getGitRoot(path);
+  @NotNull
+  public static List<GitCommit> commitsDetails(@NotNull Project project, @NotNull FilePath path, @Nullable SymbolicRefsI refs,
+                                               @NotNull final Collection<String> commitsIds) throws VcsException {
+    path = getLastCommitName(project, path);     // adjust path using change manager
+    VirtualFile root = GitUtil.getGitRoot(path);
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
+                                           SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
                                            COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(commitsIds));
 
-    //h.endOptions();
-    //h.addRelativePaths(path);
-    String output;
-    try {
-      output = h.run();
-
+    String output = h.run();
     final List<GitCommit> rc = new ArrayList<GitCommit>();
     for (GitLogRecord record : parser.parse(output)) {
       final GitCommit gitCommit = createCommit(project, refs, root, record);
       rc.add(gitCommit);
     }
     return rc;
-    } catch (VcsException e) {
-      throw e;
-    }
   }
 
   public static long getAuthorTime(Project project, FilePath path, final String commitsId) throws VcsException {
@@ -860,16 +845,9 @@ public class GitHistoryUtils {
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(commitsId);
 
-    String output;
-    try {
-      output = h.run();
-
-      GitLogRecord logRecord = parser.parseOneRecord(output);
-      return logRecord.getAuthorTimeStamp() * 1000;
-
-    } catch (VcsException e) {
-      throw e;
-    }
+    String output = h.run();
+    GitLogRecord logRecord = parser.parseOneRecord(output);
+    return logRecord.getAuthorTimeStamp() * 1000;
   }
 
   public static void hashesWithParents(Project project, FilePath path, final AsynchConsumer<CommitHashPlusParents> consumer,
