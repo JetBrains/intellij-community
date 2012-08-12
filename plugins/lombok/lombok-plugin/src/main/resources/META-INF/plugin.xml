@@ -31,6 +31,17 @@
 
   <change-notes><![CDATA[
 		<ul>
+		 <li>0.5
+				<ol>
+				    <li>Issue #23 Initial support for IntelliJ 12</li>
+				    <li>Issue #12 Added support for "Singleton" and "EnumId" annotations from lombok-pg</li>
+				<ol>
+			</li>
+		  <li>0.4
+				<ol>
+				    <li>fix reflection access for intellij ultimate</li>
+				<ol>
+			</li>
 			<li>0.3
 				<ol>
             <li>Fixed issue #4 "Getter/Setter on generic types"</li>
