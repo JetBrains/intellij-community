@@ -822,7 +822,7 @@ public class GitHistoryUtils {
                                            COMMITTER_EMAIL, SHORT_PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
     h.setNoSSH(true);
     h.setStdoutSuppressed(true);
-    h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(new ArrayList<String>(commitsIds));
 
     String output = h.run();
