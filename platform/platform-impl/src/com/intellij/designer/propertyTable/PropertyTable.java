@@ -20,6 +20,7 @@ import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.Property;
 import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer;
+import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -79,6 +80,8 @@ public abstract class PropertyTable extends JBTable {
 
   private String[] myColumnNames = new String[]{"Property", "Value"};
 
+  private final TableSpeedSearch mySpeedSearch;
+
   private final AbstractTableModel myModel = new PropertyTableModel();
   private List<PropertiesContainer> myContainers = Collections.emptyList();
   private List<Property> myProperties = Collections.emptyList();
@@ -91,7 +94,6 @@ public abstract class PropertyTable extends JBTable {
   private final PropertyCellEditor myCellEditor = new PropertyCellEditor();
 
   private final PropertyEditorListener myPropertyEditorListener = new PropertyCellEditorListener();
-
 
   public PropertyTable() {
     setModel(myModel);
@@ -110,15 +112,21 @@ public abstract class PropertyTable extends JBTable {
 
     addMouseListener(new MouseTableListener());
 
-    TableSpeedSearch search = new TableSpeedSearch(this, new NullableFunction<Pair<Object, Cell>, String>() {
+    mySpeedSearch = new TableSpeedSearch(this, new NullableFunction<Pair<Object, Cell>, String>() {
       @Override
       public String fun(Pair<Object, Cell> pair) {
         if (pair.second.column != 0) return null;
         if (pair.first instanceof GroupProperty) return null;
         return ((Property)pair.first).getName();
       }
-    });
-    search.setComparator(new SpeedSearchComparator(false, false));
+    }) {
+      @Override
+      protected void selectElement(Object element, String selectedText) {
+        super.selectElement(element, selectedText);
+        repaint(PropertyTable.this.getVisibleRect());
+      }
+    };
+    mySpeedSearch.setComparator(new SpeedSearchComparator(false, false));
 
     // TODO: Updates UI after LAF updated
   }
@@ -1241,7 +1249,8 @@ public abstract class PropertyTable extends JBTable {
           attr = attr.derive(attr.getStyle() | style, template.getFgColor(), null, template.getWaveColor());
         }
 
-        renderer.append(property.getName(), attr);
+        SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), property.getName(),
+                                   attr.getStyle(),  attr.getFgColor(), attr.getBgColor(), renderer);
 
         Icon icon = UIUtil.getTreeNodeIcon(isExpanded(property), selected, tableHasFocus);
         boolean hasChildren = !getChildren(property).isEmpty();
