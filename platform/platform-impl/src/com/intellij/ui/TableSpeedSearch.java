@@ -16,6 +16,8 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.Convertor;
 
 import javax.swing.*;
@@ -23,22 +25,30 @@ import javax.swing.table.TableModel;
 import java.util.ListIterator;
 
 public class TableSpeedSearch extends SpeedSearchBase<JTable> {
-  private static final Convertor<Object, String> TO_STRING = new Convertor<Object, String>() {
-    public String convert(Object object) {
-      return object == null? "" : object.toString();
+  private static final NullableFunction<Pair<Object, Cell>, String> TO_STRING = new NullableFunction<Pair<Object, Cell>, String>() {
+    public String fun(Pair<Object, Cell> object) {
+      return object.first == null ? "" : object.toString();
     }
   };
-  private final Convertor<Object, String> myToStringConvertor;
-
-  public TableSpeedSearch(JTable table, Convertor<Object, String> toStringConvertor) {
-    super(table);
-    myToStringConvertor = toStringConvertor;
-  }
+  private final NullableFunction<Pair<Object, Cell>, String> myToStringConvertor;
 
   public TableSpeedSearch(JTable table) {
     this(table, TO_STRING);
   }
 
+  public TableSpeedSearch(JTable table, final Convertor<Object, String> toStringConvertor) {
+    this(table, new NullableFunction<Pair<Object, Cell>, String>() {
+      @Override
+      public String fun(Pair<Object, Cell> o) {
+        return toStringConvertor.convert(o.first);
+      }
+    });
+  }
+
+  public TableSpeedSearch(JTable table, final NullableFunction<Pair<Object, Cell>, String> toStringConvertor) {
+    super(table);
+    myToStringConvertor = toStringConvertor;
+  }
 
   protected boolean isSpeedSearchEnabled() {
     return !getComponent().isEditing() && super.isSpeedSearchEnabled();
@@ -78,10 +88,10 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
   protected String getElementText(Object element) {
     final int index = ((Integer)element).intValue();
     final TableModel model = myComponent.getModel();
-    final Object value = model.getValueAt(index / model.getColumnCount(), index % model.getColumnCount());
-    String string = myToStringConvertor.convert(value);
-    if (string == null) return TO_STRING.convert(value);
-    return string;
+    int row = index / model.getColumnCount();
+    int col = index % model.getColumnCount();
+    final Object value = model.getValueAt(row, col);
+    return myToStringConvertor.fun(Pair.create(value, new Cell(row, col)));
   }
 
   private class MyListIterator implements ListIterator<Object> {

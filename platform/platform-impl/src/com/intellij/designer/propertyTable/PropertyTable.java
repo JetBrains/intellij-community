@@ -33,8 +33,8 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.NullableFunction;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,18 +104,21 @@ public abstract class PropertyTable extends JBTable {
     setIntercellSpacing(new Dimension(0, 1));
     setGridColor(UIUtil.getSlightlyDarkerColor(getBackground()));
 
-    setRowSelectionAllowed(true);
     setColumnSelectionAllowed(false);
+    setCellSelectionEnabled(false);
+    setRowSelectionAllowed(true);
 
     addMouseListener(new MouseTableListener());
 
-    new TableSpeedSearch(this, new Convertor<Object, String>() {
+    TableSpeedSearch search = new TableSpeedSearch(this, new NullableFunction<Pair<Object, Cell>, String>() {
       @Override
-      public String convert(Object o) {
-        if (o instanceof GroupProperty) return null;
-        return ((Property)o).getName();
+      public String fun(Pair<Object, Cell> pair) {
+        if (pair.second.column != 0) return null;
+        if (pair.first instanceof GroupProperty) return null;
+        return ((Property)pair.first).getName();
       }
-    }).setComparator(new SpeedSearchComparator(false, false));
+    });
+    search.setComparator(new SpeedSearchComparator(false, false));
 
     // TODO: Updates UI after LAF updated
   }
@@ -162,6 +165,14 @@ public abstract class PropertyTable extends JBTable {
 
     // Customize action and input maps
     ActionMap actionMap = getActionMap();
+
+    setFocusTraversalKeys(
+      KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS,
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalKeys(KeyboardFocusManager.FORWARD_TRAVERSAL_KEYS));
+    setFocusTraversalKeys(
+      KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS,
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().getDefaultFocusTraversalKeys(KeyboardFocusManager.BACKWARD_TRAVERSAL_KEYS));
+
     InputMap focusedInputMap = getInputMap(JComponent.WHEN_FOCUSED);
     InputMap ancestorInputMap = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
