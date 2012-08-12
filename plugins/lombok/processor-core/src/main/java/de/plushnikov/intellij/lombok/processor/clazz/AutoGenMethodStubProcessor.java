@@ -46,6 +46,7 @@ public class AutoGenMethodStubProcessor extends AbstractLombokClassProcessor {
   }
 
   protected <Psi extends PsiElement> void processIntern(@NotNull final PsiClass psiClass, @NotNull final PsiAnnotation psiAnnotation, @NotNull final List<Psi> target) {
+    //todo reimplement this to get it working
     final Collection<CandidateInfo> candidateInfos = OverrideImplementUtil.getMethodsToOverrideImplement(psiClass, true);
     for (CandidateInfo candidateInfo : candidateInfos) {
 
