@@ -182,6 +182,7 @@ public class HgCachingCommitedChangesProvider
     return getLocationFor(root);
   }
 
+  @Nullable
   public VcsCommittedListsZipper getZipper() {
     return null;
   }

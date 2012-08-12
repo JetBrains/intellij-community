@@ -83,6 +83,7 @@ public class CompositeCommittedChangesProvider implements CommittedChangesProvid
     return getLocationFor(root);
   }
 
+  @Nullable
   public VcsCommittedListsZipper getZipper() {
     throw new UnsupportedOperationException();
   }

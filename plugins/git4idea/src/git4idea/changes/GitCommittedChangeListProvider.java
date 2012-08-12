@@ -35,63 +35,40 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.Consumer;
 import git4idea.GitBranch;
-import git4idea.GitFileRevision;
 import git4idea.GitDeprecatedRemote;
+import git4idea.GitFileRevision;
 import git4idea.GitUtil;
 import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SymbolicRefs;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 
 /**
  * The provider for committed change lists
  */
 public class GitCommittedChangeListProvider implements CommittedChangesProvider<CommittedChangeList, ChangeBrowserSettings> {
-  /**
-   * the logger
-   */
+
   private static final Logger LOG = Logger.getInstance(GitCommittedChangeListProvider.class.getName());
 
+  @NotNull private final Project myProject;
 
-  /**
-   * The project for the service
-   */
-  private final Project myProject;
-
-  /**
-   * The constructor
-   *
-   * @param project the project instance for this provider
-   */
-  public GitCommittedChangeListProvider(Project project) {
+  public GitCommittedChangeListProvider(@NotNull Project project) {
     myProject = project;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public ChangeBrowserSettings createDefaultSettings() {
     return new ChangeBrowserSettings();
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new GitVersionFilterComponent(showDateFilter);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public RepositoryLocation getLocationFor(FilePath root) {
     // TODO !!! consider some caching for the case when we do not have tracked remote branch
     // TODO - in this case returned NULL is NOT cached (in ProjectKeyComponent)
@@ -125,25 +102,17 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public RepositoryLocation getLocationFor(FilePath root, String repositoryPath) {
     return getLocationFor(root);
   }
 
-  /**
-   * {@inheritDoc}
-   */
+  @Nullable
   public VcsCommittedListsZipper getZipper() {
     return null;
   }
 
-  public void loadCommittedChanges(ChangeBrowserSettings settings,
-                                   RepositoryLocation location,
-                                   int maxCount,
-                                   final AsynchConsumer<CommittedChangeList> consumer)
-    throws VcsException {
+  public void loadCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, int maxCount,
+                                   final AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
     try {
       getCommittedChangesImpl(settings, location, maxCount, new Consumer<GitCommittedChangeList>() {
         @Override
@@ -157,9 +126,6 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     }
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public List<CommittedChangeList> getCommittedChanges(ChangeBrowserSettings settings, RepositoryLocation location, final int maxCount)
     throws VcsException {
 
@@ -215,23 +181,14 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     }, consumer, false);
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public ChangeListColumn[] getColumns() {
     return new ChangeListColumn[]{ChangeListColumn.NUMBER, ChangeListColumn.DATE, ChangeListColumn.DESCRIPTION, ChangeListColumn.NAME};
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public VcsCommittedViewAuxiliary createActions(DecoratorManager manager, RepositoryLocation location) {
     return null;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   public int getUnlimitedCountValue() {
     return -1;
   }
@@ -242,7 +199,9 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
 
     final List<GitCommit> gitCommits =
       GitHistoryUtils.commitsDetails(myProject, filePath, new SymbolicRefs(), Collections.singletonList(number.asString()));
-    if (gitCommits == null || gitCommits.size() != 1) return null;
+    if (gitCommits.size() != 1) {
+      return null;
+    }
     final GitCommit gitCommit = gitCommits.get(0);
     final CommittedChangeList commit = new CommittedChangeListImpl(gitCommit.getDescription() + " (" + gitCommit.getShortHash().getString() + ")",
                                                                    gitCommit.getDescription(), gitCommit.getCommitter(),
@@ -271,42 +230,4 @@ public class GitCommittedChangeListProvider implements CommittedChangesProvider<
     return null;
   }
 
-  public int getFormatVersion() {
-    return 0;
-  }
-
-  public void writeChangeList(DataOutput stream, CommittedChangeList list) throws IOException {
-  }
-
-  public CommittedChangeList readChangeList(RepositoryLocation location, DataInput stream) throws IOException {
-    return null;
-  }
-
-  public boolean isMaxCountSupported() {
-    return false;
-  }
-
-  public Collection<FilePath> getIncomingFiles(RepositoryLocation location) throws VcsException {
-    return null;
-  }
-
-  public boolean refreshCacheByNumber() {
-    return false;
-  }
-
-  @Nls
-  public String getChangelistTitle() {
-    return null;
-  }
-
-  public boolean isChangeLocallyAvailable(FilePath filePath,
-                                          @Nullable VcsRevisionNumber localRevision,
-                                          VcsRevisionNumber changeRevision,
-                                          CommittedChangeList changeList) {
-    return false;
-  }
-
-  public boolean refreshIncomingWithCommitted() {
-    return false;
-  }
 }

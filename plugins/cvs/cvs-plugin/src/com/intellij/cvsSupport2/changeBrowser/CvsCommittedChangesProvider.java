@@ -69,6 +69,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return new CvsVersionFilterComponent(showDateFilter);
   }
 
+  @Nullable
   public VcsCommittedListsZipper getZipper() {
     return new MyZipper();
   }
