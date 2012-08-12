@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitRevisionNumber;
-import git4idea.actions.GitShowAllSubmittedFilesAction;
+import git4idea.GitUtil;
 import git4idea.util.GitUIUtil;
 
 import javax.swing.*;
@@ -94,7 +94,7 @@ public class GitReferenceValidator {
         myLastResult = false;
         try {
           GitRevisionNumber revision = GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
-          GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, revision.asString(), gitRoot(), false, false);
+          GitUtil.showSubmittedFiles(myProject, revision.asString(), gitRoot(), false, false);
           myLastResult = true;
         }
         catch (VcsException ex) {

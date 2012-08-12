@@ -35,11 +35,7 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Consumer;
-import git4idea.GitBranch;
-import git4idea.GitRevisionNumber;
-import git4idea.GitVcs;
-import git4idea.PlatformFacade;
-import git4idea.actions.GitShowAllSubmittedFilesAction;
+import git4idea.*;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
@@ -224,7 +220,7 @@ public class GitUnstashDialog extends DialogWrapper {
           GitUIUtil.showOperationError(myProject, ex, "resolving revision");
           return;
         }
-        GitShowAllSubmittedFilesAction.showSubmittedFiles(myProject, resolvedStash, root, true, false);
+        GitUtil.showSubmittedFiles(myProject, resolvedStash, root, true, false);
       }
     });
     init();

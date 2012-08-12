@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.PanelWithActionsAndCloseButton;
 import com.intellij.openapi.vcs.VcsDataKeys;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -36,7 +37,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
-import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.rebase.GitRebaseUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -143,7 +143,7 @@ public class GitSkippedCommits extends PanelWithActionsAndCloseButton {
   @Override
   protected void addActionsTo(DefaultActionGroup group) {
     super.addActionsTo(group);
-    GitShowAllSubmittedFilesAction showCommit = new GitShowAllSubmittedFilesAction();
+    ShowAllAffectedGenericAction showCommit = new ShowAllAffectedGenericAction();
     showCommit.registerCustomShortcutSet(new CustomShortcutSet(
       CommonShortcuts.DOUBLE_CLICK_1.getShortcuts()[0]), myTree);
     group.addAction(showCommit);

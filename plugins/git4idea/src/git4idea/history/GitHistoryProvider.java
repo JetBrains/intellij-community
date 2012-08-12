@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.annotate.ShowAllAffectedGenericAction;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -32,7 +33,6 @@ import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
-import git4idea.actions.GitShowAllSubmittedFilesAction;
 import git4idea.changes.GitChangeUtils;
 import git4idea.config.GitExecutableValidator;
 import git4idea.history.browser.SHAHash;
@@ -63,7 +63,7 @@ public class GitHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
   }
 
   public AnAction[] getAdditionalActions(Runnable refresher) {
-    return new AnAction[]{new GitShowAllSubmittedFilesAction(), new GitCopyHistoryRevisionNumberAction()};
+    return new AnAction[]{new ShowAllAffectedGenericAction(), new GitCopyHistoryRevisionNumberAction()};
   }
 
   public boolean isDateOmittable() {
