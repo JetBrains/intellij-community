@@ -266,8 +266,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (paramList != null && paramList.getParent() instanceof PyFunction) {
             final PyFunction func = (PyFunction) paramList.getParent();
             containingClass = func.getContainingClass();
-            final String funcName = func.getName();
-            if (PyNames.INIT.equals(funcName) && containingClass != null) {
+            if (PyNames.INIT.equals(func.getName()) && containingClass != null) {
               if (!namedParameter.isKeywordContainer() && !namedParameter.isPositionalContainer()) {
                 mayBeField = true;
               }
@@ -276,9 +275,6 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               continue;
             }
             if (func.asMethod() != null) {
-              if (funcName != null && isSpecialName(funcName)) {
-                continue;
-              }
               Boolean isEmpty = emptyFunctions.get(func);
               if (isEmpty == null) {
                 isEmpty = isEmptyFunction(func);
@@ -311,11 +307,6 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
-  }
-
-  private static boolean isSpecialName(@NotNull String name) {
-    final String dunder = "__";
-    return name.startsWith(dunder) && name.endsWith(dunder) && name.length() > (dunder.length() * 2);
   }
 
   private boolean isRangeIteration(PyForStatement forStatement) {
