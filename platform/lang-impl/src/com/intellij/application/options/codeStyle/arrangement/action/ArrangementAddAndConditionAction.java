@@ -25,9 +25,12 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Consumer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -65,17 +68,29 @@ public class ArrangementAddAndConditionAction extends AnAction {
     if (tree == null) {
       return;
     }
-
+    
+    final Ref<Balloon> balloonRef = new Ref<Balloon>();
     ArrangementSettingsNode node = ArrangementSettingsUtil.getSettingsNode(e.getDataContext());
+    Consumer<ArrangementSettingsAtomNode> consumer = new Consumer<ArrangementSettingsAtomNode>() {
+      @Override
+      public void consume(ArrangementSettingsAtomNode node) {
+        // TODO den implement
+        Balloon balloon = balloonRef.get();
+        if (balloon != null) {
+          balloon.hide();
+        }
+      }
+    };
     
     if (node == null) {
       // TODO den implement
     }
     else {
-      ArrangementNodeEditor editor = new ArrangementNodeEditor(displayManager, availableSettings);
+      ArrangementNodeEditor editor = new ArrangementNodeEditor(displayManager, availableSettings, consumer);
       editor.applyColorsFrom(tree);
       Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(editor).setDisposable(project).setHideOnClickOutside(true)
         .setFillColor(tree.getBackground()).createBalloon();
+      balloonRef.set(balloon);
       Point point = MouseInfo.getPointerInfo().getLocation();
       SwingUtilities.convertPointFromScreen(point, tree);
       balloon.show(new RelativePoint(tree, point), Balloon.Position.below);

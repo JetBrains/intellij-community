@@ -41,17 +41,17 @@ public class ArrangementNodeDisplayManager {
   public ArrangementNodeDisplayManager(@NotNull ArrangementStandardSettingsAware filter) {
     Map<ArrangementSettingType, List<?>> map = ArrangementSettingsUtil.buildAvailableOptions(filter, null);
     for (Map.Entry<ArrangementSettingType, List<?>> entry : map.entrySet()) {
-      myMaxWidths.put(entry.getKey(), maxWidth(entry.getKey(), entry.getValue()));
+      myMaxWidths.put(entry.getKey(), maxWidth(entry.getValue()));
     }
   }
   
-  private static int maxWidth(@NotNull ArrangementSettingType type, List<?> values) {
+  private int maxWidth(List<?> values) {
     JLabel label = new JLabel();
     FontMetrics metrics = label.getFontMetrics(label.getFont());
     
     int result = 0;
     for (Object value : values) {
-      result = Math.max(result, metrics.stringWidth(getDisplayValue(type, value)));
+      result = Math.max(result, metrics.stringWidth(getDisplayValue(value)));
     }
     return result;
   }
@@ -59,7 +59,7 @@ public class ArrangementNodeDisplayManager {
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public String getDisplayValue(@NotNull ArrangementSettingsAtomNode node) {
-    return getDisplayValue(node.getType(), node.getValue());
+    return getDisplayValue(node.getValue());
   }
 
   @SuppressWarnings("MethodMayBeStatic")
@@ -68,8 +68,9 @@ public class ArrangementNodeDisplayManager {
     return type.toString().toLowerCase();
   }
   
+  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
-  private static String getDisplayValue(@NotNull ArrangementSettingType type, @NotNull Object value) {
+  public String getDisplayValue(@NotNull Object value) {
     return value.toString().toLowerCase();
   }
   

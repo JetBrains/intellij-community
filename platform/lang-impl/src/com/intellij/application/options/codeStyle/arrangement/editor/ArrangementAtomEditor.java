@@ -15,15 +15,16 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.editor;
 
-import com.intellij.util.Consumer;
+import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Editor for choosing a single value from a set of predefined values.
@@ -34,27 +35,29 @@ import java.util.List;
  * @since 8/13/12 4:15 PM
  */
 public class ArrangementAtomEditor extends JPanel {
-  
-  @NotNull private final Dimension myPrefSize;
-  
-  public ArrangementAtomEditor(@NotNull String[] values, @NotNull final Consumer<String> callback) {
-    JComboBox box = new JComboBox(values);
-    box.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          callback.consume((String)e.getItem());
-        }
-      }
-    });
-    
-    setLayout(new GridBagLayout());
-    add(box, new GridBag().anchor(GridBagConstraints.CENTER));
 
-    FontMetrics metrics = box.getFontMetrics(box.getFont());
+  @NotNull private final Map<Object, Object> myValues = new HashMap<Object, Object>();
+
+  @NotNull private final Dimension myPrefSize;
+  @NotNull private final JComboBox myValueBox;
+
+  public ArrangementAtomEditor(@NotNull Collection<?> values, @NotNull ArrangementNodeDisplayManager manager) {
+    String[] uiValues = new String[values.size()];
+    int i = 0;
+    for (Object value : values) {
+      String uiValue = manager.getDisplayValue(value);
+      uiValues[i++] = uiValue;
+      myValues.put(uiValue, value);
+    }
+    Arrays.sort(uiValues);
+    myValueBox = new JComboBox(uiValues);
+    setLayout(new GridBagLayout());
+    add(myValueBox, new GridBag().anchor(GridBagConstraints.CENTER).weightx(1).fillCellHorizontally());
+
+    FontMetrics metrics = myValueBox.getFontMetrics(myValueBox.getFont());
     int maxWidth = 0;
     String widestText = null;
-    for (String value : values) {
+    for (String value : uiValues) {
       int width = metrics.stringWidth(value);
       if (width > maxWidth) {
         widestText = value;
@@ -62,14 +65,23 @@ public class ArrangementAtomEditor extends JPanel {
       }
     }
     if (widestText != null) {
-      box.setSelectedItem(widestText);
+      myValueBox.setSelectedItem(widestText);
     }
-    myPrefSize = getPreferredSize();
-    if (values.length > 0) {
-      box.setSelectedItem(values[0]);
+    myPrefSize = super.getPreferredSize();
+    if (uiValues.length > 0) {
+      myValueBox.setSelectedItem(uiValues[0]);
     }
   }
-  
+
+  @NotNull
+  public Object getValue() {
+    return myValues.get(myValueBox.getSelectedItem());
+  }
+
+  public void applyColorsFrom(@NotNull JComponent component) {
+    myValueBox.setBackground(component.getBackground());
+  }
+
   @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
