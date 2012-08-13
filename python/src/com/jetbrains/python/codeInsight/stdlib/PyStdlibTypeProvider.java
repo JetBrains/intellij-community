@@ -71,7 +71,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   public PyType getConstructorType(@NotNull PyClass cls) {
     final String classQName = cls.getQualifiedName();
     if (classQName != null) {
-      final PyQualifiedName canonicalQName = ResolveImportUtil.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(classQName));
+      final PyQualifiedName canonicalQName = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(classQName));
       if (canonicalQName != null) {
         final PyQualifiedName qname = canonicalQName.append(PyNames.INIT);
         return getReturnTypeByQName(qname.toString(), cls);
@@ -224,7 +224,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                              module,
                              c != null ? c.getName() + "." : "",
                              result);
-      final PyQualifiedName qname = ResolveImportUtil.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(result));
+      final PyQualifiedName qname = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(result));
       if (qname != null) {
         return qname.toString();
       }

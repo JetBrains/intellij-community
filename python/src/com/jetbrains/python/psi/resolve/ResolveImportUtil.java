@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -260,7 +260,7 @@ public class ResolveImportUtil {
   @Nullable
   private static PythonPathCache getPathCache(PsiElement foothold) {
     PythonPathCache cache = null;
-    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
       cache = PythonModulePathCache.getInstance(module);
     }
@@ -545,52 +545,14 @@ public class ResolveImportUtil {
     }
     final PyQualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
     if (qname != null) {
-      final PyQualifiedName restored = restoreStdlibCanonicalPath(qname);
-      if (restored != null) {
-        return restored;
+      for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
+        final PyQualifiedName restored = provider.getCanonicalPath(qname);
+        if (restored != null) {
+          return restored;
+        }
       }
     }
     return qname;
-  }
-
-  @Nullable
-  public static PyQualifiedName restoreStdlibCanonicalPath(PyQualifiedName qname) {
-    if (qname.getComponentCount() > 0) {
-      final List<String> components = qname.getComponents();
-      final String head = components.get(0);
-      if (head.equals("_abcoll") || head.equals("_collections")) {
-        components.set(0, "collections");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("posix") || head.equals("nt")) {
-        components.set(0, "os");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("_functools")) {
-        components.set(0, "functools");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("_struct")) {
-        components.set(0, "struct");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("_io") || head.equals("_pyio") || head.equals("_fileio")) {
-        components.set(0, "io");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("_datetime")) {
-        components.set(0, "datetime");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("ntpath") || head.equals("posixpath") || head.equals("path")) {
-        final List<String> result = new ArrayList<String>();
-        result.add("os");
-        components.set(0, "path");
-        result.addAll(components);
-        return PyQualifiedName.fromComponents(result);
-      }
-    }
-    return null;
   }
 
   /**
