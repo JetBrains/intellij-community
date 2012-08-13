@@ -206,6 +206,10 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (target == this || target == null) {
           continue;
         }
+        if (!target.isValid()) {
+          LOG.error("Reference " + this + " resolved to invalid element " + target + " (text=" + target.getText() + ")");
+          continue;
+        }
         type = getTypeFromTarget(target, context, this);
         if (type != null) {
           return type;
