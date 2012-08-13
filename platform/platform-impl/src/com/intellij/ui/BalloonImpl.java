@@ -24,7 +24,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.MessageType;
@@ -181,9 +180,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
     if (myComp == null || !myComp.isShowing()) return false;
     Rectangle rectangleOnScreen = new Rectangle(myComp.getLocationOnScreen(), myComp.getSize());
     if (rectangleOnScreen.contains(target.getScreenPoint())) return true;
-
+    
     try {
-      return ScreenUtil.isMovementTowards(myPrevMousePoint, target.getScreenPoint(), rectangleOnScreen);
+      // TODO vassiliy fix.
+      return false;
+      //return ScreenUtil.isMovementTowards(myPrevMousePoint, target.getScreenPoint(), rectangleOnScreen);
     }
     finally {
       myPrevMousePoint = target.getScreenPoint();
