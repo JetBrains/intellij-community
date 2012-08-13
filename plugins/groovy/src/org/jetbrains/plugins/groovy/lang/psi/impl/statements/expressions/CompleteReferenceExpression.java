@@ -403,19 +403,20 @@ public class CompleteReferenceExpression {
     @Override
     public boolean execute(@NotNull PsiElement element, ResolveState state) {
       if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) return true;
+      if (element instanceof PsiNamedElement) {
 
-      PsiNamedElement namedElement = (PsiNamedElement)element;
+        PsiNamedElement namedElement = (PsiNamedElement)element;
 
-      boolean isAccessible = isAccessible(namedElement);
-      final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
-      final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
-      boolean isStaticsOK = isStaticsOK(namedElement, resolveContext, myParameters.getInvocationCount() <= 1);
+        boolean isAccessible = isAccessible(namedElement);
+        final GroovyPsiElement resolveContext = state.get(RESOLVE_CONTEXT);
+        final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
+        boolean isStaticsOK = isStaticsOK(namedElement, resolveContext, myParameters.getInvocationCount() <= 1);
 
-      PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
-      if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
+        PsiSubstitutor substitutor = state.get(PsiSubstitutor.KEY);
+        if (substitutor == null) substitutor = PsiSubstitutor.EMPTY;
 
-      consume(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
-
+        consume(new GroovyResolveResultImpl(namedElement, resolveContext, spreadState, substitutor, isAccessible, isStaticsOK));
+      }
       return true;
     }
 
