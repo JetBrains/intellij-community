@@ -446,7 +446,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         return stub.getInitializer();
       }
       else if (initializerType == PyTargetExpressionStub.InitializerType.Custom) {
-        return stub.getCustomStub(CustomTargetExpressionStub.class).getCalleeName();
+        final CustomTargetExpressionStub customStub = stub.getCustomStub(CustomTargetExpressionStub.class);
+        if (customStub != null) {
+          return customStub.getCalleeName();
+        }
       }
       return null;
     }
