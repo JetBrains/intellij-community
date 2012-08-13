@@ -94,7 +94,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
     if (qName != null && qName.getComponentCount() == 1) {
       String name = importElement.getAsName() != null ? importElement.getAsName() : qName.getLastComponent();
       if (name != null && nameIsAcceptable(name)) {
-        final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement);
+        final PsiElement resolved = importElement.resolve();
         if (resolved instanceof PsiNamedElement) {
           addElement(name, resolved);
           return true;

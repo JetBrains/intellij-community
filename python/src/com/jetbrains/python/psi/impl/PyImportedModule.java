@@ -55,7 +55,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
     }
     final PyImportElement fromImportElement = findMatchingFromImport(myImportedPrefix, the_name);
     if (fromImportElement != null) {
-      return ResolveImportUtil.resolveImportElement(fromImportElement);
+      return fromImportElement.resolve();
     }
 
     return null;

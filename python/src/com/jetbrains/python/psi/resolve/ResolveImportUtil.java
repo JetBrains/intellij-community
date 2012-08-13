@@ -81,11 +81,6 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  public static PsiElement resolveImportElement(PyImportElement import_element) {
-    return resolveImportElement(import_element, import_element.getImportedQName());
-  }
-
-  @Nullable
   public static PsiElement resolveImportElement(PyImportElement importElement, final PyQualifiedName qName) {
     final List<RatedResolveResult> resultList = RatedResolveResult.sorted(multiResolveImportElement(importElement, qName));
     return resultList.size() > 0 ? resultList.get(0).getElement() : null;

@@ -783,7 +783,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           PsiElement importedElement;
           if (unusedImport instanceof PyImportElement) {
             final PyImportElement importElement = (PyImportElement)unusedImport;
-            final PsiElement element = ResolveImportUtil.resolveImportElement(importElement);
+            final PsiElement element = importElement.resolve();
             if (element == null) {
               continue;
             }
