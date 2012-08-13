@@ -29,8 +29,8 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
   public Iterable<PyElement> iterateNames() {
     if (getParent() instanceof PyFromImportStatement) {
       PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
-      final List<PsiElement> importedFiles = ResolveImportUtil.resolveFromOrForeignImport(fromImportStatement,
-                                                                                          fromImportStatement.getImportSourceQName());
+      final List<PsiElement> importedFiles =
+        ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement, fromImportStatement.getImportSourceQName());
       ChainIterable<PyElement> chain = new ChainIterable<PyElement>();
       for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
@@ -50,8 +50,8 @@ public class PyStarImportElementImpl extends PyElementImpl implements PyStarImpo
     }
     if (getParent() instanceof PyFromImportStatement) {
       PyFromImportStatement fromImportStatement = (PyFromImportStatement)getParent();
-      final List<PsiElement> importedFiles = ResolveImportUtil.resolveFromOrForeignImport(fromImportStatement,
-                                                                                          fromImportStatement.getImportSourceQName());
+      final List<PsiElement> importedFiles =
+        ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement, fromImportStatement.getImportSourceQName());
       for (PsiElement importedFile : new HashSet<PsiElement>(importedFiles)) { // resolver gives lots of duplicates
         final PsiElement source = PyUtil.turnDirIntoInit(importedFile);
         if (source instanceof PyFile) {

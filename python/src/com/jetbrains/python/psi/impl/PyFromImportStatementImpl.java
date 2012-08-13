@@ -136,7 +136,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       return true;
     }
     if (isStarImport()) {
-      final List<PsiElement> targets = ResolveImportUtil.resolveFromOrForeignImport(this, getImportSourceQName());
+      final List<PsiElement> targets = ResolveImportUtil.resolveFromImportStatementSource(this, getImportSourceQName());
       for (PsiElement target : targets) {
         final PsiElement importedFile = PyUtil.turnDirIntoInit(target);
         if (importedFile != null) {
@@ -205,6 +205,6 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
         return upper == null ? Collections.<PsiElement>emptyList() : Collections.<PsiElement>singletonList(upper);
       }
     }
-    return ResolveImportUtil.resolveFromOrForeignImportStatementSource(this, qName);
+    return ResolveImportUtil.resolveFromImportStatementSource(this, qName);
   }
 }

@@ -29,7 +29,7 @@ public class PyFromImportSourceReference extends PyImportReference {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    List<PsiElement> targets = ResolveImportUtil.resolveFromOrForeignImport(myStatement, myElement.asQualifiedName());
+    List<PsiElement> targets = ResolveImportUtil.resolveFromImportStatementSource(myStatement, myElement.asQualifiedName());
     return ResolveImportUtil.rateResults(targets);
   }
 }

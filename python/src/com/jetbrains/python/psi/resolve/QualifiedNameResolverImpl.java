@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.resolve;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.intellij.facet.FacetManager;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.django.facet.DjangoFacetType;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +40,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   private boolean myVisitAllModules = false;
   private int myRelativeLevel = -1;
   private boolean myWithoutRoots;
+  private boolean myWithoutForeign;
 
   public QualifiedNameResolverImpl(@NotNull String qNameString) {
     myQualifiedName = PyQualifiedName.fromDottedString(qNameString);
@@ -120,6 +123,12 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     return this;
   }
 
+  @Override
+  public QualifiedNameResolver withoutForeign() {
+    myWithoutForeign = true;
+    return this;
+  }
+
   /**
    * Specifies that we're looking for a file in a directory hierarchy, not a module in the Python package hierarchy
    * (so we don't need to check for existence of __init__.py)
@@ -174,6 +183,15 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
     if (!myWithoutRoots) {
       results.addAll(resolveInRoots());
+    }
+
+    if (!myWithoutForeign) {
+      for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
+        PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext);
+        if (foreign != null) {
+          results.add(foreign);
+        }
+      }
     }
 
     return Lists.newArrayList(results);

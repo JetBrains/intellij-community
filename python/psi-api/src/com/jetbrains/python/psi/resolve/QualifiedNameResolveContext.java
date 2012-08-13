@@ -65,6 +65,7 @@ public class QualifiedNameResolveContext {
     return true;
   }
 
+  @Nullable
   public PsiFile getFootholdFile() {
     return myFootholdFile;
   }
@@ -74,6 +75,7 @@ public class QualifiedNameResolveContext {
     return myPsiManager;
   }
 
+  @NotNull
   public Project getProject() {
     return myPsiManager.getProject();
   }

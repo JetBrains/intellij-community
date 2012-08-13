@@ -1,10 +1,11 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
-import com.intellij.psi.*;
-import com.jetbrains.python.psi.PyElement;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPackage;
+import com.jetbrains.python.psi.resolve.QualifiedNameResolveContext;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -12,23 +13,18 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyJavaImportResolver implements PyImportResolver {
   @Nullable
-  public PsiElement resolveImportReference(@NotNull final PyElement importElement, @NotNull final PyQualifiedName importText,
-                                           @Nullable PyQualifiedName importFrom) {
-    String fqn = importText.toString();
-    if (importFrom != null) {
-      fqn = importFrom.toString() + "." + fqn;
-    }
-
-    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(importElement.getProject());
+  public PsiElement resolveImportReference(PyQualifiedName name, QualifiedNameResolveContext context) {
+    String fqn = name.toString();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(context.getProject());
     if (psiFacade == null) return null;
     final PsiPackage aPackage = psiFacade.findPackage(fqn);
     if (aPackage != null) {
       return aPackage;
     }
 
-    Module sourceModule = ModuleUtil.findModuleForPsiElement(importElement);
-    if (sourceModule != null) {
-      final PsiClass aClass = psiFacade.findClass(fqn, sourceModule.getModuleWithDependenciesAndLibrariesScope(false));
+    Module module = context.getModule();
+    if (module != null) {
+      final PsiClass aClass = psiFacade.findClass(fqn, module.getModuleWithDependenciesAndLibrariesScope(false));
       if (aClass != null) return aClass;
     }
     return null;

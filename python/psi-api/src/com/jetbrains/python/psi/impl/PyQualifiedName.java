@@ -58,6 +58,13 @@ public class PyQualifiedName {
     return result;
   }
 
+  public PyQualifiedName append(PyQualifiedName qName) {
+    PyQualifiedName result = new PyQualifiedName(myComponents.size()+qName.getComponentCount());
+    result.myComponents.addAll(myComponents);
+    result.myComponents.addAll(result.getComponents());
+    return result;
+  }
+
   @NotNull
   public PyQualifiedName removeLastComponent() {
     return removeTail(1);
@@ -70,6 +77,17 @@ public class PyQualifiedName {
     result.myComponents.addAll(myComponents);
     for (int i = 0; i < count && result.myComponents.size() > 0; i++) {
       result.myComponents.remove(result.myComponents.size()-1);
+    }
+    return result;
+  }
+
+  @NotNull
+  public PyQualifiedName removeHead(int count) {
+    int size = myComponents.size();
+    PyQualifiedName result = new PyQualifiedName(size);
+    result.myComponents.addAll(myComponents);
+    for (int i = 0; i < count && result.myComponents.size() > 0; i++) {
+      result.myComponents.remove(0);
     }
     return result;
   }

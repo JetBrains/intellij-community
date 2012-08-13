@@ -42,4 +42,6 @@ public interface QualifiedNameResolver {
   <T extends PsiElement> T firstResultOfType(Class<T> clazz);
 
   QualifiedNameResolver withContext(QualifiedNameResolveContext context);
+
+  QualifiedNameResolver withoutForeign();
 }

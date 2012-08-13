@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="jam-support-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="python-plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="yaml-plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="coverage" scope="RUNTIME" />
   </component>
 </module>
 
