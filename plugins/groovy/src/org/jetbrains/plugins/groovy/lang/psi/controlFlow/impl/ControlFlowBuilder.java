@@ -162,7 +162,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       return st == ArrayUtil.getLastElement(((GroovyFileBase)parent).getStatements());
     }
 
-    else if (parent instanceof GrIfStatement || parent instanceof GrControlStatement) {
+    else if (parent instanceof GrControlStatement ||
+             parent instanceof GrConditionalExpression && st != ((GrConditionalExpression)parent).getCondition() ||
+             parent instanceof GrElvisExpression) {
       return isCertainlyReturnStatement((GrStatement)parent);
     }
 
@@ -882,10 +884,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     condition.accept(this);
     List<GotoInstruction> negations = collectAndRemoveAllPendingNegations(expression);
+
+    InstructionImpl head = myHead;
+    handlePossibleReturn(condition);
     addPendingEdge(expression, myHead);
+    myHead = head;
 
     if (elseBranch != null) {
-      InstructionImpl head = reduceAllNegationsIntoInstruction(expression, negations);
+      head = reduceAllNegationsIntoInstruction(expression, negations);
       if (head != null) myHead = head;
       elseBranch.accept(this);
       handlePossibleReturn(elseBranch);

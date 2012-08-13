@@ -119,6 +119,24 @@ String foo2(e) {
 ''')
   }
 
+  void testConditional() {
+    doTextText('''\
+//correct
+List createFilters1() {
+    abc ? [1] : []
+}
+
+//correct
+List createFilters2() {
+    abc ?: [1]
+}
+
+//incorrect
+List createFilters3() {
+<warning descr="Not all execution paths return a value">}</warning>
+''')
+  }
+
   void doTextText(String text) {
     myFixture.configureByText('___.groovy', text)
     myFixture.enableInspections(MissingReturnInspection)
