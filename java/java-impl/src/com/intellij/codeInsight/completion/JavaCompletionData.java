@@ -155,7 +155,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
   private static final PsiJavaElementPattern.Capture<PsiElement> CLASS_REFERENCE =
     psiElement().withParent(psiReferenceExpression().referencing(psiClass()));
 
-  public static final ElementPattern<PsiElement> EXPR_KEYWORDS = and(
+  private static final ElementPattern<PsiElement> EXPR_KEYWORDS = and(
     psiElement().withParent(psiElement(PsiReferenceExpression.class).withParent(
       not(
         or(psiElement(PsiTypeCastExpression.class),
@@ -455,7 +455,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
       }
     }
 
-    if (EXPR_KEYWORDS.accepts(position)) {
+    if (isExpressionPosition(position)) {
       if (PsiTreeUtil.getParentOfType(position, PsiAnnotation.class) == null) {
         result.addElement(TailTypeDecorator.withTail(createKeyword(position, PsiKeyword.NEW), TailType.INSERT_SPACE));
         result.addElement(createKeyword(position, PsiKeyword.NULL));
@@ -514,6 +514,11 @@ public class JavaCompletionData extends JavaAwareCompletionData {
         new SameSignatureCallParametersProvider().addCompletions(parameters, new ProcessingContext(), result);
       }
     }
+  }
+
+  private static boolean isExpressionPosition(PsiElement position) {
+    return EXPR_KEYWORDS.accepts(position) ||
+           psiElement().insideStarting(psiElement(PsiClassObjectAccessExpression.class)).accepts(position);
   }
 
   public static boolean isInstanceofPlace(PsiElement position) {
@@ -590,16 +595,18 @@ public class JavaCompletionData extends JavaAwareCompletionData {
 
     boolean typeFragment = position.getContainingFile() instanceof PsiTypeCodeFragment && PsiTreeUtil.prevVisibleLeaf(position) == null;
     boolean declaration = DECLARATION_START.accepts(position);
+    boolean expressionPosition = isExpressionPosition(position);
     if (START_FOR.accepts(position) ||
         isInsideParameterList(position) && !AFTER_DOT.accepts(position) ||
         VARIABLE_AFTER_FINAL.accepts(position) ||
         inCast ||
         declaration ||
         typeFragment ||
+        expressionPosition ||
         isStatementPosition(position)) {
       for (String primitiveType : PRIMITIVE_TYPES) {
         LookupElement keyword = createKeyword(position, primitiveType);
-        result.addElement(inCast || typeFragment ? keyword : new OverrideableSpace(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
+        result.addElement(inCast || typeFragment || expressionPosition ? keyword : new OverrideableSpace(keyword, TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
     }
     if (declaration) {

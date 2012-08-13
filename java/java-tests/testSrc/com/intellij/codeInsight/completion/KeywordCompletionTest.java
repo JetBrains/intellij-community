@@ -104,6 +104,9 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }
   public void testFinalAfterParameterAnno() throws Exception { doTest(2, "final", "float", "class"); }
   public void testClassInMethod() throws Exception { doTest(2, "class", "char"); }
+  public void testIntInClassArray() throws Throwable { doTest(2, "int", "char", "final"); }
+  public void testIntInClassArray2() throws Throwable { doTest(2, "int", "char", "final"); }
+  public void testIntInClassArray3() throws Throwable { doTest(2, "int", "char", "final"); }
 
   public void testTryInExpression() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
