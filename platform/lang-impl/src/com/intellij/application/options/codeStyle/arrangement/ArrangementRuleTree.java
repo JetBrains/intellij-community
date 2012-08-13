@@ -172,7 +172,7 @@ public class ArrangementRuleTree {
       else if (bounds.y > screenLocation.y) {
         high = mid - 1;
       }
-      else if (bounds.y + bounds.height < screenLocation.y) {
+      else if (bounds.y + bounds.height <= screenLocation.y) {
         low = mid + 1;
       }
       else {
