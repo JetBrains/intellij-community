@@ -119,7 +119,10 @@ public class OpenFileAction extends AnAction implements DumbAware {
         openFile(file, project);
       }
       else {
-        PlatformProjectOpenProcessor.getInstance().doOpenProject(file, null, false);
+        PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
+        if (processor != null) {
+          processor.doOpenProject(file, null, false);
+        }
       }
     }
   }

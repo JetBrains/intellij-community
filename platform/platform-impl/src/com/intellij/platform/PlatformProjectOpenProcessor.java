@@ -54,6 +54,7 @@ public class PlatformProjectOpenProcessor extends ProjectOpenProcessor {
     return projectOpenProcessor;
   }
 
+  @Nullable
   public static PlatformProjectOpenProcessor getInstanceIfItExists() {
     ProjectOpenProcessor[] processors = Extensions.getExtensions(EXTENSION_POINT_NAME);
     for(ProjectOpenProcessor processor: processors) {
