@@ -18,10 +18,7 @@ package org.jetbrains.plugins.groovy.template.expressions;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
-import com.intellij.codeInsight.template.Expression;
-import com.intellij.codeInsight.template.ExpressionContext;
-import com.intellij.codeInsight.template.PsiTypeResult;
-import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -55,15 +52,19 @@ public class ChooseTypeExpression extends Expression {
   private static LookupElement[] createItems(TypeConstraint[] constraints, boolean forGroovy) {
     Set<LookupElement> result = new LinkedHashSet<LookupElement>();
 
+    if (forGroovy && constraints.length == 1 && constraints[0].getDefaultType().equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+      result.add(LookupElementBuilder.create(GrModifier.DEF).bold());
+    }
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof SubtypeConstraint) {
         result.add(PsiTypeLookupItem.createLookupItem(constraint.getDefaultType(), null));
-      } else if (constraint instanceof SupertypeConstraint) {
+      }
+      else if (constraint instanceof SupertypeConstraint) {
         processSuperTypes(constraint.getType(), result);
       }
     }
 
-    if (forGroovy) {
+    if (forGroovy) { //don't check whether we already added 'def' 'cause it is a set
       result.add(LookupElementBuilder.create(GrModifier.DEF).bold());
     }
 
@@ -75,7 +76,8 @@ public class ChooseTypeExpression extends Expression {
     String unboxed = PsiTypesUtil.unboxIfPossible(text);
     if (unboxed != null && !unboxed.equals(text)) {
       result.add(LookupElementBuilder.create(unboxed).bold());
-    } else {
+    }
+    else {
       result.add(PsiTypeLookupItem.createLookupItem(type, null));
     }
     PsiType[] superTypes = type.getSuperTypes();
@@ -86,13 +88,18 @@ public class ChooseTypeExpression extends Expression {
 
   private PsiType chooseType(TypeConstraint[] constraints) {
     if (constraints.length > 0) return constraints[0].getDefaultType();
-    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myManager.getProject()));
+    return JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory()
+      .createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(myManager.getProject()));
   }
 
   public Result calculateResult(ExpressionContext context) {
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     PsiType type = myTypePointer.getType();
     if (type != null) {
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+        return new TextResult(GrModifier.DEF);
+      }
+
       return new PsiTypeResult(type, context.getProject()) {
         @Override
         public void handleRecalc(PsiFile psiFile, Document document, int segmentStart, int segmentEnd) {

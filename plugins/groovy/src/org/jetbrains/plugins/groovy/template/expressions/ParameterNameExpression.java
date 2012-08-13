@@ -36,7 +36,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
  * @author ven
  */
 public class ParameterNameExpression extends Expression {
-  public ParameterNameExpression() {
+  private final String myDefaultName;
+
+  public ParameterNameExpression(String name) {
+    myDefaultName = name;
   }
 
   public Result calculateResult(ExpressionContext context) {
@@ -59,7 +62,7 @@ public class ParameterNameExpression extends Expression {
     GrParameter parameter = PsiTreeUtil.getParentOfType(elementAt, GrParameter.class);
     if (parameter == null) return null;
     JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
-    return manager.suggestVariableName(VariableKind.PARAMETER, null, null, parameter.getTypeGroovy());
+    return manager.suggestVariableName(VariableKind.PARAMETER, myDefaultName, null, parameter.getTypeGroovy());
   }
 
   public Result calculateQuickResult(ExpressionContext context) {
@@ -70,8 +73,9 @@ public class ParameterNameExpression extends Expression {
     SuggestedNameInfo info = getNameInfo(context);
     if (info == null) return null;
     LookupElement[] result = new LookupElement[info.names.length];
-    for (int i = 0; i < result.length; i++) {
-      result[i] = LookupElementBuilder.create(info.names[i]);
+    int i = 0;
+    for (String name : info.names) {
+      result[i++] = LookupElementBuilder.create(name);
     }
     return result;
   }

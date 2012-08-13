@@ -88,7 +88,7 @@ public class ClosureTemplateBuilder {
         builder.replaceElement(p.getModifierList(), expression);
       }
 
-      builder.replaceElement(nameIdentifier, new ParameterNameExpression());
+      builder.replaceElement(nameIdentifier, new ParameterNameExpression(nameIdentifier.getText()));
     }
 
     final GrClosableBlock afterPostprocess = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(templateClosure);
