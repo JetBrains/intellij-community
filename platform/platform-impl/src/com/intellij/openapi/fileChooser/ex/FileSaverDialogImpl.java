@@ -161,6 +161,11 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     return panel;
   }
 
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myFileName;
+  }
+
   private boolean isFileNameExist() {
     if (myPathTextField == null) return false;
     final String path = myPathTextField.getTextFieldText();
