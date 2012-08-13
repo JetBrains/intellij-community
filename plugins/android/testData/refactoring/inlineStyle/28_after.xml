@@ -1,0 +1,15 @@
+<resources>
+    <style name="myStyle">
+        <item name="android:color">@android:color/red</item>
+    </style>
+
+    <style name="myStyle.a">
+        <item name="android:textColor">@android:color/green</item>
+        <item name="android:background">@android:color/white</item>
+    </style>
+
+    <style name="myStyle1" parent="myStyle">
+        <item name="android:textColor">@android:color/green</item>
+        <item name="android:background">@android:color/white</item>
+    </style>
+</resources>

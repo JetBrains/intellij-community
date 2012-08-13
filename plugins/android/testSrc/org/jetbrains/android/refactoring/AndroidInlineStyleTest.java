@@ -260,6 +260,14 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
     doInlineStyleReferenceAction(false, false);
   }
 
+  public void test28() {
+    final String testName = getTestName(true);
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    doCommonInlineAction(false);
+    myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
+  }
+
   private void doTest(boolean inlineThisOnly) {
     doTest(inlineThisOnly, "res/layout");
   }

@@ -48,7 +48,14 @@ class ParentStyleUsageData implements StyleUsageData {
       newItem.getName().setStringValue(entry.getKey());
       newItem.setStringValue(entry.getValue());
     }
-    myStyle.getParentStyle().setValue(parentStyleRef != null
+    final String styleName = myStyle.getName().getStringValue();
+    final boolean implicitInheritance = parentStyleRef != null &&
+                                        parentStyleRef.getStylePackage() == null &&
+                                        styleName != null &&
+                                        (styleName.startsWith(parentStyleRef.getStyleName() + ".") ||
+                                         styleName.equals(parentStyleRef.getStyleName()));
+
+    myStyle.getParentStyle().setValue(parentStyleRef != null && !implicitInheritance
                                       ? ResourceValue.referenceTo((char)0, parentStyleRef.getStylePackage(), null,
                                                                   parentStyleRef.getStyleName())
                                       : null);
