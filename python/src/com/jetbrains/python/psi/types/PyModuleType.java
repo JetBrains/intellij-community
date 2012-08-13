@@ -120,7 +120,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @NotNull
-  private List<PyQualifiedName> getCanonicalImportedQNames(@NotNull PyImportElement element) {
+  private static List<PyQualifiedName> getCanonicalImportedQNames(@NotNull PyImportElement element) {
     final List<PyQualifiedName> importedQNames = new ArrayList<PyQualifiedName>();
     final PyStatement stmt = element.getContainingImportStatement();
     if (stmt instanceof PyFromImportStatement) {
@@ -273,7 +273,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return result.toArray();
   }
 
-  private void addImportedSubmodules(PyExpression location, Set<String> exiatingNames, List<Object> result) {
+  private void addImportedSubmodules(PyExpression location, Set<String> existingNames, List<Object> result) {
     PsiFile file = location.getContainingFile();
     if (file instanceof PyFile) {
       PyFile pyFile = (PyFile)file;
@@ -286,7 +286,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
           }
           LookupElement element = null;
           if (target instanceof PsiFileSystemItem) {
-            element = buildFileLookupElement((PsiFileSystemItem) target, exiatingNames);
+            element = buildFileLookupElement((PsiFileSystemItem) target, existingNames);
           }
           else if (target instanceof PsiNamedElement) {
             element = LookupElementBuilder.createWithIcon((PsiNamedElement)target);
@@ -350,7 +350,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   @Override
   public void assertValid(String message) {
-    if (myModule != null && !myModule.isValid()) {
+    if (!myModule.isValid()) {
       throw new PsiInvalidElementAccessException(myModule, myModule.getClass().toString() + ": " + message);
     }
   }
