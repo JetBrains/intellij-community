@@ -35,7 +35,10 @@ public abstract class JpsNamedElementReferenceBase<S extends JpsNamedElement, T 
     final JpsCompositeElement parent = getParentReference().resolve();
     if (parent == null) return null;
 
-    final List<? extends S> elements = parent.getContainer().getChild(myCollectionRole).getElements();
+    JpsElementCollectionImpl<? extends S> collection = parent.getContainer().getChild(myCollectionRole);
+    if (collection == null) return null;
+
+    final List<? extends S> elements = collection.getElements();
     for (S element : elements) {
       if (element.getName().equals(myElementName)) {
         T resolved = resolve(element);
