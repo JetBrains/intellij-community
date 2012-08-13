@@ -133,7 +133,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   @Nullable
-  private static PsiElement resolve(PyImportElement importElement, final PyQualifiedName prefix) {
+  private static PsiElement resolve(PyImportElement importElement, @NotNull final PyQualifiedName prefix) {
     return PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(importElement, prefix));
   }
 

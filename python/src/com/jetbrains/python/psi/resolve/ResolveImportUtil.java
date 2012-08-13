@@ -81,41 +81,28 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  public static PsiElement resolveImportElement(PyImportElement importElement, final PyQualifiedName qName) {
-    final List<RatedResolveResult> resultList = RatedResolveResult.sorted(multiResolveImportElement(importElement, qName));
+  public static PsiElement resolveImportElement(PyImportElement importElement, @NotNull final PyQualifiedName qName) {
+    List<RatedResolveResult> targets;
+    final PyStatement importStatement = importElement.getContainingImportStatement();
+    if (importStatement instanceof PyFromImportStatement) {
+      targets = resolveNameInFromImport((PyFromImportStatement)importStatement, qName);
+    }
+    else { // "import foo"
+      targets = resolveNameInImportStatement(importElement, qName);
+    }
+    final List<RatedResolveResult> resultList = RatedResolveResult.sorted(targets);
     return resultList.size() > 0 ? resultList.get(0).getElement() : null;
   }
 
-  @NotNull
-  private static List<RatedResolveResult> multiResolveImportElement(PyImportElement importElement, final PyQualifiedName qName) {
-    final PyStatement importStatement = importElement.getContainingImportStatement();
-    if (importStatement instanceof PyFromImportStatement) {
-      return resolveNameInFromImport(importElement, qName, (PyFromImportStatement)importStatement);
-    }
-    else { // "import foo"
-      return resolveNameInImportStatement(importElement, qName);
-    }
-  }
-
-  public static List<RatedResolveResult> resolveNameInImportStatement(PyImportElement importElement, PyQualifiedName qName) {
-    if (qName == null) {
-      return Collections.emptyList();
-    }
+  public static List<RatedResolveResult> resolveNameInImportStatement(PyImportElement importElement, @NotNull PyQualifiedName qName) {
     final PsiFile file = importElement.getContainingFile().getOriginalFile();
     boolean absoluteImportEnabled = isAbsoluteImportEnabledFor(importElement);
     final List<PsiElement> modules = resolveModule(qName, file, absoluteImportEnabled, 0);
-    if (modules.size() > 0) {
-      return rateResults(modules);
-    }
-    return Collections.emptyList();
+    return rateResults(modules);
   }
 
-  public static List<RatedResolveResult> resolveNameInFromImport(PyImportElement importElement, PyQualifiedName qName,
-                                                                 PyFromImportStatement importStatement) {
-    if (qName == null) {
-      return Collections.emptyList();
-    }
-    PsiFile file = importElement.getContainingFile().getOriginalFile();
+  public static List<RatedResolveResult> resolveNameInFromImport(PyFromImportStatement importStatement, @NotNull PyQualifiedName qName) {
+    PsiFile file = importStatement.getContainingFile().getOriginalFile();
     String name = qName.getComponents().get(0);
 
     final List<PsiElement> candidates = importStatement.resolveImportSourceCandidates();

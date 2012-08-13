@@ -217,7 +217,8 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
   @Nullable
   @Override
   public PsiElement resolve() {
-    return ResolveImportUtil.resolveImportElement(this, getImportedQName());
+    PyQualifiedName qName = getImportedQName();
+    return qName == null ? null : ResolveImportUtil.resolveImportElement(this, qName);
   }
 
   public boolean mustResolveOutside() {
