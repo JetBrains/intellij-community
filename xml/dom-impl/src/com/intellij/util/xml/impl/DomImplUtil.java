@@ -18,6 +18,7 @@ package com.intellij.util.xml.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.xml.XmlFile;
@@ -267,5 +268,30 @@ public class DomImplUtil {
         return true;
       }
     });
+  }
+
+  static XmlFile getFile(DomElement domElement) {
+    if (domElement instanceof DomFileElement) {
+      return ((DomFileElement)domElement).getFile();
+    }
+    DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(domElement);
+    assert handler != null : domElement;
+    while (handler != null && !(handler instanceof DomRootInvocationHandler) && handler.getXmlTag() == null) {
+      handler = handler.getParentHandler();
+    }
+    if (handler instanceof DomRootInvocationHandler) {
+      return ((DomRootInvocationHandler)handler).getParent().getFile();
+    }
+    assert handler != null;
+    XmlTag tag = handler.getXmlTag();
+    assert tag != null;
+    while (true) {
+      final PsiElement parentTag = PhysicalDomParentStrategy.getParentTagCandidate(tag);
+      if (!(parentTag instanceof XmlTag)) {
+        return (XmlFile)tag.getContainingFile();
+      }
+
+      tag = (XmlTag)parentTag;
+    }
   }
 }

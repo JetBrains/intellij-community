@@ -16,6 +16,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,4 +37,6 @@ public interface DomParentStrategy {
 
   @Nullable
   String checkValidity();
+
+  XmlFile getContainingFile(DomInvocationHandler handler);
 }

@@ -16,6 +16,7 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
@@ -26,6 +27,8 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.stubs.model.Bar;
+import com.intellij.util.xml.stubs.model.Foo;
 
 import java.util.List;
 
@@ -80,6 +83,15 @@ public class DomStubUsingTest extends DomStubTest {
 
     XmlAttribute attribute = bar.getString().getXmlAttribute();
     assertNotNull(attribute);
+  }
+
+  public void testConverters() throws Exception {
+    DomFileElement<Foo> element = prepare("converters.xml");
+    Bar bar = element.getRootElement().getBars().get(0);
+    PsiClass value = bar.getClazz().getValue();
+    assertNotNull(value);
+    assertEquals("java.lang.String", value.getQualifiedName());
+    assertFalse(element.getFile().getNode().isParsed());
   }
 
   private DomFileElement<Foo> prepare(String path) {

@@ -22,7 +22,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,6 +86,11 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
 
   public String checkValidity() {
     return myElement.isValid() ? null : "Invalid PSI";
+  }
+
+  @Override
+  public XmlFile getContainingFile(DomInvocationHandler handler) {
+    return DomImplUtil.getFile(handler);
   }
 
   public boolean equals(final Object o) {

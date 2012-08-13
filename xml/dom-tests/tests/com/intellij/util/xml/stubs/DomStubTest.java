@@ -15,22 +15,17 @@
  */
 package com.intellij.util.xml.stubs;
 
-import com.intellij.testFramework.IdeaTestCase;
-import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.impl.DomManagerImpl;
+import com.intellij.util.xml.stubs.model.Foo;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 8/8/12
  */
-public abstract class DomStubTest extends LightPlatformCodeInsightFixtureTestCase {
-
-  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  public DomStubTest() {
-    IdeaTestCase.initPlatformPrefix();
-  }
+public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
 
   private static final DomFileDescription<Foo> DOM_FILE_DESCRIPTION = new DomFileDescription<Foo>(Foo.class, "foo") {
     @Override
@@ -38,11 +33,6 @@ public abstract class DomStubTest extends LightPlatformCodeInsightFixtureTestCas
       return true;
     }
   };
-
-  @Override
-  protected boolean isCommunity() {
-    return true;
-  }
 
   @Override
   public void setUp() throws Exception {

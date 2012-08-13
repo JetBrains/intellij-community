@@ -16,6 +16,7 @@
 package com.intellij.util.xml.stubs;
 
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomParentStrategy;
@@ -98,5 +99,10 @@ public class StubParentStrategy implements DomParentStrategy {
   @Override
   public String checkValidity() {
     return null;
+  }
+
+  @Override
+  public XmlFile getContainingFile(DomInvocationHandler handler) {
+    return getParentHandler().getFile();
   }
 }

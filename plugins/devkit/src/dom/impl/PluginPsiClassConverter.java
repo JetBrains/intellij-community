@@ -22,13 +22,14 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.ExtendClass;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.PsiClassConverter;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
 */
 public class PluginPsiClassConverter extends PsiClassConverter {
-  protected GlobalSearchScope getScope(final GenericDomValue domValue) {
-    return GlobalSearchScope.allScope(domValue.getManager().getProject());
+  protected GlobalSearchScope getScope(@NotNull ConvertContext context) {
+    return GlobalSearchScope.allScope(context.getProject());
   }
 
   @Override

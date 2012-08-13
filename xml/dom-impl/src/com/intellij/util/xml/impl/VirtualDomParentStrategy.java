@@ -17,6 +17,8 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -78,6 +80,11 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
       return null;
     }
     return "mod count changed";
+  }
+
+  @Override
+  public XmlFile getContainingFile(DomInvocationHandler handler) {
+    return DomImplUtil.getFile(handler);
   }
 
   public boolean equals(final Object o) {

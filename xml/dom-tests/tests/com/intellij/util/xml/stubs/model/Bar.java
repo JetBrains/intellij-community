@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.xml.stubs;
+package com.intellij.util.xml.stubs.model;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.stubs.Stubbed;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.*;
 
 /**
  * @author Dmitry Avdeev
@@ -30,4 +30,8 @@ public interface Bar extends DomElement {
 
   @Stubbed
   GenericAttributeValue<Integer> getInt();
+
+  @Stubbed
+  @Attribute("class")
+  GenericAttributeValue<PsiClass> getClazz();
 }

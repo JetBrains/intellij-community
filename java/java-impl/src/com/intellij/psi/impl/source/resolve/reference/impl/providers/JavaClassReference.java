@@ -28,7 +28,7 @@ import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -442,7 +442,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   private GlobalSearchScope getScope() {
     final GlobalSearchScope scope = myJavaClassReferenceSet.getProvider().getScope(getElement().getProject());
     if (scope == null) {
-      final Module module = ModuleUtil.findModuleForPsiElement(getElement());
+      final Module module = ModuleUtilCore.findModuleForPsiElement(getElement());
       if (module != null) {
         return module.getModuleWithDependenciesAndLibrariesScope(true);
       }

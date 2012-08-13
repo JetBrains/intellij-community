@@ -29,7 +29,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassKind;
-import com.intellij.psi.xml.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +43,7 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
 
   public static PsiClass findClass(String s, ConvertContext context) {
     final DomElement element = context.getInvocationElement();
-    final GlobalSearchScope scope = element instanceof GenericDomValue ? getSearchScope((GenericDomValue)element) : null;
+    final GlobalSearchScope scope = element instanceof GenericDomValue ? getSearchScope(context) : null;
     return DomJavaUtil.findClass(s, context.getFile(), context.getModule(), scope);
   }
 
@@ -65,13 +64,13 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     return provider.getReferencesByElement(element);
   }
 
-  protected JavaClassReferenceProvider createClassReferenceProvider(final GenericDomValue<PsiClass> genericDomValue, ConvertContext context,
+  protected JavaClassReferenceProvider createClassReferenceProvider(final GenericDomValue<PsiClass> genericDomValue, final ConvertContext context,
                                                                     ExtendClass extendClass) {
     return createJavaClassReferenceProvider(genericDomValue, extendClass, new JavaClassReferenceProvider() {
 
       @Override
       public GlobalSearchScope getScope(Project project) {
-        return PsiClassConverter.this.getScope(genericDomValue);
+        return PsiClassConverter.this.getScope(context);
       }
     });
   }
@@ -115,13 +114,10 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
     return provider;
   }
 
-  public static GlobalSearchScope getSearchScope(GenericDomValue domValue) {
-    final Module module = domValue.getModule();
+  public static GlobalSearchScope getSearchScope(@NotNull ConvertContext context) {
+    final Module module = context.getModule();
     if (module == null) return null;
-    XmlElement element = domValue.getXmlElement();
-    if (element == null) return null;
-    PsiFile file = element.getContainingFile();
-    if (file == null) return null;
+    PsiFile file = context.getFile();
     file = file.getOriginalFile();
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
@@ -132,8 +128,8 @@ public class PsiClassConverter extends Converter<PsiClass> implements CustomRefe
   }
 
   @Nullable
-  protected  GlobalSearchScope getScope(final GenericDomValue domValue) {
-    return getSearchScope(domValue);
+  protected  GlobalSearchScope getScope(@NotNull ConvertContext context) {
+    return getSearchScope(context);
   }
 
   public static class AnnotationType extends PsiClassConverter {

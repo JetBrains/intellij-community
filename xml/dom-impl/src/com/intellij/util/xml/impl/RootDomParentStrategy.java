@@ -16,6 +16,7 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,6 +57,11 @@ public class RootDomParentStrategy implements DomParentStrategy {
   @Override
   public String checkValidity() {
     return myFileElement.checkValidity();
+  }
+
+  @Override
+  public XmlFile getContainingFile(DomInvocationHandler handler) {
+    return myFileElement.getFile();
   }
 
   public boolean equals(final Object o) {

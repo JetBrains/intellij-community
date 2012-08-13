@@ -23,7 +23,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataCache;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -124,25 +123,7 @@ public class DomServiceImpl extends DomService {
     if (domElement instanceof DomFileElement) {
       return ((DomFileElement)domElement).getFile();
     }
-    DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(domElement);
-    assert handler != null : domElement;
-    while (handler != null && !(handler instanceof DomRootInvocationHandler) && handler.getXmlTag() == null) {
-      handler = handler.getParentHandler();
-    }
-    if (handler instanceof DomRootInvocationHandler) {
-      return ((DomRootInvocationHandler)handler).getParent().getFile();
-    }
-    assert handler != null;
-    XmlTag tag = handler.getXmlTag();
-    assert tag != null;
-    while (true) {
-      final PsiElement parentTag = PhysicalDomParentStrategy.getParentTagCandidate(tag);
-      if (!(parentTag instanceof XmlTag)) {
-        return (XmlFile)tag.getContainingFile();
-      }
-
-      tag = (XmlTag)parentTag;
-    }
+    return DomManagerImpl.getDomInvocationHandler(domElement).getFile();
   }
 
   @NotNull

@@ -490,7 +490,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   @NotNull
   public final XmlFile getFile() {
-    return DomUtil.getFile(this);
+    return getParentStrategy().getContainingFile(this);
   }
 
   @NotNull
