@@ -38,7 +38,7 @@ public class GotoTaskAction extends GotoActionBase {
   public static final CreateNewTaskAction CREATE_NEW_TASK_ACTION = new CreateNewTaskAction();
 
   public GotoTaskAction() {
-    getTemplatePresentation().setText("Goto Task...");
+    getTemplatePresentation().setText("Open Task...");
   }
 
   @Override
@@ -169,7 +169,7 @@ public class GotoTaskAction extends GotoActionBase {
         return TaskUtil.getTrimmedSummary(((TaskPsiElement)element).getTask());
       }
       else if (element == CREATE_NEW_TASK_ACTION) {
-        return "Create New Task \"" + CREATE_NEW_TASK_ACTION.getActionText() + "\"...";
+        return CREATE_NEW_TASK_ACTION.getActionText();
       }
       return null;
     }
