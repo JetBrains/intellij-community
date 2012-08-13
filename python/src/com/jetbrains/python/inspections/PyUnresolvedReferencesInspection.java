@@ -49,10 +49,7 @@ import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
-import com.jetbrains.python.psi.resolve.ImportedResolveResult;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nls;
@@ -765,7 +762,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             dunderAll = ((PyFile)file).getDunderAll();
           }
           if (file != null && PyUtil.isPackage(file)) {
-            packageQName = ResolveImportUtil.findShortestImportableQName(file);
+            packageQName = QualifiedNameFinder.findShortestImportableQName(file);
           }
         }
         PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(unusedImport, PyImportStatementBase.class);
@@ -789,7 +786,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               continue;
             }
           }
-          PsiFileSystemItem importedElement;
+          PsiElement importedElement;
           if (unusedImport instanceof PyImportElement) {
             final PyImportElement importElement = (PyImportElement)unusedImport;
             final PsiElement element = ResolveImportUtil.resolveImportElement(importElement);
@@ -809,7 +806,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
           if (packageQName != null && importedElement instanceof PsiFileSystemItem) {
-            final PyQualifiedName importedQName = ResolveImportUtil.findShortestImportableQName(importedElement);
+            final PyQualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName((PsiFileSystemItem)importedElement);
             if (importedQName != null && importedQName.matchesPrefix(packageQName)) {
               continue;
             }

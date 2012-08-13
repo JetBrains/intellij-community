@@ -2,11 +2,10 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -107,8 +106,8 @@ public class ResolveImportUtil {
       return Collections.emptyList();
     }
     final PsiFile file = importElement.getContainingFile().getOriginalFile();
-    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(importElement);
-    final List<PsiFileSystemItem> modules = resolveModule(qName, file, absolute_import_enabled, 0);
+    boolean absoluteImportEnabled = isAbsoluteImportEnabledFor(importElement);
+    final List<PsiElement> modules = resolveModule(qName, file, absoluteImportEnabled, 0);
     if (modules.size() > 0) {
       return rateResults(modules);
     }
@@ -126,7 +125,7 @@ public class ResolveImportUtil {
     PsiFile file = importElement.getContainingFile().getOriginalFile();
     String name = qName.getComponents().get(0);
 
-    final List<PsiFileSystemItem> candidates = importStatement.resolveImportSourceCandidates();
+    final List<PsiElement> candidates = importStatement.resolveImportSourceCandidates();
     List<PsiElement> resultList = new ArrayList<PsiElement>();
     for (PsiElement candidate : candidates) {
       if (!candidate.isValid()) {
@@ -153,7 +152,7 @@ public class ResolveImportUtil {
 
   @NotNull
   public static List<PsiElement> resolveFromOrForeignImport(PyFromImportStatement fromImportStatement, PyQualifiedName qname) {
-    final List<PsiFileSystemItem> results = resolveFromImportStatementSource(fromImportStatement, qname);
+    final List<PsiElement> results = resolveFromImportStatementSource(fromImportStatement, qname);
     if (results.isEmpty() && qname != null && qname.getComponentCount() > 0) {
       final PyQualifiedName importedQName = PyQualifiedName.fromComponents(qname.getLastComponent());
       final PyQualifiedName containingQName = qname.removeLastComponent();
@@ -164,26 +163,26 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  public static List<PsiFileSystemItem> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
-    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
+  public static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
+    boolean absoluteImportEnabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
-    return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
+    return resolveModule(qName, file, absoluteImportEnabled, from_import_statement.getRelativeLevel());
   }
 
   @NotNull
-  public static List<PsiFileSystemItem> resolveFromOrForeignImportStatementSource(@NotNull PyFromImportStatement fromImportStatement,
-                                                                                  @Nullable PyQualifiedName qName) {
-    final List<PsiFileSystemItem> results = resolveFromImportStatementSource(fromImportStatement, qName);
+  public static List<PsiElement> resolveFromOrForeignImportStatementSource(@NotNull PyFromImportStatement fromImportStatement,
+                                                                           @Nullable PyQualifiedName qName) {
+    final List<PsiElement> results = resolveFromImportStatementSource(fromImportStatement, qName);
     if (!results.isEmpty()) {
       return results;
     }
     final PsiElement result = qName != null ? resolveForeignImport(fromImportStatement, qName, null) : null;
-    return result instanceof PsiFileSystemItem ? Collections.singletonList((PsiFileSystemItem)result)
-                                               : Collections.<PsiFileSystemItem>emptyList();
+    return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
   }
 
   /**
    * Resolves a module reference in a general case.
+   *
    *
    * @param qualifiedName     qualified name of the module reference to resolve
    * @param sourceFile        where that reference resides; serves as PSI foothold to determine module, project, etc.
@@ -192,8 +191,8 @@ public class ResolveImportUtil {
    * @return list of possible candidates
    */
   @NotNull
-  public static List<PsiFileSystemItem> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile sourceFile,
-                                                      boolean importIsAbsolute, int relativeLevel) {
+  public static List<PsiElement> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile sourceFile,
+                                               boolean importIsAbsolute, int relativeLevel) {
     if (qualifiedName == null || sourceFile == null) {
       return Collections.emptyList();
     }
@@ -215,7 +214,7 @@ public class ResolveImportUtil {
           visitor.withRelative(0);
         }
       }
-      List<PsiFileSystemItem> results = visitor.resultsAsList();
+      List<PsiElement> results = visitor.resultsAsList();
       if (results.isEmpty() && relativeLevel == 0 && !importIsAbsolute) {
         results = resolveRelativeImportAsAbsolute(sourceFile, qualifiedName);
       }
@@ -236,11 +235,11 @@ public class ResolveImportUtil {
    * @return                list of resolved elements.
    */
   @NotNull
-  private static List<PsiFileSystemItem> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
-                                                                         @NotNull PyQualifiedName qualifiedName) {
+  private static List<PsiElement> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
+                                                                  @NotNull PyQualifiedName qualifiedName) {
     final PsiDirectory containingDirectory = foothold.getContainingDirectory();
     if (containingDirectory != null) {
-      final PyQualifiedName containingPath = findCanonicalImportPath(containingDirectory, null);
+      final PyQualifiedName containingPath = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null);
       if (containingPath != null && containingPath.getComponentCount() > 0) {
         final PyQualifiedName absolutePath = containingPath.append(qualifiedName.toString());
         final QualifiedNameResolver absoluteVisitor = new QualifiedNameResolverImpl(absolutePath).fromElement(foothold);
@@ -258,9 +257,9 @@ public class ResolveImportUtil {
   }
 
   @Nullable
-  private static PythonPathCache getPathCache(PsiElement foothold) {
+  static PythonPathCache getPathCache(PsiElement foothold) {
     PythonPathCache cache = null;
-    final Module module = ModuleUtil.findModuleForPsiElement(foothold);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(foothold);
     if (module != null) {
       cache = PythonModulePathCache.getInstance(module);
     }
@@ -344,8 +343,8 @@ public class ResolveImportUtil {
         return result;
       }
       if (parent instanceof PsiFile) {
-        final List<PsiFileSystemItem> items = resolveRelativeImportAsAbsolute((PsiFile)parent,
-                                                                              PyQualifiedName.fromComponents(referencedName));
+        final List<PsiElement> items = resolveRelativeImportAsAbsolute((PsiFile)parent,
+                                                                       PyQualifiedName.fromComponents(referencedName));
         if (!items.isEmpty()) {
           return items.get(0);
         }
@@ -410,187 +409,6 @@ public class ResolveImportUtil {
       }
     }
     return ret;
-  }
-
-  /**
-   * Tries to find roots that contain given vfile, and among them the root that contains at the smallest depth.
-   */
-  private static class PathChoosingVisitor implements RootVisitor {
-
-    private final VirtualFile myVFile;
-    private List<String> myResult;
-
-    private PathChoosingVisitor(VirtualFile file) {
-      if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {
-        myVFile = file.getParent();
-      }
-      else {
-        myVFile = file;
-      }
-    }
-
-    public boolean visitRoot(VirtualFile root, Module module, Sdk sdk) {
-      final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
-      if (relativePath != null) {
-        List<String> result = StringUtil.split(relativePath, "/");
-        if (myResult == null || result.size() < myResult.size()) {
-          if (result.size() > 0) {
-            result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
-          }
-          for (String component : result) {
-            if (!PyNames.isIdentifier(component)) {
-              return true;
-            }
-          }
-          myResult = result;
-        }
-      }
-      return myResult == null || myResult.size() > 0;
-    }
-
-    @Nullable
-    public PyQualifiedName getResult() {
-      return myResult != null ? PyQualifiedName.fromComponents(myResult) : null;
-    }
-  }
-
-  /**
-   * Looks for a way to import given file.
-   *
-   * @param foothold an element in the file to import to (maybe the file itself); used to determine module, roots, etc.
-   * @param vfile    file which importable name we want to find.
-   * @return a possibly qualified name under which the file may be imported, or null. If there's more than one way (overlapping roots),
-   *         the name with fewest qualifiers is selected.
-   */
-  @Nullable
-  public static String findShortestImportableName(PsiElement foothold, @NotNull VirtualFile vfile) {
-    final PyQualifiedName qName = findShortestImportableQName(foothold, vfile);
-    return qName == null ? null : qName.toString();
-  }
-
-  @Nullable
-  public static PyQualifiedName findShortestImportableQName(@Nullable PsiFileSystemItem fsItem) {
-    VirtualFile vFile = fsItem != null ? fsItem.getVirtualFile() : null;
-    return vFile != null ? findShortestImportableQName(fsItem, vFile) : null;
-  }
-
-  @Nullable
-  public static PyQualifiedName findShortestImportableQName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
-    final PythonPathCache cache = getPathCache(foothold);
-    final PyQualifiedName name = cache != null ? cache.getName(vfile) : null;
-    if (name != null) {
-      return name;
-    }
-    PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
-    RootVisitorHost.visitRoots(foothold, visitor);
-    final PyQualifiedName result = visitor.getResult();
-    if (cache != null) {
-      cache.putName(vfile, result);
-    }
-    return result;
-  }
-
-  @Nullable
-  public static String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
-    final PythonPathCache cache = PythonModulePathCache.getInstance(module);
-    final PyQualifiedName name = cache.getName(vfile);
-    if (name != null) {
-      return name.toString();
-    }
-    PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
-    RootVisitorHost.visitRoots(module, false, visitor);
-    final PyQualifiedName result = visitor.getResult();
-    cache.putName(vfile, result);
-    return result == null ? null : result.toString();
-  }
-
-  /**
-   * Returns the name through which the specified symbol should be imported. This can be different from the qualified name of the
-   * symbol (the place where a symbol is defined). For example, Python 2.7 unittest defines TestCase in unittest.case module
-   * but it should be imported directly from unittest.
-   *
-   * @param symbol   the symbol to be imported
-   * @param foothold the location where the import statement would be added
-   * @return the qualified name, or null if it wasn't possible to calculate one
-   */
-  @Nullable
-  public static PyQualifiedName findCanonicalImportPath(@NotNull PsiElement symbol, @Nullable PsiElement foothold) {
-    PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? (PsiFileSystemItem)symbol : symbol.getContainingFile();
-    if (srcfile == null) {
-      return null;
-    }
-    VirtualFile virtualFile = srcfile.getVirtualFile();
-    if (virtualFile == null) {
-      return null;
-    }
-    if (srcfile instanceof PsiFile && symbol instanceof PsiNamedElement && !(symbol instanceof PsiFileSystemItem)) {
-      PsiElement toplevel = symbol;
-      if (symbol instanceof PyFunction) {
-        final PyClass containingClass = ((PyFunction)symbol).getContainingClass();
-        if (containingClass != null) {
-          toplevel = containingClass;
-        }
-      }
-      PsiDirectory dir = ((PsiFile)srcfile).getContainingDirectory();
-      while (dir != null) {
-        PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
-        if (initPy == null) {
-          break;
-        }
-        if (initPy instanceof PyFile && toplevel.equals(((PyFile)initPy).getElementNamed(((PsiNamedElement)toplevel).getName()))) {
-          virtualFile = dir.getVirtualFile();
-        }
-        dir = dir.getParentDirectory();
-      }
-    }
-    final PyQualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
-    if (qname != null) {
-      final PyQualifiedName restored = restoreStdlibCanonicalPath(qname);
-      if (restored != null) {
-        return restored;
-      }
-    }
-    return qname;
-  }
-
-  @Nullable
-  public static PyQualifiedName restoreStdlibCanonicalPath(PyQualifiedName qname) {
-    if (qname.getComponentCount() > 0) {
-      final List<String> components = qname.getComponents();
-      final String head = components.get(0);
-      if (head.equals("_abcoll") || head.equals("_collections")) {
-        components.set(0, "collections");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("posix") || head.equals("nt")) {
-        components.set(0, "os");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("_functools")) {
-        components.set(0, "functools");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("_struct")) {
-        components.set(0, "struct");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("_io") || head.equals("_pyio") || head.equals("_fileio")) {
-        components.set(0, "io");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("_datetime")) {
-        components.set(0, "datetime");
-        return PyQualifiedName.fromComponents(components);
-      }
-      else if (head.equals("ntpath") || head.equals("posixpath") || head.equals("path")) {
-        final List<String> result = new ArrayList<String>();
-        result.add("os");
-        components.set(0, "path");
-        result.addAll(components);
-        return PyQualifiedName.fromComponents(result);
-      }
-    }
-    return null;
   }
 
   /**

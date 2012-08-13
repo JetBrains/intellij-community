@@ -35,7 +35,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   private PsiFile myFootholdFile;
   private final @NotNull PyQualifiedName myQualifiedName;
   @NotNull PsiManager myPsiManager;
-  final Set<PsiFileSystemItem> results = Sets.newLinkedHashSet();
+  final Set<PsiElement> results = Sets.newLinkedHashSet();
   private boolean myAcceptRootAsTopLevelPackage;
   private boolean myVisitAllModules = false;
   private int myRelativeLevel = -1;
@@ -161,7 +161,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   @Override
   @NotNull
-  public List<PsiFileSystemItem> resultsAsList() {
+  public List<PsiElement> resultsAsList() {
     if (myFootholdFile != null && !myFootholdFile.isValid()) {
       return Collections.emptyList();
     }
@@ -186,10 +186,10 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     return Lists.newArrayList(results);
   }
 
-  private List<PsiFileSystemItem> resolveInRoots() {
+  private List<PsiElement> resolveInRoots() {
     PythonPathCache cache = findMyCache();
     if (cache != null) {
-      final List<PsiFileSystemItem> cachedResults = cache.get(myQualifiedName);
+      final List<PsiElement> cachedResults = cache.get(myQualifiedName);
       if (cachedResults != null) {
         return cachedResults;
       }
@@ -217,7 +217,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       throw new IllegalStateException();
     }
 
-    final ArrayList<PsiFileSystemItem> resultList = Lists.newArrayList(results);
+    final ArrayList<PsiElement> resultList = Lists.newArrayList(results);
     if (cache != null) {
       cache.put(myQualifiedName, resultList);
     }
@@ -226,8 +226,8 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
   @Override
   @Nullable
-  public PsiFileSystemItem firstResult() {
-    final List<PsiFileSystemItem> results = resultsAsList();
+  public PsiElement firstResult() {
+    final List<PsiElement> results = resultsAsList();
     return results.size() > 0 ? results.get(0) : null;
   }
 

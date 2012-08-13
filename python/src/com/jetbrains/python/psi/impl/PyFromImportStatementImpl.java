@@ -189,20 +189,20 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   @Nullable
-  public PsiFileSystemItem resolveImportSource() {
-    final List<PsiFileSystemItem> candidates = resolveImportSourceCandidates();
+  public PsiElement resolveImportSource() {
+    final List<PsiElement> candidates = resolveImportSourceCandidates();
     return candidates.size() > 0 ? candidates.get(0) : null;
   }
 
   @NotNull
   @Override
-  public List<PsiFileSystemItem> resolveImportSourceCandidates() {
+  public List<PsiElement> resolveImportSourceCandidates() {
     final PyQualifiedName qName = getImportSourceQName();
     if (qName == null) {
       final int level = getRelativeLevel();
       if (level > 0) {
         final PsiDirectory upper = ResolveImportUtil.stepBackFrom(getContainingFile().getOriginalFile(), level);
-        return upper == null ? Collections.<PsiFileSystemItem>emptyList() : Collections.<PsiFileSystemItem>singletonList(upper);
+        return upper == null ? Collections.<PsiElement>emptyList() : Collections.<PsiElement>singletonList(upper);
       }
     }
     return ResolveImportUtil.resolveFromOrForeignImportStatementSource(this, qName);

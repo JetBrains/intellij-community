@@ -19,16 +19,14 @@ public class PyStdlibModuleMembersProvider extends PyModuleMembersProvider {
   @Override
   protected Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName, PointInImport point) {
     if (qName.equals("os")) {
-      if (point == PointInImport.AS_MODULE) {
-        return Collections.singletonList(new PyDynamicMember("path"));
-      }
-      else if (point == PointInImport.NONE && module != null) {
-        final String name = SystemInfo.isWindows ? "ntpath" : "posixpath";
+      final String name = SystemInfo.isWindows ? "ntpath" : "posixpath";
+      if (module != null) {
         final PsiElement resolved = ResolveImportUtil.resolveModuleInRoots(PyQualifiedName.fromDottedString(name), module);
         if (resolved != null) {
           return Collections.singletonList(new PyDynamicMember("path", resolved));
         }
       }
+      return Collections.singletonList(new PyDynamicMember("path"));
     }
     return Collections.emptyList();
   }

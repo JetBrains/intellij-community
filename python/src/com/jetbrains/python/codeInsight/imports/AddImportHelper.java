@@ -12,6 +12,7 @@ import com.jetbrains.python.PythonDocStringFinder;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -214,7 +215,7 @@ public class AddImportHelper {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
     final PsiFileSystemItem toImport = target instanceof PsiFileSystemItem ? ((PsiFileSystemItem)target).getParent() : target.getContainingFile();
     final ImportPriority priority = getImportPriority(file, toImport);
-    final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(target, element);
+    final PyQualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(target, element);
     if (qName == null) return;
     String path = qName.toString();
     if (target instanceof PsiFileSystemItem) {
