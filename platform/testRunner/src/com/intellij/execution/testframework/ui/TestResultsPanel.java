@@ -89,6 +89,7 @@ public abstract class TestResultsPanel extends JPanel implements Disposable {
     leftPanel.add(myToolbarPanel, BorderLayout.NORTH);
     splitter.setFirstComponent(leftPanel);
     myStatusLine.setMinimumSize(new Dimension(0, myStatusLine.getMinimumSize().height));
+    myStatusLine.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     final JPanel rightPanel = new JPanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
     myStatisticsSplitter = createSplitter(myStatisticsSplitterProportionProperty, 0.5f);
