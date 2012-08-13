@@ -14,6 +14,7 @@ package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -25,6 +26,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -37,9 +40,15 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author peter
  */
 public class GroovyCompletionConfidence extends CompletionConfidence {
+  private static final ElementPattern<PsiElement> CLOSURE_LBRACE = psiElement().withText("{").withParent(GrClosableBlock.class);
 
   private static boolean isPossibleClosureParameter(GrReferenceExpression ref) {
-    return psiElement().withParent(GrClosableBlock.class).afterLeaf("{").accepts(ref) || GroovyCompletionContributor.isInPossibleClosureParameter(ref);
+    return psiElement().afterLeaf(CLOSURE_LBRACE).accepts(ref) ||
+           psiElement().afterLeaf(
+             psiElement().afterLeaf(",").withParent(
+               psiElement(GrVariable.class).withParent(
+                 psiElement(GrVariableDeclaration.class).afterLeaf(CLOSURE_LBRACE)))).accepts(ref) ||
+           GroovyCompletionContributor.isInPossibleClosureParameter(ref);
   }
 
   @NotNull

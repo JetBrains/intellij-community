@@ -277,5 +277,18 @@ foo(new <caret>)
     assert myFixture.file.text.contains('new File()')
   }
 
+  public void testSecondClosureParameterName() {
+    myFixture.configureByText("a.groovy", "{ String a, Object <caret> }")
+    type 'o'
+    assert !lookup.focused
+  }
+
+  public void testSecondClosureParameterName2() {
+    myFixture.configureByText("a.groovy", "{ String a, Object <caret>String beanName -> println 'hi' }")
+    type 'o'
+    assert !lookup.focused
+  }
+
+
 
 }
