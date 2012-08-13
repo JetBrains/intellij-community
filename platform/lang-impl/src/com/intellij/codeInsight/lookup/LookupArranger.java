@@ -122,7 +122,7 @@ public abstract class LookupArranger {
       }
       result.addAll(items);
       ArrayList<LookupElement> list = new ArrayList<LookupElement>(result);
-      int selected = onExplicitAction ? 0 : list.indexOf(lookup.getCurrentItem());
+      int selected = !lookup.isSelectionTouched() && onExplicitAction ? 0 : list.indexOf(lookup.getCurrentItem());
       return new Pair<List<LookupElement>, Integer>(list, selected >= 0 ? selected : 0);
     }
 
