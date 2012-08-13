@@ -88,14 +88,6 @@ public class JBScrollPane extends JScrollPane {
     return new MyScrollBar(Adjustable.HORIZONTAL);
   }
 
-  public boolean isHaveBorder() {
-    return getBorder() != null;
-  }
-
-  public void setHaveBorder(boolean haveBorder) {
-    setBorder(haveBorder ? IdeBorderFactory.createBorder() : null);
-  }
-
   @Override
   protected JViewport createViewport() {
     return new JBViewport();
