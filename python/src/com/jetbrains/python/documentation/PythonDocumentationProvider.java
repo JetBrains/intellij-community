@@ -97,7 +97,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       return describeDecorators(cls, LSame2, ", ", LSame1).add(describeClass(cls, LSame2, false, false)).toString() + "\n" + summary;
     }
     else if (element instanceof PyTargetExpression || element instanceof PyNamedParameter) {
-      return describeExpression((PyExpression)element, originalElement);
+      return describeExpression((PyExpression)element);
     }
     return null;
   }
@@ -126,7 +126,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   @Nullable
-  private static String describeExpression(PyExpression expr, PsiElement originalElement) {
+  private static String describeExpression(PyExpression expr) {
     final String name = expr.getName();
     if (name != null) {
       StringBuilder result = new StringBuilder((expr instanceof PyNamedParameter) ? "parameter" : "variable");
@@ -138,9 +138,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
           result.append(String.format(" \"%s\"", function.getName()));
         }
       }
-      if (originalElement instanceof PyExpression && originalElement.isValid()) {
-        result.append("\n").append(describeExpressionType((PyExpression)originalElement));
-      }
+      result.append("\n").append(describeExpressionType(expr));
       return result.toString();
     }
     return null;
