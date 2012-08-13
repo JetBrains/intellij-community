@@ -26,6 +26,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.psi.PropertyUtils;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomExtender;
@@ -87,23 +88,26 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
       prefix = "";
     }
 
-    registerExtensions(prefix, ideaPlugin, registrar);
-    final Collection<String> dependencies = getDependencies(ideaPlugin);
-    for (IdeaPlugin plugin : IdeaPluginConverter.collectAllVisiblePlugins(DomUtil.getFile(extensions))) {
-      final String value = plugin.getPluginId();
-      // value == null for "included" platform plugins like DomPlugin.xml, XmlPlugin.xml, etc.
-      if (value == null || dependencies.contains(value)) {
-        registerExtensions(prefix, plugin, registrar);
-      }
-    }
-
+    registerExtensions(prefix, ideaPlugin, registrar, CollectionFactory.<IdeaPlugin>hashSet());
   }
 
-  private static void registerExtensions(final String prefix, final IdeaPlugin plugin, final DomExtensionsRegistrar registrar) {
-    final String pluginId = StringUtil.notNullize(plugin.getPluginId(), "com.intellij");
-    for (ExtensionPoints points : plugin.getExtensionPoints()) {
+  private static void registerExtensions(final String prefix, final IdeaPlugin ideaPlugin, final DomExtensionsRegistrar registrar, Set<IdeaPlugin> visited) {
+    if (!visited.add(ideaPlugin)) {
+      return;
+    }
+
+    final String pluginId = StringUtil.notNullize(ideaPlugin.getPluginId(), "com.intellij");
+    for (ExtensionPoints points : ideaPlugin.getExtensionPoints()) {
       for (ExtensionPoint point : points.getExtensionPoints()) {
         registerExtensionPoint(registrar, point, prefix, pluginId);
+      }
+    }
+    final Collection<String> dependencies = getDependencies(ideaPlugin);
+    for (IdeaPlugin anotherPlugin : IdeaPluginConverter.collectAllVisiblePlugins(DomUtil.getFile(ideaPlugin))) {
+      final String value = anotherPlugin.getPluginId();
+      // value == null for "included" platform plugins like DomPlugin.xml, XmlPlugin.xml, etc.
+      if (value == null || dependencies.contains(value)) {
+        registerExtensions(prefix, anotherPlugin, registrar, visited);
       }
     }
   }
@@ -311,6 +315,7 @@ public class ExtensionDomExtender extends DomExtender<Extensions> {
   }
 
   interface SimpleTagValue extends DomElement {
+    @SuppressWarnings("UnusedDeclaration")
     @TagValue
     String getTagValue();
   }

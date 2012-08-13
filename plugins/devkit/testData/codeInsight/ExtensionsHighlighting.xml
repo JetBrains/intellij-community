@@ -10,6 +10,7 @@
         <myPlugin.foo.bar/>
         <completion.contributor/>
         <custom.custom/>
+        <indirect.indirect/>
         <<error descr="Element custom.error is not allowed here">custom.error</error>/>
     </extensions>
 </idea-plugin>

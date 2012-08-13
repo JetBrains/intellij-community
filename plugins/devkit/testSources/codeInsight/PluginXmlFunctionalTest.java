@@ -60,8 +60,15 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "        <extensionPoint name=\"completion.contributor\"/>\n" +
                        "    </extensionPoints>\n" +
                        "</idea-plugin>");
+    addPluginXml("indirect", "<idea-plugin>\n" +
+                           "    <id>com.intellij.indirect</id>\n" +
+                           "    <extensionPoints>\n" +
+                           "        <extensionPoint name=\"indirect\"/>\n" +
+                           "    </extensionPoints>\n" +
+                           "</idea-plugin>");
     addPluginXml("custom", "<idea-plugin>\n" +
                            "    <id>com.intellij.custom</id>\n" +
+                           "    <depends>com.intellij.indirect</depends>\n" +
                            "    <extensionPoints>\n" +
                            "        <extensionPoint name=\"custom\"/>\n" +
                            "    </extensionPoints>\n" +
