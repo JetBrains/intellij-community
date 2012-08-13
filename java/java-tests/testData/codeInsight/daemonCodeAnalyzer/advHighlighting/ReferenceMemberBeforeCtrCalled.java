@@ -152,3 +152,23 @@ class Outer {
     }
   }
 }
+
+class WithAnonymous {
+  static class SuperClass {
+      public void foo() {}
+  } 
+  class ChildClass extends SuperClass {
+  
+      public ChildClass(final String title) {
+          this(new SuperClass(){
+              {
+                  foo();
+              }
+          });
+      }
+  
+      public ChildClass(SuperClass child) {
+      }
+  
+  }
+}

@@ -1935,6 +1935,7 @@ public class HighlightUtil {
         return highlightInfo;
       }
       element = element.getParent();
+      if (element instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)element, referencedClass, true)) return null;
     }
     return null;
   }
