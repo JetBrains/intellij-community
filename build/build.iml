@@ -10,6 +10,7 @@
     <orderEntry type="library" scope="PROVIDED" name="Groovy" level="project" />
     <orderEntry type="library" name="Ant" level="project" />
     <orderEntry type="library" name="JPS" level="project" />
+    <orderEntry type="module" module-name="jps-model-api" />
   </component>
 </module>
 

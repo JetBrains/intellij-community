@@ -42,6 +42,12 @@ public class JpsGlobalImpl extends JpsRootElementBase<JpsGlobalImpl> implements 
     return sdk;
   }
 
+  @Override
+  public <P extends JpsElement, SdkType extends JpsSdkType<P> & JpsElementTypeWithDefaultProperties<P>> JpsTypedLibrary<JpsSdk<P>>
+  addSdk(@NotNull String name, @Nullable String homePath, @Nullable String versionString, @NotNull SdkType type) {
+    return addSdk(name, homePath, versionString, type, type.createDefaultProperties());
+  }
+
   @NotNull
   @Override
   public JpsLibraryCollection getLibraryCollection() {

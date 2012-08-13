@@ -105,7 +105,7 @@ public class JpsModuleTest extends JpsModelTestCase {
   }
 
   public void testSdkDependency() {
-    JpsSdk<JpsDummyElement> sdk = myModel.getGlobal().addSdk("sdk", null, null, JpsJavaSdkType.INSTANCE, JpsElementFactory.getInstance().createDummyElement()).getProperties();
+    JpsSdk<JpsDummyElement> sdk = myModel.getGlobal().addSdk("sdk", null, null, JpsJavaSdkType.INSTANCE).getProperties();
     final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
     module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, sdk.createReference());
     module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);

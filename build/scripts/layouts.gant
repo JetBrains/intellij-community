@@ -23,6 +23,11 @@ target('default': "Developers update") {
   ant.delete(dir: patchedDescriptorDir)
 }
 
+target('build-jps': 'Build JPS standalone distribution') {
+  println("Building jps standalone distribution")
+  layout_jps("$home/build/lib/jps")
+}
+
 String appInfoFileName() {
   return "idea/IdeaApplicationInfo.xml"
 }
@@ -488,6 +493,32 @@ def reorder(String home, String targetDirectory) {
         pathelement(location: "$home/lib/jna.jar")
         pathelement(location: "$home/lib/trove4j.jar")
       }
+    }
+  }
+}
+
+def layout_jps(String target) {
+  layout(target) {
+    jar("util.jar") {
+      module("annotations")
+      module("util-rt")
+      module("util")
+    }
+    jar("jps-model.jar") {
+      module("jps-model")
+      module("jps-model-api")
+      module("jps-model-impl")
+      module("jps-model-serialization")
+    }
+    jar("jps-builders.jar") {
+      module("forms_rt")
+      module("forms-compiler")
+      module("instrumentation-util")
+      module("jps-builders")
+      module("jps-standalone-builder")
+    }
+    jar("jps-groovy-plugin.jar") {
+      module("groovy_rt")
     }
   }
 }

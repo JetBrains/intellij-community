@@ -64,8 +64,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
   protected JpsSdk<JpsDummyElement> initJdk(final String name, final String path) {
     String homePath = System.getProperty("java.home");
     String versionString = System.getProperty("java.version");
-    JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk = myModel.getGlobal().addSdk(name, homePath, versionString, JpsJavaSdkType.INSTANCE,
-                                                                              JpsElementFactory.getInstance().createDummyElement());
+    JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk = myModel.getGlobal().addSdk(name, homePath, versionString, JpsJavaSdkType.INSTANCE);
     jdk.addRoot(JpsPathUtil.pathToUrl(path), JpsOrderRootType.COMPILED);
     return jdk.getProperties();
   }

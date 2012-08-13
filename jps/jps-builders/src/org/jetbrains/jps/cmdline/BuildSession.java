@@ -5,32 +5,20 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataOutputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
-import org.jetbrains.jps.Project;
 import org.jetbrains.jps.api.*;
-import org.jetbrains.jps.idea.IdeaProjectLoader;
-import org.jetbrains.jps.idea.SystemOutErrorReporter;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
-import org.jetbrains.jps.incremental.artifacts.JpsBuilderArtifactService;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
-import org.jetbrains.jps.incremental.storage.BuildDataManager;
-import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
-import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.*;
 import java.util.*;
@@ -46,21 +34,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 */
 final class BuildSession implements Runnable, CanceledStatus {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildSession");
-  public static final String IDEA_PROJECT_DIRNAME = ".idea";
   private static final String FS_STATE_FILE = "fs_state.dat";
   private final UUID mySessionId;
   private final Channel myChannel;
   private volatile boolean myCanceled = false;
-  // globals
-  private final Map<String, String> myPathVars;
-  private final String myGlobalEncoding;
-  private final String myIgnorePatterns;
-  // build params
-  private final BuildType myBuildType;
-  private final Set<String> myModules;
-  private final List<String> myArtifacts;
-  private final List<String> myFilePaths;
-  private final Map<String, String> myBuilderParams;
   private String myProjectPath;
   @Nullable
   private CmdlineRemoteProto.Message.ControllerMessage.FSEvent myInitialFSDelta;
@@ -70,8 +47,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private volatile ProjectDescriptor myProjectDescriptor;
   private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<Pair<String, String>, ConstantSearchFuture>());
   private final ConstantSearch myConstantSearch = new ConstantSearch();
-  private final String myGlobalOptiosnPath;
-
+  private final BuildRunner myBuildRunner;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -81,26 +57,27 @@ final class BuildSession implements Runnable, CanceledStatus {
     myChannel = channel;
 
     // globals
-    myPathVars = new HashMap<String, String>();
+    Map<String, String> pathVars = new HashMap<String, String>();
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
     for (CmdlineRemoteProto.Message.KeyValuePair variable : globals.getPathVariableList()) {
-      myPathVars.put(variable.getKey(), variable.getValue());
+      pathVars.put(variable.getKey(), variable.getValue());
     }
-    myGlobalEncoding = globals.hasGlobalEncoding()? globals.getGlobalEncoding() : null;
-    myIgnorePatterns = globals.hasIgnoredFilesPatterns()? globals.getIgnoredFilesPatterns() : null;
+    String globalEncoding = globals.hasGlobalEncoding() ? globals.getGlobalEncoding() : null;
+    String ignorePatterns = globals.hasIgnoredFilesPatterns() ? globals.getIgnoredFilesPatterns() : null;
 
     // session params
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
-    myGlobalOptiosnPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
-    myBuildType = convertCompileType(params.getBuildType());
-    myModules = new HashSet<String>(params.getModuleNameList());
-    myArtifacts = params.getArtifactNameList();
-    myFilePaths = params.getFilePathList();
-    myBuilderParams = new HashMap<String, String>();
+    String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
+    BuildType myBuildType = convertCompileType(params.getBuildType());
+    Set<String> modules = new HashSet<String>(params.getModuleNameList());
+    List<String> artifacts = params.getArtifactNameList();
+    List<String> filePaths = params.getFilePathList();
+    Map<String, String> builderParams = new HashMap<String, String>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
-      myBuilderParams.put(pair.getKey(), pair.getValue());
+      builderParams.put(pair.getKey(), pair.getValue());
     }
     myInitialFSDelta = delta;
+    myBuildRunner = new BuildRunner(myProjectPath, globalOptionsPath, pathVars, globalEncoding, ignorePatterns, modules, myBuildType, artifacts, filePaths, builderParams);
   }
 
   public void run() {
@@ -108,7 +85,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
     final Ref<Boolean> markedFilesUptodate = new Ref<Boolean>(false);
     try {
-      runBuild(myBuildType, myModules, myArtifacts, myBuilderParams, myFilePaths, new MessageHandler() {
+      runBuild(new MessageHandler() {
         public void processMessage(BuildMessage buildMessage) {
           final CmdlineRemoteProto.Message.BuilderMessage response;
           if (buildMessage instanceof FileGeneratedEvent) {
@@ -155,10 +132,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void runBuild(BuildType buildType, Set<String> modules, Collection<String> artifacts, Map<String, String> builderParams,
-                        Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
-    boolean forceCleanCaches = false;
-
+  private void runBuild(final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
     final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
     if (dataStorageRoot == null) {
       msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " +
@@ -169,49 +143,14 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     try {
       final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta);
-      if (shouldApplyEvent && buildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
+      if (shouldApplyEvent && myBuildRunner.getBuildType() == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
         applyFSEvent(null, myInitialFSDelta);
         return;
       }
-      if (!dataStorageRoot.exists()) {
-        // invoked the very first time for this project. Force full rebuild
-        buildType = BuildType.PROJECT_REBUILD;
-      }
-
-      final boolean inMemoryMappingsDelta = System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
-      ProjectTimestamps projectTimestamps = null;
-      BuildDataManager dataManager = null;
-      try {
-        projectTimestamps = new ProjectTimestamps(dataStorageRoot);
-        dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
-        if (dataManager.versionDiffers()) {
-          forceCleanCaches = true;
-          msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
-        }
-      }
-      catch (Exception e) {
-        // second try
-        LOG.info(e);
-        if (projectTimestamps != null) {
-          projectTimestamps.close();
-        }
-        if (dataManager != null) {
-          dataManager.close();
-        }
-        forceCleanCaches = true;
-        FileUtil.delete(dataStorageRoot);
-        projectTimestamps = new ProjectTimestamps(dataStorageRoot);
-        dataManager = new BuildDataManager(dataStorageRoot, inMemoryMappingsDelta);
-        // second attempt succeded
-        msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
-      }
-
-      final JpsModel jpsModel = loadJpsModel();
-      final Project project = loadProject();
-      final ProjectDescriptor pd = new ProjectDescriptor(project, jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
+      ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
       myProjectDescriptor = pd;
       if (shouldApplyEvent) {
-        applyFSEvent(pd, myInitialFSDelta);
+        applyFSEvent(myProjectDescriptor, myInitialFSDelta);
       }
 
 
@@ -220,46 +159,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       // ensure events from controller are processed after FSState initialization
       myEventsProcessor.startProcessing();
 
-      for (int attempt = 0; attempt < 2; attempt++) {
-        if (forceCleanCaches && modules.isEmpty() && paths.isEmpty()) {
-          // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
-          buildType = BuildType.PROJECT_REBUILD;
-        }
-
-        final CompileScope compileScope = createCompilationScope(buildType, pd, modules, artifacts, paths);
-        final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), builderParams, cs, myConstantSearch);
-        builder.addMessageHandler(msgHandler);
-        try {
-          switch (buildType) {
-            case PROJECT_REBUILD:
-              builder.build(compileScope, false, true, forceCleanCaches);
-              break;
-
-            case FORCED_COMPILATION:
-              builder.build(compileScope, false, false, forceCleanCaches);
-              break;
-
-            case MAKE:
-              builder.build(compileScope, true, false, forceCleanCaches);
-              break;
-
-            case CLEAN:
-              //todo[nik]
-      //        new ProjectBuilder(new GantBinding(), project).clean();
-              break;
-          }
-          break; // break attempts loop
-        }
-        catch (RebuildRequestedException e) {
-          if (attempt == 0) {
-            LOG.info(e);
-            forceCleanCaches = true;
-          }
-          else {
-            throw e;
-          }
-        }
-      }
+      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler);
     }
     finally {
       saveData(fsState, dataStorageRoot);
@@ -513,122 +413,6 @@ final class BuildSession implements Runnable, CanceledStatus {
   public boolean isCanceled() {
     return myCanceled;
   }
-
-  private JpsModel loadJpsModel() {
-    final long start = System.currentTimeMillis();
-    try {
-      final JpsModel model = JpsElementFactory.getInstance().createModel();
-      try {
-        JpsGlobalLoader.loadGlobalSettings(model.getGlobal(), myPathVars, myGlobalOptiosnPath);
-        JpsProjectLoader.loadProject(model.getProject(), myPathVars, myProjectPath);
-        LOG.info("New JPS model: " + model.getProject().getModules().size() + " modules, " + model.getProject().getLibraryCollection().getLibraries().size() + " libraries");
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-      return model;
-    }
-    finally {
-      final long loadTime = System.currentTimeMillis() - start;
-      LOG.info("New JPS model: project " + myProjectPath + " loaded in " + loadTime + " ms");
-    }
-  }
-
-  private Project loadProject() {
-    final long start = System.currentTimeMillis();
-    try {
-      final Project project = new Project();
-
-      final File projectFile = new File(myProjectPath);
-
-      final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : myProjectPath;
-      IdeaProjectLoader.loadFromPath(project, loadPath, myPathVars, null, new SystemOutErrorReporter(false));
-      final String globalEncoding = myGlobalEncoding;
-      if (!StringUtil.isEmpty(globalEncoding) && project.getProjectCharset() == null) {
-        project.setProjectCharset(globalEncoding);
-      }
-      project.getIgnoredFilePatterns().loadFromString(myIgnorePatterns);
-      return project;
-    }
-    finally {
-      final long loadTime = System.currentTimeMillis() - start;
-      LOG.info("Project " + myProjectPath + " loaded in " + loadTime + " ms");
-    }
-  }
-
-  private static boolean isDirectoryBased(File projectFile) {
-    return !(projectFile.isFile() && projectFile.getName().endsWith(".ipr"));
-  }
-
-  private static CompileScope createCompilationScope(BuildType buildType,
-                                                     ProjectDescriptor pd,
-                                                     Set<String> modules,
-                                                     Collection<String> artifactNames,
-                                                     Collection<String> paths) throws Exception {
-    final Timestamps timestamps = pd.timestamps.getStorage();
-    Set<JpsArtifact> artifacts = new HashSet<JpsArtifact>();
-    if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
-      artifacts.addAll(JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false));
-    }
-    else {
-      for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false)) {
-        if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
-          artifacts.add(artifact);
-        }
-      }
-    }
-
-    final CompileScope compileScope;
-    if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
-      compileScope = new AllProjectScope(pd.project, pd.jpsProject, artifacts, buildType != BuildType.MAKE);
-    }
-    else {
-      final Set<JpsModule> forcedModules;
-      if (!modules.isEmpty()) {
-        forcedModules = new HashSet<JpsModule>();
-        for (JpsModule m : pd.jpsProject.getModules()) {
-          if (modules.contains(m.getName())) {
-            forcedModules.add(m);
-          }
-        }
-      }
-      else {
-        forcedModules = Collections.emptySet();
-      }
-
-      final Map<String, Set<File>> filesToCompile;
-      if (!paths.isEmpty()) {
-        filesToCompile = new HashMap<String, Set<File>>();
-        for (String path : paths) {
-          final File file = new File(path);
-          final RootDescriptor rd = pd.rootsIndex.getModuleAndRoot(null, file);
-          if (rd != null) {
-            Set<File> files = filesToCompile.get(rd.module);
-            if (files == null) {
-              files = new HashSet<File>();
-              filesToCompile.put(rd.module, files);
-            }
-            files.add(file);
-            if (buildType == BuildType.FORCED_COMPILATION) {
-              pd.fsState.markDirty(null, file, rd, timestamps);
-            }
-          }
-        }
-      }
-      else {
-        filesToCompile = Collections.emptyMap();
-      }
-
-      if (filesToCompile.isEmpty()) {
-        compileScope = new ModulesScope(pd.project, pd.jpsProject, forcedModules, artifacts, buildType != BuildType.MAKE);
-      }
-      else {
-        compileScope = new ModulesAndFilesScope(pd.project, pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE);
-      }
-    }
-    return compileScope;
-  }
-
 
   private static BuildType convertCompileType(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type compileType) {
     switch (compileType) {
