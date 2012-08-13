@@ -36,9 +36,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
  * @author ven
  */
 public class ParameterNameExpression extends Expression {
-  private final String myDefaultName;
+  private final @Nullable String myDefaultName;
 
-  public ParameterNameExpression(String name) {
+  public ParameterNameExpression(@Nullable String name) {
     myDefaultName = name;
   }
 

@@ -31,12 +31,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.annotator.intentions.QuickfixUtil;
-import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
-import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
+import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
+import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -81,7 +81,7 @@ public class IntentionUtils {
       PsiParameter parameter = parameters[i];
       PsiTypeElement parameterTypeElement = parameter.getTypeElement();
       builder.replaceElement(parameterTypeElement, paramTypesExpressions[i]);
-      builder.replaceElement(parameter.getNameIdentifier(), new ParameterNameExpression());
+      builder.replaceElement(parameter.getNameIdentifier(), new ParameterNameExpression(null));
     }
     PsiCodeBlock body = method.getBody();
     assert body != null;
