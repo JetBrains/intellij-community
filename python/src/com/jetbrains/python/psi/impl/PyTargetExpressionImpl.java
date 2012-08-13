@@ -181,7 +181,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             if (cls != null) {
               final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
               if (enter != null) {
-                return enter.getReturnType(context, null);
+                final PyType enterType = enter.getReturnType(context, null);
+                if (enterType != null) {
+                  return enterType;
+                }
+                // Guess the return type of __enter__
+                return PyUnionType.createWeakType(exprType);
               }
             }
           }
