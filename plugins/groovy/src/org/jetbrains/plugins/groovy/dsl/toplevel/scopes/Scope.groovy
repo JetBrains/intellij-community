@@ -4,13 +4,12 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.SyntheticElement
+import org.jetbrains.plugins.groovy.dsl.toplevel.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.dsl.toplevel.*
-
 /**
  * @author ilyas
  */
@@ -44,7 +43,7 @@ class ClosureScope extends Scope {
   private final boolean isTransparent
 
   ClosureScope(Map args) {
-    isArg == args && args.isArgument ? args.isArgument : false
+    isArg = args && args.isArgument ? args.isArgument : false
     isTransparent = args && args.transparent ? args.transparent : false
   }
 
