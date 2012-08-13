@@ -130,4 +130,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testPropertyAndFactoryFunction() {
     doTest();
   }
+
+  // PY-7179
+  public void testDecoratedFunction() {
+    doTest();
+  }
 }

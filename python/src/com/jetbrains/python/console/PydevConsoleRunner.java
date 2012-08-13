@@ -1,5 +1,6 @@
 package com.jetbrains.python.console;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
@@ -54,7 +55,6 @@ import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkFlavor;
-import org.apache.commons.lang.StringUtils;
 import org.apache.xmlrpc.XmlRpcException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -386,7 +386,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   private boolean isIndentSubstring(String text) {
     int indentSize = myConsoleExecuteActionHandler.getPythonIndent();
-    return text.length() >= indentSize && StringUtils.isWhitespace(text.substring(text.length() - indentSize));
+    return text.length() >= indentSize && CharMatcher.WHITESPACE.matchesAllOf(text.substring(text.length() - indentSize));
   }
 
   private void enableConsoleExecuteAction() {

@@ -266,7 +266,8 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (paramList != null && paramList.getParent() instanceof PyFunction) {
             final PyFunction func = (PyFunction) paramList.getParent();
             containingClass = func.getContainingClass();
-            if (PyNames.INIT.equals(func.getName()) && containingClass != null) {
+            final String funcName = func.getName();
+            if (PyNames.INIT.equals(funcName) && containingClass != null) {
               if (!namedParameter.isKeywordContainer() && !namedParameter.isPositionalContainer()) {
                 mayBeField = true;
               }
@@ -274,13 +275,18 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             else if (ignoreUnusedParameters(func, functionsWithInheritors)) {
               continue;
             }
-            Boolean isEmpty = emptyFunctions.get(func);
-            if (isEmpty == null) {
-              isEmpty = isEmptyFunction(func);
-              emptyFunctions.put(func, isEmpty);
-            }
-            if (isEmpty) {
-              continue;
+            if (func.asMethod() != null) {
+              if (funcName != null && isSpecialName(funcName) && !PyNames.INIT.equals(funcName) && !PyNames.NEW.equals(funcName)) {
+                continue;
+              }
+              Boolean isEmpty = emptyFunctions.get(func);
+              if (isEmpty == null) {
+                isEmpty = isEmptyFunction(func);
+                emptyFunctions.put(func, isEmpty);
+              }
+              if (isEmpty) {
+                continue;
+              }
             }
           }
           final LocalQuickFix[] fixes = mayBeField
@@ -305,6 +311,11 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
       }
     }
+  }
+
+  private static boolean isSpecialName(@NotNull String name) {
+    final String dunder = "__";
+    return name.startsWith(dunder) && name.endsWith(dunder) && name.length() > (dunder.length() * 2);
   }
 
   private boolean isRangeIteration(PyForStatement forStatement) {
@@ -411,20 +422,26 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       return true;
     }
     else if (statements.length == 1) {
-      if (isStringLiteral(statements[0]) || isPassOrRaise(statements[0])) {
+      if (isStringLiteral(statements[0]) || isPassOrRaiseOrEmptyReturn(statements[0])) {
         return true;
       }
     }
     else if (statements.length == 2) {
-      if (isStringLiteral(statements[0]) && (isPassOrRaise(statements[1]))) {
+      if (isStringLiteral(statements[0]) && (isPassOrRaiseOrEmptyReturn(statements[1]))) {
         return true;
       }
     }
     return false;
   }
 
-  private static boolean isPassOrRaise(PyStatement stmt) {
-    return stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement;
+  private static boolean isPassOrRaiseOrEmptyReturn(PyStatement stmt) {
+    if (stmt instanceof PyPassStatement || stmt instanceof PyRaiseStatement) {
+      return true;
+    }
+    if (stmt instanceof PyReturnStatement && ((PyReturnStatement)stmt).getExpression() == null) {
+      return true;
+    }
+    return false;
   }
 
   private static boolean isStringLiteral(PyStatement stmt) {

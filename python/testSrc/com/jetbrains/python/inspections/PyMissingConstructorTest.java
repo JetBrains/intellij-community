@@ -32,6 +32,11 @@ public class PyMissingConstructorTest extends PyTestCase {
   public void testDunderClass() {  // PY-4038
     doTest();
   }
+
+  // PY-7176
+  public void testException() {
+    doTest();
+  }
   
   public void testPy3k() {
     setLanguageLevel(LanguageLevel.PYTHON30);

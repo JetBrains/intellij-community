@@ -129,7 +129,7 @@ target('default': "Build artifacts") {
 
   def usedJars = new HashSet();
 
-  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar", "cglib", "jcip-annotations"]
+  def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar", "cglib", "jcip-annotations", "/y.jar", "ysvg.jar"]
 
   project.clean()
   modules.each {
@@ -271,6 +271,8 @@ private layoutFull(Map args, String target, Set usedJars) {
         }
         zipfileset(src: "${home}/lib/client-api.jar")
         zipfileset(src: "${home}/lib/ideaLicenseDecoder.jar")
+        zipfileset(src: "${home}/lib/y.jar")
+        zipfileset(src: "${home}/lib/ysvg.jar")
       }
 
       jar("pycharm-pydev.jar") {

@@ -1,17 +1,23 @@
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInsight.controlflow.ControlFlow;
+import com.intellij.codeInsight.controlflow.ControlFlowUtil;
+import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.actions.AddGlobalQuickFix;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -102,6 +108,9 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         return;
       }
       if (variable == null) {
+        if (!isFirstUnboundRead(node, owner)) {
+          return;
+        }
         final PsiElement resolved = node.getReference(resolveWithoutImplicits()).resolve();
         final boolean isBuiltin = PyBuiltinCache.getInstance(node).hasInBuiltins(resolved);
         if (owner instanceof PyClass) {
@@ -125,6 +134,45 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                           new AddGlobalQuickFix());
         }
       }
+    }
+
+    private static boolean isFirstUnboundRead(@NotNull PyReferenceExpression node, @NotNull ScopeOwner owner) {
+      final String nodeName = node.getReferencedName();
+      final Scope scope = ControlFlowCache.getScope(owner);
+      final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
+      final Instruction[] instructions = flow.getInstructions();
+      final int num = ControlFlowUtil.findInstructionNumberByElement(instructions, node);
+      if (num < 0) {
+        return true;
+      }
+      final Ref<Boolean> first = Ref.create(true);
+      ControlFlowUtil.iteratePrev(num, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
+        @Override
+        public ControlFlowUtil.Operation fun(Instruction instruction) {
+          if (instruction instanceof ReadWriteInstruction) {
+            final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
+            final String name = rwInstruction.getName();
+            final PsiElement element = rwInstruction.getElement();
+            if (element != null && name != null && name.equals(nodeName) && instruction.num() != num) {
+              try {
+                if (scope.getDeclaredVariable(element, name) == null) {
+                  final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
+                  if (access.isReadAccess()) {
+                    first.set(false);
+                    return ControlFlowUtil.Operation.BREAK;
+                  }
+                }
+              }
+              catch (DFALimitExceededException e) {
+                first.set(false);
+              }
+              return ControlFlowUtil.Operation.CONTINUE;
+            }
+          }
+          return ControlFlowUtil.Operation.NEXT;
+        }
+      });
+      return first.get();
     }
 
     @Override

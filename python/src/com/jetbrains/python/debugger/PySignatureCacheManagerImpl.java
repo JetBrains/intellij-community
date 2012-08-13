@@ -3,6 +3,7 @@ package com.jetbrains.python.debugger;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
@@ -13,7 +14,6 @@ import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +80,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
       lines = lines2;
     }
 
-    String attrString = StringUtils.join(lines, "\n");
+    String attrString = StringUtil.join(lines, "\n");
 
     try {
       CALL_SIGNATURES_ATTRIBUTE.writeAttributeBytes(file, attrString.getBytes());
@@ -91,7 +91,7 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   private static String signatureToString(PySignature signature) {
-    return signature.getFunctionName() + "\t" + StringUtils.join(arguments(signature), '\t');
+    return signature.getFunctionName() + "\t" + StringUtil.join(arguments(signature), "\t");
   }
 
   private static List<String> arguments(PySignature signature) {

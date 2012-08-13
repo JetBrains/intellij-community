@@ -326,7 +326,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context) {
-    return new PyFunctionType(this);
+    final PyFunctionType type = new PyFunctionType(this);
+    if (getDecoratorList() != null) {
+      return PyUnionType.createWeakType(type);
+    }
+    return type;
   }
 
   @Nullable

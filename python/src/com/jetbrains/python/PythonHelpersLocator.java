@@ -24,7 +24,7 @@ public class PythonHelpersLocator {
       File pluginBaseDir = jarFile.getParentFile().getParentFile();
       return new File(pluginBaseDir, "helpers");
     }
-    return new File(jarPath);
+    return new File(jarPath + "-helpers");
   }
 
   /**

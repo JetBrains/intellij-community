@@ -356,7 +356,9 @@ public class RemoteDebugger implements ProcessDebugger {
         LOG.warn("Error closing socket", e);
       }
     }
-    myDebuggerReader.close();
+    if (myDebuggerReader != null) {
+      myDebuggerReader.close();
+    }
     fireCloseEvent();
   }
 
@@ -448,7 +450,8 @@ public class RemoteDebugger implements ProcessDebugger {
         }
         else if (AbstractCommand.isExitEvent(frame.getCommand())) {
           fireCommunicationError();
-        } else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
+        }
+        else if (AbstractCommand.isCallSignatureTrace(frame.getCommand())) {
           recordCallSignature(ProtocolParser.parseCallSignature(frame.getPayload()));
         }
         else {
