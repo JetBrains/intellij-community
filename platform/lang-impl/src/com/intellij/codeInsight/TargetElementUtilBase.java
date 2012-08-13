@@ -156,12 +156,10 @@ public class TargetElementUtilBase {
     Project project = editor.getProject();
     if (project == null) return null;
 
-    Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
-    if (activeLookup != null && (flags & LOOKUP_ITEM_ACCEPTED) != 0) {
-      LookupElement item = activeLookup.getCurrentItem();
-      final PsiElement psi = item == null ? null : CompletionUtil.getTargetElement(item);
-      if (psi != null && psi.isValid()) {
-        return psi;
+    if ((flags & LOOKUP_ITEM_ACCEPTED) != 0) {
+      PsiElement element = getTargetElementFromLookup(project);
+      if (element != null) {
+        return element;
       }
     }
 
@@ -193,6 +191,19 @@ public class TargetElementUtilBase {
     if ((flags & ELEMENT_NAME_ACCEPTED) != 0) {
       if (element instanceof PsiNamedElement) return element;
       return getNamedElement(element, offset - element.getTextRange().getStartOffset());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement getTargetElementFromLookup(Project project) {
+    Lookup activeLookup = LookupManager.getInstance(project).getActiveLookup();
+    if (activeLookup != null) {
+      LookupElement item = activeLookup.getCurrentItem();
+      final PsiElement psi = item == null ? null : CompletionUtil.getTargetElement(item);
+      if (psi != null && psi.isValid()) {
+        return psi;
+      }
     }
     return null;
   }
