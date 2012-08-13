@@ -35,6 +35,7 @@ import java.lang.reflect.InvocationTargetException;
  */
 public class DefaultIdeaErrorLogger implements ErrorLogger {
   private static boolean ourOomOccured = false;
+  private static boolean ourLoggerBroken = false;
   private static boolean mappingFailedNotificationPosted = false;
   @NonNls private static final String FATAL_ERROR_NOTIFICATION_PROPERTY = "idea.fatal.error.notification";
   @NonNls private static final String DISABLED_VALUE = "disabled";
@@ -42,22 +43,38 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
   @NonNls private static final String PARAM_PERMGEN = "PermGen";
 
   public boolean canHandle(IdeaLoggingEvent event) {
-    boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
+    if (ourLoggerBroken) return false;
 
-    ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
-    boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
+    try {
+      boolean notificationEnabled = !DISABLED_VALUE.equals(System.getProperty(FATAL_ERROR_NOTIFICATION_PROPERTY, ENABLED_VALUE));
 
-    return notificationEnabled ||
-           showPluginError ||
-           ApplicationManagerEx.getApplicationEx().isInternal() ||
-           isOOMError(event.getThrowable())     ||
-           event.getThrowable() instanceof MappingFailedException;
+      ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
+      boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
+
+      //noinspection ThrowableResultOfMethodCallIgnored
+      return notificationEnabled ||
+             showPluginError ||
+             ApplicationManagerEx.getApplicationEx().isInternal() ||
+             isOOMError(event.getThrowable())     ||
+             event.getThrowable() instanceof MappingFailedException;
+    }
+    catch (LinkageError e) {
+      if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.IdeErrorsDialog")) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourLoggerBroken = true;
+      }
+      throw e;
+    }
   }
 
   /**
    * @noinspection CallToPrintStackTrace
    */
   public void handle(IdeaLoggingEvent event) {
+    if (ourLoggerBroken) {
+      return;
+    }
+
     try {
       Throwable throwable = event.getThrowable();
       if (isOOMError(throwable)) {
@@ -71,6 +88,10 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       }
     }
     catch (Exception e) {
+      if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.MessagePool")) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourLoggerBroken = true;
+      }
       e.printStackTrace();
     }
   }
