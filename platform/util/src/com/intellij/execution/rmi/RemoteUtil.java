@@ -24,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.rmi.Remote;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
@@ -131,7 +129,19 @@ public class RemoteUtil {
       }
     }
     else if (value instanceof Collection) {
-      result = Arrays.asList((Object[])handleRemoteResult(((Collection)value).toArray(), Object.class, classLoader, substituteClassLoader));
+      Collection c = (Collection)value;
+
+      if (value instanceof Set) {
+        LinkedHashSet set = new LinkedHashSet();
+        for (Object o : c) {
+          set.add(handleRemoteResult(o, Object.class, classLoader, substituteClassLoader));
+        }
+
+        result = set;
+      }
+      else {
+        result = Arrays.asList((Object[])handleRemoteResult(c.toArray(), Object.class, classLoader, substituteClassLoader));
+      }
     }
     else if (value instanceof Object[]) {
       Object[] array = (Object[])value;
