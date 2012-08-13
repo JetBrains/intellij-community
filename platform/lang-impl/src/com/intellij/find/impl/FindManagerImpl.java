@@ -367,7 +367,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       index = res < 0 ? -1 : res;
     }
     else{
-      index = searcher.scan(text, textArray, 0, offset);
+      index = searcher.scan(text, textArray, 0, offset-1);
     }
     if (index < 0){
       return NOT_FOUND_RESULT;
