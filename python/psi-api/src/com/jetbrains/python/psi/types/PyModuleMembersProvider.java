@@ -23,7 +23,7 @@ public abstract class PyModuleMembersProvider {
     if (vFile != null) {
       final String qName = PyPsiFacade.getInstance(module.getProject()).findShortestImportableName(module, vFile);
       if (qName != null) {
-        return getMembersByQName(module, qName, point);
+        return getMembersByQName(module, qName);
       }
     }
     return Collections.emptyList();
@@ -39,5 +39,5 @@ public abstract class PyModuleMembersProvider {
     return null;
   }
 
-  protected abstract Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName, PointInImport point);
+  protected abstract Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName);
 }

@@ -17,7 +17,7 @@ import java.util.Collections;
  */
 public class PyStdlibModuleMembersProvider extends PyModuleMembersProvider {
   @Override
-  protected Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName, PointInImport point) {
+  protected Collection<PyDynamicMember> getMembersByQName(PyFile module, String qName) {
     if (qName.equals("os")) {
       final String name = SystemInfo.isWindows ? "ntpath" : "posixpath";
       if (module != null) {
