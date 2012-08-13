@@ -271,7 +271,7 @@ public class PyTypeParser {
     for (TextRange range : ranges) {
       elementTypes.add(parse(anchor, range.substring(elementTypeNames), types, fullRanges, offset + range.getStartOffset()));
     }
-    return new PyTupleType(anchor, elementTypes.toArray(new PyType[elementTypes.size()]));
+    return PyTupleType.create(anchor, elementTypes.toArray(new PyType[elementTypes.size()]));
   }
 
   @Nullable
@@ -283,7 +283,7 @@ public class PyTypeParser {
       if (m.matches()) {
         PyType from = parse(anchor, m.group(1), types, fullRanges, offset + m.start(1));
         PyType to = parse(anchor, m.group(2), types, fullRanges, offset + m.start(2));
-        final PyType p = new PyTupleType(anchor, new PyType[] {from, to});
+        final PyType p = PyTupleType.create(anchor, new PyType[] {from, to});
         return new PyCollectionTypeImpl(dict.getPyClass(), false, p);
       }
       return dict;

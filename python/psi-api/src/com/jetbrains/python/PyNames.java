@@ -103,6 +103,7 @@ public class PyNames {
 
   public static final String ABSTRACTMETHOD = "abstractmethod";
 
+  public static final String TUPLE = "tuple";
   public static final String SET = "set";
 
   public static final String KEYS = "keys";

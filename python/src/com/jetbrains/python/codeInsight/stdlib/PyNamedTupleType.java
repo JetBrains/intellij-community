@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyElementImpl;
@@ -32,8 +33,8 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   private static final ImmutableSet<String> ourClassMembers = ImmutableSet.of("_fields", "_make");
   private static final ImmutableSet<String> ourInstanceMembers = ImmutableSet.of("_asdict", "_replace");
 
-  public PyNamedTupleType(PsiElement declaration, String name, List<String> fields, boolean isDefinition) {
-    super(PyBuiltinCache.getInstance(declaration).getClass("tuple"), isDefinition);
+  public PyNamedTupleType(PyClass tupleClass, PsiElement declaration, String name, List<String> fields, boolean isDefinition) {
+    super(tupleClass, isDefinition);
     myDeclaration = declaration;
     myFields = fields;
     myName = name;
@@ -94,14 +95,14 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
   @Override
   public PyType getCallType(@NotNull TypeEvalContext context, @Nullable PyQualifiedExpression callSite) {
     if (myDefinition) {
-      return new PyNamedTupleType(myDeclaration, myName, myFields, false);
+      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, false);
     }
     return null;
   }
 
   @Override
   public PyClassType toInstance() {
-    return myIsDefinition ? new PyNamedTupleType(myDeclaration, myName, myFields, false) : this;
+    return myIsDefinition ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, false) : this;
   }
 
   @Override
@@ -127,7 +128,10 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
       }
     }
     if (fieldNames != null) {
-      return new PyNamedTupleType(call, name, fieldNames, true);
+      PyClass tuple = PyBuiltinCache.getInstance(call).getClass(PyNames.TUPLE);
+      if (tuple != null) {
+        return new PyNamedTupleType(tuple, call, name, fieldNames, true);
+      }
     }
     return null;
   }

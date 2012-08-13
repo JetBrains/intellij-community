@@ -84,8 +84,8 @@ public class DocStringTypeReference extends PsiReferenceBase<PsiElement> {
   @Override
   public Object[] getVariants() {
     final PsiFile file = myElement.getContainingFile();
-    final ArrayList variants = Lists.newArrayList("str", "int", "basestring", "bool", "buffer", "bytearray", "complex", "dict",
-                                                  "tuple", "enumerate", "file", "float", "frozenset", "list", "long", "set", "object");
+    final ArrayList<Object> variants = Lists.<Object>newArrayList("str", "int", "basestring", "bool", "buffer", "bytearray", "complex", "dict",
+                                                                  "tuple", "enumerate", "file", "float", "frozenset", "list", "long", "set", "object");
     if (file instanceof PyFile) {
       variants.addAll(((PyFile)file).getTopLevelClasses());
       final List<PyFromImportStatement> fromImports = ((PyFile)file).getFromImports();

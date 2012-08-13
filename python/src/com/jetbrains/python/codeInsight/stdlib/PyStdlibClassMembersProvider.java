@@ -23,9 +23,6 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   @Override
   public Collection<PyDynamicMember> getMembers(PyClassType classType) {
     PyClass clazz = classType.getPyClass();
-    if (clazz == null) {
-      return Collections.emptyList();
-    }
     final String qualifiedName = clazz.getQualifiedName();
     if ("socket._socketobject".equals(qualifiedName)) {
       final PyFile socketFile = (PyFile)clazz.getContainingFile();

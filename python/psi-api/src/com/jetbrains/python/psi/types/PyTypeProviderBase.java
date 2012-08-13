@@ -50,9 +50,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
     public PyType getType(@Nullable PyQualifiedExpression callSite, @Nullable PyType qualifierType, TypeEvalContext context) {
       if (qualifierType instanceof PyClassType) {
         PyClass aClass = ((PyClassType)qualifierType).getPyClass();
-        if (aClass != null) {
-          return PyPsiFacade.getInstance(aClass.getProject()).createClassType(aClass, false);
-        }
+        return PyPsiFacade.getInstance(aClass.getProject()).createClassType(aClass, false);
       }
       return null;
     }

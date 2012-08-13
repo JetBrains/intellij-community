@@ -1,19 +1,13 @@
 package com.jetbrains.python.psi.types;
 
-import com.intellij.openapi.project.Project;
 import com.jetbrains.python.psi.PyClass;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
  */
 public class PyWeakClassType extends PyClassTypeImpl implements PyWeakType {
-  public PyWeakClassType(@Nullable PyClass source, boolean is_definition) {
-    super(source, is_definition);
-  }
-
-  public PyWeakClassType(@NotNull Project project, String classQualifiedName, boolean isDefinition) {
-    super(project, classQualifiedName, isDefinition);
+  public PyWeakClassType(@NotNull PyClass source, boolean isDefinition) {
+    super(source, isDefinition);
   }
 }

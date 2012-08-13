@@ -32,9 +32,9 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType {
+public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
-  @Nullable protected final PyClass myClass;
+  @NotNull protected final PyClass myClass;
   protected final boolean myIsDefinition;
 
   private static ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
@@ -51,15 +51,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
    * right in the place of reference, so that such changes could possibly be accounted for.
    *
    * @param source        PyClass which defines this type. For builtin or external classes, skeleton files contain the definitions.
-   * @param is_definition whether this type describes an instance or a definition of the class.
+   * @param isDefinition whether this type describes an instance or a definition of the class.
    */
-  public PyClassTypeImpl(@Nullable PyClass source, boolean is_definition) {
-    myClass = source != null ? CompletionUtil.getOriginalElement(source) : null;
-    myIsDefinition = is_definition;
-  }
-
-  public PyClassTypeImpl(@NotNull Project project, String classQualifiedName, boolean isDefinition) {
-    myClass = PyClassNameIndex.findClass(classQualifiedName, project);
+  public PyClassTypeImpl(@NotNull PyClass source, boolean isDefinition) {
+    PyClass originalElement = CompletionUtil.getOriginalElement(source);
+    myClass = originalElement != null ? originalElement : source;
     myIsDefinition = isDefinition;
   }
 
@@ -71,7 +67,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
   /**
    * @return a PyClass which defined this type.
    */
-  @Override@Nullable
+  @Override
+  @NotNull
   public PyClass getPyClass() {
     return myClass;
   }
@@ -89,13 +86,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
 
   @Override@Nullable
   public String getClassQName() {
-    return myClass == null ? null : myClass.getQualifiedName();
+    return myClass.getQualifiedName();
   }
 
   @Nullable
   public List<? extends RatedResolveResult> resolveMember(final String name, @Nullable PyExpression location, AccessDirection direction,
                                                           PyResolveContext resolveContext) {
-    if (myClass == null) return null;
     final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
     final Pair<PyClass, String> key = Pair.create(myClass, name);
     if (resolving.contains(key)) {
@@ -216,16 +212,14 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
 
   @Nullable
   private PyClassType getMetaclassType() {
-    if (myClass == null) {
-      return null;
-    }
     final PyTargetExpression metaClassAttribute = myClass.findClassAttribute(PyNames.DUNDER_METACLASS, true);
     if (metaClassAttribute != null) {
       final PyExpression metaclass = metaClassAttribute.findAssignedValue();
       if (metaclass instanceof PyReferenceExpression) {
         final QualifiedResolveResult result = ((PyReferenceExpression)metaclass).followAssignmentsChain(PyResolveContext.noImplicits());
-        if (result.getElement() instanceof PyClass) {
-          return new PyClassTypeImpl((PyClass)result.getElement(), false);
+        PsiElement element = result.getElement();
+        if (element instanceof PyClass) {
+          return new PyClassTypeImpl((PyClass)element, false);
         }
       }
     }
@@ -279,9 +273,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
   public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   public Object[] getCompletionVariants(String prefix, PyExpression location, ProcessingContext context) {
-    if (myClass == null) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
     Set<PyClassType> visited = context.get(CTX_VISITED);
     if (visited == null) {
       visited = new HashSet<PyClassType>();
@@ -336,9 +327,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
   }
 
   private void addOwnClassMembers(PyExpression expressionHook, Set<String> namesAlready, boolean suppressParentheses, List<Object> ret) {
-    if (myClass == null) {
-      return;
-    }
     PyClass containingClass = PsiTreeUtil.getParentOfType(expressionHook, PyClass.class);
     if (containingClass != null) {
       containingClass = CompletionUtil.getOriginalElement(containingClass);
@@ -388,9 +376,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
                                    Set<String> namesAlready,
                                    ProcessingContext context,
                                    List<Object> ret) {
-    if (myClass == null) {
-      return;
-    }
     for (PyClass ancestor : myClass.getSuperClasses()) {
       Object[] ancestry = (new PyClassTypeImpl(ancestor, myIsDefinition)).getCompletionVariants(name, expressionHook, context);
       for (Object ob : ancestry) {
@@ -409,13 +394,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
   }
 
   public String getName() {
-    PyClass cls = getPyClass();
-    if (cls != null) {
-      return cls.getName();
-    }
-    else {
-      return null;
-    }
+    return getPyClass().getName();
   }
 
   @Override
@@ -425,7 +404,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
 
   @Override
   public void assertValid(String message) {
-    if (myClass != null && !myClass.isValid()) {
+    if (!myClass.isValid()) {
       throw new PsiInvalidElementAccessException(myClass, myClass.getClass().toString() + ": " + message);
     }
   }
@@ -451,14 +430,14 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
     PyClassTypeImpl classType = (PyClassTypeImpl)o;
 
     if (myIsDefinition != classType.myIsDefinition) return false;
-    if (myClass != null ? !myClass.equals(classType.myClass) : classType.myClass != null) return false;
+    if (!myClass.equals(classType.myClass)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myClass != null ? myClass.hashCode() : 0;
+    int result = myClass.hashCode();
     result = 31 * result + (myIsDefinition ? 1 : 0);
     return result;
   }
@@ -476,6 +455,15 @@ public class PyClassTypeImpl extends UserDataHolderBase implements  PyClassType 
   }
 
   public boolean isValid() {
-    return myClass == null || myClass.isValid();
+    return myClass.isValid();
+  }
+
+  @Nullable
+  public static PyClassTypeImpl createTypeByQName(@NotNull Project project, String classQualifiedName, boolean isDefinition) {
+    PyClass pyClass = PyClassNameIndex.findClass(classQualifiedName, project);
+    if (pyClass == null) {
+      return null;
+    }
+    return new PyClassTypeImpl(pyClass, isDefinition);
   }
 }

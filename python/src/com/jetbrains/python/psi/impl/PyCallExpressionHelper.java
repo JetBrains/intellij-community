@@ -303,7 +303,7 @@ public class PyCallExpressionHelper {
         PyClass resolvedParent = PsiTreeUtil.getStubOrPsiParentOfType(resolved, PyClass.class);
         if (resolvedParent != null) {
           final PyClass qualifierClass = ((PyClassType)qtype).getPyClass();
-          if (qualifierClass != null && (qualifierClass.isSubclass(resolvedParent) || resolvedParent.isSubclass(qualifierClass))) {
+          if ((qualifierClass.isSubclass(resolvedParent) || resolvedParent.isSubclass(qualifierClass))) {
             return true;
           }
         }

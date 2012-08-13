@@ -219,14 +219,12 @@ public class PyQualifiedReference extends PyReferenceImpl {
   private void addDocReference(ResolveResultList ret, PyExpression qualifier, PyType qualifierType) {
     PsiElement docstring = null;
     if (qualifierType instanceof PyClassType) {
-      PyClass qual_class = ((PyClassType)qualifierType).getPyClass();
-      if (qual_class != null) docstring = qual_class.getDocStringExpression();
+      PyClass qualClass = ((PyClassType)qualifierType).getPyClass();
+      docstring = qualClass.getDocStringExpression();
     }
     else if (qualifierType instanceof PyModuleType) {
-      PsiFile qual_module = ((PyModuleType)qualifierType).getModule();
-      if (qual_module instanceof PyDocStringOwner) {
-        docstring = ((PyDocStringOwner)qual_module).getDocStringExpression();
-      }
+      PyFile qualModule = ((PyModuleType)qualifierType).getModule();
+      docstring = qualModule.getDocStringExpression();
     }
     else if (qualifier instanceof PyReferenceExpression) {
       PsiElement qual_object = ((PyReferenceExpression)qualifier).getReference(myContext).resolve();

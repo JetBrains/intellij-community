@@ -54,7 +54,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       PyClass cls = myQualifierType.getPyClass();
       boolean call_by_class = myQualifierType.isDefinition();
       String item_name = myIdentifier;
-      sure(cls); sure(item_name);
+      sure(item_name);
       PyStatementList cls_stmt_list = cls.getStatementList();
       sure(CodeInsightUtilBase.preparePsiElementForWrite(cls_stmt_list));
       // try to at least match parameter count

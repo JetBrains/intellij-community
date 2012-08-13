@@ -28,9 +28,6 @@ public class PyClassMembersProviderBase implements PyClassMembersProvider {
                                                PyClassType clazz,
                                                String name) {
     final PyClass pyClass = clazz.getPyClass();
-    if (pyClass == null) {
-      return null;
-    }
     for (PyDynamicMember member : members) {
       if (member.getName().equals(name)) {
         return member.resolve(pyClass);

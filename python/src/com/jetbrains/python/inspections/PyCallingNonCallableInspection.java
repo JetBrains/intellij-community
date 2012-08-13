@@ -99,9 +99,6 @@ public class PyCallingNonCallableInspection extends PyInspection {
         return true;
       }
       final PyClass cls = classType.getPyClass();
-      if (cls == null) {
-        return null;
-      }
       if (PyABCUtil.isSubclass(cls, PyNames.CALLABLE)) {
         return true;
       }

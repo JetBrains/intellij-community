@@ -150,7 +150,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         final PyType type = myTypeEvalContext.getType(qualifier);
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
-          if (pyClass != null && pyClass.isNewStyleClass()) {
+          if (pyClass.isNewStyleClass()) {
             final List<String> slots = pyClass.getSlots();
             final String attrName = node.getReferencedName();
             if (slots != null && !slots.contains(attrName) && !slots.contains(PyNames.DICT)) {
@@ -530,23 +530,21 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       if (qtype instanceof PyClassTypeImpl) {
         PyClass cls = ((PyClassType)qtype).getPyClass();
-        if (cls != null) {
-          if (overridesGetAttr(cls)) {
+        if (overridesGetAttr(cls)) {
+          return true;
+        }
+        if (cls.findProperty(refText) != null) {
+          return true;
+        }
+        if (hasUnresolvedAncestors(cls)) {
+          return true;
+        }
+        if (cls.getDecoratorList() != null) {
+          return true;
+        }
+        for (PyClass base : cls.iterateAncestorClasses()) {
+          if (base.getDecoratorList() != null) {
             return true;
-          }
-          if (cls.findProperty(refText) != null) {
-            return true;
-          }
-          if (hasUnresolvedAncestors(cls)) {
-            return true;
-          }
-          if (cls.getDecoratorList() != null) {
-            return true;
-          }
-          for (PyClass base : cls.iterateAncestorClasses()) {
-            if (base.getDecoratorList() != null) {
-              return true;
-            }
           }
         }
       }
@@ -576,22 +574,18 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       PsiElement element = reference.getElement();
       if (qtype instanceof PyClassTypeImpl) {
         PyClass cls = ((PyClassType)qtype).getPyClass();
-        if (cls != null) {
-          if (!PyBuiltinCache.getInstance(element).hasInBuiltins(cls)) {
-            if (element.getParent() instanceof PyCallExpression) {
-              actions.add(new AddMethodQuickFix(refText, (PyClassType)qtype));
-            }
-            else if (!(reference instanceof PyOperatorReference)) {
-              actions.add(new AddFieldQuickFix(refText, cls, "None"));
-            }
+        if (!PyBuiltinCache.getInstance(element).hasInBuiltins(cls)) {
+          if (element.getParent() instanceof PyCallExpression) {
+            actions.add(new AddMethodQuickFix(refText, (PyClassType)qtype));
+          }
+          else if (!(reference instanceof PyOperatorReference)) {
+            actions.add(new AddFieldQuickFix(refText, cls, "None"));
           }
         }
       }
       else if (qtype instanceof PyModuleType) {
-        PsiFile file = ((PyModuleType)qtype).getModule();
-        if (file instanceof PyFile) {
-          actions.add(new AddFunctionQuickFix(refText, (PyFile)file));
-        }
+        PyFile file = ((PyModuleType)qtype).getModule();
+        actions.add(new AddFunctionQuickFix(refText, file));
       }
     }
 

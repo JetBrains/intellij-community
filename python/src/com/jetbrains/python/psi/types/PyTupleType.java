@@ -3,9 +3,12 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -16,9 +19,18 @@ import java.util.Arrays;
 public class PyTupleType extends PyClassTypeImpl implements PySubscriptableType {
   private final PyType[] myElementTypes;
 
-  public PyTupleType(PsiElement anchor, PyType[] elementTypes) {
-    super(PyBuiltinCache.getInstance(anchor).getClass("tuple"), false);
+  PyTupleType(@NotNull PyClass tupleClass, PsiElement anchor, PyType[] elementTypes) {
+    super(tupleClass, false);
     myElementTypes = elementTypes;
+  }
+
+  @Nullable
+  public static PyTupleType create(PsiElement anchor, PyType[] elementTypes) {
+    PyClass tuple = PyBuiltinCache.getInstance(anchor).getClass(PyNames.TUPLE);
+    if (tuple != null) {
+      return new PyTupleType(tuple, anchor, elementTypes);
+    }
+    return null;
   }
 
   public PyTupleType(PyTupleType origin, PyType[] elementTypes) {
