@@ -75,7 +75,7 @@ public class PyUnionType implements PyType {
   public void assertValid(String message) {
     for (PyType member : myMembers) {
       if (member != null) {
-        member.assertValid(null);
+        member.assertValid(message);
       }
     }
   }
