@@ -612,7 +612,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
               }
             }, ","));
 
-            s.append(required.size() == 1 ? "\" is not enabled!" : "\" are not enabled!");
+            s.append(required.size() == 1 ? "\" is not enabled." : "\" are not enabled.");
 
           }
           myPanel.setToolTipText(s.toString());
