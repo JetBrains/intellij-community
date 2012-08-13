@@ -142,7 +142,9 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
       final String text = myConditionComboBox.getText();
       final String condition = StringUtil.isEmptyOrSpaces(text) ? null : text;
       myBreakpoint.setCondition(condition);
-      myConditionComboBox.saveTextInHistory();
+      if (condition != null) {
+        myConditionComboBox.saveTextInHistory();
+      }
     }
 
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {
