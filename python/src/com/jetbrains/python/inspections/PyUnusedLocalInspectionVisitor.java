@@ -276,7 +276,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
               continue;
             }
             if (func.asMethod() != null) {
-              if (funcName != null && isSpecialName(funcName) && !PyNames.INIT.equals(funcName) && !PyNames.NEW.equals(funcName)) {
+              if (funcName != null && isSpecialName(funcName)) {
                 continue;
               }
               Boolean isEmpty = emptyFunctions.get(func);
