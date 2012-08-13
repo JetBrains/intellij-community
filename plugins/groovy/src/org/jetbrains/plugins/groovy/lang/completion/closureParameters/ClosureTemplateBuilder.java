@@ -38,20 +38,21 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 import org.jetbrains.plugins.groovy.template.expressions.ParameterNameExpression;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * @author Max Medvedev
  */
 public class ClosureTemplateBuilder {
-  public static void runTemplate(Map<String, String> parameters, GrClosableBlock block, final Project project, final Editor editor) {
+  public static void runTemplate(List<ClosureParameterInfo> parameters, GrClosableBlock block, final Project project, final Editor editor) {
     assert block.getArrow() == null;
     if (parameters.isEmpty()) return;
 
     StringBuilder buffer = new StringBuilder();
     buffer.append("{");
-    for (String name : parameters.keySet()) {
-      final String type = parameters.get(name);
+    for (ClosureParameterInfo parameter : parameters) {
+      final String type = parameter.getType();
+      final String name = parameter.getName();
       if (type != null) {
         buffer.append(type).append(" ");
       }

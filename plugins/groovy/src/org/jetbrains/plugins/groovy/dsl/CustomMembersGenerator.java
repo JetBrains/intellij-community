@@ -39,7 +39,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   @Nullable private final Map<String, List> myBindings;
   private final String myQualifiedName;
 
-  public CustomMembersGenerator(GroovyClassDescriptor descriptor, PsiType type, Map<String, List> bindings) {
+  public CustomMembersGenerator(GroovyClassDescriptor descriptor, PsiType type, @Nullable Map<String, List> bindings) {
     myDescriptor = descriptor;
     myBindings = bindings;
     myProject = descriptor.getProject();
@@ -151,9 +151,14 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   public ParameterDescriptor parameter(Map args) {
     return new ParameterDescriptor(args, myDescriptor.justGetPlaceFile());
   }
-  
-  @SuppressWarnings("unchecked")
+
   public void method(Map<Object, Object> args) {
+    parseMethod(args);
+    myMethods.add(args);
+  }
+
+  @SuppressWarnings("unchecked")
+  private static void parseMethod(Map args) {
     String type = stringifyType(args.get("type"));
     args.put("type", type);
 
@@ -191,6 +196,15 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     else if (toThrow != null) {
       args.put(THROWS, Collections.singletonList(stringifyType(toThrow)));
     }
+  }
+
+  public void closureInMethod(Map<Object, Object> args) {
+    parseMethod(args);
+    final Object method = args.get("method");
+    if (method instanceof Map) {
+      parseMethod((Map)method);
+    }
+    args.put("closure", true);
     myMethods.add(args);
   }
 
@@ -262,7 +276,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     private final PsiElement myParent;
     @Nullable public final String myParameterTypeText;
 
-    public GdslNamedParameter(String name, String doc, @NotNull PsiElement parent, String type) {
+    public GdslNamedParameter(String name, String doc, @NotNull PsiElement parent, @Nullable String type) {
       myName = name;
       this.docString = doc;
       myParent = parent;

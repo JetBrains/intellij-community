@@ -28,13 +28,14 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettingsManager;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
-import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterInfo;
-import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureParameterProvider;
+import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
+import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureTemplateBuilder;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -43,12 +44,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 
 /**
  * @author ven
@@ -112,7 +114,7 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
               document.insertString(offset, " ");
               offset++;
             }
-            if (processClosureWithParams(context, method, document, offset)) return;
+            if (processClosureWithParams(context, method, document, offset, parent)) return;
             if (context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR) {
               //smart enter invoked
               document.insertString(offset, "{\n}");
@@ -182,20 +184,44 @@ public class GroovyInsertHandler implements InsertHandler<LookupElement> {
   }
 
 
-  private static boolean processClosureWithParams(InsertionContext context, PsiMethod method, Document document, int offset) {
+  private static boolean processClosureWithParams(InsertionContext context,
+                                                  PsiMethod method,
+                                                  Document document,
+                                                  int offset,
+                                                  PsiElement parent) {
+    if (method instanceof GrGdkMethod) method = ((GrGdkMethod)method).getStaticMethod();
+    PsiType type = JavaPsiFacade.getElementFactory(context.getProject()).createType(method.getContainingClass());
+
+    final ArrayList<ClosureDescriptor> descriptors = new ArrayList<ClosureDescriptor>();
+    GroovyDslFileIndex.processExecutors(type, ((GrReferenceExpression)parent), new BaseScopeProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element, ResolveState state) {
+        if (element instanceof ClosureDescriptor) {
+          descriptors.add((ClosureDescriptor)element);
+        }
+        return true;
+      }
+    }, ResolveState.initial());
+
+    for (ClosureDescriptor descriptor : descriptors) {
+      if (descriptor.isMethodApplicable(method, (GrReferenceExpression)parent)) {
+        if (runClosureTemplate(context, document, offset, descriptor)) {
+          return true;
+        }
+      }
+    }
     return false;
+  }
 
-    //stub for closure generating
-    /*document.insertString(offset, "{\n}");
+  private static boolean runClosureTemplate(InsertionContext context, Document document, int offset, ClosureDescriptor descriptor) {
+    document.insertString(offset, "{\n}");
     PsiDocumentManager.getInstance(context.getProject()).commitDocument(document);
-    final GrClosableBlock closure = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset + 1, GrClosableBlock.class, false);
-    if (closure == null) return true;
-    final HashMap<String, String> parameters = new HashMap<String, String>();
-    parameters.put("obj", "java.lang.String");
-    parameters.put("i", "int");
+    final GrClosableBlock closure =
+      PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), offset + 1, GrClosableBlock.class, false);
+    if (closure == null) return false;
 
-    ClosureTemplateBuilder.runTemplate(parameters, closure, context.getProject(), context.getEditor());
-    return true;*/
+    ClosureTemplateBuilder.runTemplate(descriptor.getParameters(), closure, context.getProject(), context.getEditor());
+    return true;
   }
 
   private static boolean isAnnotationNameValuePair(Object obj, PsiElement parent) {

@@ -239,8 +239,12 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
         if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) {
           return processor.execute(element, state);
         }
-
-        return ResolveUtil.processElement(processor, (PsiNamedElement)element, state);
+        else if (element instanceof PsiNamedElement) {
+          return ResolveUtil.processElement(processor, (PsiNamedElement)element, state);
+        }
+        else {
+          return processor.execute(element, state);
+        }
       }
     };
 

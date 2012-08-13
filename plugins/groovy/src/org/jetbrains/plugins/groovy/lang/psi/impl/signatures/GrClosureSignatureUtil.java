@@ -26,6 +26,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.FunctionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +90,19 @@ public class GrClosureSignatureUtil {
 
     return null;
   }
+
+  public static GrClosureSignature createSignature(MethodSignature signature) {
+    final PsiType[] types = signature.getParameterTypes();
+    GrClosureParameter[] parameters = new GrClosureParameter[types.length];
+    ContainerUtil.map(types, new Function<PsiType, GrClosureParameter>() {
+      @Override
+      public GrClosureParameter fun(PsiType type) {
+        return new GrClosureParameterImpl(type, false, null);
+      }
+    }, parameters);
+    return new GrClosureSignatureImpl(parameters, null, false, false);
+  }
+
 
   public static GrClosureSignature createSignature(final GrClosableBlock block) {
     return new GrClosureSignatureImpl(block.getAllParameters(), null) {

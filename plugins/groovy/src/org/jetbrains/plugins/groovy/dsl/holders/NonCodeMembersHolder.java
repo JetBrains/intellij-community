@@ -18,14 +18,13 @@ package org.jetbrains.plugins.groovy.dsl.holders;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.*;
 import com.intellij.util.containers.ConcurrentSoftHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.dsl.GroovyClassDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
+import org.jetbrains.plugins.groovy.lang.completion.closureParameters.ClosureDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 
 import java.util.ArrayList;
@@ -39,7 +38,7 @@ import java.util.Set;
 public class NonCodeMembersHolder implements CustomMembersHolder {
   public static final Key<String> DOCUMENTATION = Key.create("GdslDocumentation");
   public static final Key<String> DOCUMENTATION_URL = Key.create("GdslDocumentationUrl");
-  private final List<GrLightMethodBuilder> myMethods = new ArrayList<GrLightMethodBuilder>();
+  private final List<PsiElement> myMethods = new ArrayList<PsiElement>();
 
   public static NonCodeMembersHolder generateMembers(Set<Map> methods, final PsiFile place) {
     Map<Set<Map>, NonCodeMembersHolder> map = CachedValuesManager.getManager(place.getProject()).getCachedValue(
@@ -60,16 +59,22 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   private NonCodeMembersHolder(Set<Map> data, PsiElement place) {
     final PsiManager manager = place.getManager();
     for (Map prop : data) {
-      String name = String.valueOf(prop.get("name"));
-
-      final GrLightMethodBuilder method = new GrLightMethodBuilder(manager, name).addModifier(PsiModifier.PUBLIC);
-
-      if (Boolean.TRUE.equals(prop.get("constructor"))) {
-        method.setConstructor(true);
-      } else {
-        method.setReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
+      if (prop.get("closure") == Boolean.TRUE) {
+        PsiElement closureDescriptor = createClosureDescriptor(prop, place, manager);
+        myMethods.add(closureDescriptor);
       }
+      else {
+        final PsiElement method = createMethod(prop, place, manager);
+        myMethods.add(method);
+      }
+    }
+  }
 
+  private static PsiElement createClosureDescriptor(Map prop, PsiElement place, PsiManager manager) {
+    final ClosureDescriptor closure = new ClosureDescriptor(manager);
+
+    {
+//    closure.setReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
       final Object params = prop.get("params");
       if (params instanceof Map) {
         boolean first = true;
@@ -78,52 +83,117 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
           boolean isNamed = first && value instanceof List;
           first = false;
           String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
-          method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place), false);
-
-          if (isNamed) {
-            Map<String, NamedArgumentDescriptor> namedParams = ContainerUtil.newHashMap();
-            for (Object o : (List)value) {
-              if (o instanceof CustomMembersGenerator.ParameterDescriptor) {
-                namedParams.put(((CustomMembersGenerator.ParameterDescriptor)o).name,
-                                ((CustomMembersGenerator.ParameterDescriptor)o).descriptor);
-              }
-            }
-            method.setNamedParameters(namedParams);
-          }
-        }
-      }
-
-      if (Boolean.TRUE.equals(prop.get("isStatic"))) {
-        method.addModifier(PsiModifier.STATIC);
-      }
-
-      final Object bindsTo = prop.get("bindsTo");
-      if (bindsTo instanceof PsiElement) {
-        method.setNavigationElement((PsiElement)bindsTo);
-      }
-
-      final Object toThrow = prop.get(CustomMembersGenerator.THROWS);
-      if (toThrow instanceof List) {
-        for (Object o : ((List)toThrow)) {
-          final PsiType psiType = convertToPsiType(String.valueOf(o), place);
-          if (psiType instanceof PsiClassType) {
-            method.addException((PsiClassType)psiType);
-          }
+          closure.addParameter(typeName, String.valueOf(paramName));
         }
       }
 
       Object doc = prop.get("doc");
       if (doc instanceof String) {
-        method.putUserData(DOCUMENTATION, (String)doc);
+        closure.putUserData(DOCUMENTATION, (String)doc);
       }
 
       Object docUrl = prop.get("docUrl");
       if (docUrl instanceof String) {
-        method.putUserData(DOCUMENTATION_URL, (String)docUrl);
+        closure.putUserData(DOCUMENTATION_URL, (String)docUrl);
       }
-
-      myMethods.add(method);
     }
+
+
+    final Object method = prop.get("method");
+    if (method instanceof Map) {
+
+      String name = String.valueOf(((Map)method).get("name"));
+
+
+      List<PsiType> types = new ArrayList<PsiType>();
+      final Object params = ((Map)method).get("params");
+      if (params instanceof Map) {
+        boolean first = true;
+        for (Object paramName : ((Map)params).keySet()) {
+          Object value = ((Map)params).get(paramName);
+          boolean isNamed = first && value instanceof List;
+          first = false;
+          String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
+          types.add(convertToPsiType(typeName, place));
+        }
+      }
+      else if (params instanceof List) {
+        for (Object param : ((List)params)) {
+          types.add(convertToPsiType(String.valueOf(param), place));
+        }
+      }
+      final boolean isConstructor = Boolean.TRUE.equals(((Map)method).get("constructor"));
+      final PsiType[] typeArray = types.toArray(new PsiType[types.size()]);
+      final MethodSignature signature =
+        MethodSignatureUtil.createMethodSignature(name, typeArray, PsiTypeParameter.EMPTY_ARRAY, PsiSubstitutor.EMPTY, isConstructor);
+      closure.setMethodSignature(signature);
+    }
+    return closure;
+  }
+
+  private static GrLightMethodBuilder createMethod(Map prop, PsiElement place, PsiManager manager) {
+    String name = String.valueOf(prop.get("name"));
+
+    final GrLightMethodBuilder method = new GrLightMethodBuilder(manager, name).addModifier(PsiModifier.PUBLIC);
+
+    if (Boolean.TRUE.equals(prop.get("constructor"))) {
+      method.setConstructor(true);
+    } else {
+      method.setReturnType(convertToPsiType(String.valueOf(prop.get("type")), place));
+    }
+
+    final Object params = prop.get("params");
+    if (params instanceof Map) {
+      boolean first = true;
+      for (Object paramName : ((Map)params).keySet()) {
+        Object value = ((Map)params).get(paramName);
+        boolean isNamed = first && value instanceof List;
+        first = false;
+        String typeName = isNamed ? CommonClassNames.JAVA_UTIL_MAP : String.valueOf(value);
+        method.addParameter(String.valueOf(paramName), convertToPsiType(typeName, place), false);
+
+        if (isNamed) {
+          Map<String, NamedArgumentDescriptor> namedParams = ContainerUtil.newHashMap();
+          for (Object o : (List)value) {
+            if (o instanceof CustomMembersGenerator.ParameterDescriptor) {
+              namedParams.put(((CustomMembersGenerator.ParameterDescriptor)o).name,
+                              ((CustomMembersGenerator.ParameterDescriptor)o).descriptor);
+            }
+          }
+          method.setNamedParameters(namedParams);
+        }
+      }
+    }
+
+    if (Boolean.TRUE.equals(prop.get("isStatic"))) {
+      method.addModifier(PsiModifier.STATIC);
+    }
+
+    final Object bindsTo = prop.get("bindsTo");
+    if (bindsTo instanceof PsiElement) {
+      method.setNavigationElement((PsiElement)bindsTo);
+    }
+
+    final Object toThrow = prop.get(CustomMembersGenerator.THROWS);
+    if (toThrow instanceof List) {
+      for (Object o : ((List)toThrow)) {
+        final PsiType psiType = convertToPsiType(String.valueOf(o), place);
+        if (psiType instanceof PsiClassType) {
+          method.addException((PsiClassType)psiType);
+        }
+      }
+    }
+
+    Object doc = prop.get("doc");
+    if (doc instanceof String) {
+      method.putUserData(DOCUMENTATION, (String)doc);
+    }
+
+    Object docUrl = prop.get("docUrl");
+    if (docUrl instanceof String) {
+      method.putUserData(DOCUMENTATION_URL, (String)docUrl);
+    }
+    return method;
   }
 
   private static PsiType convertToPsiType(String type, PsiElement place) {
@@ -131,7 +201,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   }
 
   public boolean processMembers(GroovyClassDescriptor descriptor, PsiScopeProcessor processor, ResolveState state) {
-    for (PsiMethod method : myMethods) {
+    for (PsiElement method : myMethods) {
       if (!processor.execute(method, state)) {
         return false;
       }

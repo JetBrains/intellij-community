@@ -203,13 +203,14 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return myCandidates != null;
   }
 
+  @Nullable
   private static ResolveKind getResolveKind(PsiElement element) {
     if (element instanceof PsiVariable) return PROPERTY;
     if (element instanceof GrReferenceExpression) return PROPERTY;
     if (element instanceof PsiMethod) return METHOD;
     if (element instanceof PsiPackage) return PACKAGE;
-
-    return CLASS;
+    if (element instanceof PsiClass) return CLASS;
+    return null;
   }
 
   public String getName(ResolveState state) {
