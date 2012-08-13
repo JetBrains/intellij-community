@@ -15,7 +15,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
 
 import java.util.List;
@@ -537,7 +537,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     Sdk sdk = PyBuiltinCache.findSdkForFile(file);
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null && sdk != null && PythonSdkType.isStdLib(vFile, sdk)) {
-      PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, originalElement);
+      PyQualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
       return getStdlibUrlFor(element, qName, sdk);
     }
     return null;

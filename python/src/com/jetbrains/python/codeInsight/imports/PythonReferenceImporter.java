@@ -29,7 +29,7 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.CollectProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
@@ -158,7 +158,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
           if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile() &&
               (ImportFromExistingAction.isRoot(srcfile) || PyNames.isIdentifier(FileUtil.getNameWithoutExtension(srcfile.getName()))) &&
                !isShadowedModule(srcfile)) {
-            PyQualifiedName import_path = ResolveImportUtil.findCanonicalImportPath(srcfile, node);
+            PyQualifiedName import_path = QualifiedNameFinder.findCanonicalImportPath(srcfile, node);
             if (import_path != null && !seen_file_names.contains(import_path.toString())) {
               // a new, valid hit
               fix.addImport(symbol, srcfile, import_path, proposeAsName(node.getContainingFile(), refText, import_path));

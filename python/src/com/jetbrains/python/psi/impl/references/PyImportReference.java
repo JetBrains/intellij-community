@@ -227,7 +227,7 @@ public class PyImportReference extends PyReferenceImpl {
         if (myCurrentFile != null && (relativeLevel >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
           final PsiDirectory containingDirectory = myCurrentFile.getContainingDirectory();
           if (containingDirectory != null) {
-            PyQualifiedName thisQName = ResolveImportUtil.findShortestImportableQName(containingDirectory);
+            PyQualifiedName thisQName = QualifiedNameFinder.findShortestImportableQName(containingDirectory);
             if (thisQName == null || thisQName.getComponentCount() == relativeLevel) {
               fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relativeLevel), insertHandler);
             }

@@ -25,7 +25,7 @@ import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
@@ -348,7 +348,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (sdk == null) {
       return null;
     }
-    PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, originalElement);
+    PyQualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
     if (qName == null) {
       return null;
     }
@@ -432,7 +432,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       final Project project = element.getProject();
       final VirtualFile vFile = containingFile.getVirtualFile();
       if (vFile != null && ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(vFile)) {
-        final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, element);
+        final PyQualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, element);
         if (qName != null && qName.getComponentCount() > 0) {
           return true;
         }
@@ -444,7 +444,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @Override
   public void promptToConfigureDocumentation(PsiElement element) {
     final Project project = element.getProject();
-    final PyQualifiedName qName = ResolveImportUtil.findCanonicalImportPath(element, element);
+    final PyQualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, element);
     if (qName != null && qName.getComponentCount() > 0) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override

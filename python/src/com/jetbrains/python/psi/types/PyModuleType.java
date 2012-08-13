@@ -99,7 +99,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @Nullable
   private List<? extends RatedResolveResult> resolveImplicitPackageMember(@NotNull String name,
                                                                           @NotNull List<PyImportElement> importElements) {
-    final PyQualifiedName packageQName = ResolveImportUtil.findCanonicalImportPath(myModule, null);
+    final PyQualifiedName packageQName = QualifiedNameFinder.findCanonicalImportPath(myModule, null);
     if (packageQName != null) {
       final PyQualifiedName resolvingQName = packageQName.append(name);
       for (PyImportElement importElement : importElements) {
@@ -146,7 +146,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       if (file != null) {
         file = file.getOriginalFile();
       }
-      final PyQualifiedName absoluteQName = ResolveImportUtil.findShortestImportableQName(file);
+      final PyQualifiedName absoluteQName = QualifiedNameFinder.findShortestImportableQName(file);
       if (file != null && absoluteQName != null) {
         final PyQualifiedName prefixQName = PyUtil.isPackage(file) ? absoluteQName : absoluteQName.removeLastComponent();
         if (prefixQName.getComponentCount() > 0) {

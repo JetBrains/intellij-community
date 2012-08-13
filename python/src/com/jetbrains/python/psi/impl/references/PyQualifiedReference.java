@@ -174,7 +174,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         if (ProjectScope.getProjectScope(myElement.getProject()).contains(vFile)) {
           rate += 80;
         }
-        final PyQualifiedName qName = ResolveImportUtil.findShortestImportableQName(myElement, vFile);
+        final PyQualifiedName qName = QualifiedNameFinder.findShortestImportableQName(myElement, vFile);
         if (qName != null && imports.contains(qName)) {
           rate += 70;
         }

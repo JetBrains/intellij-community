@@ -87,7 +87,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         source = cls.getName();
       }
       else if (myContext == null || !PyUtil.inSameFile(myContext, element)) {
-        PyQualifiedName path = ResolveImportUtil.findCanonicalImportPath(element, null);
+        PyQualifiedName path = QualifiedNameFinder.findCanonicalImportPath(element, null);
         if (path != null) {
           if (element instanceof PyFile) {
             path = path.removeLastComponent();

@@ -8,7 +8,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ public class DocStringTypeReference extends PsiReferenceBase<PsiElement> {
     if (myElement instanceof PyStringLiteralExpression && element instanceof PyClass) {
       final PyStringLiteralExpression e = (PyStringLiteralExpression)myElement;
       final PyClass cls = (PyClass)element;
-      PyQualifiedName qname = ResolveImportUtil.findCanonicalImportPath(cls, element);
+      PyQualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(cls, element);
       if (qname != null) {
         qname = qname.append(cls.getName());
         ElementManipulator<PyStringLiteralExpression> manipulator = ElementManipulators.getManipulator(e);

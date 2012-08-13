@@ -18,7 +18,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -244,7 +244,7 @@ public class PyClassRefactoringUtil {
     final PsiFile newFile = element.getContainingFile();
     final PsiFile file = anchor.getContainingFile();
     if (newFile == file) return false;
-    final PyQualifiedName qname = ResolveImportUtil.findCanonicalImportPath(element, anchor);
+    final PyQualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(element, anchor);
     if (qname == null || !isValidQualifiedName(qname)) {
       return false;
     }

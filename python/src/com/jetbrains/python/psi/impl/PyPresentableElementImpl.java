@@ -7,7 +7,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubElement;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 
 import javax.swing.*;
 
@@ -48,7 +48,7 @@ public abstract class PyPresentableElementImpl<T extends StubElement> extends Py
     final VirtualFile vFile = containingFile.getVirtualFile();
 
     if (vFile != null) {
-      final String importableName = ResolveImportUtil.findShortestImportableName(containingFile, vFile);
+      final String importableName = QualifiedNameFinder.findShortestImportableName(containingFile, vFile);
       if (importableName != null) {
         return importableName;
       }

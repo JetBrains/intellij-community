@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,7 +216,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
     final PyClass c = f.getContainingClass();
     final VirtualFile vfile = f.getContainingFile().getVirtualFile();
     if (vfile != null) {
-      String module = ResolveImportUtil.findShortestImportableName(callSite != null ? callSite : f, vfile);
+      String module = QualifiedNameFinder.findShortestImportableName(callSite != null ? callSite : f, vfile);
       if ("builtins".equals(module)) {
         module = "__builtin__";
       }

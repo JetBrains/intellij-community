@@ -20,6 +20,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -213,7 +214,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (!psiFile.equals(builtins)) {
       VirtualFile vFile = psiFile.getVirtualFile();
       if (vFile != null) {
-        final String packageName = ResolveImportUtil.findShortestImportableName(this, vFile);
+        final String packageName = QualifiedNameFinder.findShortestImportableName(this, vFile);
         return packageName + "." + name;
       }
     }
