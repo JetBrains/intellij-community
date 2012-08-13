@@ -242,26 +242,51 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
                !vFile2.isValid() && vFile1 != null && !vFile1.isDirectory() && vFile1.isSymLink());
   }
 
-  public void testLinkSwitch() throws Exception {
-    final File targetDir1 = createTempDirectory(myTempDir, "targetDir1", "");
-    final File targetDir2 = createTempDirectory(myTempDir, "targetDir2", "");
+  public void testDirLinkSwitch() throws Exception {
+    final File targetDir1 = createTempDirectory(myTempDir, "target1.", ".dir");
+    final File targetDir2 = createTempDirectory(myTempDir, "target2.", ".dir");
     assertTrue(new File(targetDir1, "child1.txt").createNewFile());
     assertTrue(new File(targetDir2, "child11.txt").createNewFile());
     assertTrue(new File(targetDir2, "child12.txt").createNewFile());
 
     final File link = createTempLink(targetDir1.getPath(), myTempDir + "/link");
-    VirtualFile vLink = refreshAndFind(link);
-    assertTrue("link=" + link + ", vLink=" + vLink,
-               vLink != null && vLink.isDirectory() && vLink.isSymLink());
-    assertEquals(1, vLink.getChildren().length);
+    final VirtualFile vLink1 = refreshAndFind(link);
+    assertTrue("link=" + link + ", vLink=" + vLink1,
+               vLink1 != null && vLink1.isDirectory() && vLink1.isSymLink());
+    assertEquals(1, vLink1.getChildren().length);
 
     assertTrue(link.toString(), link.delete());
     createTempLink(targetDir2.getPath(), myTempDir + "/" + link.getName());
 
-    vLink = refreshAndFind(link);
-    assertTrue("link=" + link + ", vLink=" + vLink,
-               vLink != null && vLink.isDirectory() && vLink.isSymLink());
-    assertEquals(2, vLink.getChildren().length);
+    refresh();
+    assertFalse(vLink1.isValid());
+    final VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
+    assertTrue("link=" + link + ", vLink=" + vLink2,
+               vLink2 != null && vLink2.isDirectory() && vLink2.isSymLink());
+    assertEquals(2, vLink2.getChildren().length);
+  }
+
+  public void testFileLinkSwitch() throws Exception {
+    final File target1 = createTempFile(myTempDir, "target1.", ".txt");
+    FileUtil.writeToFile(target1, "some text");
+    final File target2 = createTempFile(myTempDir, "target2.", ".txt");
+    FileUtil.writeToFile(target2, "some quite another text");
+
+    final File link = createTempLink(target1.getPath(), myTempDir + "/link");
+    final VirtualFile vLink1 = refreshAndFind(link);
+    assertTrue("link=" + link + ", vLink=" + vLink1,
+               vLink1 != null && !vLink1.isDirectory() && vLink1.isSymLink());
+    assertEquals(FileUtil.loadFile(target1), VfsUtilCore.loadText(vLink1));
+
+    assertTrue(link.toString(), link.delete());
+    createTempLink(target2.getPath(), myTempDir + "/" + link.getName());
+
+    refresh();
+    assertFalse(vLink1.isValid());
+    final VirtualFile vLink2 = myFileSystem.findFileByIoFile(link);
+    assertTrue("link=" + link + ", vLink=" + vLink2,
+               vLink2 != null && !vLink2.isDirectory() && vLink2.isSymLink());
+    assertEquals(FileUtil.loadFile(target2), VfsUtilCore.loadText(vLink2));
   }
 
   public void testContentSynchronization() throws Exception {

@@ -77,7 +77,9 @@ public class RefreshWorker {
 
       boolean checkFurther = true;
       final VirtualFileSystemEntry parent = file.getParent();
-      if (parent != null && checkAndScheduleAttributesChange(parent, file, attributes)) {
+      if (parent != null &&
+          (checkAndScheduleAttributesChange(parent, file, attributes) ||
+           checkAndScheduleSymLinkTargetChange(parent, file, attributes, fs))) {
         // ignore everything else
         checkFurther = false;
       }
@@ -199,6 +201,22 @@ public class RefreshWorker {
     else {
       return false;
     }
+  }
+
+  private boolean checkAndScheduleSymLinkTargetChange(@NotNull VirtualFileSystemEntry parent,
+                                                      @NotNull VirtualFile child,
+                                                      @NotNull FileAttributes childAttributes,
+                                                      @NotNull NewVirtualFileSystem fs) {
+    if (childAttributes.isSymLink()) {
+      final String currentTarget = child.getCanonicalPath();
+      final String upToDateTarget = fs.resolveSymLink(child);
+      if (!Comparing.equal(currentTarget, upToDateTarget)) {
+        scheduleDeletion(child);
+        scheduleReCreation(parent, child.getName(), childAttributes.isDirectory());
+        return true;
+      }
+    }
+    return false;
   }
 
   private void scheduleWritableAttributeChange(@NotNull VirtualFileSystemEntry file, boolean currentWritable, boolean upToDateWritable) {
