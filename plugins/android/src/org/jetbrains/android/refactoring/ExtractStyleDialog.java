@@ -44,7 +44,7 @@ import java.util.*;
 /**
  * @author Alexander Lobas
  */
-public class ExtractStyleDialog extends DialogWrapper {
+class ExtractStyleDialog extends DialogWrapper {
 
   private JPanel myPanel;
   private JTextField myStyleNameField;

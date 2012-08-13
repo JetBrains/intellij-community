@@ -48,6 +48,7 @@ import org.jetbrains.android.actions.CreateResourceFileAction;
 import org.jetbrains.android.actions.CreateXmlResourceDialog;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.refactoring.AndroidBaseLayoutRefactoringAction;
 import org.jetbrains.android.refactoring.AndroidExtractStyleAction;
 import org.jetbrains.android.resourceManagers.FileResourceProcessor;
 import org.jetbrains.android.resourceManagers.ResourceManager;
@@ -204,7 +205,8 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     }
     if (myComponent != null && ResourceType.STYLE.equals(resourceGroup.getType())) {
       final XmlTag componentTag = myComponent.getTag();
-      final boolean enabled = AndroidExtractStyleAction.isEnabled(componentTag);
+      final boolean enabled = AndroidBaseLayoutRefactoringAction.getLayoutViewElement(componentTag) != null &&
+                              AndroidExtractStyleAction.doIsEnabled(componentTag);
       myExtractStyleAction.getTemplatePresentation().setEnabled(enabled);
       actionGroup.add(myExtractStyleAction);
     }

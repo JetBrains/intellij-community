@@ -82,9 +82,13 @@
             icon="/icons/attachDebugger.png">
       <add-to-group group-id="ToolbarRunGroup" anchor="after" relative-to-action="RunnerActions"/>
     </action>
-    <action id="AndroidExtractStyleAction" class="org.jetbrains.android.refactoring.AndroidExtractStyleAction" text="Android St_yle..."
+    <action id="AndroidExtractStyleAction" class="org.jetbrains.android.refactoring.AndroidExtractStyleAction" text="Extract St_yle..."
             description="Pull out style-related attributes from layout and extract them as a new style">
-      <add-to-group group-id="IntroduceActionsGroup" relative-to-action="ExtractSuperclass" anchor="after"/>
+      <add-to-group group-id="IntroduceActionsGroup"/>
+    </action>
+    <action id="AndroidInlineStyleReferenceAction" class="org.jetbrains.android.refactoring.AndroidInlineStyleReferenceAction"
+            text="Inline _Style..." description="Inlines Android style">
+      <add-to-group group-id="RefactoringMenu"/>
     </action>
   </actions>
 
@@ -236,6 +240,8 @@
 
     <compileServer.plugin classpath="jps/android-jps-plugin.jar;android-common.jar;android-rt.jar"/>
     <compileServer.plugin classpath="sdklib.jar;common.jar;jarutils.jar;androidprefs.jar"/>
+
+    <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler" order="last"/>
   </extensions>
 
   <extensionPoints>

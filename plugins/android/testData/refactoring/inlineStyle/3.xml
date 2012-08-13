@@ -1,0 +1,5 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+    <Butt<caret>on
+            style="@style/style2"
+            android:text="Hello"/>
+</LinearLayout>

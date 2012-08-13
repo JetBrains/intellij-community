@@ -1,0 +1,9 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+    <Button android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/black"
+            style="@style/style1"
+            android:text="Hello">
+      aba<caret>
+    </Button>
+</LinearLayout>

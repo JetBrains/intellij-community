@@ -42,14 +42,18 @@ import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkData;
 import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.sdk.EmptySdkLog;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
 public abstract class AndroidTestCase extends UsefulTestCase {
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
+  protected List<Module> myAdditionalModules;
 
   private boolean myCreateManifest;
   protected AndroidFacet myFacet;
@@ -85,6 +89,9 @@ public abstract class AndroidTestCase extends UsefulTestCase {
     final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
     tuneModule(moduleFixtureBuilder, myFixture.getTempDirPath());
 
+    final ArrayList<MyAdditionalModuleData> modules = new ArrayList<MyAdditionalModuleData>();
+    configureAdditionalModules(projectBuilder, modules);
+
     myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
     myModule = moduleFixtureBuilder.getFixture().getModule();
@@ -95,6 +102,38 @@ public abstract class AndroidTestCase extends UsefulTestCase {
     if (myCreateManifest) {
       createManifest();
     }
+    myAdditionalModules = new ArrayList<Module>();
+
+    for (MyAdditionalModuleData data : modules) {
+      final Module additionalModule = data.myModuleFixtureBuilder.getFixture().getModule();
+      myAdditionalModules.add(additionalModule);
+      final AndroidFacet facet = addAndroidFacet(additionalModule, getTestSdkPath());
+      facet.getConfiguration().LIBRARY_PROJECT = data.myLibrary;
+      final String rootPath = getContentRootPath(data.myDirName);
+      myFixture.copyDirectoryToProject("res", rootPath + "/res");
+      myFixture.copyFileToProject(SdkConstants.FN_ANDROID_MANIFEST_XML,
+                                  rootPath + '/' + SdkConstants.FN_ANDROID_MANIFEST_XML);
+      ModuleRootModificationUtil.addDependency(myModule, additionalModule);
+    }
+  }
+
+  protected void configureAdditionalModules(@NotNull TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder,
+                                            @NotNull List<MyAdditionalModuleData> modules) {
+  }
+
+  protected void addModuleWithAndroidFacet(@NotNull TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder,
+                                           @NotNull List<MyAdditionalModuleData> modules,
+                                           @NotNull String dirName,
+                                           boolean library) {
+    final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
+    final String moduleDirPath = myFixture.getTempDirPath() + getContentRootPath(dirName);
+    new File(moduleDirPath).mkdirs();
+    tuneModule(moduleFixtureBuilder, moduleDirPath);
+    modules.add(new MyAdditionalModuleData(moduleFixtureBuilder, dirName, library));
+  }
+
+  protected static String getContentRootPath(@NotNull String moduleName) {
+    return "/additionalModules/" + moduleName;
   }
 
   protected String getResDir() {
@@ -118,6 +157,7 @@ public abstract class AndroidTestCase extends UsefulTestCase {
   @Override
   public void tearDown() throws Exception {
     myModule = null;
+    myAdditionalModules = null;
     myFixture.tearDown();
     myFixture = null;
     myFacet = null;
@@ -169,5 +209,19 @@ public abstract class AndroidTestCase extends UsefulTestCase {
 
   protected Project getProject() {
     return myFixture.getProject();
+  }
+
+  protected static class MyAdditionalModuleData {
+    final JavaModuleFixtureBuilder myModuleFixtureBuilder;
+    final String myDirName;
+    final boolean myLibrary;
+
+    private MyAdditionalModuleData(@NotNull JavaModuleFixtureBuilder moduleFixtureBuilder,
+                                   @NotNull String dirName,
+                                   boolean library) {
+      myModuleFixtureBuilder = moduleFixtureBuilder;
+      myDirName = dirName;
+      myLibrary = library;
+    }
   }
 }

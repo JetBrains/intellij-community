@@ -1,0 +1,3 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+    <Butto<caret>n android:text="Hello"/>
+</LinearLayout>

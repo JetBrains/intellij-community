@@ -1,0 +1,6 @@
+<resources>
+    <sty<caret>le name="myStyle">
+        <item name="android:textColor">@android:color/black</item>
+        <item name="android:background">@android:color/white</item>
+    </style>
+</resources>

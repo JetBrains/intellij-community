@@ -61,6 +61,7 @@ import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.refactoring.AndroidExtractStyleAction;
+import org.jetbrains.android.refactoring.AndroidInlineStyleReferenceAction;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.uipreview.*;
@@ -160,8 +161,12 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private static ActionGroup buildRefactorActionGroup() {
     final DefaultActionGroup group = new DefaultActionGroup("_Refactor", true);
     final ActionManager manager = ActionManager.getInstance();
-    final AnAction action = manager.getAction(AndroidExtractStyleAction.ACTION_ID);
+
+    AnAction action = manager.getAction(AndroidExtractStyleAction.ACTION_ID);
     group.add(new AndroidRefactoringActionWrapper("_Extract style", action));
+
+    action = manager.getAction(AndroidInlineStyleReferenceAction.ACTION_ID);
+    group.add(new AndroidRefactoringActionWrapper("_Inline style", action));
     return group;
   }
 

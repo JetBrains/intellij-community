@@ -1,0 +1,5 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+    <B<caret>utton
+            style="@style/style1"
+            android:text="Hello"/>
+</LinearLayout>

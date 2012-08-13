@@ -3,41 +3,25 @@ package org.jetbrains.android.refactoring;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
-import com.intellij.lang.Language;
-import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
 import org.jetbrains.android.dom.AndroidDomUtil;
-import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
 import org.jetbrains.android.dom.layout.LayoutViewElement;
 import org.jetbrains.android.dom.resources.ResourceElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.dom.resources.Style;
 import org.jetbrains.android.dom.resources.StyleItem;
-import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -54,7 +38,7 @@ import java.util.Set;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidExtractStyleAction extends BaseRefactoringAction {
+public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringAction {
   @NonNls public static final String ACTION_ID = "AndroidExtractStyleAction";
 
   private static String[] NON_EXTRACTABLE_ATTRIBUTES =
@@ -72,106 +56,12 @@ public class AndroidExtractStyleAction extends BaseRefactoringAction {
     myTestConfig = testConfig;
   }
 
-  @Override
-  protected boolean isAvailableInEditorOnly() {
-    return false;
+  protected boolean isEnabled(@NotNull XmlTag tag) {
+    return doIsEnabled(tag);
   }
 
-  @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
-    if (element == null ||
-        AndroidFacet.getInstance(element) == null ||
-        PsiTreeUtil.getParentOfType(element, XmlText.class) != null) {
-      return false;
-    }
-    final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-    return tag != null && isEnabled(tag);
-  }
-
-  @Override
-  protected boolean isEnabledOnElements(PsiElement[] elements) {
-    if (elements.length != 1) {
-      return false;
-    }
-    final PsiElement element = elements[0];
-    return element instanceof XmlTag &&
-           AndroidFacet.getInstance(element) != null &&
-           isEnabled((XmlTag)element);
-  }
-
-  public static boolean isEnabled(@NotNull XmlTag tag) {
-    return getLayoutViewElement(tag) != null &&
-           getExtractableAttributes(tag).size() > 0;
-  }
-
-  @Nullable
-  private static LayoutViewElement getLayoutViewElement(@NotNull XmlTag tag) {
-    final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
-    return domElement instanceof LayoutViewElement
-           ? (LayoutViewElement)domElement
-           : null;
-  }
-
-  @Override
-  protected RefactoringActionHandler getHandler(DataContext dataContext) {
-    final XmlTag componentTag = getComponentTag(dataContext);
-    return new MyHandler(myTestConfig, componentTag);
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    final DataContext context = e.getDataContext();
-
-    final DataContext patchedContext = new DataContext() {
-      @Override
-      public Object getData(@NonNls String dataId) {
-        final Object data = context.getData(dataId);
-        if (data != null) {
-          return data;
-        }
-        if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
-          return getComponentTag(context);
-        }
-        return null;
-      }
-    };
-    super.update(new AnActionEvent(e.getInputEvent(), patchedContext, e.getPlace(), e.getPresentation(),
-                                   e.getActionManager(), e.getModifiers()));
-  }
-
-  @Nullable
-  private static XmlTag getComponentTag(DataContext dataContext) {
-    if (dataContext == null) {
-      return null;
-    }
-
-    for (AndroidRefactoringContextProvider provider : AndroidRefactoringContextProvider.EP_NAME.getExtensions()) {
-      final XmlTag componentTag = provider.getComponentTag(dataContext);
-
-      if (componentTag != null) {
-        return componentTag;
-      }
-    }
-    return null;
-  }
-
-  @Override
-  protected boolean isAvailableForLanguage(Language language) {
-    return language == XMLLanguage.INSTANCE;
-  }
-
-  @Override
-  protected boolean isAvailableForFile(PsiFile file) {
-    return file instanceof XmlFile &&
-           AndroidFacet.getInstance(file) != null &&
-           DomManager.getDomManager(file.getProject()).getDomFileDescription((XmlFile)file)
-             instanceof LayoutDomFileDescription;
-  }
-
-  private static void doExtractStyle(@NotNull XmlTag viewTag, @Nullable MyTestConfig testConfig) {
-    final Module module = ModuleUtilCore.findModuleForPsiElement(viewTag);
-    assert module != null;
-    doExtractStyle(module, viewTag, true, testConfig);
+  public static boolean doIsEnabled(@NotNull XmlTag tag) {
+    return getLayoutViewElement(tag) != null && getExtractableAttributes(tag).size() > 0;
   }
 
   @Nullable
@@ -197,17 +87,17 @@ public class AndroidExtractStyleAction extends BaseRefactoringAction {
 
     final LayoutViewElement viewElement = getLayoutViewElement(viewTag);
     assert viewElement != null;
-    final ResourceValue parentStyleVlaue = viewElement.getStyle().getValue();
+    final ResourceValue parentStyleValue = viewElement.getStyle().getValue();
     final String parentStyle;
     boolean supportImplicitParent = false;
 
-    if (parentStyleVlaue != null) {
-      parentStyle = parentStyleVlaue.getResourceName();
-      if (!ResourceType.STYLE.getName().equals(parentStyleVlaue.getResourceType()) || parentStyle == null || parentStyle.length() == 0) {
-        AndroidUtils.reportError(project, "Invalid parent style reference " + parentStyleVlaue.toString(), dialogTitle);
+    if (parentStyleValue != null) {
+      parentStyle = parentStyleValue.getResourceName();
+      if (!ResourceType.STYLE.getName().equals(parentStyleValue.getResourceType()) || parentStyle == null || parentStyle.length() == 0) {
+        AndroidUtils.reportError(project, "Invalid parent style reference " + parentStyleValue.toString(), dialogTitle);
         return null;
       }
-      supportImplicitParent = parentStyleVlaue.getPackage() == null;
+      supportImplicitParent = parentStyleValue.getPackage() == null;
     }
     else {
       parentStyle = null;
@@ -270,8 +160,8 @@ public class AndroidExtractStyleAction extends BaseRefactoringAction {
                 }
               }
 
-              if (parentStyleVlaue != null && (!finalSupportImplicitParent || !styleName.startsWith(parentStyle + "."))) {
-                final String aPackage = parentStyleVlaue.getPackage();
+              if (parentStyleValue != null && (!finalSupportImplicitParent || !styleName.startsWith(parentStyle + "."))) {
+                final String aPackage = parentStyleValue.getPackage();
                  style.getParentStyle().setStringValue((aPackage != null ? aPackage + ":" : "") + parentStyle);
               }
               return true;
@@ -331,47 +221,11 @@ public class AndroidExtractStyleAction extends BaseRefactoringAction {
     return true;
   }
 
-  private static class MyHandler implements RefactoringActionHandler {
-    private final MyTestConfig myTestConfig;
-    private final XmlTag myTag;
-
-    private MyHandler(@Nullable MyTestConfig testConfig, @Nullable XmlTag tag) {
-      myTestConfig = testConfig;
-      myTag = tag;
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-      if (myTag != null) {
-        doExtractStyle(myTag, myTestConfig);
-        return;
-      }
-      final PsiElement element = getElementAtCaret(editor, file);
-      if (element == null) {
-        return;
-      }
-      final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-      if (tag == null) {
-        return;
-      }
-      doExtractStyle(tag, myTestConfig);
-    }
-
-    @Override
-    public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-      if (myTag != null) {
-        doExtractStyle(myTag, myTestConfig);
-        return;
-      }
-      if (elements.length != 1) {
-        return;
-      }
-      final PsiElement element = elements[0];
-      if (!(element instanceof XmlTag)) {
-        return;
-      }
-      doExtractStyle((XmlTag)element, myTestConfig);
-    }
+  @Override
+  protected void doRefactor(@NotNull Project project, @NotNull XmlTag tag) {
+    final Module module = ModuleUtilCore.findModuleForPsiElement(tag);
+    assert module != null;
+    doExtractStyle(module, tag, true, myTestConfig);
   }
 
   static class MyTestConfig {
