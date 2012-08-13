@@ -101,7 +101,7 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-    final List<MyUsageInlineInfo> inlineInfos = new ArrayList<MyUsageInlineInfo>();
+    final List<AndroidInlineUtil.MyStyleUsageData> inlineInfos = new ArrayList<AndroidInlineUtil.MyStyleUsageData>();
     final List<PsiElement> nonXmlUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unsupportedUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unambiguousUsages = new ArrayList<PsiElement>();
@@ -127,7 +127,7 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
         unambiguousUsages.add(element);
         continue;
       }
-      inlineInfos.add(new MyUsageInlineInfo(tag, pair.getSecond()));
+      inlineInfos.add(new AndroidInlineUtil.MyStyleUsageData(tag, pair.getSecond()));
     }
 
     if (nonXmlUsages.size() > 0 || unambiguousUsages.size() > 0 || unsupportedUsages.size() > 0) {
@@ -136,8 +136,8 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
       return;
     }
 
-    for (MyUsageInlineInfo info : inlineInfos) {
-      AndroidInlineUtil.inlineStyleUsage(info.getTag(), info.getStyleAttribute(), myAttributeValues, myParentStyleRef);
+    for (AndroidInlineUtil.MyStyleUsageData info : inlineInfos) {
+      AndroidInlineUtil.inlineStyleUsage(info, myAttributeValues, myParentStyleRef);
     }
     myStyleTag.delete();
   }
@@ -228,25 +228,5 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
                                            ? relativePath
                                            : contentRoot.getName() + '/' + relativePath;
     return FileUtil.toSystemDependentName(".../" + presentableRelativePath);
-  }
-
-  private static class MyUsageInlineInfo {
-    private final XmlTag myTag;
-    private final GenericAttributeValue<ResourceValue> myStyleAttribute;
-
-    private MyUsageInlineInfo(@NotNull XmlTag tag, @NotNull GenericAttributeValue<ResourceValue> styleAttribute) {
-      myTag = tag;
-      myStyleAttribute = styleAttribute;
-    }
-
-    @NotNull
-    public XmlTag getTag() {
-      return myTag;
-    }
-
-    @NotNull
-    public GenericAttributeValue<ResourceValue> getStyleAttribute() {
-      return myStyleAttribute;
-    }
   }
 }

@@ -91,10 +91,12 @@ class AndroidInlineUtil {
     return null;
   }
 
-  static void inlineStyleUsage(XmlTag tag,
-                               GenericAttributeValue<ResourceValue> styleAttribute,
+  static void inlineStyleUsage(MyStyleUsageData usageData,
                                Map<XmlName, String> attributeValues,
                                MyStyleRefData parentStyleRef) {
+    final XmlTag tag = usageData.myTag;
+    final GenericAttributeValue<ResourceValue> styleAttribute = usageData.myStyleAttribute;
+
     for (Map.Entry<XmlName, String> entry : attributeValues.entrySet()) {
       final XmlName name = entry.getKey();
 
@@ -146,13 +148,6 @@ class AndroidInlineUtil {
   }
 
   static void doInlineStyleDeclaration(@NotNull Project project,
-                                         @NotNull MyStyleData data,
-                                         @Nullable MyStyleUsageData usageData,
-                                         @NotNull ErrorReporter errorReporter) {
-    doInlineStyleDeclaration(project, data, usageData, errorReporter, null);
-  }
-
-  static void doInlineStyleDeclaration(@NotNull Project project,
                                        @NotNull MyStyleData data,
                                        @Nullable final MyStyleUsageData usageData,
                                        @NotNull ErrorReporter errorReporter,
@@ -183,10 +178,15 @@ class AndroidInlineUtil {
 
     if (inlineThisOnly) {
       assert usageData != null;
-      new WriteCommandAction(project, AndroidBundle.message("android.inline.style.command.name", data.myStyleName), usageData.myFile) {
+      final PsiFile file = usageData.myTag.getContainingFile();
+
+      if (file == null) {
+        return;
+      }
+      new WriteCommandAction(project, AndroidBundle.message("android.inline.style.command.name", data.myStyleName), file) {
         @Override
         protected void run(final Result result) throws Throwable {
-          inlineStyleUsage(usageData.myTag, usageData.myStyleAttribute, attributeValues, parentStyleRef);
+          inlineStyleUsage(usageData, attributeValues, parentStyleRef);
         }
 
         @Override
@@ -271,11 +271,9 @@ class AndroidInlineUtil {
 
   static class MyStyleUsageData {
     private final XmlTag myTag;
-    private final PsiFile myFile;
     private final GenericAttributeValue<ResourceValue> myStyleAttribute;
 
-    MyStyleUsageData(PsiFile file, XmlTag tag, GenericAttributeValue<ResourceValue> styleAttribute) {
-      myFile = file;
+    MyStyleUsageData(XmlTag tag, GenericAttributeValue<ResourceValue> styleAttribute) {
       myTag = tag;
       myStyleAttribute = styleAttribute;
     }

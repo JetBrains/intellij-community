@@ -81,6 +81,6 @@ public class AndroidInlineStyleHandler extends InlineActionHandler {
     if (file == null) {
       return null;
     }
-    return new AndroidInlineUtil.MyStyleUsageData(file, tag, ((LayoutViewElement)element).getStyle());
+    return new AndroidInlineUtil.MyStyleUsageData(tag, ((LayoutViewElement)element).getStyle());
   }
 }

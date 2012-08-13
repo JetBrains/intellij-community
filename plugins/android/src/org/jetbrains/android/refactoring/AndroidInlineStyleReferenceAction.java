@@ -83,7 +83,7 @@ public class AndroidInlineStyleReferenceAction extends AndroidBaseLayoutRefactor
       return;
     }
     AndroidInlineUtil.doInlineStyleDeclaration(project, new AndroidInlineUtil.MyStyleData(styleName, style, styleElement),
-                                               new AndroidInlineUtil.MyStyleUsageData(file, tag, styleAttribute),
+                                               new AndroidInlineUtil.MyStyleUsageData(tag, styleAttribute),
                                                new ProjectBasedErrorReporter(project), myTestConfig);
   }
 
