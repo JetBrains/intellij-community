@@ -171,6 +171,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
         };
         if (useJps()) {
           myProject.save();
+          CompilerTestUtil.saveSdkTable();
           CompilerTestUtil.scanSourceRootsToRecompile(myProject);
         }
         action.run(callback);
