@@ -93,7 +93,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     }
     else if (parent instanceof PsiExpressionList) {
       final PsiExpressionList expressionList = (PsiExpressionList)parent;
-      int lambdaIdx = getLambdaIdx(expressionList);
+      int lambdaIdx = LambdaUtil.getLambdaIdx(expressionList, this);
       
       if (lambdaIdx > -1) {
         final PsiElement gParent = expressionList.getParent();
@@ -130,17 +130,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
       }
     }
     return type;
-  }
-
-  public int getLambdaIdx(PsiExpressionList expressionList) {
-    PsiExpression[] expressions = expressionList.getExpressions();
-    for (int i = 0; i < expressions.length; i++) {
-      PsiExpression expression = expressions[i];
-      if (PsiTreeUtil.isAncestor(expression, this, false)) {
-        return i;
-      }
-    }
-    return -1;
   }
 
   @Override

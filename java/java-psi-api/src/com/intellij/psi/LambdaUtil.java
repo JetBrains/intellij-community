@@ -142,7 +142,7 @@ public class LambdaUtil {
       }
       else if (parent instanceof PsiExpressionList) {
         final PsiExpressionList expressionList = (PsiExpressionList)parent;
-        final int lambdaIdx = ArrayUtil.find(expressionList.getExpressions(), lambdaExpression);
+        final int lambdaIdx = getLambdaIdx(expressionList, lambdaExpression);
         if (lambdaIdx > -1) {
           final PsiElement gParent = expressionList.getParent();
           if (gParent instanceof PsiMethodCallExpression) {
@@ -318,6 +318,17 @@ public class LambdaUtil {
       }
     }
     return lambdaReturnType != null && methodReturnType.isAssignableFrom(lambdaReturnType);
+  }
+
+  public static int getLambdaIdx(PsiExpressionList expressionList, final PsiLambdaExpression element) {
+    PsiExpression[] expressions = expressionList.getExpressions();
+    for (int i = 0; i < expressions.length; i++) {
+      PsiExpression expression = expressions[i];
+      if (PsiTreeUtil.isAncestor(expression, element, false)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {

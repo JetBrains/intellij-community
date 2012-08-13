@@ -544,7 +544,8 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
         final PsiExpressionList expressionList = (PsiExpressionList)parent;
         final PsiMethod method = expressionList.getUserData(MethodCandidateInfo.CURRENT_CANDIDATE);
         if (method != null) {
-          final int i = ((PsiLambdaExpressionImpl)lambdaExpression).getLambdaIdx(expressionList);
+          final int i = LambdaUtil.getLambdaIdx(expressionList,
+                                                ((PsiLambdaExpressionImpl)lambdaExpression));
           if (i < 0) return null;
           final PsiParameter[] parameters = method.getParameterList().getParameters();
           if (parameters.length <= i) return null;
@@ -589,6 +590,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           } else if (exprType instanceof PsiLambdaExpressionType) {
             return inferConstraintFromFunctionalInterfaceMethod(typeParam, ((PsiLambdaExpressionType)exprType).getExpression(), returnType);
           }
+          if (exprType == null) return null;
           Pair<PsiType, ConstraintType> constraint =
             getSubstitutionForTypeParameterConstraint(typeParam, returnType, exprType, false, PsiUtil.getLanguageLevel(method));
           if (constraint != null) {
