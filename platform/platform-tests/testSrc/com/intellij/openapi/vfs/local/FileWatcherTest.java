@@ -207,7 +207,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
       refresh(subDir);
 
       myAccept = true;
-      final File file = FileUtil.createTempFile(subDir, "test.", ".txt", true, false);
+      final File file = FileUtil.createTempFile(subDir, "test.", ".txt");
       assertEvent(VFileCreateEvent.class, file.getAbsolutePath());
 
       myAccept = true;
@@ -230,9 +230,9 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   public void testDirectoryFlat() throws Exception {
     final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File watchedFile = FileUtil.createTempFile(topDir, "test.", ".txt", true, false);
+    final File watchedFile = FileUtil.createTempFile(topDir, "test.", ".txt");
     final File subDir = FileUtil.createTempDirectory(topDir, "sub.", null);
-    final File unwatchedFile = FileUtil.createTempFile(subDir, "test.", ".txt", true, false);
+    final File unwatchedFile = FileUtil.createTempFile(subDir, "test.", ".txt");
     refresh(topDir);
 
     final LocalFileSystem.WatchRequest request = watch(topDir, false);
@@ -259,12 +259,12 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   public void testDirectoryMixed() throws Exception {
     final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File watchedFile1 = FileUtil.createTempFile(topDir, "test.", ".txt", true, false);
+    final File watchedFile1 = FileUtil.createTempFile(topDir, "test.", ".txt");
     final File sub1Dir = FileUtil.createTempDirectory(topDir, "sub1.", null);
-    final File unwatchedFile = FileUtil.createTempFile(sub1Dir, "test.", ".txt", true, false);
+    final File unwatchedFile = FileUtil.createTempFile(sub1Dir, "test.", ".txt");
     final File sub2Dir = FileUtil.createTempDirectory(topDir, "sub2.", null);
     final File sub2subDir = FileUtil.createTempDirectory(sub2Dir, "sub2.", null);
-    final File watchedFile2 = FileUtil.createTempFile(sub2subDir, "test.", ".txt", true, false);
+    final File watchedFile2 = FileUtil.createTempFile(sub2subDir, "test.", ".txt");
     refresh(topDir);
 
     final LocalFileSystem.WatchRequest topRequest = watch(topDir, false);
@@ -307,11 +307,11 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   public void testDirectoryOverlapping() throws Exception {
     final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File fileInTopDir = FileUtil.createTempFile(topDir, "file1.", ".txt", true, false);
+    final File fileInTopDir = FileUtil.createTempFile(topDir, "file1.", ".txt");
     final File subDir = FileUtil.createTempDirectory(topDir, "sub.", null);
-    final File fileInSubDir = FileUtil.createTempFile(subDir, "file2.", ".txt", true, false);
+    final File fileInSubDir = FileUtil.createTempFile(subDir, "file2.", ".txt");
     final File sideDir = FileUtil.createTempDirectory("side.", null);
-    final File fileInSideDir = FileUtil.createTempFile(sideDir, "file3.", ".txt", true, false);
+    final File fileInSideDir = FileUtil.createTempFile(sideDir, "file3.", ".txt");
     refresh(topDir);
     refresh(sideDir);
 
@@ -357,21 +357,24 @@ public class FileWatcherTest extends PlatformLangTestCase {
 /*
   public void testSymlinkAboveWatchRoot() throws Exception {
     final File topDir = FileUtil.createTempDirectory("top.", null);
-    final File topLink = SymlinkHandlingTest.createTempLink(topDir.getAbsolutePath(), "link");
+    final File topLink = IoTestUtil.createTempLink(topDir.getAbsolutePath(), "link");
     final File subDir = FileUtil.createTempDirectory(topDir, "sub.", null);
-    final File file = FileUtil.createTempFile(subDir, "test.", ".txt", true, false);
+    final File file = FileUtil.createTempFile(subDir, "test.", ".txt");
     final File fileLink = new File(new File(topLink, subDir.getName()), file.getName());
     refresh(topDir);
     refresh(topLink);
 
     final LocalFileSystem.WatchRequest request = watch(topLink);
     try {
+      myAccept = true;
       FileUtil.writeToFile(file, "new content");
       assertEvent(VFileContentChangeEvent.class, fileLink.getAbsolutePath());
 
+      myAccept = true;
       FileUtil.delete(file);
       assertEvent(VFileDeleteEvent.class, fileLink.getAbsolutePath());
 
+      myAccept = true;
       FileUtil.writeToFile(file, "re-creation");
       assertEvent(VFileCreateEvent.class, fileLink.getAbsolutePath());
     }
@@ -384,22 +387,25 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
   public void testSymlinkBelowWatchRoot() throws Exception {
     final File targetDir = FileUtil.createTempDirectory("top.", null);
-    final File file = FileUtil.createTempFile(targetDir, "test.", ".txt", true, false);
+    final File file = FileUtil.createTempFile(targetDir, "test.", ".txt");
     final File linkDir = FileUtil.createTempDirectory("link.", null);
     final File link = new File(linkDir, "link");
-    SymlinkHandlingTest.createTempLink(targetDir.getAbsolutePath(), link.getAbsolutePath());
+    IoTestUtil.createTempLink(targetDir.getAbsolutePath(), link.getAbsolutePath());
     final File fileLink = new File(link, file.getName());
     refresh(targetDir);
     refresh(linkDir);
 
     final LocalFileSystem.WatchRequest request = watch(linkDir);
     try {
+      myAccept = true;
       FileUtil.writeToFile(file, "new content");
       assertEvent(VFileContentChangeEvent.class, fileLink.getAbsolutePath());
 
+      myAccept = true;
       FileUtil.delete(file);
       assertEvent(VFileDeleteEvent.class, fileLink.getAbsolutePath());
 
+      myAccept = true;
       FileUtil.writeToFile(file, "re-creation");
       assertEvent(VFileCreateEvent.class, fileLink.getAbsolutePath());
     }
@@ -419,7 +425,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
 
     final File targetDir = FileUtil.createTempDirectory("top.", null);
     final File subDir = FileUtil.createTempDirectory(targetDir, "sub.", null);
-    final File file = FileUtil.createTempFile(subDir, "test.", ".txt", true, false);
+    final File file = FileUtil.createTempFile(subDir, "test.", ".txt");
     final File rootFile = IoTestUtil.createSubst(targetDir.getAbsolutePath());
     VirtualDirectoryImpl.allowRootAccess(rootFile.getPath());
     final VirtualFile vfsRoot = myFileSystem.findFileByIoFile(rootFile);
