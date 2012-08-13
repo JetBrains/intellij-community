@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,17 @@
 package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.lang.LanguageDocumentation;
+import com.intellij.lang.documentation.CodeDocumentationProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.InspectionGadgetsBundle;import com.siyeh.ig.BaseInspection;
+import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
@@ -40,9 +46,97 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("throws.runtime.exception.problem.descriptor");
   }
 
+  @NotNull
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new ThrowsRuntimeExceptionFix((String) infos[0]);
+  protected InspectionGadgetsFix[] buildFixes(Object... infos) {
+    final String exceptionName = (String)infos[0];
+    if (MoveExceptionToJavadocFix.isApplicable((PsiJavaCodeReferenceElement)infos[1])) {
+      return new InspectionGadgetsFix[] {
+        new ThrowsRuntimeExceptionFix(exceptionName),
+        new MoveExceptionToJavadocFix(exceptionName)
+      };
+    }
+    return new InspectionGadgetsFix[] {new ThrowsRuntimeExceptionFix(exceptionName)};
+  }
+
+  private static class MoveExceptionToJavadocFix extends InspectionGadgetsFix {
+
+    private final String myExceptionName;
+
+    private MoveExceptionToJavadocFix(String exceptionName) {
+      myExceptionName = exceptionName;
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("throws.runtime.exception.move.quickfix", myExceptionName);
+    }
+
+    @Override
+    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiElement element = descriptor.getPsiElement();
+      final PsiElement parent = element.getParent();
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethod)) {
+        return;
+      }
+      final PsiMethod method = (PsiMethod)grandParent;
+      final PsiDocComment comment = method.getDocComment();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      if (comment != null) {
+        final PsiDocTag docTag = factory.createDocTagFromText("@throws " + element.getText());
+        comment.add(docTag);
+      }
+      else {
+        final PsiDocComment docComment = factory.createDocCommentFromText("/** */");
+        final PsiComment resultComment = (PsiComment)method.addBefore(docComment, method.getModifierList());
+        final CodeDocumentationProvider documentationProvider =
+          (CodeDocumentationProvider)LanguageDocumentation.INSTANCE.forLanguage(method.getLanguage());
+        final String commentStub = documentationProvider.generateDocumentationContentStub(resultComment);
+        final PsiDocComment newComment = factory.createDocCommentFromText("/**\n" + commentStub + "*/");
+        resultComment.replace(newComment);
+      }
+      element.delete();
+    }
+
+    public static boolean isApplicable(@NotNull PsiJavaCodeReferenceElement reference) {
+      final PsiElement parent = reference.getParent();
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethod)) {
+        return false;
+      }
+      final PsiMethod method = (PsiMethod)grandParent;
+      final PsiDocComment docComment = method.getDocComment();
+      if (docComment == null) {
+        return true;
+      }
+      final PsiElement throwsTarget = reference.resolve();
+      if (throwsTarget == null) {
+        return true;
+      }
+      final PsiDocTag[] tags = docComment.findTagsByName("throws");
+      for (PsiDocTag tag : tags) {
+        final PsiDocTagValue valueElement = tag.getValueElement();
+        if (valueElement == null) {
+          continue;
+        }
+        final PsiElement child = valueElement.getFirstChild();
+        if (child == null) {
+          continue;
+        }
+        final PsiElement grandChild = child.getFirstChild();
+        if (!(grandChild instanceof PsiJavaCodeReferenceElement)) {
+          continue;
+        }
+        final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)grandChild;
+        final PsiElement target = referenceElement.resolve();
+        if (throwsTarget.equals(target)) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
 
   private static class ThrowsRuntimeExceptionFix extends InspectionGadgetsFix {
@@ -87,7 +181,7 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
           continue;
         }
         final String className = aClass.getName();
-        registerError(referenceElement, className);
+        registerError(referenceElement, className, referenceElement);
       }
     }
   }

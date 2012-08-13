@@ -1,10 +1,11 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementCreator;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
 import org.jetbrains.jps.model.impl.JpsElementChildRoleBase;
-import org.jetbrains.jps.model.library.JpsLibraryReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 
@@ -29,19 +30,19 @@ public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkRef
   }
 
   @Override
-  public void setSdkReference(@NotNull JpsSdkType<?> type, @NotNull JpsLibraryReference sdkReference) {
-    myContainer.setChild(new JpsSdkReferenceRole(type), sdkReference);
+  public <P extends JpsElement> void setSdkReference(@NotNull JpsSdkType<P> type, @NotNull JpsSdkReference<P> sdkReference) {
+    myContainer.setChild(new JpsSdkReferenceRole<P>(type), sdkReference);
   }
-  
+
   @Override
-  public JpsLibraryReference getSdkReference(@NotNull JpsSdkType<?> type) {
-    return myContainer.getChild(new JpsSdkReferenceRole(type));
+  public <P extends JpsElement> JpsSdkReference<P> getSdkReference(@NotNull JpsSdkType<P> type) {
+    return myContainer.getChild(new JpsSdkReferenceRole<P>(type));
   }
 
-  private static class JpsSdkReferenceRole extends JpsElementChildRoleBase<JpsLibraryReference> {
-    private final JpsSdkType<?> myType;
+  private static class JpsSdkReferenceRole<P extends JpsElement> extends JpsElementChildRoleBase<JpsSdkReference<P>> {
+    private final JpsSdkType<P> myType;
 
-    private JpsSdkReferenceRole(@NotNull JpsSdkType<?> type) {
+    private JpsSdkReferenceRole(@NotNull JpsSdkType<P> type) {
       super("sdk reference " + type);
       myType = type;
     }

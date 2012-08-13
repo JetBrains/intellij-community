@@ -133,16 +133,26 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   @Override
+  @NotNull
   public PsiFile getContainingFile() {
     StubElement stub = myStub;
     if (stub != null) {
       while (!(stub instanceof PsiFileStub)) {
         stub = stub.getParentStub();
       }
-      return (PsiFile)stub.getPsi();
+      PsiFile psi = (PsiFile)stub.getPsi();
+      if (psi == null) {
+        throw new PsiInvalidElementAccessException(this);
+      }
+      return psi;
     }
 
-    return super.getContainingFile();
+    PsiFile file = super.getContainingFile();
+    if (file == null) {
+      throw new PsiInvalidElementAccessException(this);
+    }
+
+    return file;
   }
 
   @Override

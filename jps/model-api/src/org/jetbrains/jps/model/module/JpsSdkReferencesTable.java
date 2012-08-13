@@ -3,15 +3,18 @@ package org.jetbrains.jps.model.module;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsCompositeElement;
-import org.jetbrains.jps.model.library.JpsLibraryReference;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 
 /**
  * @author nik
  */
 public interface JpsSdkReferencesTable extends JpsCompositeElement {
   @Nullable
-  JpsLibraryReference getSdkReference(@NotNull JpsSdkType<?> type);
+  <P extends JpsElement>
+  JpsSdkReference<P> getSdkReference(@NotNull JpsSdkType<P> type);
 
-  void setSdkReference(@NotNull JpsSdkType<?> type, @NotNull JpsLibraryReference sdkReference);
+  <P extends JpsElement>
+  void setSdkReference(@NotNull JpsSdkType<P> type, @NotNull JpsSdkReference<P> sdkReference);
 }

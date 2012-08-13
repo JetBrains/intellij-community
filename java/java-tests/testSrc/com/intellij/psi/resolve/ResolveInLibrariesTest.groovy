@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 package com.intellij.psi.resolve
-
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-
 /**
  * @author peter
  */
@@ -72,18 +74,62 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
     assert intfs.size() == 2
 
     for (i in 0..1) {
+      assert ClassInheritorsSearch.search(intfs[i]).findAll().containsAll([middles[i], bottoms[i]])
+      intfs[i].methods.each {
+        assert OverridingMethodsSearch.search(it).findAll()
+      }
+
       assert middles[i].isInheritor(intfs[i], true)
       assert bottoms[i].isInheritor(intfs[i], true)
       assert bottoms[i].isInheritor(middles[i], true)
     }
 
-    for (deep in [false, true]) {
-      for (i in 0..1) {
-        assert !middles[i].isInheritor(intfs[1-i], deep)
-        assert !bottoms[i].isInheritor(intfs[1-i], deep)
-        assert !bottoms[i].isInheritor(middles[1-i], deep)
-      }
-    }
   }
+
+  public void "test accept that with different library versions inheritance relation may be intransitive"() {
+    def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/inheritance")
+
+    //Foo, Middle implements Foo, Other extends Middle
+    PsiTestUtil.addLibrary(myModule, 'full', lib.path, ["/fullLibrary.jar!/"] as String[], [] as String[])
+
+    //Middle, Bottom extends Middle
+    PsiTestUtil.addLibrary(myModule, 'partial', lib.path, ["/middleBottom.jar!/"] as String[], [] as String[])
+
+    def scope = GlobalSearchScope.allScope(project)
+
+    def i0 = JavaPsiFacade.getInstance(project).findClass('Intf', scope)
+    def other0 = JavaPsiFacade.getInstance(project).findClass('Other', scope)
+    def b1 = JavaPsiFacade.getInstance(project).findClass('Bottom', scope)
+
+    def middles = JavaPsiFacade.getInstance(project).findClasses('Middle', scope)
+    assert middles.size() == 2
+    def m0 = middles[0]
+    def m1 = middles[1]
+
+    for (deep in [false, true]) {
+      assert m0.isInheritor(i0, deep)
+      assert other0.isInheritor(m0, deep)
+
+      assert !b1.isInheritor(i0, deep)
+
+      assert b1.isInheritor(m0, deep)
+      assert b1.isInheritor(m1, deep)
+
+      assert !m1.isInheritor(i0, deep)
+    }
+
+    assert other0.isInheritor(i0, true)
+    assert !other0.isInheritor(i0, false)
+
+    assert ClassInheritorsSearch.search(i0).findAll() == [m0, b1, other0]
+    assert ClassInheritorsSearch.search(m0).findAll() == [b1, other0]
+
+    assert fooInheritors(i0) == [fooMethod(m0), fooMethod(other0)] as Set
+    assert fooInheritors(m0) == [fooMethod(other0), fooMethod(b1)] as Set
+    assert fooInheritors(m1) == [fooMethod(other0), fooMethod(b1)] as Set
+  }
+
+  private PsiMethod fooMethod(PsiClass c) { c.findMethodsByName('foo', false)[0] }
+  private Set<PsiMethod> fooInheritors(PsiClass c) { OverridingMethodsSearch.search(fooMethod(c)).findAll() as Set }
 
 }

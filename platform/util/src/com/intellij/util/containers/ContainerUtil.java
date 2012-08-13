@@ -1137,6 +1137,12 @@ public class ContainerUtil extends ContainerUtilRt {
     return value;
   }
 
+  @NotNull
+  public static <T, V> V getOrElse(@NotNull Map<T, V> result, final T key, @NotNull V defValue) {
+    V value = result.get(key);
+    return value == null ? defValue : value;
+  }
+
   public static <T> boolean and(@NotNull T[] iterable, @NotNull Condition<T> condition) {
     return and(Arrays.asList(iterable), condition);
   }
@@ -1423,6 +1429,15 @@ public class ContainerUtil extends ContainerUtilRt {
       to[i] = fun.fun(from[i]);
     }
     return to;
+  }
+
+  public static <T> boolean containsIdentity(Iterable<T> list, T element) {
+    for (T t : list) {
+      if (t == element) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static <T> int indexOfIdentity(List<T> list, T element) {

@@ -19,7 +19,6 @@ import com.intellij.openapi.editor.ex.DisposableIterator;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
@@ -787,15 +786,25 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     }
   }
 
+  private static class IntTrinity {
+    private final int first, second, third;
+
+    private IntTrinity(int first, int second, int third) {
+      this.first = first;
+      this.second = second;
+      this.third = third;
+    }
+  }
+
   // returns real (minStart, maxStart, maxEnd)
-  private Trinity<Integer,Integer,Integer> checkMax(IntervalNode<T> root,
+  private IntTrinity checkMax(IntervalNode<T> root,
                                                     int deltaUpToRootExclusive,
                                                     boolean assertInvalid,
                                                     Ref<Boolean> allValid,
                                                     int[] keyCounter,
                                                     int[] nodeCounter,
                                                     TLongHashSet ids, boolean allDeltasUpAreNull) {
-    if (root == null) return Trinity.create(Integer.MAX_VALUE,Integer.MIN_VALUE,Integer.MIN_VALUE);
+    if (root == null) return new IntTrinity(Integer.MAX_VALUE,Integer.MIN_VALUE,Integer.MIN_VALUE);
     long packedOffsets = root.cachedDeltaUpToRoot;
     if (IntervalNode.modCount(packedOffsets) == modCount) {
       assert IntervalNode.allDeltasUpAreNull(packedOffsets) == (root.delta == 0 && allDeltasUpAreNull);
@@ -817,18 +826,18 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     keyCounter[0]+= root.intervals.size();
     nodeCounter[0]++;
     int delta = deltaUpToRootExclusive + (root.isValid() ? root.delta : 0);
-    Trinity<Integer, Integer, Integer> l = checkMax(root.getLeft(), delta, assertInvalid, allValid, keyCounter, nodeCounter, ids, root.delta == 0 && allDeltasUpAreNull);
+    IntTrinity l = checkMax(root.getLeft(), delta, assertInvalid, allValid, keyCounter, nodeCounter, ids, root.delta == 0 && allDeltasUpAreNull);
     int minLeftStart = l.first;
     int maxLeftStart = l.second;
     int maxLeftEnd = l.third;
-    Trinity<Integer, Integer, Integer> r = checkMax(root.getRight(), delta, assertInvalid, allValid, keyCounter, nodeCounter, ids, root.delta == 0 && allDeltasUpAreNull);
+    IntTrinity r = checkMax(root.getRight(), delta, assertInvalid, allValid, keyCounter, nodeCounter, ids, root.delta == 0 && allDeltasUpAreNull);
     int maxRightEnd = r.third;
     int minRightStart = r.first;
     int maxRightStart = r.second;
     if (!root.isValid()) {
       allValid.set(false);
       if (assertInvalid) assert false : root;
-      return Trinity.create(Math.min(minLeftStart, minRightStart), Math.max(maxLeftStart, maxRightStart), Math.max(maxRightEnd, maxLeftEnd));
+      return new IntTrinity(Math.min(minLeftStart, minRightStart), Math.max(maxLeftStart, maxRightStart), Math.max(maxRightEnd, maxLeftEnd));
     }
     IntervalNode<T> parent = root.getParent();
     if (parent != null && assertInvalid && root.hasAliveKey(false)) {
@@ -846,7 +855,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
     int minStart = Math.min(minLeftStart, myStartOffset);
     int maxStart = Math.max(myStartOffset, Math.max(maxLeftStart, maxRightStart));
     assert minStart <= maxStart;
-    return Trinity.create(minStart, maxStart, root.maxEnd + delta);
+    return new IntTrinity(minStart, maxStart, root.maxEnd + delta);
   }
 
   @Override

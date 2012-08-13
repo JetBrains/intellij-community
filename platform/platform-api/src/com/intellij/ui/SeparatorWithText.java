@@ -24,6 +24,7 @@ public class SeparatorWithText extends JComponent {
 
   private String myCaption = "";
   private int myPrefWidth;
+  private boolean myCaptionCentered = true;
 
   public SeparatorWithText() {
     setBorder(BorderFactory.createEmptyBorder(getVgap(), 0, getVgap(), 0));
@@ -39,9 +40,13 @@ public class SeparatorWithText extends JComponent {
     return 3;
   }
 
+  public void setCaptionCentered(boolean captionCentered) {
+    myCaptionCentered = captionCentered;
+  }
+
   public Dimension getPreferredSize() {
     final Dimension size = getPreferredFontSize();
-    size.width = myPrefWidth == -1? size.width : myPrefWidth;
+    size.width = myPrefWidth == -1 ? size.width : myPrefWidth;
     return size;
   }
 
@@ -81,10 +86,15 @@ public class SeparatorWithText extends JComponent {
       final int baseline = getVgap() + fm.getAscent();
 
       final int fontWidth = getPreferredFontSize().width;
-      final int lineX = (getWidth() - fontWidth) / 2;
       final int lineY = getVgap() + fm.getHeight() / 2;
 
-      g.drawLine(0, lineY, lineX, lineY);
+      final int lineX;
+      if (myCaptionCentered) {
+        lineX = (getWidth() - fontWidth) / 2;
+        g.drawLine(0, lineY, lineX, lineY);
+      } else {
+        lineX = 0;
+      }
       g.drawLine(lineX + fontWidth, lineY, getWidth() - 1, lineY);
 
       UIUtil.applyRenderingHints(g);

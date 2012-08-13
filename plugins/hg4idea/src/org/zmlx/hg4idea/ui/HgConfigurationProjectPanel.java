@@ -15,7 +15,6 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
-import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcsMessages;
@@ -85,7 +84,7 @@ public class HgConfigurationProjectPanel {
     mySelectRadioButton.setSelected(!isAutodetectHg);
     myPathSelector.setEnabled(!isAutodetectHg);
     if (isAutodetectHg) {
-      myPathSelector.setText(StringUtils.EMPTY);
+      myPathSelector.setText("");
     } else {
       myPathSelector.setText(myProjectSettings.getHgExecutable());
     }

@@ -229,6 +229,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   @Override
   public void visitMethodCallExpression(GrMethodCallExpression methodCallExpression) {
     if (myType2 == ARGUMENTS) createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_CALL_PARENTHESES);
+    if (myType2 == CLOSABLE_BLOCK) createSpaceInCode(myGroovySettings.SPACE_BEFORE_CLOSURE_LBRACE);
   }
 
   public void visitClosure(GrClosableBlock closure) {

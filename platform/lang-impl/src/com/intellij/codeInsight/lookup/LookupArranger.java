@@ -40,9 +40,10 @@ public abstract class LookupArranger {
   }
 
   private void updateCache(Lookup lookup, LookupElement item) {
-    if (prefixMatches(lookup, item)) {
-      myMatchingItems.add(item);
+    if (!prefixMatches((LookupImpl)lookup, item)) {
+      return;
     }
+    myMatchingItems.add(item);
 
     if (isPrefixItem(lookup, item, true)) {
       myExactPrefixItems.add(item);
@@ -51,8 +52,12 @@ public abstract class LookupArranger {
     }
   }
 
-  private boolean prefixMatches(Lookup lookup, LookupElement item) {
-    PrefixMatcher matcher = lookup.itemMatcher(item);
+  private boolean prefixMatches(LookupImpl lookup, LookupElement item) {
+    PrefixMatcher matcher = lookup.itemMatcherNullable(item);
+    if (matcher == null) {
+      return false;
+    }
+
     if (!myAdditionalPrefix.isEmpty()) {
       matcher = matcher.cloneWithPrefix(matcher.getPrefix() + myAdditionalPrefix);
     }

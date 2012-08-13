@@ -29,6 +29,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.dsl.psi.PsiElementCategory;
 import org.jetbrains.plugins.groovy.dsl.toplevel.AnnotatedContextFilter;
 import org.jetbrains.plugins.groovy.findUsages.LiteralConstructorReference;
@@ -102,7 +103,7 @@ public class ResolveUtil {
 
       //hack for walking up in java code
       //java's processDeclarations don't check names so we should do it manually
-      if (!isJavaResolver && run.getLanguage() == JavaLanguage.INSTANCE) {
+      if (!isJavaResolver && run.getLanguage() != GroovyFileType.GROOVY_LANGUAGE) {
         isJavaResolver = true;
         if (processor.getHint(NameHint.KEY) != null) {
           processor = new JavaResolverProcessor(processor);

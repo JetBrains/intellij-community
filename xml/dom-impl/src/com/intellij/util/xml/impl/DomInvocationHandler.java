@@ -13,6 +13,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.Stubbed;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -21,10 +22,13 @@ import com.intellij.semantic.SemElement;
 import com.intellij.semantic.SemKey;
 import com.intellij.semantic.SemService;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.*;
+import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.DomStub;
+import com.intellij.util.xml.stubs.StubParentStrategy;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
 import org.jetbrains.annotations.NotNull;
@@ -62,10 +66,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   private final InvocationCache myInvocationCache;
   private volatile Converter myScalarConverter = null;
   private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
-  @Nullable private final Stub myStub;
+  @Nullable protected final Stub myStub;
 
   protected DomInvocationHandler(Type type, DomParentStrategy parentStrategy,
-                                 final EvaluatedXmlName tagName,
+                                 @NotNull final EvaluatedXmlName tagName,
                                  final T childDescription,
                                  final DomManagerImpl manager,
                                  boolean dynamic,
@@ -576,6 +580,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
+    if (myStub != null && description.getAnnotation(Stubbed.class) != null) {
+      AttributeStub stub = myStub.getAttributeStub(description.getXmlName());
+      StubParentStrategy strategy = StubParentStrategy.createAttributeStrategy(stub, myStub);
+      return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, strategy, stub);
+    }
     final XmlTag tag = getXmlTag();
     
     if (tag != null) {
@@ -584,6 +593,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
       final XmlAttribute attribute = tag.getAttribute(description.getXmlName().getLocalName(), ns.equals(tag.getNamespace())? null:ns);
       
       if (attribute != null) {
+        LOG.assertTrue(attribute.isValid());
         return myManager.getSemService().getSemElement(DomManagerImpl.DOM_ATTRIBUTE_HANDLER_KEY, attribute);
       }
     }
@@ -742,6 +752,16 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, final NotNullFunction<DomInvocationHandler, List<XmlTag>> tagsGetter) {
+    if (myStub != null && description.getAnnotation(Stubbed.class) != null) {
+      XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
+      List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName());
+      return ContainerUtil.map(stubs, new Function<DomStub, DomElement>() {
+        @Override
+        public DomElement fun(DomStub stub) {
+          return stub.getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy();
+        }
+      });
+    }
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();
 

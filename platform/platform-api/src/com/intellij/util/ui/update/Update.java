@@ -26,7 +26,7 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
 
   private boolean myProcessed;
   private boolean myRejected;
-  private boolean myExecuteInWriteAction;
+  private final boolean myExecuteInWriteAction;
 
   private int myPriority = LOW_PRIORITY;
 
@@ -34,15 +34,15 @@ public abstract class Update extends ComparableObject.Impl implements Runnable, 
     this(identity, false);
   }
 
-  public Update(Object identity, int priority) {
+  public Update(@NonNls Object identity, int priority) {
     this(identity, false, priority);
   }
 
-  public Update(Object identity, boolean executeInWriteAction) {
+  public Update(@NonNls Object identity, boolean executeInWriteAction) {
     this(identity, executeInWriteAction, LOW_PRIORITY);
   }
 
-  public Update(Object identity, boolean executeInWriteAction, int priority) {
+  public Update(@NonNls Object identity, boolean executeInWriteAction, int priority) {
     super(identity);
     myExecuteInWriteAction = executeInWriteAction;
     myPriority = priority;

@@ -218,7 +218,7 @@ public class ChooseRunConfigurationPopup {
     PropertiesComponent.getInstance().setValue("run.configuration.edit.ad", Boolean.toString(true));
     if (RunDialog.editConfiguration(project, configuration, "Edit configuration settings", executor)) {
       RunManagerEx.getInstanceEx(project).setSelectedConfiguration(configuration);
-      ProgramRunnerUtil.executeConfiguration(project, configuration, executor, ExecutionTargetManager.getActiveTarget(project), false);
+      doRunConfiguration(configuration, executor, project);
     }
   }
 
@@ -728,11 +728,11 @@ public class ChooseRunConfigurationPopup {
   }
 
   private static void doRunConfiguration(RunnerAndConfigurationSettings configuration, Executor executor, Project project) {
-    if (configuration instanceof RunnerAndConfigurationSettingsImpl) {
-      if (canRun(executor, configuration)) {
-        ProgramRunnerUtil.executeConfiguration(project, configuration, executor);
-      }
-    }
+    ExecutionManager.getInstance(project).restartRunProfile(project,
+                                                            executor,
+                                                            ExecutionTargetManager.getActiveTarget(project),
+                                                            configuration,
+                                                            null);
   }
 
   private static final class ConfigurationActionsStep extends BaseListPopupStep<ActionWrapper> {

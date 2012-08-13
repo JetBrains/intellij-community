@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,17 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.ui.Messages;
+import org.jetbrains.annotations.Nullable;
+
 public class PasswordUtil {
-  private PasswordUtil() {}
+  private PasswordUtil() { }
 
   // weak encryption just to avoid plain text passwords in text files
   public static String encodePassword(String password) {
     String result = "";
     if (password == null) return result;
-    for (int i =0; i< password.length(); i++) {
+    for (int i = 0; i < password.length(); i++) {
       int c = password.charAt(i);
       c ^= 0xdfaa;
       result += Integer.toHexString(c);
@@ -33,22 +36,19 @@ public class PasswordUtil {
   public static String decodePassword(String password) throws NumberFormatException {
     String result = "";
     if (password == null) return result;
-    for (int i =0; i< password.length(); i+=4) {
-      String s = password.substring(i,i+4);
+    for (int i = 0; i < password.length(); i += 4) {
+      String s = password.substring(i, i + 4);
       int c = Integer.parseInt(s, 16);
       c ^= 0xdfaa;
       result += new Character((char)c).charValue();
     }
     return result;
   }
-  
+
+  /** @deprecated use {@linkplain Messages#showPasswordDialog(String, String)} (to remove in IDEA 13) */
+  @Nullable
+  @SuppressWarnings("UnusedDeclaration")
   public static String requestPassword(String prompt, String title, final String defaultValue) {
-    final PasswordPromptDialog dialog = new PasswordPromptDialog(prompt, title, defaultValue);
-    dialog.show();
-    if (dialog.isOK()) {
-      return dialog.getPassword();
-    } else {
-      return null;
-    }
+    return Messages.showPasswordDialog(prompt, title);
   }
 }

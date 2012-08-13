@@ -24,7 +24,7 @@ import com.intellij.project.model.impl.module.JpsRootModel;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsLibraryReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsSdkDependency;
 
 /**
@@ -37,8 +37,8 @@ public abstract class JpsSdkOrderEntryBase extends JpsOrderEntry<JpsSdkDependenc
 
   @Override
   public String getJdkName() {
-    final JpsLibraryReference reference = myDependencyElement.getSdkReference();
-    return reference != null ? reference.getLibraryName() : null;
+    final JpsSdkReference<?> reference = myDependencyElement.getSdkReference();
+    return reference != null ? reference.getSdkName() : null;
   }
 
   @NotNull

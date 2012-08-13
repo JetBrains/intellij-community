@@ -83,6 +83,12 @@
     <membersContributor implementation="org.jetbrains.plugins.groovy.swingBuilder.SwingBuilderNonCodeMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.groovy.dgm.DGMMemberContributor"/>
 
+    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebSpockTestMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebPageMemberContributor"/>
+
+    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebJUnitTestMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.groovy.geb.GebBrowserMemberContributor"/>
+
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.DelegatedMethodsContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoExternalizeContributor"/>
     <astTransformContributor implementation="org.jetbrains.plugins.groovy.lang.resolve.ast.AutoCloneContributor"/>
@@ -146,6 +152,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <pom.declarationSearcher implementation="org.jetbrains.plugins.groovy.geb.GebContentDeclarationSearcher"/>
+
     <testFramework implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework"/>
     <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>
@@ -309,6 +317,7 @@
                            id="groovyComments"/>
     <completion.confidence language="Groovy" implementationClass="com.intellij.codeInsight.completion.AlwaysFocusLookup" id="groovyTrue"
                            order="last"/>
+    <completion.contributor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.geb.GebPageFieldNameCompletionContributor"/>
 
     <psi.referenceContributor  language="Properties" implementation="org.jetbrains.plugins.groovy.dgm.DGMReferenceContributor"/>
 
@@ -329,7 +338,7 @@
     <debuggerEditorTextProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.debugger.GroovyEditorTextProvider"/>
 
     <xdebugger.settings implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerSettings"/>
-    <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.formatter.GroovyLanguageCodeStyleSettingsProvider"/>
+    <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsProvider"/>
 
     <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GroovyTypeHierarchyProvider"/>

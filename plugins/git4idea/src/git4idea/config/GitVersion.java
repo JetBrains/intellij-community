@@ -15,6 +15,7 @@
  */
 package git4idea.config;
 
+import com.google.common.base.Objects;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.CapturingProcessHandler;
@@ -23,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
@@ -87,7 +87,7 @@ public final class GitVersion implements Comparable<GitVersion> {
     myRevision = revision;
     myPatchLevel = patchLevel;
     myType = type;
-    myHashCode = new HashCodeBuilder(17, 37).append(myMajor).append(myMinor).append(myRevision).append(myPatchLevel).toHashCode();
+    myHashCode = Objects.hashCode(myMajor, myMinor, myRevision, myPatchLevel);
   }
 
   /**

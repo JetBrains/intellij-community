@@ -123,54 +123,6 @@ public class GitOutgoingChangesProvider implements VcsOutgoingChangesProvider<Co
     return result;
   }
 
-  /*@NotNull
-  public <U> Collection<U> whichAreOutgoingChanges(Collection<U> revisions,
-                                                   Convertor<U, VcsRevisionNumber> convertor,
-                                                   Convertor<U, FilePath> filePatchConvertor, VirtualFile vcsRoot) throws VcsException {
-    final Pair<VcsRevisionNumber, List<CommittedChangeList>> pair = getOutgoingChanges(vcsRoot, true);
-    if (pair.getFirst() == null) {
-      return new ArrayList<U>(revisions); // no information, better strict approach (see getOutgoingChanges() code)
-    }
-    if (pair.getSecond().isEmpty()) return Collections.emptyList(); // no local commits
-    final Set<String> localHashes = new HashSet<String>();
-    for (CommittedChangeList list : pair.getSecond()) {
-      localHashes.add(((GitCommittedChangeList) list).getFullHash());
-    }
-
-    final GitBranchesSearcher searcher = new GitBranchesSearcher(myProject, vcsRoot, true);
-    final GitBranch target = searcher.getRemote();
-    if (searcher.getLocal() == null || target == null) {
-      return new ArrayList<U>(revisions); // no information, better strict approach
-    }
-
-    // get branches with commit
-    final Collection<U> result = new ArrayList<U>(revisions);
-    for (Iterator<U> iterator = result.iterator(); iterator.hasNext();) {
-      final U t = iterator.next();
-      final List<String> branches = new ArrayList<String>();
-      // we do not use passed revision convertor since it returns just recent commit on repo
-      final VcsRevisionNumber revision = GitHistoryUtils.getCurrentRevision(myProject, filePatchConvertor.convert(t), null);
-      if (revision == null) continue; // will be true for new files; they are anyway outgoing 
-
-      final String containingCommit = revision.asString();
-      try {
-        GitBranch.listAsStrings(myProject, vcsRoot, true, false, branches, containingCommit);
-      }
-      catch (VcsException e) {
-        LOG.info("containingCommit = '" + containingCommit + "', current revision = '" + (revision == null ? null : revision.asString())
-                 + "', file = " + filePatchConvertor.convert(t).getPath());
-        LOG.info(e);
-        throw e;
-      }
-
-      if (branches.contains(target.getName())) {
-        iterator.remove();
-      }
-    }
-
-    return result;
-  }*/
-
   @Nullable
   public Date getRevisionDate(VcsRevisionNumber revision, FilePath file) {
     if (VcsRevisionNumber.NULL.equals(revision)) return null;

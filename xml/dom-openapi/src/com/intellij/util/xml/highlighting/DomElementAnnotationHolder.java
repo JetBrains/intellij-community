@@ -42,7 +42,7 @@ public interface DomElementAnnotationHolder extends Iterable<DomElementProblemDe
 
   DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, HighlightSeverity highlightType, String message, TextRange textRange, LocalQuickFix... fixes);
 
-  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, ProblemHighlightType highlightType, String message, TextRange textRange, LocalQuickFix... fixes);
+  DomElementProblemDescriptor createProblem(@NotNull DomElement domElement, ProblemHighlightType highlightType, String message, @Nullable TextRange textRange, LocalQuickFix... fixes);
 
   @NotNull
   DomElementResolveProblemDescriptor createResolveProblem(@NotNull GenericDomValue element, @NotNull PsiReference reference);

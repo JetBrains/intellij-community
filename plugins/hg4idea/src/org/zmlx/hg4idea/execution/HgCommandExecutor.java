@@ -16,9 +16,9 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsImplUtil;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
@@ -186,7 +186,7 @@ public final class HgCommandExecutor {
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
     final String executable = settings.isRunViaBash() ? "bash -c " + exeName : exeName;
-    final String cmdString = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtils.join(arguments, " "));
+    final String cmdString = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
 
     // log command
     if (!myIsSilent) {

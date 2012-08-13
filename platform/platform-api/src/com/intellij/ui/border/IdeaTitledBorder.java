@@ -81,10 +81,8 @@ public class IdeaTitledBorder extends TitledBorder {
   }
 
   @Override
-  public Insets getBorderInsets(Component c) {
-    Insets insets = new Insets(0, 0, 0, 0);
+  public Insets getBorderInsets(Component c, final Insets insets) {
     insets.top += getTitledSeparator(c).getPreferredSize().getHeight() - TitledSeparator.TOP_INSET - TitledSeparator.BOTTOM_INSET;
-    insets.top += UIUtil.DEFAULT_VGAP;
     insets.top += insideInsets.top;
     insets.left += insideInsets.left;
     insets.bottom += insideInsets.bottom;

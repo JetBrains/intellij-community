@@ -1747,7 +1747,7 @@ public abstract class DialogWrapper {
       UIUtil.removeQuaquaVisualMarginsIn(this);
       JBScrollPane pane =
         new JBScrollPane(myLabel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      pane.setHaveBorder(false);
+      pane.setBorder(IdeBorderFactory.createEmptyBorder(0));
       pane.setBackground(null);
       pane.getViewport().setBackground(null);
       pane.setOpaque(false);

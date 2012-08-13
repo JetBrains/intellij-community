@@ -24,10 +24,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.ComboBoxTableCellEditor;
 import com.intellij.util.ui.ComboBoxTableCellRenderer;
-import git4idea.actions.GitShowAllSubmittedFilesAction;
-import git4idea.util.StringScanner;
+import git4idea.GitUtil;
 import git4idea.config.GitConfigUtil;
 import git4idea.i18n.GitBundle;
+import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -133,7 +133,7 @@ public class GitRebaseEditor extends DialogWrapper {
           return;
         }
         GitRebaseEntry entry = myTableModel.myEntries.get(row);
-        GitShowAllSubmittedFilesAction.showSubmittedFiles(project, entry.getCommit(), gitRoot, false, false);
+        GitUtil.showSubmittedFiles(project, entry.getCommit(), gitRoot, false, false);
       }
     });
 

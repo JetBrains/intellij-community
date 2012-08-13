@@ -36,6 +36,16 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
     return VfsUtilCore.pathToUrl(myProjectHomePath + "/" + relativePath);
   }
 
+  protected void loadGlobalSettings(final String optionsDir) {
+    try {
+      String optionsPath = getTestDataFileAbsolutePath(optionsDir);
+      JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), Collections.<String, String>emptyMap(), optionsPath);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   protected static String getTestDataFileAbsolutePath(String relativePath) {
     File baseDir = new File(PathManager.getHomePath());
     File file = new File(baseDir, FileUtilRt.toSystemDependentName(relativePath));

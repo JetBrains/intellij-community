@@ -382,10 +382,6 @@ public class JavaCompletionSorting {
       final Object object = element.getObject();
       if (object instanceof PsiDocCommentOwner) {
         final PsiDocCommentOwner member = (PsiDocCommentOwner)object;
-        if (!member.isValid()) {
-          return MyEnum.NORMAL;
-        }
-
         if (!JavaPsiFacade.getInstance(member.getProject()).getResolveHelper().isAccessible(member, myPosition, null)) return MyEnum.INACCESSIBLE;
         if (member.isDeprecated()) return MyEnum.DEPRECATED;
       }

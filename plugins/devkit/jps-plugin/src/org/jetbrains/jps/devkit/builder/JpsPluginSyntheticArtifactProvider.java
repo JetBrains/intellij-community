@@ -60,11 +60,8 @@ public class JpsPluginSyntheticArtifactProvider extends JpsSyntheticArtifactProv
   @Override
   public List<JpsArtifact> createArtifacts(@NotNull JpsModel model) {
     List<JpsArtifact> artifacts = new ArrayList<JpsArtifact>();
-    for (JpsModule module : model.getProject().getModules()) {
-      JpsTypedModule<JpsSimpleElement<JpsPluginModuleProperties>> pluginModule = module.asTyped(JpsPluginModuleType.INSTANCE);
-      if (pluginModule != null) {
-        artifacts.add(createArtifact(module, pluginModule.getProperties().getData()));
-      }
+    for (JpsTypedModule<JpsSimpleElement<JpsPluginModuleProperties>> module : model.getProject().getModules(JpsPluginModuleType.INSTANCE)) {
+      artifacts.add(createArtifact(module, module.getProperties().getData()));
     }
     return artifacts;
   }

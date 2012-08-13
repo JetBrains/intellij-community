@@ -31,6 +31,8 @@ import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Set;
 
@@ -40,6 +42,7 @@ import java.util.Set;
 public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
   private final Object myClass;
+  private volatile Reference<PsiClass> myCache;
   private final String myQualifiedName;
   private String myForcedPresentableName;
 
@@ -82,8 +85,17 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> {
   @Override
   public PsiClass getObject() {
     if (myClass instanceof PsiAnchor) {
+      Reference<PsiClass> cache = myCache;
+      if (cache != null) {
+        PsiClass psiClass = cache.get();
+        if (psiClass != null) {
+          return psiClass;
+        }
+      }
+
       final PsiClass retrieve = (PsiClass)((PsiAnchor)myClass).retrieve();
       assert retrieve != null : myQualifiedName;
+      myCache = new WeakReference<PsiClass>(retrieve);
       return retrieve;
     }
     return (PsiClass)myClass;

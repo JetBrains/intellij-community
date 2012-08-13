@@ -142,40 +142,32 @@ JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs
 
 
 JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getInfo0(JNIEnv *env, jobject method, jstring path) {
-    bool isDrive = false;
-    if (env->GetStringLength(path) == 2) {
-        const jchar* str = env->GetStringChars(path, NULL);
-        isDrive = (str[1] == ':');
-        env->ReleaseStringChars(path, str);
+    WIN32_FILE_ATTRIBUTE_DATA attrData;
+    const jchar* str = env->GetStringChars(path, 0);
+    BOOL res = GetFileAttributesEx((LPCWSTR)str, GetFileExInfoStandard, &attrData);
+    env->ReleaseStringChars(path, str);
+    if (!res) {
+        return NULL;
     }
 
     WIN32_FIND_DATA data;
-    HANDLE h = INVALID_HANDLE_VALUE;
+    data.dwFileAttributes = attrData.dwFileAttributes;
+    data.dwReserved0 = 0;
+    data.ftLastWriteTime = attrData.ftLastWriteTime;
+    data.nFileSizeLow = attrData.nFileSizeLow;
+    data.nFileSizeHigh = attrData.nFileSizeHigh;
 
-    if (!isDrive) {
-        h = FindFileInner(env, path, &data);
-        if (h == INVALID_HANDLE_VALUE && GetLastError() != ERROR_ACCESS_DENIED) {
-            return NULL;
+    if (IS_SET(attrData.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
+        WIN32_FIND_DATA findData;
+        HANDLE h = FindFileInner(env, path, &findData);
+        if (h != INVALID_HANDLE_VALUE) {
+            FindClose(h);
+            data.dwFileAttributes = findData.dwFileAttributes;
+            data.dwReserved0 = findData.dwReserved0;
+            data.ftLastWriteTime = findData.ftLastWriteTime;
+            data.nFileSizeLow = findData.nFileSizeLow;
+            data.nFileSizeHigh = findData.nFileSizeHigh;
         }
-    }
-
-    if (h == INVALID_HANDLE_VALUE) {
-        WIN32_FILE_ATTRIBUTE_DATA attrData;
-        const jchar* str = env->GetStringChars(path, 0);
-        BOOL res = GetFileAttributesEx((LPCWSTR)str, GetFileExInfoStandard, &attrData);
-        env->ReleaseStringChars(path, str);
-        if (!res) {
-            return NULL;
-        }
-
-        data.dwFileAttributes = attrData.dwFileAttributes;
-        data.dwReserved0 = 0;
-        data.ftLastWriteTime = attrData.ftLastWriteTime;
-        data.nFileSizeLow = attrData.nFileSizeLow;
-        data.nFileSizeHigh = attrData.nFileSizeHigh;
-    }
-    else {
-        FindClose(h);
     }
 
     jclass fileInfoClass = getFileInfoClass(env);

@@ -42,6 +42,7 @@ import com.intellij.psi.util.*;
 import com.intellij.refactoring.psi.PropertyUtils;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,9 +51,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
-
-import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
-import static com.intellij.util.containers.ContainerUtilRt.createEmptyCOWList;
 
 public class NullableStuffInspection extends BaseLocalInspectionTool {
   // deprecated fields remain to minimize changes to users inspection profiles (which are often located in version control).
@@ -486,8 +484,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   }
 
   public static List<PsiExpression> findAllConstructorInitializers(PsiField field) {
-    final List<PsiExpression> result = createEmptyCOWList();
-    addIfNotNull(result, field.getInitializer());
+    final List<PsiExpression> result = ContainerUtil.createEmptyCOWList();
+    ContainerUtil.addIfNotNull(result, field.getInitializer());
 
     PsiClass containingClass = field.getContainingClass();
     if (containingClass != null) {
@@ -500,7 +498,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             final PsiAssignmentExpression assignment = getAssignmentExpressionIfOnAssignmentLhs(element);
             final PsiMethod method = PsiTreeUtil.getParentOfType(assignment, PsiMethod.class);
             if (method != null && method.isConstructor() && assignment != null) {
-              addIfNotNull(result, assignment.getRExpression());
+              ContainerUtil.addIfNotNull(result, assignment.getRExpression());
             }
           }
           return true;

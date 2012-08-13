@@ -22,6 +22,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -199,8 +201,10 @@ public class GitUpdateProcess {
       notifyImportantError(myProject, "Error updating " + rootName,
                            "Updating " + rootName + " failed with an error: " + e.getLocalizedMessage());
     } finally {
-      LOG.assertTrue(compoundResult != null, "Updaters were checked for non-emptiness");
-      if (incomplete || !compoundResult.isSuccess()) {
+      // Note: compoundResult normally should not be null, because the updaters map was checked for non-emptiness.
+      // But if updater.update() fails with exception for the first root, then the value would not be assigned.
+      // In this case we don't restore local changes either, because update failed.
+      if (incomplete || compoundResult == null || !compoundResult.isSuccess()) {
         mySaver.notifyLocalChangesAreNotRestored();
       }
       else {
@@ -212,17 +216,21 @@ public class GitUpdateProcess {
   }
 
   @NotNull
-  private static Map<VirtualFile, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<VirtualFile, GitUpdater> updaters) {
+  private Map<VirtualFile, GitUpdater> tryFastForwardMergeForRebaseUpdaters(@NotNull Map<VirtualFile, GitUpdater> updaters) {
     Map<VirtualFile, GitUpdater> modifiedUpdaters = new HashMap<VirtualFile, GitUpdater>();
+    Map<VirtualFile, Collection<Change>> changesUnderRoots = new LocalChangesUnderRoots(myProject).getChangesUnderRoots(updaters.keySet());
     for (Map.Entry<VirtualFile, GitUpdater> updaterEntry : updaters.entrySet()) {
+      VirtualFile root = updaterEntry.getKey();
       GitUpdater updater = updaterEntry.getValue();
-      if (updater instanceof GitRebaseUpdater) {
+      Collection<Change> changes = changesUnderRoots.get(root);
+      if (updater instanceof GitRebaseUpdater && changes != null && !changes.isEmpty()) {
+        // check only if there are local changes, otherwise stash won't happen anyway and there would be no optimization
         GitRebaseUpdater rebaseUpdater = (GitRebaseUpdater) updater;
         if (rebaseUpdater.fastForwardMerge()) {
           continue;
         }
       }
-      modifiedUpdaters.put(updaterEntry.getKey(), updaterEntry.getValue());
+      modifiedUpdaters.put(root, updater);
     }
     return modifiedUpdaters;
   }

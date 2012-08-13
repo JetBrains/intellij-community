@@ -17,8 +17,6 @@ package git4idea.test;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
@@ -33,7 +31,8 @@ import java.io.IOException;
  */
 public class GitTestRunEnv {
 
-  public static final String GIT_EXECUTABLE_ENV = "IDEA_TEST_GIT_EXECUTABLE";
+  private static final String GIT_EXECUTABLE_ENV = "IDEA_TEST_GIT_EXECUTABLE";
+  private static final String TEAMCITY_GIT_EXECUTABLE_ENV = "TEAMCITY_GIT_PATH";
   private static String ourGitExecutable;
 
   private File myRootDir;
@@ -93,27 +92,26 @@ public class GitTestRunEnv {
     return stdout;
   }
 
-  protected void log(String message) {
+  protected static void log(String message) {
     System.out.println(message);
   }
 
-  private String getExecutable() {
+  private static String getExecutable() {
     if (ourGitExecutable != null) {
       return ourGitExecutable;
     }
     String exec = System.getenv(GIT_EXECUTABLE_ENV);
     if (exec != null && new File(exec).exists()) {
-      log("Using Git from GIT_EXECUTABLE_ENV: " + exec);
+      log("Using Git from IDEA_TEST_GIT_EXECUTABLE: " + exec);
       return exec;
     }
-    File pluginRoot = new File(PluginPathManager.getPluginHomePath("git4idea"));
-    File dir = new File(pluginRoot, "tests/git4idea/tests/data/bin");
-    File git = new File(dir, SystemInfo.isWindows ? "git.exe" : "git");
-    if (!git.exists()) {
-      throw new IllegalStateException("git executable not found");
+    exec = System.getenv(TEAMCITY_GIT_EXECUTABLE_ENV);
+    if (exec != null && new File(exec).exists()) {
+      log("Using Git from TEAMCITY_GIT_PATH: " + exec);
+      return exec;
     }
-    log("Using Git from IDEA sources: " + git.getPath());
-    return git.getPath();
+    throw new IllegalStateException("Git executable not found. " +
+                                    "Please define IDEA_TEST_GIT_EXECUTABLE environment variable pointing to the Git executable.");
   }
 
 }

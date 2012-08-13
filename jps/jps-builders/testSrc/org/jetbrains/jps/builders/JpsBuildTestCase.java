@@ -52,7 +52,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     Utils.setSystemRoot(FileUtil.createTempDirectory("compile-server", null));
   }
 
-  protected JpsSdk<?> initJdk(final String name) {
+  protected JpsSdk<JpsDummyElement> initJdk(final String name) {
     try {
       return initJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
     }
@@ -61,7 +61,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     }
   }
 
-  protected JpsSdk<?> initJdk(final String name, final String path) {
+  protected JpsSdk<JpsDummyElement> initJdk(final String name, final String path) {
     String homePath = System.getProperty("java.home");
     String versionString = System.getProperty("java.version");
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk = myModel.getGlobal().addSdk(name, homePath, versionString, JpsJavaSdkType.INSTANCE,

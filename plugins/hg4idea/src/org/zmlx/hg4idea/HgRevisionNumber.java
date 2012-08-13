@@ -12,8 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea;
 
+import com.google.common.base.Objects;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.apache.commons.lang.builder.HashCodeBuilder;
 
 import java.util.Collections;
 import java.util.List;
@@ -111,6 +111,14 @@ public class HgRevisionNumber implements VcsRevisionNumber {
       return 0;
     }
 
+    // One of the revisions is local. Local is "greater" than any from the history.
+    if (changeset.isEmpty()) {
+      return 1;
+    }
+    if (other.changeset.isEmpty()) {
+      return -1;
+    }
+
     // compare revision numbers.
     final int revCompare = java.lang.Long.valueOf(getRevisionNumber()).compareTo(java.lang.Long.valueOf(other.getRevisionNumber()));
     if (revCompare != 0) {
@@ -136,10 +144,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
 
   @Override
   public int hashCode() {
-    return new HashCodeBuilder()
-      .append(revision)
-      .append(changeset)
-      .toHashCode();
+    return Objects.hashCode(revision, changeset);
   }
 
   @Override

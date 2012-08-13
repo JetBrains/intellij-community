@@ -26,5 +26,8 @@ import com.intellij.util.xml.GenericAttributeValue;
 public interface Bar extends DomElement {
 
   @Stubbed
-  GenericAttributeValue getAttribute();
+  GenericAttributeValue<String> getString();
+
+  @Stubbed
+  GenericAttributeValue<Integer> getInt();
 }

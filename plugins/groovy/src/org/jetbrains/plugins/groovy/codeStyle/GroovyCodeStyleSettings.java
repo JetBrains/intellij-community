@@ -47,6 +47,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings {
   public boolean ALIGN_MULTILINE_LIST_OR_MAP = false;
   public boolean SPACE_WITHIN_LIST_OR_MAP = false;
   public boolean ALIGN_NAMED_ARGS_IN_MAP = false;
+  public boolean SPACE_BEFORE_CLOSURE_LBRACE = true;
 
   //imports
   public boolean USE_FQ_CLASS_NAMES = false;
@@ -68,6 +69,7 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings {
     IMPORT_LAYOUT_TABLE.addEntry(new PackageEntry(false, "java", true));
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.BLANK_LINE_ENTRY);
     IMPORT_LAYOUT_TABLE.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
+
   }
 
   public GroovyCodeStyleSettings(CodeStyleSettings container) {

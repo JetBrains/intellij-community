@@ -89,7 +89,7 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
   public void setPopupVisible(boolean visible) {
     if (!isSwingPopup()) {
       if (visible && (myJBPopup == null || myJBPopup.isDisposed())) {
-        final JBList list = new JBList(getModel());
+        final JBList list = createJBList(getModel());
         myJBPopup = JBPopupFactory.getInstance()
           .createListPopupBuilder(list)
           .setItemChoosenCallback(new Runnable() {
@@ -138,6 +138,10 @@ public class ComboBox extends ComboBoxWithWidePopup implements AWTEventListener 
         configureEditor(editor, selectedItem);
       }
     }
+  }
+
+  protected JBList createJBList(ComboBoxModel model) {
+    return new JBList(model);
   }
 
   @Override

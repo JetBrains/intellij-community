@@ -14,8 +14,8 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
@@ -62,7 +62,7 @@ public abstract class HgChangesetsCommand {
     }
 
     String output = result.getRawOutput();
-    if (StringUtils.isEmpty(output)) {
+    if (StringUtil.isEmpty(output)) {
       return Collections.emptyList();
     }
     
@@ -70,9 +70,9 @@ public abstract class HgChangesetsCommand {
     List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(changesets.length);
     
     for(String changeset: changesets) {
-      String[] parts = StringUtils.split(changeset, HgChangesetUtil.ITEM_SEPARATOR);
-      if (parts.length == 4) {
-        revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1], parts[2], parts[3]));
+      List<String> parts = StringUtil.split(changeset, HgChangesetUtil.ITEM_SEPARATOR);
+      if (parts.size() == 4) {
+        revisions.add(HgRevisionNumber.getInstance(parts.get(0), parts.get(1), parts.get(2), parts.get(3)));
       } else {
         LOG.warn("Could not parse changeset [" + changeset + "]");
       }

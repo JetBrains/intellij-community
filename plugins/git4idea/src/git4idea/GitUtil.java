@@ -17,21 +17,26 @@ package git4idea;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.FilePathsHelper;
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.vfs.AbstractVcsVirtualFile;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.changes.GitChangeUtils;
@@ -44,6 +49,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -865,4 +871,43 @@ public class GitUtil {
       return "File";
     }
   }
+
+  /**
+   * Show changes made in the specified revision.
+   *
+   * @param project     the project
+   * @param revision    the revision number
+   * @param file        the file affected by the revision
+   * @param local       pass true to let the diff be editable, i.e. making the revision "at the right" be a local (current) revision.
+   *                    pass false to let both sides of the diff be non-editable.
+   * @param revertable  pass true to let "Revert" action be active.
+   */
+  public static void showSubmittedFiles(final Project project, final String revision, final VirtualFile file,
+                                        final boolean local, final boolean revertable) {
+    new Task.Backgroundable(project, GitBundle.message("changes.retrieving", revision)) {
+      public void run(@NotNull ProgressIndicator indicator) {
+        indicator.setIndeterminate(true);
+        try {
+          VirtualFile vcsRoot = getGitRoot(file);
+          final CommittedChangeList changeList = GitChangeUtils.getRevisionChanges(project, vcsRoot, revision, true, local, revertable);
+          if (changeList != null) {
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              public void run() {
+                AbstractVcsHelper.getInstance(project).showChangesListBrowser(changeList,
+                                                                              GitBundle.message("paths.affected.title", revision));
+              }
+            });
+          }
+        }
+        catch (final VcsException e) {
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            public void run() {
+              GitUIUtil.showOperationError(project, e, "git show");
+            }
+          });
+        }
+      }
+    }.queue();
+  }
+
 }

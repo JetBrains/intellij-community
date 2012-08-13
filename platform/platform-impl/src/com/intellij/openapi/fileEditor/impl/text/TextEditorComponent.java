@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.EditorPopupHandler;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +59,7 @@ import java.beans.PropertyChangeListener;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-class TextEditorComponent extends JPanel implements DataProvider{
+class TextEditorComponent extends JBLoadingPanel implements DataProvider{
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.text.TextEditorComponent");
 
   private final Project myProject;
@@ -86,7 +87,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
   private final MessageBusConnection myConnection;
 
   TextEditorComponent(@NotNull final Project project, @NotNull final VirtualFile file, @NotNull final TextEditorImpl textEditor) {
-    super(new BorderLayout (), true);
+    super(new BorderLayout(), textEditor);
 
     myProject = project;
     myFile = file;
@@ -106,7 +107,7 @@ class TextEditorComponent extends JPanel implements DataProvider{
     myVirtualFileListener = new MyVirtualFileListener();
     myFile.getFileSystem().addVirtualFileListener(myVirtualFileListener);
     myEditor = createEditor();
-    add(myEditor.getComponent (), BorderLayout.CENTER);
+    add(myEditor.getComponent(), BorderLayout.CENTER);
     myModified = isModifiedImpl();
     myValid = isEditorValidImpl();
     LOG.assertTrue(myValid);

@@ -737,7 +737,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   @NotNull
   public String getNamespaceByPrefix(String prefix) {
     final PsiElement parent = getParent();
-    LOG.assertTrue(parent.isValid());
+    if (!parent.isValid()) {
+      LOG.error(this.isValid());
+    }
     BidirectionalMap<String, String> map = initNamespaceMaps(parent);
     if (map != null) {
       final String ns = map.get(prefix);

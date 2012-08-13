@@ -39,13 +39,17 @@ import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -59,9 +63,14 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Document;
+import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
+import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
@@ -297,6 +306,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         try {
           if (useJps()) {
             getProject().save();
+            saveSdkTable();
             File ioFile = VfsUtil.virtualToIoFile(myModule.getModuleFile());
             if (!ioFile.exists()) {
               getProject().save();
@@ -319,6 +329,20 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
     }
     callback.throwException();
     return callback.getMessages();
+  }
+
+  private static void saveSdkTable() {
+    try {
+      ProjectJdkTableImpl table = (ProjectJdkTableImpl)ProjectJdkTable.getInstance();
+      File sdkFile = table.getExportFiles()[0];
+      FileUtil.createParentDirs(sdkFile);
+      Element root = new Element("application");
+      root.addContent(JDomSerializationUtil.createComponentElement(JpsGlobalLoader.SDK_TABLE_COMPONENT_NAME).addContent(table.getState().cloneContent()));
+      JDOMUtil.writeDocument(new Document(root), sdkFile, SystemProperties.getLineSeparator());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void assertOutput(String className, String output) throws ExecutionException {

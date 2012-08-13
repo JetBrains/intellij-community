@@ -6,7 +6,7 @@ import org.jdom.Element;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsLibraryReference;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
 
 import java.io.File;
@@ -36,17 +36,17 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals(4, dependencies.size());
     JpsSdkDependency sdkDependency = assertInstanceOf(dependencies.get(0), JpsSdkDependency.class);
     assertSame(JpsJavaSdkType.INSTANCE, sdkDependency.getSdkType());
-    JpsLibraryReference reference = sdkDependency.getSdkReference();
+    JpsSdkReference<?> reference = sdkDependency.getSdkReference();
     assertNotNull(reference);
-    assertEquals("1.5", reference.getLibraryName());
+    assertEquals("1.5", reference.getSdkName());
     assertInstanceOf(dependencies.get(1), JpsModuleSourceDependency.class);
     assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class);
     assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class);
 
     JpsSdkDependency inheritedSdkDependency = assertInstanceOf(main.getDependenciesList().getDependencies().get(0), JpsSdkDependency.class);
-    JpsLibraryReference projectSdkReference = inheritedSdkDependency.getSdkReference();
+    JpsSdkReference<?> projectSdkReference = inheritedSdkDependency.getSdkReference();
     assertNotNull(projectSdkReference);
-    assertEquals("1.6", projectSdkReference.getLibraryName());
+    assertEquals("1.6", projectSdkReference.getSdkName());
   }
 
   public void testSaveProject() {

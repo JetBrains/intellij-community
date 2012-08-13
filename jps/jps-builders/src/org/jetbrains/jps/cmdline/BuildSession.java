@@ -1,7 +1,6 @@
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -10,11 +9,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.DataOutputStream;
 import org.jboss.netty.channel.Channel;
 import org.jboss.netty.channel.Channels;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ether.dependencyView.Callbacks;
-import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.Project;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
@@ -29,19 +25,12 @@ import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
-import org.jetbrains.jps.model.java.JpsJavaLibraryType;
-import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsOrderRootType;
-import org.jetbrains.jps.model.library.JpsTypedLibrary;
-import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
-import org.jetbrains.jps.model.serialization.JpsSdkPropertiesSerializer;
-import org.jetbrains.jps.model.serialization.JpsSdkTableSerializer;
 
 import java.io.*;
 import java.util.*;
@@ -64,7 +53,6 @@ final class BuildSession implements Runnable, CanceledStatus {
   private volatile boolean myCanceled = false;
   // globals
   private final Map<String, String> myPathVars;
-  private final List<GlobalLibrary> myGlobalLibraries;
   private final String myGlobalEncoding;
   private final String myIgnorePatterns;
   // build params
@@ -82,6 +70,8 @@ final class BuildSession implements Runnable, CanceledStatus {
   private volatile ProjectDescriptor myProjectDescriptor;
   private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<Pair<String, String>, ConstantSearchFuture>());
   private final ConstantSearch myConstantSearch = new ConstantSearch();
+  private final String myGlobalOptiosnPath;
+
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -96,19 +86,12 @@ final class BuildSession implements Runnable, CanceledStatus {
     for (CmdlineRemoteProto.Message.KeyValuePair variable : globals.getPathVariableList()) {
       myPathVars.put(variable.getKey(), variable.getValue());
     }
-    myGlobalLibraries = new ArrayList<GlobalLibrary>();
-    for (CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary library : globals.getGlobalLibraryList()) {
-      myGlobalLibraries.add(
-        library.hasHomePath() ?
-        new SdkLibrary(library.getName(), library.getTypeName(), library.hasVersion() ? library.getVersion() : null, library.getHomePath(), library.getPathList(), library.hasAdditionalDataXml() ? library.getAdditionalDataXml() : null) :
-        new GlobalLibrary(library.getName(), library.getPathList())
-      );
-    }
     myGlobalEncoding = globals.hasGlobalEncoding()? globals.getGlobalEncoding() : null;
     myIgnorePatterns = globals.hasIgnoredFilesPatterns()? globals.getIgnoredFilesPatterns() : null;
 
     // session params
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
+    myGlobalOptiosnPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
     myModules = new HashSet<String>(params.getModuleNameList());
     myArtifacts = params.getArtifactNameList();
@@ -125,7 +108,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     final Ref<Boolean> hasErrors = new Ref<Boolean>(false);
     final Ref<Boolean> markedFilesUptodate = new Ref<Boolean>(false);
     try {
-      runBuild(myProjectPath, myBuildType, myModules, myArtifacts, myBuilderParams, myFilePaths, new MessageHandler() {
+      runBuild(myBuildType, myModules, myArtifacts, myBuilderParams, myFilePaths, new MessageHandler() {
         public void processMessage(BuildMessage buildMessage) {
           final CmdlineRemoteProto.Message.BuilderMessage response;
           if (buildMessage instanceof FileGeneratedEvent) {
@@ -172,12 +155,14 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
   }
 
-  private void runBuild(String projectPath, BuildType buildType, Set<String> modules, Collection<String> artifacts, Map<String, String> builderParams, Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
+  private void runBuild(BuildType buildType, Set<String> modules, Collection<String> artifacts, Map<String, String> builderParams,
+                        Collection<String> paths, final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
     boolean forceCleanCaches = false;
 
-    final File dataStorageRoot = Utils.getDataStorageRoot(projectPath);
+    final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
     if (dataStorageRoot == null) {
-      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " + projectPath));
+      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " +
+                                                                                      myProjectPath));
       return;
     }
     final BuildFSState fsState = new BuildFSState(false);
@@ -221,8 +206,8 @@ final class BuildSession implements Runnable, CanceledStatus {
         msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
       }
 
-      final JpsModel jpsModel = loadJpsProject(projectPath);
-      final Project project = loadProject(projectPath);
+      final JpsModel jpsModel = loadJpsModel();
+      final Project project = loadProject();
       final ProjectDescriptor pd = new ProjectDescriptor(project, jpsModel, fsState, projectTimestamps, dataManager, BuildLoggingManager.DEFAULT);
       myProjectDescriptor = pd;
       if (shouldApplyEvent) {
@@ -529,33 +514,13 @@ final class BuildSession implements Runnable, CanceledStatus {
     return myCanceled;
   }
 
-  private JpsModel loadJpsProject(String projectPath) {
+  private JpsModel loadJpsModel() {
     final long start = System.currentTimeMillis();
     try {
       final JpsModel model = JpsElementFactory.getInstance().createModel();
       try {
-        for (GlobalLibrary library : myGlobalLibraries) {
-          JpsLibrary jpsLibrary = null;
-          if (library instanceof SdkLibrary) {
-            final SdkLibrary sdkLibrary = (SdkLibrary)library;
-            final JpsSdkPropertiesSerializer<?> loader = JpsSdkTableSerializer.getSdkPropertiesSerializer(sdkLibrary.getTypeName());
-            if (loader != null) {
-              jpsLibrary = addSdk(model, sdkLibrary, loader);
-            }
-            else {
-              LOG.info("Sdk type " + sdkLibrary.getTypeName() + " not registered");
-            }
-          }
-          else {
-            jpsLibrary = model.getGlobal().getLibraryCollection().addLibrary(library.getName(), JpsJavaLibraryType.INSTANCE);
-          }
-          if (jpsLibrary != null) {
-            for (String path : library.getPaths()) {
-              jpsLibrary.addRoot(JpsPathUtil.pathToUrl(path), JpsOrderRootType.COMPILED);
-            }
-          }
-        }
-        JpsProjectLoader.loadProject(model.getProject(), myPathVars, projectPath);
+        JpsGlobalLoader.loadGlobalSettings(model.getGlobal(), myPathVars, myGlobalOptiosnPath);
+        JpsProjectLoader.loadProject(model.getProject(), myPathVars, myProjectPath);
         LOG.info("New JPS model: " + model.getProject().getModules().size() + " modules, " + model.getProject().getLibraryCollection().getLibraries().size() + " libraries");
       }
       catch (IOException e) {
@@ -565,36 +530,18 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     finally {
       final long loadTime = System.currentTimeMillis() - start;
-      LOG.info("New JPS model: project " + projectPath + " loaded in " + loadTime + " ms");
+      LOG.info("New JPS model: project " + myProjectPath + " loaded in " + loadTime + " ms");
     }
   }
 
-  private static <P extends JpsElement> JpsTypedLibrary<JpsSdk<P>> addSdk(JpsModel model, SdkLibrary sdkLibrary,
-                                                                          JpsSdkPropertiesSerializer<P> loader) {
-    try {
-      final String xml = sdkLibrary.getAdditionalDataXml();
-      final Element element = xml != null ? JDOMUtil.loadDocument(xml).getRootElement() : null;
-      return model.getGlobal().addSdk(sdkLibrary.getName(), sdkLibrary.getHomePath(), sdkLibrary.getVersion(), loader.getType(),
-                                      loader.loadProperties(element));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    catch (JDOMException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  private Project loadProject(String projectPath) {
+  private Project loadProject() {
     final long start = System.currentTimeMillis();
     try {
       final Project project = new Project();
 
-      final File projectFile = new File(projectPath);
+      final File projectFile = new File(myProjectPath);
 
-      //String root = dirBased ? projectPath : projectFile.getParent();
-
-      final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : projectPath;
+      final String loadPath = isDirectoryBased(projectFile) ? new File(projectFile, IDEA_PROJECT_DIRNAME).getPath() : myProjectPath;
       IdeaProjectLoader.loadFromPath(project, loadPath, myPathVars, null, new SystemOutErrorReporter(false));
       final String globalEncoding = myGlobalEncoding;
       if (!StringUtil.isEmpty(globalEncoding) && project.getProjectCharset() == null) {
@@ -605,7 +552,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     finally {
       final long loadTime = System.currentTimeMillis() - start;
-      LOG.info("Project " + projectPath + " loaded in " + loadTime + " ms");
+      LOG.info("Project " + myProjectPath + " loaded in " + loadTime + " ms");
     }
   }
 

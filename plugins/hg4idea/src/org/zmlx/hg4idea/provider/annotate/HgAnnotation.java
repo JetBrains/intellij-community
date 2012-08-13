@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.annotate.*;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.apache.commons.lang.StringUtils;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgFileRevision;
 
@@ -93,7 +92,7 @@ public class HgAnnotation implements FileAnnotation {
       return CurrentContentRevision.create(hgFile.toFilePath()).getContent();
     } catch (VcsException e) {
       LOG.info(e);
-      return StringUtils.EMPTY;
+      return "";
     }
   }
 
@@ -144,7 +143,7 @@ public class HgAnnotation implements FileAnnotation {
 
     public String getValue(int lineNumber) {
       if (lineNumber >= lines.size() || lineNumber < 0) {
-        return StringUtils.EMPTY;
+        return "";
       }
       HgAnnotationLine annotationLine = lines.get(lineNumber);
       return aspectType == FIELD.REVISION

@@ -123,6 +123,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
     return new SvnLoadingRepositoryLocation(repositoryPath, myVcs);
   }
 
+  @Nullable
   public VcsCommittedListsZipper getZipper() {
     return myZipper;
   }

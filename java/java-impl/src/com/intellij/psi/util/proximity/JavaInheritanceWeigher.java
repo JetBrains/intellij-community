@@ -15,23 +15,43 @@
  */
 package com.intellij.psi.util.proximity;
 
-import com.intellij.openapi.util.NullableLazyKey;
+import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author peter
 */
 public class JavaInheritanceWeigher extends ProximityWeigher {
-  private static final NullableLazyKey<PsiClass, ProximityLocation> PLACE_CLASS = NullableLazyKey.create("PLACE_CLASS", new NullableFunction<ProximityLocation, PsiClass>() {
+  private static final NotNullLazyKey<Set<String>, ProximityLocation> PLACE_SUPER_CLASSES = NotNullLazyKey.create("PLACE_SUPER_CLASSES", new NotNullFunction<ProximityLocation, Set<String>>() {
+    @NotNull
     @Override
-    public PsiClass fun(ProximityLocation location) {
-      return PsiTreeUtil.getContextOfType(location.getPosition(), PsiClass.class, false);
+    public Set<String> fun(ProximityLocation location) {
+      final HashSet<String> result = new HashSet<String>();
+      PsiClass contextClass = PsiTreeUtil.getContextOfType(location.getPosition(), PsiClass.class, false);
+      Processor<PsiClass> processor = new Processor<PsiClass>() {
+        @Override
+        public boolean process(PsiClass psiClass) {
+          ContainerUtilRt.addIfNotNull(result, psiClass.getQualifiedName());
+          return true;
+        }
+      };
+      while (contextClass != null) {
+        InheritanceUtil.processSupers(contextClass, true, processor);
+        contextClass = contextClass.getContainingClass();
+      }
+      return result;
     }
   });
 
@@ -42,27 +62,23 @@ public class JavaInheritanceWeigher extends ProximityWeigher {
     }
     if (isTooGeneral((PsiClass)element)) return false;
 
-    PsiClass contextClass = PLACE_CLASS.getValue(location);
-    if (contextClass == null) {
+    Set<String> superClasses = PLACE_SUPER_CLASSES.getValue(location);
+    if (superClasses.isEmpty()) {
       return false;
     }
-
 
     final PsiElement position = location.getPosition();
-    if (position == null) {
-      return false;
-    }
     PsiClass placeClass = findPlaceClass(element, position);
     if (placeClass == null) return false;
 
-    while (contextClass != null) {
-      PsiClass elementClass = placeClass;
-      while (elementClass != null) {
-        if (contextClass.isInheritor(elementClass, true)) return true;
-        elementClass = elementClass.getContainingClass();
+    PsiClass elementClass = placeClass;
+    while (elementClass != null) {
+      if (superClasses.contains(elementClass.getQualifiedName())) {
+        return true;
       }
-      contextClass = contextClass.getContainingClass();
+      elementClass = elementClass.getContainingClass();
     }
+
     return false;
   }
 

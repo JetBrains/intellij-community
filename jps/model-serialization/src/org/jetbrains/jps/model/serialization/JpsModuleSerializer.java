@@ -3,13 +3,17 @@ package org.jetbrains.jps.model.serialization;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
-import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.JpsCompositeElement;
+import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsElementReference;
+import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
 
 import java.util.ArrayList;
@@ -150,13 +154,14 @@ public class JpsModuleSerializer {
       }
       else if (dependency instanceof JpsSdkDependency) {
         JpsSdkType<?> sdkType = ((JpsSdkDependency)dependency).getSdkType();
-        JpsLibraryReference reference = module.getSdkReferencesTable().getSdkReference(sdkType);
+        JpsSdkReferencesTable table = module.getSdkReferencesTable();
+        JpsSdkReference<?> reference = table.getSdkReference(sdkType);
         if (reference == null) {
           rootModelElement.addContent(createDependencyElement(INHERITED_JDK_TYPE));
         }
         else {
           Element element = createDependencyElement(JDK_TYPE);
-          element.setAttribute(JDK_NAME_ATTRIBUTE, reference.getLibraryName());
+          element.setAttribute(JDK_NAME_ATTRIBUTE, reference.getSdkName());
           element.setAttribute(JDK_TYPE_ATTRIBUTE, JpsSdkTableSerializer.getLoader(sdkType).getTypeId());
           rootModelElement.addContent(element);
         }
@@ -171,8 +176,7 @@ public class JpsModuleSerializer {
           Element libraryElement = new Element(LIBRARY_TAG);
           JpsLibrary library = reference.resolve();
           String libraryName = library.getName();
-          JpsLibraryTableSerializer
-            .saveLibrary(library, libraryElement, isGeneratedName(libraryName) ? null : libraryName);
+          JpsLibraryTableSerializer.saveLibrary(library, libraryElement, isGeneratedName(libraryName) ? null : libraryName);
           element.addContent(libraryElement);
         }
         else {

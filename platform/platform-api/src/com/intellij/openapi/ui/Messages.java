@@ -561,18 +561,53 @@ public class Messages {
   }
 
   /**
-   * @return trimmed inpit string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or <code>null</code> if user cancelled dialog.
    */
   @Nullable
-  public static String showInputDialog(Project project, String message, String title, Icon icon) {
+  public static String showPasswordDialog(@Nls String message, @Nls String title) {
+    return showPasswordDialog(null, message, title, null, null);
+  }
+
+  /**
+   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   */
+  @Nullable
+  public static String showPasswordDialog(Project project, @Nls String message, @Nls String title, @Nullable Icon icon) {
+    return showPasswordDialog(project, message, title, icon, null);
+  }
+
+  /**
+   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   */
+  @Nullable
+  public static String showPasswordDialog(@Nullable Project project,
+                                          @Nls String message,
+                                          @Nls String title,
+                                          @Nullable Icon icon,
+                                          @Nullable InputValidator validator) {
+    if (isApplicationInUnitTestOrHeadless()) {
+      return ourTestInputImplementation.show(message);
+    }
+
+    final InputDialog dialog = project != null ? new PasswordInputDialog(project, message, title, icon, validator)
+                                               : new PasswordInputDialog(message, title, icon, validator);
+    dialog.show();
+    return dialog.getInputString();
+  }
+
+  /**
+   * @return trimmed input string or <code>null</code> if user cancelled dialog.
+   */
+  @Nullable
+  public static String showInputDialog(Project project, String message, String title, @Nullable Icon icon) {
     return showInputDialog(project, message, title, icon, null, null);
   }
 
   /**
-   * @return trimmed inpit string or <code>null</code> if user cancelled dialog.
+   * @return trimmed input string or <code>null</code> if user cancelled dialog.
    */
   @Nullable
-  public static String showInputDialog(Component parent, String message, String title, Icon icon) {
+  public static String showInputDialog(Component parent, String message, String title, @Nullable Icon icon) {
     return showInputDialog(parent, message, title, icon, null, null);
   }
 
@@ -583,7 +618,7 @@ public class Messages {
    * @see #showInputDialog(Component, String, String, Icon)
    */
   @Nullable
-  public static String showInputDialog(String message, String title, Icon icon) {
+  public static String showInputDialog(String message, String title, @Nullable Icon icon) {
     return showInputDialog(message, title, icon, null, null);
   }
 
@@ -592,7 +627,7 @@ public class Messages {
                                        @Nls String message,
                                        @Nls String title,
                                        @Nullable Icon icon,
-                                       @NonNls String initialValue,
+                                       @Nullable String initialValue,
                                        @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
@@ -608,8 +643,8 @@ public class Messages {
   public static String showInputDialog(Project project,
                                        @Nls String message,
                                        @Nls String title,
-                                       Icon icon,
-                                       @NonNls String initialValue,
+                                       @Nullable Icon icon,
+                                       @Nullable String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection) {
     if (isApplicationInUnitTestOrHeadless()) {
@@ -640,8 +675,8 @@ public class Messages {
                                        String message,
                                        String title,
                                        @Nullable Icon icon,
-                                       @NonNls String initialValue,
-                                       InputValidator validator) {
+                                       @Nullable String initialValue,
+                                       @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
@@ -660,7 +695,11 @@ public class Messages {
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
    */
   @Nullable
-  public static String showInputDialog(String message, String title, @Nullable Icon icon, @NonNls String initialValue, @Nullable InputValidator validator) {
+  public static String showInputDialog(String message,
+                                       String title,
+                                       @Nullable Icon icon,
+                                       @Nullable String initialValue,
+                                       @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
@@ -672,7 +711,12 @@ public class Messages {
   }
 
   @Nullable
-  public static String showMultilineInputDialog(Project project, String message, String title, @NonNls String initialValue, Icon icon, @Nullable InputValidator validator) {
+  public static String showMultilineInputDialog(Project project,
+                                                String message,
+                                                String title,
+                                                @Nullable String initialValue,
+                                                @Nullable Icon icon,
+                                                @Nullable InputValidator validator) {
     if (isApplicationInUnitTestOrHeadless()) {
       return ourTestInputImplementation.show(message);
     }
@@ -1138,26 +1182,46 @@ public class Messages {
 
   protected static class InputDialog extends MessageDialog {
     protected JTextComponent myField;
-    private InputValidator myValidator;
+    private final InputValidator myValidator;
 
-    public InputDialog(Project project, String message, String title, @Nullable Icon icon, String initialValue,
-                       @Nullable InputValidator validator, String[] options, int defaultOption) {
+    public InputDialog(Project project,
+                       String message,
+                       String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator,
+                       String[] options,
+                       int defaultOption) {
       super(project, message, title, options, defaultOption, icon, true);
       myValidator = validator;
       myField.setText(initialValue);
     }
 
-    public InputDialog(Project project, String message, String title, @Nullable Icon icon, String initialValue, @Nullable InputValidator validator) {
+    public InputDialog(Project project,
+                       String message,
+                       String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator) {
       this(project, message, title, icon, initialValue, validator, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0);
     }
 
-    public InputDialog(Component parent, String message, String title, @Nullable Icon icon, String initialValue, @Nullable InputValidator validator) {
+    public InputDialog(Component parent,
+                       String message,
+                       String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator) {
       super(parent, message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
       myValidator = validator;
       myField.setText(initialValue);
     }
 
-    public InputDialog(String message, String title, @Nullable Icon icon, String initialValue, @Nullable InputValidator validator) {
+    public InputDialog(String message,
+                       String title,
+                       @Nullable Icon icon,
+                       @Nullable String initialValue,
+                       @Nullable InputValidator validator) {
       super(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, 0, icon, true);
       myValidator = validator;
       myField.setText(initialValue);
@@ -1276,10 +1340,11 @@ public class Messages {
     public MultilineInputDialog(Project project,
                                 String message,
                                 String title,
-                                Icon icon,
-                                String initialValue,
-                                InputValidator validator,
-                                String[] options, int defaultOption) {
+                                @Nullable Icon icon,
+                                @Nullable String initialValue,
+                                @Nullable InputValidator validator,
+                                String[] options,
+                                int defaultOption) {
       super(project, message, title, icon, initialValue, validator, options, defaultOption);
     }
 
@@ -1288,7 +1353,29 @@ public class Messages {
       return new JTextArea(7, 50);
     }
   }
-  
+
+  protected static class PasswordInputDialog extends InputDialog {
+    public PasswordInputDialog(String message,
+                               String title,
+                               @Nullable Icon icon,
+                               @Nullable InputValidator validator) {
+      super(message, title, icon, null, validator);
+    }
+
+    public PasswordInputDialog(Project project,
+                               String message,
+                               String title,
+                               @Nullable Icon icon,
+                               @Nullable InputValidator validator) {
+      super(project, message, title, icon, null, validator);
+    }
+
+    @Override
+    protected JTextComponent createTextFieldComponent() {
+      return new JPasswordField(30);
+    }
+  }
+
   protected static class InputDialogWithCheckbox extends InputDialog {
     private JCheckBox myCheckBox;
 
@@ -1298,7 +1385,7 @@ public class Messages {
                                    boolean checked,
                                    boolean checkboxEnabled,
                                    @Nullable Icon icon,
-                                   String initialValue,
+                                   @Nullable String initialValue,
                                    @Nullable InputValidator validator) {
       super(message, title, icon, initialValue, validator);
       myCheckBox.setText(checkboxText);

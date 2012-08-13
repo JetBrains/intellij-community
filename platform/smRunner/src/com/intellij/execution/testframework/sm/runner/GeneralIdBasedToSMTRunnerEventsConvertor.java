@@ -26,7 +26,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.testIntegration.TestLocationProvider;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -488,7 +487,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
 
   @NotNull
   private Node findActiveNode() {
-    List<Node> runningLeaves = ContainerUtilRt.newArrayListWithExpectedSize(1);
+    List<Node> runningLeaves = ContainerUtil.newArrayListWithExpectedSize(1);
     for (Node node : myRunningNodes) {
       if (!node.hasRunningChildren()) {
         runningLeaves.add(node);
@@ -636,7 +635,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
 
     @NotNull
     public List<Node> getAncestorsFromParentToRoot() {
-      List<Node> ancestors = ContainerUtilRt.newArrayList();
+      List<Node> ancestors = ContainerUtil.newArrayList();
       Node parent = getParentNode();
       while (parent != null) {
         ancestors.add(parent);

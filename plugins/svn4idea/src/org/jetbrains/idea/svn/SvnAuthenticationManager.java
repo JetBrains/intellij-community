@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -26,6 +25,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CalledInAwt;
@@ -55,7 +55,6 @@ import java.util.*;
  */
 public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager implements SvnAuthenticationListener {
   // while Mac storage not working for IDEA, we use this key to check whether to prompt abt plaintext or just store
-  private static final Logger LOG = Logger.getInstance(SvnAuthenticationManager.class.getName());
   public static final String SVN_SSH = "svn+ssh";
   public static final String HTTP = "http";
   public static final String HTTPS = "https";
@@ -852,14 +851,16 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
     @Override
     public String getKeyringPassword(final String keyringName) throws SVNException {
-      final String[] s = new String[1];
+      final String message = keyringName != null ? SvnBundle.message("gnome.keyring.prompt.named", keyringName)
+                                                 : SvnBundle.message("gnome.keyring.prompt.nameless");
+      final Ref<String> result = Ref.create();
       UIUtil.invokeAndWaitIfNeeded(new Runnable() {
         @Override
         public void run() {
-          s[0] = Messages.showInputDialog(myProject, "Please provide '" + keyringName + "' GNOME Keyring password", "Subversion", Messages.getQuestionIcon());
+          result.set(Messages.showPasswordDialog(myProject, message, SvnBundle.message("subversion.name"), Messages.getQuestionIcon()));
         }
       });
-      return s[0];
+      return result.get();
     }
   }
 

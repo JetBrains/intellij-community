@@ -62,7 +62,7 @@ class ChangeHighlighterHolder {
   private void highlighterCreated(RangeHighlighter highlighter, TextAttributes attrs, boolean applied) {
     if (attrs != null) {
       Color color = attrs.getErrorStripeColor();
-      if (applied) {
+      if (color != null && applied) {
         color = makeColorForApplied(color);
       }
       highlighter.setErrorStripeMarkColor(color);
@@ -70,7 +70,8 @@ class ChangeHighlighterHolder {
     myHighlighters.add(highlighter);
   }
 
-  private static Color makeColorForApplied(Color color) {
+  @NotNull
+  private static Color makeColorForApplied(@NotNull Color color) {
     return new Color(color.getRed(), color.getGreen(), color.getBlue(), APPLIED_CHANGE_TRANSPARENCY);
   }
 

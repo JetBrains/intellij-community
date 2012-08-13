@@ -37,7 +37,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -49,8 +48,8 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -662,7 +661,7 @@ public abstract class BreakpointPropertiesPanel {
 
     myMasterBreakpointChooser = new BreakpointChooser(myProject, new BreakpointChooser.Delegate() {
       @Override
-      public void breakpointChosen(Project project, BreakpointItem item, JBPopup popup) {
+      public void breakpointChosen(Project project, BreakpointItem item) {
         final boolean enabled = item != null && item.getBreakpoint() != null;
         myLeaveEnabledRadioButton.setEnabled(enabled);
         myDisableAgainRadio.setEnabled(enabled);
@@ -676,12 +675,9 @@ public abstract class BreakpointPropertiesPanel {
         updateMasterBreakpointPanel(findMasterBreakpointRule());
 
       }
-    }, baseBreakpoint);
+    }, baseBreakpoint, getBreakpointItemsExceptMy());
 
     insert(myDependentBreakpointComboPanel, myMasterBreakpointChooser.getComponent());
-
-
-    myMasterBreakpointChooser.setBreakpointItems(getBreakpointItemsExceptMy());
 
   }
 

@@ -38,28 +38,21 @@ import java.util.List;
 public class TaskVcsTest extends TaskManagerTestCase {
 
   public void testCreateChangelistForLocalTask() throws Exception {
-    LocalTaskImpl task = new LocalTaskImpl("TEST-001", "Summary");
-    ChangeListInfo info = createChangelist(task);
-    assertEquals("Summary", info.name);
+    LocalTaskImpl task = new LocalTaskImpl("TEST-002", "Summary2");
+    createChangelist(task);
+    assertEquals("Summary2", myManager.getOpenChangelists(task).get(0).name);
   }
 
-  public void testCreateChangelist() throws Exception {
-    Task task = myRepository.findTask("TEST-001");
-    assertNotNull(task);
-    ChangeListInfo info = createChangelist(task);
-    assertEquals("TEST-001 Summary", info.name);
-    assertEquals("", info.comment);
-  }
-
-  public void testActivateTask() throws Exception {
+  public void  testActivateTask() throws Exception {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     List<ChangeListInfo> changelists = myManager.getOpenChangelists(task);
     assertEquals(0, changelists.size());
     myManager.activateTask(task, false, true);
     LocalTask localTask = myManager.getActiveTask();
+    assertEquals(task, localTask);
     changelists = myManager.getOpenChangelists(localTask);
-    assertTrue(changelists.size() > 0);
+    assertEquals(1, changelists.size());
     assertEquals("TEST-001 Summary", changelists.get(0).name);
   }
 
@@ -68,8 +61,10 @@ public class TaskVcsTest extends TaskManagerTestCase {
     myRepository.setCommitMessageFormat("{id} {summary} {number} {project}");
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
-    ChangeListInfo info = createChangelist(task);
-    assertEquals("TEST-001 Summary 001 TEST", info.comment);
+    myManager.activateTask(task, false, true);
+    LocalTask localTask = myManager.getActiveTask();
+    assertNotNull(localTask);
+    assertEquals("TEST-001 Summary 001 TEST", myManager.getOpenChangelists(localTask).get(0).comment);
   }
 
   public void testSaveContextOnCommit() throws Exception {
@@ -94,15 +89,18 @@ public class TaskVcsTest extends TaskManagerTestCase {
     assertNotNull(associatedTask); // association should survive
   }
 
-  private ChangeListInfo createChangelist(Task task) {
+  private void createChangelist(LocalTask localTask) throws InterruptedException {
     clearChangeLists();
-    LocalTaskImpl localTask = new LocalTaskImpl(task);
-    myManager.createChangeList(localTask, myManager.getChangelistName(task));
+    if (localTask.isActive()) {
+      assertEquals(1, myManager.getOpenChangelists(localTask).size());
+    } else {
+      assertEquals(0, myManager.getOpenChangelists(localTask).size());
+    }
+    myManager.createChangeList(localTask, myManager.getChangelistName(localTask));
     List<ChangeListInfo> list = myManager.getOpenChangelists(localTask);
     assertEquals(1, list.size());
-    ChangeListInfo info = list.get(0);
-    list.clear();
-    return info;
+    ChangeListInfo changeListInfo = list.get(0);
+    assertEquals(changeListInfo.id, localTask.getAssociatedChangelistId());
   }
 
   private TestRepository myRepository;

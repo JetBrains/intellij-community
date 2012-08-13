@@ -1198,7 +1198,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
       if (myProviderToListener.containsKey(provider)) {
         int line = getLineNumAtPoint(clickPoint);
 
-        if (line >= 0 && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED)) {
+        if (line >= 0 && line < myEditor.getDocument().getLineCount() && UIUtil.isActionClick(e, MouseEvent.MOUSE_RELEASED)) {
           myProviderToListener.get(provider).doAction(line);
         }
 

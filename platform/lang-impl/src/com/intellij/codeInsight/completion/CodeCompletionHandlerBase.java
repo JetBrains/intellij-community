@@ -44,8 +44,6 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -62,7 +60,6 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Consumer;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -120,6 +117,10 @@ public class CodeCompletionHandlerBase {
       if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
         throw new AssertionError("Completion should not be invoked inside write action");
       }
+    }
+
+    if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
+      throw new AssertionError();
     }
 
     if (editor.isViewer()) {
@@ -188,6 +189,10 @@ public class CodeCompletionHandlerBase {
               }
 
               throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
+            }
+
+            if (editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
+              throw new AssertionError();
             }
 
             final Ref<CompletionContributor> current = Ref.create(null);
@@ -303,7 +308,7 @@ public class CodeCompletionHandlerBase {
 
     CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
 
-    final AtomicReference<LookupElement[]> data = startCompletionThread(parameters, indicator, initContext);
+    final AtomicReference<LookupElement[]> data = indicator.startCompletion(initContext);
 
     if (!synchronous) {
       return;
@@ -311,7 +316,7 @@ public class CodeCompletionHandlerBase {
 
     if (freezeSemaphore.waitFor(2000)) {
       final LookupElement[] allItems = data.get();
-      if (allItems != null) { // the completion is really finished, now we may auto-insert or show lookup
+      if (allItems != null && !indicator.isRunning() && !indicator.isCanceled()) { // the completion is really finished, now we may auto-insert or show lookup
         completionFinished(initContext.getStartOffset(), initContext.getSelectionEndOffset(), indicator, allItems, hasModifiers);
         checkNotSync(indicator, allItems);
         return;
@@ -327,58 +332,6 @@ public class CodeCompletionHandlerBase {
       LOG.error("sync phase survived: " + Arrays.toString(allItems) + "; indicator=" + CompletionServiceImpl.getCompletionPhase().indicator + "; myIndicator=" + indicator);
       CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
     }
-  }
-
-  private static AtomicReference<LookupElement[]> startCompletionThread(final CompletionParameters parameters,
-                                                                        final CompletionProgressIndicator indicator,
-                                                                        final CompletionInitializationContext initContext) {
-
-    final Semaphore startSemaphore = new Semaphore();
-    startSemaphore.down();
-
-    final AtomicReference<LookupElement[]> data = new AtomicReference<LookupElement[]>(null);
-    final Runnable computeRunnable = new Runnable() {
-      @Override
-      public void run() {
-        final AtomicReference<LookupElement[]> data1 = new AtomicReference<LookupElement[]>(null);
-        ProgressManager.getInstance().runProcess(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              ApplicationManager.getApplication().runReadAction(new Runnable() {
-                @Override
-                public void run() {
-                  startSemaphore.up();
-                  ProgressManager.checkCanceled();
-
-                  indicator.duringCompletion(initContext);
-                  ProgressManager.checkCanceled();
-
-                  data1.set(CompletionService.getCompletionService().performCompletion(parameters, new Consumer<CompletionResult>() {
-                    @Override
-                    public void consume(final CompletionResult result) {
-                      indicator.addItem(result);
-                    }
-                  }));
-                }
-              });
-            }
-            catch (ProcessCanceledException ignored) {
-            }
-          }
-        }, indicator);
-        data.set(data1.get());
-      }
-    };
-
-    if (ApplicationManager.getApplication().isUnitTestMode() && !CompletionAutoPopupHandler.ourTestingAutopopup) {
-      computeRunnable.run();
-    } else {
-      ApplicationManager.getApplication().executeOnPooledThread(computeRunnable);
-    }
-
-    startSemaphore.waitFor();
-    return data;
   }
 
   private CompletionParameters createCompletionParameters(int invocationCount,
@@ -600,7 +553,7 @@ public class CodeCompletionHandlerBase {
                                                            int hostStartOffset,
                                                            Editor hostEditor,
                                                            OffsetMap hostMap) {
-    assert hostFile.isValid() : "file became invalid";
+    assert hostFile.isValid() : "file became invalid: " + hostFile.getClass();
     assert hostMap.getOffset(CompletionInitializationContext.START_OFFSET) < hostFile.getTextLength() : "startOffset outside the host file";
 
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(hostFile.getProject());

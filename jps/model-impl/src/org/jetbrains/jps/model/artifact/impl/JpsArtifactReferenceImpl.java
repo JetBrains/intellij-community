@@ -5,12 +5,12 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactReference;
-import org.jetbrains.jps.model.impl.JpsNamedElementReferenceBase;
+import org.jetbrains.jps.model.impl.JpsNamedElementReferenceImpl;
 
 /**
  * @author nik
  */
-public class JpsArtifactReferenceImpl extends JpsNamedElementReferenceBase<JpsArtifact,JpsArtifactReferenceImpl> implements JpsArtifactReference {
+public class JpsArtifactReferenceImpl extends JpsNamedElementReferenceImpl<JpsArtifact,JpsArtifactReferenceImpl> implements JpsArtifactReference {
   public JpsArtifactReferenceImpl(@NotNull String artifactName) {
     super(JpsArtifactRole.ARTIFACT_COLLECTION_ROLE, artifactName, JpsElementFactory.getInstance().createProjectReference());
   }

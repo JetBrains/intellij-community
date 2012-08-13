@@ -52,10 +52,12 @@ class GitCrlfProblemsDetectorTest {
     myGit = new GitTestImpl()
 
     cd myRootDir
-    myOldCoreAutoCrlfValue = git ("config --global core.autocrlf")
+    if (isGlobalCommandPossible()) {
+      myOldCoreAutoCrlfValue = git ("config --global core.autocrlf")
+      git ("config --global --unset core.autocrlf")
+    }
 
     git ("init")
-    git ("config --global --unset core.autocrlf")
 
     GitRepository repository = GitRepositoryImpl.getLightInstance(new GitMockVirtualFile(myRootDir), myProject, myProject)
     ((GitTestRepositoryManager)myPlatformFacade.getRepositoryManager(myProject)).add(repository)
@@ -69,14 +71,18 @@ class GitCrlfProblemsDetectorTest {
     FileUtil.delete(new File(myRootDir))
   }
 
+  private boolean isGlobalCommandPossible() {
+    return System.getenv("HOME") != null;
+  }
+
   @Test
-  void "core.autocrlf is true = no warning"() {
+  void "autocrlf is true = warning"() {
     git ("config core.autocrlf true")
     assertFalse "No warning should be done if core.autocrlf is true", detect("temp").shouldWarn()
   }
 
   @Test
-  void "core.autocrlf is input = no warning"() {
+  void "autocrlf is input = no warning"() {
     git ("config core.autocrlf input")
     assertFalse "No warning should be done if core.autocrlf is input", detect("temp").shouldWarn()
   }
@@ -88,7 +94,7 @@ class GitCrlfProblemsDetectorTest {
   }
 
   @Test
-  void "file with CRLF, no attrs, core.autocrlf is false = warning"() {
+  void "file with CRLF, no attrs, autocrlf is false = warning"() {
     createCrlfFile("win")
     assertFalse "Warning should be done for a CRLF file with core.autocrlf = false", detect("temp").shouldWarn()
   }

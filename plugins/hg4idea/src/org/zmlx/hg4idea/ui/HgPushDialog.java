@@ -16,8 +16,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgPusher;
@@ -138,8 +138,8 @@ public class HgPushDialog extends DialogWrapper {
   }
 
   private boolean validateOptions() {
-    return StringUtils.isNotBlank(repositoryTxt.getText())
-      && !(revisionCbx.isSelected() && StringUtils.isBlank(revisionTxt.getText()))
+    return !StringUtil.isEmptyOrSpaces(repositoryTxt.getText())
+      && !(revisionCbx.isSelected() && StringUtil.isEmptyOrSpaces(revisionTxt.getText()))
       && !(branchCheckBox.isSelected() && (branchComboBox.getSelectedItem() == null));
   }
 

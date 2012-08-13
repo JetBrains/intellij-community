@@ -133,7 +133,11 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
       ) {
       Color bgColor = UIUtil.getListBackground();
 
-      if (value instanceof NavigationItem) {
+      if (value instanceof PsiElement && !((PsiElement)value).isValid()) {
+        setIcon(IconUtil.getEmptyIcon(false));
+        append("Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
+      }
+      else if (value instanceof NavigationItem) {
         NavigationItem element = (NavigationItem)value;
         ItemPresentation presentation = element.getPresentation();
         assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +

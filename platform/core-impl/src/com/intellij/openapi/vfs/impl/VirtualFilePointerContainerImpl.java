@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +43,7 @@ import java.util.List;
  */
 public class VirtualFilePointerContainerImpl extends TraceableDisposable implements VirtualFilePointerContainer, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer");
-  @NotNull private final List<VirtualFilePointer> myList = ContainerUtilRt.createEmptyCOWList();
+  @NotNull private final List<VirtualFilePointer> myList = ContainerUtil.createEmptyCOWList();
   private final List<VirtualFilePointer> myReadOnlyList = Collections.unmodifiableList(myList);
   @NotNull private final VirtualFilePointerManager myVirtualFilePointerManager;
   @NotNull private final Disposable myParent;

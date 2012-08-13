@@ -20,6 +20,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -40,7 +41,7 @@ public abstract class FileIndexFacade {
   public abstract boolean isInSource(VirtualFile file);
   public abstract boolean isInSourceContent(VirtualFile file);
   public abstract boolean isInLibraryClasses(VirtualFile file);
-  public abstract boolean isInSdkClasses(VirtualFile file);
+
   public abstract boolean isInLibrarySource(VirtualFile file);
   public abstract boolean isExcludedFile(VirtualFile file);
 

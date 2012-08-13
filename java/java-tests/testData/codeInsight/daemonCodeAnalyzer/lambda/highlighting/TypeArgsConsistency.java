@@ -12,6 +12,6 @@ class TypeArgsConsistency {
       I<Integer> i1 = (i, j) -> i + j;
       foo((i, j) -> i + j);
       I<Integer> i2 = bar((i, j) -> i + j);
-      I<Integer> i3 = bar<error descr="'bar(TypeArgsConsistency.I<java.lang.Integer>)' in 'TypeArgsConsistency' cannot be applied to '(<lambda expression>)'">((i, j) -> "" + i + j)</error>;
+      <error descr="Incompatible types. Found: 'TypeArgsConsistency.I<java.lang.String>', required: 'TypeArgsConsistency.I<java.lang.Integer>'">I<Integer> i3 = bar((i, j) -> "" + i + j);</error>
     }
 }

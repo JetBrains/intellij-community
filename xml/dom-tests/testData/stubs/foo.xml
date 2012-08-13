@@ -1,4 +1,4 @@
 <foo>
-  <bar attribute="xxx"></bar>
+  <bar string="xxx" int="666"></bar>
   <bar></bar>
 </foo>

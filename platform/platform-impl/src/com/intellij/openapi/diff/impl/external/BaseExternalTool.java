@@ -19,10 +19,9 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffTool;
-import com.intellij.openapi.diff.DiffViewer;
+import com.intellij.openapi.diff.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.config.AbstractProperty;
@@ -91,6 +90,12 @@ abstract class BaseExternalTool implements DiffTool {
   }
 
   public void show(DiffRequest request) {
+    for (DiffContent diffContent : request.getContents()) {
+      Document document = diffContent.getDocument();
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document);
+      }
+    }
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(getToolPath());
     try {

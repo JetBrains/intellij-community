@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.intellij.cvsSupport2.javacvsImpl.io.StreamLogger;
 import com.intellij.cvsSupport2.util.CvsFileUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.PasswordPromptDialog;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
@@ -40,22 +40,18 @@ import java.util.List;
  * author: lesya
  */
 public class PServerLoginProviderImpl extends PServerLoginProvider {
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.cvsSupport2.connections.pserver.PServerLoginProviderImpl");
 
   @Override
   @Nullable
-  public String getScrambledPasswordForCvsRoot(String cvsroot) {
-    return getPassword(cvsroot);
+  public String getScrambledPasswordForCvsRoot(String cvsRoot) {
+    return getPassword(cvsRoot);
   }
 
   @Nullable
-  private static String requestForPassword(String cvsroot) {
-    PasswordPromptDialog passwordDialog = new PasswordPromptDialog(CvsBundle.message("prompt.text.enter.password.for.cvs.root", cvsroot),
-                                                                   CvsBundle.message("prompt.title.enter.password.for.cvs.root"), null);
-    passwordDialog.show();
-    if (!passwordDialog.isOK()) return null;
-    return PServerPasswordScrambler.getInstance().scramble(passwordDialog.getPassword());
+  private static String requestForPassword(String cvsRoot) {
+    final String password = Messages.showPasswordDialog(CvsBundle.message("prompt.text.enter.password.for.cvs.root", cvsRoot), CvsBundle.message("prompt.title.enter.password.for.cvs.root"));
+    return password != null ? PServerPasswordScrambler.getInstance().scramble(password) : null;
   }
 
   @Override

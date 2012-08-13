@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -43,8 +42,6 @@ public class SelectAndCompareWithSelectedRevisionAction extends AbstractVcsActio
     final DiffProvider diffProvider = vcs.getDiffProvider();
 
     if (selector != null) {
-      final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
-      fileDocumentManager.saveDocument(fileDocumentManager.getDocument(file));
       final VcsRevisionNumber vcsRevisionNumber = selector.selectNumber(file);
 
       if (vcsRevisionNumber != null) {

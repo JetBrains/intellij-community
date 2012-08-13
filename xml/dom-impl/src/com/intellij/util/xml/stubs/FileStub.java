@@ -33,7 +33,7 @@ public class FileStub extends ElementStub {
 
   public FileStub(StringRef tagName, StringRef tagNamespace, StringRef publicId, StringRef systemId) {
     super(null, tagName);
-    myHeader = new XmlFileHeader(tagName.getString(),
+    myHeader = new XmlFileHeader(tagName == null ? null : tagName.getString(),
                                  tagNamespace == null ? null : tagNamespace.getString(),
                                  publicId == null ? null : publicId.getString(),
                                  systemId == null ? null : systemId.getString());

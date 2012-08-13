@@ -17,7 +17,7 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
   private static final String OPTIONS_DIR = "jps/model-serialization/testData/config/options";
 
   public void testLoadSdks() {
-    loadGlobalSettings();
+    loadGlobalSettings(OPTIONS_DIR);
     final List<JpsLibrary> libraries = myModel.getGlobal().getLibraryCollection().getLibraries();
     assertEquals(3, libraries.size());
     assertEquals("Gant", libraries.get(0).getName());
@@ -28,20 +28,11 @@ public class JpsGlobalSerializationTest extends JpsSerializationTestCase {
   }
 
   public void testSaveSdks() throws JDOMException, IOException {
-    loadGlobalSettings();
+    loadGlobalSettings(OPTIONS_DIR);
     Element actual = new Element("component").setAttribute("name", "ProjectJdkTable");
     JpsSdkTableSerializer.saveSdks(myModel.getGlobal().getLibraryCollection(), actual);
     File jdkTableFile = new File(getTestDataFileAbsolutePath(OPTIONS_DIR), "jdk.table.xml");
     Element expected = JDomSerializationUtil.findComponent(JDOMUtil.loadDocument(jdkTableFile).getRootElement(), "ProjectJdkTable");
     PlatformTestUtil.assertElementsEqual(expected, actual);
-  }
-
-  private void loadGlobalSettings() {
-    try {
-      JpsGlobalLoader.loadGlobalSettings(myModel.getGlobal(), getTestDataFileAbsolutePath(OPTIONS_DIR));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 }

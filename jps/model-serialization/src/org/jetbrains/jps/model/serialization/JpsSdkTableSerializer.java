@@ -12,6 +12,7 @@ import org.jetbrains.jps.model.java.JpsJavaSdkTypeWrapper;
 import org.jetbrains.jps.model.library.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
+import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.JpsSdkReferencesTable;
 
 import java.util.ArrayList;
@@ -213,8 +214,8 @@ public class JpsSdkTableSerializer {
     return JPS_JAVA_SDK_PROPERTIES_LOADER;
   }
 
-  public static void setSdkReference(final JpsSdkReferencesTable table, String sdkName, JpsSdkType<?> sdkType) {
-    JpsLibraryReference reference = JpsElementFactory.getInstance().createSdkReference(sdkName, sdkType);
+  public static <P extends JpsElement> void setSdkReference(final JpsSdkReferencesTable table, String sdkName, JpsSdkType<P> sdkType) {
+    JpsSdkReference<P> reference = JpsElementFactory.getInstance().createSdkReference(sdkName, sdkType);
     table.setSdkReference(sdkType, reference);
     if (sdkType instanceof JpsJavaSdkTypeWrapper) {
       JpsLibrary jpsLibrary = reference.resolve();

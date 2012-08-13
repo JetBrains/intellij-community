@@ -31,10 +31,16 @@ import java.io.File;
   storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/vcs.xml")})
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
 
-  @NonNls static final String[] DEFAULT_WINDOWS_PATHS = {"C:\\cygwin\\bin", "C:\\Program Files\\Git\\bin", "C:\\Program Files (x86)\\Git\\bin"};
-  @NonNls static final String[] DEFAULT_UNIX_PATHS = {"/usr/local/bin", "/usr/bin", "/opt/local/bin", "/opt/bin", "/usr/local/git/bin"};
-  @NonNls static final String DEFAULT_WINDOWS_GIT = "git.exe";
-  @NonNls static final String DEFAULT_UNIX_GIT = "git";
+  @NonNls private static final String[] DEFAULT_WINDOWS_PATHS = { "C:\\Program Files\\Git\\bin",
+                                                                  "C:\\Program Files (x86)\\Git\\bin",
+                                                                  "C:\\cygwin\\bin" };
+  @NonNls private static final String[] DEFAULT_UNIX_PATHS = { "/usr/local/bin",
+                                                               "/usr/bin",
+                                                               "/opt/local/bin",
+                                                               "/opt/bin",
+                                                               "/usr/local/git/bin" };
+  @NonNls private static final String[] DEFAULT_WINDOWS_GITS = { "git.cmd", "git.exe" };
+  @NonNls private static final String DEFAULT_UNIX_GIT = "git";
   
   private State myState = new State();
 
@@ -71,24 +77,27 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   public String defaultGit() {
     if (myState.myPathToGit == null) {
       String[] paths;
-      String program;
+      String[] programVariants;
       if (SystemInfo.isWindows) {
-        program = DEFAULT_WINDOWS_GIT;
+        programVariants = DEFAULT_WINDOWS_GITS;
         paths = DEFAULT_WINDOWS_PATHS;
       }
       else {
-        program = DEFAULT_UNIX_GIT;
+        programVariants = new String[] { DEFAULT_UNIX_GIT };
         paths = DEFAULT_UNIX_PATHS;
       }
+
       for (String p : paths) {
-        File f = new File(p, program);
-        if (f.exists()) {
-          myState.myPathToGit = f.getAbsolutePath();
-          break;
+        for (String program : programVariants) {
+          File f = new File(p, program);
+          if (f.exists()) {
+            myState.myPathToGit = f.getAbsolutePath();
+            break;
+          }
         }
       }
-      if (myState.myPathToGit == null) { // otherwise, hope it's in $PATH
-        myState.myPathToGit = program;
+      if (myState.myPathToGit == null) { // otherwise, take the first variant and hope it's in $PATH
+        myState.myPathToGit = programVariants[0];
       }
     }
     return myState.myPathToGit;
