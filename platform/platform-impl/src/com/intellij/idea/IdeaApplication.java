@@ -17,6 +17,7 @@ package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.IdeEventQueue;
@@ -31,6 +32,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Comparing;
@@ -281,7 +283,15 @@ public class IdeaApplication {
       // application components. So it is proper to perform replacement only here.
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       // app.setupIdeQueue(IdeEventQueue.getInstance());
-      ((WindowManagerImpl)WindowManager.getInstance()).showFrame(args);
+      try {
+        ((WindowManagerImpl)WindowManager.getInstance()).showFrame(args);
+      }
+      catch (PluginException e) {
+        Messages.showErrorDialog("Plugin " + e.getPluginId() + " couldn't be loaded, the IDE will now exit.\n" +
+                                 "See the full details in the log.\n" +
+                                 e.getMessage(), "Plugin Error");
+        System.exit(-1);
+      }
 
       app.invokeLater(new Runnable() {
         public void run() {
