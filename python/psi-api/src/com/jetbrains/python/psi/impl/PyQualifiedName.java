@@ -61,7 +61,7 @@ public class PyQualifiedName {
   public PyQualifiedName append(PyQualifiedName qName) {
     PyQualifiedName result = new PyQualifiedName(myComponents.size()+qName.getComponentCount());
     result.myComponents.addAll(myComponents);
-    result.myComponents.addAll(result.getComponents());
+    result.myComponents.addAll(qName.getComponents());
     return result;
   }
 
