@@ -106,8 +106,8 @@ public class ResolveImportUtil {
       return Collections.emptyList();
     }
     final PsiFile file = importElement.getContainingFile().getOriginalFile();
-    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(importElement);
-    final List<PsiFileSystemItem> modules = resolveModule(qName, file, absolute_import_enabled, 0);
+    boolean absoluteImportEnabled = isAbsoluteImportEnabledFor(importElement);
+    final List<PsiElement> modules = resolveModule(qName, file, absoluteImportEnabled, 0);
     if (modules.size() > 0) {
       return rateResults(modules);
     }
@@ -125,7 +125,7 @@ public class ResolveImportUtil {
     PsiFile file = importElement.getContainingFile().getOriginalFile();
     String name = qName.getComponents().get(0);
 
-    final List<PsiFileSystemItem> candidates = importStatement.resolveImportSourceCandidates();
+    final List<PsiElement> candidates = importStatement.resolveImportSourceCandidates();
     List<PsiElement> resultList = new ArrayList<PsiElement>();
     for (PsiElement candidate : candidates) {
       if (!candidate.isValid()) {
@@ -152,7 +152,7 @@ public class ResolveImportUtil {
 
   @NotNull
   public static List<PsiElement> resolveFromOrForeignImport(PyFromImportStatement fromImportStatement, PyQualifiedName qname) {
-    final List<PsiFileSystemItem> results = resolveFromImportStatementSource(fromImportStatement, qname);
+    final List<PsiElement> results = resolveFromImportStatementSource(fromImportStatement, qname);
     if (results.isEmpty() && qname != null && qname.getComponentCount() > 0) {
       final PyQualifiedName importedQName = PyQualifiedName.fromComponents(qname.getLastComponent());
       final PyQualifiedName containingQName = qname.removeLastComponent();
@@ -163,26 +163,26 @@ public class ResolveImportUtil {
   }
 
   @NotNull
-  public static List<PsiFileSystemItem> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
-    boolean absolute_import_enabled = isAbsoluteImportEnabledFor(from_import_statement);
+  public static List<PsiElement> resolveFromImportStatementSource(PyFromImportStatement from_import_statement, PyQualifiedName qName) {
+    boolean absoluteImportEnabled = isAbsoluteImportEnabledFor(from_import_statement);
     PsiFile file = from_import_statement.getContainingFile();
-    return resolveModule(qName, file, absolute_import_enabled, from_import_statement.getRelativeLevel());
+    return resolveModule(qName, file, absoluteImportEnabled, from_import_statement.getRelativeLevel());
   }
 
   @NotNull
-  public static List<PsiFileSystemItem> resolveFromOrForeignImportStatementSource(@NotNull PyFromImportStatement fromImportStatement,
-                                                                                  @Nullable PyQualifiedName qName) {
-    final List<PsiFileSystemItem> results = resolveFromImportStatementSource(fromImportStatement, qName);
+  public static List<PsiElement> resolveFromOrForeignImportStatementSource(@NotNull PyFromImportStatement fromImportStatement,
+                                                                           @Nullable PyQualifiedName qName) {
+    final List<PsiElement> results = resolveFromImportStatementSource(fromImportStatement, qName);
     if (!results.isEmpty()) {
       return results;
     }
     final PsiElement result = qName != null ? resolveForeignImport(fromImportStatement, qName, null) : null;
-    return result instanceof PsiFileSystemItem ? Collections.singletonList((PsiFileSystemItem)result)
-                                               : Collections.<PsiFileSystemItem>emptyList();
+    return result != null ? Collections.singletonList(result) : Collections.<PsiElement>emptyList();
   }
 
   /**
    * Resolves a module reference in a general case.
+   *
    *
    * @param qualifiedName     qualified name of the module reference to resolve
    * @param sourceFile        where that reference resides; serves as PSI foothold to determine module, project, etc.
@@ -191,8 +191,8 @@ public class ResolveImportUtil {
    * @return list of possible candidates
    */
   @NotNull
-  public static List<PsiFileSystemItem> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile sourceFile,
-                                                      boolean importIsAbsolute, int relativeLevel) {
+  public static List<PsiElement> resolveModule(@Nullable PyQualifiedName qualifiedName, PsiFile sourceFile,
+                                               boolean importIsAbsolute, int relativeLevel) {
     if (qualifiedName == null || sourceFile == null) {
       return Collections.emptyList();
     }
@@ -214,7 +214,7 @@ public class ResolveImportUtil {
           visitor.withRelative(0);
         }
       }
-      List<PsiFileSystemItem> results = visitor.resultsAsList();
+      List<PsiElement> results = visitor.resultsAsList();
       if (results.isEmpty() && relativeLevel == 0 && !importIsAbsolute) {
         results = resolveRelativeImportAsAbsolute(sourceFile, qualifiedName);
       }
@@ -235,8 +235,8 @@ public class ResolveImportUtil {
    * @return                list of resolved elements.
    */
   @NotNull
-  private static List<PsiFileSystemItem> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
-                                                                         @NotNull PyQualifiedName qualifiedName) {
+  private static List<PsiElement> resolveRelativeImportAsAbsolute(@NotNull PsiFile foothold,
+                                                                  @NotNull PyQualifiedName qualifiedName) {
     final PsiDirectory containingDirectory = foothold.getContainingDirectory();
     if (containingDirectory != null) {
       final PyQualifiedName containingPath = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null);
@@ -343,8 +343,8 @@ public class ResolveImportUtil {
         return result;
       }
       if (parent instanceof PsiFile) {
-        final List<PsiFileSystemItem> items = resolveRelativeImportAsAbsolute((PsiFile)parent,
-                                                                              PyQualifiedName.fromComponents(referencedName));
+        final List<PsiElement> items = resolveRelativeImportAsAbsolute((PsiFile)parent,
+                                                                       PyQualifiedName.fromComponents(referencedName));
         if (!items.isEmpty()) {
           return items.get(0);
         }

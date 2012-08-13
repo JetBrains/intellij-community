@@ -1,7 +1,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import java.util.Map;
  * @author yole
  */
 public abstract class PythonPathCache {
-  private final Map<PyQualifiedName, List<PsiFileSystemItem>> myCache = new HashMap<PyQualifiedName, List<PsiFileSystemItem>>();
+  private final Map<PyQualifiedName, List<PsiElement>> myCache = new HashMap<PyQualifiedName, List<PsiElement>>();
   private final Map<VirtualFile, PyQualifiedName> myQNameCache = new HashMap<VirtualFile, PyQualifiedName>();
 
   protected void clearCache() {
@@ -20,11 +20,11 @@ public abstract class PythonPathCache {
     myQNameCache.clear();
   }
 
-  public synchronized List<PsiFileSystemItem> get(PyQualifiedName qualifiedName) {
+  public synchronized List<PsiElement> get(PyQualifiedName qualifiedName) {
     return myCache.get(qualifiedName);
   }
 
-  public synchronized void put(PyQualifiedName qualifiedName, List<PsiFileSystemItem> results) {
+  public synchronized void put(PyQualifiedName qualifiedName, List<PsiElement> results) {
     myCache.put(qualifiedName, results);
   }
 

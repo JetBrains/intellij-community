@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,10 +30,10 @@ public interface QualifiedNameResolver {
   QualifiedNameResolver withPlainDirectories();
 
   @NotNull
-  List<PsiFileSystemItem> resultsAsList();
+  List<PsiElement> resultsAsList();
 
   @Nullable
-  PsiFileSystemItem firstResult();
+  PsiElement firstResult();
 
   @NotNull
   <T extends PsiElement> List<T> resultsOfType(Class<T> clazz);

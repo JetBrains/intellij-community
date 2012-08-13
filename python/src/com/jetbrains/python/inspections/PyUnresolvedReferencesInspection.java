@@ -786,7 +786,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               continue;
             }
           }
-          PsiFileSystemItem importedElement;
+          PsiElement importedElement;
           if (unusedImport instanceof PyImportElement) {
             final PyImportElement importElement = (PyImportElement)unusedImport;
             final PsiElement element = ResolveImportUtil.resolveImportElement(importElement);
@@ -806,7 +806,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
           if (packageQName != null && importedElement instanceof PsiFileSystemItem) {
-            final PyQualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName(importedElement);
+            final PyQualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName((PsiFileSystemItem)importedElement);
             if (importedQName != null && importedQName.matchesPrefix(packageQName)) {
               continue;
             }
