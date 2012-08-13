@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,4 +97,16 @@ public interface BalloonBuilder {
 
   @NotNull
   BalloonBuilder setBlockClicksThroughBalloon(boolean block);
+
+  /**
+   * Links target balloon life cycle to the given object. I.e. current balloon will be auto-hide and collected as soon
+   * as given anchor is disposed.
+   * <p/>
+   * <b>Note:</b> given disposable anchor is assumed to correctly implement {@link #hashCode()} and {@link #equals(Object)}.
+   * 
+   * @param anchor  target anchor to link to
+   * @return        balloon builder which produces balloon linked to the given object life cycle
+   */
+  @NotNull
+  BalloonBuilder setDisposable(@NotNull Disposable anchor);
 }

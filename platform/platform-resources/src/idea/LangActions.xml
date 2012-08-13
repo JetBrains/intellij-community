@@ -807,6 +807,12 @@
       <action id="DumpLookupElementWeights" internal="true" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
-
+    
+    <group id="Arrangement.RuleEditor.Context.Menu">
+      <action id="Arrangement.AddNode"
+              class="com.intellij.application.options.codeStyle.arrangement.action.ArrangementAddAndConditionAction"
+              icon="AllIcons.General.Add"/>
+    </group>
+    
   </actions>
 </component>

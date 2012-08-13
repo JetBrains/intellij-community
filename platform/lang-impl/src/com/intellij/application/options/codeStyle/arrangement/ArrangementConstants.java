@@ -15,36 +15,17 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
-import com.intellij.ui.awt.RelativePoint;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import java.awt.*;
+import org.jetbrains.annotations.NonNls;
 
 /**
- * // TODO den add doc
- * 
  * @author Denis Zhdanov
- * @since 8/10/12 11:22 AM
+ * @since 8/13/12 11:48 AM
  */
-public interface ArrangementNodeComponent {
-  
-  @NotNull
-  ArrangementSettingsNode getSettingsNode();
-  
-  // TODO den add doc
-  @NotNull
-  JComponent getUiComponent();
+public class ArrangementConstants {
 
-  // TODO den add doc
-  @Nullable
-  ArrangementNodeComponent getComponentAt(@NotNull RelativePoint point);
-  
-  // TODO den add doc
-  @Nullable
-  Rectangle getScreenBounds();
-  
-  void setScreenBounds(@Nullable Rectangle bounds);
+  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU = "Arrangement.RuleEditor.Context.Menu";
+  @NonNls public static final String RULE_EDITOR_PLACE                     = "Arrangement.RuleEditor.Place";
+
+  private ArrangementConstants() {
+  }
 }

@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
@@ -36,7 +37,6 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
   private static final int PADDING = 2;
 
-  @Nullable private Rectangle myScreenBounds;
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
     public void paint(Graphics g) {
@@ -65,9 +65,14 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
       return mySize == null ? super.getPreferredSize() : mySize;
     }
   };
+  
+  @NotNull private final ArrangementSettingsAtomNode mySettingsNode;
+  
   @Nullable private Dimension mySize;
+  @Nullable private Rectangle myScreenBounds;
 
   public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager, @NotNull ArrangementSettingsAtomNode node) {
+    mySettingsNode = node;
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setText(manager.getDisplayValue(node));
     mySize = new Dimension(manager.getMaxWidth(node.getType()), myLabel.getPreferredSize().height);
@@ -104,6 +109,12 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
     myRenderer.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
     myRenderer.add(roundBorderPanel, constraints);
     myRenderer.setOpaque(false);
+  }
+
+  @NotNull
+  @Override
+  public ArrangementSettingsNode getSettingsNode() {
+    return mySettingsNode;
   }
 
   @NotNull

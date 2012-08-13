@@ -39,9 +39,12 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
   private static final int BUBBLE_CONNECTOR_LENGTH = 10;
 
   @NotNull private final List<ArrangementNodeComponent> myComponents = new ArrayList<ArrangementNodeComponent>();
-  @Nullable private Rectangle myScreenBounds;
+
+  @NotNull private final ArrangementSettingsCompositeNode mySettingsNode;
+  @Nullable private      Rectangle                        myScreenBounds;
 
   public ArrangementAndNodeComponent(@NotNull ArrangementSettingsCompositeNode node, @NotNull ArrangementNodeComponentFactory factory) {
+    mySettingsNode = node;
     setLayout(null);
     int x = 0;
     for (ArrangementSettingsNode operand : node.getOperands()) {
@@ -53,6 +56,12 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
       uiComponent.setBounds(x, 0, size.width, size.height);
       x += size.width + BUBBLE_CONNECTOR_LENGTH;
     }
+  }
+
+  @NotNull
+  @Override
+  public ArrangementSettingsNode getSettingsNode() {
+    return mySettingsNode;
   }
 
   @NotNull

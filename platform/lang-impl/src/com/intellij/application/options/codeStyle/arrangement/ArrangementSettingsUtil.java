@@ -15,21 +15,22 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.EnumMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * // TODO den add doc
@@ -39,6 +40,12 @@ import java.util.Map;
  */
 public class ArrangementSettingsUtil {
 
+  public static final DataKey<ArrangementNodeComponent>         NODE_COMPONENT  = DataKey.create("Arrangement.Rule.Editor.Node.Component");
+  public static final DataKey<ArrangementStandardSettingsAware> FILTER          = DataKey.create("Arrangement.Rule.Editor.Settings.Filter");
+  public static final DataKey<ArrangementNodeDisplayManager>    DISPLAY_MANAGER = DataKey.create("Arrangement.Rule.Editor.Display.Manager");
+  public static final DataKey<ArrangementMatcherSettings>       SETTINGS        = DataKey.create("Arrangement.Rule.Editor.Matcher.Settings");
+  public static final DataKey<JComponent>                       TREE            = DataKey.create("Arrangement.Rule.Editor.Tree");
+
   private static final EntryTypeHelper ENTRY_TYPE_HELPER = new EntryTypeHelper();
   private static final ModifierHelper  MODIFIER_HELPER   = new ModifierHelper();
 
@@ -46,27 +53,60 @@ public class ArrangementSettingsUtil {
   }
 
   @Nullable
+  public static ArrangementSettingsNode getSettingsNode(@NotNull DataContext context) {
+    ArrangementNodeComponent nodeComponent = NODE_COMPONENT.getData(context);
+    return nodeComponent == null ? null : nodeComponent.getSettingsNode();
+  }
+
+  @Nullable
   public static HierarchicalArrangementSettingsNode buildTreeStructure(@NotNull ArrangementSettingsNode modelNode) {
     // TODO den implement
     return new HierarchicalArrangementSettingsNode(modelNode);
   }
-  
+
+  /**
+   * Serves for the same purposes as {@link #buildAvailableOptions(ArrangementStandardSettingsAware, ArrangementMatcherSettings)} but
+   * retrieves necessary information from the given context.
+   *
+   * @param context  target information holder
+   * @return map which contains information on what new new settings are available at the current situation
+   */
   @NotNull
-  public static Map<ArrangementSettingType, List<?>> buildAvailableOptions(@NotNull ArrangementStandardSettingsAware filter) {
+  public static Map<ArrangementSettingType, List<?>> buildAvailableOptions(@NotNull DataContext context) {
+    ArrangementStandardSettingsAware filter = FILTER.getData(context);
+    if (filter == null) {
+      return Collections.emptyMap();
+    }
+    
+    return buildAvailableOptions(filter, SETTINGS.getData(context));
+  }
+
+  /**
+   * Allows to answer what new settings are available for a particular {@link ArrangementMatcherSettings arrangement matcher rules}.
+   *
+   * @param filter    filter to use
+   * @param settings  object that encapsulates information about current arrangement matcher settings
+   * @return          map which contains information on what new new settings are available at the current situation
+   */
+  @NotNull
+  public static Map<ArrangementSettingType, List<?>> buildAvailableOptions(@NotNull ArrangementStandardSettingsAware filter,
+                                                                           @Nullable ArrangementMatcherSettings settings)
+  {
     Map<ArrangementSettingType, List<?>> result = new EnumMap<ArrangementSettingType, List<?>>(ArrangementSettingType.class);
-    processData(filter, result, ArrangementEntryType.values(), ENTRY_TYPE_HELPER);
-    processData(filter, result, ArrangementModifier.values(), MODIFIER_HELPER);
+    processData(filter, settings, result, ArrangementEntryType.values(), ENTRY_TYPE_HELPER);
+    processData(filter, settings, result, ArrangementModifier.values(), MODIFIER_HELPER);
     return result;
   }
 
   private static <T> void processData(@NotNull ArrangementStandardSettingsAware filter,
+                                      @Nullable ArrangementMatcherSettings settings,
                                       Map<ArrangementSettingType, List<?>> result,
                                       @NotNull T[] values,
                                       @NotNull Helper<T> helper)
   {
     List<T> data = null;
     for (T v : values) {
-      if (!helper.isSupported(v, filter)) {
+      if (!helper.isEnabled(v, filter, settings)) {
         continue;
       }
       if (data == null) {
@@ -100,7 +140,7 @@ public class ArrangementSettingsUtil {
   
   private interface Helper<T> {
     @NotNull ArrangementSettingType getType();
-    boolean isSupported(@NotNull T data, @NotNull ArrangementStandardSettingsAware filter);
+    boolean isEnabled(@NotNull T data, @NotNull ArrangementStandardSettingsAware filter, @Nullable ArrangementMatcherSettings settings);
   }
 
   private static class EntryTypeHelper implements Helper<ArrangementEntryType> {
@@ -111,8 +151,11 @@ public class ArrangementSettingsUtil {
     }
 
     @Override
-    public boolean isSupported(@NotNull ArrangementEntryType data, @NotNull ArrangementStandardSettingsAware filter) {
-      return filter.isSupported(data);
+    public boolean isEnabled(@NotNull ArrangementEntryType data,
+                             @NotNull ArrangementStandardSettingsAware filter,
+                             @Nullable ArrangementMatcherSettings settings)
+    {
+      return filter.isEnabled(data, settings);
     }
   }
   
@@ -124,8 +167,11 @@ public class ArrangementSettingsUtil {
     }
 
     @Override
-    public boolean isSupported(@NotNull ArrangementModifier data, @NotNull ArrangementStandardSettingsAware filter) {
-      return filter.isSupported(data);
+    public boolean isEnabled(@NotNull ArrangementModifier data,
+                             @NotNull ArrangementStandardSettingsAware filter,
+                             @Nullable ArrangementMatcherSettings settings)
+    {
+      return filter.isEnabled(data, settings);
     }
   }
 }

@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementSettingsUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -40,7 +39,7 @@ public class ArrangementNodeDisplayManager {
   private final TObjectIntHashMap<ArrangementSettingType> myMaxWidths = new TObjectIntHashMap<ArrangementSettingType>();
 
   public ArrangementNodeDisplayManager(@NotNull ArrangementStandardSettingsAware filter) {
-    Map<ArrangementSettingType, List<?>> map = ArrangementSettingsUtil.buildAvailableOptions(filter);
+    Map<ArrangementSettingType, List<?>> map = ArrangementSettingsUtil.buildAvailableOptions(filter, null);
     for (Map.Entry<ArrangementSettingType, List<?>> entry : map.entrySet()) {
       myMaxWidths.put(entry.getKey(), maxWidth(entry.getKey(), entry.getValue()));
     }
@@ -63,6 +62,13 @@ public class ArrangementNodeDisplayManager {
     return getDisplayValue(node.getType(), node.getValue());
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
+  @NotNull
+  public String getDisplayValue(@NotNull ArrangementSettingType type) {
+    return type.toString().toLowerCase();
+  }
+  
+  @NotNull
   private static String getDisplayValue(@NotNull ArrangementSettingType type, @NotNull Object value) {
     return value.toString().toLowerCase();
   }

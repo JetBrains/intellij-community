@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * // TODO den add doc
@@ -30,14 +31,14 @@ import org.jetbrains.annotations.NotNull;
 public interface ArrangementStandardSettingsAware {
   
   // TODO den add doc
-  boolean isNameFilterEnabled(@NotNull ArrangementSettings settings);
+  boolean isNameFilterEnabled(@Nullable ArrangementMatcherSettings settings);
   
   // TODO den add doc
-  boolean isSupported(@NotNull ArrangementEntryType type);
+  boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementMatcherSettings settings);
   
   // TODO den add doc
-  boolean isSupported(@NotNull ArrangementModifier modifier);
+  boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatcherSettings settings);
 
   // TODO den add doc
-  boolean isSupported(@NotNull ArrangementEntrySortType type);
+  boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementMatcherSettings settings);
 }

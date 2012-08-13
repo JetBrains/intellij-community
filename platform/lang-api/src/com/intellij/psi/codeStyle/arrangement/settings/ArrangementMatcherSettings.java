@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.settings;
 
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import org.jetbrains.annotations.NotNull;
@@ -24,12 +25,14 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * // TODO den add doc 
+ * Encapsulates information about {@link ArrangementEntryMatcher standard arrangement match rule settings}.
+ * <p/>
+ * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/6/12 2:30 PM
  */
-public class ArrangementSettings implements Cloneable {
+public class ArrangementMatcherSettings implements Cloneable {
 
   @NotNull private final Set<ArrangementModifier> myModifiers = EnumSet.noneOf(ArrangementModifier.class);
   
@@ -58,8 +61,8 @@ public class ArrangementSettings implements Cloneable {
   }
 
   @Override
-  protected ArrangementSettings clone() {
-    ArrangementSettings result = new ArrangementSettings();
+  protected ArrangementMatcherSettings clone() {
+    ArrangementMatcherSettings result = new ArrangementMatcherSettings();
     result.setType(myType);
     result.myModifiers.addAll(myModifiers);
     return result;

@@ -20,10 +20,11 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettings;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,25 +49,25 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   }
 
   @Override
-  public boolean isNameFilterEnabled(@NotNull ArrangementSettings settings) {
+  public boolean isNameFilterEnabled(@NotNull ArrangementMatcherSettings settings) {
     // TODO den implement 
     return true;
   }
 
   @Override
-  public boolean isSupported(@NotNull ArrangementEntryType type) {
+  public boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementMatcherSettings settings) {
     // TODO den implement 
     return true;
   }
 
   @Override
-  public boolean isSupported(@NotNull ArrangementModifier modifier) {
+  public boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatcherSettings settings) {
     // TODO den implement 
     return true;
   }
 
   @Override
-  public boolean isSupported(@NotNull ArrangementEntrySortType type) {
+  public boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementMatcherSettings settings) {
     // TODO den implement 
     return true;
   }

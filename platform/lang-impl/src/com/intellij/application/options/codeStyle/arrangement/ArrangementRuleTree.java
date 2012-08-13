@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.*;
@@ -22,6 +24,7 @@ import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettin
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,13 +47,15 @@ public class ArrangementRuleTree {
   @NotNull private final DefaultTreeModel                 myTreeModel;
   @NotNull private final ArrangementStandardSettingsAware myFilter;
   @NotNull private final Tree                             myTree;
+  @NotNull private final ArrangementNodeDisplayManager    myDisplayManager;
   @NotNull private final ArrangementNodeComponentFactory  myFactory;
 
   @Nullable private ArrangementNodeComponent myPrevComponentUnderMouse;
 
   public ArrangementRuleTree(@NotNull ArrangementStandardSettingsAware filter) {
     myFilter = filter;
-    myFactory = new ArrangementNodeComponentFactory(new ArrangementNodeDisplayManager(filter));
+    myDisplayManager = new ArrangementNodeDisplayManager(filter);
+    myFactory = new ArrangementNodeComponentFactory(myDisplayManager);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     myTreeModel = new DefaultTreeModel(root);
     myTree = new Tree(myTreeModel) {
@@ -61,17 +66,32 @@ public class ArrangementRuleTree {
           super.setExpandedState(path, state);
         }
       }
-
-      @Override
-      public void setSelectionPath(TreePath path) {
-        // Don't allow selection in order to avoid standard selection background drawing.
-      }
     };
+    // Don't allow row selection as we're interested in particular row nodes.
+    myTree.setSelectionModel(null);
 
     myTree.addMouseMotionListener(new MouseAdapter() {
       @Override
       public void mouseMoved(MouseEvent e) {
         onMouseMoved(e);
+      }
+    });
+    myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (ArrangementSettingsUtil.NODE_COMPONENT.is(dataId)) {
+          return myPrevComponentUnderMouse;
+        }
+        else if (ArrangementSettingsUtil.DISPLAY_MANAGER.is(dataId)) {
+          return myDisplayManager;
+        }
+        else if (ArrangementSettingsUtil.FILTER.is(dataId)) {
+          return myFilter;
+        }
+        else if (ArrangementSettingsUtil.TREE.is(dataId)) {
+          return myTree;
+        }
+        return null;
       }
     });
 
@@ -116,7 +136,7 @@ public class ArrangementRuleTree {
   }
 
   private static void map(@NotNull DefaultMutableTreeNode parentTreeNode, @NotNull HierarchicalArrangementSettingsNode settingsNode) {
-    DefaultMutableTreeNode childTreeNode = new DefaultMutableTreeNode(settingsNode);
+    DefaultMutableTreeNode childTreeNode = new DefaultMutableTreeNode(settingsNode.getCurrent());
     parentTreeNode.add(childTreeNode);
     for (HierarchicalArrangementSettingsNode node : settingsNode.getChildren()) {
       map(childTreeNode, node);
@@ -129,10 +149,10 @@ public class ArrangementRuleTree {
   }
 
   @NotNull
-  private ArrangementNodeComponent getComponent(int row, @NotNull HierarchicalArrangementSettingsNode node) {
+  private ArrangementNodeComponent getComponent(int row, @NotNull ArrangementSettingsNode node) {
     ArrangementNodeComponent result = myRenderers.get(row);
     if (result == null) {
-      myRenderers.put(row, result = myFactory.getComponent(node.getCurrent()));
+      myRenderers.put(row, result = myFactory.getComponent(node));
     }
     return result;
   }
@@ -201,7 +221,7 @@ public class ArrangementRuleTree {
                                                   int row,
                                                   boolean hasFocus)
     {
-      HierarchicalArrangementSettingsNode node = (HierarchicalArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
+      ArrangementSettingsNode node = (ArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
       return getComponent(row, node).getUiComponent();
     }
   }

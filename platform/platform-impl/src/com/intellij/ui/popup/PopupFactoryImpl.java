@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
@@ -48,6 +49,8 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
+import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.WeakHashMap;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -62,8 +65,8 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -77,6 +80,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
   private static final Icon QUICK_LIST_ICON = AllIcons.Actions.QuickList;
+
+  private final Map<Disposable, List<Balloon>> myStorage = new WeakHashMap<Disposable, List<Balloon>>();
 
   public ListPopup createConfirmation(String title, final Runnable onYes, int defaultOptionIndex) {
     return createConfirmation(title, CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(), onYes, defaultOptionIndex);
@@ -706,23 +711,24 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   private static class ActionStepBuilder {
-    private final List<ActionItem> myListModel;
-    private final DataContext myDataContext;
-    private final boolean myShowNumbers;
-    private final boolean myUseAlphaAsNumbers;
-    private final boolean myShowDisabled;
+    private final List<ActionItem>                myListModel;
+    private final DataContext                     myDataContext;
+    private final boolean                         myShowNumbers;
+    private final boolean                         myUseAlphaAsNumbers;
+    private final boolean                         myShowDisabled;
     private final HashMap<AnAction, Presentation> myAction2presentation;
-    private int myCurrentNumber;
-    private boolean myPrependWithSeparator;
-    private String mySeparatorText;
-    private final boolean myHonorActionMnemonics;
-    private Icon myEmptyIcon;
-    private int myMaxIconWidth = -1;
+    private       int                             myCurrentNumber;
+    private       boolean                         myPrependWithSeparator;
+    private       String                          mySeparatorText;
+    private final boolean                         myHonorActionMnemonics;
+    private       Icon                            myEmptyIcon;
+    private int myMaxIconWidth  = -1;
     private int myMaxIconHeight = -1;
     @NotNull private String myActionPlace;
 
     private ActionStepBuilder(@NotNull DataContext dataContext, final boolean showNumbers, final boolean useAlphaAsNumbers,
-                              final boolean showDisabled, final boolean honorActionMnemonics) {
+                              final boolean showDisabled, final boolean honorActionMnemonics)
+    {
       myUseAlphaAsNumbers = useAlphaAsNumbers;
       myListModel = new ArrayList<ActionItem>();
       myDataContext = dataContext;
@@ -888,12 +894,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   public BalloonBuilder createBalloonBuilder(@NotNull final JComponent content) {
-    return new BalloonPopupBuilderImpl(content);
+    return new BalloonPopupBuilderImpl(myStorage, content);
   }
 
   @Override
   public BalloonBuilder createDialogBalloonBuilder(@NotNull JComponent content, String title) {
-    final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(content);
+    final BalloonPopupBuilderImpl builder = new BalloonPopupBuilderImpl(myStorage, content);
     final Color bg = UIManager.getColor("Panel.background");
     final Color borderOriginal = Color.darkGray;
     final Color border = ColorUtil.toAlpha(borderOriginal, 75);
@@ -913,7 +919,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull final String htmlContent, @Nullable final Icon icon, final Color fillColor,
-                                                        @Nullable final HyperlinkListener listener) {
+                                                     @Nullable final HyperlinkListener listener)
+  {
 
 
     JEditorPane text = IdeTooltipManager.initPane(htmlContent, new HintHint().setAwtTooltip(true), null);
@@ -954,7 +961,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   public BalloonBuilder createHtmlTextBalloonBuilder(@NotNull String htmlContent,
                                                      MessageType messageType,
-                                                     @Nullable HyperlinkListener listener) {
+                                                     @Nullable HyperlinkListener listener)
+  {
     return createHtmlTextBalloonBuilder(htmlContent, messageType.getDefaultIcon(), messageType.getPopupBackground(), listener);
   }
 }

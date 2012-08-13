@@ -16,11 +16,13 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +41,11 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull ArrangementStandardSettingsAware filter) {
     super(settings);
-    myContent.add(new ArrangementRuleTree(filter).getTreeComponent(), new GridBag().weightx(1).weighty(1).fillCell());
+    Tree component = new ArrangementRuleTree(filter).getTreeComponent();
+    myContent.add(component, new GridBag().weightx(1).weighty(1).fillCell());
+    CustomizationUtil.installPopupHandler(
+      component, ArrangementConstants.ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU, ArrangementConstants.RULE_EDITOR_PLACE
+    );
   }
 
   @Override
