@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBase {
-  private static final Set<Character> NATURAL = CollectionFactory.troveSet('(', ')', '.', ',', ':', ';', '!', '?', '$', '@', '%', '\"', '\'');
+  private static final Set<Character> NATURAL = CollectionFactory.troveSet('(', ')', '.', ',', ':', ';', '!', '?', '$', '@', '%', '\"', '\'', '<', '>', '[', ']');
   private static final Set<Character> SENTENCE_END = CollectionFactory.troveSet('.', '!', '?');
 
   public boolean canSelect(PsiElement e) {
@@ -138,6 +138,8 @@ public class NaturalLanguageTextSelectioner extends ExtendWordSelectionHandlerBa
     TextRange best = findSentenceRange(elementText, start, end);
     best = narrowRange(best, findCustomRange(elementText, start, end, '\"', '\"'));
     best = narrowRange(best, findCustomRange(elementText, start, end, '(', ')'));
+    best = narrowRange(best, findCustomRange(elementText, start, end, '<', '>'));
+    best = narrowRange(best, findCustomRange(elementText, start, end, '[', ']'));
 
     TextRange natural = findNaturalRange(elementText, start, end);
     if (!natural.contains(best)) {
