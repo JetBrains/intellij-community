@@ -85,48 +85,6 @@ public class AndroidInlineStyleReferenceAction extends AndroidBaseLayoutRefactor
     AndroidInlineUtil.doInlineStyleDeclaration(project, new AndroidInlineUtil.MyStyleData(styleName, style, styleElement),
                                                new AndroidInlineUtil.MyStyleUsageData(file, tag, styleAttribute),
                                                new ProjectBasedErrorReporter(project), myTestConfig);
-    /*final Map<XmlName, String> attributeValues = AndroidInlineUtil.computeAttributeMap(style, new ProjectBasedErrorReporter(project));
-
-    if (attributeValues == null) {
-      return;
-    }
-    final AndroidInlineUtil.MyStyleRefData parentStyleRef =
-      AndroidInlineUtil.getParentStyle(style);
-
-    boolean inlineThisOnly;
-
-    if (myTestConfig != null) {
-      inlineThisOnly = myTestConfig.isInlineThisOnly();
-    }
-    else {
-      final AndroidInlineStyleDialog dialog = new AndroidInlineStyleDialog(
-        project, styleElement, styleTag, styleName, attributeValues, parentStyleRef, true, true);
-      dialog.show();
-      if (!dialog.isOK()) {
-        return;
-      }
-      inlineThisOnly = dialog.isInlineThis();
-    }
-
-    if (inlineThisOnly) {
-      new WriteCommandAction(project, AndroidBundle.message("android.inline.style.command.name", styleName), file) {
-        @Override
-        protected void run(final Result result) throws Throwable {
-          AndroidInlineUtil.inlineStyleUsage(tag, styleAttribute, attributeValues, parentStyleRef);
-        }
-
-        @Override
-        protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
-          return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
-        }
-      }.execute();
-    }
-    else if (myTestConfig != null) {
-      final AndroidInlineAllStyleUsagesProcessor processor = new AndroidInlineAllStyleUsagesProcessor(
-        project, styleElement, styleTag, styleName, attributeValues, parentStyleRef);
-      processor.setPreviewUsages(false);
-      processor.run();
-    }*/
   }
 
   @Override
