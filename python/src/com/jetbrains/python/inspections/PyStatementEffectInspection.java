@@ -62,10 +62,15 @@ public class PyStatementEffectInspection extends PyInspection {
           return;
         }
       }
-      if (checkStringLiteral(expression))
+      if (checkStringLiteral(expression)) {
         return;
-      registerProblem(expression, "Statement seems to have no effect",
-                      new StatementEffectIntroduceVariableQuickFix());
+      }
+      if (expression instanceof PyReferenceExpression && ((PyReferenceExpression)expression).getQualifier() == null) {
+        registerProblem(expression, PyBundle.message("INSP.NAME.statement.message"));
+      }
+      else {
+        registerProblem(expression, PyBundle.message("INSP.NAME.statement.message"), new StatementEffectIntroduceVariableQuickFix());
+      }
     }
 
     private boolean checkStringLiteral(PyExpression expression) {

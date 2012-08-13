@@ -39,7 +39,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @NotNull private final PyFile myModule;
   @Nullable private final PyImportedModule myImportedModule;
 
-  protected static ImmutableSet<String> ourPossibleFields = ImmutableSet.of("__name__", "__file__", "__path__", "__doc__", "__dict__");
+  protected static ImmutableSet<String> ourPossibleFields = ImmutableSet.of("__name__", "__file__", "__path__", "__doc__", "__dict__", "__package__");
 
   public PyModuleType(@NotNull PyFile source) {
     this(source, null);
