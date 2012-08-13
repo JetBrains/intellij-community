@@ -111,10 +111,7 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
     final VirtualFile f = myFixture
       .copyFileToProject(BASE_PATH + testName + ".xml", libModuleDir + "/res/layout/test.xml");
     myFixture.configureFromExistingVirtualFile(f);
-    final Presentation p =
-      myFixture.testAction(new AndroidInlineStyleReferenceAction(new AndroidInlineTestConfig(false)));
-    assertTrue(p.isEnabled());
-    assertTrue(p.isVisible());
+    doInlineStyleReferenceAction(false, true);
 
     myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
     myFixture.checkResultByFile(appLayoutPath, BASE_PATH + getTestName(true) + "_1_after.xml", true);
@@ -232,6 +229,37 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
     myFixture.checkResultByFile("res/values/styles.xml", BASE_PATH + testName + "_styles_after.xml", true);
   }
 
+  public void test24() {
+    final String testName = getTestName(true);
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    doCommonInlineAction(true);
+    myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
+  }
+
+  public void test25() {
+    final String testName = getTestName(true);
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    doInlineStyleReferenceAction(true, true);
+    myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
+  }
+
+  public void test26() {
+    final String testName = getTestName(true);
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    doInlineStyleReferenceAction(false, true);
+    myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
+  }
+
+  public void test27() {
+    final String testName = getTestName(true);
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    doInlineStyleReferenceAction(false, false);
+  }
+
   private void doTest(boolean inlineThisOnly) {
     doTest(inlineThisOnly, "res/layout");
   }
@@ -242,13 +270,17 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
     final VirtualFile f = myFixture
       .copyFileToProject(BASE_PATH + testName + ".xml", dirToCopy + "/test" + testName + "_" + Boolean.toString(inlineThisOnly) + ".xml");
     myFixture.configureFromExistingVirtualFile(f);
-    final Presentation p =
-      myFixture.testAction(new AndroidInlineStyleReferenceAction(new AndroidInlineTestConfig(inlineThisOnly)));
-    assertTrue(p.isEnabled());
-    assertTrue(p.isVisible());
+    doInlineStyleReferenceAction(inlineThisOnly, true);
     myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
     myFixture.checkResultByFile("res/values/styles.xml", BASE_PATH + testName + (
       inlineThisOnly ? "_styles.xml" : "_styles_after.xml"), true);
+  }
+
+  private void doInlineStyleReferenceAction(boolean inlineThisOnly, boolean enabled) {
+    final Presentation p =
+      myFixture.testAction(new AndroidInlineStyleReferenceAction(new AndroidInlineTestConfig(inlineThisOnly)));
+    assertEquals(enabled, p.isEnabled());
+    assertTrue(p.isVisible());
   }
 
   private void doTestErrorMessageShown(boolean testInlineThis, boolean testInlineAll, boolean copyStyles, String dirToCopy) {

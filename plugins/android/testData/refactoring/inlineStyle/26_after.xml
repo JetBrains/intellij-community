@@ -1,0 +1,14 @@
+<resources>
+
+    <style name="myStyle" parent="android:Widget.Button">
+        <item name="android:textColor">@android:color/green</item>
+        <item name="android:background">@android:color/white</item>
+        <item name="android:color">@android:color/red</item>
+    </style>
+
+    <style name="myStyle1" parent="android:Widget.Button">
+        <item name="android:textColor">@android:color/green</item>
+        <item name="android:background">@android:color/white</item>
+        <item name="android:color">@android:color/red</item>
+    </style>
+</resources>

@@ -4,7 +4,6 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -22,10 +21,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.OrderedSet;
-import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.XmlName;
-import org.jetbrains.android.dom.converters.AndroidResourceReference;
-import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -40,16 +35,16 @@ import java.util.*;
 class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
   private final PsiElement myStyleElement;
   private final String myStyleName;
-  private final Map<XmlName, String> myAttributeValues;
-  private final AndroidInlineUtil.MyStyleRefData myParentStyleRef;
+  private final Map<AndroidAttributeInfo, String> myAttributeValues;
+  private final StyleRefData myParentStyleRef;
   private final XmlTag myStyleTag;
 
   protected AndroidInlineAllStyleUsagesProcessor(@NotNull Project project,
                                                  @NotNull PsiElement styleElement,
                                                  @NotNull XmlTag styleTag,
                                                  @NotNull String styleName,
-                                                 @NotNull Map<XmlName, String> attributeValues,
-                                                 @Nullable AndroidInlineUtil.MyStyleRefData parentStyleRef) {
+                                                 @NotNull Map<AndroidAttributeInfo, String> attributeValues,
+                                                 @Nullable StyleRefData parentStyleRef) {
     super(project);
     myStyleElement = styleElement;
     myStyleTag = styleTag;
@@ -101,7 +96,7 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-    final List<AndroidInlineUtil.MyStyleUsageData> inlineInfos = new ArrayList<AndroidInlineUtil.MyStyleUsageData>();
+    final List<StyleUsageData> inlineInfos = new ArrayList<StyleUsageData>();
     final List<PsiElement> nonXmlUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unsupportedUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unambiguousUsages = new ArrayList<PsiElement>();
@@ -115,19 +110,18 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
         continue;
       }
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-      final Pair<AndroidResourceReference, GenericAttributeValue<ResourceValue>> pair =
-        tag != null ? AndroidInlineUtil.findStyleReference(tag) : null;
+      final StyleUsageData usageData = tag != null ? AndroidInlineUtil.getUsageData(tag) : null;
 
-      if (pair == null) {
+      if (usageData == null) {
         unsupportedUsages.add(element);
         continue;
       }
 
-      if (pair.getFirst().computeTargetElements().length > 1) {
+      if (usageData.getReference().computeTargetElements().length > 1) {
         unambiguousUsages.add(element);
         continue;
       }
-      inlineInfos.add(new AndroidInlineUtil.MyStyleUsageData(tag, pair.getSecond()));
+      inlineInfos.add(usageData);
     }
 
     if (nonXmlUsages.size() > 0 || unambiguousUsages.size() > 0 || unsupportedUsages.size() > 0) {
@@ -136,8 +130,8 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
       return;
     }
 
-    for (AndroidInlineUtil.MyStyleUsageData info : inlineInfos) {
-      AndroidInlineUtil.inlineStyleUsage(info, myAttributeValues, myParentStyleRef);
+    for (StyleUsageData info : inlineInfos) {
+      info.inline(myAttributeValues, myParentStyleRef);
     }
     myStyleTag.delete();
   }

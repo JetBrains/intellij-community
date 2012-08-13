@@ -1,0 +1,7 @@
+<resources>
+  <style name="myStyle" parent="android:Widget.But<caret>ton">
+    <item name="android:textColor">@android:color/black</item>
+    <item name="android:background">@android:color/white</item>
+    <item name="android:color">@android:color/red</item>
+  </style>
+</resources>

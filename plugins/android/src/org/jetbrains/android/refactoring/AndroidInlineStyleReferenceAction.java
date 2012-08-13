@@ -1,17 +1,18 @@
 package org.jetbrains.android.refactoring;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.android.dom.converters.AndroidResourceReference;
-import org.jetbrains.android.dom.resources.ResourceValue;
+import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
+import org.jetbrains.android.dom.resources.ResourcesDomFileDescription;
 import org.jetbrains.android.dom.resources.Style;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.TestOnly;
 /**
  * @author Eugene.Kudelevsky
  */
-public class AndroidInlineStyleReferenceAction extends AndroidBaseLayoutRefactoringAction {
+public class AndroidInlineStyleReferenceAction extends AndroidBaseXmlRefactoringAction {
   public static final String ACTION_ID = "AndroidInlineStyleReferenceAction";
 
   private final AndroidInlineTestConfig myTestConfig;
@@ -43,18 +44,12 @@ public class AndroidInlineStyleReferenceAction extends AndroidBaseLayoutRefactor
     if (file == null) {
       return;
     }
-    final Pair<AndroidResourceReference, GenericAttributeValue<ResourceValue>> pair = AndroidInlineUtil
-      .findStyleReference(tag);
+    final StyleUsageData usageData = AndroidInlineUtil.getUsageData(tag);
 
-    if (pair == null) {
+    if (usageData == null) {
       return;
     }
-    final AndroidResourceReference reference = pair.getFirst();
-    final GenericAttributeValue<ResourceValue> styleAttribute = pair.getSecond();
-
-    if (reference == null || styleAttribute == null) {
-      return;
-    }
+    final AndroidResourceReference reference = usageData.getReference();
     final String title = AndroidBundle.message("android.inline.style.title");
     final PsiElement[] styleElements = reference.computeTargetElements();
 
@@ -83,13 +78,20 @@ public class AndroidInlineStyleReferenceAction extends AndroidBaseLayoutRefactor
       return;
     }
     AndroidInlineUtil.doInlineStyleDeclaration(project, new AndroidInlineUtil.MyStyleData(styleName, style, styleElement),
-                                               new AndroidInlineUtil.MyStyleUsageData(tag, styleAttribute),
+                                               usageData,
                                                new ProjectBasedErrorReporter(project), myTestConfig);
   }
 
   @Override
   protected boolean isEnabled(@NotNull XmlTag tag) {
-    return super.isEnabled(tag) &&
-           AndroidInlineUtil.findStyleReference(tag) != null;
+    return AndroidInlineUtil.getUsageData(tag) != null;
+  }
+
+  @Override
+  protected boolean isMyFile(PsiFile file) {
+    final DomFileDescription<?> description = DomManager.getDomManager(file.getProject()).getDomFileDescription((XmlFile)file);
+
+    return description instanceof LayoutDomFileDescription ||
+           description instanceof ResourcesDomFileDescription;
   }
 }

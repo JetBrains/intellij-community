@@ -4,7 +4,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.inline.InlineOptionsDialog;
-import com.intellij.util.xml.XmlName;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,8 +16,8 @@ import java.util.Map;
 class AndroidInlineStyleDialog extends InlineOptionsDialog {
   private final String myStyleName;
   private final boolean myInlineThisByDefault;
-  private final Map<XmlName, String> myAttributeValues;
-  private final AndroidInlineUtil.MyStyleRefData myParentStyleRef;
+  private final Map<AndroidAttributeInfo, String> myAttributeValues;
+  private final StyleRefData myParentStyleRef;
   private final XmlTag myStyleTag;
 
 
@@ -26,8 +25,8 @@ class AndroidInlineStyleDialog extends InlineOptionsDialog {
                                   @NotNull PsiElement styleElement,
                                   @NotNull XmlTag styleTag,
                                   @NotNull String styleName,
-                                  @NotNull Map<XmlName, String> attributeValues,
-                                  @Nullable AndroidInlineUtil.MyStyleRefData parentStyleRef,
+                                  @NotNull Map<AndroidAttributeInfo, String> attributeValues,
+                                  @Nullable StyleRefData parentStyleRef,
                                   boolean inlineThisByDefault,
                                   boolean invokedOnReference) {
     super(project, true, styleElement);

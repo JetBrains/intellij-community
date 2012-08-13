@@ -7,13 +7,9 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import org.jetbrains.android.dom.layout.LayoutViewElement;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.ErrorReporter;
 import org.jetbrains.android.util.HintBasedErrorReporter;
@@ -42,45 +38,33 @@ public class AndroidInlineStyleHandler extends InlineActionHandler {
   public boolean canInlineElement(PsiElement element) {
     return element != null &&
            AndroidFacet.getInstance(element) != null &&
-           element.getManager().isInProject(element) &&
-           AndroidInlineUtil.getStyleDataFromContext(element) != null;
+           AndroidInlineUtil.getInlinableStyleDataFromContext(element) != null;
   }
 
   @Override
   public void inlineElement(Project project, final Editor editor, PsiElement element) {
-    final AndroidInlineUtil.MyStyleData data = AndroidInlineUtil.getStyleDataFromContext(element);
+    final AndroidInlineUtil.MyStyleData data = AndroidInlineUtil.getInlinableStyleDataFromContext(element);
+
     if (data != null) {
-      final PsiReference reference = editor != null
-                                     ? TargetElementUtilBase.findReference(editor)
-                                     : null;
-      final PsiElement usageElement = reference != null ? reference.getElement() : null;
-      final AndroidInlineUtil.MyStyleUsageData usageData = usageElement != null
-                                                           ? getStyleUsageDataFromContext(project, usageElement)
-                                                           : null;
-      final ErrorReporter reporter = editor != null
-                                     ? new HintBasedErrorReporter(editor)
-                                     : new ProjectBasedErrorReporter(project);
+      final StyleUsageData usageData = editor != null ? getUsageDataFromEditor(editor) : null;
+      final ErrorReporter reporter = editor != null ? new HintBasedErrorReporter(editor) : new ProjectBasedErrorReporter(project);
       AndroidInlineUtil.doInlineStyleDeclaration(project, data, usageData, reporter, ourTestConfig);
     }
   }
 
   @Nullable
-  private static AndroidInlineUtil.MyStyleUsageData getStyleUsageDataFromContext(@NotNull Project project, @NotNull PsiElement context) {
-    final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class, false);
+  private static StyleUsageData getUsageDataFromEditor(@NotNull Editor editor) {
+    final PsiReference reference = TargetElementUtilBase.findReference(editor);
 
-    if (tag == null) {
+    if (reference == null) {
       return null;
     }
-    final DomElement element = DomManager.getDomManager(project).getDomElement(tag);
+    final PsiElement usageElement = reference.getElement();
 
-    if (!(element instanceof LayoutViewElement)) {
+    if (usageElement == null) {
       return null;
     }
-    final PsiFile file = tag.getContainingFile();
-
-    if (file == null) {
-      return null;
-    }
-    return new AndroidInlineUtil.MyStyleUsageData(tag, ((LayoutViewElement)element).getStyle());
+    final XmlTag tag = PsiTreeUtil.getParentOfType(usageElement, XmlTag.class, false);
+    return tag != null ? AndroidInlineUtil.getUsageData(tag) : null;
   }
 }

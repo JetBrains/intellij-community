@@ -1,13 +1,10 @@
 package org.jetbrains.android.refactoring;
 
-import com.android.resources.ResourceType;
-import com.android.sdklib.SdkConstants;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -19,7 +16,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericAttributeValue;
-import com.intellij.util.xml.XmlName;
 import org.jetbrains.android.dom.converters.AndroidResourceReference;
 import org.jetbrains.android.dom.layout.LayoutViewElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
@@ -27,6 +23,7 @@ import org.jetbrains.android.dom.resources.Style;
 import org.jetbrains.android.dom.resources.StyleItem;
 import org.jetbrains.android.dom.wrappers.LazyValueResourceElementWrapper;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.android.util.ErrorReporter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,57 +59,54 @@ class AndroidInlineUtil {
   }
 
   @Nullable
-  static Pair<AndroidResourceReference, GenericAttributeValue<ResourceValue>> findStyleReference(@NotNull XmlTag tag) {
-    final LayoutViewElement viewElement = AndroidBaseLayoutRefactoringAction.getLayoutViewElement(tag);
-    if (viewElement == null) {
+  static StyleUsageData getUsageData(@NotNull XmlTag tag) {
+    final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
+
+    if (domElement instanceof LayoutViewElement) {
+      final GenericAttributeValue<ResourceValue> styleAttribute = ((LayoutViewElement)domElement).getStyle();
+      final AndroidResourceReference reference = getAndroidResourceReference(styleAttribute);
+
+      if (reference != null) {
+        return new ViewStyleUsageData(tag, styleAttribute, reference);
+      }
+    }
+    else if (domElement instanceof Style) {
+      final AndroidResourceReference reference = getAndroidResourceReference(((Style)domElement).getParentStyle());
+
+      if (reference != null) {
+        return new ParentStyleUsageData((Style)domElement, reference);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static AndroidResourceReference getAndroidResourceReference(@Nullable GenericAttributeValue<ResourceValue> attribute) {
+    if (attribute == null) {
       return null;
     }
 
-    final GenericAttributeValue<ResourceValue> style = viewElement.getStyle();
-    if (style == null) {
-      return null;
-    }
-
-    final ResourceValue styleValue = style.getValue();
+    final ResourceValue styleValue = attribute.getValue();
     if (styleValue == null || styleValue.getPackage() != null) {
       return null;
     }
 
-    final XmlAttributeValue styleAttributeValue = style.getXmlAttributeValue();
+    final XmlAttributeValue styleAttributeValue = attribute.getXmlAttributeValue();
     if (styleAttributeValue == null) {
       return null;
     }
 
     for (PsiReference reference : styleAttributeValue.getReferences()) {
       if (reference instanceof AndroidResourceReference) {
-        return Pair.create((AndroidResourceReference)reference, style);
+        return (AndroidResourceReference)reference;
       }
     }
     return null;
   }
 
-  static void inlineStyleUsage(MyStyleUsageData usageData,
-                               Map<XmlName, String> attributeValues,
-                               MyStyleRefData parentStyleRef) {
-    final XmlTag tag = usageData.myTag;
-    final GenericAttributeValue<ResourceValue> styleAttribute = usageData.myStyleAttribute;
-
-    for (Map.Entry<XmlName, String> entry : attributeValues.entrySet()) {
-      final XmlName name = entry.getKey();
-
-      if (tag.getAttribute(name.getLocalName(), name.getNamespaceKey()) == null) {
-        tag.setAttribute(name.getLocalName(), name.getNamespaceKey(), entry.getValue());
-      }
-    }
-    styleAttribute.setValue(parentStyleRef != null
-                            ? ResourceValue.referenceTo('@', parentStyleRef.myStylePackage, ResourceType.STYLE.getName(),
-                                                        parentStyleRef.myStyleName)
-                            : null);
-  }
-
   @Nullable
-  static Map<XmlName, String> computeAttributeMap(@NotNull Style style, @NotNull ErrorReporter errorReporter) {
-    final Map<XmlName, String> attributeValues = new HashMap<XmlName, String>();
+  static Map<AndroidAttributeInfo, String> computeAttributeMap(@NotNull Style style, @NotNull ErrorReporter errorReporter) {
+    final Map<AndroidAttributeInfo, String> attributeValues = new HashMap<AndroidAttributeInfo, String>();
 
     for (StyleItem item : style.getItems()) {
       final String attributeName = item.getName().getStringValue();
@@ -124,13 +118,9 @@ class AndroidInlineUtil {
       final int idx = attributeName.indexOf(':');
       final String localName = idx >= 0 ? attributeName.substring(idx + 1) : attributeName;
       final String nsPrefix = idx >= 0 ? attributeName.substring(0, idx) : null;
-      String namespace;
 
       if (nsPrefix != null) {
-        if ("android".equals(nsPrefix)) {
-          namespace = SdkConstants.NS_RESOURCES;
-        }
-        else {
+        if (!AndroidUtils.SYSTEM_RESOURCE_PACKAGE.equals(nsPrefix)) {
           errorReporter.report(RefactoringBundle.getCannotRefactorMessage("Unknown XML attribute prefix '" + nsPrefix + ":'"),
                                AndroidBundle.message("android.inline.style.title"));
           return null;
@@ -142,22 +132,22 @@ class AndroidInlineUtil {
           AndroidBundle.message("android.inline.style.title"));
         return null;
       }
-      attributeValues.put(new XmlName(localName, namespace), attributeValue);
+      attributeValues.put(new AndroidAttributeInfo(localName, nsPrefix), attributeValue);
     }
     return attributeValues;
   }
 
   static void doInlineStyleDeclaration(@NotNull Project project,
                                        @NotNull MyStyleData data,
-                                       @Nullable final MyStyleUsageData usageData,
+                                       @Nullable final StyleUsageData usageData,
                                        @NotNull ErrorReporter errorReporter,
                                        @Nullable AndroidInlineTestConfig testConfig) {
     final Style style = data.myStyleElement;
-    final Map<XmlName, String> attributeValues = computeAttributeMap(style, errorReporter);
+    final Map<AndroidAttributeInfo, String> attributeValues = computeAttributeMap(style, errorReporter);
     if (attributeValues == null) {
       return;
     }
-    final MyStyleRefData parentStyleRef = getParentStyle(style);
+    final StyleRefData parentStyleRef = getParentStyle(style);
     boolean inlineThisOnly;
 
     if (testConfig != null) {
@@ -178,7 +168,7 @@ class AndroidInlineUtil {
 
     if (inlineThisOnly) {
       assert usageData != null;
-      final PsiFile file = usageData.myTag.getContainingFile();
+      final PsiFile file = usageData.getFile();
 
       if (file == null) {
         return;
@@ -186,7 +176,7 @@ class AndroidInlineUtil {
       new WriteCommandAction(project, AndroidBundle.message("android.inline.style.command.name", data.myStyleName), file) {
         @Override
         protected void run(final Result result) throws Throwable {
-          inlineStyleUsage(usageData, attributeValues, parentStyleRef);
+          usageData.inline(attributeValues, parentStyleRef);
         }
 
         @Override
@@ -204,14 +194,14 @@ class AndroidInlineUtil {
   }
 
   @Nullable
-  static MyStyleRefData getParentStyle(@NotNull Style style) {
+  static StyleRefData getParentStyle(@NotNull Style style) {
     final ResourceValue parentStyleRefValue = style.getParentStyle().getValue();
 
     if (parentStyleRefValue != null) {
       final String parentStyleName = parentStyleRefValue.getResourceName();
 
       if (parentStyleName != null) {
-        return new MyStyleRefData(parentStyleName, parentStyleRefValue.getPackage());
+        return new StyleRefData(parentStyleName, parentStyleRefValue.getPackage());
       }
     }
     else {
@@ -221,7 +211,7 @@ class AndroidInlineUtil {
         final int idx = styleName.lastIndexOf('.');
 
         if (idx > 0) {
-          return new MyStyleRefData(styleName.substring(0, idx), null);
+          return new StyleRefData(styleName.substring(0, idx), null);
         }
       }
     }
@@ -229,11 +219,11 @@ class AndroidInlineUtil {
   }
 
   @Nullable
-  static MyStyleData getStyleDataFromContext(@Nullable PsiElement context) {
+  static MyStyleData getInlinableStyleDataFromContext(@Nullable PsiElement context) {
     if (context instanceof LazyValueResourceElementWrapper) {
       context = ((LazyValueResourceElementWrapper)context).computeElement();
     }
-    if (context == null) {
+    if (context == null || !context.getManager().isInProject(context)) {
       return null;
     }
     final XmlAttributeValue attrValue = PsiTreeUtil.getParentOfType(context, XmlAttributeValue.class, false);
@@ -256,26 +246,6 @@ class AndroidInlineUtil {
       myStyleName = styleName;
       myStyleElement = styleElement;
       myReferredElement = referredElement;
-    }
-  }
-
-  static class MyStyleRefData {
-    private final String myStyleName;
-    private final String myStylePackage;
-
-    MyStyleRefData(@NotNull String styleName, @Nullable String stylePackage) {
-      myStyleName = styleName;
-      myStylePackage = stylePackage;
-    }
-  }
-
-  static class MyStyleUsageData {
-    private final XmlTag myTag;
-    private final GenericAttributeValue<ResourceValue> myStyleAttribute;
-
-    MyStyleUsageData(XmlTag tag, GenericAttributeValue<ResourceValue> styleAttribute) {
-      myTag = tag;
-      myStyleAttribute = styleAttribute;
     }
   }
 }
