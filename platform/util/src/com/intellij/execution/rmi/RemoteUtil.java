@@ -114,8 +114,8 @@ public class RemoteUtil {
     }, classLoader);
   }
 
-  public static <T> T handleRemoteResult(Object value, Object requestor) throws Exception {
-    return RemoteUtil.<T>handleRemoteResult(value, Object.class, requestor.getClass().getClassLoader(), false);
+  public static <T> T handleRemoteResult(Object value, Class<T> clazz, Object requestor) throws Exception {
+    return RemoteUtil.<T>handleRemoteResult(value, clazz, requestor.getClass().getClassLoader(), false);
   }
 
   private static <T> T handleRemoteResult(Object value, Class<?> methodReturnType, ClassLoader classLoader, boolean substituteClassLoader) throws Exception {
@@ -128,20 +128,8 @@ public class RemoteUtil {
         result = substituteClassLoader? substituteClassLoader(value, classLoader) : value;
       }
     }
-    else if (value instanceof Collection) {
-      Collection c = (Collection)value;
-
-      if (value instanceof Set) {
-        LinkedHashSet set = new LinkedHashSet();
-        for (Object o : c) {
-          set.add(handleRemoteResult(o, Object.class, classLoader, substituteClassLoader));
-        }
-
-        result = set;
-      }
-      else {
-        result = Arrays.asList((Object[])handleRemoteResult(c.toArray(), Object.class, classLoader, substituteClassLoader));
-      }
+    else if (value instanceof List && methodReturnType.isInterface()) {
+      result = Arrays.asList((Object[])handleRemoteResult(((List)value).toArray(), Object.class, classLoader, substituteClassLoader));
     }
     else if (value instanceof Object[]) {
       Object[] array = (Object[])value;
