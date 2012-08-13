@@ -27,6 +27,7 @@ import java.util.concurrent.Future;
 
 public class OSProcessHandler extends BaseOSProcessHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.process.OSProcessHandler");
+  private boolean myDestroyRecursively = false;
 
   public OSProcessHandler(@NotNull final Process process, @Nullable final String commandLine, final Charset defaultCharset) {
     super(process, commandLine, defaultCharset);
@@ -50,7 +51,11 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   protected boolean shouldDestroyProcessRecursively(){
     // Override this method if you want to kill process recursively (whole process try) by default
     // such behaviour is better than default java one, which doesn't kill children processes
-    return false;
+    return myDestroyRecursively;
+  }
+
+  public void setShouldDestroyProcessRecursively(boolean destroyRecursively) {
+    myDestroyRecursively = destroyRecursively;
   }
 
   protected void doDestroyProcess() {

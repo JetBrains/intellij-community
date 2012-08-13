@@ -192,6 +192,7 @@ public class GroovyScriptRunConfiguration extends ModuleBasedConfiguration<RunCo
       @Override
       protected OSProcessHandler startProcess() throws ExecutionException {
         final OSProcessHandler handler = super.startProcess();
+        handler.setShouldDestroyProcessRecursively(true);
         if (scriptRunner.shouldRefreshAfterFinish()) {
           handler.addProcessListener(new ProcessAdapter() {
             @Override
