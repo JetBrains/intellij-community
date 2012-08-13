@@ -183,7 +183,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   }
 
   private void update() {
-    myCbMakeStatic.setEnabled(myCanBeStatic && !myStaticFlag);
+    myCbMakeStatic.setEnabled(myCreateInnerClassRb.isSelected() && myCanBeStatic && !myStaticFlag);
     updateSignature();
     final PsiNameHelper helper = JavaPsiFacade.getInstance(myProject).getNameHelper();
     setOKActionEnabled((myCreateInnerClassRb.isSelected() && helper.isIdentifier(myInnerClassName.getText())) ||
@@ -210,7 +210,7 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
   protected JComponent createCenterPanel() {
     mySignatureArea.setEditable(false);
     myCreateInnerClassRb.setSelected(true);
-    enable(true);
+   
     final ActionListener enableDisableListener = new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         enable(myCreateInnerClassRb.isSelected());
@@ -280,14 +280,14 @@ public class ExtractMethodObjectDialog extends AbstractExtractDialog {
       visibilities.nextElement().addActionListener(updateSugnatureListener);
     }
 
-    update();
-
+    enable(true);
     return myWholePanel;
   }
 
   private void enable(boolean innerClassSelected){
     UIUtil.setEnabled(myInnerClassPanel, innerClassSelected, true);
     UIUtil.setEnabled(myAnonymousClassPanel, !innerClassSelected, true);
+    update();
   }
 
   private JComponent createParametersPanel() {
