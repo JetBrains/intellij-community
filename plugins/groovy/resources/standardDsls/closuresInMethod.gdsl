@@ -1,0 +1,24 @@
+contributor(ctype: 'org.codehaus.groovy.runtime.DefaultGroovyMethods') {
+  closureInMethod(method: [name: 'eachWithIndex', params: ['java.lang.Object', 'groovy.lang.Closure']], params: [entry: null, i: 'int'])
+  closureInMethod(method: [name: 'inject', params: ['java.lang.Object', 'groovy.lang.Closure']], params: [acc: null, val: null])
+
+  closureInMethod(method: [name: 'min', params: ['java.util.Collection', 'groovy.lang.Closure']], params: [a: null, b: null])
+  closureInMethod(method: [name: 'min', params: ['java.util.Iterator', 'groovy.lang.Closure']], params: [a: null, b: null])
+  closureInMethod(method: [name: 'min', params: ['java.util.Map', 'groovy.lang.Closure']], params: [a: null, b: null])
+
+  /*
+  closureInMethod(method: [name: 'min', params: ['java.util.Collection', 'groovy.lang.Closure']], params: [a: null])
+  closureInMethod(method: [name: 'min', params: ['java.util.Iterator', 'groovy.lang.Closure']], params: [a: null])
+  closureInMethod(method: [name: 'min', params: ['java.util.Map', 'groovy.lang.Closure']], params: [a: null])
+  */
+
+  closureInMethod(method: [name: 'max', params: ['java.util.Collection', 'groovy.lang.Closure']], params: [a: null, b: null])
+  closureInMethod(method: [name: 'max', params: ['java.util.Iterator', 'groovy.lang.Closure']], params: [a: null, b: null])
+  closureInMethod(method: [name: 'max', params: ['java.util.Map', 'groovy.lang.Closure']], params: [a: null, b: null])
+
+  /*
+  closureInMethod(method: [name: 'max', params: ['java.util.Collection', 'groovy.lang.Closure']], params: [a: null])
+  closureInMethod(method: [name: 'max', params: ['java.util.Iterator', 'groovy.lang.Closure']], params: [a: null])
+  closureInMethod(method: [name: 'max', params: ['java.util.Map', 'groovy.lang.Closure']], params: [a: null])
+  */
+}
