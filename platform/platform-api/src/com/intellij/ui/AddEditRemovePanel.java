@@ -147,7 +147,8 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
       }
     };
 
-    myTable = new JBTable(myTableModel);
+    myTable = createTable();
+    myTable.setModel(myTableModel);
     myTable.setShowColumns(false);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myTable.setStriped(true);
@@ -158,6 +159,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
         return true;
       }
     }.installOn(myTable);
+  }
+
+  protected JBTable createTable() {
+    return new JBTable();
   }
 
   protected JButton[] createButtons(){
