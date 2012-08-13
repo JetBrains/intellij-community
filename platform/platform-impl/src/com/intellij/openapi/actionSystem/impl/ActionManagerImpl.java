@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -44,7 +45,9 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -1176,7 +1179,19 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       super(TIMER_DELAY, null);
       addActionListener(this);
       setRepeats(true);
-     }
+      final MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+        @Override
+        public void applicationActivated(IdeFrame ideFrame) {
+          setDelay(TIMER_DELAY);
+        }
+
+        @Override
+        public void applicationDeactivated(IdeFrame ideFrame) {
+          setDelay(30000);
+        }
+      });
+    }
 
     @Override
     public String toString() {

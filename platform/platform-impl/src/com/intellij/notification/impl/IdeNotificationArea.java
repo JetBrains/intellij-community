@@ -86,7 +86,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
       @Override
       public void run() {
         updateStatus();
-        myLogAlarm.addRequest(this, 100);
+        myLogAlarm.addRequest(this, 100, true);
       }
     }.run();
 

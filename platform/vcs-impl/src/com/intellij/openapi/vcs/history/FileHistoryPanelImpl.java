@@ -424,7 +424,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         if (myVcs.getProject().isDisposed()) {
           return;
         }
-        final boolean refresh = (! myInRefresh) && myHistorySession.shouldBeRefreshed();
+        boolean refresh = ApplicationManager.getApplication().isActive()
+          && !myInRefresh
+          && myHistorySession.shouldBeRefreshed();
+
         myUpdateAlarm.cancelAllRequests();
         if (myUpdateAlarm.isDisposed()) return;
         myUpdateAlarm.addRequest(this, 20000);
