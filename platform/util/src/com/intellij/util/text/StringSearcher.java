@@ -124,24 +124,24 @@ public class StringSearcher {
     }
     else {
       int start = 1;
-      int end = textLength - myPatternLength + 1;
-      while (start <= end) {
+      int end = _end+1;
+      while (start <= end - myPatternLength + 1) {
         int i = myPatternLength - 1;
-        char lastChar = textArray != null ? textArray[textLength - (start + i)]:text.charAt(textLength - (start + i));
+        char lastChar = textArray != null ? textArray[end - (start + i)]:text.charAt(end - (start + i));
         if (!myCaseSensitive) {
           lastChar = StringUtil.toLowerCase(lastChar);
         }
         if (myPatternArray[myPatternLength - 1 - i] == lastChar) {
           i--;
           while (i >= 0) {
-            char c = textArray != null ? textArray[textLength - (start + i)]:text.charAt(textLength - (start + i));
+            char c = textArray != null ? textArray[end - (start + i)]:text.charAt(end - (start + i));
             if (!myCaseSensitive) {
               c = StringUtil.toLowerCase(c);
             }
             if (myPatternArray[myPatternLength - 1 - i] != c) break;
             i--;
           }
-          if (i < 0) return textLength - start - myPatternLength + 1;
+          if (i < 0) return end - start - myPatternLength + 1;
         }
 
         int step = 0 <= lastChar && lastChar < 128 ? mySearchTable[lastChar] : 1;
