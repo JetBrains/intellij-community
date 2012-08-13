@@ -94,16 +94,23 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
   private void initNonReadSettings() {
     final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(LanguageCodeStyleSettingsProvider.EP_NAME);
     for (final LanguageCodeStyleSettingsProvider provider : providers) {
-      if (!myCommonSettingsMap.containsKey(provider.getLanguage())) {
+      Language target = provider.getLanguage();
+      if (!myCommonSettingsMap.containsKey(target)) {
         CommonCodeStyleSettings initialSettings = provider.getDefaultCommonSettings();
         if (initialSettings != null) {
           initialSettings.copyNonDefaultValuesFrom(myParentSettings);
-          initialSettings.setRootSettings(myParentSettings);
-          initialSettings.importOldIndentOptions(myParentSettings);
-          registerCommonSettings(provider.getLanguage(), initialSettings);
+          init(initialSettings, target);
         }
       }
     }
+  }
+
+  private void init(CommonCodeStyleSettings initialSettings, Language target) {
+    initialSettings.setRootSettings(myParentSettings);
+    initialSettings.importOldIndentOptions(myParentSettings);
+    registerCommonSettings(target, initialSettings);
+
+    initialSettings.getRootSettings(); // check it's not null
   }
 
   private void initCommonSettingsMap() {
@@ -119,7 +126,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
 
   public CommonCodeStyleSettingsManager clone(@NotNull CodeStyleSettings parentSettings) {
     CommonCodeStyleSettingsManager settingsManager = new CommonCodeStyleSettingsManager(parentSettings);
-    if (myCommonSettingsMap != null && myCommonSettingsMap.size() > 0) {
+    if (myCommonSettingsMap != null && !myCommonSettingsMap.isEmpty()) {
       settingsManager.initCommonSettingsMap();
       for (Map.Entry<Language, CommonCodeStyleSettings> entry : myCommonSettingsMap.entrySet()) {
         CommonCodeStyleSettings clonedSettings = entry.getValue().clone(parentSettings);
@@ -138,7 +145,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
         if (o instanceof Element) {
           final Element commonSettingsElement = (Element)o;
           final String languageId = commonSettingsElement.getAttributeValue(LANGUAGE_ATTR);
-          if (languageId != null && languageId.length() > 0) {
+          if (languageId != null && !languageId.isEmpty()) {
             Language target = Language.findLanguageByID(languageId);
             boolean isKnownLanguage = target != null;
             if (isKnownLanguage) {
@@ -147,9 +154,7 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
                 CommonCodeStyleSettings settings = provider.getDefaultCommonSettings();
                 if (settings != null) {
                   settings.readExternal(commonSettingsElement);
-                  settings.setRootSettings(myParentSettings);
-                  settings.importOldIndentOptions(myParentSettings);
-                  registerCommonSettings(target, settings);
+                  init(settings, target);
                 }
               }
               else {
