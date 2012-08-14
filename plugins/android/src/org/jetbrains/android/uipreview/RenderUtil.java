@@ -236,9 +236,9 @@ public class RenderUtil {
         }
       }
       else {
-        builder.append("Missing class ").append(missingClasses.iterator().next());
+        builder.append("Missing class ").append(missingClasses.iterator().next()).append('\n');
       }
-      removeLastNewLineChar(builder);
+      builder.append("Try to build project");
       warnMessages.add(new FixableIssueMessage(builder.toString()));
     }
   }
