@@ -523,12 +523,12 @@ public class CodeCompletionHandlerBase {
     final Project project = hostFile.getProject();
 
     if (!synchronous) {
-      if (!CompletionServiceImpl.assertPhase(CompletionPhase.CommittingDocuments.class, CompletionPhase.NoCompletion.getClass())) {
-        CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
+      if (CompletionServiceImpl.isPhase(CompletionPhase.NoCompletion.getClass()) ||
+          !CompletionServiceImpl.assertPhase(CompletionPhase.CommittingDocuments.class)) {
         Disposer.dispose(translator);
         return;
       }
-      
+
       final CompletionPhase.CommittingDocuments phase = (CompletionPhase.CommittingDocuments)CompletionServiceImpl.getCompletionPhase();
 
       CompletionAutoPopupHandler.runLaterWithCommitted(project, hostDocument, new Runnable() {
