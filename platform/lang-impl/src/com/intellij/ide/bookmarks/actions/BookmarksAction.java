@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.popup.util.DetailViewImpl;
 import com.intellij.ui.popup.util.ItemWrapper;
 import com.intellij.ui.popup.util.MasterDetailPopupBuilder;
 import com.intellij.ui.speedSearch.FilteringListModel;
@@ -77,10 +78,11 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     actions.add(new MoveBookmarkUpAction(project, list));
     actions.add(new MoveBookmarkDownAction(project, list));
 
-    myPopup = new MasterDetailPopupBuilder(project).
-      setActionsGroup(actions).
-      setList(list).
-      setDelegate(this).createMasterDetailPopup();
+    myPopup = new MasterDetailPopupBuilder(project)
+      .setActionsGroup(actions)
+      .setList(list)
+      .setDetailView(new DetailViewImpl(project))
+      .setDelegate(this).createMasterDetailPopup();
 
     editDescriptionAction.setPopup(myPopup);
     myPopup.showCenteredInCurrentWindow(project);

@@ -35,6 +35,8 @@ public abstract class ItemWrapper {
   public abstract String footerText();
 
   public void updateDetailView(DetailView panel) {
+    if (panel == null) return;
+
     if (equals(panel.getCurrentItem())) {
       return;
     }
