@@ -135,4 +135,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testDecoratedFunction() {
     doTest();
   }
+
+  // PY-6925
+  public void testAssignedOperator() {
+    doTest();
+  }
 }
