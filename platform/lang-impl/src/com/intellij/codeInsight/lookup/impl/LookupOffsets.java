@@ -117,8 +117,12 @@ public class LookupOffsets {
   }
 
   boolean performGuardedChange(Runnable change, @Nullable final String debug) {
-    assert myLookupStartMarker != null : "null start before";
-    assert myLookupStartMarker.isValid() : "invalid start";
+    if (myLookupStartMarker == null) {
+      throw new AssertionError("null start before");
+    }
+    if (!myLookupStartMarker.isValid()) {
+      throw new AssertionError("invalid start");
+    }
     final Document document = myEditor.getDocument();
     RangeMarkerSpy spy = new RangeMarkerSpy(myLookupStartMarker) {
       @Override
