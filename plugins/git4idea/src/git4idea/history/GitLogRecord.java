@@ -209,6 +209,7 @@ class GitLogRecord {
     final ContentRevision after;
     FileStatus status = null;
     final String path = statusInfo.getFirstPath();
+    GitRevisionNumber firstParent = parentRevisions.get(0);
 
     switch (statusInfo.getType()) {
       case ADDED:
@@ -224,14 +225,13 @@ class GitLogRecord {
           status = FileStatus.MODIFIED;
         }
         final FilePath filePath = GitContentRevision.createPath(vcsRoot, path, false, true, true);
-        before = GitContentRevision.createMultipleParentsRevision(project, filePath, (GitRevisionNumber)thisRevision, parentRevisions);
-        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
+        before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, false, false, true);
+        after = GitContentRevision.createMultipleParentsRevision(project, filePath, (GitRevisionNumber)thisRevision, parentRevisions);
         break;
       case DELETED:
         status = FileStatus.DELETED;
         final FilePath filePathDeleted = GitContentRevision.createPath(vcsRoot, path, true, true, true);
-        before = GitContentRevision.createMultipleParentsRevision(project, filePathDeleted,
-                                                                  (GitRevisionNumber)thisRevision, parentRevisions);
+        before = GitContentRevision.createRevision(filePathDeleted, firstParent, project, null);
         after = null;
         break;
       case RENAMED:
@@ -239,15 +239,15 @@ class GitLogRecord {
         String secondPath = statusInfo.getSecondPath();
         final FilePath filePathAfterRename = GitContentRevision.createPath(vcsRoot, secondPath == null ? path : secondPath,
                                                                            false, false, true);
+        before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, true, true, true);
         after = GitContentRevision.createMultipleParentsRevision(project, filePathAfterRename,
                                                                  (GitRevisionNumber)thisRevision, parentRevisions);
-        before = GitContentRevision.createRevision(vcsRoot, path, parentRevisions.get(0), project, true, true, true);
         break;
       case TYPE_CHANGED:
         status = FileStatus.MODIFIED;
         final FilePath filePath2 = GitContentRevision.createPath(vcsRoot, path, false, true, true);
-        before = GitContentRevision.createMultipleParentsRevision(project, filePath2, (GitRevisionNumber)thisRevision, parentRevisions);
-        after = GitContentRevision.createRevision(vcsRoot, path, thisRevision, project, false, false, true);
+        before = GitContentRevision.createRevision(vcsRoot, path, firstParent, project, false, false, true);
+        after = GitContentRevision.createMultipleParentsRevision(project, filePath2, (GitRevisionNumber)thisRevision, parentRevisions);
         break;
       default:
         throw new AssertionError("Unknown file status: " + statusInfo);
