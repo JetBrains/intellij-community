@@ -2244,6 +2244,10 @@ def cut_binary_lib_suffix(path, f):
     m = BIN_MODULE_FNAME_PAT.match(f)
     if m:
         ret = m.group(1)
+        modlen = len('module')
+        retlen = len(ret)
+        if ret.endswith('module') and retlen > modlen and f.endswith('.so'):
+            ret = ret[:(retlen - modlen)]
     if f.endswith('.pyc') or f.endswith('.pyo'):
         fullname = os.path.join(path, f[:-1]) # check for __pycache__ is made outside
         if os.path.exists(fullname):

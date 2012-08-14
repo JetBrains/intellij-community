@@ -111,9 +111,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              @Nullable PyExpression location,
                                                              @NotNull AccessDirection direction,
                                                              @NotNull PyResolveContext resolveContext) {
-    if (myClass == null) {
-      return null;
-    }
     if (resolveContext.allowProperties()) {
       Property property = myClass.findProperty(name);
       if (property != null) {
@@ -141,14 +138,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         PyType first_arg_type = first_arg.getType(resolveContext.getTypeEvalContext());
         if (first_arg_type instanceof PyClassType) {
           PyClass derived_class = ((PyClassType)first_arg_type).getPyClass();
-          if (derived_class != null) {
-            final Iterator<PyClass> base_it = derived_class.iterateAncestorClasses().iterator();
-            if (base_it.hasNext()) {
-              return new PyClassTypeImpl(base_it.next(), true).resolveMember(name, location, direction, resolveContext);
-            }
-            else {
-              return null; // no base classes = super() cannot proxy anything meaningful from a base class
-            }
+          final Iterator<PyClass> base_it = derived_class.iterateAncestorClasses().iterator();
+          if (base_it.hasNext()) {
+            return new PyClassTypeImpl(base_it.next(), true).resolveMember(name, location, direction, resolveContext);
+          }
+          else {
+            return null; // no base classes = super() cannot proxy anything meaningful from a base class
           }
         }
       }
