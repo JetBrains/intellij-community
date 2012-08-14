@@ -233,6 +233,15 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       }
 
       @Override
+      public void executeWithReparse(final ThrowableRunnable<Exception> operation, String command) {
+        CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+          public void run() {
+            DesignerEditorPanel.this.executeWithReparse(operation);
+          }
+        }, command, null);
+      }
+
+      @Override
       public void execute(final List<EditOperation> operations, String command) {
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
           public void run() {
@@ -699,6 +708,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected abstract EditOperation processRootOperation(OperationContext context);
 
   protected abstract boolean execute(ThrowableRunnable<Exception> operation, boolean updateProperties);
+
+  protected abstract void executeWithReparse(ThrowableRunnable<Exception> operation);
 
   protected abstract void execute(List<EditOperation> operations);
 

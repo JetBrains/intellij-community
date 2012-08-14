@@ -133,6 +133,8 @@ public abstract class ToolProvider {
 
   public abstract boolean execute(ThrowableRunnable<Exception> operation, String command, boolean updateProperties);
 
+  public abstract void executeWithReparse(ThrowableRunnable<Exception> operation, String command);
+
   public abstract void execute(List<EditOperation> operations, String command);
 
   public abstract void startInplaceEditing(@Nullable InplaceContext inplaceContext);

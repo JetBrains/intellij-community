@@ -670,6 +670,23 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   }
 
   @Override
+  protected void executeWithReparse(ThrowableRunnable<Exception> operation) {
+    if (!ReadonlyStatusHandler.ensureFilesWritable(getProject(), myFile)) {
+      return;
+    }
+    try {
+      myPSIChangeListener.stop();
+      operation.run();
+      myPSIChangeListener.start();
+      reparseFile();
+    }
+    catch (Throwable e) {
+      showError("Execute command", e);
+      myPSIChangeListener.start();
+    }
+  }
+
+  @Override
   protected void execute(List<EditOperation> operations) {
     if (!ReadonlyStatusHandler.ensureFilesWritable(getProject(), myFile)) {
       return;

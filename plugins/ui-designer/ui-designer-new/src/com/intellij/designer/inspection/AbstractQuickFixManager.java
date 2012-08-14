@@ -317,12 +317,12 @@ public abstract class AbstractQuickFixManager {
     return new Runnable() {
       @Override
       public void run() {
-        myDesigner.getToolProvider().execute(new ThrowableRunnable<Exception>() {
+        myDesigner.getToolProvider().executeWithReparse(new ThrowableRunnable<Exception>() {
           @Override
           public void run() throws Exception {
             ApplicationManager.getApplication().runWriteAction(value);
           }
-        }, "Run '" + value.getName() + "' QuickFix", true);
+        }, "Run '" + value.getName() + "' QuickFix");
       }
     };
   }
