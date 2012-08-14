@@ -16,8 +16,10 @@
 package com.intellij.psi.resolve
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ClassInheritorsSearch
@@ -131,5 +133,23 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
 
   private PsiMethod fooMethod(PsiClass c) { c.findMethodsByName('foo', false)[0] }
   private Set<PsiMethod> fooInheritors(PsiClass c) { OverridingMethodsSearch.search(fooMethod(c)).findAll() as Set }
+
+  public void "test do not parse not stubbed sources in class jars"() {
+    def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/libResolve/classesAndSources")
+    PsiTestUtil.addLibrary(myModule, 'cas', lib.path, ["/classesAndSources.jar!/"] as String[], ["/classesAndSources.jar!/"] as String[])
+
+    def facade = JavaPsiFacade.getInstance(project)
+    def scope = GlobalSearchScope.allScope(project)
+
+    assert facade.findClasses('LibraryClass', scope).size() == 1
+
+    def pkg = facade.findPackage("")
+    assert pkg.classes.size() == 1
+
+    Collection<VirtualFile> pkgDirs = pkg.directories.collect { it.virtualFile }
+    Collection<VirtualFile> pkgChildren = pkgDirs.collect { it.children as List }.flatten()
+    PsiFile javaSrc = psiManager.findFile(pkgChildren.find { it.name == 'LibraryClass.java' })
+    assert !javaSrc.node.parsed
+  }
 
 }

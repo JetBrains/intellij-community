@@ -17,8 +17,10 @@ package com.intellij.core;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsFileImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +44,13 @@ public class CoreJavaDirectoryService extends JavaDirectoryService {
   public PsiClass[] getClasses(@NotNull PsiDirectory dir) {
     LOG.assertTrue(dir.isValid());
 
+    boolean onlyCompiled = FileIndexFacade.getInstance(dir.getProject()).isInLibraryClasses(dir.getVirtualFile());
+
     List<PsiClass> classes = null;
     for (PsiFile file : dir.getFiles()) {
+      if (onlyCompiled && !(file instanceof ClsFileImpl)) {
+        continue;
+      }
       if (file instanceof PsiClassOwner && file.getViewProvider().getLanguages().size() == 1) {
         PsiClass[] psiClasses = ((PsiClassOwner)file).getClasses();
         if (psiClasses.length == 0) continue;
