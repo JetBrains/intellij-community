@@ -30,6 +30,7 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
@@ -207,7 +208,7 @@ public class Switcher extends AnAction implements DumbAware {
     };
 
     @SuppressWarnings({"ManualArrayToCollectionCopy"})
-    SwitcherPanel(Project project, String title, boolean pinned) {
+    SwitcherPanel(final Project project, String title, boolean pinned) {
       setLayout(new SwitcherLayouter());
       this.project = project;
       MAX_FILES_IN_SWITCHER = pinned ? UISettings.getInstance().RECENT_FILES_LIMIT : 30;
@@ -364,7 +365,40 @@ public class Switcher extends AnAction implements DumbAware {
         filesModel.addElement(editor);
       }
 
-      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project, pinned);
+      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project, pinned) {
+        JPanel myPanel = new JPanel(new BorderLayout());
+        JLabel myLabel = new JLabel() {
+          @Override
+          protected void paintComponent(Graphics g) {
+            GraphicsConfig config = new GraphicsConfig(g);
+              ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+            super.paintComponent(g);
+            config.restore();
+          }
+        };
+        {
+          myPanel.setOpaque(false);
+          myPanel.setBackground(UIUtil.getListBackground());
+          myLabel.setText("* ");
+        }
+
+        @Override
+        public Component getListCellRendererComponent(JList list,
+                                                      Object value,
+                                                      int index,
+                                                      boolean selected,
+                                                      boolean hasFocus) {
+          final Component c = super.getListCellRendererComponent(list, value, index, selected, hasFocus);
+          final Color bg = UIUtil.getListBackground();
+          final Color fg = UIUtil.getListForeground();
+          myLabel.setForeground(open ? fg : bg);
+
+          myPanel.removeAll();
+          myPanel.add(myLabel, BorderLayout.WEST);
+          myPanel.add(c, BorderLayout.CENTER);
+          return myPanel;
+        }
+      };
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         private String getTitle2Text(String fullText) {
@@ -944,6 +978,7 @@ public class Switcher extends AnAction implements DumbAware {
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
     private final Project myProject;
     private final boolean myPinned;
+    boolean open;
 
     public VirtualFilesRenderer(Project project, boolean pinned) {
       myProject = project;
@@ -959,9 +994,8 @@ public class Switcher extends AnAction implements DumbAware {
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
         FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-        final boolean open = FileEditorManager.getInstance(myProject).isFileOpen(virtualFile);
-        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE,
-                                                       open ? Font.PLAIN : Font.ITALIC);
+        open = FileEditorManager.getInstance(myProject).isFileOpen(virtualFile);
+        TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
 
         final Color color = FileColorManager.getInstance(myProject).getFileColor(virtualFile);
