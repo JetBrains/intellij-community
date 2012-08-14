@@ -88,42 +88,42 @@ public class AndroidFindUsagesTest extends AndroidTestCase {
   public void testValueResource3() throws Throwable {
     myFixture.copyFileToProject(BASE_PATH + "Class.java", "src/p1/p2/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "layout.xml", "res/layout/layout.xml");
-    Collection<UsageInfo> references = findCodeUsages("fu2_values.xml", "res/values/fu3_values.xml");
+    Collection<UsageInfo> references = findCodeUsages("fu3_values.xml", "res/values/fu3_values.xml");
     assertEquals(2, references.size());
   }
 
   public void testValueResource4() throws Throwable {
     myFixture.copyFileToProject(BASE_PATH + "Class.java", "src/p1/p2/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "layout.xml", "res/layout/layout.xml");
-    Collection<UsageInfo> references = findCodeUsages("fu2_values.xml", "res/values/fu4_values.xml");
+    Collection<UsageInfo> references = findCodeUsages("fu4_values.xml", "res/values/fu4_values.xml");
     assertEquals(2, references.size());
   }
 
   public void testValueResource5() throws Throwable {
     myFixture.copyFileToProject(BASE_PATH + "Class.java", "src/p1/p2/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "layout.xml", "res/layout/layout.xml");
-    Collection<UsageInfo> references = findCodeUsages("fu2_values.xml", "res/values/fu5_values.xml");
+    Collection<UsageInfo> references = findCodeUsages("fu5_values.xml", "res/values/fu5_values.xml");
     assertEquals(2, references.size());
   }
 
   public void testValueResource6() throws Throwable {
     myFixture.copyFileToProject(BASE_PATH + "Class.java", "src/p1/p2/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "layout.xml", "res/layout/layout.xml");
-    Collection<UsageInfo> references = findCodeUsages("fu2_values.xml", "res/values/fu6_values.xml");
+    Collection<UsageInfo> references = findCodeUsages("fu6_values.xml", "res/values/fu6_values.xml");
     assertEquals(2, references.size());
   }
 
   public void testValueResource7() throws Throwable {
     myFixture.copyFileToProject(BASE_PATH + "Class.java", "src/p1/p2/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "layout.xml", "res/layout/layout.xml");
-    Collection<UsageInfo> references = findCodeUsages("fu2_values.xml", "res/values/fu7_values.xml");
+    Collection<UsageInfo> references = findCodeUsages("fu7_values.xml", "res/values/fu7_values.xml");
     assertEquals(2, references.size());
   }
 
   public void testValueResource8() throws Throwable {
     myFixture.copyFileToProject(BASE_PATH + "Class.java", "src/p1/p2/Class.java");
     myFixture.copyFileToProject(BASE_PATH + "layout.xml", "res/layout/layout.xml");
-    Collection<UsageInfo> references = findCodeUsages("fu2_values.xml", "res/values/f8_values.xml");
+    Collection<UsageInfo> references = findCodeUsages("fu8_values.xml", "res/values/f8_values.xml");
     assertEquals(2, references.size());
   }
 
