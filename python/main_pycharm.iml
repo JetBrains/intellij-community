@@ -36,6 +36,7 @@
     <orderEntry type="module" module-name="python-rest" />
     <orderEntry type="module" module-name="pycharm-flask" />
     <orderEntry type="module" module-name="python-helpers" />
+    <orderEntry type="module" module-name="sql" />
   </component>
 </module>
 
