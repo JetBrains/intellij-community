@@ -371,7 +371,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   @NotNull
-  public List<PyPackage> getPackages() throws PyExternalProcessException {
+  public synchronized List<PyPackage> getPackages() throws PyExternalProcessException {
     if (myPackagesCache == null) {
       if (myExceptionCache != null) {
         throw myExceptionCache;

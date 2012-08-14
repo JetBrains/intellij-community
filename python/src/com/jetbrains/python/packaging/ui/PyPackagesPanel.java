@@ -222,7 +222,8 @@ public class PyPackagesPanel extends JPanel {
                             else {
                               myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
                                                            "Upgrade Packages Failed",
-                                                           PyPackageManagerImpl.UI.createDescription(exceptions, "Upgrade packages failed."));
+                                                           PyPackageManagerImpl.UI
+                                                             .createDescription(exceptions, "Upgrade packages failed."));
                             }
                           }
                         });
@@ -270,7 +271,7 @@ public class PyPackagesPanel extends JPanel {
               final String pyPackageName = pyPackage.getName();
               final String availableVersion = (String)myPackagesTable.getValueAt(index, 2);
               upgradeAvailable = PyRequirement.VERSION_COMPARATOR.compare(pyPackage.getVersion(), availableVersion) < 0 &&
-                                  !currentlyInstalling.contains(pyPackageName);
+                                 !currentlyInstalling.contains(pyPackageName);
               isPipOrDistribute = "pip".equals(pyPackageName) || "distribute".equals(pyPackageName);
               isAvailabe = !isPipOrDistribute;
 
@@ -352,7 +353,7 @@ public class PyPackagesPanel extends JPanel {
         List<PyPackage> packages = Lists.newArrayList();
         if (selectedSdk != null) {
           try {
-            packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(selectedSdk)).getPackages();
+            packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(selectedSdk)).getPackages();
           }
           catch (PyExternalProcessException e) {
             // do nothing, we already have an empty list
@@ -377,8 +378,9 @@ public class PyPackagesPanel extends JPanel {
                     myPackagesTableModel
                       .addRow(new Object[]{pyPackage, pyPackage.getVersion(), version == null ? "" : version});
                   }
-                  if (!cache.isEmpty())
+                  if (!cache.isEmpty()) {
                     myPackagesTable.setPaintBusy(false);
+                  }
                 }
               }
             }, ModalityState.any());
@@ -439,7 +441,8 @@ public class PyPackagesPanel extends JPanel {
               final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(selectedSdk);
               final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
               boolean allowCreateVirtualEnv =
-                !(PythonSdkType.isRemote(selectedSdk) || flavor instanceof IronPythonSdkFlavor) && myNotificationArea.hasLinkHandler(CREATE_VENV);
+                !(PythonSdkType.isRemote(selectedSdk) || flavor instanceof IronPythonSdkFlavor) &&
+                myNotificationArea.hasLinkHandler(CREATE_VENV);
               final String createVirtualEnvLink = "<a href=\"" + CREATE_VENV + "\">create new VirtualEnv</a>";
               myNotificationArea.hide();
               if (!invalid) {
