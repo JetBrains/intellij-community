@@ -125,6 +125,18 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
+  @Override
+  public PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context) {
+    if ("contextlib.closing".equals(contextManager.getQualifiedName()) && withExpression instanceof PyCallExpression) {
+      PyExpression closee = ((PyCallExpression)withExpression).getArgument(0, PyExpression.class);
+      if (closee != null) {
+        return closee.getType(context);
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   private PyType getOverloadedReturnTypeByQName(@NotNull Map<PyExpression, PyNamedParameter> arguments,
                                                 @NotNull String qname,
                                                 @NotNull PsiElement anchor,
