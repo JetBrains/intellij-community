@@ -16,7 +16,11 @@
 package com.jetbrains.python.packaging;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -27,4 +31,7 @@ public abstract class PyPackageManagers {
   }
 
   public abstract PyPackageManager forSdk(Sdk sdk);
+
+  @Nullable
+  public abstract List<PyRequirement> getRequirements(Module module);
 }

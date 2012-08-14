@@ -1,8 +1,11 @@
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -20,5 +23,11 @@ public class PyPackageManagersImpl extends PyPackageManagers {
       myInstances.put(name, manager);
     }
     return manager;
+  }
+
+  @Nullable
+  @Override
+  public List<PyRequirement> getRequirements(Module module) {
+    return PyPackageManagerImpl.getRequirements(module);
   }
 }
