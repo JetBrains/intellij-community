@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2007-2012 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,12 +34,9 @@ public class ConvertCatchToThrowsIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiCatchSection catchSection =
-      (PsiCatchSection)element.getParent();
-    final PsiMethod method =
-      PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class);
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+    final PsiCatchSection catchSection = (PsiCatchSection)element.getParent();
+    final PsiMethod method = PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class);
     if (method == null) {
       return;
     }
@@ -49,34 +46,8 @@ public class ConvertCatchToThrowsIntention extends Intention {
     // YY. Do you want to modify the base method?"
     //                                             [Yes][No][Cancel]
     final PsiReferenceList throwsList = method.getThrowsList();
-    final Project project = element.getProject();
-    final PsiElementFactory factory =
-      JavaPsiFacade.getElementFactory(project);
     final PsiType catchType = catchSection.getCatchType();
-    if (catchType instanceof PsiClassType) {
-      final PsiClassType classType = (PsiClassType)catchType;
-      final PsiJavaCodeReferenceElement referenceElement =
-        factory.createReferenceElementByType(classType);
-      throwsList.add(referenceElement);
-    }
-    else if (catchType instanceof PsiDisjunctionType) {
-      final PsiDisjunctionType disjunctionType =
-        (PsiDisjunctionType)catchType;
-      final List<PsiType> disjunctions =
-        disjunctionType.getDisjunctions();
-      for (PsiType disjunction : disjunctions) {
-        if (!(disjunction instanceof PsiClassType)) {
-          continue;
-        }
-        final PsiClassType classType = (PsiClassType)disjunction;
-        final PsiJavaCodeReferenceElement referenceElement =
-          factory.createReferenceElementByType(classType);
-        throwsList.add(referenceElement);
-      }
-    }
-    else {
-      return;
-    }
+    addToThrowsList(throwsList, catchType);
     final PsiTryStatement tryStatement = catchSection.getTryStatement();
     final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
     if (catchSections.length > 1 || tryStatement.getResourceList() != null) {
@@ -93,6 +64,29 @@ public class ConvertCatchToThrowsIntention extends Intention {
         tryStatement.getParent().addRangeAfter(first, last, tryStatement);
       }
       tryStatement.delete();
+    }
+  }
+
+  private static void addToThrowsList(PsiReferenceList throwsList, PsiType catchType) {
+    if (catchType instanceof PsiClassType) {
+      final PsiClassType classType = (PsiClassType)catchType;
+      final PsiClassType[] types = throwsList.getReferencedTypes();
+      for (PsiClassType type : types) {
+        if (catchType.equals(type)) {
+          return;
+        }
+      }
+      final Project project = throwsList.getProject();
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
+      throwsList.add(referenceElement);
+    }
+    else if (catchType instanceof PsiDisjunctionType) {
+      final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)catchType;
+      final List<PsiType> disjunctions = disjunctionType.getDisjunctions();
+      for (PsiType disjunction : disjunctions) {
+        addToThrowsList(throwsList, disjunction);
+      }
     }
   }
 }

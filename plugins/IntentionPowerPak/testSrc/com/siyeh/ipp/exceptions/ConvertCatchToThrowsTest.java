@@ -24,6 +24,7 @@ public class ConvertCatchToThrowsTest extends IPPTestCase {
   public void testMultiCatch() { doTest(); }
   public void testArmWithPluralCatches() { doTest(); }
   public void testArmWithSingleCatch() { doTest(); }
+  public void testExistingThrows() { doTest(); }
 
   @Override
   protected String getIntentionName() {
