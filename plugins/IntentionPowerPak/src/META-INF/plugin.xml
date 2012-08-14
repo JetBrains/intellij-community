@@ -211,6 +211,11 @@
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.siyeh.ipp.decls.ChangeVariableTypeToRhsTypeIntention</className>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
     <!-- Imports -->
 
     <intentionAction>
