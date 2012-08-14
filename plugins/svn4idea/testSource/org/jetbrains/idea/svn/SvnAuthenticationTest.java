@@ -115,7 +115,7 @@ public class SvnAuthenticationTest extends PlatformTestCase {
     final SVNURL url = SVNURL.parseURIEncoded("http://some.host.com/repo");
 
     final SVNException[] exception = new SVNException[1];
-    final boolean[] result = new boolean[]{false};
+    final boolean[] result = {false};
     synchronousBackground(new Runnable() {
       @Override
       public void run() {
