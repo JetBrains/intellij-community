@@ -42,6 +42,7 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
   private final ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
   private final JBCheckBox myCbEnabled;
   final TextFieldWithHistory myFieldWithHistory;
+  private JComponent myAnchor;
 
   public AlternativeJREPanel() {
     super(new GridBagLayout());
@@ -79,6 +80,9 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
       }
     });
     enabledChanged();
+
+    setAnchor(myCbEnabled);
+
     updateUI();
   }
 
@@ -112,11 +116,12 @@ public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
 
   @Override
   public JComponent getAnchor() {
-    return myCbEnabled.getAnchor();
+    return myAnchor;
   }
 
   @Override
   public void setAnchor(JComponent anchor) {
+    myAnchor = anchor;
     myCbEnabled.setAnchor(anchor);
   }
 
