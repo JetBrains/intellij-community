@@ -89,64 +89,79 @@ public class UsageViewContext {
     }
 
     final ItemPresentation presentation = new ItemPresentation() {
+      @Override
       public String getPresentableText() {
         return myPresentableText;
       }
 
+      @Override
       public String getLocationString() {
         //noinspection HardCodedStringLiteral
         return "Do Not Know Where";
       }
 
+      @Override
       public Icon getIcon(boolean open) {
         return null;
       }
     };
 
+    @Override
     public void findUsages() {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void findUsagesInEditor(@NotNull FileEditor editor) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public void highlightUsages(PsiFile file, Editor editor, boolean clearHighlights) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean isValid() {
       return true;
     }
 
+    @Override
     public boolean isReadOnly() {
       return true;
     }
 
+    @Override
     public VirtualFile[] getFiles() {
       return null;
     }
 
+    @Override
     public void update() {
     }
 
+    @Override
     public String getName() {
       //noinspection HardCodedStringLiteral
       return "my name";
     }
 
+    @Override
     public ItemPresentation getPresentation() {
       return presentation;
     }
 
+    @Override
     public void navigate(boolean requestFocus) {
       throw new UnsupportedOperationException();
     }
 
+    @Override
     public boolean canNavigate() {
       return false;
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }
