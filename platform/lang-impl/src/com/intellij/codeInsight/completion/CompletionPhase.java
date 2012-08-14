@@ -155,7 +155,7 @@ public abstract class CompletionPhase implements Disposable {
       ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
         @Override
         public void beforeWriteActionStart(Object action) {
-          if (!indicator.getLookup().isLookupDisposed()) {
+          if (!indicator.getLookup().isLookupDisposed() && !indicator.isCanceled()) {
             indicator.scheduleRestart();
           }
         }
