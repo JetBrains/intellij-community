@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>SuspiciousArrayCast.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Suspicious array cast</problem_class>
+    <description>Suspicious cast to &lt;code&gt;Long[]&lt;/code&gt;</description>
+  </problem>
+</problems>

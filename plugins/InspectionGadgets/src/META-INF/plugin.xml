@@ -360,6 +360,10 @@
                      key="subtraction.in.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.bugs.SubtractionInCompareToInspection"/>
+    <localInspection language="JAVA" shortName="SuspiciousArrayCast" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="suspicious.array.cast.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.SuspiciousArrayCastInspection"/>
     <localInspection language="JAVA" shortName="SuspiciousIndentAfterControlStatement" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="suspicious.indent.after.control.statement.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
