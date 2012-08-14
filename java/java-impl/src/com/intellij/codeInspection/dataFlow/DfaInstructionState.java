@@ -25,6 +25,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import org.jetbrains.annotations.NotNull;
 
 public class DfaInstructionState {
   public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
@@ -32,7 +33,7 @@ public class DfaInstructionState {
   private final Instruction myInstruction;
   private long myDistanceFromStart = 0;
 
-  public DfaInstructionState(Instruction myInstruction, DfaMemoryState myBeforeMemoryState) {
+  public DfaInstructionState(@NotNull Instruction myInstruction, @NotNull DfaMemoryState myBeforeMemoryState) {
     this.myBeforeMemoryState = myBeforeMemoryState;
     this.myInstruction = myInstruction;
   }
@@ -41,15 +42,17 @@ public class DfaInstructionState {
 
   public void setDistanceFromStart(long distanceFromStart) { myDistanceFromStart = distanceFromStart; }
 
+  @NotNull
   public Instruction getInstruction() {
     return myInstruction;
   }
 
+  @NotNull
   public DfaMemoryState getMemoryState() {
     return myBeforeMemoryState;
   }
 
   public String toString() {
-    return "" + getInstruction().getIndex() + ": " + getMemoryState().toString() + " " + getInstruction().toString();
+    return getInstruction().getIndex() + ": " + getMemoryState().toString() + " " + getInstruction().toString();
   }
 }
