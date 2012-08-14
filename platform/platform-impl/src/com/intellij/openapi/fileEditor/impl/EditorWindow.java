@@ -534,10 +534,16 @@ public class EditorWindow {
       addFocusListener(new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent e) {
-          final JComponent focus = myEditor.getSelectedEditorWithProvider().getFirst().getPreferredFocusedComponent();
-          if (focus != null) {
-            IdeFocusManager.getGlobalInstance().requestFocus(focus, true);
-          }
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!TComp.this.hasFocus()) return;
+              final JComponent focus = myEditor.getSelectedEditorWithProvider().getFirst().getPreferredFocusedComponent();
+              if (focus != null && !focus.hasFocus()) {
+                IdeFocusManager.getGlobalInstance().requestFocus(focus, true);
+              }
+            }
+          });
         }
       });
     }
@@ -728,7 +734,7 @@ public class EditorWindow {
           }
 
           final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
-          final FileEditor[] editors = fileEditorManager.openFileImpl3(res, nextFile, false, null, true).first;
+          final FileEditor[] editors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true).first;
           syncCaretIfPossible(editors);
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
