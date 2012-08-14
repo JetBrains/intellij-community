@@ -34,7 +34,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.PairFunction;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -112,12 +112,12 @@ public abstract class PropertyTable extends JBTable {
 
     addMouseListener(new MouseTableListener());
 
-    mySpeedSearch = new TableSpeedSearch(this, new NullableFunction<Pair<Object, Cell>, String>() {
+    mySpeedSearch = new TableSpeedSearch(this, new PairFunction<Object, Cell, String>() {
       @Override
-      public String fun(Pair<Object, Cell> pair) {
-        if (pair.second.column != 0) return null;
-        if (pair.first instanceof GroupProperty) return null;
-        return ((Property)pair.first).getName();
+      public String fun(Object object, Cell cell) {
+        if (cell.column != 0) return null;
+        if (object instanceof GroupProperty) return null;
+        return ((Property)object).getName();
       }
     }) {
       @Override
@@ -1250,7 +1250,7 @@ public abstract class PropertyTable extends JBTable {
         }
 
         SearchUtil.appendFragments(mySpeedSearch.getEnteredPrefix(), property.getName(),
-                                   attr.getStyle(),  attr.getFgColor(), attr.getBgColor(), renderer);
+                                   attr.getStyle(), attr.getFgColor(), attr.getBgColor(), renderer);
 
         Icon icon = UIUtil.getTreeNodeIcon(isExpanded(property), selected, tableHasFocus);
         boolean hasChildren = !getChildren(property).isEmpty();
