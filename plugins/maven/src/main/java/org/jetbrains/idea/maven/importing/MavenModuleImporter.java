@@ -20,6 +20,7 @@ import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.ProcessorConfigProfile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.io.FileUtil;
@@ -231,6 +232,16 @@ public class MavenModuleImporter {
 
   private void configAnnotationProcessors() {
     if (Boolean.parseBoolean(System.getProperty("idea.maven.keep.annotation.processors"))) return;
+
+    Sdk sdk = ModuleRootManager.getInstance(myModule).getSdk();
+    if (sdk != null) {
+      String versionString = sdk.getVersionString();
+      if (versionString != null) {
+        if (versionString.contains("1.5.") || versionString.contains("1.4.") || versionString.contains("1.3.") || versionString.contains("1.2.")) {
+          return;
+        }
+      }
+    }
 
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(
       myModule.getProject());
