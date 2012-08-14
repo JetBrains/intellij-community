@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -708,7 +709,11 @@ public abstract class PropertyTable extends JBTable {
   }
 
   private void startEditing(int index) {
-    PropertyEditor editor = myProperties.get(index).getEditor();
+    startEditing(index, false);
+  }
+
+  private void startEditing(int index, boolean startedWithKeyboard) {
+    final PropertyEditor editor = myProperties.get(index).getEditor();
     if (editor == null) {
       return;
     }
@@ -722,6 +727,17 @@ public abstract class PropertyTable extends JBTable {
     }
     if (preferredComponent != null) {
       preferredComponent.requestFocusInWindow();
+    }
+
+    if (startedWithKeyboard) {
+      // waiting for focus is necessary in case, if 'activate' opens dialog. If we don't wait for focus, after the dialog is shown we'll
+      // end up with the table focused instead of the dialog
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+        @Override
+        public void run() {
+          editor.activate();
+        }
+      });
     }
   }
 
@@ -876,7 +892,7 @@ public abstract class PropertyTable extends JBTable {
         return;
       }
 
-      startEditing(selectedRow);
+      startEditing(selectedRow, true);
     }
   }
 
@@ -897,7 +913,7 @@ public abstract class PropertyTable extends JBTable {
         }
       }
       else {
-        startEditing(selectedRow);
+        startEditing(selectedRow, true);
       }
     }
   }

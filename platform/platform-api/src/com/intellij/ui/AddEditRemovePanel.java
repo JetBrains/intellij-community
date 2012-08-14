@@ -22,7 +22,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -82,6 +81,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
+          if (myTable.isEditing()) {
+            myTable.getCellEditor().stopCellEditing();
+            return;
+          }
           doEdit();
         }
       })
@@ -183,7 +186,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   
   protected void doRemove() {
     if (myTable.isEditing()) {
-      myTable.editingStopped(new ChangeEvent(myTableModel));
+      myTable.getCellEditor().stopCellEditing();
     }
 
     final int[] selected = myTable.getSelectedRows();

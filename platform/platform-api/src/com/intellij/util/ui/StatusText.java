@@ -40,7 +40,7 @@ public abstract class StatusText {
   private boolean myIsDefaultText;
 
   private String myText = "";
-  private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
+  protected final SimpleColoredComponent myComponent = new SimpleColoredComponent();
   private final ArrayList<ActionListener> myClickListeners = new ArrayList<ActionListener>();
 
   protected StatusText(JComponent owner) {
@@ -111,7 +111,7 @@ public abstract class StatusText {
     return null;
   }
 
-  private Rectangle getTextComponentBound() {
+  protected Rectangle getTextComponentBound() {
     Rectangle ownerRec = myOwner == null ? new Rectangle(0, 0, 0, 0) : myOwner.getBounds();
 
     Dimension size = myComponent.getPreferredSize();
@@ -171,6 +171,11 @@ public abstract class StatusText {
     Graphics2D g2 = (Graphics2D)g.create(b.x, b.y, b.width, b.height);
     myComponent.paint(g2);
     g2.dispose();
+  }
+
+  @NotNull
+  public SimpleColoredComponent getComponent() {
+    return myComponent;
   }
 
   public Dimension getPreferredSize() {
