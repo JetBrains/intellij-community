@@ -21,9 +21,9 @@ package com.intellij.lang;
 
 import com.intellij.formatting.CustomFormattingModelBuilder;
 import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 public class LanguageFormatting extends LanguageExtension<FormattingModelBuilder> {
   public static final LanguageFormatting INSTANCE = new LanguageFormatting();
@@ -32,19 +32,22 @@ public class LanguageFormatting extends LanguageExtension<FormattingModelBuilder
     super("com.intellij.lang.formatter");
   }
 
+  @Nullable
   public FormattingModelBuilder forContext(PsiElement context) {
     return forContext(context.getLanguage(), context);
   }
 
+  @Nullable
   public FormattingModelBuilder forContext(Language language, PsiElement context) {
-    final List<FormattingModelBuilder> builders = allForLanguage(language);
-    for (FormattingModelBuilder builder : builders) {
+    for (LanguageFormattingRestriction each : Extensions.getExtensions(LanguageFormattingRestriction.EXTENSION)) {
+      if (!each.isFormatterAllowed(context)) return null;
+    }
+    for (FormattingModelBuilder builder : allForLanguage(language)) {
       if (builder instanceof CustomFormattingModelBuilder) {
         final CustomFormattingModelBuilder custom = (CustomFormattingModelBuilder)builder;
         if (custom.isEngagedToFormat(context)) return builder;
       }
     }
-
     return forLanguage(language);
   }
 }
