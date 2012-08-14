@@ -17,6 +17,9 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +38,8 @@ public class StatisticsWeigher extends CompletionWeigher {
   }
 
   public static class LookupStatisticsWeigher extends LookupElementWeigher {
+    private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.StatisticsWeigher.LookupStatisticsWeigher");
+    private static final Key<StatisticsInfo> BASE_INFO = Key.create("Base statistics info");
     private final CompletionLocation myLocation;
 
     public LookupStatisticsWeigher(CompletionLocation location) {
@@ -44,8 +49,8 @@ public class StatisticsWeigher extends CompletionWeigher {
 
     @Override
     public Integer weigh(@NotNull LookupElement item) {
-      final StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
-      if (info == null || info == StatisticsInfo.EMPTY) {
+      final StatisticsInfo info = getBaseStatisticsInfo(item);
+      if (info == StatisticsInfo.EMPTY) {
         return 0;
       }
       int max = 0;
@@ -53,6 +58,24 @@ public class StatisticsWeigher extends CompletionWeigher {
         max = Math.max(max, ourStatManager.getUseCount(statisticsInfo));
       }
       return max;
+    }
+
+    @NotNull
+    private StatisticsInfo getBaseStatisticsInfo(LookupElement item) {
+      StatisticsInfo info = BASE_INFO.get(item);
+      if (info == null) {
+        BASE_INFO.set(item, info = calcBaseInfo(item));
+      }
+      return info;
+    }
+
+    @NotNull
+    private StatisticsInfo calcBaseInfo(LookupElement item) {
+      if (!ApplicationManager.getApplication().isUnitTestMode()) {
+        LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+      }
+      StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
+      return info == null ? StatisticsInfo.EMPTY : info;
     }
   }
 
