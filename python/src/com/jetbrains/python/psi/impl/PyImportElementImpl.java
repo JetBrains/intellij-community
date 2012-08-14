@@ -193,7 +193,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
     if (asName != null) {
       if (!Comparing.equal(name, asName)) return null;
       // [yole] I'm not sure why we always resolve the module in this branch but the tests seem to rely on that
-      return ResolveImportUtil.resolveImportElement(this);
+      return resolve();
     }
     else {
       final PyQualifiedName qName = getImportedQName();
@@ -212,6 +212,13 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       }
       return createImportedModule(name);
     }
+  }
+
+  @Nullable
+  @Override
+  public PsiElement resolve() {
+    PyQualifiedName qName = getImportedQName();
+    return qName == null ? null : ResolveImportUtil.resolveImportElement(this, qName);
   }
 
   public boolean mustResolveOutside() {

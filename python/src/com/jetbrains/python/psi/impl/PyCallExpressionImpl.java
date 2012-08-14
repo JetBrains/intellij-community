@@ -119,9 +119,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
               final PyClassType classType = (PyClassType)argType;
               if (!classType.isDefinition()) {
                 final PyClass cls = classType.getPyClass();
-                if (cls != null) {
-                  return cls.getType(context);
-                }
+                return cls.getType(context);
               }
             }
             else {
@@ -164,7 +162,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
             if (t != null && !(t instanceof PyNoneType)) {
               if (t instanceof PyTypeReference) {
                 PyType resolved = ((PyTypeReference)t).resolve(callee, context);
-                if (resolved == null) {
+                if (resolved == null && cls != null) {
                   return new PyWeakClassType(cls, false);
                 }
               }
@@ -257,7 +255,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
         if (CompletionUtil.getOriginalOrSelf(firstClass) == secondClass) {
           return getSuperClassUnionType(firstClass);
         }
-        if (secondClass != null && secondClass.isSubclass(firstClass)) {
+        if (secondClass.isSubclass(firstClass)) {
           final Iterator<PyClass> iterator = firstClass.iterateAncestorClasses().iterator();
           if (iterator.hasNext()) {
             return new PyClassTypeImpl(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()

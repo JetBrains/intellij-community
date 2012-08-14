@@ -83,40 +83,38 @@ class DocumentationBuilder {
             PyType type = qual.getType(TypeEvalContext.fast());
             if (type instanceof PyClassType) {
               cls = ((PyClassType)type).getPyClass();
-              if (cls != null) {
-                Property property = cls.findProperty(element_name);
-                if (property != null) {
-                  is_property = true;
-                  final AccessDirection dir = AccessDirection.of((PyElement)outer);
-                  Maybe<Callable> accessor = property.getByDirection(dir);
-                  myProlog
-                    .addItem("property ").addWith(TagBold, $().addWith(TagCode, $(element_name)))
-                    .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, TagCode, true, true))
-                  ;
-                  if (accessor.isDefined() && property.getDoc() != null) {
-                    myBody.addItem(": ").addItem(property.getDoc()).addItem(BR);
-                  }
-                  else {
-                    final Callable getter = property.getGetter().valueOrNull();
-                    if (getter != null && getter != myElement && getter instanceof PyFunction) {
-                      // not in getter, getter's doc comment may be useful
-                      PyStringLiteralExpression docstring = ((PyFunction)getter).getDocStringExpression();
-                      if (docstring != null) {
-                        myProlog
-                          .addItem(BR).addWith(TagItalic, $("Copied from getter:")).addItem(BR)
-                          .addItem(docstring.getStringValue())
-                        ;
-                      }
+              Property property = cls.findProperty(element_name);
+              if (property != null) {
+                is_property = true;
+                final AccessDirection dir = AccessDirection.of((PyElement)outer);
+                Maybe<Callable> accessor = property.getByDirection(dir);
+                myProlog
+                  .addItem("property ").addWith(TagBold, $().addWith(TagCode, $(element_name)))
+                  .addItem(" of ").add(PythonDocumentationProvider.describeClass(cls, TagCode, true, true))
+                ;
+                if (accessor.isDefined() && property.getDoc() != null) {
+                  myBody.addItem(": ").addItem(property.getDoc()).addItem(BR);
+                }
+                else {
+                  final Callable getter = property.getGetter().valueOrNull();
+                  if (getter != null && getter != myElement && getter instanceof PyFunction) {
+                    // not in getter, getter's doc comment may be useful
+                    PyStringLiteralExpression docstring = ((PyFunction)getter).getDocStringExpression();
+                    if (docstring != null) {
+                      myProlog
+                        .addItem(BR).addWith(TagItalic, $("Copied from getter:")).addItem(BR)
+                        .addItem(docstring.getStringValue())
+                      ;
                     }
-                    myBody.addItem(BR);
                   }
                   myBody.addItem(BR);
-                  if (accessor.isDefined() && accessor.value() == null) followed = null;
-                  if (dir == AccessDirection.READ) accessor_kind = "Getter";
-                  else if (dir == AccessDirection.WRITE) accessor_kind = "Setter";
-                  else accessor_kind = "Deleter";
-                  if (followed != null) myEpilog.addWith(TagSmall, $(BR, BR, accessor_kind, " of property")).addItem(BR);
                 }
+                myBody.addItem(BR);
+                if (accessor.isDefined() && accessor.value() == null) followed = null;
+                if (dir == AccessDirection.READ) accessor_kind = "Getter";
+                else if (dir == AccessDirection.WRITE) accessor_kind = "Setter";
+                else accessor_kind = "Deleter";
+                if (followed != null) myEpilog.addWith(TagSmall, $(BR, BR, accessor_kind, " of property")).addItem(BR);
               }
             }
           }
@@ -292,15 +290,13 @@ class DocumentationBuilder {
     PyClassType objtype = PyBuiltinCache.getInstance(fun).getObjectType(); // old- and new-style classes share the __xxx__ stuff
     if (objtype != null) {
       PyClass objcls = objtype.getPyClass();
-      if (objcls != null) {
-        PyFunction obj_underscored = objcls.findMethodByName(meth_name, false);
-        if (obj_underscored != null) {
-          PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
-          String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;
-          if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
-            addFormattedDocString(fun, predefined_doc, myBody, myBody);
-            myEpilog.addItem(BR).addItem(BR).addItem(PyBundle.message("QDOC.copied.from.builtin"));
-          }
+      PyFunction obj_underscored = objcls.findMethodByName(meth_name, false);
+      if (obj_underscored != null) {
+        PyStringLiteralExpression predefined_doc_expr = obj_underscored.getDocStringExpression();
+        String predefined_doc = predefined_doc_expr != null? predefined_doc_expr.getStringValue() : null;
+        if (predefined_doc != null && predefined_doc.length() > 1) { // only a real-looking doc string counts
+          addFormattedDocString(fun, predefined_doc, myBody, myBody);
+          myEpilog.addItem(BR).addItem(BR).addItem(PyBundle.message("QDOC.copied.from.builtin"));
         }
       }
     }
@@ -367,7 +363,7 @@ class DocumentationBuilder {
         final String type = structuredDocString.getParamType(name);
         if (type != null) {
           final PyType pyType = PyTypeParser.getTypeByName(followed, type);
-          if (pyType instanceof PyClassType && ((PyClassType)pyType).getPyClass() != null) {
+          if (pyType instanceof PyClassType) {
             myBody.addItem(": ").
                 addWith(new DocumentationBuilderKit.LinkWrapper(PythonDocumentationProvider.LINK_TYPE_PARAM),
                         $(pyType.getName()));

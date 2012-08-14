@@ -13,7 +13,6 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +96,7 @@ public class AddImportHelper {
         return false;
       }
       relativeToName = importElements[0].getImportedQName();
-      source = ResolveImportUtil.resolveImportElement(importElements[0]);
+      source = importElements[0].resolve();
     }
     if (relativeToName == null) {
       return false;

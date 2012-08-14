@@ -32,4 +32,12 @@ public interface PyImportElement extends PyElement, NameDefiner, StubBasedPsiEle
   
   @Nullable
   PsiElement getElementNamed(String name, boolean resolveImportElement);
+
+  /**
+   * Resolves the import element to the element being imported.
+   *
+   * @return the resolve result or null if the resolution failed.
+   */
+  @Nullable
+  PsiElement resolve();
 }

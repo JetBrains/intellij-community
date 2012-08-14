@@ -64,7 +64,7 @@ public class PyPropertyAccessInspection extends PyInspection {
         if (type instanceof PyClassType) {
           final PyClass cls = ((PyClassType)type).getPyClass();
           final String name = node.getName();
-          if (cls != null && name != null) {
+          if (name != null) {
             final Pair<PyClass, String> key = new Pair<PyClass, String>(cls, name);
             final Property property;
             if (myPropertyCache.containsKey(key)) {

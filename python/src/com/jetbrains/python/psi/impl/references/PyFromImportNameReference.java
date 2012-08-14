@@ -2,13 +2,14 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -18,13 +19,10 @@ import java.util.List;
  * @author yole
  */
 public class PyFromImportNameReference extends PyImportReference {
-  private final PyImportElement myImportElement;
   private final PyFromImportStatement myStatement;
 
   public PyFromImportNameReference(PyReferenceExpressionImpl element, PyResolveContext context) {
     super(element, context);
-    myImportElement = PsiTreeUtil.getParentOfType(element, PyImportElement.class);
-    assert myImportElement != null;
     myStatement = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);
     assert myStatement != null;
   }
@@ -32,6 +30,9 @@ public class PyFromImportNameReference extends PyImportReference {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    return ResolveImportUtil.resolveNameInFromImport(myImportElement, myElement.asQualifiedName(), myStatement);
+    PyQualifiedName qName = myElement.asQualifiedName();
+    return qName == null
+           ? Collections.<RatedResolveResult>emptyList()
+           : ResolveImportUtil.resolveNameInFromImport(myStatement, qName);
   }
 }

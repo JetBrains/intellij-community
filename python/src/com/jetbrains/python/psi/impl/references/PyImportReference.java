@@ -63,12 +63,9 @@ public class PyImportReference extends PyReferenceImpl {
   @NotNull
   @Override
   protected List<RatedResolveResult> resolveInner() {
-    final String referencedName = myElement.getReferencedName();
-    if (referencedName == null) return Collections.emptyList();
-
     final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
     final PyQualifiedName qname = myElement.asQualifiedName();
-    return ResolveImportUtil.resolveNameInImportStatement(parent, qname);
+    return qname == null ? Collections.<RatedResolveResult>emptyList() : ResolveImportUtil.resolveNameInImportStatement(parent, qname);
   }
 
   @NotNull

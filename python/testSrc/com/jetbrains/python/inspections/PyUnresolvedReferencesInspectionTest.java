@@ -165,6 +165,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-7043
+  public void testDunderPackage() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);

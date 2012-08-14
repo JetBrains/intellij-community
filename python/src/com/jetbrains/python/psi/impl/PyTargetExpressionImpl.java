@@ -181,7 +181,12 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             if (cls != null) {
               final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
               if (enter != null) {
-                return enter.getReturnType(context, null);
+                final PyType enterType = enter.getReturnType(context, null);
+                if (enterType != null) {
+                  return enterType;
+                }
+                // Guess the return type of __enter__
+                return PyUnionType.createWeakType(exprType);
               }
             }
           }
@@ -441,7 +446,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         return stub.getInitializer();
       }
       else if (initializerType == PyTargetExpressionStub.InitializerType.Custom) {
-        return stub.getCustomStub(CustomTargetExpressionStub.class).getCalleeName();
+        final CustomTargetExpressionStub customStub = stub.getCustomStub(CustomTargetExpressionStub.class);
+        if (customStub != null) {
+          return customStub.getCalleeName();
+        }
       }
       return null;
     }

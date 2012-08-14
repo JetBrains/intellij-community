@@ -60,8 +60,7 @@ public class PyBroadExceptionInspection extends PyInspection {
         if (type instanceof PyClassType) {
           final PyClass cls = ((PyClassType)type).getPyClass();
           final PyExpression target = node.getTarget();
-          if (cls != null && equalsException(cls, myTypeEvalContext) &&
-              (target == null || !isExceptionUsed(node, target.getText()))) {
+          if (equalsException(cls, myTypeEvalContext) && (target == null || !isExceptionUsed(node, target.getText()))) {
             registerProblem(exceptClass, "Too broad exception clause");
           }
         }

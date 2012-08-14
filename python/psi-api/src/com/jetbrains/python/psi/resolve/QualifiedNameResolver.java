@@ -40,4 +40,8 @@ public interface QualifiedNameResolver {
 
   @Nullable
   <T extends PsiElement> T firstResultOfType(Class<T> clazz);
+
+  QualifiedNameResolver withContext(QualifiedNameResolveContext context);
+
+  QualifiedNameResolver withoutForeign();
 }

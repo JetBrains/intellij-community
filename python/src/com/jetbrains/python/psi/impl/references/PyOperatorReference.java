@@ -125,9 +125,7 @@ public class PyOperatorReference extends PyReferenceImpl {
           VirtualFile vFile = null;
           if (type instanceof PyClassType) {
             final PyClass pyClass = ((PyClassType)type).getPyClass();
-            if (pyClass != null) {
-              vFile = pyClass.getContainingFile().getVirtualFile();
-            }
+            vFile = pyClass.getContainingFile().getVirtualFile();
           }
           type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
           typeEvalContext.trace("Could not resolve member %s in type %s from file %s", name, type, vFile);

@@ -169,7 +169,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
           if (expr_type instanceof PyClassType) {
             final PyClassType cls_type = (PyClassType)expr_type;
             PyClass cls = cls_type.getPyClass();
-            if (cls != null && !cls_type.isDefinition()) is_not_callable = cls.findMethodByName("__call__", true) == null;
+            if (!cls_type.isDefinition()) is_not_callable = cls.findMethodByName("__call__", true) == null;
           }
         }
         if (is_not_callable && !"None".equals(being_checked.getText()))

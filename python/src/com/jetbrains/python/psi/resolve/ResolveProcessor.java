@@ -107,7 +107,7 @@ public class ResolveProcessor implements PsiScopeProcessor {
             PyNames.INIT_DOT_PY.equals(importElement.getContainingFile().getName())) {
           final PsiElement packageElement = ResolveImportUtil.resolveImportElement(importElement, qName.removeLastComponent());
           if (PyUtil.turnDirIntoInit(packageElement) == importElement.getContainingFile()) {
-            myResult = PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(importElement));
+            myResult = PyUtil.turnDirIntoInit(importElement.resolve());
             addNameDefiner(importElement);
           }
         }

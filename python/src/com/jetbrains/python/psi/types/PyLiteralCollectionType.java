@@ -4,7 +4,6 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
@@ -12,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyLiteralCollectionType extends PyClassTypeImpl implements PyCollectionType {
   private final PySequenceExpression mySequence;
 
-  public PyLiteralCollectionType(@Nullable PyClass source, boolean isDefinition, PySequenceExpression sequence) {
+  public PyLiteralCollectionType(@NotNull PyClass source, boolean isDefinition, PySequenceExpression sequence) {
     super(source, isDefinition);
     mySequence = sequence;
   }

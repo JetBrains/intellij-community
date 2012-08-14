@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.psi.types.PyClassType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -23,7 +24,7 @@ public abstract class PyPsiFacade {
   @Nullable
   public abstract PyClass findClass(String qName);
 
-  public abstract PyClassType createClassType(PyClass pyClass, boolean isDefinition);
+  public abstract PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition);
 
   @Nullable
   public abstract String findShortestImportableName(PsiElement importer, VirtualFile targetFile);

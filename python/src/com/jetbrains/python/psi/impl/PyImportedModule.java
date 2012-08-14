@@ -55,7 +55,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
     }
     final PyImportElement fromImportElement = findMatchingFromImport(myImportedPrefix, the_name);
     if (fromImportElement != null) {
-      return ResolveImportUtil.resolveImportElement(fromImportElement);
+      return fromImportElement.resolve();
     }
 
     return null;
@@ -133,7 +133,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   @Nullable
-  private static PsiElement resolve(PyImportElement importElement, final PyQualifiedName prefix) {
+  private static PsiElement resolve(PyImportElement importElement, @NotNull final PyQualifiedName prefix) {
     return PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(importElement, prefix));
   }
 

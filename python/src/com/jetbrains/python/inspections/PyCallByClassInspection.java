@@ -72,58 +72,56 @@ public class PyCallByClassInspection extends PyInspection {
             final PyClassType qual_class_type = (PyClassType)qual_type;
             if (qual_class_type.isDefinition()) {
               PyClass qual_class = qual_class_type.getPyClass();
-              if (qual_class != null) {
-                final PyArgumentList arglist = call.getArgumentList();
-                if (arglist != null) {
-                  CallArgumentsMapping analysis = arglist.analyzeCall(resolveWithoutImplicits());
-                  final PyCallExpression.PyMarkedCallee markedCallee = analysis.getMarkedCallee();
-                  if (markedCallee != null  && markedCallee.getModifier() != STATICMETHOD) {
-                    PyParameter[] params = markedCallee.getCallable().getParameterList().getParameters();
-                    if (params.length > 0 && params[0] instanceof PyNamedParameter) {
-                      PyNamedParameter first_param = (PyNamedParameter)params[0];
-                      for (Map.Entry<PyExpression, PyNamedParameter> entry : analysis.getPlainMappedParams().entrySet()) {
-                        // we ignore *arg and **arg which we cannot analyze
-                        if (entry.getValue() == first_param) {
-                          PyExpression first_arg = entry.getKey();
-                          assert first_arg != null;
-                          PyType first_arg_type = myTypeEvalContext.getType(first_arg);
-                          if (first_arg_type instanceof PyClassType) {
-                            final PyClassType first_arg_class_type = (PyClassType)first_arg_type;
-                            if (first_arg_class_type.isDefinition() && markedCallee.getModifier() != CLASSMETHOD) {
-                              registerProblem(
-                                first_arg,
-                                PyBundle.message("INSP.instance.of.$0.excpected", qual_class.getQualifiedName())
-                              );
-                            }
-                            PyClass first_arg_class = first_arg_class_type.getPyClass();
-                            if (first_arg_class != null && first_arg_class != qual_class) {
-                              // delegating to a parent is fine
-                              if (markedCallee.getCallable() instanceof PyFunction) {
-                                Callable callable = PsiTreeUtil.getParentOfType(call, Callable.class);
-                                if (callable != null) {
-                                  PyFunction method = callable.asMethod();
-                                  if (method != null) {
-                                    PyClass calling_class = method.getContainingClass();
-                                    assert calling_class != null; // it's a method
-                                    if (first_arg_class.isSubclass(qual_class) && calling_class.isSubclass(qual_class)) {
-                                      break;
-                                      // TODO: might propose to switch to super() here
-                                    }
+              final PyArgumentList arglist = call.getArgumentList();
+              if (arglist != null) {
+                CallArgumentsMapping analysis = arglist.analyzeCall(resolveWithoutImplicits());
+                final PyCallExpression.PyMarkedCallee markedCallee = analysis.getMarkedCallee();
+                if (markedCallee != null  && markedCallee.getModifier() != STATICMETHOD) {
+                  PyParameter[] params = markedCallee.getCallable().getParameterList().getParameters();
+                  if (params.length > 0 && params[0] instanceof PyNamedParameter) {
+                    PyNamedParameter first_param = (PyNamedParameter)params[0];
+                    for (Map.Entry<PyExpression, PyNamedParameter> entry : analysis.getPlainMappedParams().entrySet()) {
+                      // we ignore *arg and **arg which we cannot analyze
+                      if (entry.getValue() == first_param) {
+                        PyExpression first_arg = entry.getKey();
+                        assert first_arg != null;
+                        PyType first_arg_type = myTypeEvalContext.getType(first_arg);
+                        if (first_arg_type instanceof PyClassType) {
+                          final PyClassType first_arg_class_type = (PyClassType)first_arg_type;
+                          if (first_arg_class_type.isDefinition() && markedCallee.getModifier() != CLASSMETHOD) {
+                            registerProblem(
+                              first_arg,
+                              PyBundle.message("INSP.instance.of.$0.excpected", qual_class.getQualifiedName())
+                            );
+                          }
+                          PyClass first_arg_class = first_arg_class_type.getPyClass();
+                          if (first_arg_class != qual_class) {
+                            // delegating to a parent is fine
+                            if (markedCallee.getCallable() instanceof PyFunction) {
+                              Callable callable = PsiTreeUtil.getParentOfType(call, Callable.class);
+                              if (callable != null) {
+                                PyFunction method = callable.asMethod();
+                                if (method != null) {
+                                  PyClass calling_class = method.getContainingClass();
+                                  assert calling_class != null; // it's a method
+                                  if (first_arg_class.isSubclass(qual_class) && calling_class.isSubclass(qual_class)) {
+                                    break;
+                                    // TODO: might propose to switch to super() here
                                   }
                                 }
                               }
-                              // otherwise, it's not
-                              registerProblem(
-                                first_arg,
-                                PyBundle.message(
-                                  "INSP.passing.$0.instead.of.$1",
-                                  first_arg_class.getQualifiedName(),  qual_class.getQualifiedName()
-                                )
-                              );
                             }
+                            // otherwise, it's not
+                            registerProblem(
+                              first_arg,
+                              PyBundle.message(
+                                "INSP.passing.$0.instead.of.$1",
+                                first_arg_class.getQualifiedName(),  qual_class.getQualifiedName()
+                              )
+                            );
                           }
-                          break; // once we found the first parameter, we don't need the rest
                         }
+                        break; // once we found the first parameter, we don't need the rest
                       }
                     }
                   }

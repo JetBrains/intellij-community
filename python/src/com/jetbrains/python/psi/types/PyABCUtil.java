@@ -59,7 +59,7 @@ public class PyABCUtil {
   public static boolean isSubtype(@NotNull PyType type, @NotNull String superClassName) {
     if (type instanceof PyClassType) {
       final PyClass pyClass = ((PyClassType)type).getPyClass();
-      return pyClass != null && isSubclass(pyClass, superClassName, true);
+      return isSubclass(pyClass, superClassName, true);
     }
     if (type instanceof PyUnionType) {
       final PyUnionType unionType = (PyUnionType)type;

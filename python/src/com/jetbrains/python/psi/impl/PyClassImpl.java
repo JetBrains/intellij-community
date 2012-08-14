@@ -21,7 +21,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
@@ -299,7 +298,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       PsiElement element = currentParent.getElementNamed(component);
       element = PyUtil.turnDirIntoInit(element);
       if (element instanceof PyImportElement) {
-        element = ResolveImportUtil.resolveImportElement((PyImportElement)element);
+        element = ((PyImportElement)element).resolve();
       }
       if (!(element instanceof NameDefiner)) {
         currentParent = null;
