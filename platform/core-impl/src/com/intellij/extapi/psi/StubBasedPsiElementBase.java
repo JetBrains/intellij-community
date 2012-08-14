@@ -22,6 +22,7 @@ package com.intellij.extapi.psi;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.NonCancelableSection;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Array;
 
 public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegatePsiElement {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.extapi.psi.StubBasedPsiElementBase");
   private volatile T myStub;
   private volatile ASTNode myNode;
   private final IElementType myElementType;
@@ -164,7 +166,12 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public boolean isValid() {
     T stub = myStub;
     if (stub != null) {
-      PsiElement psi = stub.getParentStub().getPsi();
+      StubElement parent = stub.getParentStub();
+      if (parent == null) {
+        LOG.error("No parent for stub " + stub + " of class " + stub.getClass());
+        return false;
+      }
+      PsiElement psi = parent.getPsi();
       return psi != null && psi.isValid();
     }
 
