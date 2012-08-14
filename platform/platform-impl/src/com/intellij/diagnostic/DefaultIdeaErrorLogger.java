@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.ErrorLogger;
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter;
@@ -88,7 +89,9 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       }
     }
     catch (Exception e) {
-      if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.MessagePool")) {
+      //noinspection InstanceofCatchParameter
+      if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.MessagePool") ||
+          e instanceof NullPointerException && ApplicationManager.getApplication() == null) {
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourLoggerBroken = true;
       }
