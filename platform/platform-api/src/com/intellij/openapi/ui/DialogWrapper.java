@@ -1450,12 +1450,20 @@ public abstract class DialogWrapper {
         if (selectedPath.length > 0) { // hide popup menu if any
           menuSelectionManager.clearSelectedPath();
         }
-        else if (ApplicationManager.getApplication() == null || !StackingPopupDispatcher.getInstance().isPopupFocused()) {
-          doCancelAction(e);
+        else {
+          final StackingPopupDispatcher popupDispatcher = StackingPopupDispatcher.getInstance();
+          if (ApplicationManager.getApplication() == null || (popupDispatcher != null && !popupDispatcher.isPopupFocused())) {
+            doCancelAction(e);
+          }
         }
       }
     };
-    getRootPane().registerKeyboardAction(cancelKeyboardAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+
+    final JRootPane rootPane = getRootPane();
+
+    if (rootPane == null) return;
+
+    rootPane.registerKeyboardAction(cancelKeyboardAction, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     registerForEveryKeyboardShortcut(cancelKeyboardAction, CommonShortcuts.getCloseActiveWindow());
 
     if (ApplicationInfo.contextHelpAvailable()) {
@@ -1466,16 +1474,16 @@ public abstract class DialogWrapper {
       };
 
       registerForEveryKeyboardShortcut(helpAction, CommonShortcuts.getContextHelp());
-      getRootPane().registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      rootPane.registerKeyboardAction(helpAction, KeyStroke.getKeyStroke(KeyEvent.VK_HELP, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
     if (myButtons != null) {
-      getRootPane().registerKeyboardAction(new AbstractAction() {
+      rootPane.registerKeyboardAction(new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
           focusPreviousButton();
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      getRootPane().registerKeyboardAction(new AbstractAction() {
+      rootPane.registerKeyboardAction(new AbstractAction() {
         public void actionPerformed(ActionEvent e) {
           focusNextButton();
         }
@@ -1483,11 +1491,11 @@ public abstract class DialogWrapper {
     }
 
     if (myYesAction != null) {
-      getRootPane().registerKeyboardAction(myYesAction, KeyStroke.getKeyStroke(KeyEvent.VK_Y, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      rootPane.registerKeyboardAction(myYesAction, KeyStroke.getKeyStroke(KeyEvent.VK_Y, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
 
     if (myNoAction != null) {
-      getRootPane().registerKeyboardAction(myNoAction, KeyStroke.getKeyStroke(KeyEvent.VK_N, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+      rootPane.registerKeyboardAction(myNoAction, KeyStroke.getKeyStroke(KeyEvent.VK_N, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
     }
   }
 
