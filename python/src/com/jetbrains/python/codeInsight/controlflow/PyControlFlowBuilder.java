@@ -334,8 +334,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (list != null) {
       myBuilder.startConditionalNode(list,  condition, true);
       list.accept(this);
-      if (myBuilder.prevInstruction != null) {
-        myBuilder.addEdge(myBuilder.prevInstruction, instruction); //loop
+      final Instruction prevInstruction = myBuilder.prevInstruction != null ? myBuilder.prevInstruction : getPrevInstruction(list);
+      if (prevInstruction != null) {
+        myBuilder.addEdge(prevInstruction, instruction); //loop
       }
     }
     myBuilder.prevInstruction = head;
