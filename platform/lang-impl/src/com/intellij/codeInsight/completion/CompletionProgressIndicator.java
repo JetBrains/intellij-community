@@ -604,7 +604,9 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     cancel();
 
     final CompletionProgressIndicator current = CompletionServiceImpl.getCompletionService().getCurrentCompletion();
-    LOG.assertTrue(this == current, current + "!=" + this);
+    if (this != current) {
+      LOG.error(current + "!=" + this);
+    }
 
     if (isAutopopupCompletion() && !myLookup.isShown()) {
       if (CompletionServiceImpl.getCompletionService().getCurrentCompletion() == this) {
