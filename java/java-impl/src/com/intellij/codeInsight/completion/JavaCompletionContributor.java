@@ -113,7 +113,8 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaCompletionData.DECLARATION_START.accepts(position) ||
-        JavaCompletionData.isInsideParameterList(position)) {
+        JavaCompletionData.isInsideParameterList(position) ||
+        psiElement().inside(psiElement(PsiJavaCodeReferenceElement.class).withParent(psiAnnotation())).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE_FILTER);
     }
 

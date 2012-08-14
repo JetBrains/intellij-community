@@ -991,6 +991,7 @@ public class ListUtils {
   public void testLiveTemplatePrefixTab() throws Throwable {doTest('\t') }
 
   public void testOnlyAnnotationsAfterAt() throws Throwable { doTest() }
+  public void testOnlyAnnotationsAfterAt2() throws Throwable { doTest() }
 
   public void testOnlyExceptionsInCatch1() throws Exception { doTest('\n') }
   public void testOnlyExceptionsInCatch2() throws Exception { doTest('\n') }
