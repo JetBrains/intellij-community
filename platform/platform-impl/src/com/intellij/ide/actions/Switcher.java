@@ -959,12 +959,15 @@ public class Switcher extends AnAction implements DumbAware {
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
         FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
+        final boolean open = FileEditorManager.getInstance(myProject).isFileOpen(virtualFile);
         TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE,
-                                                       Font.PLAIN);
+                                                       open ? Font.PLAIN : Font.ITALIC);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
 
-        if (!selected &&  myPinned && FileEditorManager.getInstance(myProject).isFileOpen(virtualFile)) {
-          setBackground(UIUtil.isUnderDarcula() ? list.getBackground().brighter() : LightColors.SLIGHTLY_GREEN);
+        final Color color = FileColorManager.getInstance(myProject).getFileColor(virtualFile);
+
+        if (!selected &&  color != null) {
+          setBackground(color);
         }
       }
     }
