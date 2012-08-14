@@ -45,6 +45,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -69,6 +70,11 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   }
 
   public static void invoke(final Project project, final Editor editor, PsiFile file, Surrounder surrounder) {
+    if (file instanceof PsiCompiledElement) {
+      HintManager.getInstance().showErrorHint(editor, "Can't modify decompiled code");
+      return;
+    }
+
     List<AnAction> applicable = buildSurroundActions(project, editor, file, surrounder);
     if (applicable != null) {
       showPopup(editor, applicable);
