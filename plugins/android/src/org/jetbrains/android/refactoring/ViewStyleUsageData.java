@@ -5,7 +5,7 @@ import com.android.sdklib.SdkConstants;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.GenericAttributeValue;
-import org.jetbrains.android.dom.converters.AndroidResourceReference;
+import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,11 +18,11 @@ import java.util.Map;
 class ViewStyleUsageData implements StyleUsageData {
   private final XmlTag myTag;
   private final GenericAttributeValue<ResourceValue> myStyleAttribute;
-  private final AndroidResourceReference myReference;
+  private final AndroidResourceReferenceBase myReference;
 
   ViewStyleUsageData(@NotNull XmlTag tag,
                      @NotNull GenericAttributeValue<ResourceValue> styleAttribute,
-                     @NotNull AndroidResourceReference reference) {
+                     @NotNull AndroidResourceReferenceBase reference) {
     myTag = tag;
     myStyleAttribute = styleAttribute;
     myReference = reference;
@@ -50,7 +50,7 @@ class ViewStyleUsageData implements StyleUsageData {
   }
 
   @NotNull
-  public AndroidResourceReference getReference() {
+  public AndroidResourceReferenceBase getReference() {
     return myReference;
   }
 }

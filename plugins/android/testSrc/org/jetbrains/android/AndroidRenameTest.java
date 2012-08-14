@@ -162,6 +162,26 @@ public class AndroidRenameTest extends AndroidTestCase {
     doTestStringRename("strings4.xml");
   }
 
+  public void testStyleInheritance() throws Throwable {
+    doTestStyleInheritance("styles1.xml", "styles1_after.xml");
+  }
+
+  public void testStyleInheritance1() throws Throwable {
+    doTestStyleInheritance("styles2.xml", "styles2_after.xml");
+  }
+
+  public void testStyleInheritance2() throws Throwable {
+    doTestStyleInheritance("styles3.xml", "styles3_after.xml");
+  }
+
+  private void doTestStyleInheritance(String before, String after) throws IOException {
+    createManifest();
+    final VirtualFile file = myFixture.copyFileToProject(BASE_PATH + before, "res/values/" + before);
+    myFixture.configureFromExistingVirtualFile(file);
+    findHandlerAndDoRename("newStyle");
+    myFixture.checkResultByFile(BASE_PATH + after);
+  }
+
   private void doTestStringRename(String fileName) throws IOException {
     createManifest();
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + fileName, "res/values/strings.xml");
@@ -170,20 +190,20 @@ public class AndroidRenameTest extends AndroidTestCase {
     myFixture.copyFileToProject(BASE_PATH + "layoutStrUsage.xml", "res/layout/layoutStrUsage.xml");
     myFixture.copyFileToProject("R.java", R_JAVA_PATH);
 
-    findHandlerAndDoRename();
+    findHandlerAndDoRename("str1");
 
     myFixture.checkResultByFile(BASE_PATH + "strings_after.xml");
     myFixture.checkResultByFile(R_JAVA_PATH, "R.java", true);
     myFixture.checkResultByFile("res/layout/layoutStrUsage.xml", BASE_PATH + "layoutStrUsage_after.xml", true);
   }
 
-  private void findHandlerAndDoRename() throws IOException {
+  private void findHandlerAndDoRename(final String newName) throws IOException {
     final DataContext editorContext = ((EditorEx)myFixture.getEditor()).getDataContext();
     final DataContext context = new DataContext() {
       @Override
       public Object getData(@NonNls String dataId) {
         return PsiElementRenameHandler.DEFAULT_NAME.getName().equals(dataId)
-               ? "str1"
+               ? newName
                : editorContext.getData(dataId);
       }
     };

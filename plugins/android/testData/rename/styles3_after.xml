@@ -1,0 +1,17 @@
+<resources>
+  <style name="myStyle">
+
+  </style>
+
+  <style name="newStyle">
+
+  </style>
+
+  <style name="style1" parent="myStyle">
+
+  </style>
+
+  <style name="newStyle.a">
+
+  </style>
+</resources>

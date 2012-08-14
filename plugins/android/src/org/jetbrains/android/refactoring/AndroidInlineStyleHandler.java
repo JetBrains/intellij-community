@@ -10,6 +10,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
+import org.jetbrains.android.dom.resources.ResourceNameConverter;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.ErrorReporter;
 import org.jetbrains.android.util.HintBasedErrorReporter;
@@ -46,19 +48,28 @@ public class AndroidInlineStyleHandler extends InlineActionHandler {
     final AndroidInlineUtil.MyStyleData data = AndroidInlineUtil.getInlinableStyleDataFromContext(element);
 
     if (data != null) {
-      final StyleUsageData usageData = editor != null ? getUsageDataFromEditor(editor) : null;
-      final ErrorReporter reporter = editor != null ? new HintBasedErrorReporter(editor) : new ProjectBasedErrorReporter(project);
+      final ErrorReporter reporter = editor != null
+                                     ? new HintBasedErrorReporter(editor)
+                                     : new ProjectBasedErrorReporter(project);
+      StyleUsageData usageData = null;
+
+      if (editor != null) {
+        final PsiReference reference = TargetElementUtilBase.findReference(editor);
+
+        if (reference instanceof AndroidResourceReferenceBase) {
+          if (reference instanceof ResourceNameConverter.MyParentStyleReference) {
+            reporter.report("Implicit inheritance is not supported", "");
+            return;
+          }
+          usageData = getUsageDataFromEditor(reference);
+        }
+      }
       AndroidInlineUtil.doInlineStyleDeclaration(project, data, usageData, reporter, ourTestConfig);
     }
   }
 
   @Nullable
-  private static StyleUsageData getUsageDataFromEditor(@NotNull Editor editor) {
-    final PsiReference reference = TargetElementUtilBase.findReference(editor);
-
-    if (reference == null) {
-      return null;
-    }
+  private static StyleUsageData getUsageDataFromEditor(@NotNull PsiReference reference) {
     final PsiElement usageElement = reference.getElement();
 
     if (usageElement == null) {

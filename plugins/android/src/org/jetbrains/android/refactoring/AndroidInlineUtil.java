@@ -16,7 +16,7 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericAttributeValue;
-import org.jetbrains.android.dom.converters.AndroidResourceReference;
+import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
 import org.jetbrains.android.dom.layout.LayoutViewElement;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.dom.resources.Style;
@@ -64,14 +64,14 @@ class AndroidInlineUtil {
 
     if (domElement instanceof LayoutViewElement) {
       final GenericAttributeValue<ResourceValue> styleAttribute = ((LayoutViewElement)domElement).getStyle();
-      final AndroidResourceReference reference = getAndroidResourceReference(styleAttribute);
+      final AndroidResourceReferenceBase reference = getAndroidResourceReference(styleAttribute);
 
       if (reference != null) {
         return new ViewStyleUsageData(tag, styleAttribute, reference);
       }
     }
     else if (domElement instanceof Style) {
-      final AndroidResourceReference reference = getAndroidResourceReference(((Style)domElement).getParentStyle());
+      final AndroidResourceReferenceBase reference = getAndroidResourceReference(((Style)domElement).getParentStyle());
 
       if (reference != null) {
         return new ParentStyleUsageData((Style)domElement, reference);
@@ -81,7 +81,7 @@ class AndroidInlineUtil {
   }
 
   @Nullable
-  private static AndroidResourceReference getAndroidResourceReference(@Nullable GenericAttributeValue<ResourceValue> attribute) {
+  private static AndroidResourceReferenceBase getAndroidResourceReference(@Nullable GenericAttributeValue<ResourceValue> attribute) {
     if (attribute == null) {
       return null;
     }
@@ -97,8 +97,8 @@ class AndroidInlineUtil {
     }
 
     for (PsiReference reference : styleAttributeValue.getReferences()) {
-      if (reference instanceof AndroidResourceReference) {
-        return (AndroidResourceReference)reference;
+      if (reference instanceof AndroidResourceReferenceBase) {
+        return (AndroidResourceReferenceBase)reference;
       }
     }
     return null;

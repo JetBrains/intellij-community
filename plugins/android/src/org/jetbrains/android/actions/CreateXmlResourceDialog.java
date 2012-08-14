@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -85,6 +86,15 @@ public class CreateXmlResourceDialog extends DialogWrapper {
                                  @Nullable String predefinedName,
                                  @Nullable String predefinedValue,
                                  boolean chooseName) {
+    this(module, resourceType, predefinedName, predefinedValue, chooseName, null);
+  }
+
+  public CreateXmlResourceDialog(@NotNull Module module,
+                                 @NotNull ResourceType resourceType,
+                                 @Nullable String predefinedName,
+                                 @Nullable String predefinedValue,
+                                 boolean chooseName,
+                                 @Nullable VirtualFile defaultFile) {
     super(module.getProject());
     myResourceType = resourceType;
 
@@ -131,12 +141,13 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       myModuleCombo.setRenderer(new ModuleListCellRendererWrapper(myModuleCombo.getRenderer()));
     }
 
-    final String defaultResFileName = AndroidResourceUtil.getDefaultResourceFileName(resourceType);
-    if (defaultResFileName != null) {
-      myFileNameField.setText(defaultResFileName);
+    if (defaultFile == null) {
+      final String defaultFileName = AndroidResourceUtil.getDefaultResourceFileName(resourceType);
+
+      if (defaultFileName != null) {
+        myFileNameField.setText(defaultFileName);
+      }
     }
-
-
     myDirectoriesList = new CheckBoxList();
     myDirectoriesLabel.setLabelFor(myDirectoriesList);
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myDirectoriesList);
@@ -185,7 +196,46 @@ public class CreateXmlResourceDialog extends DialogWrapper {
       }
     });
 
+    if (defaultFile != null) {
+      resetFromFile(defaultFile, module.getProject());
+    }
     init();
+  }
+
+  private void resetFromFile(@NotNull VirtualFile file, @NotNull Project project) {
+    final Module moduleForFile = ModuleUtilCore.findModuleForFile(file, project);
+    if (moduleForFile == null) {
+      return;
+    }
+
+    final VirtualFile parent = file.getParent();
+    if (parent == null) {
+      return;
+    }
+
+    if (myModule == null) {
+      final Object prev = myModuleCombo.getSelectedItem();
+      myModuleCombo.setSelectedItem(moduleForFile);
+
+      if (!moduleForFile.equals(myModuleCombo.getSelectedItem())) {
+        myModuleCombo.setSelectedItem(prev);
+        return;
+      }
+    }
+    else if (!myModule.equals(moduleForFile)) {
+      return;
+    }
+
+    final JCheckBox checkBox = myCheckBoxes.get(parent.getName());
+    if (checkBox == null) {
+      return;
+    }
+
+    for (JCheckBox checkBox1 : myCheckBoxes.values()) {
+      checkBox1.setSelected(false);
+    }
+    checkBox.setSelected(true);
+    myFileNameField.setText(file.getName());
   }
 
   private void doDeleteDirectory() {

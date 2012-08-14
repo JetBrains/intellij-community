@@ -127,6 +127,16 @@ public class AndroidFindUsagesTest extends AndroidTestCase {
     assertEquals(2, references.size());
   }
 
+  public void testStyleInheritance() throws Throwable {
+    Collection<UsageInfo> references = findCodeUsages("fu10_values.xml", "res/values/f10_values.xml");
+    assertEquals(3, references.size());
+  }
+
+  public void testStyleInheritance1() throws Throwable {
+    Collection<UsageInfo> references = findCodeUsages("fu11_values.xml", "res/values/f11_values.xml");
+    assertEquals(3, references.size());
+  }
+
   public void testValueItemResource() throws Throwable {
     myFixture.copyFileToProject(BASE_PATH + "strings.xml", "res/values/strings.xml");
     myFixture.copyFileToProject(BASE_PATH + "Class.java", "src/p1/p2/Class.java");

@@ -171,13 +171,14 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
   }
 
   public void test20() {
+    final boolean thisOnly = false;
     final String testName = getTestName(true);
     final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + "_styles.xml", "res/values/styles.xml");
     final String layoutPath = BASE_PATH + testName + ".xml";
     myFixture.copyFileToProject(layoutPath, "res/layout/test.xml");
     myFixture.configureFromExistingVirtualFile(f);
     try {
-      doCommonInlineAction(false);
+      doCommonInlineAction(thisOnly);
       fail();
     }
     catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
@@ -230,41 +231,77 @@ public class AndroidInlineStyleTest extends AndroidTestCase {
   }
 
   public void test24() {
-    final String testName = getTestName(true);
-    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
-    myFixture.configureFromExistingVirtualFile(f);
-    doCommonInlineAction(true);
-    myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
+    doTestCommonInlineInValues(true);
   }
 
   public void test25() {
-    final String testName = getTestName(true);
-    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
-    myFixture.configureFromExistingVirtualFile(f);
-    doInlineStyleReferenceAction(true, true);
-    myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
+    doTestInlineActionInValues(true, true, true);
   }
 
   public void test26() {
-    final String testName = getTestName(true);
-    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
-    myFixture.configureFromExistingVirtualFile(f);
-    doInlineStyleReferenceAction(false, true);
-    myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
+    doTestInlineActionInValues(false, true, true);
   }
 
   public void test27() {
-    final String testName = getTestName(true);
-    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
-    myFixture.configureFromExistingVirtualFile(f);
-    doInlineStyleReferenceAction(false, false);
+    doTestInlineActionInValues(false, false, false);
   }
 
   public void test28() {
+    doTestCommonInlineInValues(false);
+  }
+
+  public void test29() {
+    doTestCommonInlineInValues(false);
+  }
+
+  public void test30() {
+    doTestCommonInlineErrorHintInValues(true);
+  }
+
+  public void test31() {
+    doTestCommonInlineErrorHintInValues(false);
+  }
+
+  public void test32() {
+    doTestCommonInlineErrorHintInValues(false);
+  }
+
+  public void test33() {
+    doTestCommonInlineInValues(true);
+  }
+
+  public void test34() {
+    doTestDisabled();
+  }
+
+  private void doTestCommonInlineErrorHintInValues(boolean thisOnly) {
     final String testName = getTestName(true);
     final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
     myFixture.configureFromExistingVirtualFile(f);
-    doCommonInlineAction(false);
+    try {
+      doCommonInlineAction(thisOnly);
+      fail();
+    }
+    catch (IncorrectOperationException e) {
+      assertTrue(e.getMessage().length() > 0);
+    }
+  }
+
+  private void doTestInlineActionInValues(boolean thisOnly, boolean enabled, boolean checkResults) {
+    final String testName = getTestName(true);
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    doInlineStyleReferenceAction(thisOnly, enabled);
+    if (checkResults) {
+      myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
+    }
+  }
+
+  private void doTestCommonInlineInValues(boolean thisOnly) {
+    final String testName = getTestName(true);
+    final VirtualFile f = myFixture.copyFileToProject(BASE_PATH + testName + ".xml", "res/values/test.xml");
+    myFixture.configureFromExistingVirtualFile(f);
+    doCommonInlineAction(thisOnly);
     myFixture.checkResultByFile(BASE_PATH + testName + "_after.xml");
   }
 

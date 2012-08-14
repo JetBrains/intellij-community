@@ -263,8 +263,15 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     return null;
   }
 
-  public String toString(@Nullable ResourceValue resourceElement, ConvertContext context) {
-    return resourceElement != null ? resourceElement.toString() : null;
+  public String toString(@Nullable ResourceValue element, ConvertContext context) {
+    if (element == null) {
+      return null;
+    }
+    if (myWithExplicitResourceType || !element.isReference()) {
+      return element.toString();
+    }
+    return ResourceValue.referenceTo(element.getPrefix(), element.getPackage(), null,
+                                     element.getResourceName()).toString();
   }
 
   @Override
@@ -325,7 +332,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
           if (resValue.getPackage() == null && "+id".equals(resValue.getResourceType())) {
             return PsiReference.EMPTY_ARRAY;
           }
-          return new PsiReference[]{new AndroidResourceReference(value, facet, resValue)};
+          return new PsiReference[]{new AndroidResourceReference(value, facet, resValue, null)};
         }
       }
     }

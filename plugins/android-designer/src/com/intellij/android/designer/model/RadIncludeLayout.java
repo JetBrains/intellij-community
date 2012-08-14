@@ -32,7 +32,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import org.jetbrains.android.dom.converters.AndroidResourceReference;
+import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -104,7 +104,7 @@ public class RadIncludeLayout extends RadViewComponent implements IConfigurableC
           myViewInfoCount = 0;
         }
         else {
-          XmlFile xmlFile = findFile(configuration, (AndroidResourceReference)reference);
+          XmlFile xmlFile = findFile(configuration, (AndroidResourceReferenceBase)reference);
           XmlTag tag = xmlFile == null ? null : xmlFile.getRootTag();
 
           if (tag == null) {
@@ -123,7 +123,7 @@ public class RadIncludeLayout extends RadViewComponent implements IConfigurableC
   }
 
   @Nullable
-  private static XmlFile findFile(FolderConfiguration configuration, AndroidResourceReference reference) {
+  private static XmlFile findFile(FolderConfiguration configuration, AndroidResourceReferenceBase reference) {
     PsiElement[] elements = reference.computeTargetElements();
 
     if (elements.length == 0) {

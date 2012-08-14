@@ -21,6 +21,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.OrderedSet;
+import org.jetbrains.android.dom.resources.ResourceNameConverter;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
@@ -100,6 +101,7 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
     final List<PsiElement> nonXmlUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unsupportedUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unambiguousUsages = new ArrayList<PsiElement>();
+    final List<PsiElement> implicitlyInherited = new ArrayList<PsiElement>();
 
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
@@ -110,10 +112,15 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
         continue;
       }
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-      final StyleUsageData usageData = tag != null ? AndroidInlineUtil.getUsageData(tag) : null;
+      StyleUsageData usageData = tag != null ? AndroidInlineUtil.getUsageData(tag) : null;
 
       if (usageData == null) {
-        unsupportedUsages.add(element);
+        if (usage.getReference() instanceof ResourceNameConverter.MyParentStyleReference) {
+          implicitlyInherited.add(element);
+        }
+        else {
+          unsupportedUsages.add(element);
+        }
         continue;
       }
 
@@ -124,8 +131,11 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
       inlineInfos.add(usageData);
     }
 
-    if (nonXmlUsages.size() > 0 || unambiguousUsages.size() > 0 || unsupportedUsages.size() > 0) {
-      final String errorMessage = buildErrorMessage(myProject, nonXmlUsages, unambiguousUsages, unsupportedUsages);
+    if (nonXmlUsages.size() > 0 ||
+        unambiguousUsages.size() > 0 ||
+        unsupportedUsages.size() > 0 ||
+        implicitlyInherited.size() > 0) {
+      final String errorMessage = buildErrorMessage(myProject, nonXmlUsages, unambiguousUsages, unsupportedUsages, implicitlyInherited);
       AndroidUtils.reportError(myProject, errorMessage, AndroidBundle.message("android.inline.style.title"));
       return;
     }
@@ -151,7 +161,8 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
   private static String buildErrorMessage(Project project,
                                           Collection<PsiElement> nonXmlUsages,
                                           Collection<PsiElement> unambiguousUsages,
-                                          Collection<PsiElement> unsupportedUsages) {
+                                          Collection<PsiElement> unsupportedUsages,
+                                          Collection<PsiElement> implicitlyInherited) {
     final StringBuilder builder = new StringBuilder("Cannot perform refactoring\n\n");
 
     if (nonXmlUsages.size() > 0) {
@@ -169,6 +180,12 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
     if (unsupportedUsages.size() > 0) {
       builder.append("Unsupported references:\n");
       buildString(builder, project, unsupportedUsages);
+      builder.append("\n\n");
+    }
+
+    if (implicitlyInherited.size() > 0) {
+      builder.append("Implicit inheritance is not supported:\n");
+      buildString(builder, project, implicitlyInherited);
       builder.append("\n\n");
     }
     builder.delete(builder.length() - 2, builder.length());

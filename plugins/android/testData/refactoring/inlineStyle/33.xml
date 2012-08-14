@@ -1,0 +1,12 @@
+<resources>
+    <style name="parentStyle">
+        <item name="android:background">@android:color/white</item>
+    </style>
+
+    <style name="parentStyle.s">
+        <item name="android:textColor">@android:color/green</item>
+    </style>
+
+    <style name="myStyle" parent="parentStyl<caret>e">
+    </style>
+</resources>

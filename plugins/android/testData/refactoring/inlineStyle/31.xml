@@ -1,0 +1,9 @@
+<resources>
+    <style name="parentSt<caret>yle">
+        <item name="android:background">@android:color/white</item>
+    </style>
+
+    <style name="parentStyle.s">
+        <item name="android:textColor">@android:color/green</item>
+    </style>
+</resources>

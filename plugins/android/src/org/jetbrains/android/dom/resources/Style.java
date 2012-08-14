@@ -19,6 +19,7 @@ package org.jetbrains.android.dom.resources;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
 import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.Required;
 import org.jetbrains.android.dom.converters.ParentStyleConverter;
 
 import java.util.List;
@@ -38,4 +39,8 @@ public interface Style extends ResourceElement {
   @Attribute("parent")
   @Convert(ParentStyleConverter.class)
   GenericAttributeValue<ResourceValue> getParentStyle();
+
+  @Required
+  @Convert(ResourceNameConverter.class)
+  GenericAttributeValue<String> getName();
 }

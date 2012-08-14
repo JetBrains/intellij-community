@@ -10,7 +10,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomManager;
-import org.jetbrains.android.dom.converters.AndroidResourceReference;
+import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
 import org.jetbrains.android.dom.layout.LayoutDomFileDescription;
 import org.jetbrains.android.dom.resources.ResourcesDomFileDescription;
 import org.jetbrains.android.dom.resources.Style;
@@ -49,7 +49,7 @@ public class AndroidInlineStyleReferenceAction extends AndroidBaseXmlRefactoring
     if (usageData == null) {
       return;
     }
-    final AndroidResourceReference reference = usageData.getReference();
+    final AndroidResourceReferenceBase reference = usageData.getReference();
     final String title = AndroidBundle.message("android.inline.style.title");
     final PsiElement[] styleElements = reference.computeTargetElements();
 

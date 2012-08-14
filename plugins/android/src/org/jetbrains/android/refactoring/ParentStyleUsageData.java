@@ -3,7 +3,7 @@ package org.jetbrains.android.refactoring;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashMap;
-import org.jetbrains.android.dom.converters.AndroidResourceReference;
+import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
 import org.jetbrains.android.dom.resources.ResourceValue;
 import org.jetbrains.android.dom.resources.Style;
 import org.jetbrains.android.dom.resources.StyleItem;
@@ -16,11 +16,11 @@ import java.util.Map;
  * @author Eugene.Kudelevsky
  */
 class ParentStyleUsageData implements StyleUsageData {
-  private final AndroidResourceReference myReference;
+  private final AndroidResourceReferenceBase myReference;
   private final Style myStyle;
 
   public ParentStyleUsageData(@NotNull Style style,
-                              @NotNull AndroidResourceReference reference) {
+                              @NotNull AndroidResourceReferenceBase reference) {
     myReference = reference;
     myStyle = style;
   }
@@ -72,7 +72,7 @@ class ParentStyleUsageData implements StyleUsageData {
 
   @NotNull
   @Override
-  public AndroidResourceReference getReference() {
+  public AndroidResourceReferenceBase getReference() {
     return myReference;
   }
 }
