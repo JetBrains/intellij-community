@@ -21,8 +21,6 @@
 package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import org.jetbrains.annotations.NotNull;
@@ -35,45 +33,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MavenProjectOpenProcessor extends ProjectOpenProcessorBase<MavenProjectBuilder> {
-
-  private static final Logger LOG = Logger.getInstance(MavenProjectOpenProcessor.class);
-
-  public static final String[] POM_XML = new String[]{MavenConstants.POM_XML};
-
   public MavenProjectOpenProcessor(@NotNull MavenProjectBuilder builder) {
     super(builder);
   }
 
   @Nullable
   public String[] getSupportedExtensions() {
-    return POM_XML;
-  }
-
-  @Override
-  public boolean canOpenProject(VirtualFile file) {
-    if (file.isDirectory()) {
-      long startTime = System.currentTimeMillis();
-
-      try {
-        return file.findChild(MavenConstants.POM_XML) != null;
-      }
-      finally {
-        long now = System.currentTimeMillis();
-
-        int limit = ApplicationManager.getApplication().isInternal() ? 100 : 500;
-
-        if (now - startTime > limit) {
-          LOG.error("Finding pom.xml got " + (now - startTime) + "ms. See IDEA-71265. " + file.getPath(), new Exception());
-        }
-      }
-    }
-    else {
-      if (MavenConstants.POM_XML.equals(file.getName())) {
-        return true;
-      }
-    }
-
-    return false;
+    return new String[]{MavenConstants.POM_XML};
   }
 
   public boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
