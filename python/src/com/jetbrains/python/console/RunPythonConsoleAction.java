@@ -150,8 +150,8 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
 
     if (sdk == null) {
       for (Module m : ModuleManager.getInstance(project).getModules()) {
-        if (PythonSdkType.findPythonSdk(module) != null) {
-          sdk = PythonSdkType.findPythonSdk(module);
+        if (PythonSdkType.findPythonSdk(m) != null) {
+          sdk = PythonSdkType.findPythonSdk(m);
           module = m;
           break;
         }
