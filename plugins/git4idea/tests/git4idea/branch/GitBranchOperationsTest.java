@@ -230,7 +230,7 @@ public class GitBranchOperationsTest extends AbstractVcsTestCase  {
 
     doCheckoutOrMerge(checkout, "feature");
     String operation = checkout ? "checkout" : "merge";
-    assertNotify(NotificationType.ERROR, UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operation, false));
+    assertNotify(NotificationType.ERROR, UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operation, true));
   }
 
   @Test

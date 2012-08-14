@@ -48,14 +48,14 @@ public class UntrackedFilesNotifier {
                                                        @NotNull final Collection<VirtualFile> untrackedFiles,
                                                        @NotNull final String operation, @Nullable String description) {
     final String notificationTitle = StringUtil.capitalize(operation) + " error";
-    final String notificationDesc = description == null ? createUntrackedFilesOverwrittenDescription(operation, false) : description;
-    final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, true);
+    final String notificationDesc = description == null ? createUntrackedFilesOverwrittenDescription(operation, true) : description;
 
     platformFacade.getNotificator(project).notifyError(notificationTitle, notificationDesc,
                                                   new NotificationListener() {
       @Override
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, false);
           SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles),
                                                         StringUtil.stripHtml(dialogDesc, true), null, false, false) {
             @Override
@@ -70,15 +70,15 @@ public class UntrackedFilesNotifier {
     });
   }
   
-  public static String createUntrackedFilesOverwrittenDescription(@NotNull final String operation, boolean filesAreShown) {
+  public static String createUntrackedFilesOverwrittenDescription(@NotNull final String operation, boolean addLinkToViewFiles) {
     final String description1 = " untracked working tree files would be overwritten by " + operation + ".";
     final String description2 = "Please move or remove them before you can " + operation + ".";
     final String notificationDesc;
-    if (filesAreShown) {
-      notificationDesc = "These" + description1 + "<br/>" + description2;
+    if (addLinkToViewFiles) {
+      notificationDesc = "Some" + description1 + "<br/>" + description2 + " <a href='view'>View them</a>";
     }
     else {
-      notificationDesc = "Some" + description1 + "<br/>" + description2 + " <a href='view'>View them</a>";
+      notificationDesc = "These" + description1 + "<br/>" + description2;
     }
     return notificationDesc;
   }

@@ -350,7 +350,7 @@ abstract class GitBranchOperation {
 
   private void showUntrackedFilesDialogWithRollback(@NotNull Collection<VirtualFile> untrackedFiles) {
     String title = "Couldn't " + getOperationName();
-    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(getOperationName(), true);
+    String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(getOperationName(), false);
 
     final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, new ArrayList<VirtualFile>(untrackedFiles),
                                                               stripHtml(description, true));
