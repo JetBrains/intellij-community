@@ -344,7 +344,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
             PyReferenceExpression warningClass = callExpression.getArgument(1, PyReferenceExpression.class);
             if (warningClass != null && (PyNames.DEPRECATION_WARNING.equals(warningClass.getReferencedName()) ||
                                          PyNames.PENDING_DEPRECATION_WARNING.equals(warningClass.getReferencedName()))) {
-              return PyUtil.strValue(callExpression.getArguments()[0]);
+              return PyPsiUtils.strValue(callExpression.getArguments()[0]);
             }
           }
         }
@@ -360,7 +360,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       return stub.getDocString();
     }
     final PyStringLiteralExpression docStringExpression = getDocStringExpression();
-    return PyUtil.strValue(docStringExpression);
+    return PyPsiUtils.strValue(docStringExpression);
   }
 
   private boolean isGeneratedStub() {

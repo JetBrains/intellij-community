@@ -112,7 +112,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   @Nullable
   public static PyType fromCall(PyCallExpression call) {
-    final String name = PyUtil.strValue(call.getArgument(0, PyExpression.class));
+    final String name = PyPsiUtils.strValue(call.getArgument(0, PyExpression.class));
     final PyExpression fieldNamesExpression = PyPsiUtils.flattenParens(call.getArgument(1, PyExpression.class));
     if (name == null || fieldNamesExpression == null) {
       return null;
@@ -122,7 +122,7 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
       fieldNames = PyUtil.strListValue(fieldNamesExpression);
     }
     else {
-      final String fieldNamesString = PyUtil.strValue(fieldNamesExpression);
+      final String fieldNamesString = PyPsiUtils.strValue(fieldNamesExpression);
       if (fieldNamesString != null) {
         fieldNames = parseFieldNamesString(fieldNamesString);
       }

@@ -1015,7 +1015,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (stub != null) {
       return stub.getDocString();
     }
-    return PyUtil.strValue(getDocStringExpression());
+    return PyPsiUtils.strValue(getDocStringExpression());
   }
 
   public String toString() {

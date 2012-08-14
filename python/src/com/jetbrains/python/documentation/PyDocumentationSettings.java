@@ -9,7 +9,7 @@ import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ public class PyDocumentationSettings implements PersistentStateComponent<PyDocum
     if (file instanceof PyFile) {
       PyTargetExpression expr = ((PyFile) file).findTopLevelAttribute(PyNames.DOCFORMAT);
       if (expr != null) {
-        String docformat = PyUtil.strValue(expr.findAssignedValue());
+        String docformat = PyPsiUtils.strValue(expr.findAssignedValue());
         if (docformat != null) {
           final List<String> words = StringUtil.split(docformat, " ");
           return words.size() > 0 && format.equalsIgnoreCase(words.get(0));

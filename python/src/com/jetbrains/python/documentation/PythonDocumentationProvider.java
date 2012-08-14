@@ -24,6 +24,7 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.types.*;
@@ -284,7 +285,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   private static boolean specifiesReturnType(PyStringLiteralExpression docStringExpression) {
-    String value = PyUtil.strValue(docStringExpression);
+    String value = PyPsiUtils.strValue(docStringExpression);
     if (value == null) {
       return false;
     }

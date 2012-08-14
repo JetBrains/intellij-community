@@ -210,7 +210,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   @Nullable
   public static PyType getTypeFromDocString(PyTargetExpressionImpl targetExpression) {
-    final String docString = PyUtil.strValue(PyUtil.getAttributeDocString(targetExpression));
+    final String docString = PyPsiUtils.strValue(PyUtil.getAttributeDocString(targetExpression));
     if (docString != null) {
       StructuredDocString structuredDocString = StructuredDocString.parse(docString);
       if (structuredDocString != null) {

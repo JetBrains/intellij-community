@@ -368,6 +368,11 @@ public class PyPsiUtils {
     return expr;
   }
 
+  @Nullable
+  public static String strValue(@Nullable PyExpression expression) {
+    return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression)expression).getStringValue() : null;
+  }
+
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
     public void visitPyElement(final PyElement node) {
       super.visitPyElement(node);
