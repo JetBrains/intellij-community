@@ -74,6 +74,10 @@ public class LookupTypedHandler extends TypedHandlerDelegate {
       }
 
       final CharFilter.Result result = getLookupAction(charTyped, lookup);
+      if (lookup.isLookupDisposed()) {
+        return Result.CONTINUE;
+      }
+
       if (!lookup.performGuardedChange(new Runnable() {
         public void run() {
           EditorModificationUtil.deleteSelectedText(editor);
