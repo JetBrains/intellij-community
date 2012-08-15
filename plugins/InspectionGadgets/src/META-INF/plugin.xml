@@ -477,6 +477,10 @@
                      key="protected.member.in.final.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.ProtectedMemberInFinalClassInspection"/>
+    <localInspection language="JAVA" shortName="PublicConstructor" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="public.constructor.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.classlayout.PublicConstructorInspection"/>
     <localInspection language="JAVA" shortName="PublicConstructorInNonPublicClass" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="public.constructor.in.non.public.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.class.structure" enabledByDefault="false" level="WARNING"
