@@ -165,7 +165,7 @@ public class MockLocalFileSystem extends LocalFileSystem {
   }
 
   @Override
-  public String extractRootPath(@NotNull final String path) {
+  protected String extractRootPath(@NotNull final String path) {
     return path;
   }
 

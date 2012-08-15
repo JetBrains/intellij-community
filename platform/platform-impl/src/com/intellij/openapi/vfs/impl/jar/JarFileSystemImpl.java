@@ -223,7 +223,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   }
 
   @Override
-  public String extractRootPath(@NotNull final String path) {
+  protected String extractRootPath(@NotNull final String path) {
     final int jarSeparatorIndex = path.indexOf(JAR_SEPARATOR);
     assert jarSeparatorIndex >= 0 : "Path passed to JarFileSystem must have jar separator '!/': " + path;
     return path.substring(0, jarSeparatorIndex + JAR_SEPARATOR.length());
