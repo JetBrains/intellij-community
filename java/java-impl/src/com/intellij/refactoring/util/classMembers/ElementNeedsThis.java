@@ -16,6 +16,7 @@
 package com.intellij.refactoring.util.classMembers;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 
 /**
  * @author dsl
@@ -55,6 +56,18 @@ public class ElementNeedsThis extends ClassThisReferencesVisitor {
 
   protected void visitExplicitSuper(PsiClass referencedClass, PsiSuperExpression reference) {
     myResult = true;
+  }
+
+  @Override
+  public void visitReferenceExpression(PsiReferenceExpression expression) {
+    super.visitReferenceExpression(expression);
+    final PsiClass aClass = PsiUtil.resolveClassInType(expression.getType());
+    if (aClass instanceof PsiTypeParameter) {
+      final PsiTypeParameterListOwner owner = ((PsiTypeParameter)aClass).getOwner();
+      if (owner instanceof PsiClass && myClassSuperClasses.contains(owner)) {
+        myResult = true;
+      }
+    }
   }
 
   @Override public void visitElement(PsiElement element) {

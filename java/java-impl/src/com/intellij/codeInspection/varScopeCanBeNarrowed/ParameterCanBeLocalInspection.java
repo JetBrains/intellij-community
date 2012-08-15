@@ -21,6 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
+import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
+import com.intellij.usageView.UsageInfo;
+import com.intellij.util.NotNullFunction;
+import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,6 +145,38 @@ public class ParameterCanBeLocalInspection extends BaseJavaLocalInspectionTool {
     @Override
     protected PsiParameter getVariable(@NotNull ProblemDescriptor descriptor) {
       return (PsiParameter)descriptor.getPsiElement().getParent();
+    }
+
+    @Override
+    protected PsiElement applyChanges(@NotNull final Project project,
+                                       @NotNull final String localName,
+                                       @Nullable final PsiExpression initializer,
+                                       @NotNull final PsiParameter parameter,
+                                       @NotNull final Collection<PsiReference> references,
+                                       @NotNull final NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
+      final PsiElement scope = parameter.getDeclarationScope();
+      if (scope instanceof PsiMethod) {
+        final PsiMethod method = (PsiMethod)scope;
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+
+        final ParameterInfoImpl[] info = new ParameterInfoImpl[parameters.length - 1];
+        for (int i = 0; i < parameters.length; i++) {
+          PsiParameter psiParameter = parameters[i];
+          if (psiParameter == parameter) continue;
+          info[i] = new ParameterInfoImpl(i, psiParameter.getName(), psiParameter.getType());
+        }
+        final ChangeSignatureProcessor cp = new ChangeSignatureProcessor(project, method, false, VisibilityUtil.getVisibilityModifier(method.getModifierList()), method.getName(), method.getReturnType(), info){
+          @Override
+          protected void performRefactoring(UsageInfo[] usages) {
+            final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+            final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, parameter, initializer, action, references);
+            super.performRefactoring(usages);
+            positionCaretToDeclaration(project, newDeclaration.getContainingFile(), newDeclaration);
+          }
+        };
+        cp.run();
+      }
+      return null;
     }
 
     @NotNull

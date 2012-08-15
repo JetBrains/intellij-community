@@ -847,20 +847,30 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                 final PsiClass parentClass,
                                 final PsiField psiField,
                                 final PsiMember anchorMember) {
-      
-      if ((anchorMember instanceof PsiField) &&
-          anchorMember.hasModifierProperty(PsiModifier.STATIC) == psiField.hasModifierProperty(PsiModifier.STATIC)) {
+      return appendField(destClass, psiField, anchorMember, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION
+                                                            ? checkForwardRefs(initializer, parentClass) : null);
+    }
+
+    public static PsiField appendField(final PsiClass destClass,
+                                       final PsiField psiField,
+                                       final PsiElement anchorMember,
+                                       final PsiField forwardReference) {
+      final PsiClass parentClass = PsiTreeUtil.getParentOfType(anchorMember, PsiClass.class);
+
+      if (anchorMember instanceof PsiField && 
+          anchorMember.getParent() == parentClass &&
+          destClass == parentClass &&
+          ((PsiField)anchorMember).hasModifierProperty(PsiModifier.STATIC) == psiField.hasModifierProperty(PsiModifier.STATIC)) {
         return (PsiField)destClass.addBefore(psiField, anchorMember);
       }
-      else if (anchorMember instanceof PsiClassInitializer) {
-
+      else if (anchorMember instanceof PsiClassInitializer && 
+               anchorMember.getParent() == parentClass &&
+               destClass == parentClass) {
         PsiField field = (PsiField)destClass.addBefore(psiField, anchorMember);
         destClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), anchorMember);
         return field;
       }
       else {
-        final PsiField forwardReference = initializerPlace == InitializationPlace.IN_FIELD_DECLARATION
-                                          ? checkForwardRefs(initializer, parentClass) : null;
         if (forwardReference != null ) {
           return forwardReference.getParent() == destClass ?
                  (PsiField)destClass.addAfter(psiField, forwardReference) :

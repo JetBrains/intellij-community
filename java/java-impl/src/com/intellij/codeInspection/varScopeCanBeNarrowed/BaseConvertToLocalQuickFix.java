@@ -72,7 +72,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   @Nullable
   protected abstract V getVariable(@NotNull ProblemDescriptor descriptor);
 
-  private static void positionCaretToDeclaration(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement declaration) {
+  protected static void positionCaretToDeclaration(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull PsiElement declaration) {
     final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor != null && (IJSwingUtilities.hasFocus(editor.getComponent()) || ApplicationManager.getApplication().isUnitTestMode())) {
       final PsiFile openedFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -140,23 +140,19 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     );
   }
 
-  @NotNull
-  private PsiElement applyChanges(final @NotNull Project project,
-                                  final @NotNull String localName,
-                                  final @Nullable PsiExpression initializer,
-                                  final @NotNull V variable,
-                                  final @NotNull Collection<PsiReference> references,
-                                  final @NotNull NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
+  protected PsiElement applyChanges(final @NotNull Project project,
+                                    final @NotNull String localName,
+                                    final @Nullable PsiExpression initializer,
+                                    final @NotNull V variable,
+                                    final @NotNull Collection<PsiReference> references,
+                                    final @NotNull NotNullFunction<PsiDeclarationStatement, PsiElement> action) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
 
     return ApplicationManager.getApplication().runWriteAction(
       new Computable<PsiElement>() {
         @Override
         public PsiElement compute() {
-          final PsiDeclarationStatement declaration =
-            elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
-          final PsiElement newDeclaration = action.fun(declaration);
-          retargetReferences(elementFactory, localName, references);
+          final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, variable, initializer, action, references);
           beforeDelete(project, variable, newDeclaration);
           variable.normalizeDeclaration();
           variable.delete();
@@ -164,6 +160,18 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
         }
       }
     );
+  }
+
+  protected PsiElement moveDeclaration(PsiElementFactory elementFactory,
+                                       String localName,
+                                       V variable,
+                                       PsiExpression initializer,
+                                       NotNullFunction<PsiDeclarationStatement, PsiElement> action,
+                                       Collection<PsiReference> references) {
+    final PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
+    final PsiElement newDeclaration = action.fun(declaration);
+    retargetReferences(elementFactory, localName, references);
+    return newDeclaration;
   }
 
   @Nullable

@@ -526,6 +526,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   
   public void testDisabledParam() throws Exception {
     doTestDisabledParam();
+  } 
+
+  public void testTypeParamsList() throws Exception {
+    doTest();
   }
 
   private void doTestDisabledParam() throws PrepareFailedException {
