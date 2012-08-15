@@ -16,6 +16,8 @@
 
 package com.intellij.ui;
 
+import com.intellij.util.ui.UIUtil;
+
 import java.awt.*;
 
 /**
@@ -25,7 +27,7 @@ public interface LightColors {
   Color YELLOW = new Color(0xffffcc);
   Color GREEN = new Color(0xccffcc);
   Color BLUE = new Color(0xccccff);
-  Color RED = new Color(0xffcccc);
+  Color RED = UIUtil.isUnderDarcula() ? new Color(70, 0, 0) : new Color(0xffcccc);
   Color CYAN = new Color(0xccffff);
 
   Color SLIGHTLY_GREEN = new Color(0xeeffee);
