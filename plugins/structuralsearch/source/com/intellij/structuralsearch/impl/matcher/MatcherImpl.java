@@ -454,7 +454,12 @@ public class MatcherImpl {
       }
 
       if (compiledPattern==null) {
-        compiledPattern =  PatternCompiler.compilePattern(project,options);
+        compiledPattern = ApplicationManager.getApplication().runReadAction(new Computable<CompiledPattern>() {
+          @Override
+          public CompiledPattern compute() {
+            return PatternCompiler.compilePattern(project,options);
+          }
+        });
       }
     }
 
