@@ -39,6 +39,12 @@ public class CollectionElementNameMacro extends Macro {
     if (lastDot >= 0) {
       param = param.substring(lastDot+1);
     }
+    if (param.endsWith(")")) {
+      int lastParen = param.lastIndexOf('(');
+      if (lastParen > 0) {
+        param = param.substring(0, lastParen);
+      }
+    }
     final String result = smartUnpluralize(param);
     return new TextResult(result);
   }
