@@ -809,9 +809,7 @@
     </group>
     
     <group id="Arrangement.RuleEditor.Context.Menu">
-      <action id="Arrangement.AddNode"
-              class="com.intellij.application.options.codeStyle.arrangement.action.ArrangementAddAndConditionAction"
-              icon="AllIcons.General.Add"/>
+      <!--TODO den implement-->
     </group>
     
   </actions>

@@ -97,7 +97,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
       if (!(ui instanceof WideSelectionTreeUI) && isWideSelection() && !UIUtil.isUnderGTKLookAndFeel()) {
-        actualUI = new WideSelectionTreeUI(isWideSelection(), !SystemInfo.isMac);
+        actualUI = new WideSelectionTreeUI(isWideSelection(), isAlwaysPaintRowBackground());
       }
     }
     super.setUI(actualUI);
@@ -140,6 +140,10 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return true;
   }
 
+  protected boolean isAlwaysPaintRowBackground() {
+    return !SystemInfo.isMac;
+  }
+  
   public boolean isFileColorsEnabled() {
     return false;
   }

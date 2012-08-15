@@ -27,6 +27,8 @@ public class ArrangementSettingsAtomNode implements ArrangementSettingsNode {
 
   @NotNull private final ArrangementSettingType myType;
   @NotNull private final Object                 myValue;
+  
+  private boolean myInverted;
 
   public ArrangementSettingsAtomNode(@NotNull ArrangementSettingType type, @NotNull Object value) {
     myType = type;
@@ -48,8 +50,48 @@ public class ArrangementSettingsAtomNode implements ArrangementSettingsNode {
     visitor.visit(this);
   }
 
+  public boolean isInverted() {
+    return myInverted;
+  }
+
+  public void setInverted(boolean inverted) {
+    myInverted = inverted;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myType.hashCode();
+    result = 31 * result + myValue.hashCode();
+    result = 31 * result + (myInverted ? 1 : 0);
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ArrangementSettingsAtomNode node = (ArrangementSettingsAtomNode)o;
+
+    if (myInverted != node.myInverted) {
+      return false;
+    }
+    if (myType != node.myType) {
+      return false;
+    }
+    if (!myValue.equals(node.myValue)) {
+      return false;
+    }
+
+    return true;
+  }
+
   @Override
   public String toString() {
-    return myType + ": " + myValue;
+    return String.format("%s: %s%s", myType.toString().toLowerCase(), myInverted ? "not " : "", myValue.toString().toLowerCase());
   }
 }

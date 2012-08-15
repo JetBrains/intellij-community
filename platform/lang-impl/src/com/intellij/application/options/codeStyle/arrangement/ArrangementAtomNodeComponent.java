@@ -70,6 +70,10 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   
   @Nullable private Dimension mySize;
   @Nullable private Rectangle myScreenBounds;
+  
+  private boolean mySelected;
+  private boolean myEnabled;
+  private boolean myInverted;
 
   public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager, @NotNull ArrangementSettingsAtomNode node) {
     mySettingsNode = node;
@@ -89,13 +93,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
     JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
       @Override
       public void paint(Graphics g) {
-        Color color;
-        if (myScreenBounds != null && myScreenBounds.contains(MouseInfo.getPointerInfo().getLocation())) {
-          color = UIUtil.getTreeSelectionBackground();
-        }
-        else {
-          color = UIUtil.getTabbedPaneBackground();
-        }
+        Color color = mySelected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTabbedPaneBackground();
         Rectangle bounds = getBounds();
         g.setColor(color);
         g.fillRoundRect(0, 0, bounds.width, bounds.height, arcSize, arcSize);
@@ -135,10 +133,39 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   }
 
   @Override
-  public ArrangementNodeComponent getComponentAt(@NotNull RelativePoint point) {
+  public ArrangementNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
     return (myScreenBounds != null && myScreenBounds.contains(point.getScreenPoint())) ? this : null;
   }
-  
+
+  /**
+   * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'selected' state.
+   *
+   * @param selected  flag that indicates if current component should be drawn as 'selected'
+   */
+  public void setSelected(boolean selected) {
+    mySelected = selected;
+  }
+
+  /**
+   * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'enabled' state.
+   *
+   * @param enabled  flag that indicates if current component should be drawn as 'enabled'
+   */
+  public void setEnabled(boolean enabled) {
+    myEnabled = enabled;
+  }
+
+  /**
+   * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'inverted' state.
+   * <p/>
+   * For example, target rule might look like 'public' and inverting it produces 'not public'.
+   *
+   * @param inverted  flag that indicates if current component should be drawn as 'inverted'
+   */
+  public void setInverted(boolean inverted) {
+    myInverted = inverted;
+  }
+
   @Override
   public String toString() {
     return myLabel.getText();

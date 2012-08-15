@@ -40,11 +40,18 @@ public interface ArrangementNodeComponent {
 
   // TODO den add doc
   @Nullable
-  ArrangementNodeComponent getComponentAt(@NotNull RelativePoint point);
+  ArrangementNodeComponent getNodeComponentAt(@NotNull RelativePoint point);
   
   // TODO den add doc
   @Nullable
   Rectangle getScreenBounds();
   
   void setScreenBounds(@Nullable Rectangle bounds);
+
+  /**
+   * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'selected' state.
+   *
+   * @param selected  flag that indicates if current component should be drawn as 'selected'
+   */
+  void setSelected(boolean selected);
 }

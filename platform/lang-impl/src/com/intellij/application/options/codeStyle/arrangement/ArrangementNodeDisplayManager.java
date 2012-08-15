@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -34,9 +35,10 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 8/9/12 3:02 PM
  */
+@SuppressWarnings("MethodMayBeStatic")
 public class ArrangementNodeDisplayManager {
   
-  private final TObjectIntHashMap<ArrangementSettingType> myMaxWidths = new TObjectIntHashMap<ArrangementSettingType>();
+  @NotNull private final TObjectIntHashMap<ArrangementSettingType> myMaxWidths = new TObjectIntHashMap<ArrangementSettingType>();
 
   public ArrangementNodeDisplayManager(@NotNull ArrangementStandardSettingsAware filter) {
     Map<ArrangementSettingType, List<?>> map = ArrangementSettingsUtil.buildAvailableOptions(filter, null);
@@ -56,19 +58,26 @@ public class ArrangementNodeDisplayManager {
     return result;
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public String getDisplayValue(@NotNull ArrangementSettingsAtomNode node) {
     return getDisplayValue(node.getValue());
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
+  
+  @NotNull
+  public String getDisplayLabel(@NotNull ArrangementSettingType type) {
+    switch (type) {
+      case TYPE: return ApplicationBundle.message("arrangement.text.type");
+      case MODIFIER: return ApplicationBundle.message("arrangement.text.modifier");
+    }
+    return type.toString().toLowerCase();
+  }
+  
   @NotNull
   public String getDisplayValue(@NotNull ArrangementSettingType type) {
     return type.toString().toLowerCase();
   }
   
-  @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public String getDisplayValue(@NotNull Object value) {
     return value.toString().toLowerCase();
@@ -76,5 +85,18 @@ public class ArrangementNodeDisplayManager {
   
   public int getMaxWidth(@NotNull ArrangementSettingType type) {
     return myMaxWidths.get(type);
+  }
+
+  /**
+   * Asks current manager to sort in-place given arrangement condition ids ('field', 'class', 'method', 'public', 'static', 'final' etc).
+   * 
+   * @param ids  target ids to use
+   * @param <T>  id type
+   * @return     sorted ids to use (the given list)
+   */
+  @NotNull
+  public <T> List<T> sort(@NotNull List<T> ids) {
+    // TODO den implement
+    return ids;
   }
 }

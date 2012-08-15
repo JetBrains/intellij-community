@@ -82,7 +82,14 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
   }
 
   @Override
-  public ArrangementNodeComponent getComponentAt(@NotNull RelativePoint point) {
+  public void setSelected(boolean selected) {
+    for (ArrangementNodeComponent component : myComponents) {
+      component.setSelected(selected);
+    }
+  }
+
+  @Override
+  public ArrangementNodeComponent getNodeComponentAt(@NotNull RelativePoint point) {
     if (myScreenBounds == null) {
       return null;
     }

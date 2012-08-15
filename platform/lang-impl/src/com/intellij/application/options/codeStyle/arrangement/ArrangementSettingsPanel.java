@@ -21,12 +21,17 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.GridBag;
+import org.jdesktop.swingx.JXTaskPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 
 /**
@@ -41,11 +46,31 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull ArrangementStandardSettingsAware filter) {
     super(settings);
-    Tree component = new ArrangementRuleTree(filter).getTreeComponent();
-    myContent.add(component, new GridBag().weightx(1).weighty(1).fillCell());
+    final ArrangementRuleTree ruleTree = new ArrangementRuleTree(filter);
+    Tree component = ruleTree.getTreeComponent();
+    myContent.add(new JBScrollPane(component), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
     CustomizationUtil.installPopupHandler(
       component, ArrangementConstants.ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU, ArrangementConstants.RULE_EDITOR_PLACE
     );
+
+    final JXTaskPane editorPane = new JXTaskPane(ApplicationBundle.message("arrangement.title.editor"));
+    final ArrangementMatcherRuleEditor ruleEditor = new ArrangementMatcherRuleEditor(filter);
+    editorPane.add(ruleEditor);
+    editorPane.setCollapsed(true);
+    myContent.add(editorPane, new GridBag().weightx(1).fillCellHorizontally().coverLine());
+    
+    ruleTree.addEditingListener(new ArrangementMatcherEditingListener() {
+      @Override
+      public void startEditing(@NotNull ArrangementMatcherSettings settings) {
+        ruleEditor.updateState(settings);
+        editorPane.setCollapsed(false); 
+      }
+
+      @Override
+      public void stopEditing() {
+        editorPane.setCollapsed(true); 
+      }
+    });
   }
 
   @Override
@@ -77,6 +102,6 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Override
   protected String getTabTitle() {
-    return ApplicationBundle.message("tab.title.arrangement");
+    return ApplicationBundle.message("arrangement.title.settings.tab");
   }
 }

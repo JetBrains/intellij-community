@@ -15,17 +15,19 @@
  */
 package com.intellij.psi.codeStyle.arrangement.settings;
 
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNodeVisitor;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
- * Encapsulates information about {@link ArrangementEntryMatcher standard arrangement match rule settings}.
+ * Encapsulates information about {@link ArrangementSettingsNode standard arrangement match rule settings}.
  * <p/>
  * Not thread-safe.
  * 
@@ -34,37 +36,57 @@ import java.util.Set;
  */
 public class ArrangementMatcherSettings implements Cloneable {
 
-  @NotNull private final Set<ArrangementModifier> myModifiers = EnumSet.noneOf(ArrangementModifier.class);
-  
-  @Nullable private ArrangementEntryType myType;
-
-  @Nullable
-  public ArrangementEntryType getType() {
-    return myType;
-  }
-
-  public void setType(@Nullable ArrangementEntryType type) {
-    myType = type;
-  }
+  @NotNull private final List<ArrangementSettingsNode>  myConditions    = new ArrayList<ArrangementSettingsNode>();
+  @NotNull private final Set<Object>                    myValues        = new HashSet<Object>();
+  @NotNull private final ArrangementSettingsNodeVisitor myAddVisitor    = new MyAddVisitor();
+  @NotNull private final ArrangementSettingsNodeVisitor myRemoveVisitor = new MyRemoveVisitor();
 
   @NotNull
-  public Set<ArrangementModifier> getModifiers() {
-    return myModifiers;
+  public List<ArrangementSettingsNode> getConditions() {
+    return myConditions;
   }
 
-  public boolean addModifier(@NotNull ArrangementModifier modifier) {
-    return myModifiers.add(modifier);
+  public boolean addCondition(@NotNull ArrangementSettingsNode condition) {
+    condition.invite(myAddVisitor);
+    return myConditions.add(condition);
   }
 
-  public boolean removeModifier(@NotNull ArrangementModifier modifier) {
-    return myModifiers.remove(modifier);
+  public boolean removeCondition(@NotNull ArrangementSettingsNode condition) {
+    condition.invite(myRemoveVisitor);
+    return myConditions.remove(condition);
+  }
+
+  public boolean hasCondition(@NotNull Object id) {
+    return myValues.contains(id);
   }
 
   @Override
-  protected ArrangementMatcherSettings clone() {
+  public ArrangementMatcherSettings clone() {
     ArrangementMatcherSettings result = new ArrangementMatcherSettings();
-    result.setType(myType);
-    result.myModifiers.addAll(myModifiers);
+    result.myConditions.addAll(myConditions);
+    result.myValues.addAll(myValues);
     return result;
+  }
+
+  private class MyAddVisitor implements ArrangementSettingsNodeVisitor {
+    @Override
+    public void visit(@NotNull ArrangementSettingsAtomNode node) {
+      myValues.add(node.getValue());
+    }
+
+    @Override
+    public void visit(@NotNull ArrangementSettingsCompositeNode node) {
+    }
+  }
+
+  private class MyRemoveVisitor implements ArrangementSettingsNodeVisitor {
+    @Override
+    public void visit(@NotNull ArrangementSettingsAtomNode node) {
+      myValues.remove(node.getValue());
+    }
+
+    @Override
+    public void visit(@NotNull ArrangementSettingsCompositeNode node) {
+    }
   }
 }

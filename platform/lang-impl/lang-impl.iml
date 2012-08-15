@@ -25,6 +25,7 @@
     <orderEntry type="library" name="Snappy-Java" level="project" />
     <orderEntry type="module" module-name="projectModel-impl" exported="" />
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
+    <orderEntry type="library" name="swingx" level="project" />
   </component>
 </module>
 

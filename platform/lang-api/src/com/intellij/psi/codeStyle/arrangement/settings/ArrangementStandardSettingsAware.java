@@ -21,6 +21,8 @@ import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 /**
  * // TODO den add doc
  * Strategy that defines what subset of standard arrangement settings can be used during defining arrangement settings. 
@@ -31,14 +33,14 @@ import org.jetbrains.annotations.Nullable;
 public interface ArrangementStandardSettingsAware {
   
   // TODO den add doc
-  boolean isNameFilterEnabled(@Nullable ArrangementMatcherSettings settings);
+  boolean isNameFilterEnabled(@Nullable ArrangementMatcherSettings current);
   
   // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementMatcherSettings settings);
+  boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementMatcherSettings current);
   
   // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatcherSettings settings);
+  boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatcherSettings current);
 
   // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementMatcherSettings settings);
+  boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementMatcherSettings current);
 }

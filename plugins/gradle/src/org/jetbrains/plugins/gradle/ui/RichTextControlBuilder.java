@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ui.MultiRowFlowPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

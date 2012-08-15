@@ -1169,7 +1169,7 @@ public class StringUtil extends StringUtilRt {
       result.append(item).append(separator);
     }
     if (result.length() > 0) {
-      result.setLength(result.length() - 1);
+      result.setLength(result.length() - separator.length());
     }
     return result.toString();
   }
