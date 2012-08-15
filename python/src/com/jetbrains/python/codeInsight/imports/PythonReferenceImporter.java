@@ -139,7 +139,22 @@ public class PythonReferenceImporter implements ReferenceImporter {
 
     // maybe some unimported file has it, too
     ProgressManager.checkCanceled(); // before expensive index searches
-    // NOTE: current indices have limitations, only finding direct definitions of classes and functions.
+    addSymbolImportCandidates(node, refText, fix, seen_file_names, existing_import_file);
+    for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
+      provider.addImportCandidates(reference, refText, fix);
+    }
+    if (fix.getCandidatesCount() > 0) {
+      fix.sortCandidates();
+      return fix;
+    }
+    return null;
+  }
+
+  private static void addSymbolImportCandidates(PyElement node,
+                                                String refText,
+                                                AutoImportQuickFix fix,
+                                                Set<String> seenFileNames,
+                                                PsiFile existingImportFile) {
     Project project = node.getProject();
     List<PsiElement> symbols = new ArrayList<PsiElement>();
     symbols.addAll(PyClassNameIndex.find(refText, project, true));
@@ -155,27 +170,26 @@ public class PythonReferenceImporter implements ReferenceImporter {
       for (PsiElement symbol : symbols) {
         if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
           PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
-          if (srcfile != null && srcfile != existing_import_file && srcfile != node.getContainingFile() &&
-              (ImportFromExistingAction.isRoot(srcfile) || PyNames.isIdentifier(FileUtil.getNameWithoutExtension(srcfile.getName()))) &&
-               !isShadowedModule(srcfile)) {
-            PyQualifiedName import_path = QualifiedNameFinder.findCanonicalImportPath(srcfile, node);
-            if (import_path != null && !seen_file_names.contains(import_path.toString())) {
+          if (srcfile != null && isAcceptableForImport(node, existingImportFile, srcfile)) {
+            PyQualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, node);
+            if (symbol instanceof PsiFileSystemItem && importPath != null) {
+              importPath = importPath.removeTail(1);
+            }
+            if (importPath != null && !seenFileNames.contains(importPath.toString())) {
               // a new, valid hit
-              fix.addImport(symbol, srcfile, import_path, proposeAsName(node.getContainingFile(), refText, import_path));
-              seen_file_names.add(import_path.toString()); // just in case, again
+              fix.addImport(symbol, srcfile, importPath, proposeAsName(node.getContainingFile(), refText, importPath));
+              seenFileNames.add(importPath.toString()); // just in case, again
             }
           }
         }
       }
     }
-    for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
-      provider.addImportCandidates(reference, refText, fix);
-    }
-    if (fix.getCandidatesCount() > 0) {
-      fix.sortCandidates();
-      return fix;
-    }
-    return null;
+  }
+
+  private static boolean isAcceptableForImport(PyElement node, PsiFile existingImportFile, PsiFileSystemItem srcfile) {
+    return srcfile != existingImportFile && srcfile != node.getContainingFile() &&
+        (ImportFromExistingAction.isRoot(srcfile) || PyNames.isIdentifier(FileUtil.getNameWithoutExtension(srcfile.getName()))) &&
+         !isShadowedModule(srcfile);
   }
 
   private static boolean isShadowedModule(PsiFileSystemItem file) {
