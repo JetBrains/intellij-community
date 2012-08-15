@@ -20,7 +20,7 @@ import java.util.*;
  * Date: 1/5/12
  */
 public class JavaCoverageViewExtension extends CoverageViewExtension {
-  private JavaCoverageAnnotator myAnnotator;
+  private final JavaCoverageAnnotator myAnnotator;
 
   public JavaCoverageViewExtension(JavaCoverageAnnotator annotator,
                                    Project project,
@@ -278,11 +278,13 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     };
   }
 
-  public static boolean isInCoverageScope(PsiElement element, CoverageSuitesBundle suitesBundle) {
-    final PsiPackage psiPackage = (PsiPackage)element;
-    final String qualifiedName = psiPackage.getQualifiedName();
-    for (CoverageSuite suite : suitesBundle.getSuites()) {
-      if (((JavaCoverageSuite)suite).isPackageFiltered(qualifiedName)) return true;
+  private static boolean isInCoverageScope(PsiElement element, CoverageSuitesBundle suitesBundle) {
+    if (element instanceof PsiPackage) {
+      final PsiPackage psiPackage = (PsiPackage)element;
+      final String qualifiedName = psiPackage.getQualifiedName();
+      for (CoverageSuite suite : suitesBundle.getSuites()) {
+        if (((JavaCoverageSuite)suite).isPackageFiltered(qualifiedName)) return true;
+      }
     }
     return false;
   }
