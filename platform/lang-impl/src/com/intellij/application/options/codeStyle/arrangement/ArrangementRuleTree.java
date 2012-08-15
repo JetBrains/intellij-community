@@ -94,6 +94,7 @@ public class ArrangementRuleTree {
       }
     };
     myTree.setSelectionModel(mySelectionModel);
+    myTree.setRootVisible(false);
     mySelectionModel.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
@@ -126,7 +127,6 @@ public class ArrangementRuleTree {
     map(root, rules, grouper);
 
     expandAll(myTree, new TreePath(root));
-    myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
   }
@@ -170,7 +170,7 @@ public class ArrangementRuleTree {
   {
     ArrangementRuleEditingModelBuilder builder = new ArrangementRuleEditingModelBuilder();
     for (ArrangementSettingsNode setting : settings) {
-      builder.build(setting, root, grouper, myModels);
+      builder.build(setting, myTree, root, grouper, myModels);
     }
   }
 

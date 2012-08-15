@@ -160,7 +160,12 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
               compositeWithoutType.addOperand(n);
             }
           }
-          parent.addChild(new HierarchicalArrangementSettingsNode(compositeWithoutType));
+          if (compositeWithoutType.getOperands().size() == 1) {
+            parent.addChild(new HierarchicalArrangementSettingsNode(compositeWithoutType.getOperands().iterator().next()));
+          }
+          else {
+            parent.addChild(new HierarchicalArrangementSettingsNode(compositeWithoutType));
+          }
           result.set(parent);
         }
       }
