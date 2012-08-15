@@ -489,7 +489,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (GenerateBinaryStubsFix.isApplicable(reference)) {
         actions.add(new GenerateBinaryStubsFix(reference));
       }
-      actions.add(new AddIgnoredIdentifierFix(ref_text));
+      actions.add(new AddIgnoredIdentifierQuickFix(ref_text));
       addPluginQuickFixes(reference, actions);
 
       PsiElement point = node.getLastChild(); // usually the identifier at the end of qual ref

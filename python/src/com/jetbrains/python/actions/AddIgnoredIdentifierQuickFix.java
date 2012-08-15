@@ -13,10 +13,10 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class AddIgnoredIdentifierFix implements LocalQuickFix, LowPriorityAction {
+public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityAction {
   private final String myIdentifier;
 
-  public AddIgnoredIdentifierFix(String identifier) {
+  public AddIgnoredIdentifierQuickFix(String identifier) {
     myIdentifier = identifier;
   }
 
