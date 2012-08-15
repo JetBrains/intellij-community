@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 /**
@@ -28,7 +30,7 @@ public final class CustomShortcutSet implements ShortcutSet {
    * Creates <code>CustomShortcutSet</code> which contains only one
    * single stroke keyboard shortcut.
    */
-  public CustomShortcutSet(KeyStroke keyStroke){
+  public CustomShortcutSet(@NotNull KeyStroke keyStroke){
     this(new KeyboardShortcut(keyStroke, null));
   }
 
@@ -38,15 +40,18 @@ public final class CustomShortcutSet implements ShortcutSet {
    *
    * @param shortcuts keyboard shortcuts
    */
-  public CustomShortcutSet(Shortcut... shortcuts){
+  public CustomShortcutSet(@NotNull Shortcut... shortcuts){
     myShortcuts = shortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : shortcuts.clone();
   }
 
+  @Override
+  @NotNull
   public Shortcut[] getShortcuts(){
     return myShortcuts.length == 0 ? Shortcut.EMPTY_ARRAY : myShortcuts.clone();
   }
 
-  public static CustomShortcutSet fromString(String... keyboardShortcuts) {
+  @NotNull
+  public static CustomShortcutSet fromString(@NotNull String... keyboardShortcuts) {
     final KeyboardShortcut[] shortcuts = new KeyboardShortcut[keyboardShortcuts.length];
     for (int i = 0; i < keyboardShortcuts.length; i++) {
       shortcuts[i] = KeyboardShortcut.fromString(keyboardShortcuts[i]);

@@ -21,7 +21,6 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.Change;
@@ -52,7 +51,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
 
   private final class MyChangeListManagerListener extends ChangeListAdapter {
     public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
-      rebuild();
+      rebuildWithAlarm(myAlarm);
       setDisplayName(IdeBundle.message("changelist.todo.title", newDefaultList.getName()));
     }
 
@@ -61,26 +60,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     }
 
     public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
-      rebuild();
-    }
-
-    private void rebuild() {
-      myAlarm.cancelAllRequests();
-      myAlarm.addRequest(new Runnable() {
-        public void run() {
-          ApplicationManager.getApplication().runReadAction(new Runnable() {
-            public void run() {
-              myTodoTreeBuilder.rebuildCache();
-            }
-          });
-          final Runnable runnable = new Runnable() {
-            public void run() {
-              updateTree();
-            }
-          };
-          ApplicationManager.getApplication().invokeLater(runnable);
-        }
-      }, 300);
+      rebuildWithAlarm(myAlarm);
     }
   }
 }

@@ -69,6 +69,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
   private CurrentFileTodosPanel myCurrentFileTodos;
   private TodoPanel myAllTodos;
   private ChangeListTodosPanel myChangeListTodos;
+  private ScopeBasedTodosPanel myScopeBasedTodos;
   private final List<TodoPanel> myPanels;
   private final List<Content> myNotAddedContent;
 
@@ -201,11 +202,19 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     };
     Disposer.register(this, myChangeListTodos);
     myChangeListTodosContent.setComponent(myChangeListTodos);
+    
+    
+    Content scopeBasedTodoContent = ContentFactory.SERVICE.getInstance().createContent(null, "Scope Based", false);
+    myScopeBasedTodos = new ScopeBasedTodosPanel(myProject, myCurrentPanelSettings, scopeBasedTodoContent);
+    Disposer.register(this, myScopeBasedTodos);
+    scopeBasedTodoContent.setComponent(myScopeBasedTodos);
 
     myContentManager=toolWindow.getContentManager();
 
     myContentManager.addContent(allTodosContent);
     myContentManager.addContent(currentFileTodosContent);
+    myContentManager.addContent(scopeBasedTodoContent);
+
     if (myVCSManager.getAllActiveVcss().length > 0) {
       myVcsListener.myIsVisible = true;
       myContentManager.addContent(myChangeListTodosContent);
@@ -217,6 +226,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     myChangeListTodosContent.setCloseable(false);
     allTodosContent.setCloseable(false);
     currentFileTodosContent.setCloseable(false);
+    scopeBasedTodoContent.setCloseable(false);
     Content content=myContentManager.getContent(mySelectedIndex);
     content = content == null ? allTodosContent : content;
     myContentManager.setSelectedContent(content);
@@ -224,6 +234,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     myPanels.add(myAllTodos);
     myPanels.add(myChangeListTodos);
     myPanels.add(myCurrentFileTodos);
+    myPanels.add(myScopeBasedTodos);
   }
 
   private final class MyVcsListener implements VcsListener {

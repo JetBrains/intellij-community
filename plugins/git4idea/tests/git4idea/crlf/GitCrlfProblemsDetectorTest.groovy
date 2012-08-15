@@ -15,6 +15,7 @@
  */
 package git4idea.crlf
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -69,6 +70,7 @@ class GitCrlfProblemsDetectorTest {
       git ("config --global core.autocrlf " + myOldCoreAutoCrlfValue);
     }
     FileUtil.delete(new File(myRootDir))
+    Disposer.dispose(myProject)
   }
 
   private boolean isGlobalCommandPossible() {

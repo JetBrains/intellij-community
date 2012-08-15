@@ -60,24 +60,18 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   @Nullable
   public VirtualFile findFileByPath(@NotNull String path) {
-    String canonicalPath = getVfsCanonicalPath(path);
-    if (canonicalPath == null) return null;
     return VfsImplUtil.findFileByPath(this, path);
   }
 
   @Override
   public VirtualFile findFileByPathIfCached(@NotNull String path) {
-    String canonicalPath = getVfsCanonicalPath(path);
-    if (canonicalPath == null) return null;
-    return VfsImplUtil.findFileByPathIfCached(this, canonicalPath);
+    return VfsImplUtil.findFileByPathIfCached(this, path);
   }
 
   @Override
   @Nullable
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {
-    String canonicalPath = getVfsCanonicalPath(path);
-    if (canonicalPath == null) return null;
-    return VfsImplUtil.refreshAndFindFileByPath(this, canonicalPath);
+    return VfsImplUtil.refreshAndFindFileByPath(this, path);
   }
 
   @Override
@@ -93,40 +87,6 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     String path = file.getPath();
     if (path == null) return null;
     return findFileByPath(path.replace(File.separatorChar, '/'));
-  }
-
-  @Nullable
-  protected static String getVfsCanonicalPath(@NotNull String path) {
-    if (path.isEmpty()) {
-      try {
-        return new File("").getCanonicalPath();
-      }
-      catch (IOException e) {
-        return path;
-      }
-    }
-
-    if (SystemInfo.isWindows) {
-      if (path.charAt(0) == '/' && !path.startsWith("//")) {
-        path = path.substring(1);  // hack over new File(path).toUrl().getFile()
-      }
-
-      if (path.contains("~")) {
-        try {
-          return new File(path.replace('/', File.separatorChar)).getCanonicalPath().replace(File.separatorChar, '/');
-        }
-        catch (IOException e) {
-          return null;
-        }
-      }
-    }
-    else {
-      if (!StringUtil.startsWithChar(path, '/')) {
-        path = new File(path).getAbsolutePath();
-      }
-    }
-
-    return FileUtil.normalize(path);
   }
 
   @NotNull
@@ -234,8 +194,37 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   @Nullable
-  public String normalize(@NotNull final String path) {
-    return getVfsCanonicalPath(path);
+  protected String normalize(@NotNull String path) {
+    if (path.isEmpty()) {
+      try {
+        return new File("").getCanonicalPath();
+      }
+      catch (IOException e) {
+        return path;
+      }
+    }
+
+    if (SystemInfo.isWindows) {
+      if (path.charAt(0) == '/' && !path.startsWith("//")) {
+        path = path.substring(1);  // hack over new File(path).toUrl().getFile()
+      }
+
+      if (path.contains("~")) {
+        try {
+          path = new File(FileUtil.toSystemDependentName(path)).getCanonicalPath();
+        }
+        catch (IOException e) {
+          return null;
+        }
+      }
+    }
+    else {
+      if (!StringUtil.startsWithChar(path, '/')) {
+        path = new File(path).getAbsolutePath();
+      }
+    }
+
+    return FileUtil.normalize(path);
   }
 
   @Override

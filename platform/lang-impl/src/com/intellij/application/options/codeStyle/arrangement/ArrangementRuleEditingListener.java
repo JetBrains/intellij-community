@@ -15,16 +15,15 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
  * @since 8/15/12 9:14 AM
  */
-public interface ArrangementMatcherEditingListener {
+public interface ArrangementRuleEditingListener {
 
-  void startEditing(@NotNull ArrangementMatcherSettings settings);
+  void startEditing(@NotNull ArrangementRuleEditingModel settings);
   
   void stopEditing();
 }

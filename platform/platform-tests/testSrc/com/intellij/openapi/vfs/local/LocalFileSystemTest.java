@@ -162,7 +162,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     if (SystemInfo.isWindows) {
       root = LocalFileSystem.getInstance().findFileByPath("\\\\unit-133");
       assertNotNull(root);
-      root2 = LocalFileSystem.getInstance().findFileByPath("\\\\UNIT-133");
+      root2 = LocalFileSystem.getInstance().findFileByPath("//UNIT-133");
       assertNotNull(root2);
       assertTrue(String.valueOf(root2), root == root2);
       RefreshQueue.getInstance().processSingleEvent(new VFileDeleteEvent(this, root, false));
@@ -174,6 +174,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       if (new File("c:").exists()) {
         root = LocalFileSystem.getInstance().findFileByPath("c:");
         assertNotNull(root);
+        assertEquals("C:", root.getPath());
 
         root2 = LocalFileSystem.getInstance().findFileByPath("C:\\");
         assertTrue(String.valueOf(root2), root == root2);
@@ -182,6 +183,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     else if (SystemInfo.isUnix) {
       root = LocalFileSystem.getInstance().findFileByPath("/");
       assertNotNull(root);
+      assertEquals(root.getPath(), "/");
     }
 
     root = LocalFileSystem.getInstance().findFileByPath("");

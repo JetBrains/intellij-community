@@ -24,16 +24,16 @@ public class JavaClassFindUsagesOptions extends JavaFindUsagesOptions {
 
   @Override
   protected void addUsageTypes(LinkedHashSet<String> strings) {
-    if (this.isUsages || this.isMethodsUsages || this.isFieldsUsages) {
+    if (isUsages || isMethodsUsages || isFieldsUsages) {
       strings.add(FindBundle.message("find.usages.panel.title.usages"));
     }
-    if (this.isDerivedClasses) {
+    if (isDerivedClasses) {
       strings.add(FindBundle.message("find.usages.panel.title.derived.classes"));
     }
-    if (this.isImplementingClasses) {
+    if (isImplementingClasses) {
       strings.add(FindBundle.message("find.usages.panel.title.implementing.classes"));
     }
-    if (this.isDerivedInterfaces) {
+    if (isDerivedInterfaces) {
       strings.add(FindBundle.message("find.usages.panel.title.derived.interfaces"));
     }
   }

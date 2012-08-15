@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
@@ -40,7 +39,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
     public void paint(Graphics g) {
-      Point point = ArrangementSettingsUtil.getLocationOnScreen(this);
+      Point point = ArrangementConfigUtil.getLocationOnScreen(this);
       if (point != null) {
         Rectangle bounds = myRenderer.getBounds();
         myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
@@ -114,7 +113,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
   @NotNull
   @Override
-  public ArrangementSettingsNode getSettingsNode() {
+  public ArrangementSettingsAtomNode getSettingsNode() {
     return mySettingsNode;
   }
 

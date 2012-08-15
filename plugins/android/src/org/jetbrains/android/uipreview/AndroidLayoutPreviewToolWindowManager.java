@@ -425,14 +425,18 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     catch (RenderingException e) {
       LOG.debug(e);
       String message = e.getPresentableMessage();
-      message = message != null ? message : AndroidBundle.message("android.layout.preview.default.error.message");
       final Throwable[] causes = e.getCauses();
+      message = message != null ? message : AndroidBundle.message("android.layout.preview.default.error.message");
       errorMessage = causes.length > 0 ? new FixableIssueMessage(message + ' ', "Details", "", new Runnable() {
         @Override
         public void run() {
           showStackStace(causes);
         }
       }) : new FixableIssueMessage(message);
+
+      if (causes.length == 0) {
+        warnMessages.addAll(e.getWarnMessages());
+      }
     }
     catch (IOException e) {
       LOG.info(e);

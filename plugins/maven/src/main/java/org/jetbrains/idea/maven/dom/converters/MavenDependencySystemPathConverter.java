@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class MavenDependencySystemPathConverter extends ResolvingConverter<PsiFi
     public Collection<PsiFileSystemItem> getDefaultContexts() {
       Collection<PsiFileSystemItem> systemItemCollection = super.getDefaultContexts();
       if (isAbsolutePathReference()) {
-        VirtualFile vFile = LocalFileSystem.getInstance().findRoot();
+        VirtualFile vFile = LocalFileSystem.getInstance().getRoot();
 
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           assert vFile != null : ""; //

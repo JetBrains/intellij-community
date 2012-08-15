@@ -216,7 +216,9 @@
                     serviceImplementation="org.jetbrains.android.exportSignedPackage.GenerateSignedApkSettings"/>
     <compilerSettingsFactory implementation="org.jetbrains.android.compiler.AndroidDexCompilerSettingsFactory"/>
     <problemFileHighlightFilter implementation="org.jetbrains.android.AndroidProblemFileHighlightingFilter"/>
+
     <lang.documentationProvider language="JAVA" implementationClass="org.jetbrains.android.AndroidDocumentationProvider" order="first"/>
+    <lang.documentationProvider language="XML" implementationClass="org.jetbrains.android.dom.AndroidXmlDocumentationProvider" order="first"/>
 
     <sdkType implementation="org.jetbrains.android.sdk.AndroidSdkType"/>
     <gotoDeclarationHandler implementation="org.jetbrains.android.AndroidGotoDeclarationHandler"/>

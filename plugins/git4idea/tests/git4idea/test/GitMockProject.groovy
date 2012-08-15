@@ -160,7 +160,6 @@ class GitMockProject implements Project {
 
   @Override
   void dispose() {
-    throw new UnsupportedOperationException()
   }
 
   @Override

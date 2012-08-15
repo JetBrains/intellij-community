@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class PsiDisjunctionType extends PsiType {
   private final List<PsiType> myTypes;
   private final CachedValue<PsiType> myLubCache;
 
-  public PsiDisjunctionType(final List<PsiType> types, final PsiManager psiManager) {
+  public PsiDisjunctionType(@NotNull final List<PsiType> types, @NotNull final PsiManager psiManager) {
     super(PsiAnnotation.EMPTY_ARRAY);
 
     myManager = psiManager;
@@ -51,20 +51,27 @@ public class PsiDisjunctionType extends PsiType {
         PsiType lub = myTypes.get(0);
         for (int i = 1; i < myTypes.size(); i++) {
           lub = GenericsUtil.getLeastUpperBound(lub, myTypes.get(i), psiManager);
+          if (lub == null) {
+            lub = PsiType.getJavaLangObject(myManager, GlobalSearchScope.allScope(myManager.getProject()));
+            break;
+          }
         }
         return Result.create(lub, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
       }
     }, false);
   }
 
+  @NotNull
   public PsiType getLeastUpperBound() {
     return myLubCache.getValue();
   }
 
+  @NotNull
   public List<PsiType> getDisjunctions() {
     return myTypes;
   }
 
+  @NotNull
   public PsiDisjunctionType newDisjunctionType(final List<PsiType> types) {
     return new PsiDisjunctionType(types, myManager);
   }

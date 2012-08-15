@@ -40,6 +40,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
                                     PsiSubstitutor substitutor) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
 
+    field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
     if (!(expectedTypes instanceof ExpectedTypeInfo[])) {
       expectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
@@ -50,15 +51,12 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     if (createConstantField) {
       field.setInitializer(factory.createExpressionFromText("0", null));
       builder.replaceElement(field.getInitializer(), new EmptyExpression());
+      PsiIdentifier identifier = field.getNameIdentifier();
+      builder.setEndVariableAfter(identifier);
+      field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
     }
-
-    PsiIdentifier identifier = field.getNameIdentifier();
-    builder.setEndVariableAfter(identifier);
-    field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
-    Template template = builder.buildTemplate();
-
-    TextRange range = field.getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    editor.getCaretModel().moveToOffset(field.getTextRange().getStartOffset());
+    Template template = builder.buildInlineTemplate();
     if (((ExpectedTypeInfo[])expectedTypes).length > 1) template.setToShortenLongNames(false);
     return template;
   }

@@ -23,6 +23,7 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -818,21 +819,32 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
     final PsiElement grandparent = parent.getParent();
-    if (!(grandparent instanceof PsiNewExpression)) {
-      return false;
+    final PsiClass aClass;
+    if (grandparent instanceof PsiMethodCallExpression && HighlightUtil.isSuperOrThisMethodCall(grandparent)) {
+      final PsiMethod method = ((PsiMethodCallExpression)grandparent).resolveMethod();
+      if (method != null) {
+        aClass = method.getContainingClass();
+      } else {
+        return false;
+      }
+    } else {
+      if (!(grandparent instanceof PsiNewExpression)) {
+        return false;
+      }
+      final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)grandparent).getClassReference();
+      if (reference == null) {
+        return false;
+      }
+      final PsiElement referent = reference.resolve();
+      if (!(referent instanceof PsiClass)) {
+        return false;
+      }
+
+      aClass = (PsiClass)referent;
     }
-    final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)grandparent).getClassReference();
-    if (reference == null) {
-      return false;
-    }
-    final PsiElement referent = reference.resolve();
-    if (!(referent instanceof PsiClass)) {
-      return false;
-    }
-    final PsiClass aClass = (PsiClass)referent;
     final Project project = expression.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClass throwable = JavaPsiFacade.getInstance(project).findClass("java.lang.Throwable", scope);
+    final PsiClass throwable = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, scope);
     return throwable != null && aClass.isInheritor(throwable, true);
   }
 

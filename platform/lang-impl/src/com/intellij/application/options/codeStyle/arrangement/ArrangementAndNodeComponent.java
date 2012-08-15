@@ -135,7 +135,7 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
 
   @Override
   public void paint(Graphics g) {
-    Point point = ArrangementSettingsUtil.getLocationOnScreen(this);
+    Point point = ArrangementConfigUtil.getLocationOnScreen(this);
     if (point != null) {
       Rectangle bounds = getBounds();
       myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);

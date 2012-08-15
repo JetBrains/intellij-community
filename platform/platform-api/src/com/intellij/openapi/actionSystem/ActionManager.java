@@ -183,4 +183,6 @@ public abstract class ActionManager implements ApplicationComponent {
 
   public abstract void removeAnActionListener(AnActionListener listener);
 
+  @Nullable
+  public abstract KeyboardShortcut getKeyboardShortcut(@NotNull String actionId);
 }

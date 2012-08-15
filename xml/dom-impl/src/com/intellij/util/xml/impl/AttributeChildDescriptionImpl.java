@@ -23,7 +23,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
     myGetterMethod = getter;
   }
 
-  protected AttributeChildDescriptionImpl(final XmlName attributeName, @NotNull Type type) {
+  public AttributeChildDescriptionImpl(final XmlName attributeName, @NotNull Type type) {
     super(attributeName, type);
     myGetterMethod = null;
   }

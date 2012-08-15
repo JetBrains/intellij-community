@@ -15,6 +15,7 @@
  */
 package com.intellij.find;
 
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -29,8 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * Allows to invoke and control Find, Replace and Find Usages operations.
  */
 public abstract class FindManager {
-  public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<FindModelListener>("FindManager's model changes",
-                                                                                               FindModelListener.class);
+  public static final Topic<FindModelListener> FIND_MODEL_TOPIC = new Topic<FindModelListener>("FindManager's model changes", FindModelListener.class);
 
   public abstract FindModel createReplaceInFileModel();
 
@@ -38,6 +38,8 @@ public abstract class FindManager {
   public abstract FindModel getPreviousFindModel();
 
   public abstract void setPreviousFindModel(FindModel previousFindModel);
+
+  public abstract void showSettingsAndFindUsages(@NotNull NavigationItem[] targets);
 
   /**
    * Returns the find manager instance for the specified project.

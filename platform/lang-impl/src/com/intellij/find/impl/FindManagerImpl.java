@@ -28,6 +28,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -703,6 +704,11 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @Override
+  public void showSettingsAndFindUsages(@NotNull NavigationItem[] targets) {
+    myFindUsagesManager.showSettingsAndFindUsages(targets);
+  }
+
+  @Override
   public void findUsagesInEditor(@NotNull PsiElement element, @NotNull FileEditor fileEditor) {
     if (fileEditor instanceof TextEditor) {
       TextEditor textEditor = (TextEditor)fileEditor;
@@ -714,7 +720,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
   }
 
-  private boolean tryToFindNextUsageViaEditorSearchComponent(Editor editor, SearchResults.Direction forwardOrBackward) {
+  private static boolean tryToFindNextUsageViaEditorSearchComponent(Editor editor, SearchResults.Direction forwardOrBackward) {
     if (editor.getHeaderComponent() instanceof EditorSearchComponent) {
       EditorSearchComponent searchComponent = (EditorSearchComponent)editor.getHeaderComponent();
       if (searchComponent.hasMatches()) {

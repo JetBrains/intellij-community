@@ -92,7 +92,9 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
           ((MyKeyringMasterKeyProvider) myPersistentAuthenticationProviderProxy.myISVNGnomeKeyringPasswordProvider).myProject = null;
           myPersistentAuthenticationProviderProxy = null;
         }
-        ((MySvnAuthenticationInteraction) myInteraction).myProject = null;
+        if (myInteraction instanceof MySvnAuthenticationInteraction) {
+          ((MySvnAuthenticationInteraction) myInteraction).myProject = null;
+        }
         if (myConfig != null) {
           myConfig.clear();
           myConfig = null;
