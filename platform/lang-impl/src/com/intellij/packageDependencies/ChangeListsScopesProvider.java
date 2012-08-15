@@ -18,6 +18,7 @@ package com.intellij.packageDependencies;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.*;
@@ -46,7 +47,7 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
   @Override
   public List<NamedScope> getCustomScopes() {
 
-    if (myProject.isDefault()) return Collections.emptyList();
+    if (myProject.isDefault() || ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) return Collections.emptyList();
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
 
     final List<NamedScope> result = new ArrayList<NamedScope>();

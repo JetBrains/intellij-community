@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,17 +20,20 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFile;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 
-public class AllTodosTreeBuilder extends TodoTreeBuilder{
-  public AllTodosTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
+public class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder{
+  private JComboBox myScopes;
+
+  public ScopeBasedTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, JComboBox scopes){
     super(tree,treeModel,project);
+    myScopes = scopes;
   }
 
   protected TodoTreeStructure createTreeStructure(){
-    return new AllTodosTreeStructure(myProject);
+    return new ScopeBasedTodosTreeStructure(myProject, myScopes);
   }
+
 }
