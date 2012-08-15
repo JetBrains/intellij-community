@@ -45,10 +45,13 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
         Rectangle bounds = myRenderer.getBounds();
         myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
       }
+      if (!myEnabled && g instanceof Graphics2D) {
+        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+      }
       super.paint(g);
     }
   };
-  
+
   @NotNull private final JLabel myLabel = new JLabel() {
     @Override
     public Dimension getMinimumSize() {
@@ -65,14 +68,14 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
       return mySize == null ? super.getPreferredSize() : mySize;
     }
   };
-  
+
   @NotNull private final ArrangementSettingsAtomNode mySettingsNode;
-  
+
   @Nullable private Dimension mySize;
   @Nullable private Rectangle myScreenBounds;
-  
+
+  private boolean myEnabled = true;
   private boolean mySelected;
-  private boolean myEnabled;
   private boolean myInverted;
 
   public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager, @NotNull ArrangementSettingsAtomNode node) {
