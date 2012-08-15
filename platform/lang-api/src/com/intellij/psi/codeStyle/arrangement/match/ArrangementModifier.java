@@ -25,5 +25,5 @@ public enum ArrangementModifier {
   PUBLIC, PROTECTED, PRIVATE, PACKAGE_PRIVATE,
   //endregion
   
-  STATIC, FINAL
+  STATIC, FINAL, TRANSIENT, VOLATILE, SYNCHRONIZED
 }

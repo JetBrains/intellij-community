@@ -15,18 +15,14 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectProcedure;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +33,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 /**
@@ -52,17 +49,13 @@ public class ArrangementRuleTree {
   @NotNull private final TIntObjectHashMap<ArrangementMatcherSettings> mySettings       =
     new TIntObjectHashMap<ArrangementMatcherSettings>();
 
-  @NotNull private final ArrangementStandardSettingsAware myFilter;
   @NotNull private final Tree                             myTree;
-  @NotNull private final ArrangementNodeDisplayManager    myDisplayManager;
   @NotNull private final ArrangementNodeComponentFactory  myFactory;
 
   private boolean mySkipSelectionChange;
 
-  public ArrangementRuleTree(@NotNull ArrangementStandardSettingsAware filter) {
-    myFilter = filter;
-    myDisplayManager = new ArrangementNodeDisplayManager(filter);
-    myFactory = new ArrangementNodeComponentFactory(myDisplayManager);
+  public ArrangementRuleTree(@NotNull ArrangementNodeDisplayManager displayManager) {
+    myFactory = new ArrangementNodeComponentFactory(displayManager);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
     myTree = new Tree(treeModel) {
@@ -107,21 +100,6 @@ public class ArrangementRuleTree {
       @Override
       public void mouseClicked(MouseEvent e) {
         onMouseClicked(e);
-      }
-    });
-    myTree.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
-      @Override
-      public Object getData(@NonNls String dataId) {
-        if (ArrangementSettingsUtil.DISPLAY_MANAGER.is(dataId)) {
-          return myDisplayManager;
-        }
-        else if (ArrangementSettingsUtil.FILTER.is(dataId)) {
-          return myFilter;
-        }
-        else if (ArrangementSettingsUtil.TREE.is(dataId)) {
-          return myTree;
-        }
-        return null;
       }
     });
 

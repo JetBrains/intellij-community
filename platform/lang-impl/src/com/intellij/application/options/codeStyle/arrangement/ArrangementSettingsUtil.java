@@ -72,7 +72,7 @@ public class ArrangementSettingsUtil {
    * @return map which contains information on what new new settings are available at the current situation
    */
   @NotNull
-  public static Map<ArrangementSettingType, List<?>> buildAvailableOptions(@NotNull DataContext context) {
+  public static Map<ArrangementSettingType, Collection<?>> buildAvailableOptions(@NotNull DataContext context) {
     ArrangementStandardSettingsAware filter = FILTER.getData(context);
     if (filter == null) {
       return Collections.emptyMap();
@@ -89,10 +89,10 @@ public class ArrangementSettingsUtil {
    * @return          map which contains information on what new new settings are available at the current situation
    */
   @NotNull
-  public static Map<ArrangementSettingType, List<?>> buildAvailableOptions(@NotNull ArrangementStandardSettingsAware filter,
-                                                                           @Nullable ArrangementMatcherSettings settings)
+  public static Map<ArrangementSettingType, Collection<?>> buildAvailableOptions(@NotNull ArrangementStandardSettingsAware filter,
+                                                                                 @Nullable ArrangementMatcherSettings settings)
   {
-    Map<ArrangementSettingType, List<?>> result = new EnumMap<ArrangementSettingType, List<?>>(ArrangementSettingType.class);
+    Map<ArrangementSettingType, Collection<?>> result = new EnumMap<ArrangementSettingType, Collection<?>>(ArrangementSettingType.class);
     processData(filter, settings, result, ArrangementEntryType.values(), ENTRY_TYPE_HELPER);
     processData(filter, settings, result, ArrangementModifier.values(), MODIFIER_HELPER);
     return result;
@@ -100,7 +100,7 @@ public class ArrangementSettingsUtil {
 
   private static <T> void processData(@NotNull ArrangementStandardSettingsAware filter,
                                       @Nullable ArrangementMatcherSettings settings,
-                                      Map<ArrangementSettingType, List<?>> result,
+                                      Map<ArrangementSettingType, Collection<?>> result,
                                       @NotNull T[] values,
                                       @NotNull Helper<T> helper)
   {

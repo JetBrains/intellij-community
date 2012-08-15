@@ -29,10 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Control for managing {@link ArrangementEntryMatcher matching rule conditions}.
@@ -45,40 +43,44 @@ import java.util.Map;
 public class ArrangementMatcherRuleEditor extends JPanel {
 
   @NotNull private final List<JComponent>                          myColoredComponents = new ArrayList<JComponent>();
-  @NotNull private final Map<Object,ArrangementAtomNodeComponent> myComponents        = new HashMap<Object,ArrangementAtomNodeComponent>();
+  @NotNull private final Map<Object, ArrangementAtomNodeComponent> myComponents        =
+    new HashMap<Object, ArrangementAtomNodeComponent>();
 
   @NotNull private final ArrangementStandardSettingsAware myFilter;
 
-  public ArrangementMatcherRuleEditor(@NotNull ArrangementStandardSettingsAware filter) {
+  public ArrangementMatcherRuleEditor(@NotNull ArrangementStandardSettingsAware filter,
+                                      @NotNull ArrangementNodeDisplayManager displayManager)
+  {
     myFilter = filter;
-    init();
+    init(displayManager);
   }
 
-  private void init() {
+  private void init(@NotNull ArrangementNodeDisplayManager displayManager) {
     setLayout(new GridBagLayout());
 
-    ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(myFilter);
-    Map<ArrangementSettingType, List<?>> supportedSettings = ArrangementSettingsUtil.buildAvailableOptions(myFilter, null);
+    Map<ArrangementSettingType, Collection<?>> supportedSettings = ArrangementSettingsUtil.buildAvailableOptions(myFilter, null);
     addRowIfPossible(ArrangementSettingType.TYPE, supportedSettings, displayManager);
     addRowIfPossible(ArrangementSettingType.MODIFIER, supportedSettings, displayManager);
   }
 
   private void addRowIfPossible(@NotNull ArrangementSettingType key,
-                                @NotNull Map<ArrangementSettingType, List<?>> supportedSettings,
+                                @NotNull Map<ArrangementSettingType, Collection<?>> supportedSettings,
                                 @NotNull ArrangementNodeDisplayManager manager)
   {
-    List<?> values = supportedSettings.get(key);
+    Collection<?> values = supportedSettings.get(key);
     if (values == null || values.isEmpty()) {
       return;
     }
 
-    add(new JLabel(manager.getDisplayLabel(key) + ":"), new GridBag().anchor(GridBagConstraints.WEST));
     JPanel valuesPanel = new MultiRowFlowPanel(FlowLayout.LEFT, 8, 5);
     for (Object value : manager.sort(values)) {
       ArrangementAtomNodeComponent component = new ArrangementAtomNodeComponent(manager, new ArrangementSettingsAtomNode(key, value));
       myComponents.put(value, component);
       valuesPanel.add(component.getUiComponent());
     }
+    
+    int top = ArrangementAtomNodeComponent.PADDING;
+    add(new JLabel(manager.getDisplayLabel(key) + ":"), new GridBag().anchor(GridBagConstraints.NORTHWEST).insets(top, 0, 0, 0));
     add(valuesPanel, new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally().coverLine());
     myColoredComponents.add(valuesPanel);
   }

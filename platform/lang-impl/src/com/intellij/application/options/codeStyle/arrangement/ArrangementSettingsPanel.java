@@ -24,6 +24,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
+import com.intellij.psi.codeStyle.arrangement.settings.DefaultArrangementSettingsRepresentationManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.GridBag;
@@ -31,8 +33,6 @@ import org.jdesktop.swingx.JXTaskPane;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -49,7 +49,13 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull ArrangementStandardSettingsAware filter) {
     super(settings);
-    final ArrangementRuleTree ruleTree = new ArrangementRuleTree(filter);
+    ArrangementStandardSettingsRepresentationAware representationManager = DefaultArrangementSettingsRepresentationManager.INSTANCE;
+    if (filter instanceof ArrangementStandardSettingsRepresentationAware) {
+      representationManager = (ArrangementStandardSettingsRepresentationAware)filter;
+    }
+    ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(filter, representationManager);
+    
+    final ArrangementRuleTree ruleTree = new ArrangementRuleTree(displayManager);
     Tree component = ruleTree.getTreeComponent();
     myContent.add(new JBScrollPane(component), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
     CustomizationUtil.installPopupHandler(
@@ -57,7 +63,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     );
 
     final JXTaskPane editorPane = new JXTaskPane(ApplicationBundle.message("arrangement.title.editor"));
-    final ArrangementMatcherRuleEditor ruleEditor = new ArrangementMatcherRuleEditor(filter);
+    final ArrangementMatcherRuleEditor ruleEditor = new ArrangementMatcherRuleEditor(filter, displayManager);
     ruleEditor.applyBackground(component.getBackground());
     editorPane.getContentPane().setBackground(component.getBackground());
     editorPane.add(ruleEditor);

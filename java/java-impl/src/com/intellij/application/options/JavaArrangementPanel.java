@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementSettingsPanel;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;

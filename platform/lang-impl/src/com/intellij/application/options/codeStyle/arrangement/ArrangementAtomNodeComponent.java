@@ -35,7 +35,7 @@ import java.awt.*;
  */
 public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
-  private static final int PADDING = 2;
+  public static final int PADDING = 2;
 
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
