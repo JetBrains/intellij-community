@@ -16,20 +16,39 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNodeVisitor;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
  * @since 8/15/12 2:40 PM
  */
 public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingModel {
-  
+
+  @NotNull private final Set<Object> myConditions = new HashSet<Object>();
   @NotNull private ArrangementSettingsNode mySettingsNode;
 
   public ArrangementRuleEditingModelImpl(@NotNull ArrangementSettingsNode node) {
     mySettingsNode = node;
+    node.invite(new ArrangementSettingsNodeVisitor() {
+      @Override
+      public void visit(@NotNull ArrangementSettingsAtomNode node) {
+        myConditions.add(node.getValue());
+      }
+
+      @Override
+      public void visit(@NotNull ArrangementSettingsCompositeNode node) {
+        for (ArrangementSettingsNode operand : node.getOperands()) {
+          operand.invite(this);
+        } 
+      }
+    });
   }
 
   @NotNull
@@ -40,8 +59,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
 
   @Override
   public boolean hasCondition(@NotNull Object key) {
-    // TODO den implement 
-    return false;
+    return myConditions.contains(key);
   }
 
   @Override
