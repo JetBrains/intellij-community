@@ -50,6 +50,7 @@ public class DomExtensionImpl implements DomExtension {
   private int myCount = 1;
   private Map myUserMap;
   private CustomDomChildrenDescription.TagNameDescriptor myTagNameDescriptor = CustomDomChildrenDescription.TagNameDescriptor.EMPTY;
+  private CustomDomChildrenDescription.AttributeDescriptor myAttributesDescriptor;
 
   public DomExtensionImpl(final Type type, final XmlName xmlName) {
     myType = type;
@@ -62,6 +63,14 @@ public class DomExtensionImpl implements DomExtension {
 
   public CustomDomChildrenDescription.TagNameDescriptor getTagNameDescriptor() {
     return myTagNameDescriptor;
+  }
+
+  public CustomDomChildrenDescription.AttributeDescriptor getAttributesDescriptor() {
+    return myAttributesDescriptor;
+  }
+
+  public void setAttributesDescriptor(CustomDomChildrenDescription.AttributeDescriptor attributesDescriptor) {
+    myAttributesDescriptor = attributesDescriptor;
   }
 
   @NotNull

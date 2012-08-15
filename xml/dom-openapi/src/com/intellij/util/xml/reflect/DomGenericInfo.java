@@ -75,6 +75,6 @@ public interface DomGenericInfo {
   @Nullable
   GenericDomValue getNameDomElement(DomElement element);
 
-  @Nullable
-  CustomDomChildrenDescription getCustomNameChildrenDescription();
+  @NotNull
+  List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription();
 }

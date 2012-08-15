@@ -21,6 +21,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomExtensionImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,16 +40,27 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
       return DomImplUtil.getCustomSubTags(handler, handler.getXmlTag().getSubTags(), handler.getFile());
     }
   };
+
   private final TagNameDescriptor myTagNameDescriptor;
+  private final AttributeDescriptor myAttributeDescriptor;
+
 
   public CustomDomChildrenDescriptionImpl(@NotNull final JavaMethod getter) {
-    this(getter, DomReflectionUtil.extractCollectionElementType(getter.getGenericReturnType()), TagNameDescriptor.EMPTY);
+    this(getter, DomReflectionUtil.extractCollectionElementType(getter.getGenericReturnType()),
+         TagNameDescriptor.EMPTY, TagNameDescriptor.EMPTY);
   }
 
-  public CustomDomChildrenDescriptionImpl(@Nullable final JavaMethod getter, @NotNull Type type, @NotNull TagNameDescriptor descriptor) {
+  public CustomDomChildrenDescriptionImpl(DomExtensionImpl custom) {
+    this(null, custom.getType(), custom.getTagNameDescriptor(), custom.getAttributesDescriptor());
+  }
+
+  private CustomDomChildrenDescriptionImpl(@Nullable final JavaMethod getter, @NotNull Type type,
+                                          @Nullable TagNameDescriptor descriptor,
+                                          @Nullable AttributeDescriptor attributesDescriptor) {
     super(type);
     myGetter = getter;
     myTagNameDescriptor = descriptor;
+    myAttributeDescriptor = attributesDescriptor;
   }
 
   @Nullable public JavaMethod getGetterMethod() {
@@ -84,10 +96,14 @@ public class CustomDomChildrenDescriptionImpl extends AbstractDomChildDescriptio
     return new DummyEvaluatedXmlName(childTag.getLocalName(), childTag.getNamespace());
   }
 
-  @NotNull
   @Override
   public TagNameDescriptor getTagNameDescriptor() {
     return myTagNameDescriptor;
+  }
+
+  @Override
+  public AttributeDescriptor getCustomAttributeDescriptor() {
+    return myAttributeDescriptor;
   }
 
   @Override

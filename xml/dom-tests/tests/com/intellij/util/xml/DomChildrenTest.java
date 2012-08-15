@@ -464,7 +464,7 @@ public class DomChildrenTest extends DomTestCase {
     final MyElement myElement = createElement("<a><foo/><bar/><foo xmlns=\"z\"/></a>", MyElement.class);
     final XmlTag tag = myElement.getXmlTag();
     final List<MyElement> customChildren = myElement.getCustomChildren();
-    assertOrderedEquals(customChildren, myElement.getGenericInfo().getCustomNameChildrenDescription().getValues(myElement));
+    assertOrderedEquals(customChildren, myElement.getGenericInfo().getCustomNameChildrenDescription().get(0).getValues(myElement));
     assertOrderedCollection(customChildren, new Consumer<MyElement>() {
       @Override
       public void consume(final MyElement element) {

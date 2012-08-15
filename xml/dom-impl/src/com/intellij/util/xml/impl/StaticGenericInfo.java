@@ -215,9 +215,9 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     return o instanceof GenericDomValue ? (GenericDomValue)o : null;
   }
 
-  @Nullable
-  public CustomDomChildrenDescriptionImpl getCustomNameChildrenDescription() {
-    return myCustomDescription;
+  @NotNull
+  public List<? extends CustomDomChildrenDescriptionImpl> getCustomNameChildrenDescription() {
+    return myCustomDescription == null ? Collections.<CustomDomChildrenDescriptionImpl>emptyList() : Collections.singletonList(myCustomDescription);
   }
 
   @Nullable
@@ -239,7 +239,7 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     myAttributes.dumpDescriptions(list);
     myFixed.dumpDescriptions(list);
     myCollections.dumpDescriptions(list);
-    ContainerUtil.addIfNotNull(getCustomNameChildrenDescription(), list);
+    list.addAll(getCustomNameChildrenDescription());
     return list;
   }
 

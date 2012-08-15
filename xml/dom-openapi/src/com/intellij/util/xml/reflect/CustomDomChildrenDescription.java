@@ -22,6 +22,7 @@ import com.intellij.util.xml.EvaluatedXmlName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.Set;
 
@@ -29,35 +30,36 @@ import java.util.Set;
  * @author peter
  */
 public interface CustomDomChildrenDescription extends AbstractDomChildrenDescription {
-  @NotNull
+  @Nullable
   TagNameDescriptor getTagNameDescriptor();
 
-  abstract class TagNameDescriptor {
-    public static final TagNameDescriptor EMPTY = new TagNameDescriptor() {
-      @Override
-      public Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent) {
-        return Collections.emptySet();
-      }
+  @Nullable
+  AttributeDescriptor getCustomAttributeDescriptor();
 
-      @Override
-      public PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name) {
-        return null;
-      }
+  class TagNameDescriptor {
 
-      @Override
-      public PomTarget findDeclaration(@NotNull DomElement child) {
-        return child.getChildDescription();
-      }
-    };
+    public static final AttributeDescriptor EMPTY = new AttributeDescriptor();
 
-    public abstract Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent);
+    public Set<EvaluatedXmlName> getCompletionVariants(@NotNull DomElement parent) {
+      return Collections.emptySet();
+    }
 
     @Nullable
-    public abstract PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name);
+    public PomTarget findDeclaration(DomElement parent, @NotNull EvaluatedXmlName name) {
+      return null;
+    }
 
     @Nullable
-    public abstract PomTarget findDeclaration(@NotNull DomElement child);
+    public PomTarget findDeclaration(@NotNull DomElement child) {
+      return child.getChildDescription();
+    }
     
   }
-  
+
+  class AttributeDescriptor extends TagNameDescriptor {
+
+    public Type getElementType(DomElement child) {
+      throw new UnsupportedOperationException();
+    }
+  }
 }
