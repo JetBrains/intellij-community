@@ -110,7 +110,9 @@
   <exportable serviceInterface="com.intellij.openapi.roots.impl.libraries.ApplicationLibraryTable"/>
 
   <applicationService serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"
-                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl"/>
+                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.PersistableCodeStyleSchemes"/>
+  <applicationService serviceInterface="com.intellij.psi.impl.source.codeStyle.LegacyCodeStyleSchemesSettings"
+                      serviceImplementation="com.intellij.psi.impl.source.codeStyle.LegacyCodeStyleSchemesSettings"/>
   <exportable serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"/>
   <schemeOwner serviceInterface="com.intellij.psi.codeStyle.CodeStyleSchemes"/>
 
