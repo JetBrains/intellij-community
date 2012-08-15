@@ -55,7 +55,7 @@ public class PyPsiUtils {
   }
 
   @Nullable
-  protected static ASTNode getNextComma(ASTNode after) {
+  public static ASTNode getNextComma(ASTNode after) {
     ASTNode node = after;
     PyElementType comma = PyTokenTypes.COMMA;
     do {

@@ -2,6 +2,7 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -293,6 +294,13 @@ public class PyIndentTest extends PyTestCase {
            "    [9, 10, 11, 12],\n" +
            "    <caret>\n" +
            "]");
+  }
+
+  public void testAlignInCall() {  // PY-6360
+    CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest("list(a,<caret>)",
+           "list(a,\n" +
+           "     <caret>)");
   }
 
   /*

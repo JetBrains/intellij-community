@@ -15,6 +15,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,7 +239,11 @@ public class PyBlock implements ASTBlock {
         return false;
       }
       PyArgumentList argList = (PyArgumentList)_node.getPsi();
-      return argList != null && argList.getArguments().length > 1;
+      if (argList != null) {
+        PyExpression[] arguments = argList.getArguments();
+        return arguments.length > 1 || (arguments.length == 1 && PyPsiUtils.getNextComma(arguments[0].getNode()) != null);
+      }
+      return false;
     }
     if (_node.getElementType() == PyElementTypes.PARAMETER_LIST) {
       return mySettings.ALIGN_MULTILINE_PARAMETERS;
