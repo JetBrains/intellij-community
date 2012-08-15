@@ -90,6 +90,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected final VirtualFile myFile;
 
   private final CardLayout myLayout = new CardLayout();
+  private final JPanel myPanel = new JPanel(myLayout);
   private JPanel myDesignerCard;
 
   protected DesignerActionPanel myActionPanel;
@@ -134,7 +135,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myModule = module;
     myFile = file;
 
-    setLayout(myLayout);
+    setLayout(new FillLayout());
     createDesignerCard();
     createErrorCard();
     createProgressPanel();
@@ -313,10 +314,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myActionPanel = new DesignerActionPanel(this, myGlassLayer);
 
-    myDesignerCard = new JPanel(new FillLayout());
-    myDesignerCard.add(myActionPanel.getToolbarComponent());
-    myDesignerCard.add(content);
-    add(myDesignerCard, DESIGNER_CARD);
+    add(myActionPanel.getToolbarComponent());
+    add(myPanel);
+
+    myDesignerCard = content;
+    myPanel.add(myDesignerCard, DESIGNER_CARD);
 
     mySurfaceArea.addSelectionListener(new ComponentSelectionListener() {
       @Override
@@ -347,7 +349,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myLayeredPane.revalidate();
     myHorizontalCaption.update();
     myVerticalCaption.update();
-    myLayout.show(this, DESIGNER_CARD);
+    myLayout.show(myPanel, DESIGNER_CARD);
   }
 
   private void createErrorCard() {
@@ -365,7 +367,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myErrorPanel.add(myErrorStackPanel, BorderLayout.CENTER);
 
-    add(myErrorPanel, ERROR_CARD);
+    myPanel.add(myErrorPanel, ERROR_CARD);
   }
 
   public final void showError(@NotNull String message, @NotNull Throwable e) {
@@ -425,7 +427,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
 
     myErrorPanel.revalidate();
-    myLayout.show(this, ERROR_CARD);
+    myLayout.show(myPanel, ERROR_CARD);
 
     DesignerToolWindowManager.getInstance(getProject()).refresh(true);
     repaint();
