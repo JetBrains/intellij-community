@@ -15,6 +15,7 @@
  */
 package com.intellij.usages.impl;
 
+import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.CloseTabToolbarAction;
@@ -46,10 +47,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewManager;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.*;
-import com.intellij.util.Alarm;
-import com.intellij.util.Consumer;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.messages.MessageBusConnection;
@@ -468,7 +466,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
 
-    return new AnAction[]{
+
+    return new AnAction[] {
+      showSettings(),
       canPerformReRun() ? new ReRunAction() : null,
       new CloseAction(),
       ActionManager.getInstance().getAction("PinToolwindowTab"),
@@ -481,6 +481,21 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       createImportToFavorites(),
       actionsManager.createExportToTextFileAction(myTextFileExporter),
       actionsManager.createHelpAction(HELP_ID)
+    };
+  }
+
+  private AnAction showSettings() {
+    return new AnAction("Options...", "show find usages settings dialog", PlatformIcons.SHOW_SETTINGS_ICON) {
+      {
+        KeyboardShortcut shortcut = getShowUsagesWithSettingsShortcut();
+        if (shortcut != null) {
+          registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
+        }
+      }
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        FindManager.getInstance(getProject()).showSettingsAndFindUsages(myTargets);
+      }
     };
   }
 
@@ -594,8 +609,14 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     }
   }
 
+  @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  @Nullable
+  public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
+    return ActionManager.getInstance().getKeyboardShortcut("ShowUsagesSettings");
   }
 
   private class CloseAction extends CloseTabToolbarAction {
