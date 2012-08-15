@@ -50,7 +50,7 @@ String patchAppDescriptor(String targetDirectory) {
 }
 
 def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
-  project.stage("layout to $targetDirectory")
+  projectBuilder.stage("layout to $targetDirectory")
 
   //noinspection GroovyAssignabilityCheck
   List<String> openapiModules = [platformApiModules,

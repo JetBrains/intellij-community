@@ -48,7 +48,7 @@ def String getLibraryName(Library lib) {
   def name = lib.name
   if (name.startsWith("moduleLibrary#")) {
     if (lib.classpath.size() != 1) {
-      project.warning("Non-single entry module library $name: $lib.classpath");
+      projectBuilder.warning("Non-single entry module library $name: $lib.classpath");
     }
     String filePath = lib.classpath[0]
     return filePath.substring(filePath.lastIndexOf('/')+1)
@@ -59,7 +59,7 @@ def String getLibraryName(Library lib) {
 binding.setVariable("checkLibLicenses", {
   def libraries = new HashSet<Library>()
   def lib2Module = new HashMap<Library, Module>();
-  project.modules.values().each {Module module ->
+  allModules().each {Module module ->
     module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {
       if (it instanceof Library) {
         lib2Module[it] = module
@@ -87,14 +87,14 @@ binding.setVariable("checkLibLicenses", {
     errorMessage << "If a library is packaged into IDEA installation information about its license must be added to libLicenses.gant file"
     errorMessage << "If a library is used in tests only change its scope to 'Test'"
     errorMessage << "If a library is used for compilation only change its scope to 'Provided'"
-    project.error(errorMessage.join("\n"))
+    projectBuilder.error(errorMessage.join("\n"))
   }
 });
 
 binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedModulesNames ->
-  project.info("Generating licenses table")
-  project.info("Used modules: $usedModulesNames")
-  Set<Module> usedModules = project.modules.values().findAll {usedModulesNames.contains(it.name)}
+  projectBuilder.info("Generating licenses table")
+  projectBuilder.info("Used modules: $usedModulesNames")
+  Set<Module> usedModules = allModules().findAll {usedModulesNames.contains(it.name)}
   Map<String, String> usedLibraries = [:]
   usedModules.each {Module module ->
     module.getClasspath(ClasspathKind.PRODUCTION_RUNTIME).each {item ->
@@ -119,19 +119,19 @@ binding.setVariable("generateLicensesTable", {String filePath, Set<String> usedM
     }
   }
 
-  project.info("Used libraries:")
+  projectBuilder.info("Used libraries:")
   List<String> lines = []
   licenses.entrySet().each {
     LibraryLicense lib = it.key
     String moduleName = it.value
     def name = lib.url != null ? "[$lib.name|$lib.url]" : lib.name
     def license = lib.licenseUrl != null ? "[$lib.license|$lib.licenseUrl]" : lib.license
-    project.info(" $lib.name (in module $moduleName)")
+    projectBuilder.info(" $lib.name (in module $moduleName)")
     lines << "|$name| ${lib.version?:""}|$license|".toString()
   }
-  //project.info("Unused libraries:")
+  //projectBuilder.info("Unused libraries:")
   //licensesList.findAll {!licenses.containsKey(it)}.each {LibraryLicense lib ->
-  //  project.info(" $lib.name")
+  //  projectBuilder.info(" $lib.name")
   //}
 
   lines.sort(String.CASE_INSENSITIVE_ORDER)

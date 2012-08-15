@@ -6,11 +6,11 @@ requireProperty("out", "$home/out/classes")
 
 target(compile: "Compile project") {
   loadProject()
-  project.builder.useInProcessJavac = true
-  project.targetFolder = out
+  projectBuilder.useInProcessJavac = true
+  projectBuilder.targetFolder = out
   ant.delete(dir: "$home/reports")
-  project.clean()
-  project.makeAll()
+  projectBuilder.cleanOutput()
+  projectBuilder.buildAll()
 }
 
 def pass(String prop) {
