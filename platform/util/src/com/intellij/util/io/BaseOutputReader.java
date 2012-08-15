@@ -83,8 +83,9 @@ public abstract class BaseOutputReader {
     token.setLength(0);
 
     boolean read = false;
-    int n;
-    while ((n = myReader.read(buffer)) > 0) {
+    while (myReader.ready()) {
+      int n = myReader.read(buffer);
+      if (n <= 0) break;
       read = true;
 
       for (int i = 0; i < n; i++) {
