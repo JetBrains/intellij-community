@@ -125,12 +125,19 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiElement resolved = refExpr.resolve();
+    final String referenceName = refExpr.getReferenceName();
+    bindAllClassRefs(file, resolved, referenceName, resolved != null ? getResolvedClass(element, (PsiMember)resolved) : null);
+  }
 
+  public static void bindAllClassRefs(final PsiFile file,
+                                      final PsiElement resolved,
+                                      final String referenceName, 
+                                      final PsiClass resolvedClass) {
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
-        String referenceName = refExpr.getReferenceName();
+        
         if (referenceName != null && referenceName.equals(reference.getReferenceName())) {
           PsiElement resolved = reference.resolve();
           if (resolved != null) {
@@ -141,9 +148,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     });
 
     if (resolved != null) {
-      PsiReferenceExpressionImpl.bindToElementViaStaticImport(
-        getResolvedClass(element, (PsiMember)resolved), ((PsiNamedElement)resolved).getName(), ((PsiJavaFile)file).getImportList()
-      );
+      PsiReferenceExpressionImpl.bindToElementViaStaticImport(resolvedClass, referenceName, ((PsiJavaFile)file).getImportList());
     }
 
     file.accept(new JavaRecursiveElementVisitor() {
@@ -153,11 +158,10 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
         if (reference.getParameterList() != null &&
             reference.getParameterList().getFirstChild() != null) return;
 
-        if (refExpr.getReferenceName().equals(reference.getReferenceName())) {
+        if (referenceName.equals(reference.getReferenceName())) {
           final PsiElement qualifierExpression = reference.getQualifier();
           PsiElement referent = reference.getUserData(TEMP_REFERENT_USER_DATA);
           if (!reference.isQualified()) {
-
             if (referent instanceof PsiMember && referent != reference.resolve()) {
               PsiElementFactory factory = JavaPsiFacade.getInstance(reference.getProject()).getElementFactory();
               try {
@@ -179,7 +183,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
               if (aClass instanceof PsiVariable) {
                 aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)aClass).getType());
               }
-              if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, getResolvedClass(element, (PsiMember)resolved), true)) {
+              if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, resolvedClass, true)) {
                 boolean foundMemberByName = false;
                 if (referent instanceof PsiMember) {
                   final String memberName = ((PsiMember)referent).getName();
@@ -205,7 +209,6 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
         super.visitReferenceElement(reference);
       }
     });
-
   }
 
   @Override
