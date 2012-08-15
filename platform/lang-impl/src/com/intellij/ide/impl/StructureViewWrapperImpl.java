@@ -173,7 +173,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   // -------------------------------------------------------------------------
 
   public void dispose() {
-    rebuild();
+    //we don't really need it
+    //rebuild();
   }
 
   public boolean selectCurrentElement(final FileEditor fileEditor, final VirtualFile file, final boolean requestFocus) {
