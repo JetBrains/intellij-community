@@ -127,11 +127,11 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
       }
     }
     catch (ClassNotFoundException e) {
-      LOG.info(e);
+      LOG.debug(e);
       myBrokenClasses.put(className, e.getCause());
     }
     catch (InvocationTargetException e) {
-      LOG.info(e);
+      LOG.debug(e);
 
       final Throwable cause = e.getCause();
       if (cause instanceof IncompatibleClassFileFormatException) {
@@ -142,15 +142,15 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
       }
     }
     catch (IllegalAccessException e) {
-      LOG.info(e);
+      LOG.debug(e);
       myBrokenClasses.put(className, e.getCause());
     }
     catch (InstantiationException e) {
-      LOG.info(e);
+      LOG.debug(e);
       myBrokenClasses.put(className, e.getCause());
     }
     catch (NoSuchMethodException e) {
-      LOG.info(e);
+      LOG.debug(e);
       myBrokenClasses.put(className, e.getCause());
     }
     catch (IncompatibleClassFileFormatException e) {
@@ -194,7 +194,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
       return myProjectClassLoader.loadClass(className);
     }
     catch (ClassNotFoundException e) {
-      LOG.info(e);
+      LOG.debug(e);
       if (!className.equals(FRAGMENT_TAG_NAME)) {
         myMissingClasses.add(className);
       }
@@ -369,7 +369,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
           constructor = clazz.getConstructor(constructorSignature);
           if (constructor != null) {
             if (constructorSignature.length < 2) {
-              LOG.warn("wrong_constructor: Custom view " +
+              LOG.info("wrong_constructor: Custom view " +
                        clazz.getSimpleName() +
                        " is not using the 2- or 3-argument " +
                        "View constructors; XML attributes will not work");
