@@ -132,7 +132,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       if (projectProfile != null) {
         final Element profileElement = new Element(PROFILE);
         projectProfile.writeExternal(profileElement);
-        boolean hasSmthToSave = sortedProfiles.size() > 1 || !Comparing.strEqual(PROJECT_PROFILE, PROJECT_DEFAULT_PROFILE_NAME);
+        boolean hasSmthToSave = sortedProfiles.size() > 1 || isDefaultProfileUsed();
         if (!hasSmthToSave) {
           for (Object child : profileElement.getChildren()) {
             if (!((Element)child).getName().equals("option")) {
@@ -152,12 +152,16 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
       }
     }
 
-    if (profiles != null || !Comparing.strEqual(PROJECT_PROFILE, PROJECT_DEFAULT_PROFILE_NAME)) {
+    if (profiles != null || isDefaultProfileUsed()) {
       DefaultJDOMExternalizer.writeExternal(this, element);
       final Element version = new Element("version");
       version.setAttribute("value", VERSION);
       element.addContent(version);
     }
+  }
+
+  private boolean isDefaultProfileUsed() {
+    return PROJECT_PROFILE != null && !Comparing.strEqual(PROJECT_PROFILE, PROJECT_DEFAULT_PROFILE_NAME);
   }
 
   @NotNull
