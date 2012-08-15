@@ -26,6 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,7 +37,7 @@ import java.util.List;
  * @author maxim
  */
 public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUserLookupValue, Iconable, LookupValueWithPriority {
-  private static ColorSampleLookupValue[] ourColors;
+  private static volatile ColorSampleLookupValue[] ourColors;
   private static Map<String, String> ourColorNameToHexCodeMap;
   private static Map<String, String> ourHexCodeToColorNameMap;
 
@@ -378,11 +379,12 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return ourColors;
   }
 
+  @Nullable
   public String getTypeHint() {
-    return myName != null && myValue.charAt(0) == '#' ? myValue : null;
+    return myValue != null && myValue.charAt(0) == '#' ? myValue : null;
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @Nullable
   public Color getColorHint() {
     return null;
   }
@@ -413,12 +415,12 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     final Color colorFromElement = UserColorLookup.getColorFromElement(currentElement);
 
     if (colorFromElement != null) {
-      addColorPreviewAndCodeToLookup(colorFromElement, currentElement.getText(), buf);
+      addColorPreviewAndCodeToLookup(colorFromElement, buf);
     }
   }
 
   private static String toHex(@NotNull final Color color) {
-    final StringBuffer sb = new StringBuffer();
+    final StringBuilder sb = new StringBuilder();
     for (int i = 0; i < 3; i++) {
       String s = Integer.toHexString(i == 0 ? color.getRed() : i == 1 ? color.getGreen() : color.getBlue());
       if (s.length() < 2) {
@@ -431,7 +433,7 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
     return sb.toString();
   }
 
-  public static void addColorPreviewAndCodeToLookup(final Color color, final String value, final StringBuilder buf) {
+  public static void addColorPreviewAndCodeToLookup(final Color color, final StringBuilder buf) {
     if (color == null) return;
     final String code = '#' + toHex(color);
     final String colorName = getColorNameForHexCode(code);
@@ -462,7 +464,9 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
       try {
         return Color.decode("0x" + hexValue2);
       }
-      catch (NumberFormatException e) {}
+      catch (NumberFormatException e) {
+        //ignore
+      }
     }
     return null;
   }
@@ -470,5 +474,41 @@ public class ColorSampleLookupValue implements LookupValueWithUIHint, DeferredUs
   @Override
   public String toString() {
     return myName == null ? myValue : myValue + " " + myName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ColorSampleLookupValue)) {
+      return false;
+    }
+
+    ColorSampleLookupValue value = (ColorSampleLookupValue)o;
+
+    if (myIsStandard != value.myIsStandard) {
+      return false;
+    }
+    if (myColor != null ? !myColor.equals(value.myColor) : value.myColor != null) {
+      return false;
+    }
+    if (myName != null ? !myName.equals(value.myName) : value.myName != null) {
+      return false;
+    }
+    if (myValue != null ? !myValue.equals(value.myValue) : value.myValue != null) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = (myIsStandard ? 1 : 0);
+    result = 31 * result + (myName != null ? myName.hashCode() : 0);
+    result = 31 * result + (myValue != null ? myValue.hashCode() : 0);
+    result = 31 * result + (myColor != null ? myColor.hashCode() : 0);
+    return result;
   }
 }
