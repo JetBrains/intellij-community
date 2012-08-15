@@ -18,6 +18,7 @@ package com.intellij.refactoring.migration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -98,14 +99,20 @@ public class MigrationUtil {
 
       // rename all references
       for (UsageInfo usage : usages) {
-        PsiElement element = usage.getElement();
-        if (element == null || !element.isValid()) continue;
-        if (element instanceof PsiJavaCodeReferenceElement) {
-          final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
-          referenceElement.bindToElement(aClass);
-        }
-        else {
-          bindNonJavaReference(aClass, element, usage);
+        if (usage instanceof MigrationProcessor.MigrationUsageInfo) {
+          final MigrationProcessor.MigrationUsageInfo usageInfo = (MigrationProcessor.MigrationUsageInfo)usage;
+          if (Comparing.equal(newQName, usageInfo.mapEntry.getNewName())) {
+            PsiElement element = usage.getElement();
+            if (element == null || !element.isValid()) continue;
+            if (element instanceof PsiJavaCodeReferenceElement) {
+              final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)element;
+              referenceElement.bindToElement(aClass);
+            }
+            else {
+              bindNonJavaReference(aClass, element, usage);
+            }
+          }
+
         }
       }
     }
