@@ -601,9 +601,9 @@ public class IncProjectBuilder {
   private static void createClasspathIndex(final ModuleChunk chunk, boolean forTests) {
     final Set<File> outputPaths = new LinkedHashSet<File>();
     for (JpsModule module : chunk.getModules()) {
-      final String outputUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, forTests);
-      if (outputUrl != null) {
-        outputPaths.add(JpsPathUtil.urlToFile(outputUrl));
+      final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(module, forTests);
+      if (outputDir != null) {
+        outputPaths.add(outputDir);
       }
     }
     for (File outputRoot : outputPaths) {

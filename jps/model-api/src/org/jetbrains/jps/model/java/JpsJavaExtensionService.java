@@ -12,6 +12,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.service.JpsServiceManager;
 
+import java.io.File;
 import java.util.List;
 
 /**
@@ -67,6 +68,9 @@ public abstract class JpsJavaExtensionService {
 
   @Nullable
   public abstract String getOutputUrl(JpsModule module, boolean forTests);
+
+  @Nullable
+  public abstract File getOutputDirectory(JpsModule module, boolean forTests);
 
   @Nullable
   public abstract String getSourcePrefix(JpsModule module, String rootUrl);

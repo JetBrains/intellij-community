@@ -202,8 +202,7 @@ public class ProjectPaths {
 
   @Nullable
   public File getModuleOutputDir(JpsModule module, boolean forTests) {
-    final String url = JpsJavaExtensionService.getInstance().getOutputUrl(module, forTests);
-    return url != null ? JpsPathUtil.urlToFile(url) : null;
+    return JpsJavaExtensionService.getInstance().getOutputDirectory(module, forTests);
   }
 
   @Nullable
