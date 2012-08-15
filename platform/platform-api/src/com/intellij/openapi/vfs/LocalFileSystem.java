@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.util.Processor;
 import com.intellij.util.io.fs.IFile;
@@ -109,6 +111,11 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
   public long physicalLength(@NotNull VirtualFile virtualFile) throws IOException{
     return virtualFile.getLength();
+  }
+
+  public VirtualFile findRoot() {
+    //noinspection ConstantConditions
+    return SystemInfo.isWindows ? ManagingFS.getInstance().findRoot("", this) : findFileByPath("/");
   }
 
   public interface WatchRequest {

@@ -20,7 +20,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -101,12 +100,7 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
     if (containingProject != null) {
       VirtualFile root = null;
       if (isAbsolutePathReference()) {
-        if (SystemInfo.isWindows) {
-          root = ManagingFS.getInstance().findRoot("", LocalFileSystem.getInstance());
-        }    
-        else {
-          root = LocalFileSystem.getInstance().findFileByPath("/");
-        }
+        root = LocalFileSystem.getInstance().findRoot();
       }
       else {
         
