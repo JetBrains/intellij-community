@@ -32,6 +32,7 @@ import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -179,9 +180,26 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myConfigurationSpecificEditor.resetFrom(configuration);
     myWipeUserDataCheckBox.setSelected(configuration.WIPE_USER_DATA);
     myDisableBootAnimationCombo.setSelected(configuration.DISABLE_BOOT_ANIMATION);
-    myNetworkSpeedCombo.setSelectedItem(configuration.NETWORK_SPEED);
-    myNetworkLatencyCombo.setSelectedItem(configuration.NETWORK_SPEED);
+    selectItemCaseInsensitively(myNetworkSpeedCombo, configuration.NETWORK_SPEED);
+    selectItemCaseInsensitively(myNetworkLatencyCombo, configuration.NETWORK_LATENCY);
     myClearLogCheckBox.setSelected(configuration.CLEAR_LOGCAT);
+  }
+
+  private static void selectItemCaseInsensitively(@NotNull JComboBox comboBox, @Nullable String item) {
+    if (item == null) {
+      comboBox.setSelectedItem(null);
+      return;
+    }
+
+    final ComboBoxModel model = comboBox.getModel();
+
+    for (int i = 0, n = model.getSize(); i < n; i++) {
+      final Object element = model.getElementAt(i);
+      if (element instanceof String && item.equalsIgnoreCase((String)element)) {
+        comboBox.setSelectedItem(element);
+        return;
+      }
+    }
   }
 
   protected void applyEditorTo(T configuration) throws ConfigurationException {
