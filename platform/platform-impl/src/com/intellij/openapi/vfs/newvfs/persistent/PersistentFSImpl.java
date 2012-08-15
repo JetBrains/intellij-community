@@ -742,22 +742,21 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     publisher.after(events);
   }
 
-  @NotNull private static final Object LOCK = new Object();
+  @NotNull private static final Object LOCK = new Object();  // TODO: read/write locks instead of synchronized
 
   @Override
   @Nullable
-  public VirtualFileSystemEntry findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) { // TODO: read/write locks instead of synchronized
+  public VirtualFileSystemEntry findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
+    final String rootUrl = fs.getProtocol() + "://" + basePath;
     synchronized (LOCK) {
-      String rootUrl = fs.getProtocol() + "://" + basePath;
-      VirtualFileSystemEntry root = myRoots.get(rootUrl);
-      if (root == null && basePath.isEmpty()) {
-        root = myFakeRoot;
-      }
+      VirtualFileSystemEntry root = basePath.isEmpty() ? myFakeRoot : myRoots.get(rootUrl);
+
       if (root == null) {
         try {
           final int rootId = FSRecords.findRootRecord(rootUrl);
+
           if (basePath.isEmpty()) {
-            // fake root for windows
+            // fake super-root
             root = new VirtualDirectoryImpl("", null, fs, rootId) {
               @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
               @Override
@@ -773,17 +772,15 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
               }
             };
           }
+          else if (fs instanceof JarFileSystem) {
+            // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
+            String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
+            final VirtualFile parentLocalFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
+            if (parentLocalFile == null) return null;
+            root = new JarRoot(fs, rootId, parentLocalFile);
+          }
           else {
-            if (fs instanceof JarFileSystem) {
-              // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
-              String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
-              final VirtualFile parentLocalFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
-              if (parentLocalFile == null) return null;
-              root = new JarRoot(fs, rootId, parentLocalFile);
-            }
-            else {
-              root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
-            }
+            root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
           }
 
           final FileAttributes attributes = fs.getAttributes(root);
