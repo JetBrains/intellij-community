@@ -477,11 +477,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       if (severity == HighlightSeverity.WARNING) {
         hl_type = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
-      /*
       else if (severity == HighlightSeverity.ERROR) {
-        hl_type = ProblemHighlightType.ERROR;
+        hl_type = ProblemHighlightType.GENERIC_ERROR;
       }
-      */
       else {
         hl_type = ProblemHighlightType.LIKE_UNKNOWN_SYMBOL;
       }
