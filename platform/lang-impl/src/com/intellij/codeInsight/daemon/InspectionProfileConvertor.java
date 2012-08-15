@@ -142,6 +142,7 @@ public class InspectionProfileConvertor {
     if (files == null || files.length != 1) {
       return;
     }
+    if (!files[0].isFile()) return;
     final File dest = new File(profileDirectory, OLD_DEFAUL_PROFILE + XML_EXTENSION);
     try {
       Document doc = JDOMUtil.loadDocument(files[0]);
