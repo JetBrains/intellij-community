@@ -817,38 +817,22 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public void refresh(final boolean asynchronous) {
-    final NewVirtualFile[] roots;
-    synchronized (LOCK) {
-      Collection<VirtualFileSystemEntry> values = myRoots.values();
-      roots = values.toArray(new NewVirtualFile[values.size()]);
-    }
-
-    RefreshQueue.getInstance().refresh(asynchronous, true, null, roots);
+    RefreshQueue.getInstance().refresh(asynchronous, true, null, getRoots());
   }
 
   @Override
   public void refresh(boolean asynchronous, Runnable postAction, @NotNull ModalityState modalityState) {
-    final NewVirtualFile[] roots;
-    synchronized (LOCK) {
-      Collection<VirtualFileSystemEntry> values = myRoots.values();
-      roots = values.toArray(new NewVirtualFile[values.size()]);
-    }
-
-    RefreshQueue.getInstance().refresh(asynchronous, true, postAction, modalityState, roots);
+    RefreshQueue.getInstance().refresh(asynchronous, true, postAction, modalityState, getRoots());
   }
 
   @Override
   @NotNull
   public VirtualFile[] getLocalRoots() {
-    List<NewVirtualFile> roots;
+    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
     synchronized (LOCK) {
-      roots = new ArrayList<NewVirtualFile>(myRoots.values());
-
-      final Iterator<NewVirtualFile> it = roots.iterator();
-      while (it.hasNext()) {
-        NewVirtualFile file = it.next();
-        if (!file.isInLocalFileSystem()) {
-          it.remove();
+      for (NewVirtualFile root : myRoots.values()) {
+        if (root.isInLocalFileSystem()) {
+          roots.add(root);
         }
       }
     }
@@ -920,7 +904,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public VirtualFile[] getRoots(@NotNull final NewVirtualFileSystem fs) {
-    List<VirtualFile> roots = new ArrayList<VirtualFile>();
+    final List<VirtualFile> roots = new ArrayList<VirtualFile>();
     synchronized (LOCK) {
       for (NewVirtualFile root : myRoots.values()) {
         if (root.getFileSystem() == fs) {
