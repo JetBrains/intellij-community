@@ -1,1 +1,1 @@
-<warning descr="Unresolved reference 'selfReference'">selfReference</warning>
+<error descr="Unresolved reference 'selfReference'">selfReference</error>

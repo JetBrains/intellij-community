@@ -1,1 +1,1 @@
-import <warning descr="No module named wurm">wurm</warning>
+import <error descr="No module named wurm">wurm</error>

@@ -1,11 +1,11 @@
 # PY-3639
 def f(x):
-    from <warning descr="Unresolved reference 'foo'">foo</warning> import <warning descr="Unresolved reference 'StringIO'">StringIO</warning>
+    from <error descr="Unresolved reference 'foo'">foo</error> import <error descr="Unresolved reference 'StringIO'">StringIO</error>
     return StringIO(x)
 
 def f(x):
     try:
-        from <warning descr="Unresolved reference 'foo'">foo</warning> import <warning descr="Module 'StringIO' not found">StringIO</warning>
+        from <error descr="Unresolved reference 'foo'">foo</error> import <warning descr="Module 'StringIO' not found">StringIO</warning>
     except Exception:
         pass
     return x

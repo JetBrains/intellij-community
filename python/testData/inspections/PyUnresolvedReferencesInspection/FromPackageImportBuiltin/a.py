@@ -1,1 +1,1 @@
-from importSource import <warning descr="Unresolved reference 'len'">len</warning>
+from importSource import <error descr="Unresolved reference 'len'">len</error>
