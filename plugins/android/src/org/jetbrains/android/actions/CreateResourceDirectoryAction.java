@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,7 @@ public class CreateResourceDirectoryAction extends CreateElementActionBase {
   protected boolean isAvailable(DataContext context) {
     if (!super.isAvailable(context)) return false;
     final PsiElement element = (PsiElement)context.getData(LangDataKeys.PSI_ELEMENT.getName());
-    if (!(element instanceof PsiDirectory)) {
+    if (!(element instanceof PsiDirectory) || AndroidFacet.getInstance(element) == null) {
       return false;
     }
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
