@@ -22,10 +22,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
-import com.intellij.psi.codeStyle.arrangement.settings.DefaultArrangementSettingsRepresentationManager;
+import com.intellij.psi.codeStyle.arrangement.settings.*;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.GridBag;
@@ -54,8 +51,12 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       representationManager = (ArrangementStandardSettingsRepresentationAware)filter;
     }
     ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(filter, representationManager);
+    ArrangementSettingsGrouper grouper = DefaultArrangementSettingsGrouper.INSTANCE;
+    if (filter instanceof ArrangementSettingsGrouper) {
+      grouper = (ArrangementSettingsGrouper)filter;
+    }
     
-    final ArrangementRuleTree ruleTree = new ArrangementRuleTree(displayManager);
+    final ArrangementRuleTree ruleTree = new ArrangementRuleTree(grouper, displayManager);
     Tree component = ruleTree.getTreeComponent();
     myContent.add(new JBScrollPane(component), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
     CustomizationUtil.installPopupHandler(
@@ -78,10 +79,10 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         }
       }
     });
-    ruleTree.addEditingListener(new ArrangementMatcherEditingListener() {
+    ruleTree.addEditingListener(new ArrangementRuleEditingListener() {
       @Override
-      public void startEditing(@NotNull ArrangementMatcherSettings settings) {
-        ruleEditor.updateState(settings);
+      public void startEditing(@NotNull ArrangementRuleEditingModel model) {
+        ruleEditor.updateState(model);
         resetEditor.set(Boolean.FALSE);
         try {
           editorPane.setCollapsed(false);

@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement.settings;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,14 +34,14 @@ import java.util.List;
 public interface ArrangementStandardSettingsAware {
   
   // TODO den add doc
-  boolean isNameFilterEnabled(@Nullable ArrangementMatcherSettings current);
+  boolean isNameFilterEnabled(@Nullable ArrangementSettingsNode current);
   
   // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementMatcherSettings current);
+  boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementSettingsNode current);
   
   // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatcherSettings current);
+  boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementSettingsNode current);
 
   // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementMatcherSettings current);
+  boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementSettingsNode current);
 }

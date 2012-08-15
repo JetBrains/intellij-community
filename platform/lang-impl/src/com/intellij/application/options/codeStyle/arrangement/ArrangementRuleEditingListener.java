@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.settings.group;
+package com.intellij.application.options.codeStyle.arrangement;
+
+import org.jetbrains.annotations.NotNull;
 
 /**
- * // TODO den add doc
- * 
  * @author Denis Zhdanov
- * @since 8/8/12 12:29 PM
+ * @since 8/15/12 9:14 AM
  */
-public interface ArrangementSettingsNodeGrouper {
+public interface ArrangementRuleEditingListener {
+
+  void startEditing(@NotNull ArrangementRuleEditingModel settings);
+  
+  void stopEditing();
 }
