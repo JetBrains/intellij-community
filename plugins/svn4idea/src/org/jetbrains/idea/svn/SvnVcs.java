@@ -636,9 +636,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final String property = System.getProperty(KEEP_CONNECTIONS_KEY);
     final boolean keep;
     boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
-    // this commented since not everything is tested with the new pool. simple variant to be used right now
+    // pool variant by default
     if (StringUtil.isEmptyOrSpaces(property) || unitTestMode) {
-    //if (unitTestMode) {
       keep = ! unitTestMode;  // default
     } else {
       keep = Boolean.getBoolean(KEEP_CONNECTIONS_KEY);
@@ -648,6 +647,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   private ISVNRepositoryPool getPool() {
+    if (myProject.isDisposed()) {
+      throw new ProcessCanceledException();
+    }
     if (myPool == null) {
       createPool();
     }
