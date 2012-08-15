@@ -513,6 +513,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return false;
   }
 
+  @NotNull
   public List<PyImportElement> getImportTargets() {
     List<PyImportElement> ret = new ArrayList<PyImportElement>();
     List<PyImportStatement> imports = PyPsiUtils.collectStubChildren(this, this.getStub(), PyElementTypes.IMPORT_STATEMENT, PyImportStatement.class);

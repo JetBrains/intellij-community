@@ -2,6 +2,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -28,6 +29,12 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
 
   List<PyFromImportStatement> getFromImports();
 
+  /**
+   * Returns the list of import elements in all 'import xxx' statements within the file.
+   *
+   * @return the list of import targets.
+   */
+  @NotNull
   List<PyImportElement> getImportTargets();
 
   /**
