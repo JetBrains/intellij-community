@@ -34,7 +34,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.file.impl.FileManager;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
-import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -195,7 +194,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   }
 
   @Nullable
-  public PsiFile getFile(FileContent content) {
+  public PsiFile getFile(@NotNull FileContent content) {
     PsiFile psiFile = content.getUserData(CACHED_PSI_FILE_COPY_IN_FILECONTENT);
     if (psiFile == null) {
       final VirtualFile vFile = content.getVirtualFile();
