@@ -23,11 +23,16 @@ import com.android.ide.common.resources.IntArrayWrapper;
 import com.android.resources.ResourceType;
 import com.android.sdklib.SdkConstants;
 import com.android.util.Pair;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.Computable;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +55,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   private final Set<String> myClassesWithIncorrectFormat = new HashSet<String>();
 
   private final Map<String, Class<?>> myLoadedClasses = new HashMap<String, Class<?>>();
+  private boolean myHasProjectLoadedClasses = false;
 
   private ProjectClassLoader myProjectClassLoader = null;
   private final ClassLoader myParentClassLoader;
@@ -104,14 +110,14 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   @Nullable
   public Object loadView(String className, Class[] constructorSignature, Object[] constructorArgs)
-    throws ClassNotFoundException, InvocationTargetException, NoSuchMethodException, IllegalAccessException, InstantiationException {
+    throws ClassNotFoundException {
 
     Class<?> aClass = myLoadedClasses.get(className);
-    if (aClass != null) {
-      return createNewInstance(aClass, constructorSignature, constructorArgs);
-    }
 
     try {
+      if (aClass != null) {
+        return createNewInstance(aClass, constructorSignature, constructorArgs);
+      }
       aClass = loadClass(className);
 
       if (aClass != null) {
@@ -152,6 +158,11 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
 
     try {
+      final Object o = createViewFromSuperclass(className, constructorSignature, constructorArgs);
+
+      if (o != null) {
+        return o;
+      }
       return createMockView(className, constructorSignature, constructorArgs);
     }
     catch (ClassNotFoundException e) {
@@ -193,6 +204,56 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
 
   public boolean hasUnsupportedClassVersionProblem() {
     return myClassesWithIncorrectFormat.size() > 0;
+  }
+
+  @Nullable
+  private Object createViewFromSuperclass(final String className, final Class[] constructorSignature, final Object[] constructorArgs) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Object>() {
+      @Nullable
+      @Override
+      public Object compute() {
+        final JavaPsiFacade facade = JavaPsiFacade.getInstance(myModule.getProject());
+        PsiClass psiClass = facade.findClass(className, myModule.getModuleWithDependenciesAndLibrariesScope(false));
+
+        if (psiClass == null) {
+          return null;
+        }
+        psiClass = psiClass.getSuperClass();
+        final Set<String> visited = new HashSet<String>();
+
+        while (psiClass != null) {
+          final String qName = psiClass.getQualifiedName();
+
+          if (qName == null || !visited.add(qName)) {
+            break;
+          }
+
+          if (!AndroidUtils.isAbstract(psiClass)) {
+            try {
+              Class<?> aClass = myLoadedClasses.get(qName);
+              if (aClass == null) {
+                aClass = myParentClassLoader.loadClass(qName);
+                if (aClass != null) {
+                  myLoadedClasses.put(qName, aClass);
+                }
+              }
+              if (aClass != null) {
+                final Object instance = createNewInstance(aClass, constructorSignature, constructorArgs);
+
+                if (instance != null) {
+                  return instance;
+                }
+              }
+            }
+            catch (Exception e) {
+              LOG.debug(e);
+            }
+          }
+          psiClass = psiClass.getSuperClass();
+        }
+        return null;
+      }
+    });
   }
 
   private Object createMockView(String className, Class[] constructorSignature, Object[] constructorArgs)
@@ -345,7 +406,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   }
 
   public boolean hasLoadedClasses() {
-    return myLoadedClasses.size() > 0;
+    return myHasProjectLoadedClasses;
   }
 
   @NotNull
@@ -371,6 +432,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
 
       if (aClass != null) {
         myLoadedClasses.put(className, aClass);
+        myHasProjectLoadedClasses = true;
       }
     }
 

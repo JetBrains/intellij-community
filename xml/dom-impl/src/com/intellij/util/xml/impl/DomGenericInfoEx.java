@@ -21,6 +21,7 @@ import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.JavaMethod;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomGenericInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,17 @@ public abstract class DomGenericInfoEx implements DomGenericInfo {
         }
       }
     }
-    return attribute ? null : getCustomNameChildrenDescription();
+
+    List<? extends CustomDomChildrenDescription> list = getCustomNameChildrenDescription();
+    for (CustomDomChildrenDescription description : list) {
+      if (attribute) {
+        // todo
+      }
+      else if (description.getTagNameDescriptor() != null) {
+        return description;
+      }
+    }
+    return null;
   }
 
   public abstract boolean processAttributeChildrenDescriptions(Processor<AttributeChildDescriptionImpl> processor);

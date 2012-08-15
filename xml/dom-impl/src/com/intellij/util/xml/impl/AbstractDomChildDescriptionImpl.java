@@ -71,7 +71,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
 
     if (myCustomAnnotations != null ? !myCustomAnnotations.equals(that.myCustomAnnotations) : that.myCustomAnnotations != null)
       return false;
-    if (!myType.equals(that.myType)) return false;
+    if (!getType().equals(that.getType())) return false;
     if (myUserMap != null ? !myUserMap.equals(that.myUserMap) : that.myUserMap != null) return false;
 
     return true;
@@ -79,7 +79,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
 
   @Override
   public int hashCode() {
-    int result = myType.hashCode();
+    int result = getType().hashCode();
     result = 31 * result + (myCustomAnnotations != null ? myCustomAnnotations.hashCode() : 0);
     result = 31 * result + (myUserMap != null ? myUserMap.hashCode() : 0);
     return result;
@@ -126,7 +126,7 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
 
   @NotNull
   public DomNameStrategy getDomNameStrategy(@NotNull DomElement parent) {
-    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(myType), false);
+    final DomNameStrategy strategy = DomImplUtil.getDomNameStrategy(ReflectionUtil.getRawType(getType()), false);
     return strategy == null ? parent.getNameStrategy() : strategy;
   }
 

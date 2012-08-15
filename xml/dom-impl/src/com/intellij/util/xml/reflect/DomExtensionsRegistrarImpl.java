@@ -23,6 +23,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.XmlName;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.util.List;
@@ -36,7 +37,7 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
   private final List<DomExtensionImpl> myFixeds = new SmartList<DomExtensionImpl>();
   private final List<DomExtensionImpl> myCollections = new SmartList<DomExtensionImpl>();
   private final Set<Object> myDependencies = new THashSet<Object>();
-  private DomExtensionImpl myCustomChildrenType;
+  private final List<DomExtensionImpl> myCustoms = new SmartList<DomExtensionImpl>();
 
   public List<DomExtensionImpl> getAttributes() {
     return myAttributes;
@@ -49,8 +50,8 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
     return myCollections;
   }
 
-  public DomExtensionImpl getCustomChildrenType() {
-    return myCustomChildrenType;
+  public List<DomExtensionImpl> getCustoms() {
+    return myCustoms;
   }
 
   @NotNull
@@ -89,13 +90,22 @@ public class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar {
   @Override
   public DomExtension registerCustomChildrenExtension(@NotNull Type type,
                                                       @NotNull CustomDomChildrenDescription.TagNameDescriptor descriptor) {
-    assert myCustomChildrenType == null;
-    myCustomChildrenType = new DomExtensionImpl(type, null);
-    myCustomChildrenType.setTagNameDescriptor(descriptor);
-    return myCustomChildrenType;
+    DomExtensionImpl extension = addExtension(myCustoms, null, type);
+    extension.setTagNameDescriptor(descriptor);
+    return extension;
   }
 
-  private static DomExtensionImpl addExtension(final List<DomExtensionImpl> list, final XmlName name, final Type type) {
+  @NotNull
+  @Override
+  public DomExtension registerCustomChildrenExtension(@NotNull Type type,
+                                                      @NotNull CustomDomChildrenDescription.AttributeDescriptor attributeDescriptor) {
+
+    DomExtensionImpl extension = addExtension(myCustoms, null, type);
+    extension.setAttributesDescriptor(attributeDescriptor);
+    return extension;
+  }
+
+  private static DomExtensionImpl addExtension(final List<DomExtensionImpl> list, @Nullable final XmlName name, final Type type) {
     final DomExtensionImpl extension = new DomExtensionImpl(type, name);
     list.add(extension);
     return extension;

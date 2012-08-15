@@ -42,9 +42,9 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
       return null;
     }
 
-    @Nullable
-    public CustomDomChildrenDescription getCustomNameChildrenDescription() {
-      return null;
+    @NotNull
+    public List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription() {
+      return Collections.emptyList();
     }
 
     @Nullable

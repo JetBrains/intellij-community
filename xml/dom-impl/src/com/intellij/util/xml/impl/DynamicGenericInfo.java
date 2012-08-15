@@ -24,6 +24,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,7 +54,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
   private volatile ChildrenDescriptionsHolder<AttributeChildDescriptionImpl> myAttributes;
   private volatile ChildrenDescriptionsHolder<FixedChildDescriptionImpl> myFixeds;
   private volatile ChildrenDescriptionsHolder<CollectionChildDescriptionImpl> myCollections;
-  private volatile CustomDomChildrenDescriptionImpl myCustomChildren;
+  private volatile List<CustomDomChildrenDescriptionImpl> myCustomChildren;
 
   public DynamicGenericInfo(@NotNull final DomInvocationHandler handler, final StaticGenericInfo staticGenericInfo) {
     myInvocationHandler = handler;
@@ -126,10 +127,13 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
       myCollections = internChildrenHolder(file, newCollections);
     }
 
-    final DomExtensionImpl extension = registrar.getCustomChildrenType();
-    if (extension != null) {
-      myCustomChildren = new CustomDomChildrenDescriptionImpl(null, extension.getType(), extension.getTagNameDescriptor());
-    }
+    final List<DomExtensionImpl> customs = registrar.getCustoms();
+    myCustomChildren = customs.isEmpty() ? null : ContainerUtil.map(customs, new Function<DomExtensionImpl, CustomDomChildrenDescriptionImpl>() {
+      @Override
+      public CustomDomChildrenDescriptionImpl fun(DomExtensionImpl extension) {
+        return new CustomDomChildrenDescriptionImpl(extension);
+      }
+    });
   }
 
   private static <T extends DomChildDescriptionImpl> ChildrenDescriptionsHolder<T> internChildrenHolder(XmlFile file, ChildrenDescriptionsHolder<T> holder) {
@@ -177,8 +181,8 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     return myStaticGenericInfo.getNameDomElement(element);
   }
 
-  @Nullable
-  public CustomDomChildrenDescriptionImpl getCustomNameChildrenDescription() {
+  @NotNull
+  public List<? extends CustomDomChildrenDescription> getCustomNameChildrenDescription() {
     checkInitialized();
     if (myCustomChildren != null) return myCustomChildren;
     return myStaticGenericInfo.getCustomNameChildrenDescription();
@@ -195,7 +199,7 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     myAttributes.dumpDescriptions(list);
     myFixeds.dumpDescriptions(list);
     myCollections.dumpDescriptions(list);
-    ContainerUtil.addIfNotNull(myStaticGenericInfo.getCustomNameChildrenDescription(), list);
+    list.addAll(myStaticGenericInfo.getCustomNameChildrenDescription());
     return list;
   }
 

@@ -179,8 +179,7 @@ public class RenderUtil {
       if (exception != null) {
         final List<Throwable> exceptionsFromWarnings = getNonNullValues(callback.getBrokenClasses());
 
-        if (exceptionsFromWarnings.size() > 0 &&
-            exception instanceof ClassCastException &&
+        if (exception instanceof ClassCastException &&
             (SdkConstants.CLASS_MOCK_VIEW + " cannot be cast to " + SdkConstants.CLASS_VIEWGROUP)
               .equalsIgnoreCase(exception.getMessage())) {
           throw new RenderingException(exceptionsFromWarnings.toArray(new Throwable[exceptionsFromWarnings.size()]))

@@ -27,5 +27,6 @@ public interface ArrangementSettingsNode extends Cloneable {
 
   void invite(@NotNull ArrangementSettingsNodeVisitor visitor);
 
+  @NotNull
   ArrangementSettingsNode clone();
 }

@@ -1,0 +1,71 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.application.options.codeStyle.arrangement;
+
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
+import gnu.trove.TIntObjectHashMap;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.tree.DefaultMutableTreeNode;
+
+/**
+ * Holds glue logic between arrangement settings and their representation - 
+ * '{@link ArrangementSettingsNode} -&gt; {@link ArrangementRuleEditingModel}'
+ * <p/>
+ * Thread-safe.
+ * 
+ * @author Denis Zhdanov
+ * @since 8/15/12 2:50 PM
+ */
+public class ArrangementRuleEditingModelBuilder {
+
+  /**
+   * Does the following:
+   * <pre>
+   * <ol>
+   *   <li>
+   *     {@link HierarchicalArrangementSettingsNode Groups} given {@link ArrangementSettingsNode settings} using
+   *     the given {@link ArrangementStandardSettingsRepresentationAware#group(ArrangementSettingsNode) strategy};
+   *   </li>
+   *   <li>
+   *     Build {@link DefaultMutableTreeNode tree nodes} for the {@link HierarchicalArrangementSettingsNode groiping-aware nodes}
+   *     and register them within the target tree structure (denoted by the given settings root element);
+   *   </li>
+   *   <li>
+   *     Build necessary {@link ArrangementRuleEditingModel editing models} and store them at the given container (a key is a node row);
+   *   </li>
+   * </ol>
+   * </pre>
+   * 
+   * @param setting      target settings to process
+   * @param root         UI tree settings root to use
+   * @param grouper      strategy that knows how to
+   *                     {@link ArrangementStandardSettingsRepresentationAware#getDisplayValue(ArrangementModifier) group} setting
+   *                     nodes for UI representation
+   * @param rowMappings  container to hold built {@link ArrangementRuleEditingModel editing models} (UI tree row numbers are used as keys)
+   */
+  public void build(@NotNull ArrangementSettingsNode setting,
+                    @NotNull DefaultMutableTreeNode root,
+                    @NotNull ArrangementSettingsGrouper grouper,
+                    @NotNull TIntObjectHashMap<ArrangementRuleEditingModel> rowMappings)
+  {
+    HierarchicalArrangementSettingsNode grouped = grouper.group(setting);
+  }
+}

@@ -90,6 +90,7 @@ public class ArrangementSettingsAtomNode implements ArrangementSettingsNode {
     return true;
   }
 
+  @NotNull
   @Override
   public ArrangementSettingsAtomNode clone() {
     ArrangementSettingsAtomNode result = new ArrangementSettingsAtomNode(myType, myValue);

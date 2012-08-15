@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.psi.codeStyle.arrangement.settings;
 
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 8/15/12 9:14 AM
+ * @since 8/15/12 4:23 PM
  */
-public interface ArrangementMatcherEditingListener {
+public class DefaultArrangementSettingsGrouper implements ArrangementSettingsGrouper {
 
-  void startEditing(@NotNull ArrangementMatcherSettings settings);
-  
-  void stopEditing();
+  @NotNull public static final DefaultArrangementSettingsGrouper INSTANCE = new DefaultArrangementSettingsGrouper();
+
+  @NotNull
+  @Override
+  public HierarchicalArrangementSettingsNode group(@NotNull ArrangementSettingsNode node) {
+    // Don't group. 
+    return new HierarchicalArrangementSettingsNode(node);
+  }
 }

@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -12,7 +13,7 @@ import java.util.List;
 public class RenderingException extends Exception {
   private final String myPresentableMessage;
   private final Throwable[] myCauses;
-  private List<FixableIssueMessage> myWarnMessages;
+  private List<FixableIssueMessage> myWarnMessages = Collections.emptyList();
 
   public RenderingException() {
     super();
