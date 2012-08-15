@@ -114,7 +114,7 @@ public class QualifiedNameFinder {
     final PyQualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
     if (qname != null) {
       for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
-        final PyQualifiedName restored = provider.getCanonicalPath(qname);
+        final PyQualifiedName restored = provider.getCanonicalPath(qname, foothold);
         if (restored != null) {
           return restored;
         }
