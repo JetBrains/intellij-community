@@ -47,13 +47,15 @@ public class ArrangementMatcherSettings implements Cloneable {
   }
 
   public boolean addCondition(@NotNull ArrangementSettingsNode condition) {
+    int size = myConditions.size();
     condition.invite(myAddVisitor);
-    return myConditions.add(condition);
+    return myConditions.size() > size;
   }
 
   public boolean removeCondition(@NotNull ArrangementSettingsNode condition) {
+    int size = myConditions.size();
     condition.invite(myRemoveVisitor);
-    return myConditions.remove(condition);
+    return myConditions.size() < size;
   }
 
   public boolean hasCondition(@NotNull Object id) {
@@ -71,22 +73,30 @@ public class ArrangementMatcherSettings implements Cloneable {
   private class MyAddVisitor implements ArrangementSettingsNodeVisitor {
     @Override
     public void visit(@NotNull ArrangementSettingsAtomNode node) {
+      myConditions.add(node);
       myValues.add(node.getValue());
     }
 
     @Override
     public void visit(@NotNull ArrangementSettingsCompositeNode node) {
+      for (ArrangementSettingsNode n : node.getOperands()) {
+        n.invite(this);
+      }
     }
   }
 
   private class MyRemoveVisitor implements ArrangementSettingsNodeVisitor {
     @Override
     public void visit(@NotNull ArrangementSettingsAtomNode node) {
+      myConditions.remove(node);
       myValues.remove(node.getValue());
     }
 
     @Override
     public void visit(@NotNull ArrangementSettingsCompositeNode node) {
+      for (ArrangementSettingsNode n : node.getOperands()) {
+        n.invite(this);
+      }
     }
   }
 }

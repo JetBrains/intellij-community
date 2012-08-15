@@ -42,8 +42,9 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
     return myOperands;
   }
 
-  public void addOperand(@NotNull ArrangementSettingsNode node) {
+  public ArrangementSettingsCompositeNode addOperand(@NotNull ArrangementSettingsNode node) {
     myOperands.add(node);
+    return this;
   }
 
   @NotNull
@@ -57,10 +58,19 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
   }
 
   @Override
+  public ArrangementSettingsCompositeNode clone() {
+    ArrangementSettingsCompositeNode result = new ArrangementSettingsCompositeNode(myOperator);
+    for (ArrangementSettingsNode operand : myOperands) {
+      result.addOperand(operand.clone());
+    }
+    return result;
+  }
+
+  @Override
   public String toString() {
     return StringUtil.join(myOperands, myOperator == Operator.AND ? " and " : " or ");
   }
-
+  
   public enum Operator {
     AND, OR
   }

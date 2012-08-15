@@ -91,6 +91,13 @@ public class ArrangementSettingsAtomNode implements ArrangementSettingsNode {
   }
 
   @Override
+  public ArrangementSettingsAtomNode clone() {
+    ArrangementSettingsAtomNode result = new ArrangementSettingsAtomNode(myType, myValue);
+    result.setInverted(myInverted);
+    return result;
+  }
+
+  @Override
   public String toString() {
     return String.format("%s: %s%s", myType.toString().toLowerCase(), myInverted ? "not " : "", myValue.toString().toLowerCase());
   }

@@ -25,9 +25,11 @@ import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettin
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.MultiRowFlowPanel;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +44,8 @@ import java.util.Map;
  */
 public class ArrangementMatcherRuleEditor extends JPanel {
 
-  @NotNull private final Map<Object, ArrangementAtomNodeComponent> myComponents = new HashMap<Object, ArrangementAtomNodeComponent>();
+  @NotNull private final List<JComponent>                          myColoredComponents = new ArrayList<JComponent>();
+  @NotNull private final Map<Object,ArrangementAtomNodeComponent> myComponents        = new HashMap<Object,ArrangementAtomNodeComponent>();
 
   @NotNull private final ArrangementStandardSettingsAware myFilter;
 
@@ -50,12 +53,12 @@ public class ArrangementMatcherRuleEditor extends JPanel {
     myFilter = filter;
     init();
   }
-  
+
   private void init() {
     setLayout(new GridBagLayout());
 
     ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(myFilter);
-    Map<ArrangementSettingType,List<?>> supportedSettings = ArrangementSettingsUtil.buildAvailableOptions(myFilter, null);
+    Map<ArrangementSettingType, List<?>> supportedSettings = ArrangementSettingsUtil.buildAvailableOptions(myFilter, null);
     addRowIfPossible(ArrangementSettingType.TYPE, supportedSettings, displayManager);
     addRowIfPossible(ArrangementSettingType.MODIFIER, supportedSettings, displayManager);
   }
@@ -69,7 +72,7 @@ public class ArrangementMatcherRuleEditor extends JPanel {
       return;
     }
 
-    add(new JLabel(manager.getDisplayLabel(key)), new GridBag().anchor(GridBagConstraints.WEST));
+    add(new JLabel(manager.getDisplayLabel(key) + ":"), new GridBag().anchor(GridBagConstraints.WEST));
     JPanel valuesPanel = new MultiRowFlowPanel(FlowLayout.LEFT, 8, 5);
     for (Object value : manager.sort(values)) {
       ArrangementAtomNodeComponent component = new ArrangementAtomNodeComponent(manager, new ArrangementSettingsAtomNode(key, value));
@@ -77,22 +80,31 @@ public class ArrangementMatcherRuleEditor extends JPanel {
       valuesPanel.add(component.getUiComponent());
     }
     add(valuesPanel, new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally().coverLine());
+    myColoredComponents.add(valuesPanel);
   }
 
   /**
    * Asks current editor to refresh its state in accordance with the given arguments (e.g. when new rule is selected and
    * we want to show only available conditions).
    *
-   * @param settings  current rule settings
+   * @param settings  current rule settings if defined; null as an indication that no settings should be active
    */
-  public void updateState(@NotNull ArrangementMatcherSettings settings) {
+  public void updateState(@Nullable ArrangementMatcherSettings settings) {
     for (ArrangementEntryType type : ArrangementEntryType.values()) {
       ArrangementAtomNodeComponent component = myComponents.get(type);
       if (component == null) {
         continue;
       }
-      boolean enabled = myFilter.isEnabled(type, settings);
-      boolean selected = settings.hasCondition(type);
+      boolean enabled;
+      boolean selected;
+      if (settings == null) {
+        enabled = false;
+        selected = false;
+      }
+      else {
+        enabled = myFilter.isEnabled(type, settings);
+        selected = settings.hasCondition(type);
+      }
       component.setEnabled(enabled);
       component.setSelected(selected);
     }
@@ -101,10 +113,26 @@ public class ArrangementMatcherRuleEditor extends JPanel {
       if (component == null) {
         continue;
       }
-      boolean enabled = myFilter.isEnabled(modifier, settings);
-      boolean selected = settings.hasCondition(modifier);
+      boolean enabled;
+      boolean selected;
+      if (settings == null) {
+        enabled = false;
+        selected = false;
+      }
+      else {
+        enabled = myFilter.isEnabled(modifier, settings);
+        selected = settings.hasCondition(modifier);
+      }
       component.setEnabled(enabled);
       component.setSelected(selected);
+    }
+    repaint();
+  }
+
+  public void applyBackground(@NotNull Color color) {
+    setBackground(color);
+    for (JComponent component : myColoredComponents) {
+      component.setBackground(color);
     }
   }
 }

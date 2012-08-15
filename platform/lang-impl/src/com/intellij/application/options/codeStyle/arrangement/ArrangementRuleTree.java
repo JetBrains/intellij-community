@@ -192,22 +192,33 @@ public class ArrangementRuleTree {
 
   private int map(@NotNull DefaultMutableTreeNode parentTreeNode,
                   @NotNull HierarchicalArrangementSettingsNode settingsNode,
-                  @Nullable ArrangementMatcherSettings template,
+                  @Nullable ArrangementSettingsCompositeNode template,
                   int row)
   {
     DefaultMutableTreeNode childTreeNode = new DefaultMutableTreeNode(settingsNode.getCurrent());
     parentTreeNode.add(childTreeNode);
     List<HierarchicalArrangementSettingsNode> children = settingsNode.getChildren();
-    ArrangementMatcherSettings settings = template == null ? new ArrangementMatcherSettings() : template.clone();
-    settings.addCondition(settingsNode.getCurrent());
     if (children.isEmpty()) {
+      ArrangementMatcherSettings settings = new ArrangementMatcherSettings();
+      ArrangementSettingsNode condition;
+      if (template == null) {
+        condition = settingsNode.getCurrent();
+      }
+      else {
+        condition = template.clone().addOperand(settingsNode.getCurrent());
+      }
+      settings.addCondition(condition);
       mySettings.put(row, settings);
       return row + 1;
     }
     else {
       row++;
+      ArrangementSettingsCompositeNode newTemplate =
+        template == null ? new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
+                         : template.clone();
+      newTemplate.addOperand(settingsNode.getCurrent());
       for (HierarchicalArrangementSettingsNode node : children) {
-        row = map(childTreeNode, node, settings, row);
+        row = map(childTreeNode, node, newTemplate, row);
       }
       return row;
     }

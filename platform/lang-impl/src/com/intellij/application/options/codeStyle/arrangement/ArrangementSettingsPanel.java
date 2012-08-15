@@ -20,6 +20,7 @@ import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -33,6 +34,8 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 /**
  * Generic GUI for showing standard arrangement settings.
@@ -55,15 +58,31 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
     final JXTaskPane editorPane = new JXTaskPane(ApplicationBundle.message("arrangement.title.editor"));
     final ArrangementMatcherRuleEditor ruleEditor = new ArrangementMatcherRuleEditor(filter);
+    ruleEditor.applyBackground(component.getBackground());
+    editorPane.getContentPane().setBackground(component.getBackground());
     editorPane.add(ruleEditor);
     editorPane.setCollapsed(true);
+    final Ref<Boolean> resetEditor = new Ref<Boolean>(Boolean.TRUE);
     myContent.add(editorPane, new GridBag().weightx(1).fillCellHorizontally().coverLine());
-    
+    editorPane.addPropertyChangeListener("collapsed", new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getNewValue() == Boolean.FALSE && resetEditor.get()) {
+          ruleEditor.updateState(null);
+        }
+      }
+    });
     ruleTree.addEditingListener(new ArrangementMatcherEditingListener() {
       @Override
       public void startEditing(@NotNull ArrangementMatcherSettings settings) {
         ruleEditor.updateState(settings);
-        editorPane.setCollapsed(false); 
+        resetEditor.set(Boolean.FALSE);
+        try {
+          editorPane.setCollapsed(false);
+        }
+        finally {
+          resetEditor.set(Boolean.TRUE);
+        }
       }
 
       @Override
