@@ -18,6 +18,8 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
 
   void addRoot(@NotNull String url, @NotNull JpsOrderRootType rootType);
 
+  void addRoot(@NotNull File file, @NotNull JpsOrderRootType rootType);
+
   void addRoot(@NotNull String url, @NotNull JpsOrderRootType rootType, @NotNull JpsLibraryRoot.InclusionOptions options);
 
   void removeUrl(@NotNull String url, @NotNull JpsOrderRootType rootType);

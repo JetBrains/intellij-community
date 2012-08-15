@@ -14,7 +14,7 @@ import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.api.RequestFuture;
-import org.jetbrains.jps.api.SharedThreadPool;
+import org.jetbrains.jps.api.SharedBuilderThreadPool;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
@@ -26,6 +26,7 @@ import org.jetbrains.jps.incremental.storage.*;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -439,7 +440,7 @@ public class IncProjectBuilder {
 
               for (final ModuleChunk chunk : groupChunks) {
                 final CompileContext chunkLocalContext = createContextWrapper(context);
-                SharedThreadPool.INSTANCE.submitBuildTask(new Runnable() {
+                SharedBuilderThreadPool.INSTANCE.submitBuildTask(new Runnable() {
                   @Override
                   public void run() {
                     try {
@@ -584,7 +585,7 @@ public class IncProjectBuilder {
 
           if (doneSomething && GENERATE_CLASSPATH_INDEX) {
             final boolean forTests = context.isCompilingTests();
-            final Future<?> future = SharedThreadPool.INSTANCE.submit(new Runnable() {
+            final Future<?> future = SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
               @Override
               public void run() {
                 createClasspathIndex(chunk, forTests);

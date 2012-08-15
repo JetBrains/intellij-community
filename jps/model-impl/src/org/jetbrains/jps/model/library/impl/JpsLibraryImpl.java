@@ -55,6 +55,11 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
   }
 
   @Override
+  public void addRoot(@NotNull File file, @NotNull JpsOrderRootType rootType) {
+    addRoot(JpsPathUtil.getLibraryRootUrl(file), rootType);
+  }
+
+  @Override
   public void addRoot(@NotNull final String url, @NotNull final JpsOrderRootType rootType,
                       @NotNull JpsLibraryRoot.InclusionOptions options) {
     myContainer.getOrSetChild(getRole(rootType)).addChild(new JpsLibraryRootImpl(url, rootType, options));

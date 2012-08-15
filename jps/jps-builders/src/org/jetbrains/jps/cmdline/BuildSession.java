@@ -19,6 +19,7 @@ import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
 import java.util.*;
@@ -77,7 +78,8 @@ final class BuildSession implements Runnable, CanceledStatus {
       builderParams.put(pair.getKey(), pair.getValue());
     }
     myInitialFSDelta = delta;
-    myBuildRunner = new BuildRunner(myProjectPath, globalOptionsPath, pathVars, globalEncoding, ignorePatterns, modules, myBuildType, artifacts, filePaths, builderParams);
+    JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, pathVars, globalEncoding, ignorePatterns, null);
+    myBuildRunner = new BuildRunner(loader, modules, myBuildType, artifacts, filePaths, builderParams);
   }
 
   public void run() {
@@ -428,7 +430,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     private final AtomicBoolean myProcessingEnabled = new AtomicBoolean(false);
 
     EventsProcessor() {
-      super(SharedThreadPool.INSTANCE);
+      super(SharedThreadPool.getInstance());
     }
 
     public void startProcessing() {

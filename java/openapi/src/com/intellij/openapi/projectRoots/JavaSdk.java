@@ -62,6 +62,6 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType, Applicatio
 
   @Nullable
   public static String getJdkVersion(final String sdkHome) {
-    return SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] {sdkHome + File.separator + "bin" + File.separator + "java",  "-version"}, "version");
+    return SdkVersionUtil.detectJdkVersion(sdkHome);
   }
 }

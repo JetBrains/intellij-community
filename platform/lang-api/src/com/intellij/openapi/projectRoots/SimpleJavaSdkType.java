@@ -92,7 +92,7 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
 
 
   public final String getVersionString(final String sdkHome) {
-    return SdkVersionUtil.readVersionFromProcessOutput(sdkHome, new String[] {sdkHome + File.separator + "bin" + File.separator + "java",  "-version"}, "version");
+    return SdkVersionUtil.detectJdkVersion(sdkHome);
   }
 
 }

@@ -80,4 +80,12 @@ public class JpsPathUtil {
   public static String pathToUrl(String path) {
     return "file://" + path;
   }
+
+  public static String getLibraryRootUrl(File file) {
+    String path = FileUtilRt.toSystemIndependentName(file.getAbsolutePath());
+    if (file.isDirectory()) {
+      return "file://" + path;
+    }
+    return "jar://" + path + "!/";
+  }
 }

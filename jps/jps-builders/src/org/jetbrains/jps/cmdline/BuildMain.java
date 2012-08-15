@@ -15,8 +15,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineProtoUtil;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
-import org.jetbrains.jps.api.SharedThreadPool;
 import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.File;
 import java.net.InetSocketAddress;
@@ -41,7 +41,7 @@ public class BuildMain {
 
     initLoggers();
 
-    ourChannelFactory = new NioClientSocketChannelFactory(SharedThreadPool.INSTANCE, SharedThreadPool.INSTANCE, 1);
+    ourChannelFactory = new NioClientSocketChannelFactory(SharedThreadPool.getInstance(), SharedThreadPool.getInstance(), 1);
     final ClientBootstrap bootstrap = new ClientBootstrap(ourChannelFactory);
     bootstrap.setPipelineFactory(new ChannelPipelineFactory() {
       public ChannelPipeline getPipeline() throws Exception {
@@ -99,7 +99,7 @@ public class BuildMain {
               final CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta = controllerMessage.hasFsEvent()? controllerMessage.getFsEvent() : null;
               final BuildSession session = new BuildSession(mySessionId, channel, controllerMessage.getParamsMessage(), delta);
               mySession = session;
-              SharedThreadPool.INSTANCE.submit(new Runnable() {
+              SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
                 public void run() {
                   try {
                     session.run();

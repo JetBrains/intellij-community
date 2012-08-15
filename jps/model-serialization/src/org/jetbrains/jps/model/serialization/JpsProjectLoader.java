@@ -32,7 +32,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
 
-  public JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, File baseDir) {
+  private JpsProjectLoader(JpsProject project, Map<String, String> pathVariables, File baseDir) {
     super(createProjectMacroExpander(pathVariables, baseDir));
     myProject = project;
     myPathVariables = pathVariables;

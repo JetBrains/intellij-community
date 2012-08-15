@@ -12,10 +12,9 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
-import org.jetbrains.jps.api.SharedThreadPool;
+import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.net.InetSocketAddress;
 import java.util.*;
@@ -34,7 +33,7 @@ public class JavacServer {
   private final ChannelPipelineFactory myPipelineFactory;
 
   public JavacServer() {
-    myChannelFactory = new NioServerSocketChannelFactory(SharedThreadPool.INSTANCE, SharedThreadPool.INSTANCE, 1);
+    myChannelFactory = new NioServerSocketChannelFactory(SharedThreadPool.getInstance(), SharedThreadPool.getInstance(), 1);
     final ChannelRegistrar channelRegistrar = new ChannelRegistrar();
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     myPipelineFactory = new ChannelPipelineFactory() {
@@ -196,7 +195,7 @@ public class JavacServer {
 
             final CancelHandler cancelHandler = new CancelHandler();
             myCancelHandlers.add(cancelHandler);
-            SharedThreadPool.INSTANCE.submit(new Runnable() {
+            SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
               public void run() {
                 try {
                   final JavacRemoteProto.Message exitMsg =

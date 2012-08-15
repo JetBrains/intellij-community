@@ -10,7 +10,7 @@
     <orderEntry type="module" module-name="projectModel-api" exported="" />
     <orderEntry type="module" module-name="core-impl" />
     <orderEntry type="module" module-name="jps-model-api" />
-    <orderEntry type="module" module-name="jps-model-impl" />
+    <orderEntry type="module" module-name="jps-model-impl" exported="" />
     <orderEntry type="module" module-name="jps-model-serialization" exported="" />
   </component>
 </module>

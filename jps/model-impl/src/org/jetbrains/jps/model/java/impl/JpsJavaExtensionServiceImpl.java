@@ -1,12 +1,19 @@
 package org.jetbrains.jps.model.java.impl;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
+import org.jetbrains.jps.model.library.JpsTypedLibrary;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.module.*;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -113,6 +120,18 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
       }
     }
     return null;
+  }
+
+  @Override
+  public JpsTypedLibrary<JpsSdk<JpsDummyElement>> addJavaSdk(@NotNull JpsGlobal global, @NotNull String name, @NotNull String homePath) {
+    String version = JdkVersionDetector.getInstance().detectJdkVersion(homePath);
+    JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdk = global.addSdk(name, homePath, version, JpsJavaSdkType.INSTANCE);
+    File homeDir = new File(FileUtil.toSystemDependentName(homePath));
+    List<File> roots = JavaSdkUtil.getJdkClassesRoots(homeDir, false);
+    for (File root : roots) {
+      sdk.addRoot(root, JpsOrderRootType.COMPILED);
+    }
+    return sdk;
   }
 
   @Override

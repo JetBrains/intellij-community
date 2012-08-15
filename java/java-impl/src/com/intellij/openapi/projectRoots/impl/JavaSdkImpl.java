@@ -24,18 +24,16 @@ import com.intellij.openapi.roots.AnnotationOrderRootType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.impl.JavaSdkUtil;
 
 import javax.swing.*;
 import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -453,88 +451,16 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   private static VirtualFile[] findClasses(File file, boolean isJre) {
-    FileFilter jarFileFilter = new FileFilter() {
-      @Override
-      @SuppressWarnings({"HardCodedStringLiteral"})
-      public boolean accept(File f) {
-        return !f.isDirectory() && f.getName().endsWith(".jar");
-      }
-    };
-
-    File[] jarDirs;
-    if (SystemInfo.isMac && !file.getName().startsWith("mockJDK")) {
-      final File openJdkRtJar = new File(new File(new File(file, "jre"), "lib"), "rt.jar");
-      if (openJdkRtJar.exists() && !openJdkRtJar.isDirectory()) {
-        // OpenJDK
-        File libFile = new File(file, "lib");
-        @NonNls File classesFile = openJdkRtJar.getParentFile();
-        @NonNls File libExtFile = new File(openJdkRtJar.getParentFile(), "ext");
-        @NonNls File libEndorsedFile = new File(libFile, "endorsed");
-        jarDirs = new File[]{libEndorsedFile, libFile, classesFile, libExtFile};
-      }
-      else {
-        File libFile = new File(file, "lib");
-        @NonNls File classesFile = new File(file, "../Classes");
-        @NonNls File libExtFile = new File(libFile, "ext");
-        @NonNls File libEndorsedFile = new File(libFile, "endorsed");
-        jarDirs = new File[]{libEndorsedFile, libFile, classesFile, libExtFile};
-      }
-    }
-    else {
-      @NonNls final String jre = "jre";
-      File jreLibFile = isJre ? new File(file, "lib") : new File(new File(file, jre), "lib");
-      @NonNls File jreLibExtFile = new File(jreLibFile, "ext");
-      @NonNls File jreLibEndorsedFile = new File(jreLibFile, "endorsed");
-      jarDirs = new File[]{jreLibEndorsedFile, jreLibFile, jreLibExtFile};
-    }
-
-    Set<File> filter = new LinkedHashSet<File>();
-    List<File> children = new ArrayList<File>();
-    for (File jarDir : jarDirs) {
-      if (jarDir != null && jarDir.isDirectory()) {
-        File[] jarFiles = jarDir.listFiles(jarFileFilter);
-        for (File jarFile : jarFiles) {
-          final String jarFileName = jarFile.getName();
-          if (jarFileName.equals("alt-rt.jar") || jarFileName.equals("alt-string.jar")) continue;
-          try {
-            // File.getCanonicalFile() allows us to filter out duplicate (symbolically linked) jar files,
-            // commonly found in osx JDK distributions
-            if (filter.add(jarFile.getCanonicalFile())) children.add(jarFile);
-          }
-          catch (IOException e) {
-            // Symbolic links may fail to resolve. Just skip those jars as we won't be able to find virtual file in this case anyway. 
-          }
-        }
-      }
-    }
+    List<File> rootFiles = JavaSdkUtil.getJdkClassesRoots(file, isJre);
 
     ArrayList<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (File child : children) {
-      String url = JarFileSystem.PROTOCOL_PREFIX + FileUtil.toSystemIndependentName(child.getAbsolutePath()) + JarFileSystem.JAR_SEPARATOR;
+    for (File child : rootFiles) {
+      String url = VfsUtil.getUrlForLibraryRoot(child);
       VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
       if (vFile != null) {
         result.add(vFile);
       }
     }
-
-    File classesZip = new File(new File(file, "lib"), "classes.zip");
-    if (classesZip.isFile()) {
-      String url = JarFileSystem.PROTOCOL_PREFIX + FileUtil.toSystemIndependentName(classesZip.getAbsolutePath()) + JarFileSystem.JAR_SEPARATOR;
-      VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
-      if (vFile != null) {
-        result.add(vFile);
-      }
-    }
-
-    File classesDir = new File(file, "classes");
-    if (result.isEmpty() && classesDir.isDirectory()) {
-      String url = LocalFileSystem.PROTOCOL_PREFIX + FileUtil.toSystemIndependentName(classesDir.getAbsolutePath());
-      VirtualFile vFile = VirtualFileManager.getInstance().findFileByUrl(url);
-      if (vFile != null) {
-        result.add(vFile);
-      }
-    }
-
     return VfsUtil.toVirtualFileArray(result);
   }
 
