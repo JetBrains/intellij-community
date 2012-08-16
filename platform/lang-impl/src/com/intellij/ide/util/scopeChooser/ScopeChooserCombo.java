@@ -88,6 +88,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     myPrevSearchFiles = prevSearchWholeFiles;
     myProject = project;
     myScopeListener = new NamedScopesHolder.ScopeListener() {
+      @Override
       public void scopesChanged() {
         final SearchScope selectedScope = getSelectedScope();
         rebuildModel();
@@ -140,6 +141,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   private ActionListener createScopeChooserListener() {
     return new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final String selection = getSelectedScopeName();
         final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
@@ -313,22 +315,27 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
           }
           if (!files.isEmpty()) {
             GlobalSearchScope prev = new GlobalSearchScope(project) {
+              @Override
               public String getDisplayName() {
                 return IdeBundle.message("scope.files.in.previous.search.result");
               }
 
+              @Override
               public boolean contains(VirtualFile file) {
                 return files.contains(file);
               }
 
+              @Override
               public int compare(VirtualFile file1, VirtualFile file2) {
                 return 0;
               }
 
+              @Override
               public boolean isSearchInModuleContent(@NotNull Module aModule) {
                 return true;
               }
 
+              @Override
               public boolean isSearchInLibraries() {
                 return true;
               }
@@ -447,12 +454,12 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
     @Override
     public void setSelectedIndex(final int anIndex) {
-      Object item = super.getItemAt(anIndex);
+      Object item = getItemAt(anIndex);
       if (!(item instanceof ScopeSeparator)) {
         super.setSelectedIndex(anIndex);
       }
       else if (myDirection != 0) {
-        item = super.getItemAt(anIndex + myDirection);
+        item = getItemAt(anIndex + myDirection);
         if (!(item instanceof ScopeSeparator)) {
           super.setSelectedIndex(anIndex + myDirection);
         }
@@ -461,7 +468,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
   }
 
   private static class ScopeSeparator extends ScopeDescriptor {
-    private String myText;
+    private final String myText;
 
     public ScopeSeparator(final String text) {
       super(null);

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
 import com.intellij.ide.util.MethodCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -187,7 +188,7 @@ public class StaticImportMethodFix implements IntentionAction {
             try {
               PsiMethodCallExpression element = myMethodCall.getElement();
               if (element != null) {
-                element.getMethodExpression().bindToElementViaStaticImport(toImport.getContainingClass());
+                AddSingleMemberStaticImportAction.bindAllClassRefs(element.getContainingFile(), toImport, toImport.getName(), toImport.getContainingClass());
               }
             }
             catch (IncorrectOperationException e) {

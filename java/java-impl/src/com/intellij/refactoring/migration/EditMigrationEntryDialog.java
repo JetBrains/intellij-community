@@ -16,24 +16,26 @@
  */
 package com.intellij.refactoring.migration;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiManager;
+import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.LanguageTextField;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 
 public class EditMigrationEntryDialog extends DialogWrapper{
   private JRadioButton myRbPackage;
   private JRadioButton myRbClass;
-  private JTextField myOldNameField;
-  private JTextField myNewNameField;
+  private EditorTextField myOldNameField;
+  private EditorTextField myNewNameField;
   private final Project myProject;
 
   public EditMigrationEntryDialog(Project project) {
@@ -56,7 +58,7 @@ public class EditMigrationEntryDialog extends DialogWrapper{
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
     gbConstraints.insets = new Insets(4, 4, 4, 4);
-    gbConstraints.weighty = 1;
+    gbConstraints.weighty = 0;
 
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
     gbConstraints.fill = GridBagConstraints.BOTH;
@@ -81,36 +83,46 @@ public class EditMigrationEntryDialog extends DialogWrapper{
 
     gbConstraints.weightx = 0;
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
-    gbConstraints.fill = GridBagConstraints.VERTICAL;
+    gbConstraints.fill = GridBagConstraints.NONE;
     JLabel oldNamePrompt = new JLabel(RefactoringBundle.message("migration.entry.old.name"));
     panel.add(oldNamePrompt, gbConstraints);
 
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
+    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.weightx = 1;
-    myOldNameField = new JTextField();
+    final LanguageTextField.DocumentCreator documentCreator = new LanguageTextField.DocumentCreator() {
+      @Override
+      public Document createDocument(String value, @Nullable Language language, Project project) {
+        PsiPackage defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
+        final JavaCodeFragment fragment =
+          JavaCodeFragmentFactory.getInstance(project).createReferenceCodeFragment("", defaultPackage, true, true);
+        return PsiDocumentManager.getInstance(project).getDocument(fragment);
+      }
+    };
+    myOldNameField = new LanguageTextField(JavaLanguage.INSTANCE, myProject, "", documentCreator);
     panel.add(myOldNameField, gbConstraints);
 
     gbConstraints.weightx = 0;
     gbConstraints.gridwidth = GridBagConstraints.RELATIVE;
-    gbConstraints.fill = GridBagConstraints.VERTICAL;
+    gbConstraints.fill = GridBagConstraints.NONE;
     JLabel newNamePrompt = new JLabel(RefactoringBundle.message("migration.entry.new.name"));
     panel.add(newNamePrompt, gbConstraints);
 
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-    gbConstraints.fill = GridBagConstraints.BOTH;
+    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
     gbConstraints.weightx = 1;
-    myNewNameField = new JTextField();
+    myNewNameField = new LanguageTextField(JavaLanguage.INSTANCE, myProject, "", documentCreator);
     panel.setPreferredSize(new Dimension(300, panel.getPreferredSize().height));
     panel.add(myNewNameField, gbConstraints);
 
-    DocumentListener documentListener = new DocumentAdapter() {
-      public void textChanged(DocumentEvent event) {
-        validateOKButton();
+    final com.intellij.openapi.editor.event.DocumentAdapter documentAdapter = new com.intellij.openapi.editor.event.DocumentAdapter() {
+      @Override
+      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
+        super.documentChanged(e);
       }
     };
-    myOldNameField.getDocument().addDocumentListener(documentListener);
-    myNewNameField.getDocument().addDocumentListener(documentListener);
+    myOldNameField.getDocument().addDocumentListener(documentAdapter);
+    myNewNameField.getDocument().addDocumentListener(documentAdapter);
     return panel;
   }
 

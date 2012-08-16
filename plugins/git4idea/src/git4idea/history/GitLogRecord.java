@@ -31,6 +31,7 @@ import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
 import git4idea.history.wholeTree.AbstractHash;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -209,7 +210,7 @@ class GitLogRecord {
     final ContentRevision after;
     FileStatus status = null;
     final String path = statusInfo.getFirstPath();
-    GitRevisionNumber firstParent = parentRevisions.get(0);
+    @Nullable GitRevisionNumber firstParent = parentRevisions.isEmpty() ? null : parentRevisions.get(0);
 
     switch (statusInfo.getType()) {
       case ADDED:

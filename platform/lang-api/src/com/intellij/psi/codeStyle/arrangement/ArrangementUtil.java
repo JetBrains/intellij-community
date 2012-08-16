@@ -16,10 +16,15 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.CompositeArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNodeVisitor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,17 +113,48 @@ public class ArrangementUtil {
   }
   //endregion
 
-  //region Matchers composition
+  //region Rule composition
+
+  @NotNull
+  public static ArrangementSettingsNode and(@NotNull ArrangementSettingsNode... nodes) {
+    final ArrangementSettingsCompositeNode result = new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND);
+    final ArrangementSettingsNodeVisitor visitor = new ArrangementSettingsNodeVisitor() {
+      @Override
+      public void visit(@NotNull ArrangementSettingsAtomNode node) {
+        result.addOperand(node);
+      }
+
+      @Override
+      public void visit(@NotNull ArrangementSettingsCompositeNode node) {
+        if (node.getOperator() == ArrangementSettingsCompositeNode.Operator.AND) {
+          for (ArrangementSettingsNode operand : node.getOperands()) {
+            operand.invite(this);
+          }
+        }
+        else {
+          result.addOperand(node);
+        }
+      }
+    };
+    for (ArrangementSettingsNode node : nodes) {
+      node.invite(visitor);
+    }
+    return result;
+  }
+  
+  // TODO den remove
   @NotNull
   public static ArrangementEntryMatcher or(@NotNull ArrangementEntryMatcher... matchers) {
     return combine(CompositeArrangementEntryMatcher.Operator.OR, matchers);
   }
 
+  // TODO den remove
   @NotNull
   public static ArrangementEntryMatcher and(@NotNull ArrangementEntryMatcher... matchers) {
     return combine(CompositeArrangementEntryMatcher.Operator.AND, matchers);
   }
 
+  // TODO den remove
   @NotNull
   private static ArrangementEntryMatcher combine(@NotNull CompositeArrangementEntryMatcher.Operator operator,
                                                  @NotNull ArrangementEntryMatcher... matchers)

@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 
 /**
  * @author Max Medvedev
@@ -40,6 +41,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
                                     PsiSubstitutor substitutor) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(field.getProject());
 
+    field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
     if (!(expectedTypes instanceof ExpectedTypeInfo[])) {
       expectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
@@ -50,15 +52,12 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     if (createConstantField) {
       field.setInitializer(factory.createExpressionFromText("0", null));
       builder.replaceElement(field.getInitializer(), new EmptyExpression());
+      PsiIdentifier identifier = field.getNameIdentifier();
+      builder.setEndVariableAfter(identifier);
+      field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
     }
-
-    PsiIdentifier identifier = field.getNameIdentifier();
-    builder.setEndVariableAfter(identifier);
-    field = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(field);
-    Template template = builder.buildTemplate();
-
-    TextRange range = field.getTextRange();
-    editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset());
+    editor.getCaretModel().moveToOffset(field.getTextRange().getStartOffset());
+    Template template = builder.buildInlineTemplate();
     if (((ExpectedTypeInfo[])expectedTypes).length > 1) template.setToShortenLongNames(false);
     return template;
   }
@@ -72,24 +71,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     }
     while (parentClass instanceof PsiAnonymousClass);
 
-    if (enclosingContext != null &&
-        enclosingContext.getParent() == parentClass &&
-        targetClass == parentClass &&
-        enclosingContext instanceof PsiField) {
-      field = (PsiField)targetClass.addBefore(field, enclosingContext);
-    }
-    else if (enclosingContext != null &&
-             enclosingContext.getParent() == parentClass &&
-             targetClass == parentClass &&
-             enclosingContext instanceof PsiClassInitializer) {
-      field = (PsiField)targetClass.addBefore(field, enclosingContext);
-      targetClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), enclosingContext);
-    }
-    else {
-      field = (PsiField)targetClass.add(field);
-    }
-
-    return field;
+    return BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(targetClass, field, enclosingContext, null);
   }
 
 }

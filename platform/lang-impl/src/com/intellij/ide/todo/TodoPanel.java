@@ -27,6 +27,7 @@ import com.intellij.ide.todo.nodes.TodoTreeHelper;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
@@ -46,10 +47,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
-import com.intellij.util.Consumer;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.PlatformIcons;
+import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -157,10 +155,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     Disposer.register(this, myUsagePreviewPanel);
     myUsagePreviewPanel.setVisible(mySettings.isShowPreview());
 
-    final Splitter splitter = new Splitter(false);
-    splitter.setSecondComponent(myUsagePreviewPanel);
-    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
-    setContent(splitter);
+    setContent(createCenterComponent());
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(final TreeSelectionEvent e) {
@@ -231,6 +226,13 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, rightGroup, false).getComponent());
 
     setToolbar(toolBarPanel);
+  }
+
+  protected JComponent createCenterComponent() {
+    final Splitter splitter = new Splitter(false);
+    splitter.setSecondComponent(myUsagePreviewPanel);
+    splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree));
+    return splitter;
   }
 
   private void updatePreviewPanel() {
@@ -408,6 +410,25 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   public boolean hasPreviousOccurence() {
     return myOccurenceNavigator.hasPreviousOccurence();
+  }
+
+  protected void rebuildWithAlarm(final Alarm alarm) {
+    alarm.cancelAllRequests();
+    alarm.addRequest(new Runnable() {
+      public void run() {
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            myTodoTreeBuilder.rebuildCache();
+          }
+        });
+        final Runnable runnable = new Runnable() {
+          public void run() {
+            updateTree();
+          }
+        };
+        ApplicationManager.getApplication().invokeLater(runnable);
+      }
+    }, 300);
   }
 
   private final class MyTreeExpander implements TreeExpander {

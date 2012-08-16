@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,9 @@ abstract class C {
       <error descr="Incompatible types. Found: 'java.lang.Class<? extends C.E>', required: 'java.lang.Class<? extends C.IE1>'">Class<? extends IE1> clazz2 = e.getClass();</error>
       <error descr="Incompatible types. Found: 'java.lang.Class<? extends C.E>', required: 'java.lang.Class<? extends C.I>'">Class<? extends I> clazz3 = e.getClass();</error>
     }
+
+    try { f(); }
+    catch (<error descr="Incompatible types. Found: 'int | C.E', required: 'java.lang.Throwable'">int | E e</error>) { }
   }
 }
 

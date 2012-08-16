@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>PublicConstructor.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'public' constructor</problem_class>
+    <description>Class &lt;code&gt;PublicConstructor&lt;/code&gt; has public default constructor</description>
+  </problem>
+
+  <problem>
+    <file>PublicConstructor.java</file>
+    <line>8</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'public' constructor</problem_class>
+    <description>Public constructor &lt;code&gt;Y()&lt;/code&gt;</description>
+  </problem>
+
+</problems>

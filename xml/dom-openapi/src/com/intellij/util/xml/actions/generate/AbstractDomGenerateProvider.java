@@ -40,7 +40,7 @@ public abstract class AbstractDomGenerateProvider<T extends DomElement> extends 
     this(description, aClass, null);
   }
 
-  public AbstractDomGenerateProvider(final String description, final Class<T> aClass, String mappingId) {
+  public AbstractDomGenerateProvider(final String description, final Class<T> aClass, @Nullable String mappingId) {
     super(description, aClass);
     myMappingId = mappingId;
   }

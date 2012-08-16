@@ -194,20 +194,25 @@ public class CachingSvnRepositoryPool implements SvnRepositoryPool {
     }
 
     public void dispose() {
-      for (SVNRepository repository : myInactive.values()) {
-        repository.closeSession();
-      }
+      final List<SVNRepository> listForClose = new ArrayList<SVNRepository>();
+      listForClose.addAll(myInactive.values());
       myInactive.clear();
-      for (SVNRepository repository : myUsed) {
-        repository.closeSession();
-      }
-      myUsed.clear();
+      myUsed.clear();   // todo use counter instead of list??
 
       synchronized (myWait) {
         myWait.notifyAll();
       }
       myDisposed = true;
       myWait.notifyAll();
+
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          for (SVNRepository repository : listForClose) {
+            repository.closeSession();
+          }
+        }
+      });
     }
 
     public void interruptWaiting() {

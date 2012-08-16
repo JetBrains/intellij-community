@@ -48,7 +48,8 @@ public abstract class InspectionProfileEntry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionProfileEntry");
 
   private static final SkipDefaultValuesSerializationFilters DEFAULT_FILTER = new SkipDefaultValuesSerializationFilters();
-  private static Set<String> myBlackList = null;
+  private static Set<String> ourBlackList = null;
+  private static final Object BLACK_LIST_LOCK = new Object();
   private Boolean myUseNewSerializer = null;
 
   /**
@@ -171,16 +172,13 @@ public abstract class InspectionProfileEntry {
 
   private synchronized boolean useNewSerializer() {
     if (myUseNewSerializer == null) {
-      if (myBlackList == null) {
-        loadBlackList();
-      }
-      myUseNewSerializer = !myBlackList.contains(getClass().getName());
+      myUseNewSerializer = !getBlackList().contains(getClass().getName());
     }
     return myUseNewSerializer;
   }
 
   private static void loadBlackList() {
-    myBlackList = ContainerUtil.newHashSet();
+    ourBlackList = ContainerUtil.newHashSet();
 
     final URL url = InspectionProfileEntry.class.getResource("inspection-black-list.txt");
     if (url == null) {
@@ -194,7 +192,7 @@ public abstract class InspectionProfileEntry {
         String line;
         while ((line = reader.readLine()) != null) {
           line = line.trim();
-          if (line.length() > 0) myBlackList.add(line);
+          if (line.length() > 0) ourBlackList.add(line);
         }
       }
       finally {
@@ -206,12 +204,13 @@ public abstract class InspectionProfileEntry {
     }
   }
 
-  @TestOnly
-  public static synchronized Collection<String> getBlackList() {
-    if (myBlackList == null) {
-      loadBlackList();
+  public static Collection<String> getBlackList() {
+    synchronized (BLACK_LIST_LOCK) {
+      if (ourBlackList == null) {
+        loadBlackList();
+      }
+      return ourBlackList;
     }
-    return myBlackList;
   }
 
   /**

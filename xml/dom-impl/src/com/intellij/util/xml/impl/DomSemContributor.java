@@ -42,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
+import java.util.*;
 
 import static com.intellij.patterns.XmlPatterns.*;
 
@@ -160,8 +157,8 @@ public class DomSemContributor extends SemContributor {
         if (parent == null) return null;
 
         DomGenericInfoEx info = parent.getGenericInfo();
-        final CustomDomChildrenDescription customDescription = info.getCustomNameChildrenDescription();
-        if (customDescription == null) return null;
+        final List<? extends CustomDomChildrenDescription> customs = info.getCustomNameChildrenDescription();
+        if (customs.isEmpty()) return null;
 
         if (mySemService.getSemElement(DomManagerImpl.DOM_INDEXED_HANDLER_KEY, tag) == null &&
             mySemService.getSemElement(DomManagerImpl.DOM_COLLECTION_HANDLER_KEY, tag) == null) {
@@ -174,10 +171,13 @@ public class DomSemContributor extends SemContributor {
               return null;
             }
           }
-
-          AbstractCollectionChildDescription desc = (AbstractCollectionChildDescription)customDescription;
-          Type type = customDescription.getType();
-          return new CollectionElementInvocationHandler(type, tag, desc, parent, null);
+          for (CustomDomChildrenDescription description : customs) {
+            if (description.getTagNameDescriptor() != null) {
+             AbstractCollectionChildDescription desc = (AbstractCollectionChildDescription)description;
+             Type type = description.getType();
+             return new CollectionElementInvocationHandler(type, tag, desc, parent, null);
+            }
+          }
         }
 
         return null;

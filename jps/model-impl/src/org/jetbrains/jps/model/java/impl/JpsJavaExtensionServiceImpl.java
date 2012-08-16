@@ -3,6 +3,7 @@ package org.jetbrains.jps.model.java.impl;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsGlobal;
 import org.jetbrains.jps.model.JpsProject;
@@ -104,6 +105,13 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
       return url + "/" + (forTests ? "test" : "production") + "/" + module.getName();
     }
     return forTests ? extension.getTestOutputUrl() : extension.getOutputUrl();
+  }
+
+  @Nullable
+  @Override
+  public File getOutputDirectory(JpsModule module, boolean forTests) {
+    String url = getOutputUrl(module, forTests);
+    return url != null ? JpsPathUtil.urlToFile(url) : null;
   }
 
   @Override

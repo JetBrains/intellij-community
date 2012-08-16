@@ -16,11 +16,10 @@
 package com.intellij.psi.codeStyle.arrangement.model;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 
 /**
  * // TODO den add doc
@@ -30,7 +29,7 @@ import java.util.List;
  */
 public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode {
 
-  @NotNull private final List<ArrangementSettingsNode> myOperands = new ArrayList<ArrangementSettingsNode>();
+  @NotNull private final Set<ArrangementSettingsNode> myOperands = new HashSet<ArrangementSettingsNode>();
   @NotNull private final Operator myOperator;
 
   public ArrangementSettingsCompositeNode(@NotNull Operator operator) {
@@ -38,7 +37,7 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
   }
 
   @NotNull
-  public List<ArrangementSettingsNode> getOperands() {
+  public Set<ArrangementSettingsNode> getOperands() {
     return myOperands;
   }
 
@@ -56,7 +55,8 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
   public void invite(@NotNull ArrangementSettingsNodeVisitor visitor) {
     visitor.visit(this);
   }
-
+  
+  @NotNull
   @Override
   public ArrangementSettingsCompositeNode clone() {
     ArrangementSettingsCompositeNode result = new ArrangementSettingsCompositeNode(myOperator);
@@ -67,10 +67,38 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
   }
 
   @Override
+  public int hashCode() {
+    int result = myOperands.hashCode();
+    result = 31 * result + myOperator.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ArrangementSettingsCompositeNode node = (ArrangementSettingsCompositeNode)o;
+
+    if (!myOperands.equals(node.myOperands)) {
+      return false;
+    }
+    if (myOperator != node.myOperator) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
   public String toString() {
     return StringUtil.join(myOperands, myOperator == Operator.AND ? " and " : " or ");
   }
-  
+
   public enum Operator {
     AND, OR
   }

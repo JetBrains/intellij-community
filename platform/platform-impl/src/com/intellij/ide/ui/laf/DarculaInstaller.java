@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DefaultColorsScheme;
 import com.intellij.openapi.ui.Messages;
 
 /**
@@ -26,6 +27,20 @@ import com.intellij.openapi.ui.Messages;
 public class DarculaInstaller {
 
   public static void uninstall() {
+    if (DarculaLaf.NAME.equals(EditorColorsManager.getInstance().getGlobalScheme().getName())) {
+      final EditorColorsScheme scheme = EditorColorsManager.getInstance().getScheme(DefaultColorsScheme.DEFAULT_SCHEME_NAME);
+      if (scheme != null) {
+        EditorColorsManager.getInstance().setGlobalScheme(scheme);
+      }
+    }
+
+    restart();
+  }
+
+  private static void restart() {
+    if (Messages.showOkCancelDialog("Restart now?", "Restart", Messages.getQuestionIcon()) == Messages.OK) {
+      ApplicationManagerEx.getApplicationEx().restart();
+    }
   }
 
   public static void install() {
@@ -36,8 +51,6 @@ public class DarculaInstaller {
       }
     }
 
-    if (Messages.showOkCancelDialog("Restart now?", "Restart", Messages.getQuestionIcon()) == Messages.OK) {
-      ApplicationManagerEx.getApplicationEx().restart();
-    }
+    restart();
   }
 }

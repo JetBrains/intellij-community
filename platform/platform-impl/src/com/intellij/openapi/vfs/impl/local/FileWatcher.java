@@ -625,9 +625,9 @@ public class FileWatcher {
   }
 
   private void resetRoot(final String path) {
-    final NewVirtualFile root = myManagingFS.findRoot(path, LocalFileSystem.getInstance());
-    if (root != null) {
-      root.markDirtyRecursively();
+    final VirtualFile root = LocalFileSystem.getInstance().findFileByPath(path);
+    if (root instanceof NewVirtualFile) {
+      ((NewVirtualFile)root).markDirtyRecursively();
     }
 
     notifyOnEvent();

@@ -34,9 +34,6 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract void fireAfterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
 
-  @Nullable
-  public abstract KeyboardShortcut getKeyboardShortcut(@NotNull String actionId);
-
 
   public abstract void fireBeforeEditorTyping(char c, DataContext dataContext);
 

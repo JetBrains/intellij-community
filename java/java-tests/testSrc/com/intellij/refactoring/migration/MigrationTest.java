@@ -33,9 +33,12 @@ public class MigrationTest extends MultiFileTestCase {
     })));
   }
 
-
-
-
+  public void testTwoClasses() throws Exception {
+    doTest(createAction(new MigrationMap(new MigrationMapEntry[]{
+      new MigrationMapEntry("A", "A1", MigrationMapEntry.CLASS, true),
+      new MigrationMapEntry("B", "B1", MigrationMapEntry.CLASS, true)
+    })));
+  }
 
   private MultiFileTestCase.PerformAction createAction(final MigrationMap migrationMap) {
     return new MultiFileTestCase.PerformAction() {

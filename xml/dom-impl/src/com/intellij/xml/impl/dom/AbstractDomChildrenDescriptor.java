@@ -10,6 +10,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.impl.AttributeChildDescriptionImpl;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -47,14 +48,15 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
       xmlElementDescriptors.add(new DomElementXmlDescriptor(childrenDescription, myManager));
     }
 
-    final CustomDomChildrenDescription customDescription = domElement.getGenericInfo().getCustomNameChildrenDescription();
-    if (customDescription != null) {
+    final List<? extends CustomDomChildrenDescription> customs = domElement.getGenericInfo().getCustomNameChildrenDescription();
+
+    for (final CustomDomChildrenDescription custom : customs) {
       final XmlTag xmlTag = domElement.getXmlTag();
-      for (final EvaluatedXmlName name : customDescription.getTagNameDescriptor().getCompletionVariants(domElement)) {
-        xmlElementDescriptors.add(new AbstractDomChildrenDescriptor(myManager) {
+      for (final EvaluatedXmlName name : custom.getTagNameDescriptor().getCompletionVariants(domElement)) {
+        AbstractDomChildrenDescriptor descriptor = new AbstractDomChildrenDescriptor(myManager) {
           @Override
           public String getDefaultName() {
-            final String ns = xmlTag != null? name.getNamespace(xmlTag, (XmlFile)xmlTag.getContainingFile()) : null;
+            final String ns = xmlTag != null ? name.getNamespace(xmlTag, (XmlFile)xmlTag.getContainingFile()) : null;
             if (ns != null) {
               final String prefix = xmlTag.getPrefixByNamespace(ns);
               if (prefix != null) {
@@ -67,11 +69,11 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
           @Override
           @Nullable
           public PsiElement getDeclaration() {
-            final PomTarget target = customDescription.getTagNameDescriptor().findDeclaration(domElement, name);
+            final PomTarget target = custom.getTagNameDescriptor().findDeclaration(domElement, name);
             return target == null ? null : PomService.convertToPsi(context.getProject(), target);
           }
-
-        });
+        };
+        xmlElementDescriptors.add(descriptor);
       }
 
       xmlElementDescriptors.add(new AnyXmlElementDescriptor(this, getNSDescriptor()));
@@ -140,7 +142,16 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     for (DomAttributeChildDescription description : descriptions) {
       descriptors.add(new DomAttributeXmlDescriptor(description, myManager.getProject()));
     }
-
+    List<? extends CustomDomChildrenDescription> customs = domElement.getGenericInfo().getCustomNameChildrenDescription();
+    for (CustomDomChildrenDescription custom : customs) {
+      CustomDomChildrenDescription.AttributeDescriptor list = custom.getCustomAttributeDescriptor();
+      if (list != null) {
+        for (EvaluatedXmlName variant : list.getCompletionVariants(domElement)) {
+          AttributeChildDescriptionImpl childDescription = new AttributeChildDescriptionImpl(variant.getXmlName(), String.class);
+          descriptors.add(new DomAttributeXmlDescriptor(childDescription, myManager.getProject()));
+        }
+      }
+    }
     return descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
   }
 

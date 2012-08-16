@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Please do not use this class outside impl package!!!
@@ -35,6 +36,7 @@ final class ProxyShortcutSet implements ShortcutSet {
     myKeymapManager = keymapManager;
   }
 
+  @NotNull
   public Shortcut[] getShortcuts() {
     Keymap keymap=myKeymapManager.getActiveKeymap();
     return keymap.getShortcuts(myActionId);

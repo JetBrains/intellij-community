@@ -17,8 +17,11 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.model.*;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import gnu.trove.TIntObjectHashMap;
@@ -43,18 +46,20 @@ import java.util.List;
  */
 public class ArrangementRuleTree {
 
-  @NotNull private final List<ArrangementMatcherEditingListener>       myListeners      = new ArrayList<ArrangementMatcherEditingListener>();
-  @NotNull private final TreeSelectionModel                            mySelectionModel = new MySelectionModel();
-  @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>   myRenderers      = new TIntObjectHashMap<ArrangementNodeComponent>();
-  @NotNull private final TIntObjectHashMap<ArrangementMatcherSettings> mySettings       =
-    new TIntObjectHashMap<ArrangementMatcherSettings>();
+  @NotNull private final List<ArrangementRuleEditingListener> myListeners      = new ArrayList<ArrangementRuleEditingListener>();
+  @NotNull private final TreeSelectionModel                   mySelectionModel = new MySelectionModel();
 
-  @NotNull private final Tree                             myTree;
-  @NotNull private final ArrangementNodeComponentFactory  myFactory;
+  @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>    myRenderers =
+    new TIntObjectHashMap<ArrangementNodeComponent>();
+  @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModel> myModels    =
+    new TIntObjectHashMap<ArrangementRuleEditingModel>();
+
+  @NotNull private final Tree                            myTree;
+  @NotNull private final ArrangementNodeComponentFactory myFactory;
 
   private boolean mySkipSelectionChange;
 
-  public ArrangementRuleTree(@NotNull ArrangementNodeDisplayManager displayManager) {
+  public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
     myFactory = new ArrangementNodeComponentFactory(displayManager);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     DefaultTreeModel treeModel = new DefaultTreeModel(root);
@@ -89,6 +94,7 @@ public class ArrangementRuleTree {
       }
     };
     myTree.setSelectionModel(mySelectionModel);
+    myTree.setRootVisible(false);
     mySelectionModel.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
@@ -102,35 +108,25 @@ public class ArrangementRuleTree {
         onMouseClicked(e);
       }
     });
-
-    ArrangementSettingsCompositeNode constants = new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND);
-    constants.addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC));
-    constants.addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC));
-    constants.addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL));
-
-    ArrangementSettingsCompositeNode privateFields = new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND);
-    privateFields.addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE));
-
-    HierarchicalArrangementSettingsNode fields = new HierarchicalArrangementSettingsNode(new ArrangementSettingsAtomNode(
-      ArrangementSettingType.TYPE, ArrangementEntryType.FIELD
-    ));
-    fields.addChild(new HierarchicalArrangementSettingsNode(constants));
-    fields.addChild(new HierarchicalArrangementSettingsNode(privateFields));
-    int row = map(root, fields, null, 0);
-
-    HierarchicalArrangementSettingsNode methods = new HierarchicalArrangementSettingsNode(new ArrangementSettingsAtomNode(
-      ArrangementSettingType.TYPE, ArrangementEntryType.METHOD
-    ));
-    methods.addChild(new HierarchicalArrangementSettingsNode(new ArrangementSettingsAtomNode(
-      ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC
-    )));
-    methods.addChild(new HierarchicalArrangementSettingsNode(new ArrangementSettingsAtomNode(
-      ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE
-    )));
-    map(root, methods, null, row);
+    
+    List<ArrangementSettingsNode> rules = new ArrayList<ArrangementSettingsNode>();
+    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC))
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC))
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL)));
+    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
+    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
+    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
+    map(root, rules, grouper);
 
     expandAll(myTree, new TreePath(root));
-    myTree.setRootVisible(false);
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
   }
@@ -168,58 +164,37 @@ public class ArrangementRuleTree {
     tree.expandPath(parent);
   }
 
-  private int map(@NotNull DefaultMutableTreeNode parentTreeNode,
-                  @NotNull HierarchicalArrangementSettingsNode settingsNode,
-                  @Nullable ArrangementSettingsCompositeNode template,
-                  int row)
+  private void map(@NotNull DefaultMutableTreeNode root,
+                   @NotNull List<ArrangementSettingsNode> settings,
+                   @NotNull ArrangementSettingsGrouper grouper)
   {
-    DefaultMutableTreeNode childTreeNode = new DefaultMutableTreeNode(settingsNode.getCurrent());
-    parentTreeNode.add(childTreeNode);
-    List<HierarchicalArrangementSettingsNode> children = settingsNode.getChildren();
-    if (children.isEmpty()) {
-      ArrangementMatcherSettings settings = new ArrangementMatcherSettings();
-      ArrangementSettingsNode condition;
-      if (template == null) {
-        condition = settingsNode.getCurrent();
-      }
-      else {
-        condition = template.clone().addOperand(settingsNode.getCurrent());
-      }
-      settings.addCondition(condition);
-      mySettings.put(row, settings);
-      return row + 1;
-    }
-    else {
-      row++;
-      ArrangementSettingsCompositeNode newTemplate =
-        template == null ? new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                         : template.clone();
-      newTemplate.addOperand(settingsNode.getCurrent());
-      for (HierarchicalArrangementSettingsNode node : children) {
-        row = map(childTreeNode, node, newTemplate, row);
-      }
-      return row;
+    ArrangementRuleEditingModelBuilder builder = new ArrangementRuleEditingModelBuilder();
+    for (ArrangementSettingsNode setting : settings) {
+      builder.build(setting, myTree, root, grouper, myModels);
     }
   }
 
-  public void addEditingListener(@NotNull ArrangementMatcherEditingListener listener) {
+  public void addEditingListener(@NotNull ArrangementRuleEditingListener listener) {
     myListeners.add(listener);
   }
   
   /**
-   * @return    matcher settings for the selected tree row(s) if any; null otherwise
+   * @return    matcher model for the selected tree row(s) if any; null otherwise
    */
   @Nullable
-  public ArrangementMatcherSettings getActiveSettings() {
+  public ArrangementRuleEditingModel getActiveModel() {
     TreePath[] paths = mySelectionModel.getSelectionPaths();
     if (paths == null) {
       return null;
     }
+    
+    // There is a possible case that particular settings node is represented on multiple rows and that non-leaf nodes are served
+    // for more than one rule. No model is registered for them then and we want just to skip them.
     for (int i = paths.length - 1; i >= 0; i--) {
       int row = myTree.getRowForPath(paths[i]);
-      ArrangementMatcherSettings settings = mySettings.get(row);
-      if (settings != null) {
-        return settings;
+      ArrangementRuleEditingModel model = myModels.get(row);
+      if (model != null) {
+        return model;
       }
     }
     return null;
@@ -296,13 +271,13 @@ public class ArrangementRuleTree {
     }
   }
 
-  private void notifyEditingListeners(@Nullable ArrangementMatcherSettings settings) {
-    for (ArrangementMatcherEditingListener listener : myListeners) {
-      if (settings == null) {
+  private void notifyEditingListeners(@Nullable ArrangementRuleEditingModel model) {
+    for (ArrangementRuleEditingListener listener : myListeners) {
+      if (model == null) {
         listener.stopEditing();
       }
       else {
-        listener.startEditing(settings);
+        listener.startEditing(model);
       }
     }
   }
@@ -328,7 +303,7 @@ public class ArrangementRuleTree {
     public void setSelectionPath(TreePath path) {
       if (!mySkipSelectionChange) {
         super.setSelectionPath(path);
-        notifyEditingListeners(getActiveSettings());
+        notifyEditingListeners(getActiveModel());
       }
     }
   }

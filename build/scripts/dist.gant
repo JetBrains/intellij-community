@@ -49,19 +49,18 @@ setProperty("paths", paths)
 
 target(compile: "Compile project") {
   loadProject()
-  project.builder.arrangeModuleCyclesOutputs = true
+  projectBuilder.arrangeModuleCyclesOutputs = true
 
-  project.stage("Cleaning up sandbox folder")
+  projectBuilder.stage("Cleaning up sandbox folder")
   forceDelete(paths.sandbox)
 
   [paths.sandbox, paths.distWin, paths.distAll, paths.distUnix, paths.distMac, paths.artifacts, paths.artifacts_core].each {
     ant.mkdir(dir: it)
   }
 
-  project["javac"] = "$jdkHome/bin/javac"
-  project.targetFolder = "$out/classes"
-  project.clean()
-  project.makeProduction()
+  projectBuilder.targetFolder = "$out/classes"
+  projectBuilder.cleanOutput()
+  projectBuilder.buildProduction()
 }
 
 private String appInfoFile() {

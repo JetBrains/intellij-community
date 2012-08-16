@@ -35,7 +35,7 @@ import java.util.List;
 public class PropertyReference extends PropertyReferenceBase implements QuickFixProvider, LocalQuickFixProvider {
   @Nullable private final String myBundleName;
 
-  public PropertyReference(@NotNull final String key, @NotNull final PsiElement element, final String bundleName, final boolean soft, final TextRange range) {
+  public PropertyReference(@NotNull final String key, @NotNull final PsiElement element, @Nullable final String bundleName, final boolean soft, final TextRange range) {
     super(key, soft, element, range);
     myBundleName = bundleName;
   }

@@ -203,19 +203,11 @@ public class GitHistoryUtils {
     if (! GitUtil.isGitRoot(new File(root.getPath()))) throw new VcsException("Path " + root.getPath() + " is not git repository root");
 
     final GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
-    //GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
-    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME);
     h.setNoSSH(true);
     h.setSilent(true);
     h.addParameters("--all", "--pretty=format:%H%x20%ct%x0A", "--date-order", "--reverse", "--encoding=UTF-8", "--full-history",
                     "--sparse");
     h.endOptions();
-
-    // for file sort
-    final Long[] minTs = new Long[1];
-    minTs[0] = Long.MAX_VALUE;
-    final Long[] maxTs = new Long[1];
-    minTs[0] = 0L;
 
     final OutputStream[] stream = new OutputStream[1];
     try {
@@ -273,10 +265,6 @@ public class GitHistoryUtils {
         throw new VcsException(e);
       }
     }
-    /*String result = h.run();
-    if (result.length() > 0) {
-      throw new VcsException(result);
-    }*/
     File file = new File(outFilePath);
     if (! file.exists() || file.length() == 0) throw new VcsException("Short repository history not loaded");
   }

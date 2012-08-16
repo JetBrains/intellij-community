@@ -41,12 +41,13 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
   private final static ApplicationLevelNumberConnectionsGuardImpl ourGuard;
 
   private final ISVNDebugLog myLog;
-  private final ISVNCanceller myCanceller;
+  private final QuicklyDisposableISVNCanceller myCanceller;
 
   private final SvnRepositoryPool myPool;
-  private final boolean myKeepConnection;
-  private final ISVNConnectionListener myListener;
-  private ISVNAuthenticationManager myAuthManager;
+  private volatile boolean myKeepConnection;
+  private final QuicklyDisposableISVNTunnelProvider myTunnelProvider;
+  private final QuicklyDisposableISVNConnectionListener myListener;
+  private QuicklyDisposableISVNAuthenticationManager myAuthManager;
   private ThrowableConvertor<SVNURL, SVNRepository, SVNException> myCreator;
 
   static {
@@ -62,16 +63,17 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
                                       final ISVNAuthenticationManager authManager,
                                       final ISVNTunnelProvider tunnelProvider, final int maxCached, final int maxConcurrent) {
     myKeepConnection = keepConnection;
-    myAuthManager = authManager;
+    myTunnelProvider = new QuicklyDisposableISVNTunnelProvider(tunnelProvider);
+    myAuthManager = new QuicklyDisposableISVNAuthenticationManager(authManager);
     myLog = new ProxySvnLog(SVNDebugLog.getDefaultLog());
-    myCanceller = createCanceller();
+    myCanceller = new QuicklyDisposableISVNCanceller(new MyCanceller());
 
     final ThrowableConvertor<SVNURL, SVNRepository, SVNException> creator = new ThrowableConvertor<SVNURL, SVNRepository, SVNException>() {
       @Override
       public SVNRepository convert(SVNURL svnurl) throws SVNException {
         final SVNRepository repos = myCreator != null ? myCreator.convert(svnurl) : SVNRepositoryFactory.create(svnurl, SvnIdeaRepositoryPoolManager.this);
         repos.setAuthenticationManager(myAuthManager);
-        repos.setTunnelProvider(tunnelProvider);
+        repos.setTunnelProvider(myTunnelProvider);
         repos.setDebugLog(myLog);
         repos.setCanceller(myCanceller);
         if (myKeepConnection) {
@@ -89,7 +91,7 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
         repository.setLocation(url, false);
         repository.addConnectionListener(myListener);
         repository.setAuthenticationManager(myAuthManager);
-        repository.setTunnelProvider(tunnelProvider);
+        repository.setTunnelProvider(myTunnelProvider);
         repository.setDebugLog(myLog);
         repository.setCanceller(myCanceller);
       }
@@ -98,7 +100,7 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
     if (keepConnection) {
       CachingSvnRepositoryPool pool = new CachingSvnRepositoryPool(creator, maxCached, maxConcurrent, adjuster, ourGuard);
       myPool = pool;
-      myListener = new ISVNConnectionListener() {
+      ISVNConnectionListener listener = new ISVNConnectionListener() {
         @Override
         public void connectionOpened(SVNRepository repository) {
           ourGuard.connectionOpened();
@@ -111,6 +113,7 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
           ourGuard.connectionClosed();
         }
       };
+      myListener = new QuicklyDisposableISVNConnectionListener(listener);
       ourGuard.addRepositoryPool(pool);
     }
     else {
@@ -119,26 +122,24 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
     }
   }
 
-  public static ISVNCanceller createCanceller() {
-    return new ISVNCanceller() {
-      @Override
-      public void checkCancelled() throws SVNCancelException {
-        final ProgressManager pm = ProgressManager.getInstance();
-        final ProgressIndicator pi = pm.getProgressIndicator();
-        if (pi != null) {
-          if (pi.isCanceled()) throw new SVNCancelException();
-        }
-        ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-        if (indicator != null && indicator.isCanceled()) {
-          throw new SVNCancelException();
-        }
+  private static class MyCanceller implements ISVNCanceller {
+    @Override
+    public void checkCancelled() throws SVNCancelException {
+      final ProgressManager pm = ProgressManager.getInstance();
+      final ProgressIndicator pi = pm.getProgressIndicator();
+      if (pi != null) {
+        if (pi.isCanceled()) throw new SVNCancelException();
       }
-    };
+      ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+      if (indicator != null && indicator.isCanceled()) {
+        throw new SVNCancelException();
+      }
+    }
   }
 
   @Override
   public void setAuthenticationManager(ISVNAuthenticationManager authManager) {
-    myAuthManager = authManager;
+    myAuthManager = new QuicklyDisposableISVNAuthenticationManager(authManager);
   }
 
   @Override
@@ -173,6 +174,10 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
     if (myKeepConnection) {
       ourGuard.removeRepositoryPool((CachingSvnRepositoryPool)myPool);
     }
+    myKeepConnection = false;
+    myListener.dispose();
+    myAuthManager.dispose();
+    myTunnelProvider.dispose();
     myPool.dispose();
   }
 

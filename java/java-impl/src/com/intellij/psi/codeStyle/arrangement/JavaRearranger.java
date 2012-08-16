@@ -16,11 +16,13 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
+import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +34,9 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 7/20/12 2:31 PM
  */
-public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, ArrangementStandardSettingsAware {
+public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, ArrangementStandardSettingsAware,
+                                       ArrangementSettingsGrouper
+{
 
   // Type
   @NotNull private static final Set<ArrangementEntryType> SUPPORTED_TYPES = EnumSet.of(
@@ -80,35 +84,92 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   }
 
   @Override
-  public boolean isNameFilterEnabled(@Nullable ArrangementMatcherSettings settings) {
+  public boolean isNameFilterEnabled(@Nullable ArrangementSettingsNode current) {
     // TODO den implement 
     return true;
   }
 
   @Override
-  public boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementMatcherSettings settings) {
+  public boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementSettingsNode current) {
     return SUPPORTED_TYPES.contains(type);
   }
 
   @Override
-  public boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatcherSettings settings) {
-    if (settings == null) {
+  public boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementSettingsNode current) {
+    if (current == null) {
       return SUPPORTED_MODIFIERS.contains(modifier);
     }
-    Object key = NO_TYPE;
-    for (ArrangementEntryType type : ArrangementEntryType.values()) {
-      if (settings.hasCondition(type)) {
-        key = type;
-        break;
+
+    final Ref<Object> typeRef = new Ref<Object>();
+    current.invite(new ArrangementSettingsNodeVisitor() {
+      @Override
+      public void visit(@NotNull ArrangementSettingsAtomNode node) {
+        if (node.getType() == ArrangementSettingType.TYPE) {
+          typeRef.set(node.getValue());
+        }
       }
-    }
+
+      @Override
+      public void visit(@NotNull ArrangementSettingsCompositeNode node) {
+        for (ArrangementSettingsNode n : node.getOperands()) {
+          if (typeRef.get() != null) {
+            return;
+          }
+          n.invite(this);
+        } 
+      }
+    });
+    Object key = typeRef.get() == null ? NO_TYPE : typeRef.get();
     Set<ArrangementModifier> modifiers = MODIFIERS_BY_TYPE.get(key);
     return modifiers != null && modifiers.contains(modifier);
   }
 
   @Override
-  public boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementMatcherSettings settings) {
+  public boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementSettingsNode current) {
     // TODO den implement 
     return true;
+  }
+
+  @NotNull
+  @Override
+  public HierarchicalArrangementSettingsNode group(@NotNull ArrangementSettingsNode node) {
+    final Ref<HierarchicalArrangementSettingsNode> result = new Ref<HierarchicalArrangementSettingsNode>();
+    node.invite(new ArrangementSettingsNodeVisitor() {
+      @Override
+      public void visit(@NotNull ArrangementSettingsAtomNode node) {
+        result.set(new HierarchicalArrangementSettingsNode(node)); 
+      }
+
+      @Override
+      public void visit(@NotNull ArrangementSettingsCompositeNode node) {
+        ArrangementSettingsNode typeNode = null;
+        for (ArrangementSettingsNode n : node.getOperands()) {
+          if (n instanceof ArrangementSettingsAtomNode && ((ArrangementSettingsAtomNode)n).getType() == ArrangementSettingType.TYPE) {
+            typeNode = n;
+            break;
+          }
+        }
+        if (typeNode == null) {
+          result.set(new HierarchicalArrangementSettingsNode(node));
+        }
+        else {
+          HierarchicalArrangementSettingsNode parent = new HierarchicalArrangementSettingsNode(typeNode);
+          ArrangementSettingsCompositeNode compositeWithoutType = new ArrangementSettingsCompositeNode(node.getOperator());
+          for (ArrangementSettingsNode n : node.getOperands()) {
+            if (n != typeNode) {
+              compositeWithoutType.addOperand(n);
+            }
+          }
+          if (compositeWithoutType.getOperands().size() == 1) {
+            parent.addChild(new HierarchicalArrangementSettingsNode(compositeWithoutType.getOperands().iterator().next()));
+          }
+          else {
+            parent.addChild(new HierarchicalArrangementSettingsNode(compositeWithoutType));
+          }
+          result.set(parent);
+        }
+      }
+    }); 
+    return result.get();
   }
 }

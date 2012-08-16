@@ -13,13 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.settings.group;
 
 /**
- * // TODO den add doc
- * 
- * @author Denis Zhdanov
- * @since 8/8/12 12:29 PM
+ * @author Vladimir Kondratyev
  */
-public interface ArrangementSettingsNodeGrouper {
+package com.intellij.ide.todo;
+
+import com.intellij.openapi.project.Project;
+
+import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
+
+public class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder{
+  private JComboBox myScopes;
+
+  public ScopeBasedTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, JComboBox scopes){
+    super(tree,treeModel,project);
+    myScopes = scopes;
+  }
+
+  protected TodoTreeStructure createTreeStructure(){
+    return new ScopeBasedTodosTreeStructure(myProject, myScopes);
+  }
+
 }

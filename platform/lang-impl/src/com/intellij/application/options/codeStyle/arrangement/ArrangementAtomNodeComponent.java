@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.GridBag;
@@ -40,15 +39,18 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
     public void paint(Graphics g) {
-      Point point = ArrangementSettingsUtil.getLocationOnScreen(this);
+      Point point = ArrangementConfigUtil.getLocationOnScreen(this);
       if (point != null) {
         Rectangle bounds = myRenderer.getBounds();
         myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
       }
+      if (!myEnabled && g instanceof Graphics2D) {
+        ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+      }
       super.paint(g);
     }
   };
-  
+
   @NotNull private final JLabel myLabel = new JLabel() {
     @Override
     public Dimension getMinimumSize() {
@@ -65,14 +67,14 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
       return mySize == null ? super.getPreferredSize() : mySize;
     }
   };
-  
+
   @NotNull private final ArrangementSettingsAtomNode mySettingsNode;
-  
+
   @Nullable private Dimension mySize;
   @Nullable private Rectangle myScreenBounds;
-  
+
+  private boolean myEnabled = true;
   private boolean mySelected;
-  private boolean myEnabled;
   private boolean myInverted;
 
   public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager, @NotNull ArrangementSettingsAtomNode node) {
@@ -111,7 +113,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
   @NotNull
   @Override
-  public ArrangementSettingsNode getSettingsNode() {
+  public ArrangementSettingsAtomNode getSettingsNode() {
     return mySettingsNode;
   }
 

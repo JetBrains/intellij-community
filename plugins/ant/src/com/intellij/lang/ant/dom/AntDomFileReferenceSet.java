@@ -100,7 +100,7 @@ public class AntDomFileReferenceSet extends FileReferenceSet {
     if (containingProject != null) {
       VirtualFile root = null;
       if (isAbsolutePathReference()) {
-        root = LocalFileSystem.getInstance().findRoot();
+        root = LocalFileSystem.getInstance().getRoot();
       }
       else {
         

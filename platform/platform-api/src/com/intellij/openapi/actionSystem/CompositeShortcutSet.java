@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +28,8 @@ public class CompositeShortcutSet implements ShortcutSet {
     mySets = sets;
   }
 
+  @Override
+  @NotNull
   public Shortcut[] getShortcuts() {
     List<Shortcut> result = new ArrayList<Shortcut>();
     for (ShortcutSet each : mySets) {

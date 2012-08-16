@@ -113,6 +113,7 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
               CodeStyleManager.getInstance(project).reformat(psiField);
             }
           });
+          newEditor.getCaretModel().moveToOffset(psiField.getTextRange().getEndOffset() - 1);
         }
       }
     });
