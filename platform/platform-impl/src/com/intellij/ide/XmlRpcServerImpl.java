@@ -15,58 +15,30 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import org.apache.xmlrpc.IdeaAwareWebServer;
-import org.apache.xmlrpc.IdeaAwareXmlRpcServer;
-import org.apache.xmlrpc.WebServer;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.Consumer;
+import org.apache.xmlrpc.*;
+import org.jboss.netty.buffer.ChannelBuffer;
+import org.jboss.netty.buffer.ChannelBufferInputStream;
+import org.jboss.netty.buffer.ChannelBuffers;
+import org.jboss.netty.channel.*;
+import org.jboss.netty.handler.codec.http.HttpMethod;
+import org.jboss.netty.handler.codec.http.HttpRequest;
+import org.jboss.netty.handler.codec.http.HttpResponse;
+import org.jetbrains.ide.WebServerManager;
+import org.jetbrains.io.Responses;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.UnknownHostException;
-
-/**
- * @author mike
- */
-public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
+@ChannelHandler.Sharable
+public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements XmlRpcServer, Consumer<ChannelPipeline> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.XmlRpcServerImpl");
-  private static final int FIRST_PORT_NUMBER = 63342;
-  private static final int PORTS_COUNT = 20;
-  public static int detectedPortNumber = -1;
-  private WebServer myWebServer;
-  @NonNls private static final String PROPERTY_RPC_PORT = "rpc.port";
 
-  @NotNull
-  @NonNls
-  public String getComponentName() {
-    return "XmlRpcServer";
-  }
+  private final DefaultHandlerMapping handlerMapping = new DefaultHandlerMapping();
+  // idea doesn't use authentication
+  private final XmlRpcContext xmlRpcContext = new DefaultXmlRpcContext(null, null, handlerMapping);
 
-  public void initComponent() {
-    if (ApplicationManager.getApplication().isUnitTestMode() || !checkPort()) return;
-    final Thread thread = Thread.currentThread();
-    final int currentPriority = thread.getPriority();
-    try {
-      thread.setPriority(Thread.NORM_PRIORITY - 2);
-      final InetAddress address = getBindAddress();
-      final int port = getPortNumber();
-      myWebServer = new IdeaAwareWebServer(port, address, new IdeaAwareXmlRpcServer());
-      myWebServer.start();
-      LOG.info("XmlRpc server listening at " + address + ":" + port);
-    }
-    catch (Exception e) {
-      LOG.error(e);
-      myWebServer = null;
-    }
-    finally {
-      thread.setPriority(currentPriority);
-    }
-    for(XmlRpcHandlerBean handlerBean: Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
+  public XmlRpcServerImpl() {
+    for (XmlRpcHandlerBean handlerBean : Extensions.getExtensions(XmlRpcHandlerBean.EP_NAME)) {
       final Object handler;
       try {
         handler = handlerBean.instantiate();
@@ -75,78 +47,57 @@ public class XmlRpcServerImpl implements XmlRpcServer, ApplicationComponent {
         LOG.error(e);
         continue;
       }
-      addHandler(handlerBean.name, handler);
+      handlerMapping.addHandler(handlerBean.name, handler);
     }
   }
 
-  private static InetAddress getBindAddress() throws UnknownHostException {
-    return InetAddress.getByName("127.0.0.1");
+  @Override
+  public void consume(ChannelPipeline pipeline) {
+    pipeline.addLast("xmlRpc", this);
   }
 
   public int getPortNumber() {
-    return detectedPortNumber == -1 ? getDefaultPort() : detectedPortNumber;
-  }
-
-  private static int getDefaultPort() {
-    if (System.getProperty(PROPERTY_RPC_PORT) != null) return Integer.parseInt(System.getProperty(PROPERTY_RPC_PORT));
-    return FIRST_PORT_NUMBER;
-  }
-
-  private static boolean checkPort() {
-    ServerSocket socket = null;
-    try {
-      final int firstPort = getDefaultPort();
-      for (int i = 0; i < PORTS_COUNT; i++) {
-        int port = firstPort + i;
-        try {
-          socket = new ServerSocket(port, 10, getBindAddress());
-          detectedPortNumber = port;
-          return true;
-        }
-        catch (IOException ignored) {
-        }
-      }
-
-      try {
-        // try any port
-        socket = new ServerSocket(0, 10, getBindAddress());
-        detectedPortNumber = socket.getLocalPort();
-        return true;
-      }
-      catch (IOException ignored) {
-      }
-    }
-    finally {
-      if (socket != null) {
-        try {
-          socket.close();
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
-    }
-    return false;
-  }
-
-  public void disposeComponent() {
-    if (myWebServer != null) {
-      myWebServer.shutdown();
-    }
+    return WebServerManager.getInstance().getPort();
   }
 
   public void addHandler(String name, Object handler) {
-    if (myWebServer != null) {
-      myWebServer.addHandler(name, handler);
-    }
-    else {
-      LOG.info("Handler not registered because XML-RPC server is not running");
-    }
+    handlerMapping.addHandler(name, handler);
   }
 
   public void removeHandler(String name) {
-    if (myWebServer != null) {
-      myWebServer.removeHandler(name);
+    handlerMapping.removeHandler(name);
+  }
+
+  public void messageReceived(ChannelHandlerContext context, MessageEvent e) throws Exception {
+    if (e.getMessage() instanceof HttpRequest) {
+      HttpRequest request = (HttpRequest)e.getMessage();
+      if (request.getMethod() == HttpMethod.POST) {
+        ChannelBuffer result;
+        ChannelBufferInputStream in = new ChannelBufferInputStream(request.getContent());
+        try {
+          result = ChannelBuffers.copiedBuffer(new XmlRpcWorker(xmlRpcContext.getHandlerMapping()).execute(in, xmlRpcContext));
+        }
+        finally {
+          in.close();
+        }
+
+        HttpResponse response = Responses.create("text/xml");
+        response.setContent(result);
+        Responses.send(response, request, context);
+        return;
+      }
+    }
+
+    context.sendUpstream(e);
+  }
+
+  @Override
+  public void exceptionCaught(ChannelHandlerContext context, ExceptionEvent e) throws Exception {
+    try {
+      LOG.error(e.getCause());
+    }
+    finally {
+      e.getChannel().close();
     }
   }
 }

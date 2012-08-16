@@ -266,4 +266,8 @@
   <fileEditorProvider implementation="com.intellij.openapi.fileEditor.impl.text.LargeFileEditorProvider"/>
 
   <xmlRpcHandler name="fileOpener" implementation="com.intellij.ide.OpenFileXmlRpcHandler"/>
+
+  <applicationService serviceInterface="com.intellij.ide.XmlRpcServer"
+                      serviceImplementation="com.intellij.ide.XmlRpcServerImpl"/>
+  <serverPipelineConsumer implementation="org.jetbrains.ide.XmlRpcPipelineConsumer"/>
 </extensions>

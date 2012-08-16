@@ -26,6 +26,7 @@ import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.util.ScriptGenerator;
+import org.jetbrains.ide.WebServerManager;
 
 import java.util.Map;
 import java.util.Random;
@@ -51,10 +52,6 @@ public class GitRebaseEditorService {
    */
   private final Object myHandlersLock = new Object();
   /**
-   * XML rcp server
-   */
-  private final XmlRpcServer myXmlRpcServer;
-  /**
    * Random number generator
    */
   private static final Random oursRandom = new Random();
@@ -66,15 +63,6 @@ public class GitRebaseEditorService {
    * The prefix for rebase editors
    */
   @NonNls private static final String GIT_REBASE_EDITOR_PREFIX = "git-rebase-editor-";
-
-  /**
-   * The constructor
-   *
-   * @param xmlRpcServer the XML RCP server instance
-   */
-  public GitRebaseEditorService(@NotNull final XmlRpcServer xmlRpcServer) {
-    myXmlRpcServer = xmlRpcServer;
-  }
 
   /**
    * @return an instance of the server
@@ -93,7 +81,7 @@ public class GitRebaseEditorService {
    */
   private void initComponent() {
     if (!myInitialized) {
-      myXmlRpcServer.addHandler(GitRebaseEditorMain.HANDLER_NAME, new InternalHandler());
+      ServiceManager.getService(XmlRpcServer.class).addHandler(GitRebaseEditorMain.HANDLER_NAME, new InternalHandler());
       myInitialized = true;
     }
   }
@@ -108,7 +96,7 @@ public class GitRebaseEditorService {
     synchronized (myScriptLock) {
       if (myEditorCommand == null) {
         ScriptGenerator generator = new ScriptGenerator(GIT_REBASE_EDITOR_PREFIX, GitRebaseEditorMain.class);
-        generator.addInternal(Integer.toString(myXmlRpcServer.getPortNumber()));
+        generator.addInternal(Integer.toString(WebServerManager.getInstance().getPort()));
         generator.addClasses(XmlRpcClientLite.class, DecoderException.class);
         myEditorCommand = generator.commandLine();
       }

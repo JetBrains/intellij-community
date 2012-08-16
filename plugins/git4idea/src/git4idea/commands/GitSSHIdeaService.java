@@ -20,25 +20,12 @@ import com.intellij.openapi.components.ServiceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.ssh.GitSSHHandler;
 import org.jetbrains.git4idea.ssh.GitSSHService;
+import org.jetbrains.ide.WebServerManager;
 
 /**
  * The git ssh service implementation that uses IDEA XML RCP service
  */
 public class GitSSHIdeaService extends GitSSHService {
-  /**
-   * XML RPC server
-   */
-  private final XmlRpcServer myXmlRpcServer;
-
-  /**
-   * A constructor from parameter
-   *
-   * @param xmlRpcServer the injected XmlRpc server reference
-   */
-  public GitSSHIdeaService(final @NotNull XmlRpcServer xmlRpcServer) {
-    myXmlRpcServer = xmlRpcServer;
-  }
-
   /**
    * @return an instance of the server
    */
@@ -52,10 +39,10 @@ public class GitSSHIdeaService extends GitSSHService {
   }
 
   public int getXmlRcpPort() {
-    return myXmlRpcServer.getPortNumber();
+    return WebServerManager.getInstance().getPort();
   }
 
   protected void registerInternalHandler(final String handlerName, final GitSSHHandler handler) {
-    myXmlRpcServer.addHandler(handlerName, handler);
+    ServiceManager.getService(XmlRpcServer.class).addHandler(handlerName, handler);
   }
 }
