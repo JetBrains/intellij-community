@@ -1184,6 +1184,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
         @Override
         public void applicationActivated(IdeFrame ideFrame) {
           setDelay(TIMER_DELAY);
+          restart();
         }
 
         @Override
