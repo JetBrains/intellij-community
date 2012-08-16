@@ -35,9 +35,6 @@ public class PyTypeChecker {
     if (expected == null || actual == null) {
       return true;
     }
-    if (expected instanceof PyWeakType || actual instanceof PyWeakType) {
-      return true;
-    }
     if (expected instanceof PyClassType) {
       final PyClass c = ((PyClassType)expected).getPyClass();
       if (c != null && "object".equals(c.getName())) {

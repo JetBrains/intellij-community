@@ -430,6 +430,17 @@ public class PyTypeTest extends PyTestCase {
            "        expr = self.foo\n");
   }
 
+  // PY-7215
+  public void testFunctionWithNestedGenerator() {
+    doTest("list of int",
+           "def f():\n" +
+           "    def g():\n" +
+           "        yield 10\n" +
+           "    return list(g())\n" +
+           "\n" +
+           "expr = f()\n");
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);

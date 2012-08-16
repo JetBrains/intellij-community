@@ -163,7 +163,7 @@ public class PyCallExpressionImpl extends PyElementImpl implements PyCallExpress
               if (t instanceof PyTypeReference) {
                 PyType resolved = ((PyTypeReference)t).resolve(callee, context);
                 if (resolved == null && cls != null) {
-                  return new PyWeakClassType(cls, false);
+                  return PyUnionType.createWeakType(new PyClassTypeImpl(cls, false));
                 }
               }
               return t;
