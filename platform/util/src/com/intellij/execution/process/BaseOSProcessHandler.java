@@ -17,7 +17,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
-import com.intellij.util.io.OutputReader;
+import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +66,7 @@ public class BaseOSProcessHandler extends ProcessHandler {
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          final OutputReader stdoutReader = new OutputReader(createProcessOutReader()) {
+          final BaseOutputReader stdoutReader = new BaseOutputReader(createProcessOutReader()) {
             @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
@@ -78,7 +78,7 @@ public class BaseOSProcessHandler extends ProcessHandler {
             }
           };
 
-          final OutputReader stderrReader = new OutputReader(createProcessErrReader()) {
+          final BaseOutputReader stderrReader = new BaseOutputReader(createProcessErrReader()) {
             @Override
             protected void onTextAvailable(@NotNull String text) {
               notifyTextAvailable(text, ProcessOutputTypes.STDERR);
