@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2006 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.execution.filters;
 
-package com.intellij.javaee;
-
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.project.Project;
 
 /**
- * @author Dmitry Avdeev
- * @see StandardResourceEP
+ * @author Kir
  */
-public interface StandardResourceProvider {
+public class BrowserHyperlinkInfo implements HyperlinkInfo {
+  private final String myUrl;
 
-  ExtensionPointName<StandardResourceProvider> EP_NAME = ExtensionPointName.create("com.intellij.standardResourceProvider");
-  
-  void registerResources(ResourceRegistrar registrar);
+  public BrowserHyperlinkInfo(String url) {
+    myUrl = url;
+  }
+
+  public void navigate(Project project) {
+    openUrl(myUrl);
+  }
+
+  public static void openUrl(String url) {
+    BrowserUtil.launchBrowser(url);
+  }
 }

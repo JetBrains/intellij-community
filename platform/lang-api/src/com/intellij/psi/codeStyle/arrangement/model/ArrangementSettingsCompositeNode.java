@@ -55,7 +55,7 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
   public void invite(@NotNull ArrangementSettingsNodeVisitor visitor) {
     visitor.visit(this);
   }
-
+  
   @NotNull
   @Override
   public ArrangementSettingsCompositeNode clone() {
@@ -64,6 +64,34 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
       result.addOperand(operand.clone());
     }
     return result;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myOperands.hashCode();
+    result = 31 * result + myOperator.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ArrangementSettingsCompositeNode node = (ArrangementSettingsCompositeNode)o;
+
+    if (!myOperands.equals(node.myOperands)) {
+      return false;
+    }
+    if (myOperator != node.myOperator) {
+      return false;
+    }
+
+    return true;
   }
 
   @Override

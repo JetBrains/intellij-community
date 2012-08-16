@@ -15,23 +15,28 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.JavaRearranger;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.ui.treeStructure.Tree;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreePath;
 
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC;
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.STATIC;
-import static org.junit.Assert.assertEquals;
+import java.util.Arrays;
+
+import static com.intellij.psi.codeStyle.arrangement.ArrangementUtil.and;
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.FIELD;
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*;
+import static org.junit.Assert.*;
 
 /**
  * @author Denis Zhdanov
@@ -40,6 +45,7 @@ import static org.junit.Assert.assertEquals;
 public class ArrangementRuleEditingModelBuilderTest {
 
   @NotNull private ArrangementRuleEditingModelBuilder             myBuilder;
+  @NotNull private JTree                                          myTree;
   @NotNull private DefaultMutableTreeNode                         myRoot;
   @NotNull private TIntObjectHashMap<ArrangementRuleEditingModel> myRowMappings;
   @NotNull private JavaRearranger                                 myGrouper;
@@ -48,21 +54,70 @@ public class ArrangementRuleEditingModelBuilderTest {
   public void setUp() {
     myBuilder = new ArrangementRuleEditingModelBuilder();
     myRoot = new DefaultMutableTreeNode();
+    myTree = new Tree(myRoot);
+    myTree.expandPath(new TreePath(myRoot));
     myRowMappings = new TIntObjectHashMap<ArrangementRuleEditingModel>();
     myGrouper = new JavaRearranger();
   }
 
   @Test
   public void mapToTheSameLayer() {
-    build(ArrangementUtil.and(atom(PUBLIC), atom(STATIC)));
-    // TODO den uncomment
-    //assertEquals(1, myRowMappings.size());
+    ArrangementSettingsNode settingsNode = and(atom(PUBLIC), atom(STATIC));
+    myBuilder.build(settingsNode, myTree, myRoot, myGrouper, myRowMappings);
+    checkRows(1);
+    ArrangementRuleEditingModel model = myRowMappings.get(1);
+    assertTrue(model.hasCondition(PUBLIC));
+    assertTrue(model.hasCondition(STATIC));
+    assertFalse(model.hasCondition(PRIVATE));
+    assertEquals(1, myRoot.getChildCount());
+    assertEquals(settingsNode, ((DefaultMutableTreeNode)myRoot.getFirstChild()).getUserObject());
   }
 
-  private void build(@NotNull ArrangementSettingsNode node) {
-    myBuilder.build(node, myRoot, myGrouper, myRowMappings);
+  @Test
+  public void splitIntoTwoLayers() {
+    ArrangementSettingsNode settingsNode = and(atom(FIELD), atom(PUBLIC), atom(STATIC));
+    myBuilder.build(settingsNode, myTree, myRoot, myGrouper, myRowMappings);
+    
+    checkRows(2);
+    
+    DefaultMutableTreeNode fieldUiNode = (DefaultMutableTreeNode)myRoot.getFirstChild();
+    assertNotNull(fieldUiNode);
+    assertEquals(atom(FIELD), fieldUiNode.getUserObject());
+
+    DefaultMutableTreeNode modifiersUiNode = (DefaultMutableTreeNode)fieldUiNode.getFirstChild();
+    assertNotNull(modifiersUiNode);
+    assertEquals(and(atom(PUBLIC), atom(STATIC)), modifiersUiNode.getUserObject());
   }
 
+  @Test
+  public void addToExistingLayer() {
+    myBuilder.build(and(atom(PUBLIC), atom(STATIC), atom(FIELD)), myTree, myRoot, myGrouper, myRowMappings);
+    myBuilder.build(and(atom(PRIVATE), atom(FIELD)), myTree, myRoot, myGrouper, myRowMappings);
+    
+    checkRows(2, 3);
+
+    DefaultMutableTreeNode fieldUiNode = (DefaultMutableTreeNode)myRoot.getFirstChild();
+    assertNotNull(fieldUiNode);
+    assertEquals(atom(FIELD), fieldUiNode.getUserObject());
+
+    DefaultMutableTreeNode publicStaticUiNode = (DefaultMutableTreeNode)fieldUiNode.getFirstChild();
+    assertNotNull(publicStaticUiNode);
+    assertEquals(and(atom(PUBLIC), atom(STATIC)), publicStaticUiNode.getUserObject());
+
+    DefaultMutableTreeNode privateUiNode = (DefaultMutableTreeNode)fieldUiNode.getLastChild();
+    assertNotNull(privateUiNode);
+    assertEquals(atom(PRIVATE), privateUiNode.getUserObject());
+  }
+  
+  private void checkRows(int ... rows) {
+    for (int row : rows) {
+      assertTrue(
+        String.format("Expected to find mappings for rows %s. Actual: %s", Arrays.toString(rows), Arrays.toString(myRowMappings.keys())),
+        myRowMappings.containsKey(row)
+      );
+    }
+  }
+  
   private static ArrangementSettingsAtomNode atom(@NotNull Object condition) {
     final ArrangementSettingType type;
     if (condition instanceof ArrangementEntryType) {

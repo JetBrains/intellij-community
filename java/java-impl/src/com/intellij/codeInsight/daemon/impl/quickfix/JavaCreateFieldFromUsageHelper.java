@@ -24,6 +24,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.introduceField.BaseExpressionToFieldHandler;
 
 /**
  * @author Max Medvedev
@@ -70,24 +71,7 @@ public class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
     }
     while (parentClass instanceof PsiAnonymousClass);
 
-    if (enclosingContext != null &&
-        enclosingContext.getParent() == parentClass &&
-        targetClass == parentClass &&
-        enclosingContext instanceof PsiField) {
-      field = (PsiField)targetClass.addBefore(field, enclosingContext);
-    }
-    else if (enclosingContext != null &&
-             enclosingContext.getParent() == parentClass &&
-             targetClass == parentClass &&
-             enclosingContext instanceof PsiClassInitializer) {
-      field = (PsiField)targetClass.addBefore(field, enclosingContext);
-      targetClass.addBefore(CodeEditUtil.createLineFeed(field.getManager()), enclosingContext);
-    }
-    else {
-      field = (PsiField)targetClass.add(field);
-    }
-
-    return field;
+    return BaseExpressionToFieldHandler.ConvertToFieldRunnable.appendField(targetClass, field, enclosingContext, null);
   }
 
 }

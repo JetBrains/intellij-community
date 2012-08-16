@@ -45,6 +45,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author max
@@ -54,10 +56,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private final MessageBus myEventsBus;
 
-  @NotNull private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>(FileUtil.PATH_HASHING_STRATEGY);
-  @NotNull private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
+  private final ReadWriteLock myRootsLock = new ReentrantReadWriteLock();
+  private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>(FileUtil.PATH_HASHING_STRATEGY);
+  private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
   @Nullable private VirtualFileSystemEntry myFakeRoot;
-  @NotNull private final Object INPUT_LOCK = new Object();
+
+  private final Object myInputLock = new Object();
 
   public PersistentFSImpl(@NotNull final MessageBus bus) {
     myEventsBus = bus;
@@ -487,7 +491,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     InputStream contentStream = null;
     boolean reloadFromDelegate;
-    synchronized (INPUT_LOCK) {
+    synchronized (myInputLock) {
       reloadFromDelegate = mustReloadContent(canonicalFile) || (contentStream = readContent(canonicalFile)) == null;
     }
 
@@ -504,7 +508,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
            // do not cache archive content unless asked
            (cacheContent && !application.isInternal() && !application.isUnitTestMode())) &&
           content.length <= PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
-        synchronized (INPUT_LOCK) {
+        synchronized (myInputLock) {
           writeContent(canonicalFile, new ByteSequence(content), delegate.isReadOnly());
           setFlag(canonicalFile, MUST_RELOAD_CONTENT, false);
         }
@@ -536,7 +540,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   public InputStream getInputStream(@NotNull final VirtualFile file) throws IOException {
     final VirtualFile canonicalFile = getCanonicalFile(file);
-    synchronized (INPUT_LOCK) {
+    synchronized (myInputLock) {
       InputStream contentStream;
       if (mustReloadContent(canonicalFile) || (contentStream = readContent(canonicalFile)) == null) {
         final NewVirtualFileSystem delegate = getDelegate(canonicalFile);
@@ -586,7 +590,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
                                      @NotNull VirtualFile file,
                                      boolean readOnly, @NotNull byte[] bytes, int bytesLength)
     throws IOException {
-    synchronized (INPUT_LOCK) {
+    synchronized (myInputLock) {
       if (bytesLength == fileLength) {
         writeContent(file, new ByteSequence(bytes, 0, bytesLength), readOnly);
         setFlag(file, MUST_RELOAD_CONTENT, false);
@@ -742,73 +746,82 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     publisher.after(events);
   }
 
-  @NotNull private static final Object LOCK = new Object();  // TODO: read/write locks instead of synchronized
-
   @Override
   @Nullable
   public VirtualFileSystemEntry findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
     final String rootUrl = fs.getProtocol() + "://" + basePath;
-    synchronized (LOCK) {
+
+    myRootsLock.readLock().lock();
+    try {
+      final VirtualFileSystemEntry root = basePath.isEmpty() ? myFakeRoot : myRoots.get(rootUrl);
+      if (root != null) return root;
+    }
+    finally {
+      myRootsLock.readLock().unlock();
+    }
+
+    myRootsLock.writeLock().lock();
+    try {
       VirtualFileSystemEntry root = basePath.isEmpty() ? myFakeRoot : myRoots.get(rootUrl);
+      if (root != null) return root;
 
-      if (root == null) {
-        try {
-          final int rootId = FSRecords.findRootRecord(rootUrl);
+      final int rootId = FSRecords.findRootRecord(rootUrl);
 
-          if (basePath.isEmpty()) {
-            // fake super-root
-            root = new VirtualDirectoryImpl("", null, fs, rootId) {
-              @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
-              @Override
-              @NotNull
-              public VirtualFile[] getChildren() {
-                return getRoots(getFileSystem());
-              }
-
-              @Override
-              public VirtualFileSystemEntry findChild(@NotNull String name) {
-                if (name.isEmpty()) return null;
-                return findRoot(name, getFileSystem());
-              }
-            };
-          }
-          else if (fs instanceof JarFileSystem) {
-            // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
-            String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
-            final VirtualFile parentLocalFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
-            if (parentLocalFile == null) return null;
-            root = new JarRoot(fs, rootId, parentLocalFile);
-          }
-          else {
-            root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
+      if (basePath.isEmpty()) {
+        // fake super-root
+        root = new VirtualDirectoryImpl("", null, fs, rootId) {
+          @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
+          @Override
+          @NotNull
+          public VirtualFile[] getChildren() {
+            return getRoots(getFileSystem());
           }
 
-          final FileAttributes attributes = fs.getAttributes(root);
-          if (attributes == null) {
-            return null;
+          @Override
+          public VirtualFileSystemEntry findChild(@NotNull String name) {
+            if (name.isEmpty()) return null;
+            return findRoot(name, getFileSystem());
           }
+        };
+      }
+      else if (fs instanceof JarFileSystem) {
+        // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
+        String parentPath = basePath.substring(0, basePath.indexOf(JarFileSystem.JAR_SEPARATOR));
+        final VirtualFile parentLocalFile = LocalFileSystem.getInstance().findFileByPath(parentPath);
+        if (parentLocalFile == null) return null;
+        root = new JarRoot(fs, rootId, parentLocalFile);
+      }
+      else {
+        root = new VirtualDirectoryImpl(basePath, null, fs, rootId);
+      }
 
-          final boolean newRoot = copyRecordFromDelegateFS(rootId, 0, root, fs, attributes);
-          if (!newRoot) {
-            if (attributes.lastModified != FSRecords.getTimestamp(rootId)) {
-              root.markDirtyRecursively();
-            }
-          }
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+      final FileAttributes attributes = fs.getAttributes(root);
+      if (attributes == null) {
+        return null;
+      }
 
-        if (basePath.isEmpty()) {
-          myFakeRoot = root;
-        }
-        else {
-          myRoots.put(rootUrl, root);
-          myRootsById.put(root.getId(), root);
+      final boolean newRoot = copyRecordFromDelegateFS(rootId, 0, root, fs, attributes);
+      if (!newRoot) {
+        if (attributes.lastModified != FSRecords.getTimestamp(rootId)) {
+          root.markDirtyRecursively();
         }
       }
 
+      if (basePath.isEmpty()) {
+        myFakeRoot = root;
+      }
+      else {
+        myRoots.put(rootUrl, root);
+        myRootsById.put(root.getId(), root);
+      }
+
       return root;
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    finally {
+      myRootsLock.writeLock().unlock();
     }
   }
 
@@ -826,12 +839,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   public VirtualFile[] getLocalRoots() {
     final List<VirtualFile> roots = new ArrayList<VirtualFile>();
-    synchronized (LOCK) {
+
+    myRootsLock.readLock().lock();
+    try {
       for (NewVirtualFile root : myRoots.values()) {
         if (root.isInLocalFileSystem()) {
           roots.add(root);
         }
       }
+    }
+    finally {
+      myRootsLock.readLock().unlock();
     }
 
     return VfsUtilCore.toVirtualFileArray(roots);
@@ -876,8 +894,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private NewVirtualFile doFindFile(final int id, boolean cachedOnly) {
     final int parentId = getParent(id);
     if (parentId == 0) {
-      synchronized (LOCK) {
+      myRootsLock.readLock().lock();
+      try {
         return myRootsById.get(id);
+      }
+      finally {
+        myRootsLock.readLock().unlock();
       }
     }
     else {
@@ -892,9 +914,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @NotNull
   public VirtualFile[] getRoots() {
-    synchronized (LOCK) {
+    myRootsLock.readLock().lock();
+    try {
       Collection<VirtualFileSystemEntry> roots = myRoots.values();
       return VfsUtilCore.toVirtualFileArray(roots);
+    }
+    finally {
+      myRootsLock.readLock().unlock();
     }
   }
 
@@ -902,12 +928,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @NotNull
   public VirtualFile[] getRoots(@NotNull final NewVirtualFileSystem fs) {
     final List<VirtualFile> roots = new ArrayList<VirtualFile>();
-    synchronized (LOCK) {
+
+    myRootsLock.readLock().lock();
+    try {
       for (NewVirtualFile root : myRoots.values()) {
         if (root.getFileSystem() == fs) {
           roots.add(root);
         }
       }
+    }
+    finally {
+      myRootsLock.readLock().unlock();
     }
 
     return VfsUtilCore.toVirtualFileArray(roots);
@@ -1008,7 +1039,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         directory.removeChild(file);
       }
       else {
-        synchronized (LOCK) {
+        myRootsLock.writeLock().lock();
+        try {
           myRoots.remove(file.getUrl());
           myRootsById.remove(id);
           try {
@@ -1017,6 +1049,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
           catch (IOException e) {
             throw new RuntimeException(e);
           }
+        }
+        finally {
+          myRootsLock.writeLock().unlock();
         }
       }
 
