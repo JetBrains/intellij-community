@@ -134,7 +134,7 @@ target('default': "Build artifacts") {
 
   projectBuilder.cleanOutput()
   modules.each {
-    Module module = findModule(it)
+    def module = findModule(it)
     if (module != null) {
       projectBuilder.info("Building $module.name")
       projectBuilder.moduleRuntimeClasspath(module, false).each {
