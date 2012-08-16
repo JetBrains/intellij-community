@@ -18,30 +18,45 @@ package com.intellij.psi.codeStyle.arrangement.settings;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
-import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
+import java.util.Set;
 
 /**
- * // TODO den add doc
- * Strategy that defines what subset of standard arrangement settings can be used during defining arrangement settings. 
+ * Strategy that defines what subset of standard arrangement settings can be used during defining arrangement settings
+ * and how they are organised (e.g. single settings can't have more than one visibility modifier for java language). 
  * 
  * @author Denis Zhdanov
  * @since 8/6/12 2:26 PM
  */
 public interface ArrangementStandardSettingsAware {
   
-  // TODO den add doc
-  boolean isNameFilterEnabled(@Nullable ArrangementSettingsNode current);
-  
-  // TODO den add doc
+  /**
+   * Allows to answer if given entry type can be applied for the rule specified by the given settings node.
+   * 
+   * @param type     target entry type to check
+   * @param current  holds information about current rule
+   *                 (<code>null</code> to indicate a query if given entry type is supported in general)
+   * @return         <code>true</code> if given entry type is supported; <code>false</code> otherwise
+   */
   boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementSettingsNode current);
-  
-  // TODO den add doc
+
+  /**
+   * Allows to answer if given modifier can be applied for the rule specified by the given settings node.
+   *
+   * @param modifier target modifier to check
+   * @param current  holds information about current rule
+   *                 (<code>null</code> to indicate a query if given modifier is supported in general)
+   * @return         <code>true</code> if given modifier is supported; <code>false</code> otherwise
+   */
   boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementSettingsNode current);
 
-  // TODO den add doc
-  boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementSettingsNode current);
+  /**
+   * @return    collections of mutual exclusion settings. E.g. not more than one visibility modifier can be used for a single
+   *            java language rule
+   */
+  @NotNull
+  Collection<Set<?>> getMutexes();
 }

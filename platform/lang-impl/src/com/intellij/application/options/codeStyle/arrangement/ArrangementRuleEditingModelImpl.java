@@ -73,14 +73,14 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     myGrouper = grouper;
     myRowMappings = mappings;
     myRow = row;
-    extractConditions(node);
+    refreshConditions();
   }
 
-  private void extractConditions(@NotNull ArrangementSettingsNode node) {
+  private void refreshConditions() {
     myConditions.clear();
     CONDITIONS_BUILDER.conditions = myConditions;
     try {
-      node.invite(CONDITIONS_BUILDER);
+      mySettingsNode.invite(CONDITIONS_BUILDER);
     }
     finally {
       CONDITIONS_BUILDER.conditions = null;
@@ -101,7 +101,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @Override
   public void addAndCondition(@NotNull ArrangementSettingsAtomNode node) {
     doAddAndCondition(node);
-    extractConditions(mySettingsNode);
+    refreshConditions();
     notifyListeners();
   }
   
@@ -137,10 +137,36 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     }
     myRow += depthShift;
   }
-  
+
   @Override
   public void removeAndCondition(@NotNull ArrangementSettingsNode node) {
-    // TODO den implement 
+    doRemoveAndCondition(node);
+    refreshConditions();
+    notifyListeners();
+  }
+  
+  private void doRemoveAndCondition(@NotNull ArrangementSettingsNode node) {
+    if (!(mySettingsNode instanceof ArrangementSettingsCompositeNode)) {
+      return;
+    }
+
+    ArrangementSettingsNode newNode = mySettingsNode.clone();
+    ArrangementSettingsCompositeNode composite = (ArrangementSettingsCompositeNode)newNode;
+    composite.getOperands().remove(node);
+    if (composite.getOperands().size() == 1) {
+      newNode = composite.getOperands().iterator().next();
+    }
+
+    HierarchicalArrangementSettingsNode grouped = myGrouper.group(newNode);
+    int newDepth = ArrangementConfigUtil.getDepth(grouped);
+    int oldDepth = ArrangementConfigUtil.distance(myTopMost, myBottomMost);
+    if (oldDepth == newDepth) {
+      mySettingsNode = newNode;
+      myBottomMost.setUserObject(ArrangementConfigUtil.getLast(grouped).getCurrent());
+      return;
+    }
+    
+    // TODO den implement
   }
 
   @Override

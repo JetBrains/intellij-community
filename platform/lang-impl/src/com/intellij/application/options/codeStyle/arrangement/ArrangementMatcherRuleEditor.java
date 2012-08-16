@@ -141,12 +141,27 @@ public class ArrangementMatcherRuleEditor extends JPanel {
     ArrangementSettingsAtomNode settingsNode = component.getSettingsNode();
     boolean remove = myModel.hasCondition(settingsNode.getValue());
     component.setSelected(!remove);
+    repaintComponent(component);
     if (remove) {
       myModel.removeAndCondition(settingsNode);
+      return;
     }
-    else {
-      myModel.addAndCondition(settingsNode);
+    
+    Collection<Set<?>> mutexes = myFilter.getMutexes();
+    for (Set<?> mutex : mutexes) {
+      if (!mutex.contains(settingsNode.getValue())) {
+        continue;
+      }
+      for (Object key : mutex) {
+        if (myModel.hasCondition(key)) {
+          ArrangementAtomNodeComponent componentToDeselect = myComponents.get(key);
+          componentToDeselect.setSelected(false);
+          myModel.removeAndCondition(componentToDeselect.getSettingsNode());
+          repaintComponent(componentToDeselect);
+        }
+      }
     }
+    myModel.addAndCondition(settingsNode);
   }
 
   @Nullable
@@ -158,5 +173,14 @@ public class ArrangementMatcherRuleEditor extends JPanel {
       }
     }
     return null;
+  }
+  
+  private void repaintComponent(@NotNull ArrangementNodeComponent component) {
+    Rectangle bounds = component.getScreenBounds();
+    if (bounds != null) {
+      Point location = bounds.getLocation();
+      SwingUtilities.convertPointFromScreen(location, this);
+      repaint(location.x, location.y, bounds.width, bounds.height);
+    }
   }
 }

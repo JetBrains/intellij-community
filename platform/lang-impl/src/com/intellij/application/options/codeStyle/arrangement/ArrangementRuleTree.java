@@ -341,10 +341,27 @@ public class ArrangementRuleTree {
 
     @Override
     public void setSelectionPath(TreePath path) {
-      if (!mySkipSelectionChange) {
-        super.setSelectionPath(path);
-        notifySelectionListeners(getActiveModel());
+      if (mySkipSelectionChange) {
+        return;
       }
+
+      DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
+      if (component.getChildCount() > 0) {
+        // Select all nodes which correspond to the first rule under the node denoted by the given path
+        // in case when non-leaf is selected.
+        clearSelection();
+        for (DefaultMutableTreeNode node = component; node != null; node = (DefaultMutableTreeNode)node.getChildAt(0)) {
+          addSelectionPath(new TreePath(node.getPath()));
+          if (node.getChildCount() <= 0) {
+            break;
+          }
+        }
+      }
+      else {
+        super.setSelectionPath(path);
+      }
+      
+      notifySelectionListeners(getActiveModel());
     }
   }
   
