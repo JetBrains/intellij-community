@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
@@ -91,41 +92,18 @@ public class ArrangementRuleEditingModelBuilder {
     }
 
     HierarchicalArrangementSettingsNode grouped = grouper.group(setting);
-    int rowsCreated = map(root, grouped);
-    ArrangementRuleEditingModelImpl model = new ArrangementRuleEditingModelImpl(setting);
-    rowMappings.put(initialInsertRow + rowsCreated - 1, model);
+    Pair<DefaultMutableTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped);
+    DefaultMutableTreeNode topMostNode = (DefaultMutableTreeNode)ArrangementConfigUtil.getLastBefore(pair.first, root);
+    int row = initialInsertRow + pair.second - 1;
+    ArrangementRuleEditingModelImpl model
+      = new ArrangementRuleEditingModelImpl(setting, topMostNode, pair.first, grouper, rowMappings, row);
+    rowMappings.put(row, model);
   }
 
   private static int calculateRowsCount(@NotNull TreeNode node) {
     int result = 1;
     for (int i = node.getChildCount() - 1; i >= 0; i--) {
       result += calculateRowsCount(node.getChildAt(i));
-    }
-    return result;
-  }
-  
-  /**
-   * @param uiParentNode UI tree node which should hold UI nodes created for representing given settings node
-   * @param settingsNode settings node which should be represented at the UI tree denoted by the given UI tree node
-   * @return             number of rows created
-   */
-  private static int map(@NotNull DefaultMutableTreeNode uiParentNode, @NotNull HierarchicalArrangementSettingsNode settingsNode) {
-    DefaultMutableTreeNode uiNode = null;
-    int result = 0;
-    for (int i = uiParentNode.getChildCount() - 1; i >= 0; i--) {
-      DefaultMutableTreeNode child = (DefaultMutableTreeNode)uiParentNode.getChildAt(i);
-      if (settingsNode.getCurrent().equals(child.getUserObject())) {
-        uiNode = child;
-        break;
-      }
-    }
-    if (uiNode == null) {
-      uiNode = new DefaultMutableTreeNode(settingsNode.getCurrent());
-      uiParentNode.add(uiNode);
-      result++;
-    }
-    for (HierarchicalArrangementSettingsNode childSettingsNode : settingsNode.getChildren()) {
-      result += map(uiNode, childSettingsNode);
     }
     return result;
   }

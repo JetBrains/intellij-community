@@ -13,6 +13,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference;
 import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -32,6 +33,14 @@ public abstract class JpsJavaExtensionService {
   public static JpsJavaDependenciesEnumerator dependencies(JpsModule module) {
     return getInstance().enumerateDependencies(module);
   }
+
+  public static JpsJavaDependenciesEnumerator dependencies(JpsProject project) {
+    return getInstance().enumerateDependencies(project);
+  }
+
+  public abstract JpsJavaDependenciesEnumerator enumerateDependencies(Collection<JpsModule> modules);
+
+  protected abstract JpsJavaDependenciesEnumerator enumerateDependencies(JpsProject project);
 
   protected abstract JpsJavaDependenciesEnumerator enumerateDependencies(JpsModule module);
 

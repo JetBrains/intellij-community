@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util;
+package com.intellij.application.options.codeStyle.arrangement;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 /**
- * @author max
+ * @author Denis Zhdanov
+ * @since 8/15/12 9:14 AM
  */
-public interface PairFunction<Arg1, Arg2, ResultType> {
-  @Nullable
-  ResultType fun(Arg1 t, Arg2 v);
+public interface ArrangementRuleSelectionListener {
 
+  void onSelected(@NotNull ArrangementRuleEditingModel settings);
+  
+  void selectionRemoved();
 }

@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement;
+package com.intellij.ui;
 
-import org.jetbrains.annotations.NotNull;
+import java.awt.*;
 
 /**
- * @author Denis Zhdanov
- * @since 8/15/12 9:14 AM
+ * @author Konstantin Bulenkov
  */
-public interface ArrangementRuleEditingListener {
-
-  void startEditing(@NotNull ArrangementRuleEditingModel settings);
-  
-  void stopEditing();
+public interface DarculaColors {
+  Color BLUE = new Color(150, 150, 255);
 }

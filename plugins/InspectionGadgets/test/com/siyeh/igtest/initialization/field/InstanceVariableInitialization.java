@@ -78,3 +78,12 @@ class A {
   private String s = t = "";
   private String t;
 }
+class B {
+  private int i;
+
+  B() throws java.io.FileNotFoundException {
+    try (java.io.FileInputStream in = new java.io.FileInputStream("asdf" + (i = 3) + "asdf")) {
+
+    }
+  }
+}

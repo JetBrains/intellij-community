@@ -21,7 +21,7 @@ import static org.jetbrains.jps.model.serialization.JpsProjectSerializationTest.
 public class JpsArtifactSerializationTest extends JpsSerializationTestCase {
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
-    List<JpsArtifact> artifacts = getService().getSortedArtifacts(myModel.getProject());
+    List<JpsArtifact> artifacts = getService().getSortedArtifacts(myProject);
     assertEquals(2, artifacts.size());
     assertEquals("dir", artifacts.get(0).getName());
     assertEquals("jar", artifacts.get(1).getName());

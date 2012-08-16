@@ -15,8 +15,11 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNodeVisitor;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,10 +27,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
- * // TODO den add doc
+ * {@link ArrangementNodeComponent Component} for showing {@link ArrangementSettingsCompositeNode composite nodes}.
  * <p/>
  * Not thread-safe.
  * 
@@ -43,11 +48,33 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
   @NotNull private final ArrangementSettingsCompositeNode mySettingsNode;
   @Nullable private      Rectangle                        myScreenBounds;
 
-  public ArrangementAndNodeComponent(@NotNull ArrangementSettingsCompositeNode node, @NotNull ArrangementNodeComponentFactory factory) {
+  public ArrangementAndNodeComponent(@NotNull ArrangementSettingsCompositeNode node,
+                                     @NotNull ArrangementNodeComponentFactory factory,
+                                     @NotNull ArrangementNodeDisplayManager manager)
+  {
     mySettingsNode = node;
     setLayout(null);
     int x = 0;
+    final Map<Object, ArrangementSettingsNode> operands = new HashMap<Object, ArrangementSettingsNode>();
+    ArrangementSettingsNodeVisitor visitor = new ArrangementSettingsNodeVisitor() {
+      @Override
+      public void visit(@NotNull ArrangementSettingsAtomNode node) {
+        operands.put(node.getValue(), node);
+      }
+
+      @Override
+      public void visit(@NotNull ArrangementSettingsCompositeNode node) {
+        operands.put(node, node); 
+      }
+    };
     for (ArrangementSettingsNode operand : node.getOperands()) {
+      operand.invite(visitor);
+    }
+    
+    List<Object> ordered = manager.sort(operands.keySet());
+    for (Object key : ordered) {
+      ArrangementSettingsNode operand = operands.get(key);
+      assert operand != null;
       ArrangementNodeComponent component = factory.getComponent(operand);
       myComponents.add(component);
       JComponent uiComponent = component.getUiComponent();
@@ -159,13 +186,16 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
         ));
       }
       int y = bounds.y + bounds.height / 2;
-      // TODO den shift y for the component
       x += bounds.width;
-      // TODO den use right 'y'
       if (i < components.length - 1) {
         g.drawLine(x, y, x + BUBBLE_CONNECTOR_LENGTH, y);
       }
       x += BUBBLE_CONNECTOR_LENGTH;
     }
+  }
+
+  @Override
+  public String toString() {
+    return String.format("(%s)", StringUtil.join(myComponents, " and "));
   }
 }

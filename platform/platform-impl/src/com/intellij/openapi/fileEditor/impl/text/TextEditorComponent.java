@@ -208,7 +208,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
   /**
    * Updates "modified" property and fires event if necessary
    */
-  private void updateModifiedProperty(){
+  void updateModifiedProperty(){
     Boolean oldModified=Boolean.valueOf(myModified);
     myModified = isModifiedImpl();
     myTextEditor.firePropertyChange(FileEditor.PROP_MODIFIED, oldModified, Boolean.valueOf(myModified));

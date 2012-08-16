@@ -16,21 +16,21 @@
 package com.intellij.psi.codeStyle.arrangement.model;
 
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * // TODO den add doc
+ * {@link #getCurrent() Wraps} {@link ArrangementSettingsNode} in order to allow to build {@link #getChild() hierarchy}
+ * from a plain sequence of them
+ * <p/>
+ * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 1:23 PM
  */
 public class HierarchicalArrangementSettingsNode {
 
-  @NotNull private final List<HierarchicalArrangementSettingsNode> myChildren = new ArrayList<HierarchicalArrangementSettingsNode>();
-  
-  @NotNull private final ArrangementSettingsNode myCurrent;
+  @NotNull private final ArrangementSettingsNode             myCurrent;
+  @Nullable private      HierarchicalArrangementSettingsNode myChild;
 
   public HierarchicalArrangementSettingsNode(@NotNull ArrangementSettingsNode current) {
     myCurrent = current;
@@ -41,15 +41,15 @@ public class HierarchicalArrangementSettingsNode {
     return myCurrent;
   }
 
-  @NotNull
-  public List<HierarchicalArrangementSettingsNode> getChildren() {
-    return myChildren;
+  @Nullable
+  public HierarchicalArrangementSettingsNode getChild() {
+    return myChild;
   }
 
-  public void addChild(@NotNull HierarchicalArrangementSettingsNode child) {
-    myChildren.add(child);
+  public void setChild(@Nullable HierarchicalArrangementSettingsNode child) {
+    myChild = child;
   }
-
+  
   @Override
   public String toString() {
     return myCurrent.toString();

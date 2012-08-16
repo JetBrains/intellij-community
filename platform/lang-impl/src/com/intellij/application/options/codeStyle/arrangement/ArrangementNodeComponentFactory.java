@@ -43,7 +43,7 @@ public class ArrangementNodeComponentFactory {
       @Override
       public void visit(@NotNull ArrangementSettingsCompositeNode node) {
         switch (node.getOperator()) {
-          case AND: ref.set(new ArrangementAndNodeComponent(node, ArrangementNodeComponentFactory.this)); break;
+          case AND: ref.set(new ArrangementAndNodeComponent(node, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
           case OR: // TODO den implement
         }
       }

@@ -15,23 +15,10 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.JavaRearranger;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
-import com.intellij.ui.treeStructure.Tree;
-import gnu.trove.TIntObjectHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
 import org.junit.Test;
 
-import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
-
-import java.util.Arrays;
 
 import static com.intellij.psi.codeStyle.arrangement.ArrangementUtil.and;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.FIELD;
@@ -42,23 +29,7 @@ import static org.junit.Assert.*;
  * @author Denis Zhdanov
  * @since 08/15/2012
  */
-public class ArrangementRuleEditingModelBuilderTest {
-
-  @NotNull private ArrangementRuleEditingModelBuilder             myBuilder;
-  @NotNull private JTree                                          myTree;
-  @NotNull private DefaultMutableTreeNode                         myRoot;
-  @NotNull private TIntObjectHashMap<ArrangementRuleEditingModel> myRowMappings;
-  @NotNull private JavaRearranger                                 myGrouper;
-
-  @Before
-  public void setUp() {
-    myBuilder = new ArrangementRuleEditingModelBuilder();
-    myRoot = new DefaultMutableTreeNode();
-    myTree = new Tree(myRoot);
-    myTree.expandPath(new TreePath(myRoot));
-    myRowMappings = new TIntObjectHashMap<ArrangementRuleEditingModel>();
-    myGrouper = new JavaRearranger();
-  }
+public class ArrangementRuleEditingModelBuilderTest extends AbstractArrangementRuleEditingModelTest {
 
   @Test
   public void mapToTheSameLayer() {
@@ -107,28 +78,5 @@ public class ArrangementRuleEditingModelBuilderTest {
     DefaultMutableTreeNode privateUiNode = (DefaultMutableTreeNode)fieldUiNode.getLastChild();
     assertNotNull(privateUiNode);
     assertEquals(atom(PRIVATE), privateUiNode.getUserObject());
-  }
-  
-  private void checkRows(int ... rows) {
-    for (int row : rows) {
-      assertTrue(
-        String.format("Expected to find mappings for rows %s. Actual: %s", Arrays.toString(rows), Arrays.toString(myRowMappings.keys())),
-        myRowMappings.containsKey(row)
-      );
-    }
-  }
-  
-  private static ArrangementSettingsAtomNode atom(@NotNull Object condition) {
-    final ArrangementSettingType type;
-    if (condition instanceof ArrangementEntryType) {
-      type = ArrangementSettingType.TYPE;
-    }
-    else if (condition instanceof ArrangementModifier) {
-      type = ArrangementSettingType.MODIFIER;
-    }
-    else {
-      throw new IllegalArgumentException(String.format("Unexpected condition of class %s: %s", condition.getClass(), condition));
-    }
-    return new ArrangementSettingsAtomNode(type, condition);
   }
 }

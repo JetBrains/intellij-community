@@ -146,6 +146,10 @@ public class CreateTypedResourceFileAction extends CreateElementActionBase {
 
   static boolean doIsAvailable(DataContext context, final String resourceType) {
     final PsiElement element = (PsiElement)context.getData(LangDataKeys.PSI_ELEMENT.getName());
+    if (element == null || AndroidFacet.getInstance(element) == null) {
+      return false;
+    }
+
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
         PsiElement e = element;

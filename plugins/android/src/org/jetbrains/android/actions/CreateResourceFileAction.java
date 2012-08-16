@@ -81,7 +81,7 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   protected boolean isAvailable(DataContext context) {
     if (!super.isAvailable(context)) return false;
     final PsiElement element = (PsiElement)context.getData(DataKeys.PSI_ELEMENT.getName());
-    if (!(element instanceof PsiDirectory)) {
+    if (!(element instanceof PsiDirectory) || AndroidFacet.getInstance(element) == null) {
       return false;
     }
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {

@@ -4,12 +4,13 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.model.*;
-import org.jetbrains.jps.model.impl.*;
+import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
+import org.jetbrains.jps.model.impl.JpsElementCollectionRole;
+import org.jetbrains.jps.model.impl.JpsNamedCompositeElementBase;
 import org.jetbrains.jps.model.library.*;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -111,25 +112,34 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
 
   @Override
   public List<File> getFiles(final JpsOrderRootType rootType) {
-    List<File> files = new ArrayList<File>();
-    for (JpsLibraryRoot root : getRoots(rootType)) {
-      final File file = JpsPathUtil.urlToFile(root.getUrl());
-      switch (root.getInclusionOptions()) {
-        case ROOT_ITSELF:
-          files.add(file);
-          break;
-        case ARCHIVES_UNDER_ROOT:
-          collectArchives(file, false, files);
-          break;
-        case ARCHIVES_UNDER_ROOT_RECURSIVELY:
-          collectArchives(file, true, files);
-          break;
-      }
+    List<String> urls = getRootUrls(rootType);
+    List<File> files = new ArrayList<File>(urls.size());
+    for (String url : urls) {
+      files.add(JpsPathUtil.urlToFile(url));
     }
     return files;
   }
 
-  private static void collectArchives(File file, boolean recursively, Collection<File> result) {
+  @Override
+  public List<String> getRootUrls(JpsOrderRootType rootType) {
+    List<String> urls = new ArrayList<String>();
+    for (JpsLibraryRoot root : getRoots(rootType)) {
+      switch (root.getInclusionOptions()) {
+        case ROOT_ITSELF:
+          urls.add(root.getUrl());
+          break;
+        case ARCHIVES_UNDER_ROOT:
+          collectArchives(JpsPathUtil.urlToFile(root.getUrl()), false, urls);
+          break;
+        case ARCHIVES_UNDER_ROOT_RECURSIVELY:
+          collectArchives(JpsPathUtil.urlToFile(root.getUrl()), true, urls);
+          break;
+      }
+    }
+    return urls;
+  }
+
+  private static void collectArchives(File file, boolean recursively, List<String> result) {
     final File[] children = file.listFiles();
     if (children != null) {
       for (File child : children) {
@@ -140,7 +150,7 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
           }
         }
         else if (extension.equals("jar") || extension.equals("zip")) {
-          result.add(child);
+          result.add(JpsPathUtil.getLibraryRootUrl(child));
         }
       }
     }

@@ -15,16 +15,21 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -112,5 +117,77 @@ public class ArrangementConfigUtil {
       }
     }
     return null;
+  }
+
+  public static int getDepth(@NotNull HierarchicalArrangementSettingsNode node) {
+    HierarchicalArrangementSettingsNode child = node.getChild();
+    return child == null ? 1 : 1 + getDepth(child);
+  }
+
+  @NotNull
+  public static HierarchicalArrangementSettingsNode getLast(@NotNull HierarchicalArrangementSettingsNode node) {
+    HierarchicalArrangementSettingsNode result = node;
+    for (HierarchicalArrangementSettingsNode child = node.getChild(); child != null; child = child.getChild()) {
+      result = child;
+    }
+    return result;
+  }
+
+  @NotNull
+  public static TreeNode getLastBefore(@NotNull TreeNode start, @NotNull TreeNode stop) throws IllegalArgumentException {
+    TreeNode result = start;
+    for (TreeNode n = start.getParent(); n != stop; n = n.getParent()) {
+      if (n == null) {
+        throw new IllegalArgumentException(String.format(
+          "Non-crossing paths detected - start: %s, stop: %s", new TreePath(start), new TreePath(stop)
+        ));
+      }
+      result = n;
+    }
+    return result;
+  }
+  
+  public static int distance(@NotNull TreeNode parent, @NotNull TreeNode child) {
+    if (parent == child) {
+      return 1;
+    }
+    int result = 1;
+    for (TreeNode n = child; n != null && n != parent; n = n.getParent()) {
+      result++;
+    }
+    return result;
+  }
+
+  /**
+   * @param uiParentNode UI tree node which should hold UI nodes created for representing given settings node
+   * @param settingsNode settings node which should be represented at the UI tree denoted by the given UI tree node
+   * @return             pair {@code (bottom-most leaf node created; number of rows created)}
+   */
+  @NotNull
+  public static Pair<DefaultMutableTreeNode, Integer> map(@NotNull DefaultMutableTreeNode uiParentNode,
+                                                          @NotNull HierarchicalArrangementSettingsNode settingsNode)
+  {
+    DefaultMutableTreeNode uiNode = null;
+    int rowsCreated = 0;
+    for (int i = uiParentNode.getChildCount() - 1; i >= 0; i--) {
+      DefaultMutableTreeNode child = (DefaultMutableTreeNode)uiParentNode.getChildAt(i);
+      if (settingsNode.getCurrent().equals(child.getUserObject())) {
+        uiNode = child;
+        break;
+      }
+    }
+    if (uiNode == null) {
+      uiNode = new DefaultMutableTreeNode(settingsNode.getCurrent());
+      uiParentNode.add(uiNode);
+      rowsCreated++;
+    }
+    DefaultMutableTreeNode leaf = uiNode;
+    HierarchicalArrangementSettingsNode childSettingsNode = settingsNode.getChild();
+    if (childSettingsNode != null) {
+      Pair<DefaultMutableTreeNode, Integer> pair = map(uiNode, childSettingsNode);
+      leaf = pair.first;
+      rowsCreated += pair.second;
+    }
+    return Pair.create(leaf, rowsCreated);
   }
 }

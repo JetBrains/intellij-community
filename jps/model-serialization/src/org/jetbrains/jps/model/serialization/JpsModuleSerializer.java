@@ -65,6 +65,7 @@ public class JpsModuleSerializer {
     }
 
     final JpsDependenciesList dependenciesList = module.getDependenciesList();
+    dependenciesList.clear();
     final JpsElementFactory elementFactory = JpsElementFactory.getInstance();
     int moduleLibraryNum = 0;
     for (Element orderEntry : getChildren(rootModelComponent, ORDER_ENTRY_TAG)) {

@@ -159,6 +159,16 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
   }
 
   private void createProject(VirtualFile contentRoot, VirtualFile sourceRoot, AndroidFacet facet) {
+    if (sourceRoot == null) {
+      try {
+        // user've chosen "do not create source root"
+        sourceRoot = contentRoot.createChildDirectory(this, "src");
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+
     if (myProjectType == ProjectType.APPLICATION) {
       createDirectoryStructure(contentRoot, sourceRoot, facet);
     }

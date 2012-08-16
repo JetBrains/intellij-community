@@ -21,6 +21,8 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.tree.TreeNode;
+
 /**
  * Combines and encapsulates information about arrangement matcher rules representation (tree nodes) and
  * underlying {@link ArrangementSettingsNode data model}.
@@ -48,4 +50,10 @@ public interface ArrangementRuleEditingModel {
   void addAndCondition(@NotNull ArrangementSettingsAtomNode node);
 
   void removeAndCondition(@NotNull ArrangementSettingsNode node);
+  
+  void addListener(@NotNull Listener listener);
+  
+  interface Listener {
+    void onChanged(@NotNull TreeNode topMost, @NotNull TreeNode bottomMost);
+  }
 }

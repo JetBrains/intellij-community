@@ -501,7 +501,7 @@ public class ExpectedHighlightingData {
         int byEnds = i2.endOffset - i1.endOffset;
         if (byEnds != 0) return byEnds;
 
-        int byStarts = i2.startOffset - i1.startOffset;
+        int byStarts = i1.startOffset - i2.startOffset;
         if (byStarts != 0) return byStarts;
 
         int bySeverity = i2.severity.compareTo(i1.severity);
