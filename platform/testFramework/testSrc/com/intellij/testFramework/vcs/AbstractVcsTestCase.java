@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.testFramework.vcs;
 
-import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -31,13 +29,11 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -62,31 +58,21 @@ public abstract class AbstractVcsTestCase {
   protected boolean myInitChangeListManager = true;
 
   protected TestClientRunner createClientRunner() {
-    return new TestClientRunner(myTraceClient, myClientBinaryPath);
+    return createClientRunner(null);
+  }
+
+  protected TestClientRunner createClientRunner(@Nullable Map<String, String> clientEnvironment) {
+    return new TestClientRunner(myTraceClient, myClientBinaryPath, clientEnvironment);
   }
 
   public void setVcsMappings(VcsDirectoryMapping... mappings) {
     setVcsMappings(Arrays.asList(mappings));
   }
-    protected void setVcsMappings(List<VcsDirectoryMapping> mappings) {
+
+  protected void setVcsMappings(List<VcsDirectoryMapping> mappings) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     vcsManager.setDirectoryMappings(mappings);
     vcsManager.updateActiveVcss();
-  }
-
-  protected static ProcessOutput runArbitrary(final String command, final String[] args) throws IOException {
-    final List<String> arguments = new ArrayList<String>();
-    arguments.add(command);
-    Collections.addAll(arguments, args);
-    final ProcessBuilder builder = new ProcessBuilder().command(arguments);
-    Process clientProcess = builder.start();
-
-    CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
-    ProcessOutput result = handler.runProcess(60*1000);
-    if (result.isTimeout()) {
-      throw new RuntimeException("Timeout waiting for VCS client to finish execution");
-    }
-    return result;
   }
 
   protected static void refreshVfs() {
@@ -188,7 +174,7 @@ public abstract class AbstractVcsTestCase {
           final VirtualFile[] children = dir.getChildren();
           for (VirtualFile child : children) {
             if (filter != null && filter.process(child)) {
-              child.delete(null);
+              child.delete(AbstractVcsTestCase.this);
             }
           }
         }
@@ -251,14 +237,6 @@ public abstract class AbstractVcsTestCase {
     return line.trim();
   }
 
-  protected VcsDirtyScope getAllDirtyScope() {
-    VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-    dirtyScopeManager.markEverythingDirty();
-    List<VcsDirtyScope> scopes = dirtyScopeManager.retrieveScopes().getScopes();
-    Assert.assertEquals(1, scopes.size());
-    return scopes.get(0);
-  }
-
   protected VcsDirtyScope getDirtyScopeForFile(VirtualFile file) {
     VcsDirtyScopeManager dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     dirtyScopeManager.retrieveScopes();  // ensure that everything besides the file is clean
@@ -284,20 +262,6 @@ public abstract class AbstractVcsTestCase {
         }
       }
     }.execute().throwException();
-  }
-
-  protected void renamePsiInCommand(final PsiNamedElement element, final String newName) {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          element.setName(newName);
-        }
-        catch (IncorrectOperationException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
   }
 
   protected void deleteFileInCommand(final VirtualFile file) {
@@ -335,9 +299,8 @@ public abstract class AbstractVcsTestCase {
           final File file1 = new File(file.getPath());
           FileUtil.writeToFile(file1, newContent.getBytes());
           file.refresh(false, false);
-//          file.setBinaryContent(newContent.getBytes(), newModTs, newTs);
           newModTs = Math.max(System.currentTimeMillis() + 1100, file.getModificationStamp() + 1100);
-          file1.setLastModified(newModTs);
+          assertTrue(file1 + " / " + newModTs, file1.setLastModified(newModTs));
         }
         catch(IOException ex) {
           throw new RuntimeException(ex);

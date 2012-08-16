@@ -32,10 +32,8 @@ import org.tmatesoft.svn.util.ISVNDebugLog;
 import org.tmatesoft.svn.util.SVNDebugLog;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 7/30/12
- * Time: 2:17 PM
+ * @author Irina.Chernushina
+ * @since 30.07.2012
  */
 public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSession {
   private final static ApplicationLevelNumberConnectionsGuardImpl ourGuard;

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -29,25 +30,29 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/2/12
- * Time: 4:51 PM
+ * @author Irina.Chernushina
+ * @since 2.05.2012
  */
 public class TestClientRunner {
-  protected boolean myTraceClient = false;
-  protected File myClientBinaryPath;
+  private final boolean myTraceClient;
+  private final File myClientBinaryPath;
+  private final Map<String, String> myClientEnvironment;
 
-  public TestClientRunner(boolean traceClient, File clientBinaryPath) {
+  public TestClientRunner(boolean traceClient, File clientBinaryPath, @Nullable Map<String, String> clientEnvironment) {
     myTraceClient = traceClient;
     myClientBinaryPath = clientBinaryPath;
+    myClientEnvironment = clientEnvironment;
   }
 
-  public ProcessOutput runClient(String exeName, @Nullable String stdin, @Nullable final File workingDir, String[] commandLine) throws
-                                                                                                                                   IOException {
+  public ProcessOutput runClient(@NotNull String exeName,
+                                 @Nullable String stdin,
+                                 @Nullable final File workingDir,
+                                 String... commandLine) throws IOException {
     final List<String> arguments = new ArrayList<String>();
+
     final File client = new File(myClientBinaryPath, SystemInfo.isWindows ? exeName + ".exe" : exeName);
     if (client.exists()) {
       arguments.add(client.toString());
@@ -57,22 +62,27 @@ public class TestClientRunner {
       arguments.add(exeName);
     }
     Collections.addAll(arguments, commandLine);
+
     if (myTraceClient) {
       ChangeListManagerImpl.log("*** running:\n" + arguments);
       if (StringUtil.isNotEmpty(stdin)) {
         ChangeListManagerImpl.log("*** stdin:\n" + stdin);
       }
     }
+
     final ProcessBuilder builder = new ProcessBuilder().command(arguments);
     if (workingDir != null) {
       builder.directory(workingDir);
     }
-    Process clientProcess = builder.start();
+    if (myClientEnvironment != null) {
+      builder.environment().putAll(myClientEnvironment);
+    }
+    final Process clientProcess = builder.start();
 
     if (stdin != null) {
-      OutputStream outputStream = clientProcess.getOutputStream();
+      final OutputStream outputStream = clientProcess.getOutputStream();
       try {
-        byte[] bytes = stdin.getBytes();
+        final byte[] bytes = stdin.getBytes();
         outputStream.write(bytes);
       }
       finally {
@@ -80,8 +90,8 @@ public class TestClientRunner {
       }
     }
 
-    CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
-    ProcessOutput result = handler.runProcess(60*1000);
+    final CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
+    final ProcessOutput result = handler.runProcess(60*1000);
     if (myTraceClient || result.isTimeout()) {
       ChangeListManagerImpl.log("*** result: " + result.getExitCode());
       final String out = result.getStdout().trim();
@@ -93,6 +103,7 @@ public class TestClientRunner {
         ChangeListManagerImpl.log("*** error:\n" + err);
       }
     }
+
     if (result.isTimeout()) {
       throw new RuntimeException("Timeout waiting for VCS client to finish execution");
     }
