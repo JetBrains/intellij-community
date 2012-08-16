@@ -80,7 +80,6 @@ public class MavenModuleBuilderHelper {
     myInheritVersion = inheritVersion;
     myArchetype = archetype;
     myPropertiesToCreateByArtifact = propertiesToCreateByArtifact;
-    assert (archetype == null) == (propertiesToCreateByArtifact == null);
     myCommandName = commaneName;
   }
 
