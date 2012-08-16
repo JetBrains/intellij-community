@@ -254,6 +254,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
             types.add(type);
           }
         }
+
+        @Override
+        public void visitPyFunction(PyFunction node) {
+          // Ignore nested functions
+        }
       });
       final int n = types.size();
       if (n == 1) {
