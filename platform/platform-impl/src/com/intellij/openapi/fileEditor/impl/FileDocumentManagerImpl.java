@@ -38,9 +38,8 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
+import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.*;
@@ -48,6 +47,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -361,9 +361,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     VirtualFile file = getFile(document);
 
     if (file == null || !file.isValid() || file instanceof LightVirtualFile || !isFileModified(file)) {
-      myUnsavedDocuments.remove(document);
-      fireUnsavedDocumentsDropped();
-      LOG.assertTrue(!myUnsavedDocuments.contains(document));
+      removeFromUnsaved(document);
       return;
     }
 
@@ -371,6 +369,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
       file.refresh(false, false);
       if (!myUnsavedDocuments.contains(document)) return;
       if (!file.isValid()) return;
+    }
+
+    if (!isSaveNeeded(document, file)) {
+      if (document instanceof DocumentEx) {
+        ((DocumentEx)document).setModificationStamp(file.getModificationStamp());
+      }
+      removeFromUnsaved(document);
+      updateModifiedProperty(file);
+      return;
     }
 
     for (FileDocumentSynchronizationVetoer vetoer : Extensions.getExtensions(FileDocumentSynchronizationVetoer.EP_NAME)) {
@@ -401,6 +408,30 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     myUnsavedDocuments.remove(document);
     LOG.assertTrue(!myUnsavedDocuments.contains(document));
     myTrailingSpacesStripper.clearLineModificationFlags(document);
+  }
+
+  private static void updateModifiedProperty(@NotNull VirtualFile file) {
+    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+      for (FileEditor editor : fileEditorManager.getAllEditors(file)) {
+        if (editor instanceof TextEditorImpl) {
+          ((TextEditorImpl)editor).updateModifiedProperty();
+        }
+      }
+    }
+  }
+
+  private void removeFromUnsaved(@NotNull Document document) {
+    myUnsavedDocuments.remove(document);
+    fireUnsavedDocumentsDropped();
+    LOG.assertTrue(!myUnsavedDocuments.contains(document));
+  }
+
+  private static boolean isSaveNeeded(@NotNull Document document, @NotNull VirtualFile file) {
+    if (file.getFileType().isBinary() || document.getTextLength() > 1000 * 1000) {    // don't compare if the file is too big
+      return true;
+    }
+    return !Comparing.equal(document.getCharsSequence(), LoadTextUtil.loadText(file));
   }
 
   private static boolean needsRefresh(final VirtualFile file) {
