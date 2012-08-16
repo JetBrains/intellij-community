@@ -203,7 +203,9 @@ public class MavenArtifactSearchPanel extends JPanel {
     }
 
     public int getChildCount(Object parent) {
-      return getList(parent).size();
+      List list = getList(parent);
+      assert list != null : parent;
+      return list.size();
     }
 
     public List getList(Object parent) {
