@@ -305,7 +305,17 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final int filesCount = files.size();
         boolean compiledOk = true;
         if (filesCount > 0) {
-          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName);
+          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (context.isCompilingTests() ? " (tests)" : ""));
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(" classpath for " + chunkName + ":");
+            for (File file : classpath) {
+              LOG.debug("  " + file.getAbsolutePath());
+            }
+            LOG.debug(" platform classpath for " + chunkName + ":");
+            for (File file : platformCp) {
+              LOG.debug("  " + file.getAbsolutePath());
+            }
+          }
           compiledOk = compileJava(context, chunk, files, classpath, platformCp, tempRootsSourcePath, diagnosticSink, outputSink);
         }
 
@@ -838,8 +848,8 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
     final boolean compilingTests = context.isCompilingTests();
     for (JpsModule module : chunk.getModules()) {
-      final String outputUrl = JpsJavaExtensionService.getInstance().getOutputUrl(module, compilingTests);
-      if (outputUrl == null) {
+      final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(module, compilingTests);
+      if (outputDir == null) {
         continue;
       }
       final Set<File> roots = new LinkedHashSet<File>();
@@ -848,7 +858,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           roots.add(descriptor.root);
         }
       }
-      map.put(JpsPathUtil.urlToFile(outputUrl), roots);
+      map.put(outputDir, roots);
     }
     return map;
   }
