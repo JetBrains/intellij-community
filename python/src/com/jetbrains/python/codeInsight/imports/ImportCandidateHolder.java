@@ -117,11 +117,6 @@ class ImportCandidateHolder implements Comparable {
     return sb.toString();
   }
 
-  @Nullable
-  public String getTailText() {
-    return null;
-  }
-
   public int compareTo(Object o) {
     ImportCandidateHolder rhs = (ImportCandidateHolder) o;
     int lRelevance = getRelevance();
