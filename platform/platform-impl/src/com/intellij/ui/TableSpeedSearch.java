@@ -16,8 +16,7 @@
 
 package com.intellij.ui;
 
-import com.intellij.openapi.util.Pair;
-import com.intellij.util.NullableFunction;
+import com.intellij.util.PairFunction;
 import com.intellij.util.containers.Convertor;
 
 import javax.swing.*;
@@ -25,27 +24,27 @@ import javax.swing.table.TableModel;
 import java.util.ListIterator;
 
 public class TableSpeedSearch extends SpeedSearchBase<JTable> {
-  private static final NullableFunction<Pair<Object, Cell>, String> TO_STRING = new NullableFunction<Pair<Object, Cell>, String>() {
-    public String fun(Pair<Object, Cell> object) {
-      return object.first == null ? "" : object.toString();
+  private static final PairFunction<Object, Cell, String> TO_STRING = new PairFunction<Object, Cell, String>() {
+    public String fun(Object o, Cell cell) {
+      return o == null ? "" : o.toString();
     }
   };
-  private final NullableFunction<Pair<Object, Cell>, String> myToStringConvertor;
+  private final PairFunction<Object, Cell, String> myToStringConvertor;
 
   public TableSpeedSearch(JTable table) {
     this(table, TO_STRING);
   }
 
   public TableSpeedSearch(JTable table, final Convertor<Object, String> toStringConvertor) {
-    this(table, new NullableFunction<Pair<Object, Cell>, String>() {
+    this(table, new PairFunction<Object, Cell, String>() {
       @Override
-      public String fun(Pair<Object, Cell> o) {
-        return toStringConvertor.convert(o.first);
+      public String fun(Object o, Cell c) {
+        return toStringConvertor.convert(o);
       }
     });
   }
 
-  public TableSpeedSearch(JTable table, final NullableFunction<Pair<Object, Cell>, String> toStringConvertor) {
+  public TableSpeedSearch(JTable table, final PairFunction<Object, Cell, String> toStringConvertor) {
     super(table);
     myToStringConvertor = toStringConvertor;
   }
@@ -78,7 +77,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     final int row = myComponent.getSelectedRow();
     final int col = myComponent.getSelectedColumn();
     // selected row is not enough as we want to select specific cell in a large multi-column table
-    return row > -1 && col > -1? row * myComponent.getModel().getColumnCount() + col : -1;
+    return row > -1 && col > -1 ? row * myComponent.getModel().getColumnCount() + col : -1;
   }
 
   protected Object[] getAllElements() {
@@ -91,7 +90,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
     int row = index / model.getColumnCount();
     int col = index % model.getColumnCount();
     final Object value = model.getValueAt(row, col);
-    return myToStringConvertor.fun(Pair.create(value, new Cell(row, col)));
+    return myToStringConvertor.fun(value, new Cell(row, col));
   }
 
   private class MyListIterator implements ListIterator<Object> {
@@ -100,7 +99,7 @@ public class TableSpeedSearch extends SpeedSearchBase<JTable> {
 
     public MyListIterator(int startingIndex) {
       final int total = getElementCount();
-      myCursor = startingIndex < 0? total : startingIndex;
+      myCursor = startingIndex < 0 ? total : startingIndex;
     }
 
     public boolean hasNext() {
