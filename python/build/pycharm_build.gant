@@ -152,7 +152,7 @@ target('default': "Build artifacts") {
           }
         }
       }
-      module.make()
+      projectBuilder.makeModule(module)
     }
     else {
       projectBuilder.warning("$it is not a module")
@@ -163,7 +163,7 @@ target('default': "Build artifacts") {
   usedJars.add("$home/community/lib/jgoodies-looks-2.4.2.jar")
   usedJars.add("$home/community/lib/netty-3.5.1.Final.jar")
 
-  buildSearchableOptions("${findModule("platform-resources").output}/search", ["$home/build/idea.license", "$home/build/pycharm.license"], {
+  buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", ["$home/build/idea.license", "$home/build/pycharm.license"], {
     projectBuilder.moduleRuntimeClasspath(findModule("python-ide"), false).each {
       pathelement(location: it)
     }
