@@ -8,8 +8,8 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.PyStubElementType;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFunctionImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +40,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     PyFunctionImpl function = (PyFunctionImpl)psi;
     String message = function.extractDeprecationMessage();
     final PyStringLiteralExpression docStringExpression = function.getDocStringExpression();
-    return new PyFunctionStubImpl(psi.getName(), PyUtil.strValue(docStringExpression),
+    return new PyFunctionStubImpl(psi.getName(), PyPsiUtils.strValue(docStringExpression),
                                   message == null ? null : StringRef.fromString(message), parentStub, getStubElementType());
   }
 

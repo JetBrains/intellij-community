@@ -103,7 +103,7 @@ public class SetupTaskIntrospector {
     if (taskClass != null) {
       final PyTargetExpression description = taskClass.findClassAttribute("description", true);
       if (description != null) {
-        final String descriptionText = PyUtil.strValue(PyPsiUtils.flattenParens(description.findAssignedValue()));
+        final String descriptionText = PyPsiUtils.strValue(PyPsiUtils.flattenParens(description.findAssignedValue()));
         if (descriptionText != null) {
           task.setDescription(descriptionText);
         }
@@ -112,7 +112,7 @@ public class SetupTaskIntrospector {
       final List<PyExpression> booleanOptions = resolveSequenceValue(taskClass, "boolean_options");
       final List<String> booleanOptionsList = new ArrayList<String>();
       for (PyExpression option : booleanOptions) {
-        final String s = PyUtil.strValue(option);
+        final String s = PyPsiUtils.strValue(option);
         if (s != null) {
           booleanOptionsList.add(s);
         }
@@ -167,8 +167,8 @@ public class SetupTaskIntrospector {
     if (dict instanceof PyDictLiteralExpression) {
       final PyKeyValueExpression[] elements = ((PyDictLiteralExpression)dict).getElements();
       for (PyKeyValueExpression element : elements) {
-        String key = PyUtil.strValue(PyPsiUtils.flattenParens(element.getKey()));
-        String value = PyUtil.strValue(PyPsiUtils.flattenParens(element.getValue()));
+        String key = PyPsiUtils.strValue(PyPsiUtils.flattenParens(element.getKey()));
+        String value = PyPsiUtils.strValue(PyPsiUtils.flattenParens(element.getValue()));
         if (key != null && value != null) {
           result.put(key, value);
         }
@@ -183,8 +183,8 @@ public class SetupTaskIntrospector {
     if (tuple instanceof PyTupleExpression) {
       final PyExpression[] elements = ((PyTupleExpression)tuple).getElements();
       if (elements.length == 3) {
-        String name = PyUtil.strValue(elements[0]);
-        final String description = PyUtil.strValue(elements[2]);
+        String name = PyPsiUtils.strValue(elements[0]);
+        final String description = PyPsiUtils.strValue(elements[2]);
         if (name != null && description != null) {
           if (negativeOptMap.containsKey(name)) {
             return null;

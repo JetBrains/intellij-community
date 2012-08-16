@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.Comparing;
@@ -54,6 +55,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     List<Filter> filters = Lists.newArrayList();
     filters.add(new PythonTracebackFilter(getProject(), getWorkingDirectory()));
+    filters.add(new UrlFilter());
 
     return new PythonScriptCommandLineState(this, env, filters);
   }

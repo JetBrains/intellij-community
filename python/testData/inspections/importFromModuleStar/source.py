@@ -1,4 +1,4 @@
 from target import *
 
-<warning descr="Unresolved reference 'xyzzy'">x<caret>yzzy</warning>
+<error descr="Unresolved reference 'xyzzy'">x<caret>yzzy</error>
 shazam()

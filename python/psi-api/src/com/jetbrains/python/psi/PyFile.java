@@ -2,6 +2,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -26,8 +27,20 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
 
   LanguageLevel getLanguageLevel();
 
+  /**
+   * Return the list of all 'from ... import' statements in the top-level scope of the file.
+   *
+   * @return the list of 'from ... import' statements.
+   */
+  @NotNull
   List<PyFromImportStatement> getFromImports();
 
+  /**
+   * Returns the list of import elements in all 'import xxx' statements in the top-level scope of the file.
+   *
+   * @return the list of import targets.
+   */
+  @NotNull
   List<PyImportElement> getImportTargets();
 
   /**
@@ -44,7 +57,7 @@ public interface PyFile extends PyElement, PsiFile, PyDocStringOwner, ScopeOwner
   boolean hasImportFromFuture(FutureFeature feature);
 
   /**
-   * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning..
+   * If the function raises a DeprecationWarning or a PendingDeprecationWarning, returns the explanation text provided for the warning.
    *
    * @return the deprecation message or null if the function is not deprecated.
    */

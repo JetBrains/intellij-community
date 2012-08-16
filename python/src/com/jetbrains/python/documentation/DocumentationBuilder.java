@@ -20,6 +20,7 @@ import com.jetbrains.python.console.PyConsoleUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RootVisitor;
@@ -356,7 +357,7 @@ class DocumentationBuilder {
   private void addParameterDoc(PyNamedParameter followed) {
     PyFunction function = PsiTreeUtil.getParentOfType(followed, PyFunction.class);
     if (function != null) {
-      final String docString = PyUtil.strValue(function.getDocStringExpression());
+      final String docString = PyPsiUtils.strValue(function.getDocStringExpression());
       StructuredDocString structuredDocString = StructuredDocString.parse(docString);
       if (structuredDocString != null) {
         final String name = followed.getName();
@@ -388,7 +389,7 @@ class DocumentationBuilder {
       .addItem(" of class ").addWith(PythonDocumentationProvider.LinkMyClass, $().addWith(TagCode, $(cls.getName()))).addItem(BR)
     ;
 
-    final String docString = PyUtil.strValue(PyUtil.getAttributeDocString((PyTargetExpression)myElement));
+    final String docString = PyPsiUtils.strValue(PyUtil.getAttributeDocString((PyTargetExpression)myElement));
     if (docString != null) {
       addFormattedDocString(myElement, docString, myBody, myEpilog);
     }

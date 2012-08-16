@@ -28,7 +28,6 @@ class ImportCandidateHolder implements Comparable {
   private final PyImportElement myImportElement;
   private final PsiFileSystemItem myFile;
   private final PyQualifiedName myPath;
-  private final String myAsName;
 
   /**
    * Creates new instance.
@@ -36,18 +35,16 @@ class ImportCandidateHolder implements Comparable {
    * @param file the file which is the source of the importable
    * @param importElement an existing import element that can be a source for the importable.
    * @param path import path for the file, as a qualified name (a.b.c)
-   * @param asName name to use in a new import statement for 'as' clause, if an import is added.
    */
   public ImportCandidateHolder(
     @NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
-    @Nullable PyImportElement importElement, @Nullable PyQualifiedName path, @Nullable String asName
+    @Nullable PyImportElement importElement, @Nullable PyQualifiedName path
   ) {
     myFile = file;
     myImportable = importable;
     myImportElement = importElement;
     myPath = path;
-    myAsName = asName;
-    assert importElement != null || path != null; // one of these must be present 
+    assert importElement != null || path != null; // one of these must be present
   }
 
   public PsiElement getImportable() {
@@ -64,10 +61,6 @@ class ImportCandidateHolder implements Comparable {
 
   public PyQualifiedName getPath() {
     return myPath;
-  }
-
-  public String getAsName() {
-    return myAsName;
   }
 
   /**
@@ -122,14 +115,6 @@ class ImportCandidateHolder implements Comparable {
       sb.append(" from ").append(((PyFromImportStatement)parent).getImportSource().getReferencedName()); // no NPE, we won't add a sourceless import stmt
     }
     return sb.toString();
-  }
-
-  @Nullable
-  public String getTailText() {
-    if (myAsName != null) {
-      return "import as " + myAsName;
-    }
-    return null;
   }
 
   public int compareTo(Object o) {

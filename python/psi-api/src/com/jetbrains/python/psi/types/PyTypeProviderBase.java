@@ -96,6 +96,12 @@ public class PyTypeProviderBase implements PyTypeProvider {
     return null;
   }
 
+  @Nullable
+  @Override
+  public PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context) {
+    return null;
+  }
+
   protected void registerSelfReturnType(String classQualifiedName, Collection<String> methods) {
     registerReturnType(classQualifiedName, methods, mySelfTypeCallback);
   }

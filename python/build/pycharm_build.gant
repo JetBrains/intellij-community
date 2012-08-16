@@ -90,10 +90,10 @@ target('default': "Build artifacts") {
 
   loadProject()
 
-  project.stage("Cleaning up sandbox folder")
+  projectBuilder.stage("Cleaning up sandbox folder")
 
-  project.targetFolder = "${paths.sandbox}/classes"
-  project.dryRun = dryRun
+  projectBuilder.targetFolder = "${paths.sandbox}/classes"
+  projectBuilder.dryRun = dryRun
 
   if (!dryRun) {
     forceDelete(paths.sandbox)
@@ -131,12 +131,12 @@ target('default': "Build artifacts") {
 
   def forbiddenJars = ["client-api", "ideaLicenseDecoder", "eawtstub.jar", "ui.jar", "exe4jlib.jar", "cglib", "jcip-annotations", "/y.jar", "ysvg.jar"]
 
-  project.clean()
+  projectBuilder.cleanOutput()
   modules.each {
-    Module module = project[it] as Module
+    Module module = findModule(it)
     if (module != null) {
-      project.info("Building $module.name")
-      module.runtimeClasspath().each {
+      projectBuilder.info("Building $module.name")
+      projectBuilder.moduleRuntimeClasspath(module, false).each {
         File file = new File(it)
         if (file.exists()) {
           String path = file.canonicalPath.replace('\\', '/')
@@ -152,18 +152,19 @@ target('default': "Build artifacts") {
           }
         }
       }
-      module.make()
+      projectBuilder.makeModule(module)
     }
     else {
-      project.warning("$it is not a module")
+      projectBuilder.warning("$it is not a module")
     }
   }
 
   usedJars.add("$home/community/lib/jgoodies-common-1.2.1.jar")
   usedJars.add("$home/community/lib/jgoodies-looks-2.4.2.jar")
+  usedJars.add("$home/community/lib/netty-3.5.1.Final.jar")
 
-  buildSearchableOptions("${project["platform-resources"].output}/search", ["$home/build/idea.license", "$home/build/pycharm.license"], {
-    project["python-ide"].runtimeClasspath().each {
+  buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", ["$home/build/idea.license", "$home/build/pycharm.license"], {
+    projectBuilder.moduleRuntimeClasspath(findModule("python-ide"), false).each {
       pathelement(location: it)
     }
   }, "-Didea.platform.prefix=Python -Didea.no.jre.check=true")

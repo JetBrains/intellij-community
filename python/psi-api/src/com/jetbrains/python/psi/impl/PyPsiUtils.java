@@ -55,7 +55,7 @@ public class PyPsiUtils {
   }
 
   @Nullable
-  protected static ASTNode getNextComma(ASTNode after) {
+  public static ASTNode getNextComma(ASTNode after) {
     ASTNode node = after;
     PyElementType comma = PyTokenTypes.COMMA;
     do {
@@ -366,6 +366,11 @@ public class PyPsiUtils {
       expr = ((PyParenthesizedExpression)expr).getContainedExpression();
     }
     return expr;
+  }
+
+  @Nullable
+  public static String strValue(@Nullable PyExpression expression) {
+    return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression)expression).getStringValue() : null;
   }
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {

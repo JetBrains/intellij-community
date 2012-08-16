@@ -1,7 +1,9 @@
 package com.jetbrains.python.codeInsight.stdlib;
 
+import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyCanonicalPathProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -13,7 +15,7 @@ import java.util.List;
 public class PyStdlibCanonicalPathProvider implements PyCanonicalPathProvider {
   @Nullable
   @Override
-  public PyQualifiedName getCanonicalPath(PyQualifiedName qName) {
+  public PyQualifiedName getCanonicalPath(@NotNull PyQualifiedName qName, PsiElement foothold) {
     return restoreStdlibCanonicalPath(qName);
   }
 

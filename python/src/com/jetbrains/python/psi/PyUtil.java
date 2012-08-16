@@ -39,6 +39,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.documentation.EpydocUtil;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
@@ -832,11 +833,6 @@ public class PyUtil {
     return null;
   }
 
-  @Nullable
-  public static String strValue(@Nullable PyExpression expression) {
-    return expression instanceof PyStringLiteralExpression ? ((PyStringLiteralExpression)expression).getStringValue() : null;
-  }
-
   @NotNull
   public static Map<String, PyExpression> dictValue(@NotNull PyDictLiteralExpression dict) {
     Map<String, PyExpression> result = Maps.newLinkedHashMap();
@@ -881,7 +877,7 @@ public class PyUtil {
 
   @Nullable
   public static String getKeywordArgumentString(PyCallExpression expr, String keyword) {
-    return strValue(expr.getKeywordArgument(keyword));
+    return PyPsiUtils.strValue(expr.getKeywordArgument(keyword));
   }
 
   public static boolean isExceptionClass(PyClass pyClass) {

@@ -172,26 +172,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         }
       }
       if (parent instanceof PyWithItem) {
-        final PyWithItem item = (PyWithItem)parent;
-        final PyExpression expression = item.getExpression();
-        if (expression != null) {
-          final PyType exprType = expression.getType(context);
-          if (exprType instanceof PyClassType) {
-            final PyClass cls = ((PyClassType)exprType).getPyClass();
-            if (cls != null) {
-              final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
-              if (enter != null) {
-                final PyType enterType = enter.getReturnType(context, null);
-                if (enterType != null) {
-                  return enterType;
-                }
-                // Guess the return type of __enter__
-                return PyUnionType.createWeakType(exprType);
-              }
-            }
-          }
-        }
-        return null;
+        return getWithItemVariableType(context, (PyWithItem)parent);
       }
       PyType iterType = getTypeFromIteration(context);
       if (iterType != null) {
@@ -209,8 +190,35 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Nullable
+  private static PyType getWithItemVariableType(TypeEvalContext context, PyWithItem item) {
+    final PyExpression expression = item.getExpression();
+    if (expression != null) {
+      final PyType exprType = expression.getType(context);
+      if (exprType instanceof PyClassType) {
+        final PyClass cls = ((PyClassType)exprType).getPyClass();
+        final PyFunction enter = cls.findMethodByName(PyNames.ENTER, true);
+        if (enter != null) {
+          final PyType enterType = enter.getReturnType(context, null);
+          if (enterType != null) {
+            return enterType;
+          }
+          for (PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
+            PyType typeFromProvider = provider.getContextManagerVariableType(cls, expression, context);
+            if (typeFromProvider != null) {
+              return typeFromProvider;
+            }
+          }
+          // Guess the return type of __enter__
+          return PyUnionType.createWeakType(exprType);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public static PyType getTypeFromDocString(PyTargetExpressionImpl targetExpression) {
-    final String docString = PyUtil.strValue(PyUtil.getAttributeDocString(targetExpression));
+    final String docString = PyPsiUtils.strValue(PyUtil.getAttributeDocString(targetExpression));
     if (docString != null) {
       StructuredDocString structuredDocString = StructuredDocString.parse(docString);
       if (structuredDocString != null) {

@@ -9,11 +9,9 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScopeBuilder;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyNamedParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,13 +101,10 @@ public class PySignatureCacheManagerImpl extends PySignatureCacheManager {
   }
 
   @Nullable
-  public static String findParameterType(@NotNull PyNamedParameter parameter) {
-    PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
-    if (function != null) {
-      PySignature signature = findSignature(function);
-      if (signature != null) {
-        return signature.getArgType(parameter.getName());
-      }
+  public static String findParameterType(@NotNull PyFunction function, @NotNull String name) {
+    final PySignature signature = findSignature(function);
+    if (signature != null) {
+      return signature.getArgType(name);
     }
     return null;
   }

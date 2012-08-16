@@ -7,6 +7,7 @@ import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
@@ -48,7 +49,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     return new PyClassStubImpl(psi.getName(), parentStub,
                                superClasses.toArray(new PyQualifiedName[superClasses.size()]),
                                ((PyClassImpl) psi).getOwnSlots(),
-                               PyUtil.strValue(docStringExpression),
+                               PyPsiUtils.strValue(docStringExpression),
                                getStubElementType());
   }
 

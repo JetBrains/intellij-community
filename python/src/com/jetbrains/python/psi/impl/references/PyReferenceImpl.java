@@ -18,7 +18,6 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.cython.CythonLanguageDialect;
 import com.jetbrains.cython.CythonResolveUtil;
 import com.jetbrains.cython.psi.*;
-import com.jetbrains.django.util.PythonDataflowUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
@@ -533,7 +532,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     }
 
     // in a call, include function's arg names
-    PythonDataflowUtil.collectFunctionArgNames(element, ret);
+    KeywordArgumentCompletionUtil.collectFunctionArgNames(element, ret);
 
     // include builtin names
     final PyFile builtinsFile = PyBuiltinCache.getInstance(element).getBuiltinsFile();

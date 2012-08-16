@@ -100,7 +100,8 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
       if (libDir != null) {
         // superset of test dirs found in Python 2.5 to 3.1
         List<VirtualFile> testDirs = findTestDirs(libDir, "test", "bsddb/test", "ctypes/test", "distutils/tests", "email/test",
-                                                  "importlib/test", "json/tests", "lib2to3/tests", "sqlite3/test", "tkinter/test");
+                                                  "importlib/test", "json/tests", "lib2to3/tests", "sqlite3/test", "tkinter/test",
+                                                  "idlelib/testcode.py");
         if (!testDirs.isEmpty()) {
           GlobalSearchScope scope = buildUnionScope(project, testDirs);
           return GlobalSearchScope.notScope(scope);

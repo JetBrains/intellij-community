@@ -286,3 +286,11 @@ class C:
 # PY-7126
 def test_unused_empty_function(<weak_warning descr="Parameter 'x' value is not used">x</weak_warning>):
     pass
+
+
+# PY-7072
+def test_unused_variable_in_cycle(x, c):
+    while x > 0:
+        x -= 1 #pass
+        if c:
+            break

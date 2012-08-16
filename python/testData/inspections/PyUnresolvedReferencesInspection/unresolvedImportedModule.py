@@ -1,2 +1,2 @@
-import <warning descr="No module named deliverance">deliverance</warning>.proxycommand
+import <error descr="No module named deliverance">deliverance</error>.proxycommand
 deliverance.proxycommand.main()

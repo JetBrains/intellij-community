@@ -28,4 +28,7 @@ public interface PyTypeProvider {
 
   @Nullable
   PyType getIterationType(PyClass iterable);
+
+  @Nullable
+  PyType getContextManagerVariableType(PyClass contextManager, PyExpression withExpression, TypeEvalContext context);
 }

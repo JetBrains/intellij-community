@@ -258,6 +258,16 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo");
   }
 
+  public void testRelativePackageStarImport() {   // PY-7204
+    myTestFileName = "b/c/__init__.py";
+    try {
+      assertResolvesTo(PyFunction.class, "foo", "/src/b/__init__.py");
+    }
+    finally {
+      myTestFileName = null;
+    }
+  }
+
   public void testCythonFromModuleCImport() {
     assertResolvesTo(CythonFunction.class, "foo");
   }

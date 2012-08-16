@@ -76,6 +76,20 @@ public class PyOperatorReference extends PyReferenceImpl {
     }
   }
 
+  @Nullable
+  public PyExpression getReceiver() {
+    if (myElement instanceof PyBinaryExpression) {
+      return ((PyBinaryExpression)myElement).getLeftExpression();
+    }
+    else if (myElement instanceof PySubscriptionExpression) {
+      return ((PySubscriptionExpression)myElement).getOperand();
+    }
+    else if (myElement instanceof PyPrefixExpression) {
+      return ((PyPrefixExpression)myElement).getOperand();
+    }
+    return null;
+  }
+
   private static String leftToRightOperatorName(String name) {
     return name.replaceFirst("__([a-z]+)__", "__r$1__");
   }

@@ -130,10 +130,7 @@ public class ImportFromExistingAction implements QuestionAction {
       String qualifiedName = item.getPath().toString();
       if (myUseQualifiedImport) {
         AddImportHelper.addImportStatement(myTarget.getContainingFile(), qualifiedName, null, priority);
-        String qual_name;
-        if (item.getAsName() != null) qual_name = item.getAsName();
-        else qual_name = qualifiedName;
-        myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qual_name + "." + myName));
+        myTarget.replace(gen.createExpressionFromText(LanguageLevel.forElement(myTarget), qualifiedName + "." + myName));
       }
       else {
         AddImportHelper.addImportFrom(myTarget.getContainingFile(), myTarget, qualifiedName, myName, null, priority);
@@ -213,11 +210,6 @@ public class ImportFromExistingAction implements QuestionAction {
       setIcon(item.getImportable().getIcon(0));
       String item_name = item.getPresentableText(myName);
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-
-      String tailText = item.getTailText();
-      if (tailText != null) {
-        append(" " + tailText, SimpleTextAttributes.GRAY_ATTRIBUTES);
-      }
 
       setFont(FONT);
       if (isSelected) {
