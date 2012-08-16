@@ -314,7 +314,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     @NonNls StringBuilder buffer = new StringBuilder();
     buffer.append(getVersionName());
     buffer.append(" ");
-    if (getMajorVersion() != null && !isEAP()) {
+    if (getMajorVersion() != null && !isEAP() && !isBetaOrRC()) {
       buffer.append(getMajorVersion());
 
       if (getMinorVersion() != null && getMinorVersion().length() > 0){
@@ -333,6 +333,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   }
 
   private static ApplicationInfoImpl ourShadowInstance;
+
+  public boolean isBetaOrRC() {
+    String minor = getMinorVersion();
+    if (minor != null) {
+      if (minor.contains("RC") || minor.contains("Beta") || minor.contains("beta")) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   public static ApplicationInfoEx getShadowInstance() {
     if (ourShadowInstance == null) {

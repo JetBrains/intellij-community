@@ -290,7 +290,8 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
     vmOptions += " -agentlib:yjpagent=disablej2ee,disablealloc,sessionname=${args.system_selector}"
   }
 
-  String version = isEap() ? "EAP $args.buildNumber" : "${p("component.version.major")}.${p("component.version.minor")}"
+  String minor = p("component.version.minor")
+  String version = isEap() && !minor.contains("RC") && !minor.contains("Beta") ? "EAP $args.buildNumber" : "${p("component.version.major")}.${minor}"
 
   String properties = readIdeaProperties(args)
 
