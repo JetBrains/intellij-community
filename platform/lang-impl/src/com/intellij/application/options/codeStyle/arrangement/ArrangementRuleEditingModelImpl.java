@@ -110,13 +110,12 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     HierarchicalArrangementSettingsNode grouped = myGrouper.group(newNode);
     int newDepth = ArrangementConfigUtil.getDepth(grouped);
     int oldDepth = ArrangementConfigUtil.distance(myTopMost, myBottomMost);
+    mySettingsNode = newNode;
     if (newDepth == oldDepth) {
-      mySettingsNode = newNode;
       myBottomMost.setUserObject(ArrangementConfigUtil.getLast(grouped).getCurrent());
       return;
     }
     
-    mySettingsNode = newNode;
     DefaultMutableTreeNode parent = (DefaultMutableTreeNode)myTopMost.getParent();
     parent.remove(myTopMost);
     Pair<DefaultMutableTreeNode,Integer> pair = ArrangementConfigUtil.map(parent, grouped);
@@ -157,16 +156,36 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
       newNode = composite.getOperands().iterator().next();
     }
 
+    mySettingsNode = newNode;
+    
     HierarchicalArrangementSettingsNode grouped = myGrouper.group(newNode);
     int newDepth = ArrangementConfigUtil.getDepth(grouped);
     int oldDepth = ArrangementConfigUtil.distance(myTopMost, myBottomMost);
     if (oldDepth == newDepth) {
-      mySettingsNode = newNode;
       myBottomMost.setUserObject(ArrangementConfigUtil.getLast(grouped).getCurrent());
       return;
     }
+
+    DefaultMutableTreeNode parent = (DefaultMutableTreeNode)myTopMost.getParent();
+    parent.remove(myTopMost);
+    Pair<DefaultMutableTreeNode,Integer> pair = ArrangementConfigUtil.map(parent, grouped);
+    myTopMost = (DefaultMutableTreeNode)ArrangementConfigUtil.getLastBefore(pair.first, parent);
+    myBottomMost = pair.first;
     
-    // TODO den implement
+    int[] rows = myRowMappings.keys();
+    Arrays.sort(rows);
+    int depthShift = oldDepth - newDepth;
+    for (int row : rows) {
+      if (row >= myRow) {
+        myRowMappings.put(row - depthShift, myRowMappings.get(row));
+        myRowMappings.remove(row);
+      }
+      else {
+        break;
+      }
+    }
+    
+    myRow -= depthShift;
   }
 
   @Override
@@ -178,6 +197,11 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     for (Listener listener : myListeners) {
       listener.onChanged(myTopMost, myBottomMost);
     }
+  }
+
+  @Override
+  public String toString() {
+    return "model for " + mySettingsNode;
   }
 
   private static class MyConditionsBuilder implements ArrangementSettingsNodeVisitor {

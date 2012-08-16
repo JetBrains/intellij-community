@@ -116,6 +116,44 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
 
   @Test
   public void removeLastRowCondition() {
-    // TODO den implement
+    configure(and(atom(FIELD), atom(PUBLIC)));
+    ArrangementRuleEditingModel model = myRowMappings.get(2);
+    assertNotNull(model);
+    assertEquals(1, myRowMappings.size());
+
+    model.removeAndCondition(atom(PUBLIC));
+
+    assertEquals(1, myRowMappings.size());
+    assertSame(model, myRowMappings.get(1));
+    assertEquals(atom(FIELD), model.getSettingsNode());
+
+    DefaultMutableTreeNode fieldNode = (DefaultMutableTreeNode)myRoot.getFirstChild();
+    assertNotNull(fieldNode);
+    assertEquals(atom(FIELD), fieldNode.getUserObject());
+    
+    assertEquals(0, fieldNode.getChildCount());
+  }
+
+  @Test
+  public void removeLastRowConditionFromMultiChildrenParent() {
+    // TODO den uncomment
+    //configure(and(atom(FIELD), atom(PUBLIC)));
+    //configure(and(atom(FIELD), atom(STATIC)));
+    //
+    //ArrangementRuleEditingModel modelToChange = myRowMappings.get(2);
+    //assertNotNull(modelToChange);
+    //
+    //ArrangementRuleEditingModel siblingModel = myRowMappings.get(3);
+    //assertNotNull(siblingModel);
+    //assertEquals(2, myRowMappings.size());
+    //
+    //modelToChange.removeAndCondition(atom(PUBLIC));
+    //
+    //assertEquals(2, myRowMappings.size());
+    //assertSame(modelToChange, myRowMappings.get(1));
+    //assertEquals(atom(FIELD), modelToChange.getSettingsNode());
+    //
+    //assertSame(siblingModel, myRowMappings.get(3));
+    //assertEquals(and(atom(FIELD), atom(STATIC)), siblingModel);
   }
 }
