@@ -6,9 +6,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 
 import java.util.List;
 
-public interface PyStringLiteralExpression extends PyLiteralExpression, PsiLanguageInjectionHost {
-  String getStringValue();
-
+public interface PyStringLiteralExpression extends PyLiteralExpression, StringLiteralExpression, PsiLanguageInjectionHost {
   List<TextRange> getStringValueTextRanges();
 
   List<ASTNode> getStringNodes();
