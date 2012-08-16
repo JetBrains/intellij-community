@@ -739,7 +739,7 @@ public class ChooseRunConfigurationPopup {
     private ConfigurationActionsStep(@NotNull final Project project,
                                      ChooseRunConfigurationPopup action,
                                      @NotNull final RunnerAndConfigurationSettings settings, final boolean dynamic) {
-      super("Actions", buildActions(project, action, settings, dynamic));
+      super(null, buildActions(project, action, settings, dynamic));
     }
 
     @Override
