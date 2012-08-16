@@ -441,6 +441,34 @@ public class PyTypeTest extends PyTestCase {
            "expr = f()\n");
   }
 
+  // PY-7020
+  public void testListComprehensionType() {
+    final PyExpression expr = parseExpr("expr = [str(x) for x in range(10)]\n");
+    final TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    final PyType type = expr.getType(context);
+    assertNotNull(type);
+    assertInstanceOf(type, PyCollectionType.class);
+    assertEquals(type.getName(), "list");
+    final PyCollectionType collectionType = (PyCollectionType)type;
+    final PyType elementType = collectionType.getElementType(context);
+    assertNotNull(elementType);
+    assertEquals(elementType.getName(), "str");
+  }
+
+  // PY-7021
+  public void testGeneratorComprehensionType() {
+    final PyExpression expr = parseExpr("expr = (str(x) for x in range(10))\n");
+    final TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    final PyType type = expr.getType(context);
+    assertNotNull(type);
+    assertInstanceOf(type, PyCollectionType.class);
+    assertEquals(type.getName(), "__generator");
+    final PyCollectionType collectionType = (PyCollectionType)type;
+    final PyType elementType = collectionType.getElementType(context);
+    assertNotNull(elementType);
+    assertEquals(elementType.getName(), "str");
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
