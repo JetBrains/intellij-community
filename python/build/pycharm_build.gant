@@ -44,7 +44,8 @@ setProperty("pluginFilter", [
             "diagram-api", "uml",
             "python-uml", "localization",
             "python-localization",
-            "rest", "python-rest"
+            "rest", "python-rest",
+            "pycharm-flask"
 ])
 
 private List<String> pycharmPlatformApiModules() {
@@ -219,6 +220,7 @@ private layoutPlugins() {
     layouts.layoutPlugin("python-localization")
     layouts.layoutPlugin("rest")
     layouts.layoutPlugin("python-rest")
+    layouts.layoutPlugin("pycharm-flask")
   }
 
   layouts.layoutPlugins()
