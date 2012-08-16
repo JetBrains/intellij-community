@@ -266,6 +266,8 @@ public class MavenProjectsManagerWatcher {
     Runnable onCompletion = new Runnable() {
       @Override
       public void run() {
+        if (myProject.isDisposed()) return;
+
         if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
           myManager.scheduleImportAndResolve();
         }

@@ -262,6 +262,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private void listenForSettingsChanges() {
     getImportingSettings().addListener(new MavenImportingSettings.Listener() {
       public void autoImportChanged() {
+        if (myProject.isDisposed()) return;
+
         if (getImportingSettings().isImportAutomatically()) {
           scheduleImportAndResolve();
         }
