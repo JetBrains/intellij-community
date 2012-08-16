@@ -251,6 +251,7 @@ public abstract class InplaceRefactoring {
 
     if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder);
     for (PsiReference ref : refs) {
+      if (nameIdentifier != null && ref.getElement() == nameIdentifier.getParent()) continue;
       addVariable(ref, selectedElement, builder, offset);
     }
     for (Pair<PsiElement, TextRange> usage : stringUsages) {

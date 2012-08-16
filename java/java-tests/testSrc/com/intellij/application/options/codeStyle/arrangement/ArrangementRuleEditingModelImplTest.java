@@ -91,4 +91,31 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     assertNotNull(modifiersNode);
     assertEquals(and(atom(PUBLIC), atom(STATIC)), modifiersNode.getUserObject());
   }
+
+  @Test
+  public void removeAndKeepAllLevels() {
+    configure(and(atom(FIELD), atom(PUBLIC), atom(STATIC)));
+    ArrangementRuleEditingModel model = myRowMappings.get(2);
+    assertNotNull(model);
+    assertEquals(1, myRowMappings.size());
+    
+    model.removeAndCondition(atom(PUBLIC));
+
+    assertEquals(1, myRowMappings.size());
+    assertSame(model, myRowMappings.get(2));
+    assertEquals(and(atom(FIELD), atom(STATIC)), model.getSettingsNode());
+
+    DefaultMutableTreeNode fieldNode = (DefaultMutableTreeNode)myRoot.getFirstChild();
+    assertNotNull(fieldNode);
+    assertEquals(atom(FIELD), fieldNode.getUserObject());
+
+    DefaultMutableTreeNode modifiersNode = fieldNode.getFirstLeaf();
+    assertNotNull(modifiersNode);
+    assertEquals(atom(STATIC), modifiersNode.getUserObject());
+  }
+
+  @Test
+  public void removeLastRowCondition() {
+    // TODO den implement
+  }
 }

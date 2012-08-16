@@ -48,7 +48,7 @@ public class SvnBusyOnAddTest extends TestCase {
     File pluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
     if (!pluginRoot.isDirectory()) {
       // try standalone mode
-      Class aClass = SvnTestCase.class;
+      Class aClass = Svn17TestCase.class;
       String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
       pluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
     }

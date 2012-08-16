@@ -22,7 +22,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.TestClientRunner;
 import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,27 +33,26 @@ import org.tmatesoft.svn.core.wc.SVNTreeConflictDescription;
 
 import java.io.File;
 
+import static com.intellij.util.TimeoutUtil.sleep;
+
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/2/12
- * Time: 2:01 PM
+ * @author Irina.Chernushina
+ * @since 2.05.2012
  */
-public class SvnTreeConflictDataTest extends SvnTestCase {
+public class SvnTreeConflictDataTest extends Svn17TestCase {
   private VirtualFile myTheirs;
   private SvnClientRunnerImpl mySvnClientRunner;
 
   @Override
   @Before
   public void setUp() throws Exception {
-    myWcrootName = "wcRootConflictData";
+    myWcRootName = "wcRootConflictData";
     myTraceClient = true;
     super.setUp();
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     myTheirs = myTempDirFixture.findOrCreateDir("theirs");
-    final TestClientRunner testClientRunner = new TestClientRunner(true, myClientBinaryPath);
-    mySvnClientRunner = new SvnClientRunnerImpl(testClientRunner);
+    mySvnClientRunner = new SvnClientRunnerImpl(myRunner);
     mySvnClientRunner.checkout(myRepoUrl, myTheirs);
   }
 
@@ -809,7 +807,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
-    final SubTree subTree = new SubTree(myWorkingCopyDir);
+    new SubTree(myWorkingCopyDir);
     mySvnClientRunner.checkin(myWorkingCopyDir);
     sleep(10);
     mySvnClientRunner.update(myTheirs);
@@ -818,12 +816,5 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
 
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-  }
-
-  private static void sleep(final int millis) {
-    try {
-      Thread.sleep(millis);
-    }
-    catch (InterruptedException ignore) { }
   }
 }

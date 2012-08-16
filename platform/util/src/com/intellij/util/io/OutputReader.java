@@ -43,7 +43,6 @@ public abstract class OutputReader extends BaseOutputReader {
         }
 
         if (isStopped) {
-          myReader.close();
           break;
         }
 
@@ -58,6 +57,14 @@ public abstract class OutputReader extends BaseOutputReader {
     catch (Exception e) {
       LOG.error(e);
     }
+    finally {
+      try {
+        myReader.close();
+      }
+      catch (IOException e) {
+        LOG.warn("Can't close reader", e);
+      }
+    }
   }
 
   public void readFully() throws InterruptedException {
@@ -69,6 +76,5 @@ public abstract class OutputReader extends BaseOutputReader {
       }
     }
   }
-
 
 }

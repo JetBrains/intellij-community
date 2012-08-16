@@ -37,7 +37,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
+public class SvnChangesCorrectlyRefreshedTest extends Svn16TestCase {
   private ChangeListManager clManager;
   //private static final Logger LOG = Logger.getInstance("#SvnChangesCorrectlyRefreshedTest");
 

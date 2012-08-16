@@ -60,7 +60,6 @@ public abstract class BaseOutputReader {
         boolean read = readAvailable();
 
         if (isStopped) {
-          myReader.close();
           break;
         }
 
@@ -75,16 +74,30 @@ public abstract class BaseOutputReader {
     catch (Exception e) {
       LOG.error(e);
     }
+    finally {
+      try {
+        myReader.close();
+      }
+      catch (IOException e) {
+        LOG.error("Can't close stream", e);
+      }
+    }
   }
 
-  protected synchronized boolean readAvailable() throws IOException {
+  /**
+   * Reads as much data as possible without blocking.
+   * @return true if non-zero amount of data has been read
+   * @exception  IOException  If an I/O error occurs
+   */
+  protected final boolean readAvailable() throws IOException {
     char[] buffer = myBuffer;
     StringBuilder token = myTextBuffer;
     token.setLength(0);
 
     boolean read = false;
-    int n;
-    while ((n = myReader.read(buffer)) > 0) {
+    while (myReader.ready()) {
+      int n = myReader.read(buffer);
+      if (n <= 0) break;
       read = true;
 
       for (int i = 0; i < n; i++) {

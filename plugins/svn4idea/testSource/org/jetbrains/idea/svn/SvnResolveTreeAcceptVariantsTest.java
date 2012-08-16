@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.TestClientRunner;
 import com.intellij.util.Processor;
 import junit.framework.Assert;
 import org.jetbrains.idea.svn.treeConflict.SvnTreeConflictResolver;
@@ -43,12 +42,10 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 5/3/12
- * Time: 6:14 PM
+ * @author Irina.Chernushina
+ * @since 3.05.2012
  */
-public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
+public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
   private VirtualFile myTheirs;
   private SvnClientRunnerImpl mySvnClientRunner;
   private SvnVcs myVcs;
@@ -62,8 +59,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
 
     myTheirs = myTempDirFixture.findOrCreateDir("theirs");
-    final TestClientRunner testClientRunner = new TestClientRunner(true, myClientBinaryPath);
-    mySvnClientRunner = new SvnClientRunnerImpl(testClientRunner);
+    mySvnClientRunner = new SvnClientRunnerImpl(myRunner);
     clearWc(true);
 
     myVcs = SvnVcs.getInstance(myProject);

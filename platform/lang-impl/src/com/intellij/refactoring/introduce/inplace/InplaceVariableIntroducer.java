@@ -21,6 +21,11 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LanguageTokenSeparatorGenerators;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
@@ -68,7 +73,20 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
     super(editor, elementToRename, project);
     myTitle = title;
     myOccurrences = occurrences;
-    myExpr = expr;
+    if (expr != null) {
+      final ASTNode node = expr.getNode();
+      final ASTNode astNode = LanguageTokenSeparatorGenerators.INSTANCE.forLanguage(expr.getLanguage())
+        .generateWhitespaceBetweenTokens(node.getTreePrev(), node);
+      if (astNode != null) {
+        new WriteCommandAction<Object>(project, "Normalize declaration") {
+          @Override
+          protected void run(Result<Object> result) throws Throwable {
+            node.getTreeParent().addChild(astNode, node);
+          }
+        }.execute();
+      }
+      myExpr = expr;
+    }
     myExprMarker = myExpr != null && myExpr.isPhysical() ? createMarker(myExpr) : null;
     initOccurrencesMarkers();
   }

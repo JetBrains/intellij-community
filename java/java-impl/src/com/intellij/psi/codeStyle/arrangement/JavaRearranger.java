@@ -24,11 +24,13 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
-import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*;
 
 /**
  * @author Denis Zhdanov
@@ -39,29 +41,28 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 {
 
   // Type
-  @NotNull private static final Set<ArrangementEntryType> SUPPORTED_TYPES = EnumSet.of(
-    ArrangementEntryType.CLASS, ArrangementEntryType.FIELD, ArrangementEntryType.METHOD
-  );
+  @NotNull private static final Set<ArrangementEntryType> SUPPORTED_TYPES = EnumSet.of(CLASS, FIELD, METHOD);
 
   // Modifier
-  @NotNull private static final Set<ArrangementModifier>              SUPPORTED_MODIFIERS = EnumSet.of(
-    ArrangementModifier.PUBLIC, ArrangementModifier.PROTECTED, ArrangementModifier.PACKAGE_PRIVATE, ArrangementModifier.PRIVATE,
-    ArrangementModifier.STATIC, ArrangementModifier.FINAL, ArrangementModifier.VOLATILE, ArrangementModifier.TRANSIENT,
-    ArrangementModifier.SYNCHRONIZED
+  @NotNull private static final Set<ArrangementModifier> SUPPORTED_MODIFIERS = EnumSet.of(
+    PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE, STATIC, FINAL, VOLATILE, TRANSIENT, SYNCHRONIZED
   );
-  @NotNull private static final Object                                NO_TYPE             = new Object();
-  @NotNull private static final Map<Object, Set<ArrangementModifier>> MODIFIERS_BY_TYPE   = new HashMap<Object, Set<ArrangementModifier>>();
+
+  @NotNull private static final Object                                NO_TYPE           = new Object();
+  @NotNull private static final Map<Object, Set<ArrangementModifier>> MODIFIERS_BY_TYPE = new HashMap<Object, Set<ArrangementModifier>>();
+  @NotNull private static final Collection<Set<?>>                    MUTEXES           = new ArrayList<Set<?>>();
 
   static {
-    EnumSet<ArrangementModifier> commonModifiers = EnumSet.of(
-      ArrangementModifier.PUBLIC, ArrangementModifier.PROTECTED, ArrangementModifier.PACKAGE_PRIVATE, ArrangementModifier.PRIVATE,
-      ArrangementModifier.STATIC, ArrangementModifier.FINAL
-    );
+    EnumSet<ArrangementModifier> visibilityModifiers = EnumSet.of(PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE);
+    MUTEXES.add(visibilityModifiers);
+    MUTEXES.add(SUPPORTED_TYPES);
+
+    Set<ArrangementModifier> commonModifiers = concat(visibilityModifiers, STATIC, FINAL);
+    
     MODIFIERS_BY_TYPE.put(NO_TYPE, commonModifiers);
-    MODIFIERS_BY_TYPE.put(ArrangementEntryType.CLASS, commonModifiers);
-    MODIFIERS_BY_TYPE.put(ArrangementEntryType.METHOD, concat(commonModifiers, ArrangementModifier.SYNCHRONIZED));
-    MODIFIERS_BY_TYPE.put(ArrangementEntryType.FIELD,
-                          concat(commonModifiers, ArrangementModifier.TRANSIENT, ArrangementModifier.VOLATILE));
+    MODIFIERS_BY_TYPE.put(CLASS, commonModifiers);
+    MODIFIERS_BY_TYPE.put(METHOD, concat(commonModifiers, SYNCHRONIZED));
+    MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
   }
 
   @NotNull
@@ -81,12 +82,6 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     List<JavaElementArrangementEntry> result = new ArrayList<JavaElementArrangementEntry>();
     root.accept(new JavaArrangementVisitor(result, document, ranges));
     return result;
-  }
-
-  @Override
-  public boolean isNameFilterEnabled(@Nullable ArrangementSettingsNode current) {
-    // TODO den implement 
-    return true;
   }
 
   @Override
@@ -116,7 +111,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
             return;
           }
           n.invite(this);
-        } 
+        }
       }
     });
     Object key = typeRef.get() == null ? NO_TYPE : typeRef.get();
@@ -124,10 +119,10 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     return modifiers != null && modifiers.contains(modifier);
   }
 
+  @NotNull
   @Override
-  public boolean isEnabled(@NotNull ArrangementEntrySortType type, @Nullable ArrangementSettingsNode current) {
-    // TODO den implement 
-    return true;
+  public Collection<Set<?>> getMutexes() {
+    return MUTEXES;
   }
 
   @NotNull
@@ -137,7 +132,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     node.invite(new ArrangementSettingsNodeVisitor() {
       @Override
       public void visit(@NotNull ArrangementSettingsAtomNode node) {
-        result.set(new HierarchicalArrangementSettingsNode(node)); 
+        result.set(new HierarchicalArrangementSettingsNode(node));
       }
 
       @Override
