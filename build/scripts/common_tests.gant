@@ -45,7 +45,7 @@ target('default': 'The default target') {
     }
 
     classpath {
-      this["community-main"].testRuntimeClasspath().each {
+      projectBuilder.moduleRuntimeClasspath(findModule("community-main"), true).each {
         pathelement(location: it)
       }
       pathelement(location: "${jdkHome}/lib/tools.jar")

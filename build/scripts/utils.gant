@@ -212,7 +212,7 @@ binding.setVariable("commonJvmArgs", {
   return [
    "-ea",
    "-Didea.home.path=$home",
-   "-Xbootclasspath/p:${boot.output}",
+   "-Xbootclasspath/p:${projectBuilder.moduleOutput(findModule("boot"))}",
    "-XX:+HeapDumpOnOutOfMemoryError",
    "-Didea.system.path=${p("teamcity.build.tempDir")}/system",
    "-Didea.config.path=${p("teamcity.build.tempDir")}/config",

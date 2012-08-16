@@ -64,7 +64,7 @@ target(compile: "Compile project") {
 }
 
 private String appInfoFile() {
-  return "${this["community-resources"].output}/idea/IdeaApplicationInfo.xml"
+  return "${projectBuilder.moduleOutput(findModule("community-resources"))}/idea/IdeaApplicationInfo.xml"
 }
 
 target('default': 'The default target') {
