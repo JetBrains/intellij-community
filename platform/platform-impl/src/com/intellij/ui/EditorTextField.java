@@ -253,7 +253,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
         CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
           @Override
           public void run() {
-            myDocument.replaceString(0, myDocument.getTextLength(), text);
+            myDocument.replaceString(0, myDocument.getTextLength(), text == null ? "" : text);
             if (myEditor != null) {
               final CaretModel caretModel = myEditor.getCaretModel();
               if (caretModel.getOffset() >= myDocument.getTextLength()) {
