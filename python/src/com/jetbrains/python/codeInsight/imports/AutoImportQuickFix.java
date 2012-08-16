@@ -65,7 +65,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
    * @param importElement an existing import element that can be a source for the importable.
    */
   public void addImport(@NotNull PsiElement importable, @NotNull PsiFile file, @Nullable PyImportElement importElement) {
-    myImports.add(new ImportCandidateHolder(importable, file, importElement, null, null));
+    myImports.add(new ImportCandidateHolder(importable, file, importElement, null));
   }
 
   /**
@@ -73,10 +73,9 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
    * @param importable an element that could be imported either from import element or from file.
    * @param file the file which is the source of the importable
    * @param path import path for the file, as a qualified name (a.b.c)
-   * @param asName name to use to import the path as: "import path as asName"
    */
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable PyQualifiedName path, @Nullable String asName) {
-    myImports.add(new ImportCandidateHolder(importable, file, null, path, asName));
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable PyQualifiedName path) {
+    myImports.add(new ImportCandidateHolder(importable, file, null, path));
   }
 
   @NotNull

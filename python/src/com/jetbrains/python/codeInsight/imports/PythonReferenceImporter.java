@@ -177,7 +177,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
             }
             if (importPath != null && !seenFileNames.contains(importPath.toString())) {
               // a new, valid hit
-              fix.addImport(symbol, srcfile, importPath, proposeAsName(node.getContainingFile(), refText, importPath));
+              fix.addImport(symbol, srcfile, importPath);
               seenFileNames.add(importPath.toString()); // just in case, again
             }
           }
@@ -261,47 +261,6 @@ public class PythonReferenceImporter implements ReferenceImporter {
     }
     // only top-level target expressions are included in VariableNameIndex
     return symbol instanceof PyTargetExpression;
-  }
-
-  private static final String[] AS_PREFIXES = {"other_", "one_more_", "different_", "pseudo_", "true_"};
-
-  // a no-frills recursive accumulating scan
-  private static void collectIdentifiers(PsiElement node, Collection<String> dst) {
-    PsiElement seeker = node.getFirstChild();
-    while (seeker != null) {
-      if (seeker instanceof NameDefiner) {
-        for (PyElement named : ((NameDefiner)seeker).iterateNames()) {
-          if (named != null) dst.add(named.getName());
-        }
-      }
-      else collectIdentifiers(seeker, dst);
-      seeker = seeker.getNextSibling();
-    }
-  }
-
-  // find an unique name that does not clash with anything in the file, using ref_name and import_path as hints
-  private static String proposeAsName(PsiFile file, String ref_name, PyQualifiedName import_path) {
-    // a somehow brute-force approach: collect all identifiers wholesale and avoid clashes with any of them
-    Set<String> ident_set = new HashSet<String>();
-    collectIdentifiers(file, ident_set);
-    // try the default, 'normal' name first; if it does not clash, propose no sustitute!
-    if (! ident_set.contains(ref_name)) return null;
-    // try flattened import path
-    String path_name = import_path.join("_");
-    if (! ident_set.contains(path_name)) return path_name;
-    // ...with prefixes: a highly improbable situation already
-    for (String prefix : AS_PREFIXES) {
-      String variant = prefix + path_name;
-      if (! ident_set.contains(variant)) return variant;
-    }
-    // if nothing helped, just bluntly add a number to the end. guaranteed to finish in ident_set.size()+1 iterations.
-    int cnt = 1;
-    while (cnt < Integer.MAX_VALUE) {
-      String variant = path_name + Integer.toString(cnt);
-      if (! ident_set.contains(variant)) return variant;
-      cnt += 1;
-    }
-    return "SHOOSHPANCHICK"; // no, this cannot happen in a life-size file, just keeps inspections happy
   }
 
   public static boolean isImportable(PsiElement ref_element) {

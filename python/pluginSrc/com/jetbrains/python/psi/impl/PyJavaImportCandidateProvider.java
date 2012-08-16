@@ -26,7 +26,7 @@ public class PyJavaImportCandidateProvider implements PyImportCandidateProvider 
     final PsiClass[] classesByName = cache.getClassesByName(name, scope);
     for (PsiClass psiClass : classesByName) {
       final PyQualifiedName packageQName = PyQualifiedName.fromDottedString(psiClass.getQualifiedName()).removeLastComponent();
-      quickFix.addImport(psiClass, psiClass.getContainingFile(), packageQName, null);
+      quickFix.addImport(psiClass, psiClass.getContainingFile(), packageQName);
     }
   }
 }
