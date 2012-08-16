@@ -46,14 +46,18 @@ import java.util.List;
  */
 public class ArrangementRuleTree {
 
-  @NotNull private final List<ArrangementRuleEditingListener> myListeners      = new ArrayList<ArrangementRuleEditingListener>();
-  @NotNull private final TreeSelectionModel                   mySelectionModel = new MySelectionModel();
+  @NotNull private static final JLabel EMPTY_RENDERER = new JLabel("");
+
+  @NotNull private final List<ArrangementRuleSelectionListener> myListeners           = new ArrayList<ArrangementRuleSelectionListener>();
+  @NotNull private final TreeSelectionModel                     mySelectionModel      = new MySelectionModel();
+  @NotNull private final MyModelChangeListener                  myModelChangeListener = new MyModelChangeListener();
 
   @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>    myRenderers =
     new TIntObjectHashMap<ArrangementNodeComponent>();
   @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModel> myModels    =
     new TIntObjectHashMap<ArrangementRuleEditingModel>();
 
+  @NotNull private final DefaultTreeModel                myTreeModel;
   @NotNull private final Tree                            myTree;
   @NotNull private final ArrangementNodeComponentFactory myFactory;
 
@@ -62,8 +66,8 @@ public class ArrangementRuleTree {
   public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
     myFactory = new ArrangementNodeComponentFactory(displayManager);
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-    DefaultTreeModel treeModel = new DefaultTreeModel(root);
-    myTree = new Tree(treeModel) {
+    myTreeModel = new DefaultTreeModel(root);
+    myTree = new Tree(myTreeModel) {
       @Override
       protected void setExpandedState(TreePath path, boolean state) {
         // Don't allow node collapse
@@ -85,7 +89,7 @@ public class ArrangementRuleTree {
         try {
           super.processMouseEvent(e);
           if (mySkipSelectionChange) {
-            notifyEditingListeners(null);
+            notifySelectionListeners(null);
           }
         }
         finally {
@@ -172,9 +176,16 @@ public class ArrangementRuleTree {
     for (ArrangementSettingsNode setting : settings) {
       builder.build(setting, myTree, root, grouper, myModels);
     }
+    myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModel>() {
+      @Override
+      public boolean execute(ArrangementRuleEditingModel model) {
+        model.addListener(myModelChangeListener); 
+        return true;
+      }
+    });
   }
 
-  public void addEditingListener(@NotNull ArrangementRuleEditingListener listener) {
+  public void addEditingListener(@NotNull ArrangementRuleSelectionListener listener) {
     myListeners.add(listener);
   }
   
@@ -271,17 +282,37 @@ public class ArrangementRuleTree {
     }
   }
 
-  private void notifyEditingListeners(@Nullable ArrangementRuleEditingModel model) {
-    for (ArrangementRuleEditingListener listener : myListeners) {
+  private void notifySelectionListeners(@Nullable ArrangementRuleEditingModel model) {
+    for (ArrangementRuleSelectionListener listener : myListeners) {
       if (model == null) {
-        listener.stopEditing();
+        listener.selectionRemoved();
       }
       else {
-        listener.startEditing(model);
+        listener.onSelected(model);
       }
     }
   }
 
+  private void onModelChange(@NotNull TreeNode topMost, @NotNull TreeNode bottomMost) {
+    mySkipSelectionChange = true;
+    try {
+      for (DefaultMutableTreeNode node = (DefaultMutableTreeNode)bottomMost; node != null; node = (DefaultMutableTreeNode)node.getParent()) {
+        TreePath path = new TreePath(node.getPath());
+        int row = myTree.getRowForPath(path);
+        myRenderers.remove(row);
+        myTreeModel.nodeChanged(node);
+        mySelectionModel.addSelectionPath(path);
+        getNodeComponentAt(row, (ArrangementSettingsNode)node.getUserObject()).setSelected(true);
+        if (node == topMost) {
+          break;
+        }
+      }
+    }
+    finally {
+      mySkipSelectionChange = false;
+    }
+  }
+  
   private class MyCellRenderer implements TreeCellRenderer {
     @Override
     public Component getTreeCellRendererComponent(JTree tree,
@@ -290,8 +321,10 @@ public class ArrangementRuleTree {
                                                   boolean expanded,
                                                   boolean leaf,
                                                   int row,
-                                                  boolean hasFocus)
-    {
+                                                  boolean hasFocus) {
+      if (row < 0) {
+        return EMPTY_RENDERER;
+      }
       ArrangementSettingsNode node = (ArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
       return getNodeComponentAt(row, node).getUiComponent();
     }
@@ -300,11 +333,25 @@ public class ArrangementRuleTree {
   private class MySelectionModel extends DefaultTreeSelectionModel {
 
     @Override
+    public void addSelectionPath(TreePath path) {
+      if (!mySkipSelectionChange) {
+        super.addSelectionPath(path);
+      }
+    }
+
+    @Override
     public void setSelectionPath(TreePath path) {
       if (!mySkipSelectionChange) {
         super.setSelectionPath(path);
-        notifyEditingListeners(getActiveModel());
+        notifySelectionListeners(getActiveModel());
       }
+    }
+  }
+  
+  private class MyModelChangeListener implements ArrangementRuleEditingModel.Listener {
+    @Override
+    public void onChanged(@NotNull TreeNode topMost, @NotNull TreeNode bottomMost) {
+      onModelChange(topMost, bottomMost); 
     }
   }
 }

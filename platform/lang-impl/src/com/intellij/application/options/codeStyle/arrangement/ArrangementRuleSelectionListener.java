@@ -21,9 +21,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/15/12 9:14 AM
  */
-public interface ArrangementRuleEditingListener {
+public interface ArrangementRuleSelectionListener {
 
-  void startEditing(@NotNull ArrangementRuleEditingModel settings);
+  void onSelected(@NotNull ArrangementRuleEditingModel settings);
   
-  void stopEditing();
+  void selectionRemoved();
 }

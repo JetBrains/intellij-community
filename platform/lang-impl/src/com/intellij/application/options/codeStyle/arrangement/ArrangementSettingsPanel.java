@@ -79,9 +79,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         }
       }
     });
-    ruleTree.addEditingListener(new ArrangementRuleEditingListener() {
+    ruleTree.addEditingListener(new ArrangementRuleSelectionListener() {
       @Override
-      public void startEditing(@NotNull ArrangementRuleEditingModel model) {
+      public void onSelected(@NotNull ArrangementRuleEditingModel model) {
         ruleEditor.updateState(model);
         resetEditor.set(Boolean.FALSE);
         try {
@@ -93,7 +93,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       }
 
       @Override
-      public void stopEditing() {
+      public void selectionRemoved() {
         editorPane.setCollapsed(true); 
       }
     });

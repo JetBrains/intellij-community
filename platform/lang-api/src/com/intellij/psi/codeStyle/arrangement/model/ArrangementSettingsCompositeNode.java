@@ -96,7 +96,7 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
 
   @Override
   public String toString() {
-    return StringUtil.join(myOperands, myOperator == Operator.AND ? " and " : " or ");
+    return String.format("(%s)", StringUtil.join(myOperands, myOperator == Operator.AND ? " and " : " or "));
   }
 
   public enum Operator {
