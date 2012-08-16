@@ -523,6 +523,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     return ret;
   }
 
+  @NotNull
   public List<PyFromImportStatement> getFromImports() {
     return PyPsiUtils.collectStubChildren(this, getStub(), PyElementTypes.FROM_IMPORT_STATEMENT, PyFromImportStatement.class);
   }

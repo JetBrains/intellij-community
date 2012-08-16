@@ -17,9 +17,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
@@ -27,8 +25,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.resolve.CollectProcessor;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -43,7 +39,9 @@ import java.util.*;
 public class PythonReferenceImporter implements ReferenceImporter {
   @Override
   public boolean autoImportReferenceAtCursor(@NotNull final Editor editor, @NotNull final PsiFile file) {
-    if (!(file instanceof PyFile)) return false;
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
     int caretOffset = editor.getCaretModel().getOffset();
     Document document = editor.getDocument();
     int lineNumber = document.getLineNumber(caretOffset);
@@ -71,7 +69,9 @@ public class PythonReferenceImporter implements ReferenceImporter {
 
   @Override
   public boolean autoImportReferenceAt(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    if (!(file instanceof PyFile)) return false;
+    if (!(file instanceof PyFile)) {
+      return false;
+    }
     PsiReference element = file.findReferenceAt(offset);
     if (element instanceof PyReferenceExpression && isImportable((PsiElement)element)) {
       final PyReferenceExpression refExpr = (PyReferenceExpression)element;
@@ -88,8 +88,6 @@ public class PythonReferenceImporter implements ReferenceImporter {
     }
     return false;
   }
-
-  private static final TokenSet IS_IMPORT_STATEMENT = TokenSet.create(PyElementTypes.IMPORT_STATEMENT);
 
   @Nullable
   public static AutoImportQuickFix proposeImportFix(final PyElement node, PsiReference reference) {
@@ -109,37 +107,15 @@ public class PythonReferenceImporter implements ReferenceImporter {
     }
 
     AutoImportQuickFix fix = new AutoImportQuickFix(node, reference, !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT);
-    Set<String> seen_file_names = new HashSet<String>(); // true import names
-    // maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
-    // walk up collecting all such statements and analyzing
-    CollectProcessor import_prc = new CollectProcessor(IS_IMPORT_STATEMENT);
-    PyResolveUtil.treeCrawlUp(import_prc, node);
-    List<PsiElement> result = import_prc.getResult();
-    PsiFile existing_import_file = null; // if there's a matching existing import, this it the file it imports
-    if (!result.isEmpty()) {
-      for (PsiElement stmt : import_prc.getResult()) {
-        for (PyImportElement ielt : ((PyImportStatement)stmt).getImportElements()) {
-          final PyReferenceExpression src = ielt.getImportReferenceExpression();
-          if (src != null) {
-            PsiElement dst = src.getReference().resolve();
-            if (dst instanceof PyFileImpl) {
-              PyFileImpl dstFile = (PyFileImpl)dst;
-              String name = ielt.getImportReferenceExpression().getReferencedName(); // ref is ok or matching would fail
-              seen_file_names.add(name);
-              PsiElement res = dstFile.findExportedName(refText);
-              if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && dstFile.equals(res.getContainingFile())) {
-                existing_import_file = dstFile;
-                fix.addImport(res, dstFile, ielt);
-              }
-            }
-          }
-        }
-      }
+    Set<String> seenFileNames = new HashSet<String>(); // true import names
+
+    PsiFile existingImportFile = addCandidatesFromExistingImports(node, refText, fix, seenFileNames);
+    if (fix.getCandidatesCount() == 0) {
+      // maybe some unimported file has it, too
+      ProgressManager.checkCanceled(); // before expensive index searches
+      addSymbolImportCandidates(node, refText, fix, seenFileNames, existingImportFile);
     }
 
-    // maybe some unimported file has it, too
-    ProgressManager.checkCanceled(); // before expensive index searches
-    addSymbolImportCandidates(node, refText, fix, seen_file_names, existing_import_file);
     for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
       provider.addImportCandidates(reference, refText, fix);
     }
@@ -148,6 +124,59 @@ public class PythonReferenceImporter implements ReferenceImporter {
       return fix;
     }
     return null;
+  }
+
+  /**
+   * maybe the name is importable via some existing 'import foo' statement, and only needs a qualifier.
+   * collect all such statements and analyze.
+   * NOTE: It only makes sense to look at imports in file scope - there is no guarantee that an import in a local scope will
+   * be visible from the scope where the auto-import was invoked
+   *
+   * @param node
+   * @param refText
+   * @param fix
+   * @param seenFileNames
+   * @return
+   */
+  @Nullable
+  private static PsiFile addCandidatesFromExistingImports(PyElement node, String refText, AutoImportQuickFix fix,
+                                                          Set<String> seenFileNames) {
+    PsiFile existingImportFile = null; // if there's a matching existing import, this it the file it imports
+    PsiFile file = node.getContainingFile();
+    if (file instanceof PyFile) {
+      PyFile pyFile = (PyFile)file;
+      for (PyImportElement importElement : pyFile.getImportTargets()) {
+        existingImportFile = addImportViaElement(refText, fix, seenFileNames, existingImportFile, importElement, importElement.resolve());
+      }
+      for (PyFromImportStatement fromImportStatement : pyFile.getFromImports()) {
+        if (!(fromImportStatement.isStarImport()) && fromImportStatement.getImportElements().length > 0) {
+          PsiElement source = fromImportStatement.resolveImportSource();
+          existingImportFile = addImportViaElement(refText, fix, seenFileNames, existingImportFile, fromImportStatement.getImportElements()[0], source);
+        }
+      }
+    }
+    return existingImportFile;
+  }
+
+  private static PsiFile addImportViaElement(String refText,
+                                             AutoImportQuickFix fix,
+                                             Set<String> seenFileNames,
+                                             PsiFile existingImportFile,
+                                             PyImportElement importElement,
+                                             PsiElement source) {
+    PsiElement sourceFile = PyUtil.turnDirIntoInit(source);
+    if (sourceFile instanceof PyFileImpl) {
+      seenFileNames.add(importElement.getImportReferenceExpression().getReferencedName());
+      PyFileImpl importSourceFile = (PyFileImpl)sourceFile;
+      PsiElement res = importSourceFile.findExportedName(refText);
+      // allow importing from this source if it either declares the name itself or represents a higher-level package that reexports the name
+      if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) &&
+          PsiTreeUtil.isAncestor(source, res.getContainingFile(), false)) {
+        existingImportFile = importSourceFile;
+        fix.addImport(res, importSourceFile, importElement);
+      }
+    }
+    return existingImportFile;
   }
 
   private static void addSymbolImportCandidates(PyElement node,

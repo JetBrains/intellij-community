@@ -73,14 +73,9 @@ public class PyResolveUtil {
   }
 
   @Nullable
-  public static PsiElement getPrevNodeOf(PsiElement elt, PsiScopeProcessor proc) {
+  public static PsiElement getPrevNodeOf(PsiElement elt) {
     if (elt instanceof PsiFile) return null;  // no sense to get the previous node of a file
-    if (proc instanceof PyClassScopeProcessor) {
-      return getPrevNodeOf(elt, ((PyClassScopeProcessor)proc).getTargetTokenSet());
-    }
-    else {
-      return getPrevNodeOf(elt, PythonDialectsTokenSetProvider.INSTANCE.getNameDefinerTokens());
-    }
+    return getPrevNodeOf(elt, PythonDialectsTokenSetProvider.INSTANCE.getNameDefinerTokens());
   }
 
   /**
@@ -163,10 +158,10 @@ public class PyResolveUtil {
     final boolean is_outside_param_list = PsiTreeUtil.getParentOfType(elt, PyParameterList.class) == null;
     do {
       ProgressManager.checkCanceled();
-      seeker = getPrevNodeOf(seeker, processor);
+      seeker = getPrevNodeOf(seeker);
       // aren't we in the same defining assignment, global, etc?
       if ((seeker instanceof NameDefiner) && ((NameDefiner)seeker).mustResolveOutside() && PsiTreeUtil.isAncestor(seeker, elt, true)) {
-        seeker = getPrevNodeOf(seeker, processor);
+        seeker = getPrevNodeOf(seeker);
       }
       // maybe we're under a cap?
       while (true) {
@@ -182,7 +177,7 @@ public class PyResolveUtil {
             seeker = local_cap;
           }
           else {
-            seeker = getPrevNodeOf(local_cap, processor);
+            seeker = getPrevNodeOf(local_cap);
           }
         }
         else {
