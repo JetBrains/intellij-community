@@ -163,7 +163,7 @@ public class JpsProjectLoader extends JpsLoaderBase {
     final JpsModulePropertiesSerializer<?> serializer = getModulePropertiesSerializer(typeId);
     final JpsModule module = createModule(name, moduleRoot, serializer);
     JpsModuleSerializer.loadRootModel(module, JDomSerializationUtil.findComponent(moduleRoot, "NewModuleRootManager"), projectSdkType);
-    final String moduleDirPath = new File(path).getParent();
+    final String moduleDirPath = file.getParent();
     JpsFacetSerializer.loadFacets(module, JDomSerializationUtil.findComponent(moduleRoot, "FacetManager"),
                                   FileUtil.toSystemIndependentName(moduleDirPath));
     return module;
