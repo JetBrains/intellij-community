@@ -262,7 +262,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
         }
       }
       else if (action instanceof CustomComponentAction) {
-        add(((CustomComponentAction)action).createCustomComponent(myPresentationFactory.getPresentation(action)));
+        Presentation presentation = myPresentationFactory.getPresentation(action);
+        JComponent customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
+        presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
+        add(customComponent);
       }
       else {
         final ActionButton button = createToolbarButton(action);
@@ -908,7 +911,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
   }
 
-  protected DataContext getToolbarDataContext() {
+  public DataContext getToolbarDataContext() {
     return getDataContext();
   }
 

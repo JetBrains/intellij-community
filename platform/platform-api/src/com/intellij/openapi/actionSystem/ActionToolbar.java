@@ -116,4 +116,6 @@ public interface ActionToolbar extends SwitchProvider, QuickActionProvider {
   void setSecondaryActionsTooltip(String secondaryActionsTooltip);
 
   void setMiniMode(boolean minimalMode);
+
+  DataContext getToolbarDataContext();
 }

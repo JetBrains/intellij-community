@@ -340,7 +340,7 @@ public class BreakpointMasterDetailPopupBuilder {
     public JComponent createCustomComponent(Presentation presentation) {
       JComponent component = super.createCustomComponent(presentation);
       if (SystemInfo.isMac) {
-        getCheckBox().setFont(smaller(getCheckBox().getFont()));
+        component.setFont(smaller(component.getFont()));
       }
       return component;
     }
