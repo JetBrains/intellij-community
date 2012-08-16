@@ -34,6 +34,11 @@ public class JpsDependenciesListImpl extends JpsCompositeElementBase<JpsDependen
   }
 
   @Override
+  public void clear() {
+    myContainer.getChild(DEPENDENCY_COLLECTION_ROLE).removeAllChildren();
+  }
+
+  @Override
   @NotNull
   public JpsModuleDependency addModuleDependency(@NotNull JpsModule module) {
     return addModuleDependency(module.createReference());

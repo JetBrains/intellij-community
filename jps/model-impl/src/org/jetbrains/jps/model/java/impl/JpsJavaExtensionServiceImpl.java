@@ -16,6 +16,7 @@ import org.jetbrains.jps.model.module.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -152,6 +153,16 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @NotNull
   public JpsTestModuleOutputPackagingElement createTestModuleOutput(@NotNull JpsModuleReference moduleReference) {
     return new JpsTestModuleOutputPackagingElementImpl(moduleReference);
+  }
+
+  @Override
+  public JpsJavaDependenciesEnumerator enumerateDependencies(Collection<JpsModule> modules) {
+    return new JpsJavaDependenciesEnumeratorImpl(modules);
+  }
+
+  @Override
+  protected JpsJavaDependenciesEnumerator enumerateDependencies(JpsProject project) {
+    return new JpsJavaDependenciesEnumeratorImpl(project.getModules());
   }
 
   @Override

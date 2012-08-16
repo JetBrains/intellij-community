@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementCreator;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
@@ -30,8 +31,14 @@ public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkRef
   }
 
   @Override
-  public <P extends JpsElement> void setSdkReference(@NotNull JpsSdkType<P> type, @NotNull JpsSdkReference<P> sdkReference) {
-    myContainer.setChild(new JpsSdkReferenceRole<P>(type), sdkReference);
+  public <P extends JpsElement> void setSdkReference(@NotNull JpsSdkType<P> type, @Nullable JpsSdkReference<P> sdkReference) {
+    JpsSdkReferenceRole<P> role = new JpsSdkReferenceRole<P>(type);
+    if (sdkReference != null) {
+      myContainer.setChild(role, sdkReference);
+    }
+    else {
+      myContainer.removeChild(role);
+    }
   }
 
   @Override

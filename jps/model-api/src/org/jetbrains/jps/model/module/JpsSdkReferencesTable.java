@@ -16,5 +16,5 @@ public interface JpsSdkReferencesTable extends JpsCompositeElement {
   JpsSdkReference<P> getSdkReference(@NotNull JpsSdkType<P> type);
 
   <P extends JpsElement>
-  void setSdkReference(@NotNull JpsSdkType<P> type, @NotNull JpsSdkReference<P> sdkReference);
+  void setSdkReference(@NotNull JpsSdkType<P> type, @Nullable JpsSdkReference<P> sdkReference);
 }

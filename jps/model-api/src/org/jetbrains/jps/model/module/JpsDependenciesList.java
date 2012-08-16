@@ -30,4 +30,6 @@ public interface JpsDependenciesList extends JpsElement {
 
   @NotNull
   List<JpsDependencyElement> getDependencies();
+
+  void clear();
 }
