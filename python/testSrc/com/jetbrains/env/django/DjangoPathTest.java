@@ -27,6 +27,7 @@ public class DjangoPathTest extends PyEnvTestCase {
       protected void configure(AbstractPythonRunConfiguration config) throws IOException {
         final int[] ports = DjangoTemplateDebuggerTest.findFreePorts(2);
         ((DjangoServerRunConfiguration)config).setPort(ports[1]);
+        ((DjangoServerRunConfiguration)config).setRunNoReload(true);
       }
 
       @Override
