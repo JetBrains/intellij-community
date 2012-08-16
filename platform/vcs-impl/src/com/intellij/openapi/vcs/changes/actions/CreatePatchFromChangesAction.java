@@ -121,9 +121,15 @@ public class CreatePatchFromChangesAction extends AnAction implements DumbAware 
   public void update(final AnActionEvent e) {
     final Boolean haveSelectedChanges = e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES);
     Change[] changes;
-    ChangeList[] lists;
-    e.getPresentation().setEnabled(Boolean.TRUE.equals(haveSelectedChanges) &&
-                                   ((lists = e.getData(VcsDataKeys.CHANGE_LISTS)) != null && lists.length == 1) &&
+    ChangeList[] data1 = e.getData(VcsDataKeys.CHANGE_LISTS);
+    ShelvedChangeList[] data2 = e.getData(ShelvedChangesViewManager.SHELVED_CHANGELIST_KEY);
+    ShelvedChangeList[] data3 = e.getData(ShelvedChangesViewManager.SHELVED_RECYCLED_CHANGELIST_KEY);
+
+    int sum = data1 == null ? 0 : data1.length;
+    sum += data2 == null ? 0 : data2.length;
+    sum += data3 == null ? 0 : data3.length;
+
+    e.getPresentation().setEnabled(Boolean.TRUE.equals(haveSelectedChanges) && (sum == 1) &&
                                    ((changes = e.getData(VcsDataKeys.CHANGES)) != null && changes.length > 0));
   }
 }
