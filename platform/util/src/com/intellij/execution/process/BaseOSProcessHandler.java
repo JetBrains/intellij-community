@@ -16,6 +16,7 @@
 package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import com.intellij.util.io.BaseOutputReader;
 import org.jetbrains.annotations.NotNull;
@@ -66,29 +67,8 @@ public class BaseOSProcessHandler extends ProcessHandler {
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          final BaseOutputReader stdoutReader = new BaseOutputReader(createProcessOutReader()) {
-            @Override
-            protected void onTextAvailable(@NotNull String text) {
-              notifyTextAvailable(text, ProcessOutputTypes.STDOUT);
-            }
-
-            @Override
-            protected Future<?> executeOnPooledThread(Runnable runnable) {
-              return BaseOSProcessHandler.this.executeOnPooledThread(runnable);
-            }
-          };
-
-          final BaseOutputReader stderrReader = new BaseOutputReader(createProcessErrReader()) {
-            @Override
-            protected void onTextAvailable(@NotNull String text) {
-              notifyTextAvailable(text, ProcessOutputTypes.STDERR);
-            }
-
-            @Override
-            protected Future<?> executeOnPooledThread(Runnable runnable) {
-              return BaseOSProcessHandler.this.executeOnPooledThread(runnable);
-            }
-          };
+          final BaseOutputReader stdoutReader = new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT);
+          final BaseOutputReader stderrReader = new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR);
 
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
@@ -119,6 +99,7 @@ public class BaseOSProcessHandler extends ProcessHandler {
 
     super.startNotify();
   }
+
   protected void onOSProcessTerminated(final int exitCode) {
     notifyProcessTerminated(exitCode);
   }
@@ -254,4 +235,26 @@ public class BaseOSProcessHandler extends ProcessHandler {
       myTerminationCallback.offer(r);
     }
   }
+
+  private class SimpleOutputReader extends BaseOutputReader {
+
+    private final Key myProcessOutputType;
+
+    private SimpleOutputReader(@NotNull Reader reader, @NotNull Key processOutputType) {
+      super(reader);
+      myProcessOutputType = processOutputType;
+      start();
+    }
+
+    @Override
+    protected Future<?> executeOnPooledThread(Runnable runnable) {
+      return BaseOSProcessHandler.this.executeOnPooledThread(runnable);
+    }
+
+    @Override
+    protected void onTextAvailable(@NotNull String text) {
+      notifyTextAvailable(text, myProcessOutputType);
+    }
+  }
+
 }
