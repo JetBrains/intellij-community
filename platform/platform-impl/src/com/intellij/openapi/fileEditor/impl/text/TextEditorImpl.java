@@ -107,6 +107,10 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myComponent.deselectNotify();
   }
 
+  public void updateModifiedProperty() {
+    myComponent.updateModifiedProperty();
+  }
+
   void firePropertyChange(final String propertyName, final Object oldValue, final Object newValue) {
     myChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
   }

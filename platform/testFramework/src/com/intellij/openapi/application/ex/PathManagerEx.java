@@ -175,6 +175,19 @@ public class PathManagerEx {
     return isLocatedInCommunity() ? path : path + File.separator + "community";
   }
 
+  /**
+   * Find file by its path relative to 'community' directory irrespective of current project
+   * @param relativePath path to file relative to 'community' directory
+   * @return file under the home directory of 'community' project
+   */
+  public static File findFileUnderCommunityHome(String relativePath) {
+    File file = new File(getCommunityHomePath(), toSystemDependentName(relativePath));
+    if (!file.exists()) {
+      throw new IllegalArgumentException("Cannot find file '" + relativePath + "' under '" + getCommunityHomePath() + "' directory");
+    }
+    return file;
+  }
+
   private static boolean isLocatedInCommunity() {
     FileSystemLocation projectLocation = parseProjectLocation();
     return projectLocation == FileSystemLocation.COMMUNITY;

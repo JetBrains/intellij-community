@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
@@ -35,12 +36,17 @@ import java.lang.reflect.Method;
  */
 public class SVNStoppableInputStream extends InputStream {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.lowLevel.SVNStoppableInputStream");
+  private final static String ourCheckAvalilable = "svn.check.available";
   private final InputStream myOriginalIs;
   private final InputStream myIn;
   private boolean myAvailableChecked;
+  private final boolean myCheckAvailable;
 
   public SVNStoppableInputStream(InputStream original, InputStream in) {
-    myOriginalIs = digOriginal(original);
+    final String property = System.getProperty(ourCheckAvalilable);
+    //myCheckAvailable = StringUtil.isEmptyOrSpaces(property) || Boolean.parseBoolean(property);
+    myCheckAvailable = Boolean.parseBoolean(property);
+    myOriginalIs = myCheckAvailable ? digOriginal(original) : original;
     myIn = in;
     myAvailableChecked = false;
   }
@@ -58,6 +64,8 @@ public class SVNStoppableInputStream extends InputStream {
           current = byName(current, "myInputStream");
         } else if ("org.tmatesoft.svn.core.internal.util.FixedSizeInputStream".equals(name)) {
           current = byName(current, "mySource");
+        } else if (current instanceof BufferedInputStream) {
+          return createReadingProxy(current);
         } else {
           // maybe ok class, maybe some unknown proxy
           Method[] methods = current.getClass().getDeclaredMethods();
@@ -192,6 +200,7 @@ public class SVNStoppableInputStream extends InputStream {
   }
 
   private void waitForAvailable() throws IOException {
+    if (! myCheckAvailable) return;
     final Object lock = new Object();
     synchronized (lock) {
       while (available() <= 0) {

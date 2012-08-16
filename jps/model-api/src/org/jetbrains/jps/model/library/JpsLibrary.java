@@ -36,4 +36,6 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
   JpsElement getProperties();
 
   List<File> getFiles(final JpsOrderRootType rootType);
+
+  List<String> getRootUrls(final JpsOrderRootType rootType);
 }

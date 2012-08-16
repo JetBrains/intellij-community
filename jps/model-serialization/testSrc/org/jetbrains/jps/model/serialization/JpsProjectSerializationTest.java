@@ -22,14 +22,14 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void testLoadProject() {
     loadProject(SAMPLE_PROJECT_PATH);
-    List<JpsModule> modules = myModel.getProject().getModules();
+    List<JpsModule> modules = myProject.getModules();
     assertEquals(2, modules.size());
     JpsModule main = modules.get(0);
     assertEquals("main", main.getName());
     JpsModule util = modules.get(1);
     assertEquals("util", util.getName());
 
-    List<JpsLibrary> libraries = myModel.getProject().getLibraryCollection().getLibraries();
+    List<JpsLibrary> libraries = myProject.getLibraryCollection().getLibraries();
     assertEquals(3, libraries.size());
 
     List<JpsDependencyElement> dependencies = util.getDependenciesList().getDependencies();
@@ -51,17 +51,17 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void testSaveProject() {
     loadProject(SAMPLE_PROJECT_PATH);
-    JpsModule main = myModel.getProject().getModules().get(0);
+    JpsModule main = myProject.getModules().get(0);
     doTestSaveModule(main, "main.iml");
 
-    JpsModule util = myModel.getProject().getModules().get(1);
+    JpsModule util = myProject.getModules().get(1);
     doTestSaveModule(util, "util/util.iml");
 
     File[] libs = getFileInSampleProject(".idea/libraries").listFiles();
     assertNotNull(libs);
     for (File libFile : libs) {
       String libName = FileUtil.getNameWithoutExtension(libFile);
-      JpsLibrary library = myModel.getProject().getLibraryCollection().findLibrary(libName);
+      JpsLibrary library = myProject.getLibraryCollection().findLibrary(libName);
       assertNotNull(libName, library);
       doTestSaveLibrary(libFile, libName, library);
     }
@@ -102,7 +102,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
   public void _testLoadIdeaProject() {
     long start = System.currentTimeMillis();
-    final JpsProject project = myModel.getProject();
+    final JpsProject project = myProject;
     loadProject("");
     assertTrue(project.getModules().size() > 0);
     System.out.println("Time: " + (System.currentTimeMillis() - start));

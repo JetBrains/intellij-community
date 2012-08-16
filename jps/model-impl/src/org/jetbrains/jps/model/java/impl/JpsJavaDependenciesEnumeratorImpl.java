@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.java.impl;
 
 import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.impl.JpsDependenciesEnumeratorBase;
@@ -15,6 +16,7 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
   private boolean myRuntimeOnly;
   private boolean myCompileOnly;
   private boolean myExportedOnly;
+  private boolean myRecursivelyExportedOnly;
   private JpsJavaClasspathKind myClasspathKind;
 
   public JpsJavaDependenciesEnumeratorImpl(Collection<JpsModule> rootModules) {
@@ -41,7 +43,12 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
 
   @Override
   public JpsJavaDependenciesEnumerator exportedOnly() {
-    myExportedOnly = true;
+    if (myRecursively) {
+      myRecursivelyExportedOnly = true;
+    }
+    else {
+      myExportedOnly = true;
+    }
     return this;
   }
 
@@ -52,12 +59,22 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
   }
 
   @Override
+  public JpsJavaDependenciesRootsEnumerator classes() {
+    return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsOrderRootType.COMPILED);
+  }
+
+  @Override
+  public JpsJavaDependenciesRootsEnumerator sources() {
+    return new JpsJavaDependenciesRootsEnumeratorImpl(this, JpsOrderRootType.SOURCES);
+  }
+
+  @Override
   protected JpsJavaDependenciesEnumeratorImpl self() {
     return this;
   }
 
   @Override
-  protected boolean shouldProcess(JpsDependencyElement element) {
+  protected boolean shouldProcess(JpsModule module, JpsDependencyElement element) {
     boolean exported = false;
     JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getDependencyExtension(element);
     if (extension != null) {
@@ -78,7 +95,12 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
     }
     if (!exported) {
       if (myExportedOnly) return false;
+      if (myRecursivelyExportedOnly && !isEnumerationRootModule(module)) return false;
     }
     return true;
+  }
+
+  public boolean isProductionOnly() {
+    return myProductionOnly;
   }
 }

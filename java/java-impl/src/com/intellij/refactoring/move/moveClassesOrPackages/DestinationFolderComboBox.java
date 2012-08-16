@@ -261,7 +261,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                                               final ArrayList<DirectoryChooser.ItemWrapper> items,
                                                               final DirectoryChooser.ItemWrapper initial,
                                                               final DirectoryChooser.ItemWrapper oldOne) {
-    if (initial != null || (items.size() > 2 && items.contains(NULL_WRAPPER)) || items.isEmpty()) {
+    if (initial != null || ((initialTargetDirectorySourceRoot == null || items.size() > 2) && items.contains(NULL_WRAPPER)) || items.isEmpty()) {
       return initial;
     }
     else {

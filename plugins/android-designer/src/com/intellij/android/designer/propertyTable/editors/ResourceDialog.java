@@ -157,20 +157,22 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
       }
     }
     if (doSelection && value.startsWith("@")) {
-      ResourcePanel panel;
-      String type;
       int index = value.indexOf('/');
-      String name = value.substring(index + 1);
-      if (value.startsWith(ANDROID)) {
-        panel = mySystemPanel;
-        type = value.substring(ANDROID.length(), index);
+      if (index != -1) {
+        ResourcePanel panel;
+        String type;
+        String name = value.substring(index + 1);
+        if (value.startsWith(ANDROID)) {
+          panel = mySystemPanel;
+          type = value.substring(ANDROID.length(), index);
+        }
+        else {
+          panel = myProjectPanel;
+          type = value.substring(1, index);
+        }
+        myContentPanel.setSelectedComponent(panel.myComponent);
+        panel.select(type, name);
       }
-      else {
-        panel = myProjectPanel;
-        type = value.substring(1, index);
-      }
-      myContentPanel.setSelectedComponent(panel.myComponent);
-      panel.select(type, name);
     }
 
     myContentPanel.addChangeListener(new ChangeListener() {

@@ -83,7 +83,7 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     });
   }
 
-  private boolean processDependencies(Processor<JpsDependencyElement> processor) {
+  public boolean processDependencies(Processor<JpsDependencyElement> processor) {
     THashSet<JpsModule> processed = new THashSet<JpsModule>();
     for (JpsModule module : myRootModules) {
       if (!doProcessDependencies(module, processor, processed)) {
@@ -104,15 +104,15 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
         if (!myRecursively && element instanceof JpsModuleDependency) continue;
         if (element instanceof JpsModuleSourceDependency && !isEnumerationRootModule(module)) continue;
       }
-      if (shouldProcess(element)) {
-
+      if (!shouldProcess(module, element)) {
+        continue;
       }
 
       if (element instanceof JpsModuleDependency) {
         if (myRecursively) {
           JpsModule depModule = ((JpsModuleDependency)element).getModule();
           if (depModule != null) {
-            doProcessDependencies(module, processor, processed);
+            doProcessDependencies(depModule, processor, processed);
             continue;
           }
         }
@@ -127,11 +127,11 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
     return true;
   }
 
-  protected boolean shouldProcess(JpsDependencyElement element) {
+  protected boolean shouldProcess(JpsModule module, JpsDependencyElement element) {
     return true;
   }
 
-  private boolean isEnumerationRootModule(JpsModule module) {
+  public boolean isEnumerationRootModule(JpsModule module) {
     return myRootModules.contains(module);
   }
 

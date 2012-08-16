@@ -6,12 +6,14 @@ import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsLibraryDependency;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.util.List;
+
 /**
  * @author nik
  */
-public class JpsJavaExtensionTest extends JpsModelTestCase {
+public class JpsJavaExtensionTest extends JpsJavaModelTestCase {
   public void testModule() {
-    final JpsModule module = myModel.getProject().addModule("m", JpsJavaModuleType.INSTANCE);
+    final JpsModule module = addModule();
     final JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module);
     extension.setOutputUrl("file://path");
     JpsJavaModuleExtension moduleExtension = JpsJavaExtensionService.getInstance().getModuleExtension(module);
@@ -28,8 +30,9 @@ public class JpsJavaExtensionTest extends JpsModelTestCase {
     JpsJavaExtensionService.getInstance().getOrCreateDependencyExtension(dependency).setExported(true);
     model.commit();
 
-    final JpsDependencyElement dep =
-      assertOneElement(assertOneElement(myModel.getProject().getModules()).getDependenciesList().getDependencies());
+    List<JpsDependencyElement> dependencies = assertOneElement(myProject.getModules()).getDependenciesList().getDependencies();
+    assertEquals(2, dependencies.size());
+    final JpsDependencyElement dep = dependencies.get(1);
     final JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dep);
     assertNotNull(extension);
     assertTrue(extension.isExported());

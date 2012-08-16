@@ -1,6 +1,6 @@
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
@@ -25,7 +25,7 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
       myProjectHomePath = PathUtil.getParentPath(myProjectHomePath);
     }
     try {
-      JpsProjectLoader.loadProject(myModel.getProject(), Collections.<String, String>emptyMap(), path);
+      JpsProjectLoader.loadProject(myProject, Collections.<String, String>emptyMap(), path);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -47,19 +47,11 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   }
 
   protected static String getTestDataFileAbsolutePath(String relativePath) {
-    File baseDir = new File(PathManager.getHomePath());
-    File file = new File(baseDir, FileUtilRt.toSystemDependentName(relativePath));
-    if (!file.exists()) {
-      final File communityDir = new File(baseDir, "community");
-      if (communityDir.exists()) {
-        file = new File(communityDir, FileUtilRt.toSystemDependentName(relativePath));
-      }
-    }
-    return FileUtilRt.toSystemDependentName(file.getAbsolutePath());
+    return PathManagerEx.findFileUnderCommunityHome(relativePath).getAbsolutePath();
   }
 
   protected static Element loadModuleRootTag(File imlFile) {
-    return JpsLoaderBase
-      .loadRootElement(imlFile, JpsProjectLoader.createModuleMacroExpander(Collections.<String, String>emptyMap(), imlFile));
+    JpsMacroExpander expander = JpsProjectLoader.createModuleMacroExpander(Collections.<String, String>emptyMap(), imlFile);
+    return JpsLoaderBase.loadRootElement(imlFile, expander);
   }
 }

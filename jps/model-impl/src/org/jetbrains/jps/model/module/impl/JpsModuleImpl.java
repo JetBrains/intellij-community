@@ -38,6 +38,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
     myContainer.setChild(EXCLUDED_ROOTS_ROLE);
     myContainer.setChild(JpsFacetRole.COLLECTION_ROLE);
     myContainer.setChild(DEPENDENCIES_LIST_CHILD_ROLE, new JpsDependenciesListImpl());
+    getDependenciesList().addModuleSourceDependency();
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
     myContainer.setChild(JpsModuleSourceRootRole.ROOT_COLLECTION_ROLE);
     myContainer.setChild(JpsSdkReferencesTableImpl.ROLE);

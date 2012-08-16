@@ -83,6 +83,13 @@ public class JpsElementCollectionImpl<E extends JpsElement> extends JpsElementBa
     }
   }
 
+  public void removeAllChildren() {
+    List<E> elements = new ArrayList<E>(myElements);
+    for (E element : elements) {
+      removeChild(element);
+    }
+  }
+
   @NotNull
   @Override
   public JpsElementCollectionImpl<E> createCopy() {

@@ -20,4 +20,7 @@ public interface JpsJavaDependenciesEnumerator extends JpsDependenciesEnumerator
   JpsJavaDependenciesEnumerator recursively();
 
   JpsJavaDependenciesEnumerator includedIn(JpsJavaClasspathKind classpathKind);
+
+  JpsJavaDependenciesRootsEnumerator classes();
+  JpsJavaDependenciesRootsEnumerator sources();
 }

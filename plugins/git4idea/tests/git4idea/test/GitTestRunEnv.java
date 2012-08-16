@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@ package git4idea.test;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
@@ -109,6 +111,13 @@ public class GitTestRunEnv {
     if (exec != null && new File(exec).exists()) {
       log("Using Git from TEAMCITY_GIT_PATH: " + exec);
       return exec;
+    }
+    if (SystemInfo.isUnix) {
+      exec = ExecUtil.execAndReadLine("which", "git");
+      if (exec != null && new File(exec).exists()) {
+        log("Using Git from PATH: " + exec);
+        return exec;
+      }
     }
     throw new IllegalStateException("Git executable not found. " +
                                     "Please define IDEA_TEST_GIT_EXECUTABLE environment variable pointing to the Git executable.");

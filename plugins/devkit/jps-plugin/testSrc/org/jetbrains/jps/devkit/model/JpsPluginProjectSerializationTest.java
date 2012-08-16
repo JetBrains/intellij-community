@@ -26,7 +26,7 @@ import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
 public class JpsPluginProjectSerializationTest extends JpsSerializationTestCase {
   public void testLoadProject() {
     loadProject("plugins/devkit/jps-plugin/testData/pluginProject/pluginProject.ipr");
-    JpsModule module = assertOneElement(myModel.getProject().getModules());
+    JpsModule module = assertOneElement(myProject.getModules());
     assertEquals(JpsPluginModuleType.INSTANCE, module.getModuleType());
     JpsTypedModule<JpsSimpleElement<JpsPluginModuleProperties>> pluginModule = module.asTyped(JpsPluginModuleType.INSTANCE);
     assertNotNull(pluginModule);
