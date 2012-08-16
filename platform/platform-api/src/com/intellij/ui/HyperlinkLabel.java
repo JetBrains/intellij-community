@@ -57,9 +57,9 @@ public class HyperlinkLabel extends HighlightableComponent {
 
   public HyperlinkLabel(String text) {
     this(text,
-         UIUtil.isUnderDarcula() ? new Color(150, 150, 255) : Color.BLUE,
+         UIUtil.isUnderDarcula() ? DarculaColors.BLUE : Color.BLUE,
          UIUtil.getLabelBackground(),
-         UIUtil.isUnderDarcula() ? new Color(150, 150, 255) : Color.BLUE);
+         UIUtil.isUnderDarcula() ? DarculaColors.BLUE : Color.BLUE);
   }
 
   public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
