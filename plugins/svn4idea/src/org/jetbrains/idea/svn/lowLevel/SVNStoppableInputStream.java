@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.lowLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -44,8 +45,8 @@ public class SVNStoppableInputStream extends InputStream {
 
   public SVNStoppableInputStream(InputStream original, InputStream in) {
     final String property = System.getProperty(ourCheckAvalilable);
-    //myCheckAvailable = StringUtil.isEmptyOrSpaces(property) || Boolean.parseBoolean(property);
-    myCheckAvailable = Boolean.parseBoolean(property);
+    myCheckAvailable = ! StringUtil.isEmptyOrSpaces(property) && Boolean.parseBoolean(property);
+    //myCheckAvailable = Boolean.parseBoolean(property);
     myOriginalIs = myCheckAvailable ? digOriginal(original) : original;
     myIn = in;
     myAvailableChecked = false;
