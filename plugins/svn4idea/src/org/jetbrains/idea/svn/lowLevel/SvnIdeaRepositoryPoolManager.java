@@ -175,7 +175,9 @@ public class SvnIdeaRepositoryPoolManager implements ISVNRepositoryPool, ISVNSes
       ourGuard.removeRepositoryPool((CachingSvnRepositoryPool)myPool);
     }
     myKeepConnection = false;
-    myListener.dispose();
+    if (myListener != null) {
+      myListener.dispose();
+    }
     myAuthManager.dispose();
     myTunnelProvider.dispose();
     myPool.dispose();
