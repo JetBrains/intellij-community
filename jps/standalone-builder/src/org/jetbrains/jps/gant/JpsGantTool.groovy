@@ -22,7 +22,7 @@ final class JpsGantTool {
     binding.setVariable("oldProject", oldProject)
     binding.setVariable("global", model.global)
     def builder = new JpsGantProjectBuilder(binding.ant.project, model, oldProject)
-    binding.setVariable("builder", builder)
+    binding.setVariable("projectBuilder", builder)
     binding.setVariable("loadProject", {String path ->
       loadProject(path, model, oldProject, builder);
     })

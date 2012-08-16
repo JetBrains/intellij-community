@@ -23,7 +23,7 @@ public class ModulesAndFilesScope extends CompileScope {
 
   public ModulesAndFilesScope(Project project, JpsProject jpsProject, Collection<JpsModule> modules, Map<String, Set<File>> files,
                               Set<JpsArtifact> artifacts, boolean isForcedCompilation) {
-    super(project, jpsProject, artifacts, isForcedCompilation);
+    super(project, jpsProject, artifacts, isForcedCompilation, true);
     myFiles = files;
     myModules = new HashSet<String>();
     for (JpsModule module : modules) {

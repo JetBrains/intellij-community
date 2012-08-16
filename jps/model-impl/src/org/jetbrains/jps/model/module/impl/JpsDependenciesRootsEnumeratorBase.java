@@ -3,10 +3,12 @@ package org.jetbrains.jps.model.module.impl;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.Processor;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -28,6 +30,18 @@ public abstract class JpsDependenciesRootsEnumeratorBase<E extends JpsDependenci
     Set<String> urls = new LinkedHashSet<String>();
     processUrls(new CollectConsumer<String>(urls));
     return urls;
+  }
+
+  @Override
+  public Collection<File> getRoots() {
+    final Set<File> files = new LinkedHashSet<File>();
+    processUrls(new Consumer<String>() {
+      @Override
+      public void consume(String url) {
+        files.add(JpsPathUtil.urlToFile(url));
+      }
+    });
+    return files;
   }
 
   private void processUrls(final Consumer<String> urlConsumer) {
