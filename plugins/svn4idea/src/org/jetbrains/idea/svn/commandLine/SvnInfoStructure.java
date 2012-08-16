@@ -96,6 +96,8 @@ public class SvnInfoStructure {
       return SVNConflictReason.UNVERSIONED;
     } else if (ConflictDescriptor.Reason.added.name().equals(reason)) {
       return SVNConflictReason.ADDED;
+    } else if (ConflictDescriptor.Reason.replaced.name().equals(reason)) {
+      return SVNConflictReason.REPLACED;
     }
     if ("edit".equals(reason)) {
       return SVNConflictReason.EDITED;
@@ -109,6 +111,8 @@ public class SvnInfoStructure {
       return SVNConflictReason.UNVERSIONED;
     } else if (reason.contains("add")) {
       return SVNConflictReason.ADDED;
+    } else if (reason.contains("replace")) {
+      return SVNConflictReason.REPLACED;
     }
     throw new SAXException("Can not parse conflict reason: " + reason);
   }
