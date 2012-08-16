@@ -39,7 +39,7 @@ import static com.intellij.util.TimeoutUtil.sleep;
  * @author Irina.Chernushina
  * @since 2.05.2012
  */
-public class SvnTreeConflictDataTest extends SvnTestCase {
+public class SvnTreeConflictDataTest extends Svn17TestCase {
   private VirtualFile myTheirs;
   private SvnClientRunnerImpl mySvnClientRunner;
 

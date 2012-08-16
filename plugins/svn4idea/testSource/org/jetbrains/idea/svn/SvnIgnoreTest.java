@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import java.util.Random;
  *         Date: 12/20/10
  *         Time: 5:05 PM
  */
-public class SvnIgnoreTest extends SvnTestCase {
+public class SvnIgnoreTest extends Svn17TestCase {
   private ChangeListManager clManager;
   private SvnVcs myVcs;
 

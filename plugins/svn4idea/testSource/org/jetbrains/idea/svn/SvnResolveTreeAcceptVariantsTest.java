@@ -45,7 +45,7 @@ import java.util.Collection;
  * @author Irina.Chernushina
  * @since 3.05.2012
  */
-public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
+public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
   private VirtualFile myTheirs;
   private SvnClientRunnerImpl mySvnClientRunner;
   private SvnVcs myVcs;

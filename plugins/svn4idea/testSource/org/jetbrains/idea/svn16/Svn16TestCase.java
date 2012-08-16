@@ -15,9 +15,8 @@
  */
 package org.jetbrains.idea.svn16;
 
-@SuppressWarnings("ClassNameSameAsAncestorName")
-public abstract class SvnTestCase extends org.jetbrains.idea.SvnTestCase {
-  protected SvnTestCase() {
+public abstract class Svn16TestCase extends org.jetbrains.idea.SvnTestCase {
+  protected Svn16TestCase() {
     super("testData16");
   }
 }

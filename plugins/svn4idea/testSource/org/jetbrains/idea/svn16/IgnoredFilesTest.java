@@ -42,7 +42,7 @@ import java.io.File;
 /**
  * @author irengrig
  */
-public class IgnoredFilesTest extends SvnTestCase {
+public class IgnoredFilesTest extends Svn16TestCase {
   private SvnVcs myVcs;
   private ProjectLevelVcsManagerImpl myVcsManager;
   private ChangeListManager myChangeListManager;
