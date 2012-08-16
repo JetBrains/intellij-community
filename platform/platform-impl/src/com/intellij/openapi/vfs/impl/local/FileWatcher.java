@@ -448,7 +448,12 @@ public class FileWatcher {
               kind = ChangeKind.valueOf(command);
             }
             catch (IllegalArgumentException e) {
-              LOG.error("Illegal watcher command: " + command);
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Illegal watcher command: " + command);
+              }
+              else {
+                LOG.error("Illegal watcher command: " + command);
+              }
               continue;
             }
 
