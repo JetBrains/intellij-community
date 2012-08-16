@@ -37,7 +37,9 @@ public class PyNames {
   public static final String NONE = "None";
   public static final String TRUE = "True";
   public static final String FALSE = "False";
+
   public static final String FAKE_OLD_BASE = "___Classobj";
+  public static final String FAKE_GENERATOR = "__generator";
 
   public static final String FUTURE_MODULE = "__future__";
   public static final String UNICODE_LITERALS = "unicode_literals";

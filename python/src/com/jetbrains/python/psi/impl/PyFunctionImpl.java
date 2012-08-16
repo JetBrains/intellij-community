@@ -270,9 +270,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     if (elementType != null) {
-      final PyType it = PyTypeParser.getTypeByName(this, "__generator");
-      if (it instanceof PyClassType) {
-        return new PyCollectionTypeImpl(((PyClassType)it).getPyClass(), false, elementType.get());
+      final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
+      if (generator != null) {
+        return new PyCollectionTypeImpl(generator, false, elementType.get());
       }
     }
     return null;
