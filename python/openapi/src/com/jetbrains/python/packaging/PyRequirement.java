@@ -161,6 +161,9 @@ public class PyRequirement {
     @NotNull
     private List<String> parse(@Nullable String s) {
       // Version parsing from pkg_resources ensures that all the "pre", "alpha", "rc", etc. are sorted correctly
+      if (s == null) {
+        return Collections.emptyList();
+      }
       final Pattern COMPONENT_RE = Pattern.compile("\\d+|[a-z]+|\\.|-|.+");
       final List<String> results = new ArrayList<String>();
       final Matcher matcher = COMPONENT_RE.matcher(s);

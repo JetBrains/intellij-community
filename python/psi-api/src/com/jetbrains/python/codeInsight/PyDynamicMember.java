@@ -181,7 +181,10 @@ public class PyDynamicMember {
       if (myTypeCallback != null) {
         return myTypeCallback.fun(myContext);
       }
-      return PyPsiFacade.getInstance(getProject()).createClassType(myClass, !myResolveToInstance);
+      else if (myClass != null) {
+        return PyPsiFacade.getInstance(getProject()).createClassType(myClass, !myResolveToInstance);
+      }
+      return null;
     }
   }
 }
