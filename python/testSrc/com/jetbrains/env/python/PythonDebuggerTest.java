@@ -276,7 +276,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-
   private static void addExceptionBreakpoint(IdeaProjectTestFixture fixture, PyExceptionBreakpointProperties properties) {
     XDebuggerTestUtil.addBreakpoint(fixture.getProject(), PyExceptionBreakpointType.class, properties);
   }

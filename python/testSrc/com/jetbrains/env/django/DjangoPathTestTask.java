@@ -122,13 +122,16 @@ public abstract class DjangoPathTestTask extends PyExecutionFixtureTestTask {
     myOutput = new StringBuilder();
     runProcess(sdkHome, s);
 
-    testing();
-    Assert.assertTrue(s.waitFor(60000));
+    try {
+      testing();
+      Assert.assertTrue(s.waitFor(60000));
+      XDebuggerTestUtil.waitForSwing();
+      after();
+    }
+    finally {
 
-    XDebuggerTestUtil.waitForSwing();
-    after();
-
-    disposeProcess(myProcessHandler);
+      disposeProcess(myProcessHandler);
+    }
   }
 
   private void runProcess(final String sdkHome, final Semaphore s) throws ExecutionException, IOException {

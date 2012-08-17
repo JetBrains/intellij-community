@@ -160,22 +160,22 @@ public class PyDebuggerTask extends PyBaseDebuggerTask {
 
     try {
       testing();
+      after();
     }
     catch (Throwable e) {
       throw new RuntimeException(output(), e);
     }
+    finally {
+      clearAllBreakpoints();
 
-    after();
+      setProcessCanTerminate(true);
 
-    clearAllBreakpoints();
+      if (myOutputPrinter != null) {
+        myOutputPrinter.stop();
+      }
 
-    setProcessCanTerminate(true);
-
-    if (myOutputPrinter != null) {
-      myOutputPrinter.stop();
+      finishSession();
     }
-
-    finishSession();
   }
 
   private boolean isMultiprocessDebug() {

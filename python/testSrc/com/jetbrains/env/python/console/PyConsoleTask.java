@@ -45,15 +45,6 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     setWorkingFolder(getTestDataPath());
   }
 
-  public PyConsoleTask(String workingFolder, String scriptName, String scriptParameters) {
-    setWorkingFolder(getTestDataPath() + workingFolder);
-    setScriptParameters(scriptParameters);
-  }
-
-  public PyConsoleTask(String workingFolder) {
-    this(workingFolder, null, null);
-  }
-
   public PythonConsoleView getConsoleView() {
     return myConsoleView;
   }
@@ -123,7 +114,6 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
         protected void run(Result result) throws Throwable {
           Disposer.dispose(myConsoleView);
           myConsoleView = null;
-
         }
       }.execute();
     }
@@ -202,17 +192,19 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     waitForOutput("PyDev console");
 
-    testing();
-
-    after();
-
-    setProcessCanTerminate(true);
-
-    if (myOutputPrinter != null) {
-      myOutputPrinter.stop();
+    try {
+      testing();
+      after();
     }
+    finally {
+      setProcessCanTerminate(true);
 
-    disposeConsole();
+      if (myOutputPrinter != null) {
+        myOutputPrinter.stop();
+      }
+
+      disposeConsole();
+    }
   }
 
   private void disposeConsoleProcess() throws InterruptedException {

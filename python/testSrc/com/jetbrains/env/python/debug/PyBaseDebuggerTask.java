@@ -1,6 +1,8 @@
 package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.Sets;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
@@ -46,7 +48,6 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     setProcessCanTerminate(true);
 
     Assert.assertTrue("Debugger didn't terminated within timeout\nOutput:" + output(), waitFor(myTerminateSemaphore));
-
     XDebuggerTestUtil.waitForSwing();
   }
 
@@ -117,13 +118,22 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   protected void clearAllBreakpoints() {
-    for (Pair<String, Integer> bp : myBreakpoints) {
-      doToggleBreakpoint(bp.first, bp.second);
-    }
+
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        new WriteAction() {
+          protected void run(final Result result) {
+            XDebuggerTestUtil.removeAllBreakpoints(getProject());
+          }
+        };
+      }
+    });
   }
 
   /**
-   *  Toggles breakpoint
+   * Toggles breakpoint
+   *
    * @param file getScriptPath() or path to script
    * @param line starting with 0
    */
@@ -220,6 +230,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     if (mySession != null) {
       new WriteAction() {
         protected void run(Result result) throws Throwable {
+          mySession.stop();
           Disposer.dispose(mySession.getConsoleView());
           mySession = null;
           myDebugProcess = null;
