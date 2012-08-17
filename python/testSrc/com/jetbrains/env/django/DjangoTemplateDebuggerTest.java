@@ -1,5 +1,6 @@
 package com.jetbrains.env.django;
 
+import com.google.common.collect.Sets;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.django.util.VirtualFileUtil;
@@ -9,6 +10,7 @@ import com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Set;
 
 /**
  * @author traff
@@ -335,7 +337,14 @@ public class DjangoTemplateDebuggerTest extends PyEnvTestCase {
 
   public void testBreakpointStopAndEvalInAutoReloadMode() throws IOException {
     final int[] ports = findFreePorts(4);
-    BreakpointStopAndEvalTask testTask = new BreakpointStopAndEvalTask("/djangoDebug", "manage.py", "runserver ", ports[3]);
+    BreakpointStopAndEvalTask testTask = new BreakpointStopAndEvalTask("/djangoDebug", "manage.py", "runserver ", ports[3]) {
+      @Override
+      public Set<String> getTags() {
+        Set<String> tags = Sets.newHashSet(super.getTags());
+        tags.add("-django13");  //Django 1.3 doesn't work in reload mode on Unix
+        return tags;
+      }
+    };
     //testTask.setShouldPrintOutput(true);
     testTask.setMultiprocessDebug(true);
     runPythonTest(testTask);
