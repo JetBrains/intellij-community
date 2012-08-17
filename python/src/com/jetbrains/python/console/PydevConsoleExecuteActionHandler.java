@@ -76,7 +76,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     if (StringUtil.isEmptyOrSpaces(line)) {
       doProcessLine("\n");
     }
-    else if (indentSize == 0 && indentSize < myCurrentIndentSize && !shouldIndent(line) && !myConsoleCommunication.isWaitingForInput()) {
+    else if (indentSize == 0 && indentSize < myCurrentIndentSize && !PyConsoleIndentUtil.shouldIndent(line) && !myConsoleCommunication.isWaitingForInput()) {
       doProcessLine("\n");
       doProcessLine(line);
     }
@@ -140,7 +140,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     if (!StringUtil.isEmptyOrSpaces(line)) {
       int indent = IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false);
       boolean flag = false;
-      if (shouldIndent(line)) {
+      if (PyConsoleIndentUtil.shouldIndent(line)) {
         indent += getPythonIndent();
         flag = true;
       }
@@ -274,10 +274,6 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     else {
       return null;
     }
-  }
-
-  private static boolean shouldIndent(String line) {
-    return line.endsWith(":");
   }
 
   public int getPythonIndent() {

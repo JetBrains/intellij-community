@@ -27,6 +27,10 @@ public class PyConsoleIndentTest extends UsefulTestCase{
     doTest();
   }
 
+  public void testIndent5() {
+    doTest();
+  }
+
   private void doTest() {
     String name = getTestName(true);
     try {

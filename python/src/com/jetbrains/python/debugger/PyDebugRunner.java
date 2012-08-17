@@ -176,6 +176,8 @@ public class PyDebugRunner extends GenericProgramRunner {
       debugParams.addParameter("--DEBUG");
     }
 
+    //debugParams.addParameter("--save-signatures");
+
     final String[] debuggerArgs = new String[]{
       CLIENT_PARAM, "127.0.0.1",
       PORT_PARAM, String.valueOf(serverLocalPort),
