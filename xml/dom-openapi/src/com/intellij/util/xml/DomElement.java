@@ -46,7 +46,6 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
   @Nullable
   XmlElement getXmlElement();
 
-  @Nullable
   DomElement getParent();
 
   XmlTag ensureTagExists();
