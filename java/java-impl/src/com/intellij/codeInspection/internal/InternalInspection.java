@@ -18,35 +18,42 @@ package com.intellij.codeInspection.internal;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
-  private static final String GROUP_NAME = "IDEA Platform Inspections";
+  private static final Key<Boolean> INTERNAL_INSPECTIONS = Key.create("idea.internal.inspections.enabled");
+  private static final String MARKER_CLASS = JBList.class.getName();
+  private static final PsiElementVisitor EMPTY_VISITOR = new PsiElementVisitor() { };
 
-  @Nls
   @NotNull
   @Override
-  public String getGroupDisplayName() {
-    return GROUP_NAME;
-  }
-
-  public boolean isEnabledByDefault() {
-    return true;
+  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return isAllowed(holder.getProject()) ? buildInternalVisitor(holder, isOnTheFly) : EMPTY_VISITOR;
   }
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
-                                        @NotNull LocalInspectionToolSession session) {
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(holder.getProject());
-    final PsiClass markerClass = JavaPsiFacade.getInstance(holder.getProject()).findClass(JBList.class.getName(), scope);
-    return markerClass != null ? super.buildVisitor(holder, isOnTheFly, session) : new PsiElementVisitor() { };
+  public final PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                              boolean isOnTheFly,
+                                              @NotNull LocalInspectionToolSession session) {
+    return isAllowed(holder.getProject()) ? buildInternalVisitor(holder, isOnTheFly) : EMPTY_VISITOR;
   }
+
+  private static boolean isAllowed(@NotNull Project project) {
+    Boolean flag = project.getUserData(INTERNAL_INSPECTIONS);
+    if (flag == null) {
+      final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+      flag = JavaPsiFacade.getInstance(project).findClass(MARKER_CLASS, scope) != null;
+      project.putUserData(INTERNAL_INSPECTIONS, flag);
+    }
+    return flag;
+  }
+
+  public abstract PsiElementVisitor buildInternalVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
 }
