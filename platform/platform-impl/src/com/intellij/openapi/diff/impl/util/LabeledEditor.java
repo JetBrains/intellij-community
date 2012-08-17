@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.util;
 
-import com.intellij.openapi.diff.DiffBundle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -23,12 +23,12 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 public class LabeledEditor extends JPanel {
-  private final JLabel myLabel = new JLabel();
+
   private final Border myEditorBorder;
+  private JComponent myMainComponent;
 
   public LabeledEditor(@Nullable Border editorBorder) {
     super(new BorderLayout());
-    myLabel.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     myEditorBorder = editorBorder;
   }
 
@@ -36,31 +36,25 @@ public class LabeledEditor extends JPanel {
     this(null);
   }
 
-
-  private static String addReadOnly(String title, boolean readonly) {
-    if (readonly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
-    return title;
-  }
-
-  public void setComponent(JComponent component, String title) {
+  public void setComponent(@NotNull JComponent component, @NotNull JComponent titleComponent) {
+    myMainComponent = component;
     removeAll();
+
+    JPanel title = new JPanel(new BorderLayout());
+    title.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
+    title.add(titleComponent);
+    revalidate();
+
     final JPanel p = new JPanel(new BorderLayout());
     if (myEditorBorder != null) {
       p.setBorder(myEditorBorder);
     }
     p.add(component, BorderLayout.CENTER);
     add(p, BorderLayout.CENTER);
-    add(myLabel, BorderLayout.NORTH);
-    setLabelTitle(title);
-    revalidate();
+    add(title, BorderLayout.NORTH);
   }
 
-  private void setLabelTitle(String title) {
-    myLabel.setText(title);
-    myLabel.setToolTipText(title);
-  }
-
-  public void updateTitle(String title, boolean readonly) {
-    setLabelTitle(addReadOnly(title, readonly));
+  public void updateTitle(JComponent title) {
+    setComponent(myMainComponent, title);
   }
 }

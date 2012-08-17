@@ -37,6 +37,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ScrollUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -60,17 +61,12 @@ public class DiffSideView {
   private DiffHighlighterFactory myHighlighterFactory = DUMMY_HIGHLIGHTER_FACTORY;
   private EditorSource myEditorSource = EditorSource.NULL;
   private boolean myIsMaster = false;
-  private String myTitle;
+  private JComponent myTitle = new JLabel();
 
-  public DiffSideView(String title, DiffSidesContainer container, @Nullable Border editorBorder) {
-    myTitle = title;
+  public DiffSideView(DiffSidesContainer container, @Nullable Border editorBorder) {
     myContainer = container;
     myPanel = new LabeledEditor(editorBorder);
     insertComponent(MOCK_COMPONENT);
-  }
-
-  public DiffSideView(String title, DiffSidesContainer container) {
-    this(title, container, null);
   }
 
   public JComponent getComponent() {
@@ -127,12 +123,9 @@ public class DiffSideView {
     editor.getColorsScheme().setColor(EditorColors.CARET_ROW_COLOR, null);
   }
 
-  public void setTitle(String title) {
+  public void setTitle(@NotNull JComponent title) {
     myTitle = title;
-    Editor editor = getEditor();
-    if (editor == null) return;
-    boolean readonly = editor.isViewer() || !editor.getDocument().isWritable();
-    myPanel.updateTitle(myTitle, readonly);
+    myPanel.updateTitle(myTitle);
   }
 
   private void setMouseListeners(EditorSource source) {

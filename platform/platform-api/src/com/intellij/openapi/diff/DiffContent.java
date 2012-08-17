@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -126,6 +127,14 @@ public abstract class DiffContent {
    */
   public static DocumentContent fromDocument(Project project, Document document) {
     return new DocumentContent(project, document);
+  }
+
+  /**
+   * @return line separator used in this content, or null if it is unknown.
+   */
+  @Nullable
+  public LineSeparator getLineSeparator() {
+    return null;
   }
 
   public interface Listener {

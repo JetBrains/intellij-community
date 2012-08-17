@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -34,10 +35,12 @@ public class FileContent extends DiffContent {
   private final VirtualFile myFile;
   private Document myDocument;
   private final Project myProject;
+  private final FileDocumentManager myDocumentManager;
 
   public FileContent(Project project, @NotNull VirtualFile file) {
     myProject = project;
     myFile = file;
+    myDocumentManager = FileDocumentManager.getInstance();
   }
 
   public Document getDocument() {
@@ -82,4 +85,11 @@ public class FileContent extends DiffContent {
     }
     throw new IOException("Can not create temp file for revision content");
   }
+
+  @NotNull
+  @Override
+  public LineSeparator getLineSeparator() {
+    return LineSeparator.fromString(myDocumentManager.getLineSeparator(myFile, myProject));
+  }
+
 }
