@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom.impl;
 
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -27,14 +27,12 @@ import javax.swing.*;
  */
 public class PluginXmlDomFileDescription extends DomFileDescription<IdeaPlugin> {
 
-  private static final Icon ICON = IconLoader.getIcon("/plugin.png");
-
   public PluginXmlDomFileDescription() {
     super(IdeaPlugin.class, "idea-plugin");
   }
 
   @Override
   public Icon getFileIcon(@Iconable.IconFlags int flags) {
-    return ICON;
+    return AllIcons.Nodes.Plugin;
   }
 }
