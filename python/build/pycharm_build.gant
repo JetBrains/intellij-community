@@ -1,4 +1,3 @@
-import org.jetbrains.jps.Jps
 import org.jetbrains.jps.LayoutInfo
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
@@ -7,7 +6,6 @@ includeTargets << new File("${guessHome(this as Script)}/community/build/scripts
 includeTargets << new File("${guessHome(this)}/build/scripts/ultimate_utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
 includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
-includeTool << Jps
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
 

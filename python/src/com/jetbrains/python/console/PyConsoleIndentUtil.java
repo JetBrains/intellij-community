@@ -95,7 +95,7 @@ public class PyConsoleIndentUtil {
         }
         lastIndent = indentArray[i];
         indentArray[i] -= indent;
-        if (lines.get(i).trim().endsWith(":")) {
+        if (shouldIndent(lines.get(i))) {
           lastIndented = true;
         }
         else {
@@ -120,5 +120,13 @@ public class PyConsoleIndentUtil {
     }
 
     return result.toString();
+  }
+
+  public static boolean shouldIndent(@NotNull String line) {
+    if (line.contains("#")) {
+      line = line.substring(0, line.indexOf("#")); //strip comments
+      line = line.trim();
+    }
+    return line.endsWith(":");
   }
 }

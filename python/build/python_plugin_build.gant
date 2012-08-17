@@ -1,9 +1,7 @@
-import org.jetbrains.jps.Jps
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
 includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
-includeTool << Jps
 
 setProperty("basedir", "${ant.project.properties.basedir}/../python/build")
 
