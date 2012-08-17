@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
@@ -26,11 +27,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
+  private static final String GROUP_NAME = "IDEA Platform Inspections";
+
   @Nls
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return InternalInspectionToolsProvider.GROUP_NAME;
+    return GROUP_NAME;
   }
 
   public boolean isEnabledByDefault() {
@@ -42,11 +45,8 @@ public abstract class InternalInspection extends BaseJavaLocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    if (JavaPsiFacade.getInstance(holder.getProject()).findClass(JBList.class.getName(),
-                                                                 GlobalSearchScope.allScope(holder.getProject())) == null) {
-      return new PsiElementVisitor() {
-      };
-    }
-    return super.buildVisitor(holder, isOnTheFly, session);
+    final GlobalSearchScope scope = GlobalSearchScope.allScope(holder.getProject());
+    final PsiClass markerClass = JavaPsiFacade.getInstance(holder.getProject()).findClass(JBList.class.getName(), scope);
+    return markerClass != null ? super.buildVisitor(holder, isOnTheFly, session) : new PsiElementVisitor() { };
   }
 }
