@@ -129,7 +129,13 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
     if (ref.isNull()) throw new RuntimeException("Unable to acquire remote proxy for: " + getName(target));
     RunningInfo info = ref.get();
-    if (info.handler == null) throw new ExecutionException(info.name);
+    if (info.handler == null) {
+      String message = info.name;
+      if (message != null && message.startsWith("ERROR: transport error 202:")) {
+        message = "Unable to start java process in debug mode: -Xdebug parameters are already in use.";
+      }
+      throw new ExecutionException(message);
+    }
     return acquire(info);
   }
 
