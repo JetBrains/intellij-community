@@ -96,7 +96,8 @@ public class InitializationUtils {
     if (statement instanceof PsiBreakStatement ||
         statement instanceof PsiContinueStatement ||
         statement instanceof PsiAssertStatement ||
-        statement instanceof PsiEmptyStatement) {
+        statement instanceof PsiEmptyStatement ||
+        statement instanceof PsiSwitchLabelStatement) {
       return false;
     }
     else if (statement instanceof PsiReturnStatement) {
@@ -501,6 +502,11 @@ public class InitializationUtils {
         }
       }
       return false;
+    }
+    else if (expression instanceof PsiInstanceOfExpression) {
+      final PsiInstanceOfExpression instanceOfExpression = (PsiInstanceOfExpression)expression;
+      final PsiExpression operand = instanceOfExpression.getOperand();
+      return expressionAssignsVariableOrFails(operand, variable, checkedMethods, strict);
     }
     else {
       return false;

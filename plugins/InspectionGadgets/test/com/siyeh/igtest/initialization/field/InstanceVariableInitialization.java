@@ -87,3 +87,10 @@ class B {
     }
   }
 }
+class C {
+  private Object o;
+
+  C() {
+    boolean b = (o = "") instanceof String;
+  }
+}
