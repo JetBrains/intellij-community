@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,11 @@
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
+
+import static com.intellij.patterns.StandardPatterns.string;
 
 /**
  * User: anna
@@ -28,11 +29,11 @@ import com.intellij.psi.PsiReferenceRegistrar;
 public class InspectionsPropertiesReferenceProviderContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    ElementPattern pattern = XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute()
-      .withParent(StandardPatterns.or(XmlPatterns.xmlTag().withName("localInspection")
-                                                          .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")),
-                                      XmlPatterns.xmlTag().withName("globalInspection")
-                                                          .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin")))));
-    registrar.registerReferenceProvider(pattern, new InspectionsKeyPropertiesReferenceProvider(false), PsiReferenceRegistrar.DEFAULT_PRIORITY);
+    ElementPattern pattern = XmlPatterns.xmlAttributeValue()
+      .withParent(XmlPatterns.xmlAttribute().withLocalName(string().oneOf("key", "groupKey"))
+                    .withParent(XmlPatterns.xmlTag().withName(string().oneOf("localInspection", "globalInspection"))
+                                  .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin"))));
+    registrar.registerReferenceProvider(pattern, new InspectionsKeyPropertiesReferenceProvider(false),
+                                        PsiReferenceRegistrar.DEFAULT_PRIORITY);
   }
 }
