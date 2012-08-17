@@ -296,8 +296,16 @@ public class DebuggerUIUtil {
       balloon.showInCenterOf(component);
     }
     else {
-      final Point p = new Point(whereToShow.x + panel.getPreferredSize().width / 2, whereToShow.y);
-      balloon.show(new RelativePoint(component, p), Balloon.Position.below);
+      //todo[kb] modify and move to BalloonImpl?
+      final Window window = SwingUtilities.windowForComponent(component);
+      final RelativePoint p = new RelativePoint(component, whereToShow);
+      if (window != null) {
+        final RelativePoint point = new RelativePoint(window, new Point(0, 0));
+        if (p.getScreenPoint().getX() - point.getScreenPoint().getX() < 40) { // triangle + offsets is ~40px
+          p.getPoint().x += 40;
+        }
+      }
+      balloon.show(p, Balloon.Position.below);
     }
 
     BreakpointsMasterDetailPopupFactory.getInstance(project).setBalloonToHide(balloon, breakpoint);
