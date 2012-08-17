@@ -5,13 +5,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ClassMap;
 import org.jetbrains.jps.JpsPathUtil;
-import org.jetbrains.jps.idea.OwnServiceLoader;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactCompilerInstructionCreator;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactInstructionsBuilderContext;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.*;
 import org.jetbrains.jps.model.java.JpsProductionModuleOutputPackagingElement;
 import org.jetbrains.jps.model.java.JpsTestModuleOutputPackagingElement;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.util.List;
@@ -42,7 +42,7 @@ public class LayoutElementBuildersRegistry {
     for (LayoutElementBuilderService<?> builder : standardBuilders) {
       myBuilders.put(builder.getElementClass(), builder);
     }
-    for (LayoutElementBuilderService builder : OwnServiceLoader.load(LayoutElementBuilderService.class)) {
+    for (LayoutElementBuilderService builder : JpsServiceManager.getInstance().getExtensions(LayoutElementBuilderService.class)) {
       myBuilders.put(builder.getElementClass(), builder);
     }
   }

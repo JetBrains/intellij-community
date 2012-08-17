@@ -1,7 +1,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.jps.idea.OwnServiceLoader;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.*;
 
@@ -25,9 +25,7 @@ public class BuilderRegistry {
       myModuleLevelBuilders.put(category, new ArrayList<ModuleLevelBuilder>());
     }
 
-    final OwnServiceLoader<BuilderService> loader = OwnServiceLoader.load(BuilderService.class);
-
-    for (BuilderService service : loader) {
+    for (BuilderService service : JpsServiceManager.getInstance().getExtensions(BuilderService.class)) {
       myProjectLevelBuilders.addAll(service.createProjectLevelBuilders());
       final List<? extends ModuleLevelBuilder> moduleLevelBuilders = service.createModuleLevelBuilders();
       for (ModuleLevelBuilder builder : moduleLevelBuilders) {
