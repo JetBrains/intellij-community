@@ -487,7 +487,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   public PsiElement getElementNamed(String name) {
     PsiElement exportedName = findExportedName(name);
     if (exportedName instanceof PyImportElement) {
-      return ((PyImportElement) exportedName).getElementNamed(name);
+      PsiElement importedElement = ((PyImportElement)exportedName).getElementNamed(name);
+      if (importedElement != null && !importedElement.isValid()) {
+        throw new PsiInvalidElementAccessException(importedElement);
+      }
+      return importedElement;
+    }
+    else if (exportedName != null && !exportedName.isValid()) {
+      throw new PsiInvalidElementAccessException(exportedName);
     }
     return exportedName;
   }
