@@ -59,7 +59,7 @@ public abstract class CreateResourceDirectoryDialog extends DialogWrapper {
       }
     });
 
-    myDeviceConfiguratorPanel = new DeviceConfiguratorPanel(null) {
+    myDeviceConfiguratorPanel = new DeviceConfiguratorPanel() {
       @Override
       public void applyEditors() {
         try {
