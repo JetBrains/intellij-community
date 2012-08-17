@@ -166,7 +166,7 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
     def __init__(self, pyDb):
         PyDBDaemonThread.__init__(self)
         self.pyDb = pyDb
-        self.setDaemon(False)
+        #self.setDaemon(False) #Strange but sometimes that prevents threads from correct termination
         self.setName('pydevd.CheckAliveThread')
 
     def OnRun(self):

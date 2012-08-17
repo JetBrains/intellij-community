@@ -323,7 +323,7 @@ class WriterThread(PyDBDaemonThread):
     """ writer thread writes out the commands in an infinite loop """
     def __init__(self, sock):
         PyDBDaemonThread.__init__(self)
-        self.setDaemon(False)  #we decided not to be a Daemon as we want to be good - to deliver all data even after other threads die.
+        #self.setDaemon(False)  #we decided not to be a Daemon as we want to be good - to deliver all data even after other threads die.
         self.sock = sock
         self.setName("pydevd.Writer")
         self.cmdQueue = PydevQueue.Queue()
