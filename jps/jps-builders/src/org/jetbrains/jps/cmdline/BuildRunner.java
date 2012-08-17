@@ -91,14 +91,14 @@ public class BuildRunner {
   }
 
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
-                       MessageHandler msgHandler) throws Exception {
+                       MessageHandler msgHandler, final boolean includeTests) throws Exception {
     for (int attempt = 0; attempt < 2; attempt++) {
       if (myForceCleanCaches && myModules.isEmpty() && myFilePaths.isEmpty()) {
         // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
         myBuildType = BuildType.PROJECT_REBUILD;
       }
 
-      final CompileScope compileScope = createCompilationScope(myBuildType, pd, myModules, myArtifacts, myFilePaths);
+      final CompileScope compileScope = createCompilationScope(myBuildType, pd, myModules, myArtifacts, myFilePaths, includeTests);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, constantSearch);
       builder.addMessageHandler(msgHandler);
       try {
@@ -142,7 +142,7 @@ public class BuildRunner {
                                                      ProjectDescriptor pd,
                                                      Set<String> modules,
                                                      Collection<String> artifactNames,
-                                                     Collection<String> paths) throws Exception {
+                                                     Collection<String> paths, boolean includeTests) throws Exception {
     final Timestamps timestamps = pd.timestamps.getStorage();
     Set<JpsArtifact> artifacts = new HashSet<JpsArtifact>();
     if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
@@ -158,7 +158,7 @@ public class BuildRunner {
 
     final CompileScope compileScope;
     if (buildType == BuildType.PROJECT_REBUILD || (modules.isEmpty() && paths.isEmpty())) {
-      compileScope = new AllProjectScope(pd.project, pd.jpsProject, artifacts, buildType != BuildType.MAKE);
+      compileScope = new AllProjectScope(pd.project, pd.jpsProject, artifacts, buildType != BuildType.MAKE, includeTests);
     }
     else {
       final Set<JpsModule> forcedModules;
@@ -198,7 +198,7 @@ public class BuildRunner {
       }
 
       if (filesToCompile.isEmpty()) {
-        compileScope = new ModulesScope(pd.project, pd.jpsProject, forcedModules, artifacts, buildType != BuildType.MAKE);
+        compileScope = new ModulesScope(pd.project, pd.jpsProject, forcedModules, artifacts, buildType != BuildType.MAKE, includeTests);
       }
       else {
         compileScope = new ModulesAndFilesScope(pd.project, pd.jpsProject, forcedModules, filesToCompile, artifacts, buildType != BuildType.MAKE);

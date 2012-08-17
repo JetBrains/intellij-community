@@ -1,10 +1,13 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.impl.JpsCompositeElementBase;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+
+import java.io.File;
 
 /**
  * @author nik
@@ -50,6 +53,12 @@ public class JpsModuleSourceRootImpl<P extends JpsElement> extends JpsCompositeE
   @NotNull
   public String getUrl() {
     return myUrl;
+  }
+
+  @NotNull
+  @Override
+  public File getFile() {
+    return JpsPathUtil.urlToFile(myUrl);
   }
 
   @NotNull

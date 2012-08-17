@@ -22,8 +22,8 @@ final class JpsGantTool {
     binding.setVariable("oldProject", oldProject)
     binding.setVariable("global", model.global)
     def builder = new JpsGantProjectBuilder(binding.ant.project, model, oldProject)
-    binding.setVariable("builder", builder)
-    binding.setVariable("loadProject", {String path ->
+    binding.setVariable("projectBuilder", builder)
+    binding.setVariable("loadProjectFromPath", {String path ->
       loadProject(path, model, oldProject, builder);
     })
 
@@ -88,6 +88,7 @@ final class JpsGantTool {
   private void loadProject(String path, JpsModel model, Project oldProject, JpsGantProjectBuilder builder) {
     IdeaProjectLoader.loadFromPath(oldProject, path, [:])
     JpsProjectLoader.loadProject(model.project, [:], path)
+    builder.exportModuleOutputProperties();
     builder.setDataStorageRoot(Utils.getDataStorageRoot(path))
   }
 
@@ -99,5 +100,19 @@ final class JpsGantTool {
     }
     initializer.delegate = meta
     initializer.call()
+  }
+
+  public static String guessHome(Script script) {
+    File home = new File(script["gant.file"].substring("file:".length()))
+
+    while (home != null) {
+      if (home.isDirectory()) {
+        if (new File(home, ".idea").exists()) return home.getCanonicalPath()
+      }
+
+      home = home.getParentFile()
+    }
+
+    return null
   }
 }
