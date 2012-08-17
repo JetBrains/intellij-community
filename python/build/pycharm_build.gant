@@ -1,6 +1,6 @@
 import org.jetbrains.jps.Jps
 import org.jetbrains.jps.LayoutInfo
-import org.jetbrains.jps.Module
+
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
@@ -327,6 +327,10 @@ private layoutFull(Map args, String target, Set usedJars) {
 
         jar("pycharm-pydev-src.zip") {
           fileset(dir: "$home/python/pydevSrc")
+        }
+        jar("pycharm-openapi-src.zip") {
+          fileset(dir: "$home/python/openapi/src")
+          fileset(dir: "$home/python/psi-api/src")
         }
       }
     }
