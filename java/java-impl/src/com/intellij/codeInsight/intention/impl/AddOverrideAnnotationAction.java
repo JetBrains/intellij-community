@@ -48,6 +48,7 @@ public class AddOverrideAnnotationAction implements IntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!PsiUtil.isLanguageLevel5OrHigher(file)) return false;
+    if (!file.getManager().isInProject(file)) return false;
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return false;
     if (method.getModifierList().findAnnotation(JAVA_LANG_OVERRIDE) != null) return false;

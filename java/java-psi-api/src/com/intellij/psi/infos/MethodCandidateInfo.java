@@ -21,20 +21,26 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author ik, dsl
  */
 public class MethodCandidateInfo extends CandidateInfo{
-  public static final Key<PsiMethod> CURRENT_CANDIDATE = Key.create("CURRENT_CANDIDATE");
+  public static final ThreadLocal<Map<PsiElement, PsiMethod>> CURRENT_CANDIDATE = new ThreadLocal<Map<PsiElement, PsiMethod>>();
   @ApplicabilityLevelConstant private int myApplicabilityLevel = 0;
   private final PsiElement myArgumentList;
   private final PsiType[] myArgumentTypes;
   private final PsiType[] myTypeArguments;
   private PsiSubstitutor myCalcedSubstitutor = null;
   private final LanguageLevel myLanguageLevel;
+  private static final Object LOCK = new Object();
 
   public MethodCandidateInfo(PsiElement candidate,
                              PsiSubstitutor substitutor,
@@ -92,12 +98,20 @@ public class MethodCandidateInfo extends CandidateInfo{
       PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
       PsiMethod method = getElement();
       if (myTypeArguments == null) {
-        myArgumentList.putUserData(CURRENT_CANDIDATE, getElement());
+        Map<PsiElement, PsiMethod> map;
+        synchronized (LOCK) {
+          map = CURRENT_CANDIDATE.get();
+          if (map == null) {
+            map = new ConcurrentWeakHashMap<PsiElement, PsiMethod>();
+            CURRENT_CANDIDATE.set(map);
+          }
+        }
+        map.put(myArgumentList, getElement());
         try {
           myCalcedSubstitutor = inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE);
         }
         finally {
-          myArgumentList.putUserData(CURRENT_CANDIDATE, null);
+          map.remove(myArgumentList);
         }
       }
       else {

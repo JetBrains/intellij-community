@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,6 +134,12 @@ public class SimpleContent extends DiffContent {
     else {
       return currentText.getBytes();
     }
+  }
+
+  @NotNull
+  @Override
+  public LineSeparator getLineSeparator() {
+    return LineSeparator.fromString(myLineSeparators.mySeparator);
   }
 
   public Charset getCharset() {

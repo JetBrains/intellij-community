@@ -45,6 +45,14 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testTypeArgsConsistencyMisc1() throws Exception {
+    doTest();
+  }
+
+  public void testTypeArgsConsistencyWithoutParams() throws Exception {
+    doTest();
+  }
+
   public void testWildcardBounds() throws Exception {
     doTest();
   }

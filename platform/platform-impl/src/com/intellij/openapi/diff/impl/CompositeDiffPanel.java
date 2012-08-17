@@ -18,9 +18,7 @@ package com.intellij.openapi.diff.impl;
 import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.diff.DiffRequest;
-import com.intellij.openapi.diff.DiffViewer;
-import com.intellij.openapi.diff.DiffViewerType;
+import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.external.DiscloseMultiRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -97,6 +95,7 @@ public class CompositeDiffPanel implements DiffViewer {
 
     if (myMap.isEmpty()) {
       final EmptyDiffViewer emptyDiffViewer = new EmptyDiffViewer();
+      emptyDiffViewer.setDiffRequest(request);
       myMap.put(FICTIVE_KEY, emptyDiffViewer);
       final Content content = myUi.createContent(FICTIVE_KEY, emptyDiffViewer.getComponent(), FICTIVE_KEY, null,
                                                  emptyDiffViewer.getPreferredFocusedComponent());

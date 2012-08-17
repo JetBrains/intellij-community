@@ -17,6 +17,7 @@ package com.intellij.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.impl.BundledColorSchemesProvider;
+import com.intellij.util.PlatformUtils;
 
 /**
  * @author Konstantin Bulenkov
@@ -29,7 +30,9 @@ public class IdeaColorSchemesProvider implements BundledColorSchemesProvider {
   @Override
   public String[] getBundledSchemesRelativePaths() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return null;
-    return PATHS;
+    if (PlatformUtils.isCommunity() || PlatformUtils.isIdea()) return PATHS;
+
+    return null;
   }
 
   @Override
