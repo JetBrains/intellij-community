@@ -105,8 +105,7 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
     public void handleInsert(final InsertionContext context, final LookupElement item) {
       int tailOffset = context.getTailOffset()-1;
       super.handleInsert(context, item);  // adds parentheses, modifies tail offset
-      final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(context.getProject());
-      documentManager.commitDocument(documentManager.getDocument(context.getFile()));
+      context.commitDocument();
       addImportForLookupElement(context, item, tailOffset);
     }
   };

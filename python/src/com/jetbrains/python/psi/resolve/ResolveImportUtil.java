@@ -315,11 +315,7 @@ public class ResolveImportUtil {
       final PsiFile initPy = dir.findFile(PyNames.INIT_DOT_PY);
       if (initPy == containingFile) return null; // don't dive into the file we're in
       if (initPy instanceof PyFile) {
-        final PsiElement element = ((PyFile)initPy).getElementNamed(referencedName);
-        if (element != null && !element.isValid()) {
-          throw new PsiInvalidElementAccessException(element);
-        }
-        return element;
+        return ((PyFile)initPy).getElementNamed(referencedName);
       }
     }
     return null;

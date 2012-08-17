@@ -436,9 +436,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
   @Nullable
   public static List<PyRequirement> getRequirements(@NotNull Module module) {
     // TODO: Cache requirements, clear cache on requirements.txt or setup.py updates
-    final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
-    if (requirementsTxt != null) {
-      return PyRequirement.parse(requirementsTxt);
+    List<PyRequirement> requirements = getRequirementsFromTxt(module);
+    if (requirements != null) {
+      return requirements;
     }
     final List<String> lines = new ArrayList<String>();
     for (String name : PyPackageUtil.SETUP_PY_REQUIRES_KWARGS_NAMES) {
@@ -456,6 +456,15 @@ public class PyPackageManagerImpl extends PyPackageManager {
     }
     if (PyPackageUtil.findSetupPy(module) != null) {
       return Collections.emptyList();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static List<PyRequirement> getRequirementsFromTxt(Module module) {
+    final VirtualFile requirementsTxt = PyPackageUtil.findRequirementsTxt(module);
+    if (requirementsTxt != null) {
+      return PyRequirement.parse(requirementsTxt);
     }
     return null;
   }
