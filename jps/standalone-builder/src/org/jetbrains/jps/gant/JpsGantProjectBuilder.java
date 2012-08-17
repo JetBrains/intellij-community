@@ -1,11 +1,18 @@
 package org.jetbrains.jps.gant;
 
+import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.build.Standalone;
 import org.jetbrains.jps.cmdline.JpsModelLoader;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
@@ -26,7 +33,7 @@ public class JpsGantProjectBuilder {
   private File myDataStorageRoot;
   private JpsModelLoader myModelLoader;
   private boolean myDryRun;
-  private BuildInfoPrinter myBuildInfoPrinter;
+  private BuildInfoPrinter myBuildInfoPrinter = new DefaultBuildInfoPrinter();
 
   public JpsGantProjectBuilder(Project project, JpsModel model, org.jetbrains.jps.Project oldProject) {
     myProject = project;
@@ -66,16 +73,20 @@ public class JpsGantProjectBuilder {
     myBuildInfoPrinter = printer;
   }
 
-  public void setUseInProcessJavac() {
+  public void setUseInProcessJavac(boolean value) {
     //doesn't make sense for new builders
   }
 
-  public void setArrangeModuleCyclesOutputs() {
+  public void setArrangeModuleCyclesOutputs(boolean value) {
     //doesn't make sense for new builders
   }
 
   public void error(String message) {
     throw new BuildException(message);
+  }
+
+  public void error(Throwable t) {
+    throw new BuildException(t);
   }
 
   public void warning(String message) {
@@ -87,12 +98,11 @@ public class JpsGantProjectBuilder {
   }
 
   public void stage(String message) {
-    if (myBuildInfoPrinter != null) {
-      myBuildInfoPrinter.printProgressMessage(this, message);
-    }
-    else {
-      myProject.log(message, Project.MSG_INFO);
-    }
+    myBuildInfoPrinter.printProgressMessage(this, message);
+  }
+
+  public File getDataStorageRoot() {
+    return myDataStorageRoot;
   }
 
   public void setDataStorageRoot(File dataStorageRoot) {
@@ -151,13 +161,28 @@ public class JpsGantProjectBuilder {
 
   private void runBuild(final Set<String> modulesSet, boolean includeTests) {
     if (!myDryRun) {
-      info("Starting build, caches are saved to " + myDataStorageRoot.getAbsolutePath());
-      Standalone.runBuild(myModelLoader, myDataStorageRoot, BuildType.PROJECT_REBUILD, modulesSet, Collections.<String>emptyList(),
-                          includeTests);
+      final AntMessageHandler messageHandler = new AntMessageHandler();
+      Logger.setFactory(new AntLoggerFactory(messageHandler));
+      info("Starting build: modules = " + modulesSet + ", caches are saved to " + myDataStorageRoot.getAbsolutePath());
+      try {
+        Standalone.runBuild(myModelLoader, myDataStorageRoot, BuildType.PROJECT_REBUILD, modulesSet, Collections.<String>emptyList(),
+                            includeTests, messageHandler);
+      }
+      catch (Throwable e) {
+        error(e);
+      }
     }
     else {
       info("Building skipped as we're running dry");
     }
+  }
+
+  public String moduleOutput(JpsModule module) {
+    return getModuleOutput(module, false);
+  }
+
+  public String moduleTestsOutput(JpsModule module) {
+    return getModuleOutput(module, true);
   }
 
   public String getModuleOutput(JpsModule module, boolean forTests) {
@@ -173,5 +198,60 @@ public class JpsGantProjectBuilder {
       result.add(root.getAbsolutePath());
     }
     return result;
+  }
+
+  private class AntMessageHandler implements MessageHandler {
+    @Override
+    public void processMessage(BuildMessage msg) {
+      BuildMessage.Kind kind = msg.getKind();
+      String text = msg.getMessageText();
+      switch (kind) {
+        case ERROR:
+          String compilerName = msg instanceof CompilerMessage ? ((CompilerMessage)msg).getCompilerName() : "";
+          myBuildInfoPrinter.printCompilationErrors(JpsGantProjectBuilder.this, compilerName, text);
+          break;
+        case WARNING:
+          warning(text);
+          break;
+        case INFO:
+          if (!text.isEmpty()) {
+            info(text);
+          }
+          break;
+        case PROGRESS:
+          myBuildInfoPrinter.printProgressMessage(JpsGantProjectBuilder.this, text);
+          break;
+      }
+    }
+  }
+
+  private class AntLoggerFactory implements Logger.Factory {
+    private static final String COMPILER_NAME = "build runner";
+
+    private final AntMessageHandler myMessageHandler;
+
+    public AntLoggerFactory(AntMessageHandler messageHandler) {
+      myMessageHandler = messageHandler;
+    }
+
+    @Override
+    public Logger getLoggerInstance(String category) {
+      return new DefaultLogger(category) {
+        @Override
+        public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+          if (t != null) {
+            myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t));
+          }
+          else {
+            myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message));
+          }
+        }
+
+        @Override
+        public void warn(@NonNls String message, @Nullable Throwable t) {
+          myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message));
+        }
+      };
+    }
   }
 }
