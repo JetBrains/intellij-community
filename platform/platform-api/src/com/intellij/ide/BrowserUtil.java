@@ -31,6 +31,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.OptionsDialog;
 import org.jetbrains.annotations.NonNls;
@@ -43,9 +44,8 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -108,7 +108,7 @@ public class BrowserUtil {
     }
 
     if (getGeneralSettingsInstance().isUseDefaultBrowser() && canStartDefaultBrowser()) {
-      final String[] command = getDefaultBrowserCommand();
+      final List<String> command = getDefaultBrowserCommand();
       if (command != null) {
         launchBrowserByCommand(url, command);
       }
@@ -142,21 +142,21 @@ public class BrowserUtil {
 
   @Nullable
   @NonNls
-  private static String[] getDefaultBrowserCommand() {
+  private static List<String> getDefaultBrowserCommand() {
     if (SystemInfo.isWindows) {
-      return new String[]{(SystemInfo.isWindows9x ? "command.com" : "cmd.exe"), "/c", "start", "\"\""};
+      return Arrays.asList((SystemInfo.isWindows9x ? "command.com" : "cmd.exe"), "/c", "start", "\"\"");
     }
     else if (SystemInfo.isMac) {
-      return new String[]{ExecUtil.getOpenCommandPath()};
+      return new SmartList<String>(ExecUtil.getOpenCommandPath());
     }
     else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen()) {
-      return new String[]{"xdg-open"};
+      return new SmartList<String>("xdg-open");
     }
 
     return null;
   }
 
-  private static void launchBrowserByCommand(final String url, @NotNull final String[] command) {
+  private static void launchBrowserByCommand(final String url, @NotNull final List<String> command) {
     URL curl;
     try {
       curl = getURL(url);
@@ -215,40 +215,19 @@ public class BrowserUtil {
     launchBrowserByCommand(url, getOpenBrowserCommand(browserPath));
   }
 
-  /**
-   * @deprecated use {@link #getOpenBrowserCommand(String)} instead
-   */
-  @SuppressWarnings({"UnusedDeclaration"})
-  public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath, final String... parameters) {
-    return getOpenBrowserCommand(browserPath);
-  }
 
-  public static String[] getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
-    final String[] command;
-
-    if (SystemInfo.isMac) {
-      if (new File(browserPath).isFile()) {
-        // versions before 10.6 don't allow to pass command line arguments to browser via 'open' command
-        // so we use full path to browser executable in such case
-        command = new String[]{browserPath};
-      }
-      else {
-        command = new String[]{ExecUtil.getOpenCommandPath(), "-a", browserPath};
-      }
+  public static List<String> getOpenBrowserCommand(final @NonNls @NotNull String browserPath) {
+    // versions before 10.6 don't allow to pass command line arguments to browser via 'open' command
+    // so we use full path to browser executable in such case
+    if (SystemInfo.isMac && !new File(browserPath).isFile()) {
+      return Arrays.asList(ExecUtil.getOpenCommandPath(), "-a", browserPath);
     }
-    else if (SystemInfo.isWindows) {
-      if (new File(browserPath).isFile()) {
-        command = new String[]{browserPath};
-      }
-      else {
-        command = new String[]{(SystemInfo.isWindows9x ? "command.com" : "cmd.exe"), "/c", "start", "\"\"", browserPath};
-      }
+    else if (SystemInfo.isWindows && !new File(browserPath).isFile()) {
+      return Arrays.asList((SystemInfo.isWindows9x ? "command.com" : "cmd.exe"), "/c", "start", "\"\"", browserPath);
     }
     else {
-      command = new String[]{browserPath};
+      return new SmartList<String>(browserPath);
     }
-
-    return command;
   }
 
   private static void showErrorMessage(final String message, final String title) {
@@ -382,7 +361,7 @@ public class BrowserUtil {
         });
       }
 
-      return VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(new File(outputDir, targetFileRelativePath).getPath())) + anchor;
+      return VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(new File(outputDir, targetFileRelativePath).getPath())) + anchor;
     }
     catch (IOException e) {
       LOG.warn(e);
