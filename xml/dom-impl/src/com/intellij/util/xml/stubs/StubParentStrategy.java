@@ -105,4 +105,9 @@ public class StubParentStrategy implements DomParentStrategy {
   public XmlFile getContainingFile(DomInvocationHandler handler) {
     return getParentHandler().getFile();
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj instanceof StubParentStrategy && myStub.equals(((StubParentStrategy)obj).myStub);
+  }
 }

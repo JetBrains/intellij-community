@@ -30,14 +30,18 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemContributor;
 import com.intellij.semantic.SemRegistrar;
 import com.intellij.semantic.SemService;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.xml.EvaluatedXmlName;
+import com.intellij.util.xml.EvaluatedXmlNameImpl;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.reflect.DomCollectionChildDescription;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
+import com.intellij.util.xml.stubs.DomStub;
+import com.intellij.util.xml.stubs.ElementStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -133,6 +137,16 @@ public class DomSemContributor extends SemContributor {
 
         final DomCollectionChildDescription description = findChildrenDescription(parent.getGenericInfo().getCollectionChildrenDescriptions(), tag, parent);
         if (description != null) {
+          DomStub parentStub = parent.getStub();
+          if (parentStub != null) {
+            int index = ArrayUtil.indexOf(parentTag.findSubTags(tag.getLocalName(), tag.getNamespace()), tag);
+            ElementStub stub = parentStub.getElementStub(tag.getLocalName(), index);
+            if (stub != null) {
+              XmlName name = description.getXmlName();
+              EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
+              return new CollectionElementInvocationHandler(evaluatedXmlName, (AbstractDomChildDescriptionImpl)description, parent.getManager(), stub);
+            }
+          }
           return new CollectionElementInvocationHandler(description.getType(), tag, (AbstractCollectionChildDescription)description, parent, null);
         }
         return null;

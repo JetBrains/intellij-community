@@ -94,7 +94,7 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
    * @return absolute path to the test data.
    */
   @NonNls
-  protected final String getTestDataPath() {
+  protected String getTestDataPath() {
     String communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/');
     String path = communityPath + getBasePath();
     if (new File(path).exists()) return path;

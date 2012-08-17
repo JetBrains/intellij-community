@@ -17,11 +17,11 @@ package com.intellij.util.xml.stubs;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.stubs.ObjectStubBase;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.EvaluatedXmlNameImpl;
 import com.intellij.util.xml.XmlName;
+import com.intellij.util.xml.impl.CollectionElementInvocationHandler;
 import com.intellij.util.xml.impl.DomChildDescriptionImpl;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
@@ -76,20 +76,23 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     });
   }
 
+  @Nullable
+  public ElementStub getElementStub(String name, int index) {
+    List<DomStub> stubs = getChildrenStubs();
+    int i = 0;
+    for (DomStub stub : stubs) {
+      if (stub instanceof ElementStub && name.equals(stub.getName()) && i++ == index) {
+        return (ElementStub)stub;
+      }
+    }
+    return null;
+  }
+
   public synchronized DomInvocationHandler getOrCreateHandler(DomChildDescriptionImpl description, DomManagerImpl manager) {
     if (myHandler == null) {
       XmlName name = description.getXmlName();
       EvaluatedXmlNameImpl evaluatedXmlName = EvaluatedXmlNameImpl.createEvaluatedXmlName(name, name.getNamespaceKey(), true);
-      myHandler = new DomInvocationHandler(description.getType(), new StubParentStrategy(this), evaluatedXmlName, description, manager, false, this) {
-        @Override
-        protected void undefineInternal() {
-        }
-
-        @Override
-        protected XmlTag setEmptyXmlTag() {
-          return null;
-        }
-      };
+      myHandler = new CollectionElementInvocationHandler(evaluatedXmlName, description, manager, (ElementStub)this);
     }
     return myHandler;
   }

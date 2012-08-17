@@ -116,6 +116,11 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     return getParentStrategy().getParentHandler();
   }
 
+  @Nullable
+  public Stub getStub() {
+    return myStub;
+  }
+
   @NotNull
   public final Type getDomElementType() {
     return myType;

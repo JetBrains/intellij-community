@@ -30,6 +30,7 @@ import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.stubs.model.Bar;
 import com.intellij.util.xml.stubs.model.Foo;
+import com.intellij.util.xml.stubs.model.NotStubbed;
 
 import java.util.List;
 
@@ -97,9 +98,16 @@ public class DomStubUsingTest extends DomStubTest {
 
   public void testParent() throws Exception {
     DomFileElement<Foo> element = prepare("parent.xml");
+
     Bar bar = element.getRootElement().getBars().get(0);
     GenericAttributeValue<Integer> notStubbed = bar.getNotStubbed();
     DomElement parent = notStubbed.getParent();
+    assertEquals(bar, parent);
+
+//    SemService.getSemService(getProject()).clearCache();
+
+    NotStubbed child = bar.getNotStubbeds().get(0);
+    parent = child.getParent();
     assertEquals(bar, parent);
   }
 
@@ -111,6 +119,7 @@ public class DomStubUsingTest extends DomStubTest {
     assertNotNull(tree);
 
     ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
+
     file = getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
 
