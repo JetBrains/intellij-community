@@ -166,8 +166,8 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
       return null;
     }
-    if (results != null && isWeak(results.getArguments(), context)) {
-      return PyWeakTypeFactory.create(type);
+    if (results != null && isDynamicallyEvaluated(results.getArguments().values(), context)) {
+      return PyUnionType.createWeakType(type);
     }
     else {
       return type;
@@ -192,9 +192,10 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
     return type;
   }
 
-  private static boolean isWeak(Map<PyExpression, PyNamedParameter> arguments, TypeEvalContext context) {
-    for (PyNamedParameter param : arguments.values()) {
-      if (param.getType(context) instanceof PyWeakType) {
+  private static boolean isDynamicallyEvaluated(@NotNull Collection<PyNamedParameter> parameters, @NotNull TypeEvalContext context) {
+    for (PyNamedParameter parameter : parameters) {
+      final PyType type = parameter.getType(context);
+      if (type instanceof PyDynamicallyEvaluatedType) {
         return true;
       }
     }
@@ -269,9 +270,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       }
     }
     if (elementType != null) {
-      final PyType it = PyTypeParser.getTypeByName(this, "__generator");
-      if (it instanceof PyClassType) {
-        return new PyCollectionTypeImpl(((PyClassType)it).getPyClass(), false, elementType.get());
+      final PyClass generator = cache.getClass(PyNames.FAKE_GENERATOR);
+      if (generator != null) {
+        return new PyCollectionTypeImpl(generator, false, elementType.get());
       }
     }
     return null;

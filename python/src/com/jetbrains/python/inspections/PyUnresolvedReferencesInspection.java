@@ -292,9 +292,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (qualifier != null && name != null && isGuardedByHasattr(qualifier, name)) {
           return;
         }
-        if (qualifier != null &&  isWeakQualifier(qualifier)) {
-          return;
-        }
       }
       PsiElement target = null;
       boolean unresolved;
@@ -327,10 +324,6 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                !isContainingFileImportAllowed(node, (PsiFile)target)) {
         registerProblem(node, "Import resolves to its containing file");
       }
-    }
-
-    private boolean isWeakQualifier(PyExpression qualifier) {
-      return qualifier.getType(myTypeEvalContext) instanceof PyWeakType;
     }
 
     private static boolean isContainingFileImportAllowed(PyElement node, PsiFile target) {

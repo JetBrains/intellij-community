@@ -1,13 +1,10 @@
-import org.jetbrains.jps.Jps
 import org.jetbrains.jps.LayoutInfo
-import org.jetbrains.jps.Module
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/ultimate_utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
 includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
-includeTool << Jps
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
 
@@ -44,7 +41,8 @@ setProperty("pluginFilter", [
             "diagram-api", "uml",
             "python-uml", "localization",
             "python-localization",
-            "rest", "python-rest"
+            "rest", "python-rest",
+            "pycharm-flask"
 ])
 
 private List<String> pycharmPlatformApiModules() {
@@ -133,7 +131,7 @@ target('default': "Build artifacts") {
 
   projectBuilder.cleanOutput()
   modules.each {
-    Module module = findModule(it)
+    def module = findModule(it)
     if (module != null) {
       projectBuilder.info("Building $module.name")
       projectBuilder.moduleRuntimeClasspath(module, false).each {
@@ -219,6 +217,7 @@ private layoutPlugins() {
     layouts.layoutPlugin("python-localization")
     layouts.layoutPlugin("rest")
     layouts.layoutPlugin("python-rest")
+    layouts.layoutPlugin("pycharm-flask")
   }
 
   layouts.layoutPlugins()
