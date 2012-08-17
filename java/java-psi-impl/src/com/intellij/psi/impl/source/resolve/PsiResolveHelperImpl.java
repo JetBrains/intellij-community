@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiLambdaExpressionImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -876,8 +877,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiExpressionList argumentList = methodCall.getArgumentList();
       if (argumentList != null && PsiUtil.getLanguageLevel(argumentList).isAtLeast(LanguageLevel.JDK_1_8)) {
         for (PsiExpression expression : argumentList.getExpressions()) {
-          if (expression instanceof PsiLambdaExpression){
-            return getFailedInferenceConstraint(typeParameter);
+          if (expression instanceof PsiLambdaExpression) {
+            if (((PsiLambdaExpression)expression).getParameterList().getParametersCount() > 0){
+              return getFailedInferenceConstraint(typeParameter);
+            }
+            final PsiType functionalInterfaceType = PsiLambdaExpressionImpl.getFunctionalInterfaceType(((PsiLambdaExpression)expression), false);
+            if (functionalInterfaceType == null || PsiUtil.resolveClassInType(functionalInterfaceType) == typeParameter){
+              return getFailedInferenceConstraint(typeParameter);
+            }
           }
         }
       }
