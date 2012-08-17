@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:andr1="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res/p1.p2"
+              andr1:orientation="vertical"
+              andr1:layout_width="fill_parent"
+              andr1:layout_height="fill_parent">
+    <include layout="@layout/extracted"/>
+</LinearLayout>

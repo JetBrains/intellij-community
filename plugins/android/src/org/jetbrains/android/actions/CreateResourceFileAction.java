@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
@@ -91,11 +92,24 @@ public class CreateResourceFileAction extends CreateElementActionBase {
     });
   }
 
+  @Nullable
+  public static XmlFile createFileResource(@NotNull AndroidFacet facet,
+                                           @NotNull final ResourceType resType,
+                                           @Nullable String resName,
+                                           boolean chooseResName) {
+    final PsiElement[] elements = doCreateFileResource(facet, resType, resName, chooseResName);
+    if (elements.length == 0) {
+      return null;
+    }
+    assert elements.length == 1 && elements[0] instanceof XmlFile;
+    return (XmlFile)elements[0];
+  }
+
   @NotNull
-  public static PsiElement[] createFileResource(@NotNull AndroidFacet facet,
-                                                @NotNull final ResourceType resType,
-                                                @Nullable String resName,
-                                                boolean chooseResName) {
+  private static PsiElement[] doCreateFileResource(@NotNull AndroidFacet facet,
+                                                   @NotNull final ResourceType resType,
+                                                   @Nullable String resName,
+                                                   boolean chooseResName) {
     final CreateResourceFileAction action = getInstance();
 
     final String subdirName;

@@ -16,8 +16,13 @@ import org.jetbrains.annotations.Nullable;
 public abstract class AndroidBaseLayoutRefactoringAction extends AndroidBaseXmlRefactoringAction {
 
   @Override
-  protected boolean isEnabled(@NotNull XmlTag tag) {
-    return getLayoutViewElement(tag) != null;
+  protected boolean isEnabledForTags(@NotNull XmlTag[] tags) {
+    for (XmlTag tag : tags) {
+      if (getLayoutViewElement(tag) == null) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:andr1="http://schemas.android.com/apk/res/android"
+              xmlns:app="http://schemas.android.com/apk/res/p1.p2"
+              andr1:orientation="vertical"
+              andr1:layout_width="fill_parent"
+              andr1:layout_height="fill_parent">
+  <selection><TextView
+      andr1:layout_width="fill_parent"
+      andr1:layout_height="wrap_content"
+      andr1:text="Hello World, MyActivity"
+      />
+  <TextView xmlns:andr2="http://schemas.android.com/apk/res/android"
+            andr2:layout_width="fill_parent"
+            andr2:layout_height="wrap_content"
+            andr2:text="Hello World, MyActivity"/></selection>
+</LinearLayout>

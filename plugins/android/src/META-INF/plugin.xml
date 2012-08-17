@@ -82,8 +82,12 @@
             icon="/icons/attachDebugger.png">
       <add-to-group group-id="ToolbarRunGroup" anchor="after" relative-to-action="RunnerActions"/>
     </action>
-    <action id="AndroidExtractStyleAction" class="org.jetbrains.android.refactoring.AndroidExtractStyleAction" text="Extract St_yle..."
+    <action id="AndroidExtractStyleAction" class="org.jetbrains.android.refactoring.AndroidExtractStyleAction" text="St_yle..."
             description="Pull out style-related attributes from layout and extract them as a new style">
+      <add-to-group group-id="IntroduceActionsGroup"/>
+    </action>
+    <action id="AndroidExtractAsIncludeAction" class="org.jetbrains.android.refactoring.AndroidExtractAsIncludeAction"
+            text="_Layout..." description="Extract one or more views into a separate layout">
       <add-to-group group-id="IntroduceActionsGroup"/>
     </action>
     <action id="AndroidInlineStyleReferenceAction" class="org.jetbrains.android.refactoring.AndroidInlineStyleReferenceAction"

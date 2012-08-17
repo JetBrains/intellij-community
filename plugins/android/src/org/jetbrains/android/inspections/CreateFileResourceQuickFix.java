@@ -14,9 +14,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.android.actions.CreateResourceFileAction;
 import org.jetbrains.android.actions.CreateTypedResourceFileAction;
@@ -73,9 +73,9 @@ public class CreateFileResourceQuickFix implements LocalQuickFix, IntentionActio
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement[] createdElements =
+    final XmlFile newFile =
       CreateResourceFileAction.createFileResource(myFacet, myResourceType, myResourceName + ".xml", myChooseResName);
-    if (createdElements.length > 0) {
+    if (newFile != null) {
       UndoUtil.markPsiFileForUndo(myFile);
     }
   }

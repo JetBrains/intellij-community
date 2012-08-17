@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:andr1="http://schemas.android.com/apk/res/android">
+    <TextView
+            andr1:layout_width="fill_parent"
+            andr1:layout_height="wrap_content"
+            andr1:text="Hello World, MyActivity"
+            />
+    <TextView xmlns:andr2="http://schemas.android.com/apk/res/android"
+              andr2:layout_width="fill_parent"
+              andr2:layout_height="wrap_content"
+              andr2:text="Hello World, MyActivity"/>
+</merge>

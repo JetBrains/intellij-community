@@ -6,9 +6,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -26,27 +31,124 @@ import org.jetbrains.annotations.Nullable;
 abstract class AndroidBaseXmlRefactoringAction extends BaseRefactoringAction {
   @Override
   protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+    final XmlTag[] tags = getXmlTagsFromExternalContext(context);
+    if (tags.length > 0) {
+      return AndroidFacet.getInstance(tags[0]) != null && isEnabledForTags(tags);
+    }
+
+    final TextRange range = getNonEmptySelectionRange(editor);
+    if (range != null) {
+      final Pair<PsiElement, PsiElement> psiRange = getExtractableRange(
+        file, range.getStartOffset(), range.getEndOffset());
+      return psiRange != null && isEnabledForPsiRange(psiRange.getFirst(), psiRange.getSecond());
+    }
+
     if (element == null ||
         AndroidFacet.getInstance(element) == null ||
         PsiTreeUtil.getParentOfType(element, XmlText.class) != null) {
       return false;
     }
     final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-    return tag != null && isEnabled(tag);
+    return tag != null && isEnabledForTags(new XmlTag[]{tag});
+  }
+
+  @Nullable
+  private static TextRange getNonEmptySelectionRange(Editor editor) {
+    if (editor != null) {
+      final SelectionModel model = editor.getSelectionModel();
+
+      if (model.hasSelection()) {
+        final int start = model.getSelectionStart();
+        final int end = model.getSelectionEnd();
+
+        if (start < end) {
+          return TextRange.create(start, end);
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static Pair<PsiElement, PsiElement> getExtractableRange(PsiFile file, int start, int end) {
+    PsiElement startElement = file.findElementAt(start);
+    PsiElement parent = startElement != null ? startElement.getParent() : null;
+
+    while (parent != null &&
+           !(parent instanceof PsiFile) &&
+           parent.getTextRange().getStartOffset() == startElement.getTextRange().getStartOffset()) {
+      startElement = parent;
+      parent = parent.getParent();
+    }
+    PsiElement endElement = file.findElementAt(end - 1);
+    parent = endElement != null ? endElement.getParent() : null;
+
+    while (parent != null &&
+           !(parent instanceof PsiFile) &&
+           parent.getTextRange().getEndOffset() == endElement.getTextRange().getEndOffset()) {
+      endElement = parent;
+      parent = parent.getParent();
+    }
+
+    if (startElement == null || endElement == null) {
+      return null;
+    }
+    final PsiElement commonParent = startElement.getParent();
+
+    if (commonParent == null ||
+        !(commonParent instanceof XmlTag) ||
+        commonParent != endElement.getParent()) {
+      return null;
+    }
+    PsiElement e = startElement;
+    boolean containTag = false;
+
+    while (e != null) {
+      if (!(e instanceof XmlText) &&
+          !(e instanceof XmlTag) &&
+          !(e instanceof PsiWhiteSpace) &&
+          !(e instanceof PsiComment)) {
+        return null;
+      }
+      if (e instanceof XmlTag) {
+        containTag = true;
+      }
+      if (e == endElement) {
+        break;
+      }
+      e = e.getNextSibling();
+    }
+    return e != null && containTag
+           ? Pair.create(startElement, endElement)
+           : null;
   }
 
   @Override
   protected boolean isEnabledOnElements(PsiElement[] elements) {
-    if (elements.length != 1) {
+    if (elements.length == 0) {
       return false;
     }
     final PsiElement element = elements[0];
-    return element instanceof XmlTag &&
-           AndroidFacet.getInstance(element) != null &&
-           isEnabled((XmlTag)element);
+
+    if (AndroidFacet.getInstance(element) == null) {
+      return false;
+    }
+    final XmlTag[] tags = new XmlTag[elements.length];
+
+    for (int i = 0; i < tags.length; i++) {
+      if (!(elements[i] instanceof XmlTag)) {
+        return false;
+      }
+      tags[i] = (XmlTag)elements[i];
+    }
+    return isEnabledForTags(tags);
   }
 
-  protected abstract boolean isEnabled(@NotNull XmlTag tag);
+  protected abstract boolean isEnabledForTags(@NotNull XmlTag[] tags);
+
+  protected boolean isEnabledForPsiRange(@NotNull PsiElement from, @Nullable PsiElement to) {
+    return false;
+  }
 
   @Override
   protected boolean isAvailableForLanguage(Language language) {
@@ -74,7 +176,11 @@ abstract class AndroidBaseXmlRefactoringAction extends BaseRefactoringAction {
           return data;
         }
         if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
-          return getXmlTagFromExternalContext(context);
+          final XmlTag[] tags = getXmlTagsFromExternalContext(context);
+          return tags.length == 1 ? tags[0] : null;
+        }
+        else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+          return getXmlTagsFromExternalContext(context);
         }
         return null;
       }
@@ -83,12 +189,15 @@ abstract class AndroidBaseXmlRefactoringAction extends BaseRefactoringAction {
                                    e.getActionManager(), e.getModifiers()));
   }
 
-  protected abstract void doRefactor(@NotNull Project project, @NotNull XmlTag tag);
+  protected abstract void doRefactorForTags(@NotNull Project project, @NotNull XmlTag[] tags);
+
+  protected void doRefactorForPsiRange(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement from, @NotNull PsiElement to) {
+  }
 
   @Override
   protected RefactoringActionHandler getHandler(DataContext dataContext) {
-    final XmlTag componentTag = getXmlTagFromExternalContext(dataContext);
-    return new MyHandler(componentTag);
+    final XmlTag[] componentTags = getXmlTagsFromExternalContext(dataContext);
+    return new MyHandler(componentTags);
   }
 
   @Override
@@ -96,35 +205,46 @@ abstract class AndroidBaseXmlRefactoringAction extends BaseRefactoringAction {
     return false;
   }
 
-  @Nullable
-  protected static XmlTag getXmlTagFromExternalContext(DataContext dataContext) {
+  @NotNull
+  protected static XmlTag[] getXmlTagsFromExternalContext(DataContext dataContext) {
     if (dataContext == null) {
-      return null;
+      return XmlTag.EMPTY;
     }
 
     for (AndroidRefactoringContextProvider provider : AndroidRefactoringContextProvider.EP_NAME.getExtensions()) {
-      final XmlTag componentTag = provider.getComponentTag(dataContext);
+      final XmlTag[] componentTags = provider.getComponentTags(dataContext);
 
-      if (componentTag != null) {
-        return componentTag;
+      if (componentTags.length > 0) {
+        return componentTags;
       }
     }
-    return null;
+    return XmlTag.EMPTY;
   }
 
   private class MyHandler implements RefactoringActionHandler {
-    private final XmlTag myTagFromExternalContext;
+    private final XmlTag[] myTagsFromExternalContext;
 
-    private MyHandler(@Nullable XmlTag tagFromExternalContext) {
-      myTagFromExternalContext = tagFromExternalContext;
+    private MyHandler(@NotNull XmlTag[] tagsFromExternalContext) {
+      myTagsFromExternalContext = tagsFromExternalContext;
     }
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-      if (myTagFromExternalContext != null) {
-        doRefactor(project, myTagFromExternalContext);
+      if (myTagsFromExternalContext.length > 0) {
+        doRefactorForTags(project, myTagsFromExternalContext);
         return;
       }
+
+      final TextRange range = getNonEmptySelectionRange(editor);
+      if (range != null) {
+        final Pair<PsiElement, PsiElement> psiRange = getExtractableRange(
+          file, range.getStartOffset(), range.getEndOffset());
+        if (psiRange != null) {
+          doRefactorForPsiRange(project, file, psiRange.getFirst(), psiRange.getSecond());
+        }
+        return;
+      }
+
       final PsiElement element = getElementAtCaret(editor, file);
       if (element == null) {
         return;
@@ -133,13 +253,13 @@ abstract class AndroidBaseXmlRefactoringAction extends BaseRefactoringAction {
       if (tag == null) {
         return;
       }
-      doRefactor(project, tag);
+      doRefactorForTags(project, new XmlTag[]{tag});
     }
 
     @Override
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
-      if (myTagFromExternalContext != null) {
-        doRefactor(project, myTagFromExternalContext);
+      if (myTagsFromExternalContext.length > 0) {
+        doRefactorForTags(project, myTagsFromExternalContext);
         return;
       }
       if (elements.length != 1) {
@@ -149,7 +269,7 @@ abstract class AndroidBaseXmlRefactoringAction extends BaseRefactoringAction {
       if (!(element instanceof XmlTag)) {
         return;
       }
-      doRefactor(project, (XmlTag)element);
+      doRefactorForTags(project, new XmlTag[]{(XmlTag)element});
     }
   }
 }
