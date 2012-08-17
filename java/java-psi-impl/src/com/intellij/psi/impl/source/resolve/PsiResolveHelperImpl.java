@@ -595,6 +595,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiSubstitutor subst = resolveResult.getSubstitutor();
       final PsiType returnType = subst.substitute(method.getReturnType());
       if (returnType != null && returnType != PsiType.VOID) {
+        Pair<PsiType, ConstraintType> constraint = null;
         final List<PsiExpression> expressions = lambdaExpression.getReturnExpressions();
         for (final PsiExpression expression : expressions) {
           final boolean independent = LambdaUtil.isFreeFromTypeInferenceArgs(methodParameters, lambdaExpression, expression);
@@ -621,12 +622,20 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           if (exprType == null){
             return FAILED_INFERENCE;
           }
-          Pair<PsiType, ConstraintType> constraint =
+
+          final Pair<PsiType, ConstraintType> returnExprConstraint =
             getSubstitutionForTypeParameterConstraint(typeParam, returnType, exprType, false, PsiUtil.getLanguageLevel(method));
-          if (constraint != null) {
-            return constraint; //todo check that all return statements lead to the same inference
+          if (returnExprConstraint != null) {
+            if (returnExprConstraint == FAILED_INFERENCE) return returnExprConstraint;
+            if (constraint != null) {
+              final PsiType leastUpperBound = GenericsUtil.getLeastUpperBound(constraint.getFirst(), returnExprConstraint.getFirst(), typeParam.getManager());
+              constraint = new Pair<PsiType, ConstraintType>(leastUpperBound, ConstraintType.SUPERTYPE);
+            } else {
+              constraint = returnExprConstraint;
+            }
           }
         }
+        if (constraint != null) return constraint;
       }
       for (PsiParameter parameter : methodParameters) {
         if (LambdaUtil.dependsOnTypeParams(parameter.getType(), lambdaExpression)) {
