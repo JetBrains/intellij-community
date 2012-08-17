@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 
+import java.io.File;
+
 /**
  * @author nik
  */
@@ -19,4 +21,7 @@ public interface JpsModuleSourceRoot extends JpsElement {
 
   @NotNull
   String getUrl();
+
+  @NotNull
+  File getFile();
 }
