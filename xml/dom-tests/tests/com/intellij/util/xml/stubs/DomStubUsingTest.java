@@ -24,6 +24,7 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -92,6 +93,14 @@ public class DomStubUsingTest extends DomStubTest {
     assertNotNull(value);
     assertEquals("java.lang.String", value.getQualifiedName());
     assertFalse(element.getFile().getNode().isParsed());
+  }
+
+  public void testParent() throws Exception {
+    DomFileElement<Foo> element = prepare("parent.xml");
+    Bar bar = element.getRootElement().getBars().get(0);
+    GenericAttributeValue<Integer> notStubbed = bar.getNotStubbed();
+    DomElement parent = notStubbed.getParent();
+    assertEquals(bar, parent);
   }
 
   private DomFileElement<Foo> prepare(String path) {

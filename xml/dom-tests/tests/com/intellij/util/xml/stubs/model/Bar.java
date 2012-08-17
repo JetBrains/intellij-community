@@ -34,4 +34,6 @@ public interface Bar extends DomElement {
   @Stubbed
   @Attribute("class")
   GenericAttributeValue<PsiClass> getClazz();
+
+  GenericAttributeValue<Integer> getNotStubbed();
 }

@@ -38,7 +38,7 @@ public class AttributeStubSerializer implements ObjectStubSerializer<AttributeSt
   @Override
   public void serialize(AttributeStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
-    dataStream.writeUTFFast(stub.getValue());
+    dataStream.writeUTFFast(stub.getValue() == null ? "" : stub.getValue());
   }
 
   @Override
