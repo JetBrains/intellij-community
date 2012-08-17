@@ -30,4 +30,11 @@ public class PyPackageManagersImpl extends PyPackageManagers {
   public List<PyRequirement> getRequirements(Module module) {
     return PyPackageManagerImpl.getRequirements(module);
   }
+
+
+  @Nullable
+  @Override
+  public List<PyRequirement> getRequirementsFromTxt(Module module) {
+    return PyPackageManagerImpl.getRequirementsFromTxt(module);
+  }
 }
