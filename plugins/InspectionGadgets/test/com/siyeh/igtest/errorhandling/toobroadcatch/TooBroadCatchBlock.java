@@ -56,4 +56,10 @@ public class TooBroadCatchBlock{
   class ObjectStreamException extends IOException {}
   class StreamCorruptedException extends ObjectStreamException {}
   class NotActiveException extends ObjectStreamException {}
+
+  void test() {
+    try {
+      try (java.io.FileInputStream in = new java.io.FileInputStream("asdf")) {}
+    } catch (IOException e) {}
+  }
 }
