@@ -174,10 +174,13 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   public static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context) {
-    return getTypeName(type, context, new HashMap<PyType, String>());
+    return getTypeName(type, context, new HashMap<PyType, String>(), true);
   }
 
-  private static String getTypeName(@Nullable PyType type, @NotNull final TypeEvalContext context, @NotNull final Map<PyType, String> visited) {
+  private static String getTypeName(@Nullable PyType type,
+                                    @NotNull final TypeEvalContext context,
+                                    @NotNull final Map<PyType, String> visited,
+                                    boolean allowUnions) {
     final String evaluated = visited.get(type);
     if (evaluated != null) {
       return evaluated;
@@ -187,22 +190,22 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     if (type instanceof PyTypeReference) {
       final PyType resolved = ((PyTypeReference)type).resolve(null, context);
       if (resolved != null) {
-        result = getTypeName(resolved, context, visited);
+        result = getTypeName(resolved, context, visited, true);
       }
     }
     else if (type instanceof PyCollectionType) {
       final String name = type.getName();
       final PyType elementType = ((PyCollectionType)type).getElementType(context);
       if (elementType != null) {
-        result = String.format("%s of %s", name, getTypeName(elementType, context, visited));
+        result = String.format("%s of %s", name, getTypeName(elementType, context, visited, true));
       }
     }
-    else if (type instanceof PyUnionType) {
+    else if (type instanceof PyUnionType && allowUnions) {
       result = String.format("one of (%s)", StringUtil.join(((PyUnionType)type).getMembers(),
                                                             new Function<PyType, String>() {
                                                               @Override
                                                               public String fun(PyType t) {
-                                                                return getTypeName(t, context, visited);
+                                                                return getTypeName(t, context, visited, false);
                                                               }
                                                             }, ", "));
     }
