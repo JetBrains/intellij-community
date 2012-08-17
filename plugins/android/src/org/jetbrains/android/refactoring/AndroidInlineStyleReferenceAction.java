@@ -39,7 +39,10 @@ public class AndroidInlineStyleReferenceAction extends AndroidBaseXmlRefactoring
   }
 
   @Override
-  protected void doRefactor(@NotNull Project project, @NotNull final XmlTag tag) {
+  protected void doRefactorForTags(@NotNull Project project, @NotNull final XmlTag[] tags) {
+    assert tags.length == 1;
+    final XmlTag tag = tags[0];
+
     final PsiFile file = tag.getContainingFile();
     if (file == null) {
       return;
@@ -83,8 +86,8 @@ public class AndroidInlineStyleReferenceAction extends AndroidBaseXmlRefactoring
   }
 
   @Override
-  protected boolean isEnabled(@NotNull XmlTag tag) {
-    return AndroidInlineUtil.getUsageData(tag) != null;
+  protected boolean isEnabledForTags(@NotNull XmlTag[] tags) {
+    return tags.length == 1 && AndroidInlineUtil.getUsageData(tags[0]) != null;
   }
 
   @Override

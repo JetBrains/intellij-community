@@ -60,6 +60,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
+import org.jetbrains.android.refactoring.AndroidExtractAsIncludeAction;
 import org.jetbrains.android.refactoring.AndroidExtractStyleAction;
 import org.jetbrains.android.refactoring.AndroidInlineStyleReferenceAction;
 import org.jetbrains.android.sdk.AndroidPlatform;
@@ -163,10 +164,13 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     final ActionManager manager = ActionManager.getInstance();
 
     AnAction action = manager.getAction(AndroidExtractStyleAction.ACTION_ID);
-    group.add(new AndroidRefactoringActionWrapper("_Extract style", action));
+    group.add(new AndroidRefactoringActionWrapper("_Extract Style", action));
 
     action = manager.getAction(AndroidInlineStyleReferenceAction.ACTION_ID);
-    group.add(new AndroidRefactoringActionWrapper("_Inline style", action));
+    group.add(new AndroidRefactoringActionWrapper("_Inline Style", action));
+
+    action = manager.getAction(AndroidExtractAsIncludeAction.ACTION_ID);
+    group.add(new AndroidRefactoringActionWrapper("E_xtract Layout", action));
     return group;
   }
 

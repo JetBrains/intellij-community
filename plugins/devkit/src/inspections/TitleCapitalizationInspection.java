@@ -88,7 +88,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
           PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
           for (int i = 0, parametersLength = parameters.length; i < parametersLength; i++) {
             PsiParameter parameter = parameters[i];
-            if (parameter.getName().equals("title") && i < args.length) {
+            if ("title".equals(parameter.getName()) && i < args.length) {
               String titleValue = getTitleValue(args [i]);
               if (!hasTitleCapitalization(titleValue)) {
                 holder.registerProblem(args [i], "Message title '" + titleValue + "' is not properly capitalized. It should have title capitalization",
@@ -263,7 +263,7 @@ public class TitleCapitalizationInspection extends BaseJavaLocalInspectionTool {
     @NotNull
     @Override
     public String getFamilyName() {
-      return getName();
+      return "Properly capitalize";
     }
   }
 }

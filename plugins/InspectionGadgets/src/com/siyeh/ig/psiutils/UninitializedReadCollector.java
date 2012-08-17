@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class UninitializedReadCollector {
 
-  // Set to prevent duplicates
   private final Set<PsiExpression> uninitializedReads;
   private int counter = 0;
 
@@ -36,15 +36,12 @@ public class UninitializedReadCollector {
   }
 
   public PsiExpression[] getUninitializedReads() {
-    final PsiExpression[] array =
-      new PsiExpression[uninitializedReads.size()];
-    return uninitializedReads.toArray(array);
+    return uninitializedReads.toArray(new PsiExpression[uninitializedReads.size()]);
   }
 
   public boolean blockAssignsVariable(@Nullable PsiCodeBlock block,
                                       @NotNull PsiVariable variable) {
-    return blockAssignsVariable(block, variable,
-                                counter, new HashSet<MethodSignature>());
+    return blockAssignsVariable(block, variable, counter, new HashSet<MethodSignature>());
   }
 
   private boolean blockAssignsVariable(
@@ -264,10 +261,18 @@ public class UninitializedReadCollector {
     return false;
   }
 
-  private boolean tryStatementAssignsVariable(
-    @NotNull PsiTryStatement tryStatement,
-    @NotNull PsiVariable variable,
-    int stamp, @NotNull Set<MethodSignature> checkedMethods) {
+  private boolean tryStatementAssignsVariable(@NotNull PsiTryStatement tryStatement, @NotNull PsiVariable variable,
+                                              int stamp, @NotNull Set<MethodSignature> checkedMethods) {
+    final PsiResourceList resourceList = tryStatement.getResourceList();
+    if (resourceList != null) {
+      final List<PsiResourceVariable> resourceVariables = resourceList.getResourceVariables();
+      for (PsiResourceVariable resourceVariable : resourceVariables) {
+        final PsiExpression initializer = resourceVariable.getInitializer();
+        if (expressionAssignsVariable(initializer, variable, stamp, checkedMethods)) {
+          return true;
+        }
+      }
+    }
     final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
     boolean initializedInTryOrCatch =
       blockAssignsVariable(tryBlock, variable, stamp, checkedMethods);
@@ -438,15 +443,15 @@ public class UninitializedReadCollector {
       return expressionAssignsVariable(operand, variable, stamp,
                                        checkedMethods);
     }
-    else if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      return expressionAssignsVariable(lhs, variable, stamp,
-                                       checkedMethods) ||
-             expressionAssignsVariable(rhs, variable, stamp,
-                                       checkedMethods);
+    else if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      for (PsiExpression operand : operands) {
+        if (expressionAssignsVariable(operand, variable, stamp, checkedMethods)) {
+          return true;
+        }
+      }
+      return false;
     }
     else if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditional =

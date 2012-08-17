@@ -51,8 +51,10 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     final List<? extends CustomDomChildrenDescription> customs = domElement.getGenericInfo().getCustomNameChildrenDescription();
 
     for (final CustomDomChildrenDescription custom : customs) {
+      final CustomDomChildrenDescription.TagNameDescriptor tagNameDescriptor = custom.getTagNameDescriptor();
+      if (tagNameDescriptor == null) continue;
       final XmlTag xmlTag = domElement.getXmlTag();
-      for (final EvaluatedXmlName name : custom.getTagNameDescriptor().getCompletionVariants(domElement)) {
+      for (final EvaluatedXmlName name : tagNameDescriptor.getCompletionVariants(domElement)) {
         AbstractDomChildrenDescriptor descriptor = new AbstractDomChildrenDescriptor(myManager) {
           @Override
           public String getDefaultName() {
@@ -69,7 +71,7 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
           @Override
           @Nullable
           public PsiElement getDeclaration() {
-            final PomTarget target = custom.getTagNameDescriptor().findDeclaration(domElement, name);
+            final PomTarget target = tagNameDescriptor.findDeclaration(domElement, name);
             return target == null ? null : PomService.convertToPsi(context.getProject(), target);
           }
         };
@@ -144,9 +146,9 @@ public abstract class AbstractDomChildrenDescriptor implements XmlElementDescrip
     }
     List<? extends CustomDomChildrenDescription> customs = domElement.getGenericInfo().getCustomNameChildrenDescription();
     for (CustomDomChildrenDescription custom : customs) {
-      CustomDomChildrenDescription.AttributeDescriptor list = custom.getCustomAttributeDescriptor();
-      if (list != null) {
-        for (EvaluatedXmlName variant : list.getCompletionVariants(domElement)) {
+      CustomDomChildrenDescription.AttributeDescriptor descriptor = custom.getCustomAttributeDescriptor();
+      if (descriptor != null) {
+        for (EvaluatedXmlName variant : descriptor.getCompletionVariants(domElement)) {
           AttributeChildDescriptionImpl childDescription = new AttributeChildDescriptionImpl(variant.getXmlName(), String.class);
           descriptors.add(new DomAttributeXmlDescriptor(childDescription, myManager.getProject()));
         }

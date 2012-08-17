@@ -23,9 +23,12 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.FileStub;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -49,7 +52,10 @@ public class DomStubBuilderVisitor implements DomElementVisitor {
       if (xmlElement instanceof XmlTag) {
         ElementStub old = myRoot;
         myRoot = new ElementStub(myRoot, StringRef.fromString(((PsiNamedElement)xmlElement).getName()));
-        element.acceptChildren(this);
+        List<DomElement> children = DomUtil.getDefinedChildren(element, true, true);
+        for (DomElement child : children) {
+          visitDomElement(child);
+        }
         if (old != null) {
           myRoot = old;
         }

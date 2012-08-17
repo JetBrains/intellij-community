@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
@@ -36,6 +37,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.rename.RenameJavaVariableProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
+import com.intellij.refactoring.rename.RenameXmlAttributeProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomElement;
@@ -90,7 +92,9 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
             }
             // then it is value resource
             XmlTag tag = PsiTreeUtil.getParentOfType(element1, XmlTag.class);
-            return tag != null && manager.getValueResourceType(tag) != null;
+            return tag != null &&
+                   DomManager.getDomManager(tag.getProject()).getDomElement(tag) instanceof ResourceElement &&
+                   manager.getValueResourceType(tag) != null;
           }
         }
         return false;
@@ -252,13 +256,19 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
       new RenameJavaVariableProcessor().renameElement(element, newName, usages, listener);
     }
     else {
-      super.renameElement(element, newName, usages, listener);
-      if (element instanceof PsiFile) {
-        VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-        if (!LocalHistory.getInstance().isUnderControl(virtualFile)) {
-          DocumentReference ref = DocumentReferenceManager.getInstance().create(virtualFile);
-          UndoManager.getInstance(element.getProject()).nonundoableActionPerformed(ref, false);
+      if (element instanceof PsiNamedElement) {
+        super.renameElement(element, newName, usages, listener);
+
+        if (element instanceof PsiFile) {
+          VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
+          if (virtualFile != null && !LocalHistory.getInstance().isUnderControl(virtualFile)) {
+            DocumentReference ref = DocumentReferenceManager.getInstance().create(virtualFile);
+            UndoManager.getInstance(element.getProject()).nonundoableActionPerformed(ref, false);
+          }
         }
+      }
+      else if (element instanceof XmlAttributeValue) {
+        new RenameXmlAttributeProcessor().renameElement(element, newName, usages, listener);
       }
     }
   }

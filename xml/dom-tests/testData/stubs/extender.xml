@@ -1,0 +1,4 @@
+<foo>
+  <bar extend="xxx"></bar>
+  <bar></bar>
+</foo>

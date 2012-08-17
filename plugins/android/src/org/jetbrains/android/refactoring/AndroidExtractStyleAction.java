@@ -56,8 +56,8 @@ public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringActio
     myTestConfig = testConfig;
   }
 
-  protected boolean isEnabled(@NotNull XmlTag tag) {
-    return doIsEnabled(tag);
+  protected boolean isEnabledForTags(@NotNull XmlTag[] tags) {
+    return tags.length == 1 && doIsEnabled(tags[0]);
   }
 
   public static boolean doIsEnabled(@NotNull XmlTag tag) {
@@ -222,7 +222,10 @@ public class AndroidExtractStyleAction extends AndroidBaseLayoutRefactoringActio
   }
 
   @Override
-  protected void doRefactor(@NotNull Project project, @NotNull XmlTag tag) {
+  protected void doRefactorForTags(@NotNull Project project, @NotNull XmlTag[] tags) {
+    assert tags.length == 1;
+
+    final XmlTag tag = tags[0];
     final Module module = ModuleUtilCore.findModuleForPsiElement(tag);
     assert module != null;
     doExtractStyle(module, tag, true, myTestConfig);

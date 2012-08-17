@@ -34,8 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTabbedPane;
@@ -246,10 +245,10 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
 
   private void createNewResourceFile(ResourceType resourceType) {
     AndroidFacet facet = AndroidFacet.getInstance(myModule);
-    PsiElement[] elements = CreateResourceFileAction.createFileResource(facet, resourceType, null, true);
+    XmlFile newFile = CreateResourceFileAction.createFileResource(facet, resourceType, null, true);
 
-    if (elements.length == 1) {
-      String name = ((PsiFile)elements[0]).getName();
+    if (newFile != null) {
+      String name = newFile.getName();
       int index = name.lastIndexOf('.');
       if (index != -1) {
         name = name.substring(0, index);

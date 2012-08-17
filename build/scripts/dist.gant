@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-import org.jetbrains.jps.Jps
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
-includeTool << Jps
 
 requireProperty("out", "$home/out")
 
