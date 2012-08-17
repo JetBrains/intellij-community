@@ -16,13 +16,11 @@
 package com.intellij.codeInspection.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.ui.ListCellRendererWrapper;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import org.jetbrains.annotations.Nls;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -33,26 +31,11 @@ public class GtkPreferredJComboBoxRendererInspection extends InternalInspection 
   private static final String SETTER_METHOD_NAME = "setRenderer";
 
   private static final String MESSAGE =
-    "Default ListCellRenderer implementations are known to cause UI artifacts under GTK+ Look and Feel," +
+    "Default ListCellRenderer implementations are known to cause UI artifacts under GTK+ Look and Feel, " +
     "so please use ListCellRendererWrapper instead.";
 
-  @Nls
   @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Preferred JComboBox renderer";
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "GtkPreferredJComboBoxRenderer";
-  }
-
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return new JavaElementVisitor() {};
-
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(final PsiMethodCallExpression expression) {

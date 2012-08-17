@@ -202,11 +202,11 @@
     <definitionsSearch implementation="com.intellij.codeInsight.navigation.MethodImplementationsSearch"/>
     <definitionsSearch implementation="com.intellij.codeInsight.navigation.ClassImplementationsSearch"/>
 
-    <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable Class Usage" groupName="IDEA Platform Inspections"
-                     enabledByDefault="true" level="WARNING"
+    <localInspection language="JAVA" shortName="UndesirableClassUsage" displayName="Undesirable class usage"
+                     groupName="IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.internal.UndesirableClassUsageInspection"/>
-    <localInspection language="JAVA" shortName="FileEqualsUsage" displayName="File.equals() usage" groupName="IDEA Platform Inspections"
-                     enabledByDefault="true" level="WARNING"
+    <localInspection language="JAVA" shortName="FileEqualsUsage" displayName="File.equals() usage"
+                     groupName="IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.internal.FileEqualsUsageInspection"/>
     <localInspection language="JAVA" shortName="GtkPreferredJComboBoxRenderer" displayName="Preferred JComboBox renderer"
                      groupName="IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
