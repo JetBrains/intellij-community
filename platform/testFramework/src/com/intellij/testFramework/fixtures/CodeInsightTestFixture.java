@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   void enableInspections(InspectionProfileEntry... inspections);
 
   void enableInspections(Class<? extends LocalInspectionTool>... inspections);
+
+  void enableInspections(@NotNull Collection<Class<? extends LocalInspectionTool>> inspections);
 
   void disableInspections(InspectionProfileEntry... inspections);
 
