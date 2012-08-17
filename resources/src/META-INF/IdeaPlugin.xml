@@ -211,6 +211,9 @@
     <localInspection language="JAVA" shortName="GtkPreferredJComboBoxRenderer" displayName="Preferred JComboBox renderer"
                      groupName="IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.internal.GtkPreferredJComboBoxRendererInspection"/>
+    <localInspection language="JAVA" shortName="UnsafeVfsRecursion" displayName="Unsafe VFS recursion"
+                     groupName="IDEA Platform Inspections" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.internal.UnsafeVfsRecursionInspection"/>
 
     <fileTypeFactory implementation="com.intellij.openapi.fileTypes.impl.JavaFileTypeFactory"/>
 
