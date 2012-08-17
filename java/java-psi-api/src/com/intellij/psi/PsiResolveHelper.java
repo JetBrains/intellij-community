@@ -17,6 +17,8 @@ package com.intellij.psi;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.RecursionGuard;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.impl.source.resolve.ParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
@@ -29,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
  * @see JavaPsiFacade#getResolveHelper()
  */
 public interface PsiResolveHelper {
+  RecursionGuard ourGuard = RecursionManager.createGuard("typeArgInference");
+
   class SERVICE {
     private SERVICE() {
     }
