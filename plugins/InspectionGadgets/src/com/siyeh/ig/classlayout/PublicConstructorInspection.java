@@ -16,16 +16,24 @@
 
 package com.siyeh.ig.classlayout;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiParameterList;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.AsyncResult;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
+import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
@@ -47,6 +55,35 @@ public class PublicConstructorInspection extends BaseInspection {
     }
     else {
       return InspectionGadgetsBundle.message("public.constructor.problem.descriptor");
+    }
+  }
+
+  @Nullable
+  @Override
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new ReplaceConstructorWithFactoryMethodFix();
+  }
+
+  private class ReplaceConstructorWithFactoryMethodFix extends InspectionGadgetsFix {
+
+    @NotNull
+    @Override
+    public String getName() {
+      return InspectionGadgetsBundle.message("public.constructor.quickfix");
+    }
+
+    @Override
+    protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class, PsiMethod.class);
+      final AsyncResult<DataContext> context = DataManager.getInstance().getDataContextFromFocus();
+      context.doWhenDone(new AsyncResult.Handler<DataContext>() {
+        @Override
+        public void run(DataContext dataContext) {
+          final JavaRefactoringActionHandlerFactory factory = JavaRefactoringActionHandlerFactory.getInstance();
+          final RefactoringActionHandler handler = factory.createReplaceConstructorWithFactoryHandler();
+          handler.invoke(project, new PsiElement[]{element}, dataContext);
+        }
+      });
     }
   }
 
