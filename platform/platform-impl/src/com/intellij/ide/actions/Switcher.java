@@ -42,6 +42,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -365,7 +366,7 @@ public class Switcher extends AnAction implements DumbAware {
         filesModel.addElement(editor);
       }
 
-      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project, pinned) {
+      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project) {
         JPanel myPanel = new JPanel(new BorderLayout());
         JLabel myLabel = new JLabel() {
           @Override
@@ -977,20 +978,20 @@ public class Switcher extends AnAction implements DumbAware {
 
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
     private final Project myProject;
-    private final boolean myPinned;
     boolean open;
 
-    public VirtualFilesRenderer(Project project, boolean pinned) {
+    public VirtualFilesRenderer(Project project) {
       myProject = project;
-      myPinned = pinned;
     }
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof FileInfo) {
         VirtualFile virtualFile = ((FileInfo)value).getFirst();
-        String name = UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
-                      ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, virtualFile)
-                      : virtualFile.getName();
+        String name = virtualFile instanceof VirtualFilePathWrapper
+                      ? ((VirtualFilePathWrapper)virtualFile).getPresentablePath()
+                      : UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
+                        ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, virtualFile)
+                        : virtualFile.getName();
         setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
 
         FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
