@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public class PyEnvSufficiencyTest extends PyEnvTestCase {
   private static final List<String> BASE_TAGS =
-    ImmutableList.<String>builder().add("python3", "django", "jython", "pypy", "ipython", "ipython011", "ipython012", "nose", "pytest").build();
+    ImmutableList.<String>builder().add("python3", "django", "jython", "ipython", "ipython011", "ipython012", "nose", "pytest").build();
 
   public void testSufficiency() {
     if (IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
