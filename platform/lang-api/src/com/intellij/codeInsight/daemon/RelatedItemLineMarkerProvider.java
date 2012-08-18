@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ public abstract class RelatedItemLineMarkerProvider implements LineMarkerProvide
   public void collectNavigationMarkers(List<PsiElement> elements,
                                        Collection<? super RelatedItemLineMarkerInfo> result,
                                        boolean forNavigation) {
-    for (PsiElement element : elements) {
+    //noinspection ForLoopReplaceableByForEach
+    for (int i = 0, size = elements.size(); i < size; i++) {
+      PsiElement element = elements.get(i);
       collectNavigationMarkers(element, result);
       if (forNavigation && element instanceof PsiNameIdentifierOwner) {
         PsiElement nameIdentifier = ((PsiNameIdentifierOwner)element).getNameIdentifier();
