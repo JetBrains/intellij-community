@@ -322,6 +322,14 @@ public class XDebuggerTestUtil {
     return breakpoint.get();
   }
 
+  public static void removeAllBreakpoints(@NotNull final Project project) {
+    final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
+    XBreakpoint<?>[] breakpoints = breakpointManager.getAllBreakpoints();
+    for (XBreakpoint b: breakpoints) {
+      breakpointManager.removeBreakpoint(b);
+    }
+  }
+
   public static void setBreakpointCondition(Project project, int line, final String condition) {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     for (XBreakpoint breakpoint : breakpointManager.getAllBreakpoints()) {

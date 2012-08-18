@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.java.PsiLambdaExpressionImpl;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
@@ -595,6 +596,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiSubstitutor subst = resolveResult.getSubstitutor();
       final PsiType returnType = subst.substitute(method.getReturnType());
       if (returnType != null && returnType != PsiType.VOID) {
+        Pair<PsiType, ConstraintType> constraint = null;
         final List<PsiExpression> expressions = lambdaExpression.getReturnExpressions();
         for (final PsiExpression expression : expressions) {
           final boolean independent = LambdaUtil.isFreeFromTypeInferenceArgs(methodParameters, lambdaExpression, expression);
@@ -621,12 +623,20 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
           if (exprType == null){
             return FAILED_INFERENCE;
           }
-          Pair<PsiType, ConstraintType> constraint =
+
+          final Pair<PsiType, ConstraintType> returnExprConstraint =
             getSubstitutionForTypeParameterConstraint(typeParam, returnType, exprType, false, PsiUtil.getLanguageLevel(method));
-          if (constraint != null) {
-            return constraint; //todo check that all return statements lead to the same inference
+          if (returnExprConstraint != null) {
+            if (returnExprConstraint == FAILED_INFERENCE) return returnExprConstraint;
+            if (constraint != null) {
+              final PsiType leastUpperBound = GenericsUtil.getLeastUpperBound(constraint.getFirst(), returnExprConstraint.getFirst(), typeParam.getManager());
+              constraint = new Pair<PsiType, ConstraintType>(leastUpperBound, ConstraintType.SUPERTYPE);
+            } else {
+              constraint = returnExprConstraint;
+            }
           }
         }
+        if (constraint != null) return constraint;
       }
       for (PsiParameter parameter : methodParameters) {
         if (LambdaUtil.dependsOnTypeParams(parameter.getType(), lambdaExpression)) {
@@ -867,8 +877,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       final PsiExpressionList argumentList = methodCall.getArgumentList();
       if (argumentList != null && PsiUtil.getLanguageLevel(argumentList).isAtLeast(LanguageLevel.JDK_1_8)) {
         for (PsiExpression expression : argumentList.getExpressions()) {
-          if (expression instanceof PsiLambdaExpression){
-            return getFailedInferenceConstraint(typeParameter);
+          if (expression instanceof PsiLambdaExpression) {
+            if (((PsiLambdaExpression)expression).getParameterList().getParametersCount() > 0){
+              return getFailedInferenceConstraint(typeParameter);
+            }
+            final PsiType functionalInterfaceType = PsiLambdaExpressionImpl.getFunctionalInterfaceType(((PsiLambdaExpression)expression), false);
+            if (functionalInterfaceType == null || PsiUtil.resolveClassInType(functionalInterfaceType) == typeParameter){
+              return getFailedInferenceConstraint(typeParameter);
+            }
           }
         }
       }

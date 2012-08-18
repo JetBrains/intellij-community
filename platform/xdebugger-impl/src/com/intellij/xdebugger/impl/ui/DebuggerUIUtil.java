@@ -268,8 +268,9 @@ public class DebuggerUIUtil {
     editor.setPropertiesPanel(mainPanel);
     editor.setShowMoreOptionsLink(true);
 
+    final JPanel panel = editor.getMainPanel();
     final Balloon balloon = JBPopupFactory.getInstance()
-      .createDialogBalloonBuilder(editor.getMainPanel(), null)
+      .createDialogBalloonBuilder(panel, null)
       .setHideOnClickOutside(true)
       .setCloseButtonEnabled(false)
       .setAnimationCycle(0)
@@ -295,7 +296,16 @@ public class DebuggerUIUtil {
       balloon.showInCenterOf(component);
     }
     else {
-      balloon.show(new RelativePoint(component, whereToShow), Balloon.Position.below);
+      //todo[kb] modify and move to BalloonImpl?
+      final Window window = SwingUtilities.windowForComponent(component);
+      final RelativePoint p = new RelativePoint(component, whereToShow);
+      if (window != null) {
+        final RelativePoint point = new RelativePoint(window, new Point(0, 0));
+        if (p.getScreenPoint().getX() - point.getScreenPoint().getX() < 40) { // triangle + offsets is ~40px
+          p.getPoint().x += 40;
+        }
+      }
+      balloon.show(p, Balloon.Position.below);
     }
 
     BreakpointsMasterDetailPopupFactory.getInstance(project).setBalloonToHide(balloon, breakpoint);
