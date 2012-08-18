@@ -18,10 +18,14 @@ package com.intellij.util;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.util.messages.MessageBus;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -89,6 +93,26 @@ public class Alarm implements Disposable {
 
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, this);
+    }
+  }
+
+  public void addRequest(final Runnable request, final int delay, boolean runWithActiveFrameOnly) {
+    if (runWithActiveFrameOnly && !ApplicationManager.getApplication().isActive()) {
+      final MessageBus bus = ApplicationManager.getApplication().getMessageBus();
+      final MessageBusConnection connection = bus.connect(this);
+      connection.subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
+        @Override
+        public void applicationActivated(IdeFrame ideFrame) {
+          connection.disconnect();
+          addRequest(request, delay);
+        }
+
+        @Override
+        public void applicationDeactivated(IdeFrame ideFrame) {
+        }
+      });
+    } else {
+      addRequest(request, delay);
     }
   }
 
