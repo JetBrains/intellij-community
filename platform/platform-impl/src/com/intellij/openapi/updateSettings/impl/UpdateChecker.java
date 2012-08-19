@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,10 @@ import com.intellij.ide.plugins.*;
 import com.intellij.ide.reporter.ConnectionException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.*;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -95,12 +98,11 @@ public final class UpdateChecker {
                              IdeBundle.message("title.connection.error"));
   }
 
-  public static enum DownloadPatchResult {
+  public enum DownloadPatchResult {
     SUCCESS, FAILED, CANCELED
   }
 
   private static boolean myVeryFirstOpening = true;
-
 
   @NonNls
   private static final String DISABLED_UPDATE = "disabled_update.txt";
@@ -625,15 +627,7 @@ public final class UpdateChecker {
         catch (final IOException e) {
           LOG.info(e);
           result[0] = DownloadPatchResult.FAILED;
-
-          SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-              Notifications.Bus.notify(new Notification("Updater",
-                                                        "Failed to download patch file",
-                                                        e.getMessage(),
-                                                        NotificationType.ERROR));
-            }
-          });
+          Notifications.Bus.notify(new Notification("Updater", "Failed to download patch file", e.getMessage(), NotificationType.ERROR));
         }
       }
     }, IdeBundle.message("update.downloading.patch.progress.title"), true, null)) {
@@ -650,49 +644,56 @@ public final class UpdateChecker {
     String productCode = ApplicationInfo.getInstance().getBuild().getProductCode();
 
     String osSuffix = "";
-    if (SystemInfo.isWindows) {
-      osSuffix = "-win";
-    }
-    else if (SystemInfo.isMac) {
-      osSuffix = "-mac";
-    }
+    if (SystemInfo.isWindows) osSuffix = "-win";
+    else if (SystemInfo.isMac) osSuffix = "-mac";
     else if (SystemInfo.isUnix) osSuffix = "-unix";
 
     String fromBuildNumber = patch.getFromBuild().asStringWithoutProductCode();
     String toBuildNumber = newVersion.getNumber().asStringWithoutProductCode();
     String fileName = productCode + "-" + fromBuildNumber + "-" + toBuildNumber + "-patch" + osSuffix + ".jar";
-    URLConnection connection = null;
-    InputStream in = null;
-    OutputStream out = null;
 
     String platform = PlatformUtils.getPlatformPrefix();
 
     File tempFile = FileUtil.createTempFile(platform, "patch", true);
 
+    OutputStream out = new BufferedOutputStream(new FileOutputStream(tempFile));
     try {
-      connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
-      in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
-      out = new BufferedOutputStream(new FileOutputStream(tempFile));
+      URLConnection connection = new URL(new URL(getPatchesUrl()), fileName).openConnection();
+      try {
+        InputStream in = UrlConnectionUtil.getConnectionInputStreamWithException(connection, i);
+        try {
+          int total = connection.getContentLength();
+          i.setIndeterminate(total > 0);
 
-      i.setIndeterminate(false);
+          byte[] buffer = new byte[10 * 1024];
+          int count;
+          int read = 0;
 
-      byte[] buffer = new byte[10 * 1024];
-      int total = connection.getContentLength();
-      int count;
-      int read = 0;
-
-      while ((count = in.read(buffer)) > 0) {
-        i.checkCanceled();
-        out.write(buffer, 0, count);
-        read += count;
-        i.setFraction(((double)read) / total);
-        i.setText2((read / 1024) + "/" + (total / 1024) + " KB");
+          while ((count = in.read(buffer)) > 0) {
+            i.checkCanceled();
+            out.write(buffer, 0, count);
+            read += count;
+            if (total > 0) {
+              i.setFraction(((double)read) / total);
+              i.setText2((read / 1024) + "/" + (total / 1024) + " KB");
+            }
+            else {
+              i.setText2((read / 1024) + " KB");
+            }
+          }
+        }
+        finally {
+          in.close();
+        }
+      }
+      finally {
+        if (connection instanceof HttpURLConnection) {
+          ((HttpURLConnection)connection).disconnect();
+        }
       }
     }
     finally {
-      if (out != null) out.close();
-      if (in != null) in.close();
-      if (connection instanceof HttpURLConnection) ((HttpURLConnection)connection).disconnect();
+      out.close();
     }
 
     String patchFileName = ("jetbrains.patch.jar." + platform).toLowerCase();
@@ -729,18 +730,15 @@ public final class UpdateChecker {
       File plugins = new File(PathManager.getConfigPath(), DISABLED_UPDATE);
       FileUtil.ensureCanCreateFile(plugins);
 
-      PrintWriter printWriter = null;
+      PrintWriter printWriter = new PrintWriter(new BufferedWriter(new FileWriter(plugins)));
       try {
-        printWriter = new PrintWriter(new BufferedWriter(new FileWriter(plugins)));
         for (String id : getDisabledToUpdatePlugins()) {
           printWriter.println(id);
         }
         printWriter.flush();
       }
       finally {
-        if (printWriter != null) {
-          printWriter.close();
-        }
+        printWriter.close();
       }
     }
     catch (IOException e) {
