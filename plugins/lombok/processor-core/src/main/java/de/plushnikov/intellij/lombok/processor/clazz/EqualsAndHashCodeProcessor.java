@@ -1,16 +1,11 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
@@ -126,20 +121,10 @@ public class EqualsAndHashCodeProcessor extends AbstractLombokClassProcessor {
   }
 
   private boolean shouldGenerateCanEqual(@NotNull PsiClass psiClass) {
-    boolean result = true;
-    //needsCanEqual = !isFinal || !isDirectDescendantOfObject
-    final PsiClass superClass = psiClass.getSuperClass();
-    if (null == superClass && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
-      result = false;
-    }
-    if (null != superClass && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
-      final Project project = psiClass.getProject();
-      final PsiManager manager = psiClass.getContainingFile().getManager();
-      final PsiClassType javaLangObject = PsiType.getJavaLangObject(manager, GlobalSearchScope.projectScope(project));
+    boolean isFinal = psiClass.hasModifierProperty(PsiModifier.FINAL);
+    boolean isNotDirectDescendantOfObject = PsiClassUtil.hasSuperClass(psiClass);
 
-      result = !superClass.equals(javaLangObject.resolve());
-    }
-    return result;
+    return !isFinal || isNotDirectDescendantOfObject;
   }
 
   @NotNull
