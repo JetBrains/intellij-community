@@ -18,7 +18,6 @@ import de.plushnikov.intellij.lombok.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
-import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import de.plushnikov.intellij.lombok.util.PsiPrimitiveTypeFactory;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -97,11 +96,13 @@ public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
       final PsiMethod[] classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
 
       for (String methodName : methodNames) {
-        if (PsiMethodUtil.hasMethodByName(classMethods, methodName)) {
-          final String setterMethodName = LombokUtils.toGetterName(psiField.getName(), isBoolean);
+        for (PsiMethod classMethod : classMethods) {
+          if (classMethod.getName().equals(methodName) && classMethod.getParameterList().getParametersCount() == 0) {
+            final String setterMethodName = LombokUtils.toGetterName(psiField.getName(), isBoolean);
 
-          builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
-          result = false;
+            builder.addWarning(String.format("Not generated '%s'(): A method with similar name '%s' already exists", setterMethodName, methodName));
+            result = false;
+          }
         }
       }
     }
