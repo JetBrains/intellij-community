@@ -35,6 +35,7 @@
 				<ol>
 				    <li>Issue #23 Initial support for IntelliJ 12</li>
 				    <li>Issue #12 Added support for "Singleton" and "EnumId" annotations from lombok-pg</li>
+				    <li>Fixed Issue #27 "@EqualsAndHashCode on final classes: Should not have a canEquals in that case."</li>
 				<ol>
 			</li>
 		  <li>0.4
