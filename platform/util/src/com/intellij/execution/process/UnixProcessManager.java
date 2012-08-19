@@ -113,6 +113,38 @@ public class UnixProcessManager {
     final ProcessInfo processInfo = new ProcessInfo();
     final List<Integer> childrenPids = new ArrayList<Integer>();
 
+    findChildProcesses(our_pid, process_pid, foundPid, processInfo, childrenPids);
+
+    boolean result;
+    if (!foundPid.isNull()) {
+      processInfo.killProcTree(foundPid.get(), signal, UNIX_KILLER);
+      result = true;
+    }
+    else {
+      for (Integer pid : childrenPids) {
+        processInfo.killProcTree(pid, signal, UNIX_KILLER);
+      }
+      result = !childrenPids.isEmpty(); //we've tried to kill at least one process
+    }
+
+    if (result) {
+      foundPid.set(null);
+      childrenPids.clear();
+
+      findChildProcesses(our_pid, process_pid, foundPid, processInfo, childrenPids);
+
+      return foundPid.isNull() && childrenPids.isEmpty(); //all processes have been killed
+    }
+    else {
+      return true; //the parent process was already killed
+    }
+  }
+
+  private static void findChildProcesses(final int our_pid,
+                                         final int process_pid,
+                                         final Ref<Integer> foundPid,
+                                         final ProcessInfo processInfo, final List<Integer> childrenPids) {
+    final Ref<Boolean> ourPidFound = Ref.create(false);
     processPSOutput(getPSCmd(false), new Processor<String>() {
       @Override
       public boolean process(String s) {
@@ -127,32 +159,23 @@ public class UnixProcessManager {
           childrenPids.add(pid);
         }
 
-        if (pid == process_pid) {
+        if (pid == our_pid) {
+          ourPidFound.set(true);
+        }
+        else if (pid == process_pid) {
           if (parent_pid == our_pid) {
             foundPid.set(pid);
           }
           else {
-            throw new IllegalStateException("process is not our child");
+            throw new IllegalStateException("Process (pid=" + process_pid + ") is not our child(our pid = " + our_pid + ")");
           }
         }
         return false;
       }
     });
-
-    boolean result;
-    if (!foundPid.isNull()) {
-      processInfo.killProcTree(foundPid.get(), signal, UNIX_KILLER);
-      result = true;
+    if (!ourPidFound.get()) {
+      throw new IllegalStateException("IDE pid is not found in ps list(" + our_pid + ")");
     }
-    else {
-      for (Integer pid : childrenPids) {
-        processInfo.killProcTree(pid, signal, UNIX_KILLER);
-      }
-      result = false;
-    }
-
-    //TODO[traff]: check that processes were really terminated.
-    return result;
   }
 
   public static void processPSOutput(String[] cmd, Processor<String> processor) {

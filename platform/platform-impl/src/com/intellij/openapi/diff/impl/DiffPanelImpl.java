@@ -48,7 +48,6 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
@@ -61,6 +60,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.border.CustomLineBorder;
+import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.CacheOneStepIterator;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.diff.FilesTooBigForDiffException;
@@ -120,8 +120,8 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     myOwnerWindow = owner;
     myIsSyncScroll = true;
     final boolean v = !horizontal;
-    myLeftSide =  new DiffSideView("", this, new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, v ? 0 : 1, v ? 0 : 1));
-    myRightSide = new DiffSideView("", this, new CustomLineBorder(UIUtil.getBorderColor(), v ? 0 : 1, v ? 0 : 1, 1, 0));
+    myLeftSide =  new DiffSideView(this, new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, v ? 0 : 1, v ? 0 : 1));
+    myRightSide = new DiffSideView(this, new CustomLineBorder(UIUtil.getBorderColor(), v ? 0 : 1, v ? 0 : 1, 1, 0));
     myLeftSide.becomeMaster();
     myDiffUpdater = new Rediffers(this);
 
@@ -307,11 +307,35 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
   }
 
   public void setTitle1(String title) {
-    myLeftSide.setTitle(title);
+    setTitle(title, true);
+  }
+
+  private void setTitle(String title, boolean left) {
+    Editor editor = left ? getEditor1() : getEditor2();
+    if (editor == null) return;
+    title = addReadOnly(title, editor);
+    JLabel label = new JLabel(title);
+    if (left) {
+      myLeftSide.setTitle(label);
+    }
+    else {
+      myRightSide.setTitle(label);
+    }
+  }
+
+  private static String addReadOnly(@NotNull String title, @Nullable Editor editor) {
+    if (editor == null) {
+      return title;
+    }
+    boolean readonly = editor.isViewer() || !editor.getDocument().isWritable();
+    if (readonly) {
+      title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
+    }
+    return title;
   }
 
   public void setTitle2(String title) {
-    myRightSide.setTitle(title);
+    setTitle(title, false);
   }
 
   private void setLineBlocks(LineBlocks blocks) {
@@ -490,6 +514,18 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   public LineBlocks getLineBlocks() { return myLineBlocks; }
 
+  static JComponent createComponentForTitle(@NotNull String title, @NotNull final LineSeparator separator, boolean left) {
+    JPanel bottomPanel = new JPanel(new BorderLayout());
+    JLabel sepLabel = new JLabel(separator.name());
+    sepLabel.setForeground(separator.equals(LineSeparator.CRLF) ? Color.RED : Color.BLUE);
+    bottomPanel.add(sepLabel, left ? BorderLayout.EAST : BorderLayout.WEST);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new JLabel(title));
+    panel.add(bottomPanel, BorderLayout.SOUTH);
+    return panel;
+  }
+
   public void setDiffRequest(DiffRequest data) {
     myDiffRequest = data;
     if (data.getHints().contains(DiffTool.HINT_DO_NOT_IGNORE_WHITESPACES)) {
@@ -497,24 +533,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
     myDataProvider.putData(myDiffRequest.getGenericData());
 
-    IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
-    boolean isEditor1Focused = getEditor1() != null
-                               && fm.getFocusedDescendantFor(getEditor1().getComponent()) != null;
+    DiffContent content1 = data.getContents()[0];
+    DiffContent content2 = data.getContents()[1];
 
-    boolean isEditor2Focused = myData.getContent2() != null
-                               && getEditor2() != null
-                               && fm.getFocusedDescendantFor(getEditor2().getComponent()) != null;
+    setContents(content1, content2);
+    setTitles(data);
 
-    setContents(data.getContents()[0], data.getContents()[1]);
-    setTitle1(data.getContentTitles()[0]);
-    setTitle2(data.getContentTitles()[1]);
     setWindowTitle(myOwnerWindow, data.getWindowTitle());
-    //if (isBinaryOrUIEditors(data)) {
-    //  myPanel.removeStatusBar();
-    //  //myPanel.disableToolbar(true);
-    //} else {
-    //  myPanel.addStatusBar();
-    //}
     data.customizeToolbar(myPanel.resetToolbar());
     myPanel.registerToolbarActions();
 
@@ -527,6 +552,14 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
 
     if (myIsRequestFocus) {
+      IdeFocusManager fm = IdeFocusManager.getInstance(myProject);
+      boolean isEditor1Focused = getEditor1() != null
+                                 && fm.getFocusedDescendantFor(getEditor1().getComponent()) != null;
+
+      boolean isEditor2Focused = myData.getContent2() != null
+                                 && getEditor2() != null
+                                 && fm.getFocusedDescendantFor(getEditor2().getComponent()) != null;
+
       if (isEditor1Focused || isEditor2Focused) {
         Editor e = isEditor2Focused ? getEditor2() : getEditor1();
         if (e != null) {
@@ -538,12 +571,29 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     }
   }
 
-  private boolean isBinaryOrUIEditors(DiffRequest data) {
-    final DiffContent[] contents = data.getContents();
-    return contents[0].isBinary()
-           || contents[1].isBinary()
-           || contents[0].getContentType() instanceof UIBasedFileType
-           || contents[1].getContentType() instanceof UIBasedFileType;
+  private void setTitles(@NotNull DiffRequest data) {
+    LineSeparator sep1 = data.getContents()[0].getLineSeparator();
+    LineSeparator sep2 = data.getContents()[1].getLineSeparator();
+
+    String title1 = addReadOnly(data.getContentTitles()[0], myLeftSide.getEditor());
+    String title2 = addReadOnly(data.getContentTitles()[1], myRightSide.getEditor());
+
+    if (sep1 != null && sep2 != null && !sep1.equals(sep2)) {
+      setTitle1(createComponentForTitle(title1, sep1, true));
+      setTitle2(createComponentForTitle(title2, sep2, false));
+    }
+    else {
+      setTitle1(title1);
+      setTitle2(title2);
+    }
+  }
+
+  private void setTitle1(JComponent title) {
+    myLeftSide.setTitle(title);
+  }
+
+  private void setTitle2(JComponent title) {
+    myRightSide.setTitle(title);
   }
 
   private static void setWindowTitle(Window window, String title) {

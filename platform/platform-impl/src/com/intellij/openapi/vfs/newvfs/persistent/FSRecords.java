@@ -127,7 +127,6 @@ public class FSRecords implements Forceable {
         w.lock();
         if (!ourInitialized) {
           init();
-          scanFreeRecords();
           setupFlushing();
           ourInitialized = true;
         }
@@ -231,8 +230,9 @@ public class FSRecords implements Forceable {
           throw new IOException("FS repository wasn't safely shut down");
         }
         markDirty();
+        scanFreeRecords();
       }
-      catch (IOException e) {
+      catch (Exception e) { // IOException, IllegalArgumentException
         LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
         try {
           closeFiles();

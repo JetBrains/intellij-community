@@ -1,0 +1,16 @@
+def ctx = context(scope: scriptScope(), filetypes : ["gant"])
+
+contributor ([ctx], {
+  property name:"project", type:"org.jetbrains.jps.model.JpsProject"
+  property name:"global", type:"org.jetbrains.jps.model.JpsGlobal"
+  property name:"projectBuilder", type:"org.jetbrains.jps.gant.JpsGantProjectBuilder"
+  method name:"jdk", type:"void", params:[name:"String", jdkPath:"String"]
+  method name:"jdk", type:"void", params:[name:"String", jdkPath:"String", initializer:{}]
+
+  method name:"layout", type:"org.jetbrains.jps.gant.LayoutInfo", params: [name:"String", layout:{}]
+  method name:"module", type:"void", params: [name:"String"]
+  method name:"module", type:"void", params: [name:"String", layout:{}]
+  ["jar", "dir", "zip"].each { methodName ->
+    method name:methodName, type:"void", params: [name:"String", layout:{}]
+  }
+})

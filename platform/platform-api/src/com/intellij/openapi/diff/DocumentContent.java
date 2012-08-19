@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.LineSeparator;
 import org.jetbrains.annotations.NotNull;
 
 public class DocumentContent extends DiffContent {
@@ -28,6 +29,7 @@ public class DocumentContent extends DiffContent {
   private final VirtualFile myFile;
   private final FileType myOverridenType;
   private Project myProject;
+  private FileDocumentManager myDocumentManager;
 
   public DocumentContent(Project project, Document document) {
     this(project, document, null);
@@ -36,7 +38,8 @@ public class DocumentContent extends DiffContent {
   public DocumentContent(Project project, @NotNull Document document, FileType type) {
     myProject = project;
     myDocument = document;
-    myFile = FileDocumentManager.getInstance().getFile(document);
+    myDocumentManager = FileDocumentManager.getInstance();
+    myFile = myDocumentManager.getFile(document);
     myOverridenType = type;
   }
 
@@ -69,5 +72,11 @@ public class DocumentContent extends DiffContent {
 
   public byte[] getBytes() {
     return myDocument.getText().getBytes();
+  }
+
+  @NotNull
+  @Override
+  public LineSeparator getLineSeparator() {
+    return LineSeparator.fromString(myDocumentManager.getLineSeparator(myFile, myProject));
   }
 }

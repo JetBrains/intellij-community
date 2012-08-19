@@ -18,7 +18,7 @@ public abstract class JpsServiceManager {
     private static final JpsServiceManager INSTANCE;
 
     static {
-      INSTANCE = ServiceLoader.load(JpsServiceManager.class).iterator().next();
+      INSTANCE = ServiceLoader.load(JpsServiceManager.class, JpsServiceManager.class.getClassLoader()).iterator().next();
     }
   }
 }

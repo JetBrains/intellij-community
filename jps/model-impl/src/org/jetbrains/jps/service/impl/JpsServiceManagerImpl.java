@@ -17,7 +17,7 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
     //noinspection unchecked
     T service = (T)myServices.get(serviceClass);
     if (service == null) {
-      final Iterator<T> iterator = ServiceLoader.load(serviceClass).iterator();
+      final Iterator<T> iterator = ServiceLoader.load(serviceClass, serviceClass.getClassLoader()).iterator();
       if (!iterator.hasNext()) {
         throw new ServiceConfigurationError("Implementation for " + serviceClass + " not found");
       }
@@ -37,7 +37,7 @@ public class JpsServiceManagerImpl extends JpsServiceManager {
   public <T> Iterable<T> getExtensions(Class<T> extensionClass) {
     List<?> cached = myExtensions.get(extensionClass);
     if (cached == null) {
-      final ServiceLoader<T> loader = ServiceLoader.load(extensionClass);
+      final ServiceLoader<T> loader = ServiceLoader.load(extensionClass, extensionClass.getClassLoader());
       List<T> extensions = new ArrayList<T>();
       for (T t : loader) {
         extensions.add(t);

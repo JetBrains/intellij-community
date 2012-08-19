@@ -12,6 +12,20 @@ public class IdeaProjectLoader {
   private ProjectLoadingErrorReporter errorReporter
   private final XmlParser xmlParser = new XmlParser(false, false)
 
+  public static String guessHome(Script script) {
+    File home = new File(script["gant.file"].substring("file:".length()))
+
+    while (home != null) {
+      if (home.isDirectory()) {
+        if (new File(home, ".idea").exists()) return home.getCanonicalPath()
+      }
+
+      home = home.getParentFile()
+    }
+
+    return null
+  }
+
   public static ProjectMacroExpander loadFromPath(Project project, String path, Map<String, String> pathVariables) {
     return loadFromPath(project, path, pathVariables, "")
   }

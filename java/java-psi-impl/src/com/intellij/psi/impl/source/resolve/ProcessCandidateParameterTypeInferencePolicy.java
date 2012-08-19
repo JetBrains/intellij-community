@@ -75,7 +75,7 @@ public class ProcessCandidateParameterTypeInferencePolicy extends DefaultParamet
           }
           if (parameter != null) {
             final PsiParameter finalParameter = parameter;
-            PsiType type = PsiResolveHelperImpl.ourGuard.doPreventingRecursion(innerMethodCall, true, new Computable<PsiType>() {
+            PsiType type = PsiResolveHelper.ourGuard.doPreventingRecursion(innerMethodCall, true, new Computable<PsiType>() {
               @Override
               public PsiType compute() {
                 return substitutor.substitute(finalParameter.getType());

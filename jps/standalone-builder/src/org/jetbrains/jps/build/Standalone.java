@@ -104,21 +104,20 @@ public class Standalone {
       return;
     }
 
-    runBuild(loader, dataStorageRoot, buildType, modulesSet, artifactsList, true);
-  }
-
-  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, BuildType buildType, Set<String> modulesSet,
-                              List<String> artifactsList, final boolean includeTests) {
-    final BuildRunner buildRunner = new BuildRunner(loader, modulesSet, buildType, artifactsList, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
-    final ConsoleMessageHandler messageHandler = new ConsoleMessageHandler();
     try {
-      ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
-      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, includeTests);
+      runBuild(loader, dataStorageRoot, buildType, modulesSet, artifactsList, true, new ConsoleMessageHandler());
     }
     catch (Throwable t) {
       System.err.println("Internal error: " + t.getMessage());
       t.printStackTrace();
     }
+  }
+
+  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, BuildType buildType, Set<String> modulesSet,
+                              List<String> artifactsList, final boolean includeTests, final MessageHandler messageHandler) throws Exception {
+    final BuildRunner buildRunner = new BuildRunner(loader, modulesSet, buildType, artifactsList, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
+    ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
+    buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, includeTests);
   }
 
   private static class ConsoleMessageHandler implements MessageHandler {
