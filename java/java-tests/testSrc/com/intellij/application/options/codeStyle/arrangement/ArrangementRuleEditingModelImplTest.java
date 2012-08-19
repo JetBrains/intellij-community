@@ -19,6 +19,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import org.junit.Test;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 
 import static com.intellij.psi.codeStyle.arrangement.ArrangementUtil.and;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.FIELD;
@@ -136,24 +137,36 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
 
   @Test
   public void removeLastRowConditionFromMultiChildrenParent() {
+    configure(and(atom(FIELD), atom(PUBLIC)));
+    configure(and(atom(FIELD), atom(STATIC)));
+    
+    ArrangementRuleEditingModel modelToChange = myRowMappings.get(2);
+    assertNotNull(modelToChange);
+    
+    ArrangementRuleEditingModel siblingModel = myRowMappings.get(3);
+    assertNotNull(siblingModel);
+    assertEquals(2, myRowMappings.size());
+    
+    modelToChange.removeAndCondition(atom(PUBLIC));
+    
     // TODO den uncomment
-    //configure(and(atom(FIELD), atom(PUBLIC)));
-    //configure(and(atom(FIELD), atom(STATIC)));
-    //
-    //ArrangementRuleEditingModel modelToChange = myRowMappings.get(2);
-    //assertNotNull(modelToChange);
-    //
-    //ArrangementRuleEditingModel siblingModel = myRowMappings.get(3);
-    //assertNotNull(siblingModel);
-    //assertEquals(2, myRowMappings.size());
-    //
-    //modelToChange.removeAndCondition(atom(PUBLIC));
-    //
     //assertEquals(2, myRowMappings.size());
     //assertSame(modelToChange, myRowMappings.get(1));
     //assertEquals(atom(FIELD), modelToChange.getSettingsNode());
     //
     //assertSame(siblingModel, myRowMappings.get(3));
     //assertEquals(and(atom(FIELD), atom(STATIC)), siblingModel);
+    //
+    //DefaultMutableTreeNode atomFieldNode = (DefaultMutableTreeNode)myRoot.getFirstChild();
+    //assertNotNull(atomFieldNode);
+    //assertEquals(atom(FIELD), atomFieldNode.getUserObject());
+    //
+    //DefaultMutableTreeNode layeredFieldNode = atomFieldNode.getNextNode();
+    //assertNotNull(atomFieldNode);
+    //assertEquals(atom(FIELD), atomFieldNode.getUserObject());
+    //
+    //DefaultMutableTreeNode staticNode = (DefaultMutableTreeNode)layeredFieldNode.getFirstChild();
+    //assertNotNull(staticNode);
+    //assertEquals(atom(STATIC), staticNode.getUserObject());
   }
 }
