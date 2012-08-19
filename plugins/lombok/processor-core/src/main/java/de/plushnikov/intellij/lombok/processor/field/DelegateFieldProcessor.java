@@ -7,7 +7,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -17,12 +16,12 @@ import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
+import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiElementUtil;
-import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.Delegate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,8 +128,8 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
       PsiClass psiClass = classResolveResult.getElement();
       PsiSubstitutor classSubstitutor = classResolveResult.getSubstitutor();
       if (null != psiClass) {
-        List<Pair<PsiMethod, PsiSubstitutor>> methodsAndTheirSubstitutors = psiClass.getAllMethodsAndTheirSubstitutors();
-        for (Pair<PsiMethod, PsiSubstitutor> pair : methodsAndTheirSubstitutors) {
+        List<Pair<PsiMethod, PsiSubstitutor>> acceptedMethods = psiClass.getAllMethodsAndTheirSubstitutors();
+        for (Pair<PsiMethod, PsiSubstitutor> pair : acceptedMethods) {
           PsiMethod psiMethod = pair.getFirst();
           if (!psiMethod.isConstructor() && psiMethod.hasModifierProperty(PsiModifier.PUBLIC) && !psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
             // replace Substitutor, one from pair seems to be wrong?
@@ -150,14 +149,14 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
     Iterator<Pair<PsiMethod, PsiSubstitutor>> iterator = allMethods.iterator();
     while (iterator.hasNext()) {
       Pair<PsiMethod, PsiSubstitutor> pair = iterator.next();
-      boolean accepptMethod = true;
-      for (Pair<PsiMethod, PsiSubstitutor> uniqueuePair : processedMethods) {
-        if (PsiElementUtil.methodMatches(pair, uniqueuePair)) {
-          accepptMethod = false;
+      boolean acceptMethod = true;
+      for (Pair<PsiMethod, PsiSubstitutor> uniquePair : processedMethods) {
+        if (PsiElementUtil.methodMatches(pair, uniquePair)) {
+          acceptMethod = false;
           break;
         }
       }
-      if (accepptMethod) {
+      if (acceptMethod) {
         processedMethods.add(pair);
       } else {
         iterator.remove();
@@ -175,14 +174,14 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
 
     Collection<Pair<PsiMethod, PsiSubstitutor>> result = new ArrayList<Pair<PsiMethod, PsiSubstitutor>>();
     for (Pair<PsiMethod, PsiSubstitutor> includesMethodPair : includesMethods) {
-      boolean accepptMethod = true;
+      boolean acceptMethod = true;
       for (Pair<PsiMethod, PsiSubstitutor> excludeMethodPair : excludeMethods) {
         if (PsiElementUtil.methodMatches(includesMethodPair, excludeMethodPair)) {
-          accepptMethod = false;
+          acceptMethod = false;
           break;
         }
       }
-      if (accepptMethod) {
+      if (acceptMethod) {
         result.add(includesMethodPair);
       }
     }
@@ -191,30 +190,54 @@ public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
 
   @NotNull
   private PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiMethod psiMethod, @Nullable PsiSubstitutor psiSubstitutor) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(PsiKeyword.PUBLIC);
-      builder.append(' ');
-      final PsiType returnType = null == psiSubstitutor ? psiMethod.getReturnType() : psiSubstitutor.substitute(psiMethod.getReturnType());
-      builder.append(null == returnType ? "" : returnType.getCanonicalText());
-      builder.append(' ');
-      builder.append(psiMethod.getName());
-      builder.append('(');
+    final PsiType returnType = null == psiSubstitutor ? psiMethod.getReturnType() : psiSubstitutor.substitute(psiMethod.getReturnType());
 
-      PsiParameterList parameterList = psiMethod.getParameterList();
-      if (parameterList.getParametersCount() > 0) {
-        for (PsiParameter psiParameter : parameterList.getParameters()) {
-          final PsiType psiParameterType = null == psiSubstitutor ? psiParameter.getType() : psiSubstitutor.substitute(psiParameter.getType());
-          builder.append(psiParameterType.getCanonicalText()).append(' ').append(psiParameter.getName()).append(',');
-        }
-        builder.deleteCharAt(builder.length() - 1);
+    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().
+        createLightMethod(psiClass.getManager(), psiMethod.getName())
+        .withModifier(PsiModifier.PUBLIC)
+        .withMethodReturnType(returnType)
+        .withContainingClass(psiClass)
+        .withNavigationElement(psiMethod);
+
+    PsiParameterList parameterList = psiMethod.getParameterList();
+    if (parameterList.getParametersCount() > 0) {
+      for (PsiParameter psiParameter : parameterList.getParameters()) {
+        final PsiType psiParameterType = null == psiSubstitutor ? psiParameter.getType() : psiSubstitutor.substitute(psiParameter.getType());
+        method.withParameter(psiParameter.getName(), psiParameterType);
       }
-      builder.append(')');
-      builder.append("{ }");
-
-      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiMethod);
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
     }
+
+    return method;
+//    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
+//    try {
+//      builder.append(PsiKeyword.PUBLIC);
+//      builder.append(' ');
+//      final PsiType returnType = null == psiSubstitutor ? psiMethod.getReturnType() : psiSubstitutor.substitute(psiMethod.getReturnType());
+//      final String returnTypeText = null == returnType ? "" : returnType.getCanonicalText();
+//      //Workaround for: "public <T> T someMethod(SomeType<T> someParam)" Methods
+//      final String psiMethodText = psiMethod.getText();
+//      if (null != psiMethodText && psiMethodText.contains("<" + returnTypeText + "> " + returnTypeText)) {
+//        builder.append('<').append(returnTypeText).append("> ");
+//      }
+//      builder.append(returnTypeText);
+//      builder.append(' ');
+//      builder.append(psiMethod.getName());
+//      builder.append('(');
+//
+//      PsiParameterList parameterList = psiMethod.getParameterList();
+//      if (parameterList.getParametersCount() > 0) {
+//        for (PsiParameter psiParameter : parameterList.getParameters()) {
+//          final PsiType psiParameterType = null == psiSubstitutor ? psiParameter.getType() : psiSubstitutor.substitute(psiParameter.getType());
+//          builder.append(psiParameterType.getCanonicalText()).append(' ').append(psiParameter.getName()).append(',');
+//        }
+//        builder.deleteCharAt(builder.length() - 1);
+//      }
+//      builder.append(')');
+//      builder.append("{ }");
+//
+//      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiMethod);
+//    } finally {
+//      StringBuilderSpinAllocator.dispose(builder);
+//    }
   }
 }
