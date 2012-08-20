@@ -878,11 +878,12 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       if (argumentList != null && PsiUtil.getLanguageLevel(argumentList).isAtLeast(LanguageLevel.JDK_1_8)) {
         for (PsiExpression expression : argumentList.getExpressions()) {
           if (expression instanceof PsiLambdaExpression) {
-            if (((PsiLambdaExpression)expression).getParameterList().getParametersCount() > 0){
-              return getFailedInferenceConstraint(typeParameter);
-            }
             final PsiType functionalInterfaceType = PsiLambdaExpressionImpl.getFunctionalInterfaceType(((PsiLambdaExpression)expression), false);
             if (functionalInterfaceType == null || PsiUtil.resolveClassInType(functionalInterfaceType) == typeParameter){
+              return getFailedInferenceConstraint(typeParameter);
+            }
+            final PsiType functionalInterfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+            if (((PsiLambdaExpression)expression).getParameterList().getParametersCount() > 0 && functionalInterfaceReturnType != PsiType.VOID) {
               return getFailedInferenceConstraint(typeParameter);
             }
           }

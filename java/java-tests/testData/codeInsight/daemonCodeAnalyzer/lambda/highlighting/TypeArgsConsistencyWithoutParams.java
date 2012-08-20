@@ -1,3 +1,4 @@
+import java.lang.String;
 import java.util.*;
 class Test4 {
    interface I<K> {
@@ -33,4 +34,16 @@ class Test6 {
         bar(<error descr="Incompatible return type <null> in lambda expression">() -> null</error>);
         bar(() -> {});
     }
+}
+
+class Test7 {
+  interface I<K> {
+    void foo(String s);
+  }
+  
+  static <T> void bar(I<T> i){}
+
+  {
+     bar(x -> {});
+  }
 }
