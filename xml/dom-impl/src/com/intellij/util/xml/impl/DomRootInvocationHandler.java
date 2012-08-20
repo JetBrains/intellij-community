@@ -43,9 +43,6 @@ public class DomRootInvocationHandler extends DomInvocationHandler<AbstractDomCh
       }
     }, fileElement.getManager(), true, stub);
     myParent = fileElement;
-    if (stub != null) {
-      stub.setHandler(this);
-    }
   }
 
   public void undefineInternal() {

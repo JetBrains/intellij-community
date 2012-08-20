@@ -32,6 +32,7 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
                                             DomManagerImpl manager,
                                             ElementStub stub) {
     super(childDescription.getType(), new StubParentStrategy(stub), tagName, childDescription, manager, true, stub);
+
   }
 
   protected Type narrowType(@NotNull final Type nominalType) {

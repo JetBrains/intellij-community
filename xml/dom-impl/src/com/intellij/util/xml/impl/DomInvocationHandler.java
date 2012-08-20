@@ -20,7 +20,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.semantic.SemElement;
 import com.intellij.semantic.SemKey;
-import com.intellij.semantic.SemService;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -92,6 +91,9 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     }
     myProxy = AdvancedProxy.createProxy(this, implementation, isInterface ? new Class[]{rawType} : ArrayUtil.EMPTY_CLASS_ARRAY);
     refreshGenericInfo(dynamic);
+    if (stub != null) {
+      stub.setHandler(this);
+    }
   }
 
   protected Type narrowType(@NotNull Type nominalType) {
@@ -304,7 +306,6 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
     final XmlElement xmlElement = parentStrategy.getXmlElement();
     if (xmlElement != null) {
-      final SemService semService = SemService.getSemService(myManager.getProject());
       final DomInvocationHandler actual = myManager.getDomHandler(xmlElement);
       if (!equals(actual)) {
         return "element changed: " + this.toStringEx() + "!=" + (actual == null ? null : actual.toStringEx());

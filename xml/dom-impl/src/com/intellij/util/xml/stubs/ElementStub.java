@@ -52,4 +52,10 @@ public class ElementStub extends DomStub {
   public String toString() {
     return getName();
   }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    return obj instanceof ElementStub && id == ((ElementStub)obj).id && myName.equals(((ElementStub)obj).myName);
+  }
 }

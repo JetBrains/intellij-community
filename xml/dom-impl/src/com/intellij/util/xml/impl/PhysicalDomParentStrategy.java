@@ -24,7 +24,6 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlEntityRef;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,27 +92,36 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return DomImplUtil.getFile(handler);
   }
 
+  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   public boolean equals(final Object o) {
-    if (this == o) return true;
-    if (!(o instanceof PhysicalDomParentStrategy)) return false;
+    return strategyEquals(this, o);
+  }
 
-    final XmlElement thatElement = ((PhysicalDomParentStrategy)o).myElement;
-    if (xmlElementsEqual(myElement, thatElement)) {
-      if (myElement != thatElement) {
-        final PsiElement nav1 = myElement.getNavigationElement();
+  public static boolean strategyEquals(DomParentStrategy strategy, final Object o) {
+
+    if (strategy == o) return true;
+    if (!(o instanceof DomParentStrategy)) return false;
+    final XmlElement thatElement = ((DomParentStrategy)o).getXmlElement();
+    if (thatElement == null) return false;
+    XmlElement element = strategy.getXmlElement();
+    if (element == null) return false;
+
+    if (xmlElementsEqual(element, thatElement)) {
+      if (element != thatElement) {
+        final PsiElement nav1 = element.getNavigationElement();
         final PsiElement nav2 = thatElement.getNavigationElement();
         if (nav1 != nav2) {
-          PsiElement curContext = findIncluder(myElement);
+          PsiElement curContext = findIncluder(element);
           PsiElement navContext = findIncluder(nav1);
           LOG.error(LogMessageEx.createEvent(
             "x:include processing error",
             "nav1,nav2=" + nav1 + ", " + nav2 + ";\n" +
             nav1.getContainingFile() + ":" + nav1.getTextRange().getStartOffset() + "!=" + nav2.getContainingFile() + ":" + nav2.getTextRange().getStartOffset() + ";\n" +
-            (nav1 == myElement) + ";" + (nav2 == thatElement) + ";\n" +
+            (nav1 == element) + ";" + (nav2 == thatElement) + ";\n" +
             "contexts equal: " +  (curContext == navContext) + ";\n" +
             "curContext?.physical=" + (curContext != null && curContext.isPhysical()) + ";\n" +
             "navContext?.physical=" + (navContext != null && navContext.isPhysical()) + ";\n" +
-            "myElement.physical=" + myElement.isPhysical() + ";\n" +
+            "myElement.physical=" + element.isPhysical() + ";\n" +
             "thatElement.physical=" + thatElement.isPhysical() + "\n" + DebugUtil.currentStackTrace(),
             new Attachment("Including tag text 1.xml", curContext == null ? "null" : curContext.getText()),
             new Attachment("Including tag text 2.xml", navContext == null ? "null" : navContext.getText())
