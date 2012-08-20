@@ -190,4 +190,156 @@ public class ArrangementConfigUtil {
     }
     return Pair.create(leaf, rowsCreated);
   }
+
+  /**
+   * Utility method which helps to replace node sub-hierarchy identified by the given start and end nodes (inclusive) by
+   * a sub-hierarchy which is denoted by the given root. 
+   * 
+   * @param from         indicates start of the node sub-hierarchy to be replaced (inclusive)
+   * @param to           indicates end of the node sub-hierarchy to be replaced (inclusive)
+   * @param replacement  root of the node sub-hierarchy which should replace the one identified by the given 'start' and 'end' nodes
+   */
+  public static void replace(@NotNull DefaultMutableTreeNode from,
+                             @NotNull DefaultMutableTreeNode to,
+                             @NotNull DefaultMutableTreeNode replacement)
+  {
+    if (from == to) {
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)from.getParent();
+      int index = parent.getIndex(from);
+      parent.remove(index);
+      parent.insert(replacement, index);
+      return;
+    }
+
+    // The algorithm looks as follows:
+    //   1. Cut sub-hierarchy which belongs to the given 'from' root and is located below the 'to -> from' path;
+    //   2. Remove 'to -> from' sub-hierarchy' by going bottom-up and stopping as soon as a current node has a child over than one
+    //      from the sub-hierarchy to remove;
+    //   3. Add 'replacement' sub-hierarchy starting after the 'from' index at its parent;
+    //   4. Add sub-hierarchy cut at the 1) starting after the 'replacement' sub-hierarchy index;
+    // Example:
+    //   Initial:
+    //      0
+    //      |_1
+    //        |_2
+    //        | |_3
+    //        | |_4
+    //        | |_5
+    //        |
+    //        |_6
+    //   Let's say we want to replace the sub-hierarchy '1 -> 2 -> 4' by the sub-hierarchy '1 -> 4'. The algorithm in action:
+    //     1. Cut bottom sub-hierarchy:
+    //         Current:      Cut:
+    //           0            1
+    //           |_1          |_2
+    //             |_2        | |_5
+    //               |_3      |
+    //               |_4      |_6
+    //
+    //     2. Remove target sub-hierarchy:
+    //         Current:  
+    //           0       
+    //           |_1     
+    //             |_2    <-- stop at this node because it has a child node '3' which doesn't belong to the '1 -> 2 -> 4'
+    //               |_3 
+    //     3. Add 'replacement' sub-hierarchy:
+    //         Current:  
+    //           0       
+    //           |_1    <-- re-use this node for '1 -> 4' addition
+    //             |_2    
+    //             | |_3
+    //             |
+    //             |_4
+    //     4. Add 'bottom' sub-hierarchy:
+    //         Current:  
+    //           0       
+    //           |_1    <-- re-use this node either for '1 -> 2 -> 5' or '1 -> 6' addition
+    //             |_2  
+    //             | |_3
+    //             |
+    //             |_4
+    //             |
+    //             |_2
+    //             | |_5
+    //             |
+    //             |_6
+    //
+    // Note: we need to have a notion of 'equal nodes' for node re-usage. It's provided by comparing node user objects.
+
+    DefaultMutableTreeNode root = (DefaultMutableTreeNode)from.getParent();
+
+    //region Cut bottom sub-hierarchy
+    DefaultMutableTreeNode cutHierarchy = null;
+    for (DefaultMutableTreeNode current = to; current != root; current = (DefaultMutableTreeNode)current.getParent()) {
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)current.getParent();
+      int i = parent.getIndex(current);
+      if (i >= parent.getChildCount() - 1) {
+        continue;
+      }
+      DefaultMutableTreeNode parentCopy = new DefaultMutableTreeNode(parent.getUserObject());
+      if (cutHierarchy != null) {
+        parentCopy.add(cutHierarchy);
+      }
+      for (int j = i + 1, limit = parent.getChildCount(); j < limit; j++) {
+        DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(j);
+        parent.remove(j);
+        parentCopy.add(child);
+      }
+      cutHierarchy = parentCopy;
+    }
+    //endregion
+    
+    int insertionIndex = root.getIndex(from) + 1; 
+    
+    //region Remove target sub-hierarchy
+    for (DefaultMutableTreeNode current = to; current != root; current = (DefaultMutableTreeNode)current.getParent()) {
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)current.getParent();
+      parent.remove(current);
+      if (parent.getChildCount() > 0) {
+        break;
+      }
+    }
+    //endregion
+
+    //region Insert nodes.
+    insert(root, insertionIndex, replacement);
+    if (cutHierarchy != null) {
+      insert(root, insertionIndex + 1, cutHierarchy);
+    }
+    //endregion
+  }
+
+  /**
+   * Inserts given child to the given parent re-using existing nodes under the parent sub-hierarchy if possible (two nodes are
+   * considered equals if their {@link DefaultMutableTreeNode#getUserObject() user objects} are equal.
+   * <p/>
+   * Example:
+   * <pre>
+   *   parent:  0         to-insert: 2     
+   *            |_1                  |_3   
+   *            |_2                    |_6 
+   *            | |_3                      
+   *            |   |_4                    
+   *            |_5                        
+   *   -------------------------------------------------------------------------------------------------
+   *  | index:  |       0             |       1             |       2             |       3             |
+   *  |-------------------------------------------------------------------------------------------------
+   *  | result: |       0             |       0             |       0             |       0             |
+   *  |         |       |_2           |       |_1           |       |_1           |       |_1           |
+   *  |         |       | |_3         |       |_2           |       |_2           |       |_2           |
+   *  |         |       |   |_6       |       | |_3         |       | |_3         |       | |_3         |
+   *  |         |       |_1           |       |   |_6       |       |   |_4       |       |   |_4       |
+   *  |         |       |_2           |       |   |_4       |       |   |_6       |       |_5           |
+   *  |         |       | |_3         |       |_5           |       |_5           |       |_2           |
+   *  |         |       |   |_4       |                     |                     |         |_3         |
+   *  |         |       |_5           |                     |                     |           |_6       |
+   * </pre>
+   * 
+   * @param parent  parent node to insert into
+   * @param index   insertion index to use for the given parent node
+   * @param child   node to insert to the given parent node at the given insertion index
+   */
+  public static void insert(@NotNull DefaultMutableTreeNode parent, int index, @NotNull DefaultMutableTreeNode child) {
+    
+  }
 }
