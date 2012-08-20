@@ -533,6 +533,9 @@
     <localInspection language="JAVA" shortName="Convert2Diamond" displayName="Explicit type can be replaced with &lt;&gt;"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection" />
+    <localInspection language="JAVA" shortName="Convert2Lambda" displayName="Anonymous type can be replaced with lambda"
+                     groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection" />
     <localInspection language="JAVA" suppressId="unchecked" shortName="SafeVarargsDetector"
                      displayName="Possible heap pollution from parameterized vararg type" groupName="Java language level migration aids"
                      enabledByDefault="true" level="WARNING"

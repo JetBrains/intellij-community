@@ -70,7 +70,8 @@ public class LambdaUtil {
            context instanceof PsiLambdaExpression ||
            context instanceof PsiReturnStatement ||
            context instanceof PsiExpressionList ||
-           context instanceof PsiParenthesizedExpression;
+           context instanceof PsiParenthesizedExpression ||
+           context instanceof PsiArrayInitializerExpression;
   }
 
   public static boolean isLambdaFullyInferred(PsiLambdaExpression expression, PsiType functionalInterfaceType) {
