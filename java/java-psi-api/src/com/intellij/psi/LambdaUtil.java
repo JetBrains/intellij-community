@@ -98,6 +98,31 @@ public class LambdaUtil {
     if (signatures.isEmpty()) return "No target method found";
     return signatures.size() == 1 ? null : "Multiple non-overriding abstract methods found";
   }
+  
+  public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceType) {
+    final PsiType returnType = getFunctionalInterfaceReturnType(functionalInterfaceType);
+    if (returnType == PsiType.VOID) {
+      final PsiElement body = lambdaExpression.getBody();
+      if (body instanceof PsiCodeBlock) {
+        if (!lambdaExpression.getReturnExpressions().isEmpty()) return "Cannot return a value from method whose result type is void";
+      } else if (body instanceof PsiExpression) {
+        final PsiType type = ((PsiExpression)body).getType();
+        return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) +" in lambda expression";
+      }
+    } else if (returnType != null) {
+      final List<PsiExpression> returnExpressions = lambdaExpression.getReturnExpressions();
+      for (PsiExpression expression : returnExpressions) {
+        final PsiType expressionType = expression.getType();
+        if (expressionType != null && !returnType.isAssignableFrom(expressionType)) {
+          return "Incompatible return type " + expressionType.getPresentableText() + " in lambda expression";
+        }
+      }
+      if (returnExpressions.isEmpty()) {
+        return  "Incompatible return type void in lambda expression";
+      }
+    }
+    return null;
+  }
 
   public static boolean isAcceptable(PsiLambdaExpression lambdaExpression, final PsiType leftType) {
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(leftType);

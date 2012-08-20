@@ -32,7 +32,7 @@ class Test1 {
         I<Object> lO =  x->x;
         bar2("", lO);
 
-        <error descr="Incompatible types. Found: '<lambda expression>', required: 'Test1.I<java.lang.String>'">I<String> lS =  x->x;</error>
+        I<String> lS =  <error descr="Incompatible return type List<String> in lambda expression">x->x</error>;
         bar2("", lS);
 
         bar2("", x -> x);
@@ -66,9 +66,9 @@ class Test2 {
     {
         bar(<error descr="Cyclic inference">x -> x</error>);
         bar1(<error descr="Cyclic inference">x -> x</error>);
-        bar2<error descr="'bar2(java.lang.Integer, Test2.I<java.lang.Integer>)' in 'Test2' cannot be applied to '(int, <lambda expression>)'">(1, x -> x)</error>;
-        bar2<error descr="'bar2(java.lang.String, Test2.I<java.lang.String>)' in 'Test2' cannot be applied to '(java.lang.String, <lambda expression>)'">("", x -> x)</error>;
-        bar3<error descr="'bar3(Test2.I<java.lang.String>, java.lang.String)' in 'Test2' cannot be applied to '(<lambda expression>, java.lang.String)'">(x -> x, "")</error>;
+        bar2(1, <error descr="Incompatible return type List<Integer> in lambda expression">x -> x</error>);
+        bar2("", <error descr="Incompatible return type List<String> in lambda expression">x -> x</error>);
+        bar3(<error descr="Incompatible return type List<String> in lambda expression">x -> x</error>, "");
     }
 }
 

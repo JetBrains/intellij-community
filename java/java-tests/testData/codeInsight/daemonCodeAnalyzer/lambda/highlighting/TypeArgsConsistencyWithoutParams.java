@@ -19,7 +19,7 @@ class Test5 {
     static <T> void bar(I<T> i){}
 
     {
-        bar<error descr="'bar(Test5.I<T>)' in 'Test5' cannot be applied to '(<lambda expression>)'">(() -> null)</error>;
+        bar(<error descr="Incompatible return type <null> in lambda expression">() -> null</error>);
     }
 }
 class Test6 {
@@ -30,7 +30,7 @@ class Test6 {
     static <T> void bar(I<T> i){}
 
     {
-        bar<error descr="'bar(Test6.I<java.lang.Object>)' in 'Test6' cannot be applied to '(<lambda expression>)'">(() -> null)</error>;
+        bar(<error descr="Incompatible return type <null> in lambda expression">() -> null</error>);
         bar(() -> {});
     }
 }
