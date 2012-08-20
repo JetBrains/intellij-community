@@ -50,9 +50,6 @@ public class PyTypeChecker {
     if (actual instanceof PyTypeReference) {
       return match(expected, ((PyTypeReference)actual).resolve(null, context), context, substitutions, false);
     }
-    if (isUnknown(actual)) {
-      return true;
-    }
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
       final PyType subst = substitutions.get(generic);
@@ -71,6 +68,9 @@ public class PyTypeChecker {
         substitutions.put(generic, actual);
         return true;
       }
+    }
+    if (isUnknown(actual)) {
+      return true;
     }
     if (actual instanceof PyUnionType) {
       for (PyType m : ((PyUnionType)actual).getMembers()) {
@@ -149,7 +149,7 @@ public class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type) {
-    if (type == null || type instanceof PyTypeReference) {
+    if (type == null || type instanceof PyTypeReference || type instanceof PyGenericType) {
       return true;
     }
     if (type instanceof PyUnionType) {
