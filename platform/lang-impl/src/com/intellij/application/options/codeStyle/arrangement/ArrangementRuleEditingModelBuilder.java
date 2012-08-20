@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
 /**
@@ -92,11 +93,20 @@ public class ArrangementRuleEditingModelBuilder {
     }
 
     HierarchicalArrangementSettingsNode grouped = grouper.group(setting);
+    DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
     Pair<DefaultMutableTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped);
     DefaultMutableTreeNode topMostNode = (DefaultMutableTreeNode)ArrangementConfigUtil.getLastBefore(pair.first, root);
     int row = initialInsertRow + pair.second - 1;
-    ArrangementRuleEditingModelImpl model
-      = new ArrangementRuleEditingModelImpl(setting, topMostNode, pair.first, grouper, rowMappings, row, tree.isRootVisible() ? 0 : -1);
+    ArrangementRuleEditingModelImpl model = new ArrangementRuleEditingModelImpl(
+      treeModel,
+      setting,
+      topMostNode,
+      pair.first,
+      grouper,
+      rowMappings,
+      row,
+      tree.isRootVisible() ? 0 : -1
+    );
     rowMappings.put(row, model);
   }
 

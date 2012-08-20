@@ -26,6 +26,7 @@ import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.util.Set;
 
 /**
@@ -41,6 +42,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @NotNull private final Set<Listener> myListeners  = new HashSet<Listener>();
   @NotNull private final Set<Object>   myConditions = new HashSet<Object>();
 
+  @NotNull private final DefaultTreeModel                                   myTreeModel;
   @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myRowMappings;
   @NotNull private final ArrangementSettingsGrouper                         myGrouper;
   private final          int                                                myRowShift;
@@ -53,18 +55,20 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   /**
    * Creates new <code>ArrangementRuleEditingModelImpl</code> object.
    *
+   * @param model      tree model which holds target ui nodes. Basically, we need to perform ui nodes modification via it in order
+   *                   to generate corresponding events automatically
    * @param node       backing settings node
    * @param topMost    there is a possible case that a single settings node is shown in more than one visual line
-   *                   ({@link HierarchicalArrangementSettingsNode}). This argument is the top-most UI node used for the
-   *                   settings node representation
+ *                     ({@link HierarchicalArrangementSettingsNode}). This argument is the top-most UI node used for the
+ *                     settings node representation
    * @param bottomMost bottom-most UI node used for the given settings node representation 
    * @param grouper    strategy that encapsulates information on how settings node should be displayed
    * @param mappings   {@code 'row -> model'} mappings
    * @param row        row number for which current model is registered at the given model mappings
    * @param shift      specifies a shift to be applied to the node rows on model modification. Primary intention is to handle
-   *                   a situation when tree root is not shown (a shift is '-1' then)
    */
-  public ArrangementRuleEditingModelImpl(@NotNull ArrangementSettingsNode node,
+  public ArrangementRuleEditingModelImpl(@NotNull DefaultTreeModel model,
+                                         @NotNull ArrangementSettingsNode node,
                                          @NotNull DefaultMutableTreeNode topMost,
                                          @NotNull DefaultMutableTreeNode bottomMost,
                                          @NotNull ArrangementSettingsGrouper grouper,
@@ -72,6 +76,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
                                          int row,
                                          int shift)
   {
+    myTreeModel = model;
     mySettingsNode = node;
     myTopMost = topMost;
     myBottomMost = bottomMost;
@@ -180,7 +185,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     Pair<DefaultMutableTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped);
     DefaultMutableTreeNode newBottom = replacement.first;
     DefaultMutableTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
-    final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop);
+    final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop, myTreeModel);
     myTopMost = newTop;
     myBottomMost = newBottom;
 

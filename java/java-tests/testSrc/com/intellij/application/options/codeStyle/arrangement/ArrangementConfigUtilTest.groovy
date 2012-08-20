@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable
 import org.junit.Test
 
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 
 import static org.junit.Assert.assertEquals
 /**
@@ -50,7 +51,7 @@ four =      '4'()
       '1' {
         '4'()
       }
-    def rowMappings = ArrangementConfigUtil.replace(one, four, replacement)
+    def rowMappings = doReplace(initial, one, four, replacement)
     
     // Check
     def expected = new TreeNodeBuilder().
@@ -108,8 +109,8 @@ four =      '4'()
          }
          '5'()
        }
-
-    ArrangementConfigUtil.insert(initial, 0, toAdd)
+    
+    doInsert(initial, 0, toAdd)
     assertNodesEqual(expected, initial)
   }
 
@@ -145,7 +146,7 @@ four =      '4'()
          '5'()
        }
 
-    ArrangementConfigUtil.insert(initial, 1, toAdd)
+    doInsert(initial, 1, toAdd)
     assertNodesEqual(expected, initial)
   }
 
@@ -181,7 +182,7 @@ four =      '4'()
               '5'()
             }
 
-    ArrangementConfigUtil.insert(initial, 2, toAdd)
+    doInsert(initial, 2, toAdd)
     assertNodesEqual(expected, initial)
   }
   
@@ -221,8 +222,16 @@ four =      '4'()
          }
        }
 
-    ArrangementConfigUtil.insert(initial, 3, toAdd)
+    doInsert(initial, 3, toAdd)
     assertNodesEqual(expected, initial)
+  }
+  
+  private static def doReplace(initial, from, to, replacement) {
+    ArrangementConfigUtil.replace(from, to, replacement, new DefaultTreeModel(initial))
+  }
+
+  private static def doInsert(parent, i, child) {
+    ArrangementConfigUtil.insert(parent, i, child, new DefaultTreeModel(ArrangementConfigUtil.getRoot(parent)))
   }
   
   private static void assertNodesEqual(@NotNull DefaultMutableTreeNode expected, @NotNull DefaultMutableTreeNode actual) {

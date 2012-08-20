@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -215,20 +216,22 @@ public class ArrangementConfigUtil {
    * @param from         indicates start of the node sub-hierarchy to be replaced (inclusive)
    * @param to           indicates end of the node sub-hierarchy to be replaced (inclusive)
    * @param replacement  root of the node sub-hierarchy which should replace the one identified by the given 'start' and 'end' nodes
+   * @param treeModel    model which should hold ui nodes
    * @return             collection of row changes at the form {@code 'old row -> new row'}
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
   @NotNull
   public static TIntIntHashMap replace(@NotNull DefaultMutableTreeNode from,
                                        @NotNull DefaultMutableTreeNode to,
-                                       @NotNull DefaultMutableTreeNode replacement)
+                                       @NotNull DefaultMutableTreeNode replacement,
+                                       @NotNull DefaultTreeModel treeModel)
   {
     markRows(from);
     if (from == to) {
       DefaultMutableTreeNode parent = (DefaultMutableTreeNode)from.getParent();
       int index = parent.getIndex(from);
-      parent.remove(index);
-      parent.insert(replacement, index);
+      treeModel.removeNodeFromParent(from);
+      treeModel.insertNodeInto(replacement, parent, index);
       return collectRowChangesAndUnmark(parent);
     }
 
@@ -306,7 +309,7 @@ public class ArrangementConfigUtil {
       }
       for (int j = i + 1; j < childCount; j++) {
         DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(j);
-        parent.remove(j);
+        treeModel.removeNodeFromParent(child);
         // Unwrap node's data.
         child.setUserObject(child.getChildCount() > 0 ? extractUserObject(child.getUserObject()) : child.getUserObject());
         parentCopy.add(child);
@@ -320,7 +323,7 @@ public class ArrangementConfigUtil {
     //region Remove target sub-hierarchy
     for (DefaultMutableTreeNode current = to; current != root;) {
       DefaultMutableTreeNode parent = (DefaultMutableTreeNode)current.getParent();
-      parent.remove(current);
+      treeModel.removeNodeFromParent(current);
       current = parent;
       if (current != to) {
         current.setUserObject(extractUserObject(current.getUserObject()));
@@ -332,9 +335,9 @@ public class ArrangementConfigUtil {
     //endregion
 
     //region Insert nodes.
-    boolean merged = insert(root, insertionIndex, replacement);
+    boolean merged = insert(root, insertionIndex, replacement, treeModel);
     if (cutHierarchy != null) {
-      insert(root, insertionIndex + (merged ? 0 : 1), cutHierarchy);
+      insert(root, insertionIndex + (merged ? 0 : 1), cutHierarchy, treeModel);
     }
     //endregion
     
@@ -469,20 +472,25 @@ public class ArrangementConfigUtil {
    * </pre>
    * <p/>
    * 
-   * @param parent  parent node to insert into
-   * @param index   insertion index to use for the given parent node
-   * @param child   node to insert to the given parent node at the given insertion index
-   * @return        <code>true</code> if given child node has been merged to the existing node; <code>false</code> otherwise
+   * @param parent     parent node to insert into
+   * @param index      insertion index to use for the given parent node
+   * @param child      node to insert to the given parent node at the given insertion index
+   * @param treeModel  model which should hold UI nodes
+   * @return           <code>true</code> if given child node has been merged to the existing node; <code>false</code> otherwise
    */
-  public static boolean insert(@NotNull final DefaultMutableTreeNode parent, final int index, @NotNull final DefaultMutableTreeNode child) {
+  public static boolean insert(@NotNull final DefaultMutableTreeNode parent,
+                               final int index,
+                               @NotNull final DefaultMutableTreeNode child,
+                               @NotNull DefaultTreeModel treeModel)
+  {
     if (parent.getChildCount() < index) {
-      parent.add(child);
+      treeModel.insertNodeInto(child, parent, parent.getChildCount());
       return false;
     }
 
     if (child.getChildCount() <= 0) {
       // Don't merge the last child.
-      parent.insert(child, index);
+      treeModel.insertNodeInto(child, parent, index);
     }
 
     boolean anchorAbove = false;
@@ -503,17 +511,12 @@ public class ArrangementConfigUtil {
     }
 
     if (mergeCandidate == null) {
-      if (index < parent.getChildCount()) {
-        parent.insert(child, index);
-      }
-      else {
-        parent.add(child);
-      }
+      treeModel.insertNodeInto(child, parent, index);
       return false;
     }
 
     for (int i = 0, limit = child.getChildCount(); i < limit; i++) {
-      insert(mergeCandidate, anchorAbove ? 0 : mergeCandidate.getChildCount(), (DefaultMutableTreeNode)child.getChildAt(0));
+      insert(mergeCandidate, anchorAbove ? 0 : mergeCandidate.getChildCount(), (DefaultMutableTreeNode)child.getChildAt(0), treeModel);
     }
     return true;
   }

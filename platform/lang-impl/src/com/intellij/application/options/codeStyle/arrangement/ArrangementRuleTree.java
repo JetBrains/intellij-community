@@ -300,7 +300,6 @@ public class ArrangementRuleTree {
         TreePath path = new TreePath(node.getPath());
         int row = myTree.getRowForPath(path);
         myRenderers.remove(row);
-        myTreeModel.nodeChanged(node);
         mySelectionModel.addSelectionPath(path);
         getNodeComponentAt(row, (ArrangementSettingsNode)node.getUserObject()).setSelected(true);
         if (node == topMost) {
@@ -310,6 +309,8 @@ public class ArrangementRuleTree {
     }
     finally {
       mySkipSelectionChange = false;
+      // TODO den check
+      //expandAll(myTree, new TreePath(myTreeModel.getRoot()));
     }
   }
   
@@ -321,11 +322,15 @@ public class ArrangementRuleTree {
                                                   boolean expanded,
                                                   boolean leaf,
                                                   int row,
-                                                  boolean hasFocus) {
+                                                  boolean hasFocus)
+    {
       if (row < 0) {
         return EMPTY_RENDERER;
       }
       ArrangementSettingsNode node = (ArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
+      if (node == null) {
+        return EMPTY_RENDERER;
+      }
       return getNodeComponentAt(row, node).getUiComponent();
     }
   }
