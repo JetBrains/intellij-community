@@ -99,9 +99,8 @@ public class LambdaUtil {
     return signatures.size() == 1 ? null : "Multiple non-overriding abstract methods found";
   }
   
-  public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceType) {
-    final PsiType returnType = getFunctionalInterfaceReturnType(functionalInterfaceType);
-    if (returnType == PsiType.VOID) {
+  public static String checkReturnTypeCompatible(PsiLambdaExpression lambdaExpression, PsiType functionalInterfaceReturnType) {
+    if (functionalInterfaceReturnType == PsiType.VOID) {
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
         if (!lambdaExpression.getReturnExpressions().isEmpty()) return "Unexpected return value";
@@ -111,16 +110,16 @@ public class LambdaUtil {
           return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) +" in lambda expression";
         }
       }
-    } else if (returnType != null) {
+    } else if (functionalInterfaceReturnType != null) {
       final List<PsiExpression> returnExpressions = lambdaExpression.getReturnExpressions();
       for (PsiExpression expression : returnExpressions) {
         final PsiType expressionType = expression.getType();
-        if (expressionType != null && !returnType.isAssignableFrom(expressionType)) {
+        if (expressionType != null && !functionalInterfaceReturnType.isAssignableFrom(expressionType)) {
           return "Incompatible return type " + expressionType.getPresentableText() + " in lambda expression";
         }
       }
-      if (returnExpressions.isEmpty()) {
-        return  "Missing return value";
+      if (lambdaExpression.getReturnStatements().size() > returnExpressions.size() || returnExpressions.isEmpty() && !lambdaExpression.isVoidCompatible()) {
+        return "Missing return value";
       }
     }
     return null;
@@ -154,29 +153,8 @@ public class LambdaUtil {
     LOG.assertTrue(psiClass != null);
     PsiType methodReturnType = getReturnType(psiClass, methodSignature);
     if (methodReturnType != null) {
-      if (methodReturnType != PsiType.VOID) {
-        methodReturnType = resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodReturnType));
-        final PsiElement body = lambdaExpression.getBody();
-        if (body instanceof PsiCodeBlock) {
-          final PsiCodeBlock block = (PsiCodeBlock)body;
-          for (PsiStatement statement : block.getStatements()) {
-            if (statement instanceof PsiReturnStatement) {
-              final PsiExpression returnValue = ((PsiReturnStatement)statement).getReturnValue();
-              if (returnValue != null) {
-                if (!checkReturnTypeAssignability(returnValue.getType(), parameterTypes, lambdaExpression, methodReturnType)) return false;
-              }
-            }
-          }
-        }
-        else if (body instanceof PsiExpression) {
-          return checkReturnTypeAssignability(((PsiExpression)body).getType(), parameterTypes, lambdaExpression, methodReturnType);
-        }
-      } else {
-        final List<PsiExpression> returnExpressions = lambdaExpression.getReturnExpressions();
-        for (PsiExpression returnValue : returnExpressions) {
-         if (returnValue.getType() != PsiType.VOID) return false;
-        }
-      }
+      methodReturnType = resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodReturnType));
+      return checkReturnTypeCompatible(lambdaExpression, methodReturnType) == null;
     }
     return true;
   }
@@ -269,20 +247,6 @@ public class LambdaUtil {
       }
     }
     return null;
-  }
-
-  private static boolean checkReturnTypeAssignability(PsiType lambdaReturnType,
-                                                      PsiType[] parameterTypes,
-                                                      PsiLambdaExpression lambdaExpression,
-                                                      PsiType methodReturnType) {
-    if (lambdaReturnType instanceof PsiLambdaParameterType) {
-      final PsiParameter parameter = ((PsiLambdaParameterType)lambdaReturnType).getParameter();
-      final int parameterIndex = lambdaExpression.getParameterList().getParameterIndex(parameter);
-      if (parameterIndex > -1) {
-        lambdaReturnType = parameterTypes[parameterIndex];
-      }
-    }
-    return lambdaReturnType != null && methodReturnType.isAssignableFrom(lambdaReturnType);
   }
 
   public static int getLambdaIdx(PsiExpressionList expressionList, final PsiLambdaExpression element) {

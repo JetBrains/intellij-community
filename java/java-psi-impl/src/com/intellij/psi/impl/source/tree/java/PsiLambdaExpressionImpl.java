@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
+import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.infos.MethodCandidateInfo;
@@ -50,21 +51,14 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   }
 
   @Override
-  public List<PsiExpression> getReturnExpressions() {
+  public List<PsiReturnStatement> getReturnStatements() {
     final PsiElement body = getBody();
-    if (body instanceof PsiExpression) {
-      //if (((PsiExpression)body).getType() != PsiType.VOID) return Collections.emptyList();
-      return Collections.singletonList((PsiExpression)body);
-    }
-    final List<PsiExpression> result = new ArrayList<PsiExpression>();
+    final List<PsiReturnStatement> result = new ArrayList<PsiReturnStatement>();
     if (body != null) {
       body.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitReturnStatement(PsiReturnStatement statement) {
-          final PsiExpression returnValue = statement.getReturnValue();
-          if (returnValue != null) {
-            result.add(returnValue);
-          }
+          result.add(statement);
         }
 
         @Override
@@ -75,10 +69,45 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     return result;
   }
 
+  @Override
+  public List<PsiExpression> getReturnExpressions() {
+    final PsiElement body = getBody();
+    if (body instanceof PsiExpression) {
+      //if (((PsiExpression)body).getType() != PsiType.VOID) return Collections.emptyList();
+      return Collections.singletonList((PsiExpression)body);
+    }
+    final List<PsiExpression> result = new ArrayList<PsiExpression>();
+    for (PsiReturnStatement returnStatement : getReturnStatements()) {
+      final PsiExpression returnValue = returnStatement.getReturnValue();
+      if (returnValue != null) {
+        result.add(returnValue);
+      }
+    }
+    return result;
+  }
+
   @Nullable
   @Override
   public PsiType getFunctionalInterfaceType() {
     return getFunctionalInterfaceType(this, true);
+  }
+
+  @Override
+  public boolean isVoidCompatible() {
+    final PsiElement body = getBody();
+    if (body != null) {
+      try {
+        ControlFlow controlFlow = ControlFlowFactory.getInstance(getProject()).getControlFlow(body, LocalsOrMyInstanceFieldsControlFlowPolicy
+          .getInstance());
+        int startOffset = controlFlow.getStartOffset(body);
+        int endOffset = controlFlow.getEndOffset(body);
+        return startOffset != -1 && endOffset != -1 && !ControlFlowUtil.canCompleteNormally(controlFlow, startOffset, endOffset);
+      }
+      catch (AnalysisCanceledException e) {
+        return true;
+      }
+    }
+    return true;
   }
 
   @Nullable

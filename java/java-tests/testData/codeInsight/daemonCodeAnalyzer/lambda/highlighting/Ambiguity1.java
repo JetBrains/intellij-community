@@ -13,5 +13,10 @@ class Ambiguity1 {
 
   {
     m<error descr="Ambiguous method call: both 'Ambiguity1.m(I1)' and 'Ambiguity1.m(I2<Object>)' match">(()->{throw new AssertionError();})</error>;
+    m(() -> {});
+    m(() -> {
+        if (false) return;
+        throw new RuntimeException();
+    });
   }
 }
