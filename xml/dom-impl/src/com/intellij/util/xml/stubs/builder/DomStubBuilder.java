@@ -16,6 +16,7 @@
 package com.intellij.util.xml.stubs.builder;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -24,10 +25,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.util.xml.NanoXmlUtil;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.stubs.FileStub;
 
 import java.io.ByteArrayInputStream;
@@ -70,6 +68,11 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
 
   @Override
   public int getStubVersion() {
-    return 3;
+    int version = 3;
+    DomFileDescription[] descriptions = Extensions.getExtensions(DomFileDescription.EP_NAME);
+    for (DomFileDescription description : descriptions) {
+      version += description.getStubVersion();
+    }
+    return version;
   }
 }
