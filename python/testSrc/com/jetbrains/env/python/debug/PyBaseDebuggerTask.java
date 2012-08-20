@@ -231,12 +231,13 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
       new WriteAction() {
         protected void run(Result result) throws Throwable {
           mySession.stop();
-          Disposer.dispose(mySession.getConsoleView());
-          mySession = null;
-          myDebugProcess = null;
-          myPausedSemaphore = null;
         }
       }.execute();
+
+      XDebuggerTestUtil.disposeDebugSession(mySession);
+      mySession = null;
+      myDebugProcess = null;
+      myPausedSemaphore = null;
     }
   }
 
