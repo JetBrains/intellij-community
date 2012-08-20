@@ -104,10 +104,12 @@ public class LambdaUtil {
     if (returnType == PsiType.VOID) {
       final PsiElement body = lambdaExpression.getBody();
       if (body instanceof PsiCodeBlock) {
-        if (!lambdaExpression.getReturnExpressions().isEmpty()) return "Cannot return a value from method whose result type is void";
+        if (!lambdaExpression.getReturnExpressions().isEmpty()) return "Unexpected return value";
       } else if (body instanceof PsiExpression) {
         final PsiType type = ((PsiExpression)body).getType();
-        return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) +" in lambda expression";
+        if (type != PsiType.VOID) {
+          return "Incompatible return type " + (type == PsiType.NULL || type == null ? "<null>" : type.getPresentableText()) +" in lambda expression";
+        }
       }
     } else if (returnType != null) {
       final List<PsiExpression> returnExpressions = lambdaExpression.getReturnExpressions();
@@ -118,7 +120,7 @@ public class LambdaUtil {
         }
       }
       if (returnExpressions.isEmpty()) {
-        return  "Incompatible return type void in lambda expression";
+        return  "Missing return value";
       }
     }
     return null;
