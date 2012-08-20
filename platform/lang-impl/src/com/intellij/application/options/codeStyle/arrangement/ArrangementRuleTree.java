@@ -54,8 +54,8 @@ public class ArrangementRuleTree {
 
   @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>    myRenderers =
     new TIntObjectHashMap<ArrangementNodeComponent>();
-  @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModel> myModels    =
-    new TIntObjectHashMap<ArrangementRuleEditingModel>();
+  @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myModels    =
+    new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
 
   @NotNull private final DefaultTreeModel                myTreeModel;
   @NotNull private final Tree                            myTree;
@@ -176,9 +176,9 @@ public class ArrangementRuleTree {
     for (ArrangementSettingsNode setting : settings) {
       builder.build(setting, myTree, root, grouper, myModels);
     }
-    myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModel>() {
+    myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
       @Override
-      public boolean execute(ArrangementRuleEditingModel model) {
+      public boolean execute(ArrangementRuleEditingModelImpl model) {
         model.addListener(myModelChangeListener); 
         return true;
       }

@@ -15,7 +15,9 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import gnu.trove.TObjectProcedure;
 import org.junit.Test;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -164,5 +166,26 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     DefaultMutableTreeNode staticNode = (DefaultMutableTreeNode)layeredFieldNode.getFirstChild();
     assertNotNull(staticNode);
     assertEquals(atom(STATIC), staticNode.getUserObject());
+    
+    //checkTreeNodesConsistency();
+  }
+  
+  private void checkTreeNodesConsistency() {
+    final Ref<DefaultMutableTreeNode> rootRef = new Ref<DefaultMutableTreeNode>();
+    myRowMappings.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
+      @Override
+      public boolean execute(ArrangementRuleEditingModelImpl model) {
+        DefaultMutableTreeNode root = ArrangementConfigUtil.getRoot(model.getTopMost());
+        assertSame(root, ArrangementConfigUtil.getRoot(model.getBottomMost()));
+
+        if (rootRef.get() == null) {
+          rootRef.set(root);
+        }
+        else {
+          assertSame(rootRef.get(), root);
+        }
+        return true;
+      }
+    });
   }
 }

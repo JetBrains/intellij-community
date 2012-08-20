@@ -343,10 +343,7 @@ public class ArrangementConfigUtil {
    * @param node  reference to the target hierarchy
    */
   private static void markRows(@NotNull DefaultMutableTreeNode node) {
-    DefaultMutableTreeNode root = node;
-    for (TreeNode n = root; n != null; n = n.getParent()) {
-      root = (DefaultMutableTreeNode)n;
-    }
+    DefaultMutableTreeNode root = getRoot(node);
     int row = 0;
     Stack<DefaultMutableTreeNode> nodes = new Stack<DefaultMutableTreeNode>();
     nodes.push(root);
@@ -357,6 +354,15 @@ public class ArrangementConfigUtil {
         nodes.push((DefaultMutableTreeNode)n.getChildAt(i));
       }
     }
+  }
+
+  @NotNull
+  public static DefaultMutableTreeNode getRoot(DefaultMutableTreeNode node) {
+    DefaultMutableTreeNode root = node;
+    for (TreeNode n = root; n != null; n = n.getParent()) {
+      root = (DefaultMutableTreeNode)n;
+    }
+    return root;
   }
 
   /**
@@ -371,10 +377,7 @@ public class ArrangementConfigUtil {
   @NotNull
   private static TIntIntHashMap collectRowChangesAndUnmark(@NotNull DefaultMutableTreeNode node) {
     @NotNull TIntIntHashMap changes = new TIntIntHashMap();
-    DefaultMutableTreeNode root = node;
-    for (TreeNode n = root; n != null; n = n.getParent()) {
-      root = (DefaultMutableTreeNode)n;
-    }
+    DefaultMutableTreeNode root = getRoot(node);
     int row = 0;
     Stack<DefaultMutableTreeNode> nodes = new Stack<DefaultMutableTreeNode>();
     nodes.push(root);
@@ -403,10 +406,7 @@ public class ArrangementConfigUtil {
    * @return      given node's row at the nodes hierarchy (0-based)
    */
   public static int getRow(@NotNull DefaultMutableTreeNode node) {
-    DefaultMutableTreeNode root = node;
-    for (TreeNode n = root; n != null; n = n.getParent()) {
-      root = (DefaultMutableTreeNode)n;
-    }
+    DefaultMutableTreeNode root = getRoot(node);
     int row = 0;
     Stack<DefaultMutableTreeNode> nodes = new Stack<DefaultMutableTreeNode>();
     nodes.push(root);

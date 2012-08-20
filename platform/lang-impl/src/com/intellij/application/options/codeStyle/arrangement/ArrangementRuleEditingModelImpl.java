@@ -40,8 +40,8 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @NotNull private final Set<Listener> myListeners  = new HashSet<Listener>();
   @NotNull private final Set<Object>   myConditions = new HashSet<Object>();
 
-  @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModel> myRowMappings;
-  @NotNull private final ArrangementSettingsGrouper                     myGrouper;
+  @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myRowMappings;
+  @NotNull private final ArrangementSettingsGrouper                         myGrouper;
 
   @NotNull private DefaultMutableTreeNode  myTopMost;
   @NotNull private DefaultMutableTreeNode  myBottomMost;
@@ -64,7 +64,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
                                          @NotNull DefaultMutableTreeNode topMost,
                                          @NotNull DefaultMutableTreeNode bottomMost,
                                          @NotNull ArrangementSettingsGrouper grouper,
-                                         @NotNull TIntObjectHashMap<ArrangementRuleEditingModel> mappings,
+                                         @NotNull TIntObjectHashMap<ArrangementRuleEditingModelImpl> mappings,
                                          int row)
   {
     mySettingsNode = node;
@@ -93,11 +93,40 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     return mySettingsNode;
   }
 
+  @NotNull
+  public DefaultMutableTreeNode getTopMost() {
+    return myTopMost;
+  }
+
+  @NotNull
+  public DefaultMutableTreeNode getBottomMost() {
+    return myBottomMost;
+  }
+
   @Override
   public boolean hasCondition(@NotNull Object key) {
     return myConditions.contains(key);
   }
 
+  /**
+   * There is a possible case that tree nodes referenced by the current model become out of date due to a tree modification.
+   * <p/>
+   * This method asks the model to refresh its tree nodes if necessary.
+   */
+  public void refreshTreeNodes() {
+    for (DefaultMutableTreeNode node = myBottomMost; node != null; node = (DefaultMutableTreeNode)node.getParent()) {
+      if (node == myTopMost) {
+        // No refresh is necessary.
+        return;
+      }
+      else if (mySettingsNode.equals(node.getUserObject())) {
+        myTopMost = node;
+        return;
+      }
+    }
+    assert false;
+  }
+  
   @Override
   public void addAndCondition(@NotNull ArrangementSettingsAtomNode node) {
     doAddAndCondition(node);
@@ -181,12 +210,12 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
       return;
     }
     
-    final TIntObjectHashMap<ArrangementRuleEditingModel> newMappings = new TIntObjectHashMap<ArrangementRuleEditingModel>();
+    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> newMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
 
     // Update model mappings.
-    myRowMappings.forEachEntry(new TIntObjectProcedure<ArrangementRuleEditingModel>() {
+    myRowMappings.forEachEntry(new TIntObjectProcedure<ArrangementRuleEditingModelImpl>() {
       @Override
-      public boolean execute(int row, ArrangementRuleEditingModel model) {
+      public boolean execute(int row, ArrangementRuleEditingModelImpl model) {
         if (row == myRow) {
           return true;
         }
@@ -196,6 +225,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         else {
           newMappings.put(row, model);
         }
+        model.refreshTreeNodes();
         return true;
       }
     });
@@ -203,9 +233,9 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     newMappings.put(myRow, this);
     
     myRowMappings.clear();
-    newMappings.forEachEntry(new TIntObjectProcedure<ArrangementRuleEditingModel>() {
+    newMappings.forEachEntry(new TIntObjectProcedure<ArrangementRuleEditingModelImpl>() {
       @Override
-      public boolean execute(int row, ArrangementRuleEditingModel model) {
+      public boolean execute(int row, ArrangementRuleEditingModelImpl model) {
         myRowMappings.put(row, model);
         return true;
       }
