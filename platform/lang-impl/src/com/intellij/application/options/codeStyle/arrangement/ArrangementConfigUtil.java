@@ -479,7 +479,12 @@ public class ArrangementConfigUtil {
       parent.add(child);
       return false;
     }
-    
+
+    if (child.getChildCount() <= 0) {
+      // Don't merge the last child.
+      parent.insert(child, index);
+    }
+
     boolean anchorAbove = false;
     DefaultMutableTreeNode mergeCandidate = null;
     if (index > 0) {

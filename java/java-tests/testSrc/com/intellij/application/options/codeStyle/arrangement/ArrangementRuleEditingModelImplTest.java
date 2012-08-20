@@ -21,6 +21,7 @@ import gnu.trove.TObjectProcedure;
 import org.junit.Test;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 
 import static com.intellij.psi.codeStyle.arrangement.ArrangementUtil.and;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.FIELD;
@@ -135,7 +136,7 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
   }
 
   @Test
-  public void removeLastRowConditionFromMultiChildrenParent() {
+  public void removeFirstRowConditionFromMultiChildrenParent() {
     configure(and(atom(FIELD), atom(PUBLIC)));
     configure(and(atom(FIELD), atom(STATIC)));
     
@@ -159,7 +160,7 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     assertNotNull(atomFieldNode);
     assertEquals(atom(FIELD), atomFieldNode.getUserObject());
     
-    DefaultMutableTreeNode layeredFieldNode = atomFieldNode.getNextNode();
+    DefaultMutableTreeNode layeredFieldNode = atomFieldNode.getNextSibling();
     assertNotNull(atomFieldNode);
     assertEquals(atom(FIELD), atomFieldNode.getUserObject());
     
@@ -167,6 +168,42 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     assertNotNull(staticNode);
     assertEquals(atom(STATIC), staticNode.getUserObject());
     
+    checkTreeNodesConsistency();
+  }
+
+  @Test
+  public void removeLastRowConditionFromMultiChildrenParent() {
+    configure(and(atom(FIELD), atom(PUBLIC)));
+    configure(and(atom(FIELD), atom(STATIC)));
+
+    ArrangementRuleEditingModel siblingModel = myRowMappings.get(2);
+    assertNotNull(siblingModel);
+    
+    ArrangementRuleEditingModel modelToChange = myRowMappings.get(3);
+    assertNotNull(modelToChange);
+    assertEquals(2, myRowMappings.size());
+
+    modelToChange.removeAndCondition(atom(STATIC));
+
+    assertEquals(2, myRowMappings.size());
+    assertSame(siblingModel, myRowMappings.get(2));
+    assertEquals(and(atom(FIELD), atom(PUBLIC)), siblingModel.getSettingsNode());
+
+    assertSame(modelToChange, myRowMappings.get(3));
+    assertEquals(atom(FIELD), modelToChange.getSettingsNode());
+
+    DefaultMutableTreeNode compositeFieldNode = (DefaultMutableTreeNode)myRoot.getFirstChild();
+    assertNotNull(compositeFieldNode);
+    assertEquals(atom(FIELD), compositeFieldNode.getUserObject());
+
+    DefaultMutableTreeNode publicNode = (DefaultMutableTreeNode)compositeFieldNode.getFirstChild();
+    assertNotNull(publicNode);
+    assertEquals(atom(PUBLIC), publicNode.getUserObject());
+
+    DefaultMutableTreeNode atomFieldNode = compositeFieldNode.getNextSibling();
+    assertNotNull(atomFieldNode);
+    assertEquals(atom(FIELD), atomFieldNode.getUserObject());
+
     checkTreeNodesConsistency();
   }
   

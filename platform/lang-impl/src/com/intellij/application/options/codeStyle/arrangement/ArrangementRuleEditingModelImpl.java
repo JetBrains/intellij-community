@@ -43,6 +43,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
 
   @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myRowMappings;
   @NotNull private final ArrangementSettingsGrouper                         myGrouper;
+  private final          int                                                myRowShift;
 
   @NotNull private DefaultMutableTreeNode  myTopMost;
   @NotNull private DefaultMutableTreeNode  myBottomMost;
@@ -60,13 +61,16 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    * @param grouper    strategy that encapsulates information on how settings node should be displayed
    * @param mappings   {@code 'row -> model'} mappings
    * @param row        row number for which current model is registered at the given model mappings
+   * @param shift      specifies a shift to be applied to the node rows on model modification. Primary intention is to handle
+   *                   a situation when tree root is not shown (a shift is '-1' then)
    */
   public ArrangementRuleEditingModelImpl(@NotNull ArrangementSettingsNode node,
                                          @NotNull DefaultMutableTreeNode topMost,
                                          @NotNull DefaultMutableTreeNode bottomMost,
                                          @NotNull ArrangementSettingsGrouper grouper,
                                          @NotNull TIntObjectHashMap<ArrangementRuleEditingModelImpl> mappings,
-                                         int row)
+                                         int row,
+                                         int shift)
   {
     mySettingsNode = node;
     myTopMost = topMost;
@@ -74,6 +78,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     myGrouper = grouper;
     myRowMappings = mappings;
     myRow = row;
+    myRowShift = shift;
     refreshConditions();
   }
 
@@ -188,8 +193,8 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         if (row == myRow) {
           return true;
         }
-        if (rowChanges.containsKey(row)) {
-          newMappings.put(rowChanges.get(row), model);
+        if (rowChanges.containsKey(row - myRowShift)) {
+          newMappings.put(rowChanges.get(row - myRowShift) + myRowShift, model);
         }
         else {
           newMappings.put(row, model);
@@ -198,7 +203,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         return true;
       }
     });
-    myRow = ArrangementConfigUtil.getRow(myBottomMost);
+    myRow = ArrangementConfigUtil.getRow(myBottomMost) + myRowShift;
     newMappings.put(myRow, this);
 
     myRowMappings.clear();

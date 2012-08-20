@@ -96,7 +96,7 @@ public class ArrangementRuleEditingModelBuilder {
     DefaultMutableTreeNode topMostNode = (DefaultMutableTreeNode)ArrangementConfigUtil.getLastBefore(pair.first, root);
     int row = initialInsertRow + pair.second - 1;
     ArrangementRuleEditingModelImpl model
-      = new ArrangementRuleEditingModelImpl(setting, topMostNode, pair.first, grouper, rowMappings, row);
+      = new ArrangementRuleEditingModelImpl(setting, topMostNode, pair.first, grouper, rowMappings, row, tree.isRootVisible() ? 0 : -1);
     rowMappings.put(row, model);
   }
 
