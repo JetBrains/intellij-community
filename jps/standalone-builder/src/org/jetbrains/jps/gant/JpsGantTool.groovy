@@ -89,7 +89,10 @@ final class JpsGantTool {
     IdeaProjectLoader.loadFromPath(oldProject, path, [:])
     JpsProjectLoader.loadProject(model.project, [:], path)
     builder.exportModuleOutputProperties();
-    builder.setDataStorageRoot(Utils.getDataStorageRoot(path))
+    if (builder.getDataStorageRoot() == null) {
+      builder.setDataStorageRoot(Utils.getDataStorageRoot(path))
+    }
+    builder.info("Loaded project " + path + ": " + model.getProject().getModules().size() + " modules, " + model.getProject().getLibraryCollection().getLibraries().size() + " libraries")
   }
 
   private void createJavaSdk(JpsGlobal global, String name, String homePath, Closure initializer) {

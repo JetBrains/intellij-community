@@ -902,6 +902,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         myRootsLock.readLock().unlock();
       }
     }
+    else if (parentId == id) {
+      LOG.error("Corrupted VFS? id=" + id + " name=" + getName(id));
+      return null;
+    }
     else {
       NewVirtualFile parentFile = _findFileById(parentId, cachedOnly);
       if (parentFile == null) {

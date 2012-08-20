@@ -39,11 +39,11 @@ import static org.junit.Assert.assertTrue;
  */
 public abstract class AbstractArrangementRuleEditingModelTest {
 
-  @NotNull protected ArrangementRuleEditingModelBuilder             myBuilder;
-  @NotNull protected JTree                                          myTree;
-  @NotNull protected DefaultMutableTreeNode                         myRoot;
-  @NotNull protected TIntObjectHashMap<ArrangementRuleEditingModel> myRowMappings;
-  @NotNull protected JavaRearranger                                 myGrouper;
+  @NotNull protected ArrangementRuleEditingModelBuilder                 myBuilder;
+  @NotNull protected JTree                                              myTree;
+  @NotNull protected DefaultMutableTreeNode                             myRoot;
+  @NotNull protected TIntObjectHashMap<ArrangementRuleEditingModelImpl> myRowMappings;
+  @NotNull protected JavaRearranger                                     myGrouper;
 
   @Before
   public void setUp() {
@@ -51,7 +51,7 @@ public abstract class AbstractArrangementRuleEditingModelTest {
     myRoot = new DefaultMutableTreeNode();
     myTree = new Tree(myRoot);
     myTree.expandPath(new TreePath(myRoot));
-    myRowMappings = new TIntObjectHashMap<ArrangementRuleEditingModel>();
+    myRowMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
     myGrouper = new JavaRearranger();
   }
 
@@ -73,7 +73,7 @@ public abstract class AbstractArrangementRuleEditingModelTest {
     return new ArrangementSettingsAtomNode(type, condition);
   }
 
-  protected void checkRows(int ... rows) {
+  protected void checkRows(int... rows) {
     for (int row : rows) {
       assertTrue(
         String.format("Expected to find mappings for rows %s. Actual: %s", Arrays.toString(rows), Arrays.toString(myRowMappings.keys())),

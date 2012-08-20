@@ -17,7 +17,12 @@ package com.intellij.util.xml.stubs.model;
 
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.stubs.Stubbed;
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Attribute;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.SubTagList;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -34,4 +39,11 @@ public interface Bar extends DomElement {
   @Stubbed
   @Attribute("class")
   GenericAttributeValue<PsiClass> getClazz();
+
+  GenericAttributeValue<Integer> getNotStubbed();
+
+  @SubTagList("notStubbed")
+  List<NotStubbed> getNotStubbeds();
+
+  NotStubbed addNotStubbed();
 }

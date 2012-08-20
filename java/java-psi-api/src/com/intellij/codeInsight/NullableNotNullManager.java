@@ -36,10 +36,6 @@ import java.util.List;
  * User: anna
  * Date: 1/25/11
  */
-@State(
-    name = "NullableNotNullManager",
-    storages = {@Storage( file = StoragePathMacros.PROJECT_FILE)}
-)
 public class NullableNotNullManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#" + NullableNotNullManager.class.getName());
 

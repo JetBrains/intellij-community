@@ -4,8 +4,10 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.EvaluatedXmlName;
 import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.stubs.ElementStub;
+import com.intellij.util.xml.stubs.StubParentStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +27,16 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
           (AbstractDomChildDescriptionImpl)description, parent.getManager(), true, stub);
   }
 
+  public CollectionElementInvocationHandler(@NotNull EvaluatedXmlName tagName,
+                                            AbstractDomChildDescriptionImpl childDescription,
+                                            DomManagerImpl manager,
+                                            ElementStub stub) {
+    super(childDescription.getType(), new StubParentStrategy(stub), tagName, childDescription, manager, true, stub);
+
+  }
+
   protected Type narrowType(@NotNull final Type nominalType) {
-    return getManager().getTypeChooserManager().getTypeChooser(nominalType).chooseType(getXmlTag());
+    return getStub() == null ? getManager().getTypeChooserManager().getTypeChooser(nominalType).chooseType(getXmlTag()) : nominalType;
   }
 
   protected final XmlTag setEmptyXmlTag() {

@@ -1,0 +1,8 @@
+<html>
+<body>
+This inspection detects calls of VirtualFile.getChildren() inside recursive methods.
+Such a code may cause dead loops when iterating over cyclic symlinks -
+so please use VfsUtilCore.visitChildrenRecursively() instead.
+<p><small>Internal inspection - has no effect outside of IntelliJ IDEA project.</small></p>
+</body>
+</html>

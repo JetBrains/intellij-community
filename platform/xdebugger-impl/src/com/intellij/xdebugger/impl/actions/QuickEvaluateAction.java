@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 /**
@@ -53,23 +54,33 @@ public class QuickEvaluateAction extends XDebuggerActionBase {
 
     public void perform(@NotNull final Project project, final AnActionEvent event) {
       Editor editor = event.getData(PlatformDataKeys.EDITOR);
-
-      if(editor != null) {
+      if (editor != null) {
         LogicalPosition logicalPosition = editor.getCaretModel().getLogicalPosition();
-        ValueLookupManager.getInstance(project).showHint(myHandler, editor, editor.logicalPositionToXY(logicalPosition), ValueHintType.MOUSE_CLICK_HINT);
+        ValueLookupManager.getInstance(project).
+          showHint(myHandler, editor, editor.logicalPositionToXY(logicalPosition), ValueHintType.MOUSE_CLICK_HINT);
       }
     }
 
     public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
+      if (!myHandler.isEnabled(project)) return false;
+
       Editor editor = event.getData(PlatformDataKeys.EDITOR);
-      MouseEvent mouseEvent = event.getInputEvent() instanceof MouseEvent ? (MouseEvent)event.getInputEvent(): null;
-      if (editor == null || mouseEvent == null || !(mouseEvent.isAltDown()))
-        return false;
-      Component deepestComponentAt = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-      if (!SwingUtilities.isDescendingFrom(deepestComponentAt, editor.getComponent()))
-        return false;
-      EditorMouseEventArea area = editor.getMouseEventArea(SwingUtilities.convertMouseEvent(mouseEvent.getComponent(), mouseEvent, deepestComponentAt));
-      return myHandler.isEnabled(project) && area == EditorMouseEventArea.EDITING_AREA;
+      if (editor == null) return false;
+
+      InputEvent inputEvent = event.getInputEvent();
+      if (inputEvent instanceof MouseEvent && inputEvent.isAltDown()) {
+        MouseEvent mouseEvent = (MouseEvent)inputEvent;
+        Component component = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+        if (SwingUtilities.isDescendingFrom(component, editor.getComponent())) {
+          MouseEvent convertedEvent = SwingUtilities.convertMouseEvent(mouseEvent.getComponent(), mouseEvent, component);
+          EditorMouseEventArea area = editor.getMouseEventArea(convertedEvent);
+          if (area != EditorMouseEventArea.EDITING_AREA) {
+            return false;
+          }
+        }
+      }
+
+      return true;
     }
   }
 }

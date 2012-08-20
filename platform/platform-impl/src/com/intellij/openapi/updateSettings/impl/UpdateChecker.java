@@ -538,21 +538,61 @@ public final class UpdateChecker {
   }
 
   public static String getInstallationUID(final PropertiesComponent propertiesComponent) {
-    String uid = "";
+    if (SystemInfo.isWindows) {
+      String uid = getInstallationUIDOnWindows(propertiesComponent);
+      if (uid != null) {
+        return uid;
+      }
+    }
+    String uid;
     if (!propertiesComponent.isValueSet(INSTALLATION_UID)) {
-      try {
-        uid = UUID.randomUUID().toString();
-      }
-      catch (Exception ignored) {
-      }
-      catch (InternalError ignored) {
-      }
+      uid = generateUUID();
       propertiesComponent.setValue(INSTALLATION_UID, uid);
     }
     else {
       uid = propertiesComponent.getValue(INSTALLATION_UID);
     }
     return uid;
+  }
+
+  @Nullable
+  private static String getInstallationUIDOnWindows(PropertiesComponent propertiesComponent) {
+    String appdata = System.getenv("APPDATA");
+    if (appdata != null) {
+      File jetBrainsDir = new File(appdata, "JetBrains");
+      if (jetBrainsDir.exists() || jetBrainsDir.mkdirs()) {
+        File permanentIdFile = new File(jetBrainsDir, "PermanentUserId");
+        try {
+          if (permanentIdFile.exists()) {
+            return FileUtil.loadFile(permanentIdFile).trim();
+          }
+          String uuid;
+          if (propertiesComponent.isValueSet(INSTALLATION_UID)) {
+            uuid = propertiesComponent.getValue(INSTALLATION_UID);
+          }
+          else {
+            uuid = generateUUID();
+          }
+          FileUtil.writeToFile(permanentIdFile, uuid);
+          return uuid;
+        }
+        catch (IOException e) {
+          // ignore
+        }
+      }
+    }
+    return null;
+  }
+
+  private static String generateUUID() {
+    try {
+      return UUID.randomUUID().toString();
+    }
+    catch (Exception ignored) {
+    }
+    catch (InternalError ignored) {
+    }
+    return "";
   }
 
   public static boolean install(List<PluginDownloader> downloaders) {

@@ -1,8 +1,7 @@
 <html>
 <body>
-<font face="verdana" size="-1">
-This inspection detects usages of DefaultListCellRenderer in code. Please use ListCellRendererWrapper in case you need simple cell renderer with text and icon.
-This avoids ugly UI under GTK look and feel, because in this case SynthComboBoxUI#SynthComboBoxRenderer is used instead of DefaultComboBoxRenderer.
-</font>
+This inspection detects usages of DefaultListCellRenderer - which causes ugly UI under GTK+ L&F.
+Please use ListCellRendererWrapper (or it's inheritors) instead.
+<p><small>Internal inspection - has no effect outside of IntelliJ IDEA project.</small></p>
 </body>
 </html>

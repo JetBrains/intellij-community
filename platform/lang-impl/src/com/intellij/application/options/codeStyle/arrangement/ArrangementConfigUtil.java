@@ -23,6 +23,8 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.util.containers.Stack;
+import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -146,6 +148,16 @@ public class ArrangementConfigUtil {
     }
     return result;
   }
+
+  @NotNull
+  public static DefaultMutableTreeNode getLast(@NotNull final DefaultMutableTreeNode node) {
+    TreeNode result = node;
+    int childCount = result.getChildCount();
+    while (childCount > 0) {
+      result = result.getChildAt(childCount - 1);
+    }
+    return (DefaultMutableTreeNode)result;
+  }
   
   public static int distance(@NotNull TreeNode parent, @NotNull TreeNode child) {
     if (parent == child) {
@@ -159,26 +171,31 @@ public class ArrangementConfigUtil {
   }
 
   /**
-   * @param uiParentNode UI tree node which should hold UI nodes created for representing given settings node
+   * @param uiParentNode UI tree node which should hold UI nodes created for representing given settings node;
+   *                     <code>null</code> as an indication that we want to create a standalone nodes hierarchy
    * @param settingsNode settings node which should be represented at the UI tree denoted by the given UI tree node
    * @return             pair {@code (bottom-most leaf node created; number of rows created)}
    */
   @NotNull
-  public static Pair<DefaultMutableTreeNode, Integer> map(@NotNull DefaultMutableTreeNode uiParentNode,
+  public static Pair<DefaultMutableTreeNode, Integer> map(@Nullable DefaultMutableTreeNode uiParentNode,
                                                           @NotNull HierarchicalArrangementSettingsNode settingsNode)
   {
     DefaultMutableTreeNode uiNode = null;
     int rowsCreated = 0;
-    for (int i = uiParentNode.getChildCount() - 1; i >= 0; i--) {
-      DefaultMutableTreeNode child = (DefaultMutableTreeNode)uiParentNode.getChildAt(i);
-      if (settingsNode.getCurrent().equals(child.getUserObject())) {
-        uiNode = child;
-        break;
+    if (uiParentNode != null) {
+      for (int i = uiParentNode.getChildCount() - 1; i >= 0; i--) {
+        DefaultMutableTreeNode child = (DefaultMutableTreeNode)uiParentNode.getChildAt(i);
+        if (settingsNode.getCurrent().equals(child.getUserObject())) {
+          uiNode = child;
+          break;
+        }
       }
     }
     if (uiNode == null) {
       uiNode = new DefaultMutableTreeNode(settingsNode.getCurrent());
-      uiParentNode.add(uiNode);
+      if (uiParentNode != null) {
+        uiParentNode.add(uiNode);
+      }
       rowsCreated++;
     }
     DefaultMutableTreeNode leaf = uiNode;
@@ -189,5 +206,338 @@ public class ArrangementConfigUtil {
       rowsCreated += pair.second;
     }
     return Pair.create(leaf, rowsCreated);
+  }
+
+  /**
+   * Utility method which helps to replace node sub-hierarchy identified by the given start and end nodes (inclusive) by
+   * a sub-hierarchy which is denoted by the given root. 
+   * 
+   * @param from         indicates start of the node sub-hierarchy to be replaced (inclusive)
+   * @param to           indicates end of the node sub-hierarchy to be replaced (inclusive)
+   * @param replacement  root of the node sub-hierarchy which should replace the one identified by the given 'start' and 'end' nodes
+   * @return             collection of row changes at the form {@code 'old row -> new row'}
+   */
+  @SuppressWarnings("AssignmentToForLoopParameter")
+  @NotNull
+  public static TIntIntHashMap replace(@NotNull DefaultMutableTreeNode from,
+                                       @NotNull DefaultMutableTreeNode to,
+                                       @NotNull DefaultMutableTreeNode replacement)
+  {
+    markRows(from);
+    if (from == to) {
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)from.getParent();
+      int index = parent.getIndex(from);
+      parent.remove(index);
+      parent.insert(replacement, index);
+      return collectRowChangesAndUnmark(parent);
+    }
+
+    // The algorithm looks as follows:
+    //   1. Cut sub-hierarchy which belongs to the given 'from' root and is located below the 'to -> from' path;
+    //   2. Remove 'to -> from' sub-hierarchy' by going bottom-up and stopping as soon as a current node has a child over than one
+    //      from the sub-hierarchy to remove;
+    //   3. Add 'replacement' sub-hierarchy starting after the 'from' index at its parent;
+    //   4. Add sub-hierarchy cut at the 1) starting after the 'replacement' sub-hierarchy index;
+    // Example:
+    //   Initial:
+    //      0
+    //      |_1
+    //        |_2
+    //        | |_3
+    //        | |_4
+    //        | |_5
+    //        |
+    //        |_6
+    //   Let's say we want to replace the sub-hierarchy '1 -> 2 -> 4' by the sub-hierarchy '1 -> 4'. The algorithm in action:
+    //     1. Cut bottom sub-hierarchy:
+    //         Current:      Cut:
+    //           0            1
+    //           |_1          |_2
+    //             |_2        | |_5
+    //               |_3      |
+    //               |_4      |_6
+    //
+    //     2. Remove target sub-hierarchy:
+    //         Current:  
+    //           0       
+    //           |_1     
+    //             |_2    <-- stop at this node because it has a child node '3' which doesn't belong to the '1 -> 2 -> 4'
+    //               |_3 
+    //     3. Add 'replacement' sub-hierarchy:
+    //         Current:  
+    //           0       
+    //           |_1    <-- re-use this node for '1 -> 4' addition
+    //             |_2    
+    //             | |_3
+    //             |
+    //             |_4
+    //     4. Add 'bottom' sub-hierarchy:
+    //         Current:  
+    //           0       
+    //           |_1    <-- re-use this node either for '1 -> 2 -> 5' or '1 -> 6' addition
+    //             |_2  
+    //             | |_3
+    //             |
+    //             |_4
+    //             |
+    //             |_2
+    //             | |_5
+    //             |
+    //             |_6
+    //
+    // Note: we need to have a notion of 'equal nodes' for node re-usage. It's provided by comparing node user objects.
+
+    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)from.getParent();
+
+    //region Cut bottom sub-hierarchy
+    DefaultMutableTreeNode cutHierarchy = null;
+    for (DefaultMutableTreeNode current = to; current != root; current = (DefaultMutableTreeNode)current.getParent()) {
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)current.getParent();
+      int i = parent.getIndex(current);
+      int childCount = parent.getChildCount();
+      if (i >= childCount - 1) {
+        continue;
+      }
+      DefaultMutableTreeNode parentCopy = new DefaultMutableTreeNode(
+        childCount > 0 ? extractUserObject(parent.getUserObject()) : parent.getUserObject()
+      );
+      if (cutHierarchy != null) {
+        parentCopy.add(cutHierarchy);
+      }
+      for (int j = i + 1; j < childCount; j++) {
+        DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(j);
+        parent.remove(j);
+        // Unwrap node's data.
+        child.setUserObject(child.getChildCount() > 0 ? extractUserObject(child.getUserObject()) : child.getUserObject());
+        parentCopy.add(child);
+      }
+      cutHierarchy = parentCopy;
+    }
+    //endregion
+    
+    int insertionIndex = root.getIndex(from) + 1; 
+    
+    //region Remove target sub-hierarchy
+    for (DefaultMutableTreeNode current = to; current != root;) {
+      DefaultMutableTreeNode parent = (DefaultMutableTreeNode)current.getParent();
+      parent.remove(current);
+      current = parent;
+      if (current != to) {
+        current.setUserObject(extractUserObject(current.getUserObject()));
+      }
+      if (parent.getChildCount() > 0) {
+        break;
+      }
+    }
+    //endregion
+
+    //region Insert nodes.
+    boolean merged = insert(root, insertionIndex, replacement);
+    if (cutHierarchy != null) {
+      insert(root, insertionIndex + (merged ? 0 : 1), cutHierarchy);
+    }
+    //endregion
+    
+    return collectRowChangesAndUnmark(root);
+  }
+
+  @Nullable
+  private static Object extractUserObject(@Nullable Object userData) {
+    if (userData instanceof RowInfo) {
+      return ((RowInfo)userData).userObject;
+    }
+    return userData;
+  }
+  
+  /**
+   * Enriches every node at the hierarchy denoted by the given node by information about it's row. 
+   * 
+   * @param node  reference to the target hierarchy
+   */
+  private static void markRows(@NotNull DefaultMutableTreeNode node) {
+    DefaultMutableTreeNode root = getRoot(node);
+    int row = 0;
+    Stack<DefaultMutableTreeNode> nodes = new Stack<DefaultMutableTreeNode>();
+    nodes.push(root);
+    while (!nodes.isEmpty()) {
+      DefaultMutableTreeNode n = nodes.pop();
+      n.setUserObject(new RowInfo(row++, n.getUserObject()));
+      for (int i = n.getChildCount() - 1; i >= 0; i--) {
+        nodes.push((DefaultMutableTreeNode)n.getChildAt(i));
+      }
+    }
+  }
+
+  @NotNull
+  public static DefaultMutableTreeNode getRoot(DefaultMutableTreeNode node) {
+    DefaultMutableTreeNode root = node;
+    for (TreeNode n = root; n != null; n = n.getParent()) {
+      root = (DefaultMutableTreeNode)n;
+    }
+    return root;
+  }
+
+  /**
+   * Processes hierarchy denoted by the given node assuming that every node there contains information about its initial row
+   * (see {@link #markRows(DefaultMutableTreeNode)}).
+   * <p/>
+   * Collects all row changes and returns them. All row information is dropped from the nodes during the current method processing.
+   * 
+   * @param node  reference to the target nodes hierarchy
+   * @return      collection of row changes at the form {@code 'old row -> new row'}
+   */
+  @NotNull
+  private static TIntIntHashMap collectRowChangesAndUnmark(@NotNull DefaultMutableTreeNode node) {
+    @NotNull TIntIntHashMap changes = new TIntIntHashMap();
+    DefaultMutableTreeNode root = getRoot(node);
+    int row = 0;
+    Stack<DefaultMutableTreeNode> nodes = new Stack<DefaultMutableTreeNode>();
+    nodes.push(root);
+    while (!nodes.isEmpty()) {
+      DefaultMutableTreeNode n = nodes.pop();
+      Object userObject = n.getUserObject();
+      if (userObject instanceof RowInfo) {
+        RowInfo rowInfo = (RowInfo)userObject;
+        if (rowInfo.row != row) {
+          changes.put(rowInfo.row, row);
+        }
+        n.setUserObject(rowInfo.userObject);
+      }
+      row++;
+      for (int i = n.getChildCount() - 1; i >= 0; i--) {
+        nodes.push((DefaultMutableTreeNode)n.getChildAt(i));
+      }
+    }
+    return changes;
+  }
+
+  /**
+   * Allows to map given node to its row at the hierarchy.
+   * 
+   * @param node  target node
+   * @return      given node's row at the nodes hierarchy (0-based)
+   */
+  public static int getRow(@NotNull DefaultMutableTreeNode node) {
+    DefaultMutableTreeNode root = getRoot(node);
+    int row = 0;
+    Stack<DefaultMutableTreeNode> nodes = new Stack<DefaultMutableTreeNode>();
+    nodes.push(root);
+    while (!nodes.isEmpty()) {
+      DefaultMutableTreeNode n = nodes.pop();
+      if (n == node) {
+        return row;
+      }
+      row++;
+      for (int i = n.getChildCount() - 1; i >= 0; i--) {
+        nodes.push((DefaultMutableTreeNode)n.getChildAt(i));
+      }
+    }
+    
+    StringBuilder buffer = new StringBuilder();
+    String separator = "->";
+    for (TreeNode n = node; n != null; n = n.getParent()) {
+      buffer.append(n).append(separator);
+    }
+    buffer.setLength(buffer.length() - separator.length());
+    throw new RuntimeException("Invalid DefaultMutableTreeNode detected: " + buffer.toString());
+  }
+  
+  /**
+   * Inserts given child to the given parent re-using existing nodes under the parent sub-hierarchy if possible (two nodes are
+   * considered equals if their {@link DefaultMutableTreeNode#getUserObject() user objects} are equal.
+   * <p/>
+   * Example:
+   * <pre>
+   *   parent:  0         to-insert: 2     
+   *            |_1                  |_3   
+   *            |_2                    |_6 
+   *            | |_3                      
+   *            |   |_4                    
+   *            |_5                        
+   *   -------------------------------------------------------------------------------------------------
+   *  | index:  |       0             |       1             |       2             |       3             |
+   *  |-------------------------------------------------------------------------------------------------
+   *  | result: |       0             |       0             |       0             |       0             |
+   *  |         |       |_2           |       |_1           |       |_1           |       |_1           |
+   *  |         |       | |_3         |       |_2           |       |_2           |       |_2           |
+   *  |         |       |   |_6       |       | |_3         |       | |_3         |       | |_3         |
+   *  |         |       |_1           |       |   |_6       |       |   |_4       |       |   |_4       |
+   *  |         |       |_2           |       |   |_4       |       |   |_6       |       |_5           |
+   *  |         |       | |_3         |       |_5           |       |_5           |       |_2           |
+   *  |         |       |   |_4       |                     |                     |         |_3         |
+   *  |         |       |_5           |                     |                     |           |_6       |
+   * </pre>
+   * <p/>
+   * 
+   * @param parent  parent node to insert into
+   * @param index   insertion index to use for the given parent node
+   * @param child   node to insert to the given parent node at the given insertion index
+   * @return        <code>true</code> if given child node has been merged to the existing node; <code>false</code> otherwise
+   */
+  public static boolean insert(@NotNull final DefaultMutableTreeNode parent, final int index, @NotNull final DefaultMutableTreeNode child) {
+    if (parent.getChildCount() < index) {
+      parent.add(child);
+      return false;
+    }
+    
+    boolean anchorAbove = false;
+    DefaultMutableTreeNode mergeCandidate = null;
+    if (index > 0) {
+      mergeCandidate = (DefaultMutableTreeNode)parent.getChildAt(index - 1);
+      if (!userDataEqual(mergeCandidate.getUserObject(), child.getUserObject())) {
+        mergeCandidate = null;
+      }
+    }
+
+    if (index < parent.getChildCount()) {
+      DefaultMutableTreeNode n = (DefaultMutableTreeNode)parent.getChildAt(index);
+      if (userDataEqual(n.getUserObject(), child.getUserObject())) {
+        mergeCandidate = n;
+        anchorAbove = true;
+      }
+    }
+
+    if (mergeCandidate == null) {
+      if (index < parent.getChildCount()) {
+        parent.insert(child, index);
+      }
+      else {
+        parent.add(child);
+      }
+      return false;
+    }
+
+    for (int i = 0, limit = child.getChildCount(); i < limit; i++) {
+      insert(mergeCandidate, anchorAbove ? 0 : mergeCandidate.getChildCount(), (DefaultMutableTreeNode)child.getChildAt(0));
+    }
+    return true;
+  }
+
+  private static boolean userDataEqual(@Nullable Object first, @Nullable Object second) {
+    if (first == null && second == null) {
+      return true;
+    }
+    else if (first == null ^ second == null) {
+      return false;
+    }
+    Object effectiveFirst = first instanceof RowInfo ? ((RowInfo)first).userObject : first;
+    Object effectiveSecond = second instanceof RowInfo ? ((RowInfo)second).userObject : second;
+    return effectiveFirst.equals(effectiveSecond);
+  }
+  
+  private static class RowInfo {
+    @Nullable
+    public final Object userObject;
+    public final int    row;
+
+    RowInfo(int row, @Nullable Object data) {
+      userObject = data;
+      this.row = row;
+    }
+
+    @Override
+    public String toString() {
+      return "row=" + row + (userObject == null ? "" : ": " + userObject.toString());
+    }
   }
 }

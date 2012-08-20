@@ -48,14 +48,23 @@ public final class SpansTest extends TestCase{
       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     final Dimension preferredSize = panel.getPreferredSize();
-    assertEquals(100, preferredSize.width);
+    if (SystemInfo.isMac) {
+      assertEquals(125, preferredSize.width);
+    } else {
+      assertEquals(100, preferredSize.width);
+    }
 
     panel.setSize(new Dimension(500, panel.getHeight()));
     panel.doLayout();
 
     assertEquals(500, field2.getWidth());
-    assertEquals(50, button.getWidth());
-    assertEquals(450, field1.getWidth());
+    if (SystemInfo.isMac) {
+      assertEquals(75, button.getWidth());
+      assertEquals(425, field1.getWidth());
+    } else {
+      assertEquals(50, button.getWidth());
+      assertEquals(450, field1.getWidth());
+    }
   }
 
 
@@ -84,14 +93,23 @@ public final class SpansTest extends TestCase{
       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     final Dimension preferredSize = panel.getPreferredSize();
-    assertEquals(100, preferredSize.width);
+    if (SystemInfo.isMac) {
+      assertEquals(125, preferredSize.width);
+    } else {
+      assertEquals(100, preferredSize.width);
+    }
 
     panel.setSize(new Dimension(500, panel.getHeight()));
     panel.doLayout();
 
     assertEquals(500, field2.getWidth());
-    assertEquals(250, button.getWidth());
-    assertEquals(250, field1.getWidth());
+    if (SystemInfo.isMac) {
+      assertEquals(263, button.getWidth());
+      assertEquals(237, field1.getWidth());
+    } else {
+      assertEquals(250, button.getWidth());
+      assertEquals(250, field1.getWidth());
+    }
   }
 
   /**
@@ -113,13 +131,22 @@ public final class SpansTest extends TestCase{
       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     final Dimension preferredSize = panel.getPreferredSize();
-    assertEquals(160, preferredSize.width);
+    if (SystemInfo.isMac) {
+      assertEquals(185, preferredSize.width);
+    } else {
+      assertEquals(160, preferredSize.width);
+    }
 
     panel.setSize(new Dimension(500, panel.getHeight()));
     panel.doLayout();
 
-    assertEquals(50, button.getWidth());
-    assertEquals(450, field1.getWidth());
+    if (SystemInfo.isMac) {
+      assertEquals(75, button.getWidth());
+      assertEquals(425, field1.getWidth());
+    } else {
+      assertEquals(50, button.getWidth());
+      assertEquals(450, field1.getWidth());
+    }
   }
 
   /**

@@ -192,7 +192,7 @@ public class VfsUtilCore {
     }
 
     if (visitChildren) {
-      VirtualFile[] children = file.getChildren();
+      @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
       for (VirtualFile child : children) {
         visitChildrenRecursively(child, visitor, visitedSymLinks);
       }

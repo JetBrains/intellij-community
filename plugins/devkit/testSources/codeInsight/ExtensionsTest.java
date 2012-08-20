@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,9 @@ import com.intellij.util.PathUtil;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/11/11
+ * @since 10/11/11
  */
 public class ExtensionsTest extends JavaCodeInsightFixtureTestCase {
-
   public void testInspectionMappings() throws Throwable {
     myFixture.testHighlighting("inspectionMapping.xml", "bundle.properties");
   }

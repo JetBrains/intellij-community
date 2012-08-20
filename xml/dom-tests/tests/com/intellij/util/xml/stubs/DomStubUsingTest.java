@@ -24,11 +24,13 @@ import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.stubs.model.Bar;
 import com.intellij.util.xml.stubs.model.Foo;
+import com.intellij.util.xml.stubs.model.NotStubbed;
 
 import java.util.List;
 
@@ -94,6 +96,21 @@ public class DomStubUsingTest extends DomStubTest {
     assertFalse(element.getFile().getNode().isParsed());
   }
 
+  public void testParent() throws Exception {
+    DomFileElement<Foo> element = prepare("parent.xml");
+
+    Bar bar = element.getRootElement().getBars().get(0);
+    GenericAttributeValue<Integer> notStubbed = bar.getNotStubbed();
+    DomElement parent = notStubbed.getParent();
+    assertEquals(bar, parent);
+
+//    SemService.getSemService(getProject()).clearCache();
+
+    NotStubbed child = bar.getNotStubbeds().get(0);
+    parent = child.getParent();
+    assertEquals(bar, parent);
+  }
+
   private DomFileElement<Foo> prepare(String path) {
     PsiFile file = myFixture.configureByFile(path);
     assertFalse(file.getNode().isParsed());
@@ -102,6 +119,7 @@ public class DomStubUsingTest extends DomStubTest {
     assertNotNull(tree);
 
     ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
+
     file = getPsiManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
 

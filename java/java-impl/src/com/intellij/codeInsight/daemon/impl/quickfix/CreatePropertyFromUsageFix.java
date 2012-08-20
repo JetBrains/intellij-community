@@ -315,7 +315,9 @@ public class CreatePropertyFromUsageFix extends CreateFromUsageBaseFix implement
   }
 
   protected void beforeTemplateFinished(PsiClass aClass, PsiField field) {
-    positionCursor(myMethodCall.getProject(), myMethodCall.getContainingFile(), myMethodCall);
+    if (myMethodCall.isValid()) {
+      positionCursor(myMethodCall.getProject(), myMethodCall.getContainingFile(), myMethodCall);
+    }
   }
 
   private static String getVariableName(PsiMethodCallExpression methodCall, boolean isStatic) {

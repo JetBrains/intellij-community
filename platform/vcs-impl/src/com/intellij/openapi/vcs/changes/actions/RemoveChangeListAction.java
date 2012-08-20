@@ -55,7 +55,7 @@ public class RemoveChangeListAction extends AnAction implements DumbAware {
     for(ChangeList changeList: lists) {
       if (!(changeList instanceof LocalChangeList)) return false;
       LocalChangeList localChangeList = (LocalChangeList) changeList;
-      if (localChangeList.isReadOnly() || localChangeList.hasDefaultName()) return false;
+      if (localChangeList.isReadOnly()) return false;
       if (localChangeList.isDefault() && ChangeListManager.getInstance(project).getChangeListsCopy().size() <= lists.length) return false;
     }
     return true;

@@ -62,8 +62,13 @@ public final class GapsTest extends TestCase{
     panel.setSize(panel.getPreferredSize());
     panel.doLayout();
 
-    assertEquals(new Rectangle(0,0,100,20), field1.getBounds());
-    assertEquals(new Rectangle(107,0,100,20), field2.getBounds());
+    if (SystemInfo.isMac) {
+      assertEquals(new Rectangle(0,0,100,28), field1.getBounds());
+      assertEquals(new Rectangle(107,0,100,28), field2.getBounds());
+    } else {
+      assertEquals(new Rectangle(0,0,100,20), field1.getBounds());
+      assertEquals(new Rectangle(107,0,100,20), field2.getBounds());
+    }
   }
 
 
@@ -192,7 +197,11 @@ public final class GapsTest extends TestCase{
       GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     final Dimension preferredSize = panel.getPreferredSize();
-    assertEquals(47, preferredSize.height);
+    if (SystemInfo.isMac) {
+      assertEquals(65, preferredSize.height);
+    } else {
+      assertEquals(47, preferredSize.height);
+    }
 
     panel.setSize(panel.getPreferredSize());
     panel.doLayout();
@@ -223,7 +232,11 @@ public final class GapsTest extends TestCase{
       GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     final Dimension preferredSize = panel.getPreferredSize();
-    assertEquals(47, preferredSize.height);
+    if (SystemInfo.isMac) {
+      assertEquals(65, preferredSize.height);
+    } else {
+      assertEquals(47, preferredSize.height);
+    }
 
     panel.setSize(panel.getPreferredSize());
     panel.doLayout();
@@ -249,7 +262,11 @@ public final class GapsTest extends TestCase{
       GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     final Dimension preferredSize = panel.getPreferredSize();
-    assertEquals(540, preferredSize.height);
+    if (SystemInfo.isMac) {
+      assertEquals(558, preferredSize.height);
+    } else {
+      assertEquals(540, preferredSize.height);
+    }
 
     panel.setSize(panel.getPreferredSize());
     panel.doLayout(); // should not crash

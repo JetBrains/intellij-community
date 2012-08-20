@@ -15,6 +15,11 @@
  */
 package com.intellij.util.xml.stubs;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.stubs.ObjectStubTree;
+import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomManager;
@@ -43,5 +48,23 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return "/xml/dom-tests/testData/stubs";
+  }
+
+  protected ElementStub getRootStub(String filePath) {
+    PsiFile psiFile = myFixture.configureByFile(filePath);
+
+    StubTreeLoader loader = StubTreeLoader.getInstance();
+    VirtualFile file = psiFile.getVirtualFile();
+    assertTrue(loader.canHaveStub(file));
+    ObjectStubTree stubTree = loader.readFromVFile(getProject(), file);
+    assertNotNull(stubTree);
+    ElementStub root = (ElementStub)stubTree.getRoot();
+    assertNotNull(root);
+    return root;
+  }
+
+  protected void doBuilderTest(String file, String stubText) {
+    ElementStub stub = getRootStub(file);
+    assertEquals(stubText, DebugUtil.stubTreeToString(stub));
   }
 }

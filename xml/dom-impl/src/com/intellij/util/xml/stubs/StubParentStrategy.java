@@ -18,8 +18,7 @@ package com.intellij.util.xml.stubs;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xml.impl.DomParentStrategy;
+import com.intellij.util.xml.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,12 +28,12 @@ import org.jetbrains.annotations.Nullable;
  */
 public class StubParentStrategy implements DomParentStrategy {
 
-  public static StubParentStrategy createAttributeStrategy(@Nullable AttributeStub stub, @NotNull DomStub parent) {
+  public static StubParentStrategy createAttributeStrategy(@Nullable AttributeStub stub, @NotNull final DomStub parent) {
     if (stub == null) {
       return new StubParentStrategy(parent) {
         @Override
         public DomInvocationHandler getParentHandler() {
-          return myStub.getHandler();
+          return parent.getHandler();
         }
 
         @Override
@@ -47,8 +46,12 @@ public class StubParentStrategy implements DomParentStrategy {
       return new StubParentStrategy(stub) {
         @Override
         public XmlElement getXmlElement() {
-          XmlTag tag = myStub.getParentStub().getHandler().getXmlTag();
-          return tag == null ? null : tag.getAttribute(myStub.getName());
+          DomInvocationHandler parentHandler = getParentHandler();
+          XmlTag tag = parentHandler.getXmlTag();
+          if (tag == null) {
+            throw new AssertionError("can't find tag for " + parentHandler);
+          }
+          return tag.getAttribute(myStub.getName());
         }
       };
     }
@@ -71,7 +74,8 @@ public class StubParentStrategy implements DomParentStrategy {
     DomStub parentStub = myStub.getParentStub();
     if (parentStub == null) return null;
     int index = parentStub.getChildIndex(myStub);
-    XmlTag tag = parentStub.getHandler().getXmlTag();
+    DomInvocationHandler handler = parentStub.getHandler();
+    XmlTag tag = handler.getXmlTag();
     if (tag == null) return null;
     XmlTag[] subTags = tag.findSubTags(myStub.getName());
 
@@ -87,13 +91,15 @@ public class StubParentStrategy implements DomParentStrategy {
   @NotNull
   @Override
   public DomParentStrategy setXmlElement(@NotNull XmlElement element) {
-    return this;
+    return new PhysicalDomParentStrategy(element, DomManagerImpl.getDomManager(element.getProject()));
   }
 
   @NotNull
   @Override
   public DomParentStrategy clearXmlElement() {
-    return this;
+    final DomInvocationHandler parent = getParentHandler();
+    assert parent != null : "write operations should be performed on the DOM having a parent, your DOM may be not very fresh";
+    return new VirtualDomParentStrategy(parent);
   }
 
   @Override
@@ -104,5 +110,11 @@ public class StubParentStrategy implements DomParentStrategy {
   @Override
   public XmlFile getContainingFile(DomInvocationHandler handler) {
     return getParentHandler().getFile();
+  }
+
+  @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
+  @Override
+  public boolean equals(Object obj) {
+    return PhysicalDomParentStrategy.strategyEquals(this, obj);
   }
 }

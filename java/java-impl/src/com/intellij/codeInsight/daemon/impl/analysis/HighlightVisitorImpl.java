@@ -248,7 +248,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, notFunctionalMessage));
           } else {
             if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType)) {
-              myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, "Cyclic inference")); //todo[ann] append not inferred type params info
+              myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression,
+                                                             "Cyclic inference")); //todo[ann] append not inferred type params info
+            }
+            else {
+              final String incompatibleReturnTypesMessage = LambdaUtil.checkReturnTypeCompatible(expression, LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType));
+              if (incompatibleReturnTypesMessage != null) {
+                myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, incompatibleReturnTypesMessage));
+              }
             }
           }
         }

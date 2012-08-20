@@ -70,7 +70,7 @@ public class ArrangementRuleEditingModelBuilder {
                     @NotNull JTree tree,
                     @NotNull DefaultMutableTreeNode root,
                     @NotNull ArrangementSettingsGrouper grouper,
-                    @NotNull TIntObjectHashMap<ArrangementRuleEditingModel> rowMappings)
+                    @NotNull TIntObjectHashMap<ArrangementRuleEditingModelImpl> rowMappings)
   {
     int initialInsertRow = 0;
     

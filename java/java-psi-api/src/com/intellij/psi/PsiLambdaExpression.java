@@ -42,7 +42,10 @@ public interface PsiLambdaExpression extends PsiExpression {
   PsiElement getBody();
 
   List<PsiExpression> getReturnExpressions();
+  List<PsiReturnStatement> getReturnStatements();
   
   @Nullable
   PsiType getFunctionalInterfaceType();
+
+  boolean isVoidCompatible();
 }

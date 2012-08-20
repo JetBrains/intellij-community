@@ -259,4 +259,8 @@ public class DomFileDescription<T> {
   public boolean hasStubs() {
     return false;
   }
+
+  public int getStubVersion() {
+    return 0;
+  }
 }

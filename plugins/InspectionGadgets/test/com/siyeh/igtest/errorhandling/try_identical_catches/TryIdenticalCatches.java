@@ -69,7 +69,7 @@ class TryIdenticalCatches {
      catch(ClassNotFoundException cnfe) {
        System.out.println();
      }
-     <warning descr="Identical 'catch' branches in 'try' statement">catch(NumberFormatException nfe)</warning> {
+     <warning descr="catch branch identical to 'ClassNotFoundException' branch">catch(NumberFormatException nfe)</warning> {
       System.out.println();
      }
    }
@@ -86,11 +86,26 @@ class TryIdenticalCatches {
     catch(ClassNotFoundException cnfe) {
       log(cnfe);
     }
-    <warning descr="Identical 'catch' branches in 'try' statement">catch(NumberFormatException n<caret>fe)</warning> {
+    <warning descr="catch branch identical to 'ClassNotFoundException' branch">catch(NumberFormatException n<caret>fe)</warning> {
       log(nfe);
     }
   }
 
   private void log(Exception e) {
+  }
+
+  class E1 extends RuntimeException {}
+  class E2 extends E1 {}
+  class E3 extends RuntimeException {}
+  class E4 extends E3 {}
+
+  void p() {
+    try {
+
+    } catch (E4 e) {
+    } <warning descr="catch branch identical to 'E4' branch">catch (E2 e)</warning> {
+    } <warning descr="catch branch identical to 'E4' branch">catch (E3 e)</warning> {
+    } <warning descr="catch branch identical to 'E2' branch">catch (E1 e)</warning> {
+    }
   }
 }

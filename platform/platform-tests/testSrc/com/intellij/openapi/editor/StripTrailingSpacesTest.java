@@ -130,9 +130,11 @@ public class StripTrailingSpacesTest extends LightPlatformCodeInsightTestCase {
     settings.setStripTrailingSpaces(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
     settings.setEnsureNewLineAtEOF(true);
 
-    configureFromFileText("x.txt", "xxx <caret>\nyyy\n\t\t\t");
+    Document document = configureFromFileText("x.txt", "xxx <caret>\nyyy\n\t\t\t");
+    // make any modification, so that Document and file content differ. Otherwise save won't be, and "on-save" actions won't be called.
+    document.insertString(0, " ");
 
     FileDocumentManager.getInstance().saveAllDocuments();
-    checkResultByText("xxx <caret>\nyyy\n\t\t\t\n");
+    checkResultByText(" xxx <caret>\nyyy\n\t\t\t\n");
   }
 }

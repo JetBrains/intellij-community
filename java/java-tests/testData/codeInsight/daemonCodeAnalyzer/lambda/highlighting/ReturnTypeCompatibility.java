@@ -57,7 +57,7 @@ class ReturnTypeCompatibility {
     }
 
     public static void main(String[] args) {
-        call(<error descr="Cyclic inference">i-> {return i;}</error>);
+        <error descr="Cannot resolve method 'call(<lambda expression>)'">call</error>(i-> {return i;});
     }
 }
 
@@ -68,5 +68,5 @@ class ReturnTypeChecks1 {
     }
 
     I<Integer, Integer> accepted = i -> { return i; };
-    <error descr="Incompatible types. Found: '<lambda expression>', required: 'ReturnTypeChecks1.I<java.lang.Double,java.lang.Integer>'">I<Double, Integer> rejected = i -> { return i; };</error>
+    I<Double, Integer> rejected = <error descr="Incompatible return type Double in lambda expression">i -> { return i; }</error>;
 }
