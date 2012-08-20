@@ -20,11 +20,12 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.util.containers.hash.HashSet;
-import gnu.trove.*;
+import gnu.trove.TIntIntHashMap;
+import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -136,34 +137,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   
   private void doAddAndCondition(@NotNull ArrangementSettingsAtomNode node) {
     ArrangementSettingsNode newNode = ArrangementUtil.and(mySettingsNode.clone(), node);
-    HierarchicalArrangementSettingsNode grouped = myGrouper.group(newNode);
-    int newDepth = ArrangementConfigUtil.getDepth(grouped);
-    int oldDepth = ArrangementConfigUtil.distance(myTopMost, myBottomMost);
-    mySettingsNode = newNode;
-    if (newDepth == oldDepth) {
-      myBottomMost.setUserObject(ArrangementConfigUtil.getLast(grouped).getCurrent());
-      return;
-    }
-    
-    DefaultMutableTreeNode parent = (DefaultMutableTreeNode)myTopMost.getParent();
-    parent.remove(myTopMost);
-    Pair<DefaultMutableTreeNode,Integer> pair = ArrangementConfigUtil.map(parent, grouped);
-    myTopMost = (DefaultMutableTreeNode)ArrangementConfigUtil.getLastBefore(pair.first, parent);
-    myBottomMost = pair.first;
-    int depthShift = newDepth - oldDepth;
-    int[] rows = myRowMappings.keys();
-    Arrays.sort(rows);
-    for (int i = rows.length - 1; i >= 0; i--) {
-      int row = rows[i];
-      if (row >= myRow) {
-        myRowMappings.put(row + depthShift, myRowMappings.get(row));
-        myRowMappings.remove(row);
-      }
-      else {
-        break;
-      }
-    }
-    myRow += depthShift;
+    applyNewSetting(newNode);
   }
 
   @Override
@@ -185,8 +159,11 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
       newNode = composite.getOperands().iterator().next();
     }
 
+    applyNewSetting(newNode);
+  }
+
+  private void applyNewSetting(@NotNull ArrangementSettingsNode newNode) {
     mySettingsNode = newNode;
-    
     HierarchicalArrangementSettingsNode grouped = myGrouper.group(newNode);
     int newDepth = ArrangementConfigUtil.getDepth(grouped);
     int oldDepth = ArrangementConfigUtil.distance(myTopMost, myBottomMost);
@@ -196,12 +173,12 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     }
 
     Pair<DefaultMutableTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped);
-    DefaultMutableTreeNode newTop = replacement.first;
-    DefaultMutableTreeNode newBottom = ArrangementConfigUtil.getLast(newTop);
+    DefaultMutableTreeNode newBottom = replacement.first;
+    DefaultMutableTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
     final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop);
     myTopMost = newTop;
     myBottomMost = newBottom;
-    
+
     final TIntObjectHashMap<ArrangementRuleEditingModelImpl> newMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
 
     // Update model mappings.
@@ -223,7 +200,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     });
     myRow = ArrangementConfigUtil.getRow(myBottomMost);
     newMappings.put(myRow, this);
-    
+
     myRowMappings.clear();
     newMappings.forEachEntry(new TIntObjectProcedure<ArrangementRuleEditingModelImpl>() {
       @Override
