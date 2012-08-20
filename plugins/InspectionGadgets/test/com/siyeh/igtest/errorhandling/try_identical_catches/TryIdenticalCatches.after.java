@@ -90,4 +90,19 @@ class TryIdenticalCatches {
 
   private void log(Exception e) {
   }
+
+  class E1 extends RuntimeException {}
+  class E2 extends E1 {}
+  class E3 extends RuntimeException {}
+  class E4 extends E3 {}
+
+  void p() {
+    try {
+
+    } catch (E4 e) {
+    } catch (E2 e) {
+    } catch (E3 e) {
+    } catch (E1 e) {
+    }
+  }
 }
