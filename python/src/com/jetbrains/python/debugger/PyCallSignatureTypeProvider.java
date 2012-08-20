@@ -3,12 +3,13 @@ package com.jetbrains.python.debugger;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.types.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author traff
  */
 public class PyCallSignatureTypeProvider extends PyTypeProviderBase {
-  public PyType getParameterType(final PyNamedParameter param, final PyFunction func, TypeEvalContext context) {
+  public PyType getParameterType(@NotNull final PyNamedParameter param, @NotNull final PyFunction func, @NotNull TypeEvalContext context) {
     final String name = param.getName();
     if (name != null) {
       final String typeName = ((PySignatureCacheManagerImpl)PySignatureCacheManager.getInstance(param.getProject())).findParameterType(func, name);

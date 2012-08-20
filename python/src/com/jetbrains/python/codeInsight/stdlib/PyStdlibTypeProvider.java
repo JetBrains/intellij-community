@@ -104,7 +104,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public PyType getParameterType(PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
+  public PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     final String name = param.getName();
     final String qname = getQualifiedName(func, param);
     if (qname != null && name != null) {

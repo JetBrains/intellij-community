@@ -9,10 +9,11 @@ import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyClassTypeImpl;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author yole
@@ -40,6 +41,7 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
     return PyClassNameIndex.findClass(qName, myProject);
   }
 
+  @NotNull
   @Override
   public PyClassType createClassType(@NotNull PyClass pyClass, boolean isDefinition) {
     return new PyClassTypeImpl(pyClass, isDefinition);
@@ -47,7 +49,25 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
 
   @Nullable
   @Override
-  public String findShortestImportableName(PsiElement importer, VirtualFile targetFile) {
-    return QualifiedNameFinder.findShortestImportableName(importer, targetFile);
+  public PyType createUnionType(@NotNull Collection<PyType> members) {
+    return PyUnionType.union(members);
+  }
+
+  @Nullable
+  @Override
+  public PyType createTupleType(@NotNull Collection<PyType> members, @NotNull PsiElement anchor) {
+    return PyTupleType.create(anchor, members.toArray(new PyType[members.size()]));
+  }
+
+  @Nullable
+  @Override
+  public PyType parseTypeAnnotation(@NotNull String annotation, @NotNull PsiElement anchor) {
+    return PyTypeParser.getTypeByName(anchor, annotation);
+  }
+
+  @Nullable
+  @Override
+  public String findShortestImportableName(@NotNull VirtualFile targetFile, @NotNull PsiElement anchor) {
+    return QualifiedNameFinder.findShortestImportableName(anchor, targetFile);
   }
 }
