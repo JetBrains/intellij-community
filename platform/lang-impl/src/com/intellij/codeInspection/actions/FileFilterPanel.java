@@ -43,7 +43,9 @@ class FileFilterPanel {
   @Nullable
   SearchScope getSearchScope() {
     if (!myUseFileMask.isSelected()) return null;
-    String text = myUseFileMask.getText();
+    String text = (String)myFileMask.getSelectedItem();
+    if (text == null) return null;
+
     final Pattern pattern = FindInProjectUtil.createFileMaskRegExp(text);
     return new GlobalSearchScope() {
       @Override
