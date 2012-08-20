@@ -736,22 +736,29 @@ public class OverrideImplementUtil {
     return null;
   }
 
-  public static void overrideOrImplement(PsiClass psiClass, @NotNull PsiMethod baseMethod) throws IncorrectOperationException {
+  public static List<PsiGenerationInfo<PsiMethod>> overrideOrImplement(PsiClass psiClass, @NotNull PsiMethod baseMethod) throws IncorrectOperationException {
     FileEditorManager fileEditorManager = FileEditorManager.getInstance(baseMethod.getProject());
+    List<PsiGenerationInfo<PsiMethod>> results = new ArrayList<PsiGenerationInfo<PsiMethod>>();
+    try {
 
-    List<PsiGenerationInfo<PsiMethod>> prototypes = convert2GenerationInfos(overrideOrImplementMethod(psiClass, baseMethod, false));
-    if (prototypes.isEmpty()) return;
+      List<PsiGenerationInfo<PsiMethod>> prototypes = convert2GenerationInfos(overrideOrImplementMethod(psiClass, baseMethod, false));
+      if (prototypes.isEmpty()) return null;
 
-    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseMethod.getContainingClass(), psiClass, PsiSubstitutor.EMPTY);
-    PsiElement anchor = getDefaultAnchorToOverrideOrImplement(psiClass, baseMethod, substitutor);
-    List<PsiGenerationInfo<PsiMethod>> results = GenerateMembersUtil.insertMembersBeforeAnchor(psiClass, anchor, prototypes);
+      PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(baseMethod.getContainingClass(), psiClass, PsiSubstitutor.EMPTY);
+      PsiElement anchor = getDefaultAnchorToOverrideOrImplement(psiClass, baseMethod, substitutor);
+      results = GenerateMembersUtil.insertMembersBeforeAnchor(psiClass, anchor, prototypes);
 
-    PsiFile psiFile = psiClass.getContainingFile();
-    Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(psiFile.getProject(), psiFile.getVirtualFile()), false);
-    if (editor == null) return;
+      return results;
+    }
+    finally {
 
-    results.get(0).positionCaret(editor, true);
-    editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      PsiFile psiFile = psiClass.getContainingFile();
+      Editor editor = fileEditorManager.openTextEditor(new OpenFileDescriptor(psiFile.getProject(), psiFile.getVirtualFile()), false);
+      if (editor != null && !results.isEmpty()) {
+        results.get(0).positionCaret(editor, true);
+        editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+      }
+    }
   }
 
   @Nullable

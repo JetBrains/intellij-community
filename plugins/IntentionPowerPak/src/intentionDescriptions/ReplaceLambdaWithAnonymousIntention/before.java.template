@@ -1,0 +1,5 @@
+class X {
+  {
+    Runnable r = <spot>() - > {}</spot>;
+  }
+}
