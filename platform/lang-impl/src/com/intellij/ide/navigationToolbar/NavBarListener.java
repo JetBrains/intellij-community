@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -154,10 +155,16 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   }
 
   private void processFocusLost(FocusEvent e) {
+    final Component opposite = e.getOppositeComponent();
+
+    if (myPanel.isInFloatingMode() && opposite != null && DialogWrapper.findInstance(opposite) != null) {
+      myPanel.hideHint();
+      return;
+    }
+
     final boolean nodePopupInactive = !myPanel.isNodePopupActive();
     boolean childPopupInactive = !JBPopupFactory.getInstance().isChildPopupFocused(myPanel);
     if (nodePopupInactive && childPopupInactive) {
-      final Component opposite = e.getOppositeComponent();
       if (opposite != null && opposite != myPanel && !myPanel.isAncestorOf(opposite) && !e.isTemporary()) {
         myPanel.setContextComponent(null);
         myPanel.hideHint();
