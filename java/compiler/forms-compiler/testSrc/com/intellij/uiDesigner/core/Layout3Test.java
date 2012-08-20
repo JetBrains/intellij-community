@@ -36,6 +36,6 @@ public final class Layout3Test extends TestCase{
       GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
     final Dimension preferredSize = panel.getPreferredSize();
-    assertEquals(120, preferredSize.height);
+    assertEquals(SystemInfo.isMac ? 129 : 120, preferredSize.height);
   }
 }
