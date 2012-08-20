@@ -25,7 +25,6 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.Set;
 
@@ -47,8 +46,8 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @NotNull private final ArrangementSettingsGrouper                         myGrouper;
   private final          int                                                myRowShift;
 
-  @NotNull private DefaultMutableTreeNode  myTopMost;
-  @NotNull private DefaultMutableTreeNode  myBottomMost;
+  @NotNull private ArrangementTreeNode     myTopMost;
+  @NotNull private ArrangementTreeNode     myBottomMost;
   @NotNull private ArrangementSettingsNode mySettingsNode;
   private          int                     myRow;
 
@@ -59,8 +58,8 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    *                   to generate corresponding events automatically
    * @param node       backing settings node
    * @param topMost    there is a possible case that a single settings node is shown in more than one visual line
- *                     ({@link HierarchicalArrangementSettingsNode}). This argument is the top-most UI node used for the
- *                     settings node representation
+   *                     ({@link HierarchicalArrangementSettingsNode}). This argument is the top-most UI node used for the
+   *                     settings node representation
    * @param bottomMost bottom-most UI node used for the given settings node representation 
    * @param grouper    strategy that encapsulates information on how settings node should be displayed
    * @param mappings   {@code 'row -> model'} mappings
@@ -69,8 +68,8 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    */
   public ArrangementRuleEditingModelImpl(@NotNull DefaultTreeModel model,
                                          @NotNull ArrangementSettingsNode node,
-                                         @NotNull DefaultMutableTreeNode topMost,
-                                         @NotNull DefaultMutableTreeNode bottomMost,
+                                         @NotNull ArrangementTreeNode topMost,
+                                         @NotNull ArrangementTreeNode bottomMost,
                                          @NotNull ArrangementSettingsGrouper grouper,
                                          @NotNull TIntObjectHashMap<ArrangementRuleEditingModelImpl> mappings,
                                          int row,
@@ -105,12 +104,12 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   }
 
   @NotNull
-  public DefaultMutableTreeNode getTopMost() {
+  public ArrangementTreeNode getTopMost() {
     return myTopMost;
   }
 
   @NotNull
-  public DefaultMutableTreeNode getBottomMost() {
+  public ArrangementTreeNode getBottomMost() {
     return myBottomMost;
   }
 
@@ -125,7 +124,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    * This method asks the model to refresh its tree nodes if necessary.
    */
   public void refreshTreeNodes() {
-    for (DefaultMutableTreeNode node = myBottomMost; node != null; node = (DefaultMutableTreeNode)node.getParent()) {
+    for (ArrangementTreeNode node = myBottomMost; node != null; node = node.getParent()) {
       if (node == myTopMost) {
         // No refresh is necessary.
         return;
@@ -178,13 +177,13 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     int newDepth = ArrangementConfigUtil.getDepth(grouped);
     int oldDepth = ArrangementConfigUtil.distance(myTopMost, myBottomMost);
     if (oldDepth == newDepth) {
-      myBottomMost.setUserObject(ArrangementConfigUtil.getLast(grouped).getCurrent());
+      myBottomMost.setSettings(ArrangementConfigUtil.getLast(grouped).getCurrent());
       return;
     }
 
-    Pair<DefaultMutableTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped);
-    DefaultMutableTreeNode newBottom = replacement.first;
-    DefaultMutableTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
+    Pair<ArrangementTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped);
+    ArrangementTreeNode newBottom = replacement.first;
+    ArrangementTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
     final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop, myTreeModel);
     myTopMost = newTop;
     myBottomMost = newBottom;

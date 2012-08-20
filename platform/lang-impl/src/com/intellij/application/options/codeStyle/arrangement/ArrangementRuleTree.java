@@ -65,7 +65,7 @@ public class ArrangementRuleTree {
 
   public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
     myFactory = new ArrangementNodeComponentFactory(displayManager);
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+    ArrangementTreeNode root = new ArrangementTreeNode(null);
     myTreeModel = new DefaultTreeModel(root);
     myTree = new Tree(myTreeModel) {
       @Override
@@ -168,7 +168,7 @@ public class ArrangementRuleTree {
     tree.expandPath(parent);
   }
 
-  private void map(@NotNull DefaultMutableTreeNode root,
+  private void map(@NotNull ArrangementTreeNode root,
                    @NotNull List<ArrangementSettingsNode> settings,
                    @NotNull ArrangementSettingsGrouper grouper)
   {

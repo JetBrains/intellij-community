@@ -15,11 +15,12 @@
  */
 package com.intellij.application.options.codeStyle.arrangement
 
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.junit.Test
 
-import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 
 import static org.junit.Assert.assertEquals
@@ -234,7 +235,7 @@ four =      '4'()
     ArrangementConfigUtil.insert(parent, i, child, new DefaultTreeModel(ArrangementConfigUtil.getRoot(parent)))
   }
   
-  private static void assertNodesEqual(@NotNull DefaultMutableTreeNode expected, @NotNull DefaultMutableTreeNode actual) {
+  private static void assertNodesEqual(@NotNull ArrangementTreeNode expected, @NotNull ArrangementTreeNode actual) {
     assertEquals(expected.userObject, actual.userObject)
     assertEquals(expected.childCount, actual.childCount)
     for (i in 0..<expected.childCount) {
@@ -247,14 +248,14 @@ public class TreeNodeBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name) {
-    def result = new DefaultMutableTreeNode(name)
+    def result = new ArrangementTreeNode(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, name))
     currentNode?.add(result)
     result
   }
   
   @Nullable
-  DefaultMutableTreeNode getCurrentNode() {
-    getCurrent() as DefaultMutableTreeNode
+  ArrangementTreeNode getCurrentNode() {
+    getCurrent() as ArrangementTreeNode
   }
 
   @Override protected void setParent(Object parent, Object child) { }

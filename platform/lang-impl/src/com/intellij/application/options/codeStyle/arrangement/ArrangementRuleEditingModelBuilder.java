@@ -69,7 +69,7 @@ public class ArrangementRuleEditingModelBuilder {
   @SuppressWarnings("MethodMayBeStatic")
   public void build(@NotNull ArrangementSettingsNode setting,
                     @NotNull JTree tree,
-                    @NotNull DefaultMutableTreeNode root,
+                    @NotNull ArrangementTreeNode root,
                     @NotNull ArrangementSettingsGrouper grouper,
                     @NotNull TIntObjectHashMap<ArrangementRuleEditingModelImpl> rowMappings)
   {
@@ -94,8 +94,8 @@ public class ArrangementRuleEditingModelBuilder {
 
     HierarchicalArrangementSettingsNode grouped = grouper.group(setting);
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
-    Pair<DefaultMutableTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped);
-    DefaultMutableTreeNode topMostNode = (DefaultMutableTreeNode)ArrangementConfigUtil.getLastBefore(pair.first, root);
+    Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped);
+    ArrangementTreeNode topMostNode = ArrangementConfigUtil.getLastBefore(pair.first, root);
     int row = initialInsertRow + pair.second - 1;
     ArrangementRuleEditingModelImpl model = new ArrangementRuleEditingModelImpl(
       treeModel,
