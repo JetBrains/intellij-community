@@ -101,6 +101,6 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
   }
 
   public boolean isProductionOnly() {
-    return myProductionOnly;
+    return myProductionOnly || myClasspathKind == JpsJavaClasspathKind.PRODUCTION_RUNTIME || myClasspathKind == JpsJavaClasspathKind.PRODUCTION_COMPILE;
   }
 }
