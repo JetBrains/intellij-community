@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement
 
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.junit.Test
 
 import javax.swing.tree.DefaultMutableTreeNode
@@ -242,7 +243,7 @@ public class TreeNodeBuilder extends BuilderSupport {
     result
   }
   
-  @NotNull
+  @Nullable
   DefaultMutableTreeNode getCurrentNode() {
     getCurrent() as DefaultMutableTreeNode
   }
