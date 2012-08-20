@@ -68,10 +68,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
@@ -245,14 +242,15 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
           @Override
           public void iterateIndexableFilesIn(@NotNull final VirtualFile file, @NotNull final ContentIterator iterator) {
-            if (file.isDirectory()) {
-              for (VirtualFile child : file.getChildren()) {
-                iterateIndexableFilesIn(child, iterator);
+            VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+              @Override
+              public boolean visitFile(@NotNull VirtualFile file) {
+                if (!file.isDirectory()) {
+                  iterator.processFile(file);
+                }
+                return true;
               }
-            }
-            else {
-              iterator.processFile(file);
-            }
+            });
           }
         }, null);
 

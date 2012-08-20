@@ -27,9 +27,13 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -115,23 +119,23 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return loadModule(new File(modulePath));
   }
 
-
   @Nullable
-  protected ModuleImpl loadAllModulesUnder(VirtualFile rootDir) throws Exception {
-    ModuleImpl module = null;
-    final VirtualFile[] children = rootDir.getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        final ModuleImpl childModule = loadAllModulesUnder(child);
-        if (module == null) module = childModule;
+  protected Module loadAllModulesUnder(@NotNull VirtualFile rootDir) throws Exception {
+    final Ref<Module> result = Ref.create();
+
+    VfsUtilCore.visitChildrenRecursively(rootDir, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!file.isDirectory() && file.getName().endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
+          ModuleImpl module = (ModuleImpl)loadModule(new File(file.getPath()));
+          readJdomExternalizables(module);
+          result.setIfNull(module);
+        }
+        return true;
       }
-      else if (child.getName().endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION)) {
-        String modulePath = child.getPath();
-        module = (ModuleImpl)loadModule(new File(modulePath));
-        readJdomExternalizables(module);
-      }
-    }
-    return module;
+    });
+
+    return result.get();
   }
 
   protected void readJdomExternalizables(final ModuleImpl module) {

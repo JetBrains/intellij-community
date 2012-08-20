@@ -41,6 +41,14 @@ public class Ref<T> {
     myValue = value;
   }
 
+  public boolean setIfNull(@Nullable T value) {
+    if (myValue == null) {
+      myValue = value;
+      return true;
+    }
+    return false;
+  }
+
   public static <T> Ref<T> create() {
     return new Ref<T>();
   }
