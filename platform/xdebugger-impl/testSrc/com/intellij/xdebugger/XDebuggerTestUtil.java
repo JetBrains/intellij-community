@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +29,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.breakpoints.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.ui.DebuggerIcons;
@@ -365,6 +367,16 @@ public class XDebuggerTestUtil {
         }
       }
     }
+  }
+
+  public static void disposeDebugSession(final XDebugSession debugSession) {
+    new WriteAction() {
+      protected void run(Result result) throws Throwable {
+        XDebugSessionImpl session = (XDebugSessionImpl)debugSession;
+        Disposer.dispose(session.getSessionTab());
+        Disposer.dispose(session.getConsoleView());
+      }
+    }.execute();
   }
 
   public static class XTestStackFrameContainer extends XTestContainer<XStackFrame> implements XExecutionStack.XStackFrameContainer {
