@@ -137,34 +137,39 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
   }
 
   public void testTargetIsWritable() throws Exception {
-    final File targetFile = createTempFile(myTempDir, "target", "");
+    final File targetFile = createTempFile(myTempDir, "target.", ".txt");
     final File linkFile = createTempLink(targetFile.getPath(), myTempDir + "/link");
     final VirtualFile linkVFile = refreshAndFind(linkFile);
     assertTrue("link=" + linkFile + ", vLink=" + linkVFile, linkVFile != null && !linkVFile.isDirectory() && linkVFile.isSymLink());
 
-    assertTrue(targetFile.getPath(), targetFile.setWritable(true, false) && targetFile.canWrite());
+    setWritableAndCheck(targetFile, true);
     refresh();
     assertTrue(linkVFile.getPath(), linkVFile.isWritable());
-    assertTrue(targetFile.getPath(), targetFile.setWritable(false, false) && !targetFile.canWrite());
+    setWritableAndCheck(targetFile, false);
     refresh();
     assertFalse(linkVFile.getPath(), linkVFile.isWritable());
 
-    final File targetDir = createTempDirectory(myTempDir, "targetDir", "");
+    final File targetDir = createTempDirectory(myTempDir, "target.", ".dir");
     final File linkDir = createTempLink(targetDir.getPath(), myTempDir + "/linkDir");
     final VirtualFile linkVDir = refreshAndFind(linkDir);
     assertTrue("link=" + linkDir + ", vLink=" + linkVDir, linkVDir != null && linkVDir.isDirectory() && linkVDir.isSymLink());
 
     if (!SystemInfo.isWindows) {
-      assertTrue(targetDir.getPath(), targetDir.setWritable(true, false) && targetDir.canWrite());
+      setWritableAndCheck(targetDir, true);
       refresh();
       assertTrue(linkVDir.getPath(), linkVDir.isWritable());
-      assertTrue(targetDir.getPath(), targetDir.setWritable(false, false) && !targetDir.canWrite());
+      setWritableAndCheck(targetDir, false);
       refresh();
       assertFalse(linkVDir.getPath(), linkVDir.isWritable());
     }
     else {
       assertEquals(linkVDir.getPath(), targetDir.canWrite(), linkVDir.isWritable());
     }
+  }
+
+  private static void setWritableAndCheck(File file, boolean writable) {
+    assertTrue(file.getPath(), file.setWritable(writable, false));
+    assertEquals(file.getPath(), writable, file.canWrite());
   }
 
   public void testLinkDeleteIsSafe() throws Exception {
