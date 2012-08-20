@@ -141,12 +141,12 @@ public class LambdaUtil {
         final PsiType lambdaFormalType = typeElement.getType();
         final PsiType methodParameterType = parameterTypes[lambdaParamIdx];
         if (lambdaFormalType instanceof PsiPrimitiveType) {
-          if (methodParameterType instanceof PsiPrimitiveType) return methodParameterType.isAssignableFrom(lambdaFormalType);
+          if (methodParameterType instanceof PsiPrimitiveType) return methodParameterType.equals(lambdaFormalType);
           return false;
         }
 
-        if (!resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType))
-          .isAssignableFrom(lambdaFormalType)) {
+        if (!lambdaFormalType
+          .equals(resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType)))) {
           return false;
         }
       }
