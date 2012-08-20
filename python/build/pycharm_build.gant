@@ -43,7 +43,8 @@ setProperty("pluginFilter", [
             "python-uml", "localization",
             "python-localization",
             "rest", "python-rest",
-            "pycharm-flask"
+            "pycharm-flask",
+            "pycharm-numpy"
 ])
 
 private List<String> pycharmPlatformApiModules() {
@@ -219,6 +220,7 @@ private layoutPlugins() {
     layouts.layoutPlugin("rest")
     layouts.layoutPlugin("python-rest")
     layouts.layoutPlugin("pycharm-flask")
+    layouts.layoutPlugin("pycharm-numpy")
   }
 
   layouts.layoutPlugins()
