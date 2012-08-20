@@ -177,7 +177,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   public void setConsoleEditorEnabled(boolean consoleEditorEnabled) {
-    if (isConsoleEditorEnabled() != consoleEditorEnabled) return;
+    if (isConsoleEditorEnabled() == consoleEditorEnabled) return;
     final VirtualFile virtualFile = myFile.getVirtualFile();
     assert virtualFile != null;
     final FileEditorManagerEx fileManager = FileEditorManagerEx.getInstanceEx(getProject());
