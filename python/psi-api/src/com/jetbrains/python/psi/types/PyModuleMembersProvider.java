@@ -21,7 +21,7 @@ public abstract class PyModuleMembersProvider {
   public Collection<PyDynamicMember> getMembers(PyFile module, PointInImport point) {
     final VirtualFile vFile = module.getVirtualFile();
     if (vFile != null) {
-      final String qName = PyPsiFacade.getInstance(module.getProject()).findShortestImportableName(module, vFile);
+      final String qName = PyPsiFacade.getInstance(module.getProject()).findShortestImportableName(vFile, module);
       if (qName != null) {
         return getMembersByQName(module, qName);
       }
