@@ -20,7 +20,7 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.util.containers.hash.HashSet;
-import gnu.trove.TIntObjectHashMap;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -166,26 +166,50 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
       return;
     }
 
-    DefaultMutableTreeNode parent = (DefaultMutableTreeNode)myTopMost.getParent();
-    parent.remove(myTopMost);
-    Pair<DefaultMutableTreeNode,Integer> pair = ArrangementConfigUtil.map(parent, grouped);
-    myTopMost = (DefaultMutableTreeNode)ArrangementConfigUtil.getLastBefore(pair.first, parent);
-    myBottomMost = pair.first;
-    
-    int[] rows = myRowMappings.keys();
-    Arrays.sort(rows);
-    int depthShift = oldDepth - newDepth;
-    for (int row : rows) {
-      if (row >= myRow) {
-        myRowMappings.put(row - depthShift, myRowMappings.get(row));
-        myRowMappings.remove(row);
+    Pair<DefaultMutableTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped);
+    DefaultMutableTreeNode newTop = replacement.first;
+    DefaultMutableTreeNode newBottom = ArrangementConfigUtil.getLast(newTop);
+    final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop);
+    myTopMost = newTop;
+    myBottomMost = newBottom;
+    if (rowChanges.isEmpty()) {
+      int newRow = ArrangementConfigUtil.getRow(myBottomMost);
+      if (newRow != myRow) {
+        myRowMappings.put(newRow, myRowMappings.remove(myRow));
+        myRow = newRow;
       }
-      else {
-        break;
-      }
+      return;
     }
     
-    myRow -= depthShift;
+    final TIntObjectHashMap<ArrangementRuleEditingModel> newMappings = new TIntObjectHashMap<ArrangementRuleEditingModel>();
+
+    // Update model mappings.
+    myRowMappings.forEachEntry(new TIntObjectProcedure<ArrangementRuleEditingModel>() {
+      @Override
+      public boolean execute(int row, ArrangementRuleEditingModel model) {
+        if (row == myRow) {
+          return true;
+        }
+        if (rowChanges.containsKey(row)) {
+          newMappings.put(rowChanges.get(row), model);
+        }
+        else {
+          newMappings.put(row, model);
+        }
+        return true;
+      }
+    });
+    myRow = ArrangementConfigUtil.getRow(myBottomMost);
+    newMappings.put(myRow, this);
+    
+    myRowMappings.clear();
+    newMappings.forEachEntry(new TIntObjectProcedure<ArrangementRuleEditingModel>() {
+      @Override
+      public boolean execute(int row, ArrangementRuleEditingModel model) {
+        myRowMappings.put(row, model);
+        return true;
+      }
+    });
   }
 
   @Override
