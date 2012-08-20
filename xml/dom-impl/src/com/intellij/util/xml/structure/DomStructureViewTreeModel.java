@@ -54,6 +54,10 @@ public class DomStructureViewTreeModel extends XmlStructureViewTreeModel impleme
            new DomStructureTreeElement(fileElement.getRootElement().createStableCopy(), myDescriptor, myNavigationProvider);
   }
 
+  protected DomElementNavigationProvider getNavigationProvider() {
+    return myNavigationProvider;
+  }
+
   @NotNull
   public Sorter[] getSorters() {
     return new Sorter[]{Sorter.ALPHA_SORTER};

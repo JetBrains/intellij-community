@@ -65,7 +65,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
         final DomService.StructureViewMode viewMode = myDescriptor.fun(element);
         switch (viewMode) {
           case SHOW:
-            result.add(new DomStructureTreeElement(element, myDescriptor, myNavigationProvider));
+            result.add(createChildElement(element));
             break;
           case SHOW_CHILDREN:
             DomUtil.acceptAvailableChildren(element, this);
@@ -77,6 +77,10 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
     };
     DomUtil.acceptAvailableChildren(myElement, elementVisitor);
     return result.toArray(new TreeElement[result.size()]);
+  }
+
+  protected StructureViewTreeElement createChildElement(final DomElement element) {
+    return new DomStructureTreeElement(element, myDescriptor, myNavigationProvider);
   }
 
   public void navigate(boolean requestFocus) {

@@ -38,7 +38,7 @@ public class DomStructureViewBuilderProvider implements XmlStructureViewBuilderP
     return null;
   }
 
-  private static final Function<DomElement,DomService.StructureViewMode> DESCRIPTOR =
+  protected static final Function<DomElement,DomService.StructureViewMode> DESCRIPTOR =
     new Function<DomElement, DomService.StructureViewMode>() {
       @Override
       public DomService.StructureViewMode fun(DomElement element) {
