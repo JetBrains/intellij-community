@@ -31,6 +31,7 @@ import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
@@ -74,8 +75,12 @@ public class RunInspectionAction extends GotoActionBase {
       }
 
       @Override
-      public void elementChosen(ChooseByNamePopup popup, Object element) {
-        runInspection(project, (InspectionProfileEntry)element, virtualFile, psiElement, psiFile);
+      public void elementChosen(ChooseByNamePopup popup, final Object element) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          public void run() {
+            runInspection(project, (InspectionProfileEntry)element, virtualFile, psiElement, psiFile);
+          }
+        });
       }
     });
   }
