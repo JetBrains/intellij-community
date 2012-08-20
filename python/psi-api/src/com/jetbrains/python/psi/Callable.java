@@ -7,9 +7,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Something that can be called, passed parameters to, and return something back.
- * <br/>
- * User: dcheryasov
- * Date: May 15, 2010 3:22:30 PM
+
+ * @author dcheryasov
  */
 public interface Callable extends PyElement {
 
@@ -31,4 +30,11 @@ public interface Callable extends PyElement {
   @Nullable
   PyFunction asMethod();
 
+  /**
+   * Returns the qualified name of the function.
+   *
+   * @return the qualified name of the function, or null for a lambda expression.
+   */
+  @Nullable
+  String getQualifiedName();
 }

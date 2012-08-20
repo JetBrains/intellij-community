@@ -69,6 +69,8 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   PyFunction findInitOrNew(boolean inherited);
 
   /**
+   * Finds a property with the specified name in the class or one of its ancestors.
+   *
    * @param name of the property
    * @return descriptor of property accessors, or null if such property does not exist.
    */
