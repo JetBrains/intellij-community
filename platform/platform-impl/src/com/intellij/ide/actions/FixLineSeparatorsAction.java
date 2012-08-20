@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,10 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
@@ -44,20 +47,18 @@ public class FixLineSeparatorsAction extends AnAction {
   }
 
   private static void fixSeparators(VirtualFile vFile) {
-    if (vFile.isDirectory()) {
-      for (VirtualFile child : vFile.getChildren()) {
-        fixSeparators(child);
+    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!file.isDirectory() && !file.getFileType().isBinary()) {
+          final Document document = FileDocumentManager.getInstance().getDocument(file);
+          if (areSeparatorsBroken(document)) {
+            fixSeparators(document);
+          }
+        }
+        return true;
       }
-    }
-    else {
-      if (vFile.getFileType().isBinary()) {
-        return;
-      }
-      final Document document = FileDocumentManager.getInstance().getDocument(vFile);
-      if (areSeparatorsBroken(document)) {
-        fixSeparators(document);
-      }
-    }
+    });
   }
 
   private static boolean areSeparatorsBroken(Document document) {

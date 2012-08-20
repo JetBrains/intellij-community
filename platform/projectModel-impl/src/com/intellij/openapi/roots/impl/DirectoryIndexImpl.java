@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -30,6 +29,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -50,17 +50,17 @@ import java.util.*;
 public class DirectoryIndexImpl extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
 
+  private static final Key<String> PACKAGE_NAME = Key.create("dir.index.visitor.package.name");
+
   protected final Project myProject;
+  protected final DirectoryIndexExcludePolicy[] myExcludePolicies;
+  protected volatile IndexState myState;
 
   private boolean myInitialized = false;
   private boolean myDisposed = false;
-  protected volatile IndexState myState;
-
-  protected final DirectoryIndexExcludePolicy[] myExcludePolicies;
 
   public DirectoryIndexImpl(Project project) {
     myProject = project;
-
     myExcludePolicies = Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myProject);
     myState = new IndexState();
     Disposer.register(project, new Disposable() {
@@ -264,9 +264,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     void fillMapWithModuleContent(VirtualFile root, final Module module, final VirtualFile contentRoot, @Nullable final ProgressIndicator progress) {
-
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
-        
         @Override
         protected DirectoryInfo updateInfo(VirtualFile file) {
           if (progress != null) {
@@ -294,9 +292,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private abstract class DirectoryVisitor extends VirtualFileVisitor {
-
       private final Stack<DirectoryInfo> myDirectoryInfoStack = new Stack<DirectoryInfo>();
-      
+
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (!file.isDirectory()) return false;
@@ -305,7 +302,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           myDirectoryInfoStack.push(info);
           return true;
         }
-        return false; 
+        return false;
       }
 
       @Override
@@ -318,7 +315,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
       protected void afterChildrenVisited(DirectoryInfo info) {}
     }
-    
+
     private boolean isExcluded(VirtualFile root, VirtualFile dir) {
       Set<String> excludes = myExcludeRootsMap.get(root);
       return excludes != null && excludes.contains(dir.getUrl());
@@ -368,7 +365,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                            final String packageName,
                                            final VirtualFile sourceRoot,
                                            final boolean isTestSource, @Nullable final ProgressIndicator progress) {
-      
       VfsUtilCore.visitChildrenRecursively(dir, new DirectoryVisitor() {
 
         private final Stack<String> myPackages = new Stack<String>();
@@ -425,30 +421,36 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    protected void fillMapWithLibrarySources(VirtualFile dir, String packageName, VirtualFile sourceRoot, @Nullable ProgressIndicator progress) {
-      if (progress != null) {
-        progress.checkCanceled();
-      }
-      if (isIgnored(dir)) return;
+    protected void fillMapWithLibrarySources(final VirtualFile dir,
+                                             final String packageName,
+                                             final VirtualFile sourceRoot,
+                                             @Nullable final ProgressIndicator progress) {
+      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+        { set(PACKAGE_NAME, packageName); }
 
-      DirectoryInfo info = getOrCreateDirInfo(dir);
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          if (progress != null) progress.checkCanceled();
+          if (!file.isDirectory() || isIgnored(file)) return false;
 
-      if (info.isInLibrarySource) { // library sources overlap
-        String definedPackage = myDirToPackageName.get(dir);
-        if (definedPackage != null && definedPackage.isEmpty()) return; // another library source root starts here
-      }
+          DirectoryInfo info = getOrCreateDirInfo(file);
 
-      info.isInLibrarySource = true;
-      info.sourceRoot = sourceRoot;
-      setPackageName(dir, packageName);
+          if (info.isInLibrarySource) { // library sources overlap
+            String definedPackage = myDirToPackageName.get(file);
+            if (definedPackage != null && definedPackage.isEmpty()) return false; // another library source root starts here
+          }
 
-      VirtualFile[] children = dir.getChildren();
-      for (VirtualFile child : children) {
-        if (child.isDirectory()) {
-          String childPackageName = getPackageNameForSubdir(packageName, child.getName());
-          fillMapWithLibrarySources(child, childPackageName, sourceRoot, progress);
+          info.isInLibrarySource = true;
+          info.sourceRoot = sourceRoot;
+
+          final String packageName = get(PACKAGE_NAME);
+          final String newPackageName = file == dir ? packageName : getPackageNameForSubdir(packageName, file.getName());
+          setPackageName(file, newPackageName);
+          set(PACKAGE_NAME, newPackageName);
+
+          return true;
         }
-      }
+      });
     }
 
     private void initLibraryClasses(Module module, ProgressIndicator progress) {
@@ -465,32 +467,37 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    protected void fillMapWithLibraryClasses(VirtualFile dir, String packageName, VirtualFile classRoot, @Nullable ProgressIndicator progress) {
-      if (progress != null) {
-        progress.checkCanceled();
-      }
-      if (isIgnored(dir)) return;
+    protected void fillMapWithLibraryClasses(final VirtualFile dir,
+                                             final String packageName,
+                                             final VirtualFile classRoot,
+                                             @Nullable final ProgressIndicator progress) {
+      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+        { set(PACKAGE_NAME, packageName); }
 
-      DirectoryInfo info = getOrCreateDirInfo(dir);
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          if (progress != null) progress.checkCanceled();
+          if (!file.isDirectory() || isIgnored(file)) return false;
 
-      if (info.libraryClassRoot != null) { // library classes overlap
-        String definedPackage = myDirToPackageName.get(dir);
-        if (definedPackage != null && definedPackage.isEmpty()) return; // another library root starts here
-      }
+          DirectoryInfo info = getOrCreateDirInfo(file);
 
-      info.libraryClassRoot = classRoot;
+          if (info.libraryClassRoot != null) { // library classes overlap
+            String definedPackage = myDirToPackageName.get(file);
+            if (definedPackage != null && definedPackage.isEmpty()) return false; // another library root starts here
+          }
 
-      if (!info.isInModuleSource && !info.isInLibrarySource) {
-        setPackageName(dir, packageName);
-      }
+          info.libraryClassRoot = classRoot;
 
-      VirtualFile[] children = dir.getChildren();
-      for (VirtualFile child : children) {
-        if (child.isDirectory()) {
-          String childPackageName = getPackageNameForSubdir(packageName, child.getName());
-          fillMapWithLibraryClasses(child, childPackageName, classRoot, progress);
+          final String packageName = get(PACKAGE_NAME);
+          final String newPackageName = file == dir ? packageName : getPackageNameForSubdir(packageName, file.getName());
+          if (!info.isInModuleSource && !info.isInLibrarySource) {
+            setPackageName(file, newPackageName);
+          }
+          set(PACKAGE_NAME, newPackageName);
+
+          return true;
         }
-      }
+      });
     }
 
     private void initOrderEntries(Module module,
@@ -593,7 +600,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                            @Nullable final VirtualFile libraryClassRoot,
                                            @Nullable final VirtualFile librarySourceRoot,
                                            @Nullable final DirectoryInfo parentInfo, @Nullable final ProgressIndicator progress) {
-      
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
         private final Stack<List<OrderEntry>> myEntries = new Stack<List<OrderEntry>>();
 

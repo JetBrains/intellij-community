@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileContent;
@@ -72,35 +74,46 @@ public class FrameworkDetectionProcessor {
   }
 
   private void collectSuitableFiles(@NotNull VirtualFile file) {
-    if (myProgressIndicator.isCanceled() || !myProcessedFiles.add(file)) return;
+    class CancelledException extends RuntimeException { }
 
-    if (file.isDirectory()) {
-      file.getChildren();//initialize myChildren field to ensure that refresh will be really performed
-      file.refresh(false, false);
-      VirtualFile[] children = file.getChildren();
-      for (VirtualFile child : children) {
-        collectSuitableFiles(child);
-      }
-      return;
-    }
-
-    final FileType fileType = file.getFileType();
-    if (!myDetectorsByFileType.containsKey(fileType)) {
-      return;
-    }
-
-    myProgressIndicator.setText2(file.getPresentableUrl());
     try {
-      FileContent fileContent = new FileContentImpl(file, file.contentsToByteArray(false));
-      for (FrameworkDetectorData detector : myDetectorsByFileType.get(fileType)) {
-        if (detector.myFilePattern.accepts(fileContent)) {
-          detector.mySuitableFiles.add(file);
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          if (myProgressIndicator.isCanceled()) {
+            throw new CancelledException();
+          }
+          if (!myProcessedFiles.add(file)) {
+            return false;
+          }
+
+          if (file.isDirectory()) {
+            file.getChildren();  // initialize myChildren field to ensure that refresh will be really performed
+            file.refresh(false, false);
+          }
+          else {
+            final FileType fileType = file.getFileType();
+            if (myDetectorsByFileType.containsKey(fileType)) {
+              myProgressIndicator.setText2(file.getPresentableUrl());
+              try {
+                final FileContent fileContent = new FileContentImpl(file, file.contentsToByteArray(false));
+                for (FrameworkDetectorData detector : myDetectorsByFileType.get(fileType)) {
+                  if (detector.myFilePattern.accepts(fileContent)) {
+                    detector.mySuitableFiles.add(file);
+                  }
+                }
+              }
+              catch (IOException e) {
+                LOG.info(e);
+              }
+            }
+          }
+
+          return true;
         }
-      }
+      });
     }
-    catch (IOException e) {
-      LOG.info(e);
-    }
+    catch (CancelledException ignored) { }
   }
 
   private static class FrameworkDetectorData {

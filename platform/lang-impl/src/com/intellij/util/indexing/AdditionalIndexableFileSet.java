@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,9 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,7 +49,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     THashSet<VirtualFile> files = new THashSet<VirtualFile>();
     THashSet<VirtualFile> directories = new THashSet<VirtualFile>();
     if (myExtensions == null) {
-      myExtensions = Extensions.getExtensions(IndexableSetContributor.EP_NAME);
+      myExtensions = Extensions.getExtensions(IndexedRootsProvider.EP_NAME);
     }
     for (IndexedRootsProvider provider : myExtensions) {
       for(VirtualFile file:IndexableSetContributor.getRootsToIndex(provider)) {
@@ -75,7 +76,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   @Override
   public boolean isInSet(@NotNull VirtualFile file) {
     for (final VirtualFile root : getDirectories()) {
-      if (VfsUtil.isAncestor(root, file, false)) {
+      if (VfsUtilCore.isAncestor(root, file, false)) {
         return true;
       }
     }
@@ -83,16 +84,20 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   }
 
   @Override
-  public void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
-    if (!isInSet(file)) return;
+  public void iterateIndexableFilesIn(@NotNull VirtualFile file, @NotNull final ContentIterator iterator) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!isInSet(file)) {
+          return false;
+        }
 
-    if (file.isDirectory()) {
-      for (VirtualFile child : file.getChildren()) {
-        iterateIndexableFilesIn(child, iterator);
+        if (!file.isDirectory()) {
+          iterator.processFile(file);
+        }
+
+        return true;
       }
-    }
-    else {
-      iterator.processFile(file);
-    }
+    });
   }
 }

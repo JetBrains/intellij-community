@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -216,15 +218,15 @@ public abstract class BaseAnalysisAction extends AnAction {
     return null;
   }
 
-  private static void traverseDirectory(VirtualFile vFile, Set<VirtualFile> files) {
-    if (vFile.isDirectory()) {
-      final VirtualFile[] virtualFiles = vFile.getChildren();
-      for (VirtualFile virtualFile : virtualFiles) {
-        traverseDirectory(virtualFile, files);
+  private static void traverseDirectory(final VirtualFile vFile, final Set<VirtualFile> files) {
+    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!file.isDirectory()) {
+          files.add(file);
+        }
+        return true;
       }
-    }
-    else {
-      files.add(vFile);
-    }
+    });
   }
 }

@@ -51,6 +51,7 @@ public class VfsUtil extends VfsUtilCore {
 
   /**
    * Copies all files matching the <code>filter</code> from <code>fromDir</code> to <code>toDir</code>.
+   * Symlinks end special files are ignored.
    *
    * @param requestor any object to control who called this method. Note that
    *                  it is considered to be an external change if <code>requestor</code> is <code>null</code>.
@@ -60,11 +61,13 @@ public class VfsUtil extends VfsUtilCore {
    * @param filter    {@link VirtualFileFilter}
    * @throws IOException if files failed to be copied
    */
-  public static void copyDirectory(Object requestor, @NotNull VirtualFile fromDir, @NotNull VirtualFile toDir, @Nullable VirtualFileFilter filter)
-    throws IOException {
-    VirtualFile[] children = fromDir.getChildren();
+  public static void copyDirectory(Object requestor,
+                                   @NotNull VirtualFile fromDir,
+                                   @NotNull VirtualFile toDir,
+                                   @Nullable VirtualFileFilter filter) throws IOException {
+    @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = fromDir.getChildren();
     for (VirtualFile child : children) {
-      if (filter == null || filter.accept(child)) {
+      if (!child.isSymLink() && !child.isSpecialFile() && (filter == null || filter.accept(child))) {
         if (!child.isDirectory()) {
           copyFile(requestor, child, toDir);
         }

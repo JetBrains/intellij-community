@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -115,7 +115,7 @@ public class CommonRefactoringUtil {
         }
         else {
           if (recursively) {
-            addVirtualFiles(vFile, readonly);
+            collectReadOnlyFiles(vFile, readonly);
           }
           else {
             readonly.add(vFile);
@@ -131,7 +131,7 @@ public class CommonRefactoringUtil {
               failed.add(virtualFile);
             }
             else {
-              addVirtualFiles(virtualFile, readonly);
+              collectReadOnlyFiles(virtualFile, readonly);
             }
           }
           else {
@@ -165,7 +165,7 @@ public class CommonRefactoringUtil {
       }
     }
 
-    final VirtualFile[] files = VfsUtil.toVirtualFileArray(readonly);
+    final VirtualFile[] files = VfsUtilCore.toVirtualFileArray(readonly);
     final ReadonlyStatusHandler.OperationStatus status = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(files);
     ContainerUtil.addAll(failed, status.getReadonlyFiles());
     if (notifyOnFail && (!failed.isEmpty() || seenNonWritablePsiFilesWithoutVirtualFile && readonly.isEmpty())) {
@@ -195,20 +195,18 @@ public class CommonRefactoringUtil {
     return failed.isEmpty();
   }
 
-  private static void addVirtualFiles(final VirtualFile vFile, final Collection<VirtualFile> list) {
-    if (!vFile.isWritable()) {
-      list.add(vFile);
-    }
-    if (!vFile.isSymLink()) {
-      final VirtualFile[] children = vFile.getChildren();
-      if (children != null) {
-        final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        for (VirtualFile virtualFile : children) {
-          if (fileTypeManager.isFileIgnored(virtualFile)) continue;
-          addVirtualFiles(virtualFile, list);
+  public static void collectReadOnlyFiles(final VirtualFile vFile, final Collection<VirtualFile> list) {
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+
+    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!vFile.isWritable() && !fileTypeManager.isFileIgnored(file)) {
+          list.add(vFile);
         }
+        return true;
       }
-    }
+    });
   }
 
   public static String capitalize(String text) {

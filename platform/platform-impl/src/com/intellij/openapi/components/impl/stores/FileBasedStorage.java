@@ -129,11 +129,12 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   private static void requestAllChildren(final VirtualFile configDir, @Nullable final String excludeDir) {
-    if (excludeDir == null || !excludeDir.equals(configDir.getName())) {
-      for (VirtualFile file : configDir.getChildren()) {
-        requestAllChildren(file, excludeDir);
+    VfsUtilCore.visitChildrenRecursively(configDir, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        return excludeDir == null || !excludeDir.equals(file.getName());
       }
-    }
+    });
   }
 
   @Override

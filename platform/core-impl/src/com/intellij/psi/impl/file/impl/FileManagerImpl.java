@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiManagerImpl;
@@ -48,8 +50,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.io.IOException;
-import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -68,9 +68,7 @@ public class FileManagerImpl implements FileManager {
   private final FileDocumentManager myFileDocumentManager;
   private final MessageBusConnection myConnection;
 
-  public FileManagerImpl(PsiManagerImpl manager,
-                         FileDocumentManager fileDocumentManager,
-                         FileIndexFacade fileIndex) {
+  public FileManagerImpl(PsiManagerImpl manager, FileDocumentManager fileDocumentManager, FileIndexFacade fileIndex) {
     myManager = manager;
     myFileIndex = fileIndex;
     myConnection = manager.getProject().getMessageBus().connect();
@@ -78,21 +76,21 @@ public class FileManagerImpl implements FileManager {
     myFileDocumentManager = fileDocumentManager;
 
     myConnection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
-
       @Override
       public void enteredDumbMode() {
-        recalcAllViewProviders();
+        updateAllViewProviders();
       }
 
       @Override
       public void exitDumbMode() {
-        recalcAllViewProviders();
+        updateAllViewProviders();
       }
     });
     Disposer.register(manager.getProject(), this);
   }
 
   private static final VirtualFile NULL = new LightVirtualFile();
+
   public void processQueue() {
     // just to call processQueue()
     myVFileToViewProviderMap.remove(NULL);
@@ -103,7 +101,7 @@ public class FileManagerImpl implements FileManager {
     return myVFileToViewProviderMap;
   }
 
-  private void recalcAllViewProviders() {
+  private void updateAllViewProviders() {
     handleFileTypesChange(new FileTypesChanged() {
       @Override
       protected void updateMaps() {
@@ -391,17 +389,18 @@ public class FileManagerImpl implements FileManager {
   }
 
   void removeFilesAndDirsRecursively(VirtualFile vFile) {
-    if (vFile.isDirectory()) {
-      myVFileToPsiDirMap.remove(vFile);
-
-      VirtualFile[] children = vFile.getChildren();
-      for (VirtualFile child : children) {
-        removeFilesAndDirsRecursively(child);
+    VfsUtilCore.visitChildrenRecursively(vFile, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (file.isDirectory()) {
+          myVFileToPsiDirMap.remove(file);
+        }
+        else {
+          myVFileToViewProviderMap.remove(file);
+        }
+        return true;
       }
-    }
-    else {
-      myVFileToViewProviderMap.remove(vFile);
-    }
+    });
   }
 
   @Nullable
@@ -411,6 +410,7 @@ public class FileManagerImpl implements FileManager {
            ? ((SingleRootFileViewProvider)fileViewProvider).getCachedPsi(fileViewProvider.getBaseLanguage()) : null;
   }
 
+  @NotNull
   @Override
   public List<PsiFile> getAllCachedFiles() {
     List<PsiFile> files = new ArrayList<PsiFile>();
@@ -512,20 +512,6 @@ public class FileManagerImpl implements FileManager {
       }
 
       myManager.childrenChanged(event);
-    }
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void dumpFilesWithContentLoaded(Writer out) throws IOException {
-    out.write("Files with content loaded cached in FileManagerImpl:\n");
-    Set<VirtualFile> vFiles = myVFileToViewProviderMap.keySet();
-    for (VirtualFile fileCacheEntry : vFiles) {
-      final FileViewProvider view = myVFileToViewProviderMap.get(fileCacheEntry);
-      PsiFile psiFile = view.getPsi(view.getBaseLanguage());
-      if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
-        out.write(fileCacheEntry.getPresentableUrl());
-        out.write("\n");
-      }
     }
   }
 }

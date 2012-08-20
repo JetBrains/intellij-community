@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
@@ -426,24 +424,32 @@ public class VcsUtil {
    *
    * @throws IllegalArgumentException if <code>dir</code> isn't a directory.
    */
-  public static void collectFiles(VirtualFile dir, List files, boolean recursive, boolean addDirectories) {
+  public static void collectFiles(final VirtualFile dir,
+                                  final List<VirtualFile> files,
+                                  final boolean recursive,
+                                  final boolean addDirectories) {
     if (!dir.isDirectory()) {
       throw new IllegalArgumentException(VcsBundle.message("exception.text.file.should.be.directory", dir.getPresentableUrl()));
     }
 
-    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    VirtualFile[] children = dir.getChildren();
-    for (VirtualFile child : children) {
-      if (!child.isDirectory() && (fileTypeManager == null || child.getFileType() != FileTypes.UNKNOWN)) {
-        files.add(child);
-      }
-      else if (recursive && child.isDirectory()) {
-        if (addDirectories) {
-          files.add(child);
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (file.isDirectory()) {
+          if (addDirectories) {
+            files.add(file);
+          }
+          if (!recursive && file != dir) {
+            return false;
+          }
         }
-        collectFiles(child, files, recursive, false);
+        else if (fileTypeManager == null || file.getFileType() != FileTypes.UNKNOWN) {
+          files.add(file);
+        }
+        return true;
       }
-    }
+    });
   }
 
   public static boolean runVcsProcessWithProgress(final VcsRunnable runnable, String progressTitle, boolean canBeCanceled, Project project)

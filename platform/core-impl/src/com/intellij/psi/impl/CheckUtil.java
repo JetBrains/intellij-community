@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -49,17 +51,17 @@ public class CheckUtil {
   }
 
   public static void checkDelete(@NotNull final VirtualFile file) throws IncorrectOperationException {
-    if (FileTypeRegistry.getInstance().isFileIgnored(file)) {
-      return;
-    }
-    if (!file.isWritable()) {
-      throw new IncorrectOperationException(PsiBundle.message("cannot.delete.a.read.only.file", file.getPresentableUrl()));
-    }
-    if (file.isDirectory() && !file.isSymLink()) {
-      VirtualFile[] children = file.getChildren();
-      for (VirtualFile aChildren : children) {
-        checkDelete(aChildren);
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (FileTypeRegistry.getInstance().isFileIgnored(file)) {
+          return false;
+        }
+        if (!file.isWritable()) {
+          throw new IncorrectOperationException(PsiBundle.message("cannot.delete.a.read.only.file", file.getPresentableUrl()));
+        }
+        return true;
       }
-    }
+    });
   }
 }

@@ -23,16 +23,17 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -109,10 +110,10 @@ public class PatchProjectUtil {
       final VirtualFile parent = file.getParent();
       if (parent == null || parents.contains(parent)) continue;
       parents.add(parent);
-      for (VirtualFile toExclude : parent.getChildren()) {
+      for (VirtualFile toExclude : parent.getChildren()) {  // if it will ever dead-loop on symlink blame anna.kozlova
         boolean toExcludeSibling = true;
         for (VirtualFile includeRoot : included) {
-          if (VfsUtil.isAncestor(toExclude, includeRoot, false)) {
+          if (VfsUtilCore.isAncestor(toExclude, includeRoot, false)) {
             toExcludeSibling = false;
           }
         }
@@ -124,13 +125,15 @@ public class PatchProjectUtil {
     processIncluded(contentEntry, parents);
   }
 
-  public static void iterate(VirtualFile contentRoot, ContentIterator iterator, ProjectFileIndex idx) {
-    if (!iterator.processFile(contentRoot)) return;
-    if (idx.getModuleForFile(contentRoot) == null) return; //already excluded
-    final VirtualFile[] files = contentRoot.getChildren();
-    for (VirtualFile file : files) {
-      iterate(file, iterator, idx);
-    }
+  public static void iterate(VirtualFile contentRoot, final ContentIterator iterator, final ProjectFileIndex idx) {
+    VfsUtilCore.visitChildrenRecursively(contentRoot, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!iterator.processFile(file)) return false;
+        if (idx.getModuleForFile(file) == null) return false;  // already excluded
+        return true;
+      }
+    });
   }
 
   public static Map<Pattern, Set<Pattern>> loadPatterns(@NonNls String propertyKey) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -240,8 +240,8 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   private void addFileToMove(final VirtualFile file, final String newParentPath, final String newName) {
-    if (file.isDirectory() && !isDirectoryVersioningSupported()) {
-      VirtualFile[] children = file.getChildren();
+    if (file.isDirectory() && !file.isSymLink() && !isDirectoryVersioningSupported()) {
+      @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
       if (children != null) {
         for (VirtualFile child : children) {
           addFileToMove(child, newParentPath + "/" + newName, child.getName());
@@ -432,7 +432,7 @@ public abstract class VcsVFSListener implements Disposable {
 
     // If a file is scheduled for deletion, and at the same time for copying or addition, don't delete it.
     // It happens during Overwrite command or undo of overwrite.
-    private void dontDeleteAddedCopiedOrMovedFiles() {
+    private void doNotDeleteAddedCopiedOrMovedFiles() {
       Collection<String> copiedAddedMoved = new ArrayList<String>();
       for (VirtualFile file : myCopyFromMap.keySet()) {
         copiedAddedMoved.add(file.getPath());
@@ -444,14 +444,14 @@ public abstract class VcsVFSListener implements Disposable {
         copiedAddedMoved.add(movedFileInfo.myNewPath);
       }
 
-      for (Iterator<FilePath> iter = myDeletedFiles.iterator(); iter.hasNext(); ) {
-        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iter.next().getPath()))) {
-          iter.remove();
+      for (Iterator<FilePath> iterator = myDeletedFiles.iterator(); iterator.hasNext(); ) {
+        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iterator.next().getPath()))) {
+          iterator.remove();
         }
       }
-      for (Iterator<FilePath> iter = myDeletedWithoutConfirmFiles.iterator(); iter.hasNext(); ) {
-        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iter.next().getPath()))) {
-          iter.remove();
+      for (Iterator<FilePath> iterator = myDeletedWithoutConfirmFiles.iterator(); iterator.hasNext(); ) {
+        if (copiedAddedMoved.contains(FileUtil.toSystemIndependentName(iterator.next().getPath()))) {
+          iterator.remove();
         }
       }
     }
@@ -471,7 +471,7 @@ public abstract class VcsVFSListener implements Disposable {
           finally {
             myCommandLevel--;
           }
-          dontDeleteAddedCopiedOrMovedFiles();
+          doNotDeleteAddedCopiedOrMovedFiles();
           checkMovedAddedSourceBack();
           if (!myAddedFiles.isEmpty()) {
             executeAdd();

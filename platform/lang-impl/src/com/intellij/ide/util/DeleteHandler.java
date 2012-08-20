@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -37,7 +36,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -168,7 +170,6 @@ public class DeleteHandler {
       }
     }
 
-    final FileTypeManager ftManager = FileTypeManager.getInstance();
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
         if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false)) {
@@ -186,12 +187,11 @@ public class DeleteHandler {
             VirtualFile virtualFile = ((PsiDirectory)elementToDelete).getVirtualFile();
             if (virtualFile.isInLocalFileSystem() && !virtualFile.isSymLink()) {
               ArrayList<VirtualFile> readOnlyFiles = new ArrayList<VirtualFile>();
-              getReadOnlyVirtualFiles(virtualFile, readOnlyFiles, ftManager);
+              CommonRefactoringUtil.collectReadOnlyFiles(virtualFile, readOnlyFiles);
 
               if (!readOnlyFiles.isEmpty()) {
-                int _result = Messages.showYesNoDialog(project, IdeBundle.message("prompt.directory.contains.read.only.files",
-                                                                                  virtualFile.getPresentableUrl()),
-                                                       IdeBundle.message("title.delete"), Messages.getQuestionIcon());
+                String message = IdeBundle.message("prompt.directory.contains.read.only.files", virtualFile.getPresentableUrl());
+                int _result = Messages.showYesNoDialog(project, message, IdeBundle.message("title.delete"), Messages.getQuestionIcon());
                 if (_result != 0) continue;
 
                 boolean success = true;
@@ -267,22 +267,6 @@ public class DeleteHandler {
       }
     }, "", null);
     return success[0];
-  }
-
-  /**
-   * Fills readOnlyFiles with VirtualFiles
-   */
-  private static void getReadOnlyVirtualFiles(VirtualFile file, ArrayList<VirtualFile> readOnlyFiles, final FileTypeManager ftManager) {
-    if (ftManager.isFileIgnored(file)) return;
-    if (!file.isWritable()) {
-      readOnlyFiles.add(file);
-    }
-    if (file.isDirectory()) {
-      VirtualFile[] children = file.getChildren();
-      for (VirtualFile child : children) {
-        getReadOnlyVirtualFiles(child, readOnlyFiles, ftManager);
-      }
-    }
   }
 
   public static boolean shouldEnableDeleteAction(PsiElement[] elements) {

@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl.libraries;
 
 import com.intellij.openapi.Disposable;
@@ -32,6 +31,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -48,6 +48,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
+import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 
 /**
  * @author dsl
@@ -173,17 +176,17 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   }
 
   public static void collectJarFiles(final VirtualFile dir, final List<VirtualFile> container, final boolean recursively) {
-    for (VirtualFile child : dir.getChildren()) {
-      final VirtualFile jarRoot = StandardFileSystems.getJarRootForLocalFile(child);
-      if (jarRoot != null) {
-        container.add(jarRoot);
-      }
-      else {
-        if (recursively && child.isDirectory()) {
-          collectJarFiles(child, container, recursively);
+    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor(SKIP_ROOT, (recursively ? null : ONE_LEVEL_DEEP)) {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        final VirtualFile jarRoot = StandardFileSystems.getJarRootForLocalFile(file);
+        if (jarRoot != null) {
+          container.add(jarRoot);
+          return false;
         }
+        return true;
       }
-    }
+    });
   }
 
   @Override

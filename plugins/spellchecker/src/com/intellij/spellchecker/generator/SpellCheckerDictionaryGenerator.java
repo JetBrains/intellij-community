@@ -1,14 +1,32 @@
+/*
+ * Copyright 2000-2012 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.spellchecker.generator;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
+import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -63,10 +81,10 @@ public abstract class SpellCheckerDictionaryGenerator {
         generate(myDefaultDictName, progressIndicator);
 
         // other gem-related dictionaries in alphabet order
-        final List<String> dictsList = new ArrayList<String>(myDict2FolderMap.keySet());
-        Collections.sort(dictsList);
+        final List<String> dictionaries = new ArrayList<String>(myDict2FolderMap.keySet());
+        Collections.sort(dictionaries);
 
-        for (String dict : dictsList) {
+        for (String dict : dictionaries) {
           if (myDefaultDictName.equals(dict)) {
             continue;
           }
@@ -92,7 +110,7 @@ public abstract class SpellCheckerDictionaryGenerator {
     }
 
     if (seenNames.isEmpty()) {
-      System.out.println("  No new words was found.");
+      LOG.info("  No new words was found.");
       return;
     }
 
@@ -122,21 +140,22 @@ public abstract class SpellCheckerDictionaryGenerator {
     }
   }
 
-  protected void processFolder(final HashSet<String> seenNames, final PsiManager manager,
-                             final VirtualFile folder) {
-    if (myExcludedFolders.contains(folder)) {
-      return;
-    }
-    for (VirtualFile virtualFile : folder.getChildren()) {
-      if (virtualFile.isDirectory()) {
-        processFolder(seenNames, manager, virtualFile);
-        continue;
+  protected void processFolder(final HashSet<String> seenNames, final PsiManager manager, final VirtualFile folder) {
+    VfsUtilCore.visitChildrenRecursively(folder, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (myExcludedFolders.contains(file)) {
+          return false;
+        }
+        if (!file.isDirectory()) {
+          final PsiFile psiFile = manager.findFile(file);
+          if (psiFile != null) {
+            processFile(psiFile, seenNames);
+          }
+        }
+        return true;
       }
-      final PsiFile file = manager.findFile(virtualFile);
-      if (file != null) {
-        processFile(file, seenNames);
-      }
-    }
+    });
   }
 
   protected abstract void processFile(PsiFile file, HashSet<String> seenNames);
@@ -185,10 +204,11 @@ public abstract class SpellCheckerDictionaryGenerator {
       return;
     }
 
-    boolean keyword = LanguageNamesValidation.INSTANCE.forLanguage(language).isKeyword(word, myProject);
-    if (keyword){
+    final NamesValidator namesValidator = LanguageNamesValidation.INSTANCE.forLanguage(language);
+    if (namesValidator != null && namesValidator.isKeyword(word, myProject)) {
       return;
     }
+
     globalSeenNames.add(lowerWord);
     if (mySpellCheckerManager.hasProblem(lowerWord)){
       seenNames.add(lowerWord);
