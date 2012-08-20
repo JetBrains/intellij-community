@@ -36,6 +36,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -139,10 +140,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param fileText - data file text.
    * @throws java.io.IOException
    */
-  protected static void configureFromFileText(@NonNls final String fileName, @NonNls final String fileText) throws IOException {
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+  @NotNull
+  protected static Document configureFromFileText(@NonNls final String fileName, @NonNls final String fileText) throws IOException {
+    return ApplicationManager.getApplication().runWriteAction(new Computable<Document>() {
       @Override
-      public void run() {
+      public Document compute() {
         final Document fakeDocument = new DocumentImpl(fileText);
 
         int caretIndex = fileText.indexOf(CARET_MARKER);
@@ -166,8 +168,9 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         }
 
         String newFileText = fakeDocument.getText();
+        Document document;
         try {
-          setupFileEditorAndDocument(fileName, newFileText);
+          document = setupFileEditorAndDocument(fileName, newFileText);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -175,6 +178,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         setupCaret(caretMarker, newFileText);
         setupSelection(selStartMarker, selEndMarker);
         setupEditorForInjectedLanguage();
+        return document;
       }
     });
   }
@@ -202,7 +206,8 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     return editor;
   }
 
-  private static void setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
+  @NotNull
+  private static Document setupFileEditorAndDocument(final String fileName, String fileText) throws IOException {
     EncodingProjectManager.getInstance(getProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     EncodingProjectManager.getInstance(ProjectManager.getInstance().getDefaultProject()).setEncoding(null, CharsetToolkit.UTF8_CHARSET);
     PostprocessReformattingAspect.getInstance(ourProject).doPostponedFormatting();
@@ -222,6 +227,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     myVFile.setCharset(CharsetToolkit.UTF8_CHARSET);
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    return document;
   }
 
   private static void setupEditorForInjectedLanguage() {
