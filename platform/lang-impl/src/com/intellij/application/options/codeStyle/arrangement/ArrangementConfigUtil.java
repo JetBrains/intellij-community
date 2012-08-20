@@ -294,20 +294,21 @@ public class ArrangementConfigUtil {
     for (DefaultMutableTreeNode current = to; current != root; current = (DefaultMutableTreeNode)current.getParent()) {
       DefaultMutableTreeNode parent = (DefaultMutableTreeNode)current.getParent();
       int i = parent.getIndex(current);
-      if (i >= parent.getChildCount() - 1) {
+      int childCount = parent.getChildCount();
+      if (i >= childCount - 1) {
         continue;
       }
-      Object userObject = parent.getUserObject();
-      if (userObject instanceof RowInfo) {
-        userObject = ((RowInfo)userObject).userObject;
-      }
-      DefaultMutableTreeNode parentCopy = new DefaultMutableTreeNode(userObject);
+      DefaultMutableTreeNode parentCopy = new DefaultMutableTreeNode(
+        childCount > 0 ? extractUserObject(parent.getUserObject()) : parent.getUserObject()
+      );
       if (cutHierarchy != null) {
         parentCopy.add(cutHierarchy);
       }
-      for (int j = i + 1, limit = parent.getChildCount(); j < limit; j++) {
+      for (int j = i + 1; j < childCount; j++) {
         DefaultMutableTreeNode child = (DefaultMutableTreeNode)parent.getChildAt(j);
         parent.remove(j);
+        // Unwrap node's data.
+        child.setUserObject(child.getChildCount() > 0 ? extractUserObject(child.getUserObject()) : child.getUserObject());
         parentCopy.add(child);
       }
       cutHierarchy = parentCopy;
@@ -321,6 +322,9 @@ public class ArrangementConfigUtil {
       DefaultMutableTreeNode parent = (DefaultMutableTreeNode)current.getParent();
       parent.remove(current);
       current = parent;
+      if (current != to) {
+        current.setUserObject(extractUserObject(current.getUserObject()));
+      }
       if (parent.getChildCount() > 0) {
         break;
       }
@@ -337,6 +341,14 @@ public class ArrangementConfigUtil {
     return collectRowChangesAndUnmark(root);
   }
 
+  @Nullable
+  private static Object extractUserObject(@Nullable Object userData) {
+    if (userData instanceof RowInfo) {
+      return ((RowInfo)userData).userObject;
+    }
+    return userData;
+  }
+  
   /**
    * Enriches every node at the hierarchy denoted by the given node by information about it's row. 
    * 

@@ -119,7 +119,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         // No refresh is necessary.
         return;
       }
-      else if (mySettingsNode.equals(node.getUserObject())) {
+      else if (myTopMost.getUserObject().equals(node.getUserObject())) {
         myTopMost = node;
         return;
       }
@@ -201,14 +201,6 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop);
     myTopMost = newTop;
     myBottomMost = newBottom;
-    if (rowChanges.isEmpty()) {
-      int newRow = ArrangementConfigUtil.getRow(myBottomMost);
-      if (newRow != myRow) {
-        myRowMappings.put(newRow, myRowMappings.remove(myRow));
-        myRow = newRow;
-      }
-      return;
-    }
     
     final TIntObjectHashMap<ArrangementRuleEditingModelImpl> newMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
 

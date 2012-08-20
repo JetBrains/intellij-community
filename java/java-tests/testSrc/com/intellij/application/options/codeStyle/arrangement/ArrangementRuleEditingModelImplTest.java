@@ -167,7 +167,7 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     assertNotNull(staticNode);
     assertEquals(atom(STATIC), staticNode.getUserObject());
     
-    //checkTreeNodesConsistency();
+    checkTreeNodesConsistency();
   }
   
   private void checkTreeNodesConsistency() {
