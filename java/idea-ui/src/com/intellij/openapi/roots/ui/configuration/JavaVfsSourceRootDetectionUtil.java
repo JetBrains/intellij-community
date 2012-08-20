@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,19 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class JavaVfsSourceRootDetectionUtil {
   private JavaVfsSourceRootDetectionUtil() {}
@@ -37,84 +41,51 @@ public class JavaVfsSourceRootDetectionUtil {
    * Scan directory and detect java source roots within it. The source root is detected as the following:
    * <ol>
    * <li>It contains at least one Java file.</li>
-   * <li>Java file is located in the subfolder that matches package statement in the file.</li>
+   * <li>Java file is located in the sub-folder that matches package statement in the file.</li>
    * </ol>
    *
    * @param dir a directory to scan
    * @param progressIndicator
    * @return a list of found source roots within directory. If no source roots are found, a empty list is returned.
    */
-  public static List<VirtualFile> suggestRoots(VirtualFile dir, ProgressIndicator progressIndicator) {
-    ArrayList<VirtualFile> foundDirectories = new ArrayList<VirtualFile>();
-    try{
-      suggestRootsImpl(dir, progressIndicator, foundDirectories);
-    }
-    catch(PathFoundException ignore){
-    }
-    return foundDirectories;
-  }
-
-  private static class PathFoundException extends Exception {
-    public VirtualFile myDirectory;
-
-    public PathFoundException(VirtualFile directory) {
-      myDirectory = directory;
-    }
-  }
-
-  private static void suggestRootsImpl(VirtualFile dir,
-                                       ProgressIndicator progressIndicator,
-                                       ArrayList<? super VirtualFile> foundDirectories) throws PathFoundException {
+  @NotNull
+  public static List<VirtualFile> suggestRoots(@NotNull VirtualFile dir, @NotNull final ProgressIndicator progressIndicator) {
     if (!dir.isDirectory()) {
-      return;
-    }
-    FileTypeManager typeManager = FileTypeManager.getInstance();
-    final String dirName = dir.getName();
-    if (typeManager.isFileIgnored(dir) || StringUtil.startsWithIgnoreCase(dirName, "testdata")) {
-      return;
-    }
-    if (progressIndicator.isCanceled()) {
-      return;
-    }
-    progressIndicator.setText2(dir.getPath());
-
-    VirtualFile[] list = dir.getChildren();
-    if (list == null || list.length == 0) {
-      return;
+      return ContainerUtil.emptyList();
     }
 
-    for (VirtualFile child : list) {
-      if (!child.isDirectory()) {
-        FileType type = typeManager.getFileTypeByFileName(child.getName());
-        if (StdFileTypes.JAVA == type) {
-          if (progressIndicator.isCanceled()) {
-            return;
-          }
+    final FileTypeManager typeManager = FileTypeManager.getInstance();
+    final ArrayList<VirtualFile> foundDirectories = new ArrayList<VirtualFile>();
+    try {
+      VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+        @NotNull
+        @Override
+        public Result visitFileEx(@NotNull VirtualFile file) {
+          progressIndicator.checkCanceled();
 
-          VirtualFile root = suggestRootForJavaFile(child);
-          if (root != null) {
-            foundDirectories.add(root);
-            throw new PathFoundException(root);
+          if (file.isDirectory()) {
+            if (typeManager.isFileIgnored(file) || StringUtil.startsWithIgnoreCase(file.getName(), "testData")) {
+              return SKIP_CHILDREN;
+            }
           }
           else {
-            return;
+            FileType type = typeManager.getFileTypeByFileName(file.getName());
+            if (StdFileTypes.JAVA == type) {
+              VirtualFile root = suggestRootForJavaFile(file);
+              if (root != null) {
+                foundDirectories.add(root);
+                return skipTo(root);
+              }
+            }
           }
-        }
-      }
-    }
 
-    for (VirtualFile child : list) {
-      if (child.isDirectory()) {
-        try {
-          suggestRootsImpl(child, progressIndicator, foundDirectories);
+          return CONTINUE;
         }
-        catch (PathFoundException found) {
-          if (!found.myDirectory.equals(child)) {
-            throw found;
-          }
-        }
-      }
+      });
     }
+    catch (ProcessCanceledException ignore) { }
+
+    return foundDirectories;
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,8 +29,11 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPackage;
@@ -182,7 +185,7 @@ public class TreeModelBuilder {
         });
 
         for (VirtualFile root : LibraryUtil.getLibraryRoots(project)) {
-          processFilesRecursively(root, null);
+          processFilesRecursively(root);
         }
       }
     };
@@ -192,31 +195,39 @@ public class TreeModelBuilder {
     return new TreeModel(myRoot, myTotalFileCount, myMarkedFileCount);
   }
 
-  @Nullable
-  private PackageDependenciesNode processFilesRecursively(VirtualFile file, @Nullable PackageDependenciesNode parent) {
-    if (file.isDirectory()) {
-      VirtualFile[] children = file.getChildren();
-      PackageDependenciesNode dirNode = null;
-      for (VirtualFile aChildren : children) {
-        dirNode = processFilesRecursively(aChildren, dirNode);
+  private void processFilesRecursively(@NotNull VirtualFile file) {
+    final Ref<PackageDependenciesNode> parent = Ref.create();
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (file.isDirectory()) {
+          parent.set(null);
+        }
+        else {
+          parent.set(buildFileNode(file, parent.get()));
+        }
+        return true;
       }
-    }
-    else {
-      return buildFileNode(file, parent);
-    }
-    return null;
+
+      @Override
+      public void afterChildrenVisited(@NotNull VirtualFile file) {
+        if (file.isDirectory()) {
+          parent.set(null);
+        }
+      }
+    });
   }
 
   private void countFilesRecursively(VirtualFile file) {
-    if (file.isDirectory()) {
-      VirtualFile[] children = file.getChildren();
-      for (VirtualFile aChildren : children) {
-        countFilesRecursively(aChildren);
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!file.isDirectory()) {
+          counting();
+        }
+        return true;
       }
-    }
-    else {
-      counting();
-    }
+    });
   }
 
   private void counting() {
@@ -243,7 +254,8 @@ public class TreeModelBuilder {
     };
 
     if (showProgress) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, AnalysisScopeBundle.message("package.dependencies.build.process.title"), false, myProject);
+      final String title = AnalysisScopeBundle.message("package.dependencies.build.process.title");
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(buildingRunnable, title, false, myProject);
     }
     else {
       buildingRunnable.run();
