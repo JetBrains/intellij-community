@@ -13,6 +13,7 @@
     <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="jps-model-serialization" />
+    <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>
 

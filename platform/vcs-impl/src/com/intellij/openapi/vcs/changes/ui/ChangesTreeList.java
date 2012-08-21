@@ -69,7 +69,7 @@ import java.util.List;
 /**
  * @author max
  */
-public abstract class ChangesTreeList<T> extends JPanel {
+public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataProvider {
   private final Tree myTree;
   private final JBList myList;
   private final JScrollPane myTreeScrollPane;
@@ -109,63 +109,7 @@ public abstract class ChangesTreeList<T> extends JPanel {
     setLayout(myCards);
 
     final int checkboxWidth = new JCheckBox().getPreferredSize().width;
-    myTree = new Tree(ChangesBrowserNode.create(myProject, ROOT)) {
-
-      @Override
-      public boolean isFileColorsEnabled() {
-        final boolean enabled = Registry.is("file.colors.in.commit.dialog")
-                          && FileColorManager.getInstance(project).isEnabled()
-                          && FileColorManager.getInstance(project).isEnabledForProjectView();
-        final boolean opaque = isOpaque();
-        if (enabled && opaque) {
-          setOpaque(false);
-        } else if (!enabled && !opaque) {
-          setOpaque(true);
-        }
-        return enabled;
-      }
-
-      @Override
-      public Color getFileColorFor(Object object) {
-        VirtualFile file = null;
-        if (object instanceof FilePathImpl) {
-          file = LocalFileSystem.getInstance().findFileByPath(((FilePathImpl)object).getPath());
-        } else if (object instanceof Change) {
-          file = ((Change)object).getVirtualFile();
-        }
-
-        if (file != null) {
-          return FileColorManager.getInstance(project).getFileColor(file);
-        }
-        return super.getFileColorFor(object);
-      }
-
-      public Dimension getPreferredScrollableViewportSize() {
-        Dimension size = super.getPreferredScrollableViewportSize();
-        size = new Dimension(size.width + 10, size.height);
-        return size;
-      }
-
-      protected void processMouseEvent(MouseEvent e) {
-        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-          if (! myTree.isEnabled()) return;
-          int row = myTree.getRowForLocation(e.getX(), e.getY());
-          if (row >= 0) {
-            final Rectangle baseRect = myTree.getRowBounds(row);
-            baseRect.setSize(checkboxWidth, baseRect.height);
-            if (baseRect.contains(e.getPoint())) {
-              myTree.setSelectionRow(row);
-              toggleSelection();
-            }
-          }
-        }
-        super.processMouseEvent(e);
-      }
-
-      public int getToggleClickCount() {
-        return -1;
-      }
-    };
+    myTree = new MyTree(project, checkboxWidth);
 
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
@@ -938,5 +882,82 @@ public abstract class ChangesTreeList<T> extends JPanel {
   public void setPaintBusy(final boolean value) {
     myTree.setPaintBusy(value);
     myList.setPaintBusy(value);
+  }
+
+  @Override
+  public void calcData(DataKey key, DataSink sink) {
+  }
+
+  private class MyTree extends Tree implements TypeSafeDataProvider {
+
+    private final Project myProject;
+    private final int myCheckboxWidth;
+
+    public MyTree(Project project, int checkboxWidth) {
+      super(ChangesBrowserNode.create(ChangesTreeList.this.myProject, ChangesTreeList.ROOT));
+      myProject = project;
+      myCheckboxWidth = checkboxWidth;
+    }
+
+    @Override
+    public boolean isFileColorsEnabled() {
+      final boolean enabled = Registry.is("file.colors.in.commit.dialog")
+                        && FileColorManager.getInstance(myProject).isEnabled()
+                        && FileColorManager.getInstance(myProject).isEnabledForProjectView();
+      final boolean opaque = isOpaque();
+      if (enabled && opaque) {
+        setOpaque(false);
+      } else if (!enabled && !opaque) {
+        setOpaque(true);
+      }
+      return enabled;
+    }
+
+    @Override
+    public Color getFileColorFor(Object object) {
+      VirtualFile file = null;
+      if (object instanceof FilePathImpl) {
+        file = LocalFileSystem.getInstance().findFileByPath(((FilePathImpl)object).getPath());
+      } else if (object instanceof Change) {
+        file = ((Change)object).getVirtualFile();
+      }
+
+      if (file != null) {
+        return FileColorManager.getInstance(myProject).getFileColor(file);
+      }
+      return super.getFileColorFor(object);
+    }
+
+    public Dimension getPreferredScrollableViewportSize() {
+      Dimension size = super.getPreferredScrollableViewportSize();
+      size = new Dimension(size.width + 10, size.height);
+      return size;
+    }
+
+    protected void processMouseEvent(MouseEvent e) {
+      if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+        if (! myTree.isEnabled()) return;
+        int row = myTree.getRowForLocation(e.getX(), e.getY());
+        if (row >= 0) {
+          final Rectangle baseRect = myTree.getRowBounds(row);
+          baseRect.setSize(myCheckboxWidth, baseRect.height);
+          if (baseRect.contains(e.getPoint())) {
+            myTree.setSelectionRow(row);
+            toggleSelection();
+          }
+        }
+      }
+      super.processMouseEvent(e);
+    }
+
+    public int getToggleClickCount() {
+      return -1;
+    }
+
+    @Override
+    public void calcData(DataKey key, DataSink sink) {
+      // just delegate to the change list
+      ChangesTreeList.this.calcData(key, sink);
+    }
   }
 }

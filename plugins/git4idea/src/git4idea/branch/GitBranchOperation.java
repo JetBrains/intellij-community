@@ -398,7 +398,7 @@ abstract class GitBranchOperation {
   private class UntrackedFilesDialog extends SelectFilesDialog {
 
     public UntrackedFilesDialog(@NotNull Project project, @NotNull List<VirtualFile> originalFiles, @NotNull String prompt) {
-      super(project, originalFiles, prompt, null, false, false);
+      super(project, originalFiles, prompt, null, false, false, false);
       setOKButtonText("Rollback");
       setCancelButtonText("Don't rollback");
     }

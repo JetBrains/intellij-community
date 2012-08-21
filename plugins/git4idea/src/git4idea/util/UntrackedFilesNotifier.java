@@ -56,13 +56,7 @@ public class UntrackedFilesNotifier {
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           final String dialogDesc = createUntrackedFilesOverwrittenDescription(operation, false);
-          SelectFilesDialog dlg = new SelectFilesDialog(project, new ArrayList<VirtualFile>(untrackedFiles),
-                                                        StringUtil.stripHtml(dialogDesc, true), null, false, false) {
-            @Override
-            protected Action[] createActions() {
-              return new Action[]{getOKAction()};
-            }
-          };
+          SelectFilesDialog dlg = new UntrackedFilesDialog(project, untrackedFiles, dialogDesc);
           dlg.setTitle("Untracked Files Preventing " + StringUtil.capitalize(operation));
           dlg.show();
         }
@@ -81,5 +75,18 @@ public class UntrackedFilesNotifier {
       notificationDesc = "These" + description1 + "<br/>" + description2;
     }
     return notificationDesc;
+  }
+
+  private static class UntrackedFilesDialog extends SelectFilesDialog {
+
+    public UntrackedFilesDialog(Project project, Collection<VirtualFile> untrackedFiles, String dialogDesc) {
+      super(project, new ArrayList<VirtualFile>(untrackedFiles), StringUtil.stripHtml(dialogDesc, true), null, false, false, true);
+    }
+
+    @Override
+    protected Action[] createActions() {
+      return new Action[]{getOKAction()};
+    }
+
   }
 }

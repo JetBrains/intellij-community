@@ -16,12 +16,21 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Collections2;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -30,28 +39,14 @@ import java.util.List;
  */
 public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
 
-  private ChangesTreeList<VirtualFile> myFileList;
+  @NotNull private final VirtualFileList myFileList;
+  private final boolean myDeletableFiles;
 
-  public SelectFilesDialog(final Project project, List<VirtualFile> originalFiles, final String prompt,
-                           final VcsShowConfirmationOption confirmationOption, boolean selectableFiles, boolean showDoNotAskOption) {
+  public SelectFilesDialog(Project project, List<VirtualFile> originalFiles, String prompt, VcsShowConfirmationOption confirmationOption,
+                           boolean selectableFiles, boolean showDoNotAskOption, boolean deletableFiles) {
     super(project, false, confirmationOption, prompt, showDoNotAskOption);
-    myFileList = new ChangesTreeList<VirtualFile>(project, originalFiles, selectableFiles, true, null, null) {
-      protected DefaultTreeModel buildTreeModel(final List<VirtualFile> changes, ChangeNodeDecorator changeNodeDecorator) {
-        return new TreeModelBuilder(project, false).buildModelFromFiles(changes);
-      }
-
-      protected List<VirtualFile> getSelectedObjects(final ChangesBrowserNode node) {
-        return node.getAllFilesUnder();
-      }
-
-      protected VirtualFile getLeadSelectedObject(final ChangesBrowserNode node) {
-        final Object o = node.getUserObject();
-        if (o instanceof VirtualFile) {
-          return (VirtualFile) o;
-        }
-        return null;
-      }
-    };
+    myDeletableFiles = deletableFiles;
+    myFileList = new VirtualFileList(project, originalFiles, selectableFiles, deletableFiles);
     myFileList.setChangesToDisplay(originalFiles);
     init();
   }
@@ -64,5 +59,71 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
   @Override
   protected ChangesTreeList getFileList() {
     return myFileList;
+  }
+
+  @NotNull
+  @Override
+  protected DefaultActionGroup createToolbarActions() {
+    DefaultActionGroup defaultGroup = super.createToolbarActions();
+    if (myDeletableFiles) {
+      AnAction deleteAction = new DeleteUnversionedFilesAction() {
+        @Override
+        public void actionPerformed(AnActionEvent e) {
+          super.actionPerformed(e);
+          myFileList.refresh();
+        }
+      };
+      defaultGroup.add(deleteAction);
+      deleteAction.registerCustomShortcutSet(CommonShortcuts.DELETE, this.getFileList());
+    }
+    return defaultGroup;
+  }
+
+  private static class VirtualFileList extends ChangesTreeList<VirtualFile> {
+    private final Project myProject;
+    @Nullable private final DeleteProvider myDeleteProvider;
+
+    public VirtualFileList(Project project, List<VirtualFile> originalFiles, boolean selectableFiles, boolean deletableFiles) {
+      super(project, originalFiles, selectableFiles, true, null, null);
+      myProject = project;
+      myDeleteProvider = (deletableFiles ?  new VirtualFileDeleteProvider() : null);
+    }
+
+    protected DefaultTreeModel buildTreeModel(final List<VirtualFile> changes, ChangeNodeDecorator changeNodeDecorator) {
+      return new TreeModelBuilder(myProject, false).buildModelFromFiles(changes);
+    }
+
+    protected List<VirtualFile> getSelectedObjects(final ChangesBrowserNode node) {
+      return node.getAllFilesUnder();
+    }
+
+    protected VirtualFile getLeadSelectedObject(final ChangesBrowserNode node) {
+      final Object o = node.getUserObject();
+      if (o instanceof VirtualFile) {
+        return (VirtualFile) o;
+      }
+      return null;
+    }
+
+    @Override
+    public void calcData(DataKey key, DataSink sink) {
+      super.calcData(key, sink);
+      if (key.equals(PlatformDataKeys.DELETE_ELEMENT_PROVIDER) && myDeleteProvider != null) {
+        sink.put(key, myDeleteProvider);
+      }
+      else if (key.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY)) {
+        sink.put(key, ArrayUtil.toObjectArray(getSelectedChanges(), VirtualFile.class));
+      }
+    }
+
+    public void refresh() {
+      setChangesToDisplay(new ArrayList<VirtualFile>(Collections2.filter(getIncludedChanges(), new Predicate<VirtualFile>() {
+        @Override
+        public boolean apply(@Nullable VirtualFile input) {
+          return input != null && input.isValid();
+        }
+      })));
+    }
+
   }
 }

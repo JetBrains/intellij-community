@@ -100,13 +100,18 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
   }
 
   private JComponent createToolbar() {
+    DefaultActionGroup group = createToolbarActions();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
+    return toolbar.getComponent();
+  }
+
+  @NotNull
+  protected DefaultActionGroup createToolbarActions() {
     DefaultActionGroup group = new DefaultActionGroup();
     final AnAction[] actions = getFileList().getTreeActions();
     for(AnAction action: actions) {
       group.add(action);
     }
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
-    return toolbar.getComponent();
+    return group;
   }
-
 }
