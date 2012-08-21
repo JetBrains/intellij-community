@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.util.containers;
 
 import java.util.*;
 
+/**
+ * A drop-in replacement for {@link java.util.Stack} based on {@link java.util.ArrayList} (instead of {@link java.util.Vector})
+ * and therefore is (1) not synchronized and (2) faster.
+ *
+ * @author max
+ */
 public class Stack<T> extends ArrayList<T> {
   public Stack(int initialCapacity) {
     super(initialCapacity);

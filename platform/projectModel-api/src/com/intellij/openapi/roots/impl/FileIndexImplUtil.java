@@ -13,38 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
 
 public class FileIndexImplUtil {
-  private FileIndexImplUtil() {
+  private FileIndexImplUtil() { }
+
+  public static boolean iterateRecursively(@NotNull final VirtualFile root,
+                                           @NotNull final VirtualFileFilter filter,
+                                           @NotNull final ContentIterator iterator) {
+    return VfsUtilCore.iterateChildrenRecursively(root, filter, iterator);
   }
-
-  public static boolean iterateRecursively(@NotNull final VirtualFile root, @NotNull final VirtualFileFilter filter, @NotNull final ContentIterator iterator){
-
-    try {
-      VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
-        @Override
-        public boolean visitFile(@NotNull VirtualFile file) {
-          if (!file.isValid() || !filter.accept(file)) return false;
-
-          if (!iterator.processFile(file)) throw new StopItException();
-          return true;
-        }
-      });
-      return true;
-    }
-    catch (StopItException e) {
-      return false;
-    }
-  }
-
-  private static class StopItException extends RuntimeException {}
 }

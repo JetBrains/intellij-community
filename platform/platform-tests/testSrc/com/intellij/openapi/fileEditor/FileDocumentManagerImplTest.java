@@ -443,7 +443,6 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
 
     myDocumentManager.myReloadFromDisk = Boolean.TRUE;
     try {
-      file.setActualTimeStamp(file.getTimeStamp() + 1);
       myDocumentManager.saveAllDocuments();
       long fileStamp = file.getModificationStamp();
 
@@ -476,7 +475,6 @@ public class FileDocumentManagerImplTest extends PlatformLiteFixture {
 
       file.setContent(null, "xxx", false);
 
-      file.setActualTimeStamp(file.getTimeStamp() + 1);
       myDocumentManager.saveAllDocuments();
 
       assertEquals("zzztest", document.getText());

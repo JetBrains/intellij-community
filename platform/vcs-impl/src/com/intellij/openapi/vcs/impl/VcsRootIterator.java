@@ -165,29 +165,24 @@ public class VcsRootIterator {
     }
 
     public void iterate() {
-      class StopIterationException extends RuntimeException { }
-
-      try {
-        VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor(false) {
-          @Override
-          public void afterChildrenVisited(@NotNull VirtualFile file) {
-            if (myDirectoryFilter != null) {
-              myDirectoryFilter.afterChildrenVisited(file);
-            }
+      VfsUtilCore.visitChildrenRecursively(myRoot, new VirtualFileVisitor(VirtualFileVisitor.NO_FOLLOW_SYMLINKS) {
+        @Override
+        public void afterChildrenVisited(@NotNull VirtualFile file) {
+          if (myDirectoryFilter != null) {
+            myDirectoryFilter.afterChildrenVisited(file);
           }
+        }
 
-          @Override
-          public boolean visitFile(@NotNull VirtualFile file) {
-            if (isExcluded(myExcludedFileIndex, file)) return false;
-            if (myRootPresentFilter != null && ! myRootPresentFilter.accept(file)) return false;
-            if (myProject.isDisposed() || ! process(file)) throw new StopIterationException();
-            if (myDirectoryFilter != null && file.isDirectory() && ! myDirectoryFilter.shouldGoIntoDirectory(file)) return false;
-            return true;
-          }
-        });
-      } catch (StopIterationException e) {
-        //
-      }
+        @NotNull
+        @Override
+        public Result visitFileEx(@NotNull VirtualFile file) {
+          if (isExcluded(myExcludedFileIndex, file)) return SKIP_CHILDREN;
+          if (myRootPresentFilter != null && ! myRootPresentFilter.accept(file)) return SKIP_CHILDREN;
+          if (myProject.isDisposed() || ! process(file)) return skipTo(myRoot);
+          if (myDirectoryFilter != null && file.isDirectory() && ! myDirectoryFilter.shouldGoIntoDirectory(file)) return SKIP_CHILDREN;
+          return CONTINUE;
+        }
+      });
     }
 
     private boolean process(VirtualFile current) {

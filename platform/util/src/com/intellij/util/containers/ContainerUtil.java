@@ -1491,6 +1491,21 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <T> Stack<T> newStack() {
+    return ContainerUtilRt.newStack();
+  }
+
+  @NotNull
+  public static <T> Stack<T> newStack(Collection<T> initial) {
+    return ContainerUtilRt.newStack(initial);
+  }
+
+  @NotNull
+  public static <T> Stack<T> newStack(T... initial) {
+    return ContainerUtilRt.newStack(initial);
+  }
+
+  @NotNull
   public static <T> List<T> emptyList() {
     return ContainerUtilRt.emptyList();
   }

@@ -127,6 +127,21 @@ public class ContainerUtilRt {
     return 5 + size + size / 5;
   }
 
+  @NotNull
+  public static <T> Stack<T> newStack() {
+    return new Stack<T>();
+  }
+
+  @NotNull
+  public static <T> Stack<T> newStack(Collection<T> initial) {
+    return new Stack<T>(initial);
+  }
+
+  @NotNull
+  public static <T> Stack<T> newStack(T... initial) {
+    return new Stack<T>(Arrays.asList(initial));
+  }
+
   /**
    * Optimized toArray() as opposed to the {@link java.util.Collections#emptyList()}.
    */

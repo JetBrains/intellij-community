@@ -389,7 +389,7 @@ public class SymlinkHandlingTest extends LightPlatformLangTestCase {
     }));
 
     final Set<String> actualSet = new HashSet<String>();
-    VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor(true) {
+    VfsUtilCore.visitChildrenRecursively(vDir, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         actualSet.add(file.getPath());

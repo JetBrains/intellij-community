@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
@@ -26,9 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class VfsUtilCore {
   /**
@@ -170,38 +169,63 @@ public class VfsUtilCore {
     return stream;
   }
 
-  public static void visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor) {
-    visitChildrenRecursively(file, visitor, null);
+  public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
+                                                   @Nullable final VirtualFileFilter filter,
+                                                   @NotNull final ContentIterator iterator) {
+    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor() {
+      @NotNull
+      @Override
+      public Result visitFileEx(@NotNull VirtualFile file) {
+        if (filter != null && !filter.accept(file)) return SKIP_CHILDREN;
+        if (!iterator.processFile(file)) return skipTo(root);
+        return CONTINUE;
+      }
+    });
+    return result.skipToParent != root;
   }
 
-  private static void visitChildrenRecursively(@NotNull VirtualFile file,
-                                               @NotNull VirtualFileVisitor visitor,
-                                               @Nullable Set<VirtualFile> visitedSymLinks) {
-    if (!file.isValid()) return;
-    if (!visitor.visitFile(file)) return;
+  public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor) {
+    if (!file.isValid()) return VirtualFileVisitor.CONTINUE;
 
-    boolean visitChildren = true;
-    if (file.isSymLink()) {
-      if (!visitor.followSymLinks()) return;
-      if (visitedSymLinks == null) {
-        visitedSymLinks = new HashSet<VirtualFile>();
+    visitor.pushFrame();
+    try {
+      final boolean visited = visitor.allowVisitFile(file);
+      if (visited) {
+        VirtualFileVisitor.Result result = visitor.visitFileEx(file);
+        if (result.skipChildren) return result;
       }
-      if (!visitedSymLinks.add(file) || isInvalidLink(file)) {
-        visitChildren = false;
+
+      if (!visitor.allowVisitChildren(file)) return VirtualFileVisitor.CONTINUE;
+
+      if (!visitor.depthLimitReached()) {
+        final Iterable<VirtualFile> iterable = visitor.getChildrenIterable(file);
+        if (iterable != null) {
+          for (VirtualFile child : iterable) {
+            VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
+            if (result.skipToParent != null && result.skipToParent != child) return result;
+          }
+        }
+        else {
+          @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
+          for (VirtualFile child : children) {
+            VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
+            if (result.skipToParent != null && result.skipToParent != child) return result;
+          }
+        }
       }
+
+      if (visited) {
+        visitor.afterChildrenVisited(file);
+      }
+
+      return VirtualFileVisitor.CONTINUE;
     }
-
-    if (visitChildren) {
-      @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
-      for (VirtualFile child : children) {
-        visitChildrenRecursively(child, visitor, visitedSymLinks);
-      }
+    finally {
+      visitor.popFrame();
     }
-
-    visitor.afterChildrenVisited(file);
   }
 
-  private static boolean isInvalidLink(@NotNull VirtualFile link) {
+  public static boolean isInvalidLink(@NotNull VirtualFile link) {
     final VirtualFile target = link.getCanonicalFile();
     return target == null || target == link || isAncestor(target, link, true);
   }

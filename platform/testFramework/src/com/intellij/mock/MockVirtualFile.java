@@ -38,6 +38,7 @@ public class MockVirtualFile extends VirtualFile {
   private final List<VirtualFile> myChildren = new SmartList<VirtualFile>();
   private String myText;
   private final MockVirtualFileSystem myFileSystem = new MockVirtualFileSystem();
+  private boolean myIsWritable = true;
   private long myModStamp = LocalTimeCounter.currentTime();
 
   public MockVirtualFile(final String name) {
@@ -73,9 +74,13 @@ public class MockVirtualFile extends VirtualFile {
   @Override
   public VirtualFile createChildData(final Object requestor, @NotNull @NonNls final String name) {
     final MockVirtualFile file = new MockVirtualFile(name);
-    file.setParent(this);
-    myChildren.add(file);
+    addChild(file);
     return file;
+  }
+
+  public void addChild(@NotNull final MockVirtualFile child) {
+    child.setParent(this);
+    myChildren.add(child);
   }
 
   @Override
@@ -90,11 +95,11 @@ public class MockVirtualFile extends VirtualFile {
     return prefix + "/" + myName;
   }
 
-  private boolean myIsWritable = true;
   @Override
   public boolean isWritable() {
     return myIsWritable;
   }
+
   public void setWritable(boolean b) {
     myIsWritable = b;
   }
@@ -117,7 +122,7 @@ public class MockVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile[] getChildren() {
-    return VfsUtil.toVirtualFileArray(myChildren);
+    return VfsUtilCore.toVirtualFileArray(myChildren);
   }
 
   @Override
@@ -161,16 +166,6 @@ public class MockVirtualFile extends VirtualFile {
 
   @Override
   public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-
-  }
-
-  private long myActualTimeStamp = myTimeStamp;
-  public void setActualTimeStamp(long actualTimeStamp) {
-    myActualTimeStamp = actualTimeStamp;
-  }
-
-  public long getActualTimeStamp() {
-    return myActualTimeStamp;
   }
 
   @Override
@@ -191,6 +186,4 @@ public class MockVirtualFile extends VirtualFile {
       myListener.contentsChanged(new VirtualFileEvent(requestor, this, null, oldStamp, myModStamp));
     }
   }
-
-  
 }
