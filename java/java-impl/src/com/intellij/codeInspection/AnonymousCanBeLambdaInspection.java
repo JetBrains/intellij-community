@@ -107,18 +107,8 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
         LOG.assertTrue(method != null);
 
         final String lambdaWithTypesDeclared = composeLambdaText(method, true);
-        boolean mustBeFinal = false;
-        for (PsiParameter parameter : method.getParameterList().getParameters()) {
-          for (PsiReference reference : ReferencesSearch.search(parameter)) {
-            if (HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(parameter, reference.getElement()) != null) {
-              mustBeFinal = true;
-              break;
-            }
-          }
-          if (mustBeFinal) break;
-        }
         PsiLambdaExpression lambdaExpression =
-          (PsiLambdaExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText(mustBeFinal ? lambdaWithTypesDeclared : composeLambdaText(method, false), anonymousClass);
+          (PsiLambdaExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText(composeLambdaText(method, false), anonymousClass);
         final PsiNewExpression newExpression = (PsiNewExpression)anonymousClass.getParent();
         lambdaExpression = (PsiLambdaExpression)newExpression.replace(lambdaExpression);
         PsiType interfaceType = lambdaExpression.getFunctionalInterfaceType();
@@ -133,17 +123,24 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool 
       if (appendType) {
         buf.append(method.getParameterList().getText());
       } else {
-        buf.append("(").append(StringUtil.join(method.getParameterList().getParameters(),
-                                               new Function<PsiParameter, String>() {
-                                                 @Override
-                                                 public String fun(PsiParameter parameter) {
-                                                   String parameterName = parameter.getName();
-                                                   if (parameterName == null) {
-                                                     parameterName = "";
-                                                   }
-                                                   return parameterName;
-                                                 }
-                                               }, ",")).append(")");
+        final PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length != 1) {
+          buf.append("(");
+        }
+        buf.append(StringUtil.join(parameters,
+                                   new Function<PsiParameter, String>() {
+                                     @Override
+                                     public String fun(PsiParameter parameter) {
+                                       String parameterName = parameter.getName();
+                                       if (parameterName == null) {
+                                         parameterName = "";
+                                       }
+                                       return parameterName;
+                                     }
+                                   }, ","));
+        if (parameters.length != 1) {
+          buf.append(")");
+        }
       }
       buf.append("->");
       final PsiCodeBlock body = method.getBody();

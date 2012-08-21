@@ -1,7 +1,7 @@
 // "Replace with lambda" "true"
 class Test {
   {
-    Comparable<String> c = (final String o)->{
+    Comparable<String> c = o->{
         Runnable r = new Runnable() {
             @Override
             public void run() {

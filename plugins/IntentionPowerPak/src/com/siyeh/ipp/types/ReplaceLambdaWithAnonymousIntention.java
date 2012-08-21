@@ -15,13 +15,16 @@
  */
 package com.siyeh.ipp.types;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -66,6 +69,20 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
       final PsiCodeBlock codeBlock = member.getBody();
       LOG.assertTrue(codeBlock != null);
       codeBlock.replace(psiElementFactory.createCodeBlockFromText(blockText, null));
+      for (PsiParameter parameter : member.getParameterList().getParameters()) {
+        if (parameter.hasModifierProperty(PsiModifier.FINAL)) continue;
+        boolean declareFinal = false;
+        for (PsiReference reference : ReferencesSearch.search(parameter)) {
+          final PsiClass innerClass = HighlightControlFlowUtil.getInnerClassVariableReferencedFrom(parameter, reference.getElement());
+          if (innerClass != null) {
+            declareFinal = true;
+            break;
+          }
+        }
+        if (declareFinal) {
+          PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, true);
+        }
+      }
       GenerateMembersUtil.positionCaret(editor, member, true);
     }
   }
