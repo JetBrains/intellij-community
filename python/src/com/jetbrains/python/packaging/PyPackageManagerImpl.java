@@ -16,16 +16,21 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -290,6 +295,28 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   PyPackageManagerImpl(@NotNull Sdk sdk) {
     mySdk = sdk;
+    final Application app = ApplicationManager.getApplication();
+    final MessageBusConnection connection = app.getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void before(@NotNull List<? extends VFileEvent> events) {}
+
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        final VirtualFile[] roots = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+        for (VFileEvent event : events) {
+          final VirtualFile file = event.getFile();
+          if (file != null) {
+            for (VirtualFile root : roots) {
+              if (VfsUtilCore.isAncestor(root, file, false)) {
+                clearCaches();
+                return;
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   public Sdk getSdk() {
