@@ -108,7 +108,7 @@ public class ScopeImpl implements Scope {
   @NotNull
   @Override
   public List<NameDefiner> getNameDefiners() {
-    if (myNamedElements == null) {
+    if (myNameDefiners == null) {
       collectDeclarations();
     }
     return myNameDefiners;
