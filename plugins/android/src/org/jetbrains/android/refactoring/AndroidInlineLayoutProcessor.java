@@ -2,10 +2,12 @@ package org.jetbrains.android.refactoring;
 
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.ui.UsageViewDescriptorAdapter;
@@ -13,37 +15,35 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.android.dom.resources.ResourceNameConverter;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
  */
-class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
-  private final PsiElement myStyleElement;
-  private final String myStyleName;
-  private final Map<AndroidAttributeInfo, String> myAttributeValues;
-  private final StyleRefData myParentStyleRef;
-  private final XmlTag myStyleTag;
+public class AndroidInlineLayoutProcessor extends BaseRefactoringProcessor {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.refactoring.AndroidInlineLayoutProcessor");
 
-  protected AndroidInlineAllStyleUsagesProcessor(@NotNull Project project,
-                                                 @NotNull PsiElement styleElement,
-                                                 @NotNull XmlTag styleTag,
-                                                 @NotNull String styleName,
-                                                 @NotNull Map<AndroidAttributeInfo, String> attributeValues,
-                                                 @Nullable StyleRefData parentStyleRef) {
+  private final XmlFile myLayoutFile;
+  private final XmlTag myLayoutRootTag;
+  private final PsiElement myUsageElement;
+
+  protected AndroidInlineLayoutProcessor(@NotNull Project project,
+                                         @NotNull XmlFile file,
+                                         @NotNull XmlTag rootTag,
+                                         @Nullable PsiElement usageElement) {
     super(project);
-    myStyleElement = styleElement;
-    myStyleTag = styleTag;
-    myStyleName = styleName;
-    myAttributeValues = attributeValues;
-    myParentStyleRef = parentStyleRef;
+    myLayoutFile = file;
+    myLayoutRootTag = rootTag;
+    myUsageElement = usageElement;
   }
 
   @NotNull
@@ -53,7 +53,7 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
       @NotNull
       @Override
       public PsiElement[] getElements() {
-        return new PsiElement[]{myStyleElement};
+        return new PsiElement[]{myLayoutFile};
       }
 
       @Override
@@ -63,7 +63,7 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
 
       @Override
       public String getProcessedElementsHeader() {
-        return "Style to inline";
+        return "Layout file to inline";
       }
     };
   }
@@ -71,23 +71,24 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected UsageInfo[] findUsages() {
+    if (myUsageElement != null) {
+      return new UsageInfo[] {new UsageInfo(myUsageElement)};
+    }
     final Set<UsageInfo> usages = new HashSet<UsageInfo>();
-    AndroidInlineUtil.addReferences(myStyleElement, usages);
+    AndroidInlineUtil.addReferences(myLayoutFile, usages);
 
-    for (PsiField field : AndroidResourceUtil.findResourceFieldsForValueResource(myStyleTag, false)) {
+    for (PsiField field : AndroidResourceUtil.findResourceFieldsForFileResource(myLayoutFile, false)) {
       AndroidInlineUtil.addReferences(field, usages);
     }
     return usages.toArray(new UsageInfo[usages.size()]);
   }
 
-
   @Override
   protected void performRefactoring(UsageInfo[] usages) {
-    final List<StyleUsageData> inlineInfos = new ArrayList<StyleUsageData>();
+    final List<LayoutUsageData> inlineInfos = new ArrayList<LayoutUsageData>();
     final List<PsiElement> nonXmlUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unsupportedUsages = new ArrayList<PsiElement>();
     final List<PsiElement> unambiguousUsages = new ArrayList<PsiElement>();
-    final List<PsiElement> implicitlyInherited = new ArrayList<PsiElement>();
 
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
@@ -98,15 +99,11 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
         continue;
       }
       final XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
-      StyleUsageData usageData = tag != null ? AndroidInlineUtil.getStyleUsageData(tag) : null;
-
+      final LayoutUsageData usageData = tag != null
+                                        ? AndroidInlineUtil.getLayoutUsageData(tag)
+                                        : null;
       if (usageData == null) {
-        if (usage.getReference() instanceof ResourceNameConverter.MyParentStyleReference) {
-          implicitlyInherited.add(element);
-        }
-        else {
-          unsupportedUsages.add(element);
-        }
+        unsupportedUsages.add(element);
         continue;
       }
 
@@ -117,25 +114,37 @@ class AndroidInlineAllStyleUsagesProcessor extends BaseRefactoringProcessor {
       inlineInfos.add(usageData);
     }
 
-    if (nonXmlUsages.size() > 0 ||
-        unambiguousUsages.size() > 0 ||
-        unsupportedUsages.size() > 0 ||
-        implicitlyInherited.size() > 0) {
-      final String errorMessage = AndroidInlineUtil
-        .buildErrorMessage(myProject, nonXmlUsages, unambiguousUsages, unsupportedUsages, implicitlyInherited);
+    if (nonXmlUsages.size() > 0 || unambiguousUsages.size() > 0 || unsupportedUsages.size() > 0) {
+      final String errorMessage = AndroidInlineUtil.buildErrorMessage(
+        myProject, nonXmlUsages, unambiguousUsages, unsupportedUsages,
+        Collections.<PsiElement>emptyList());
       AndroidUtils.reportError(myProject, errorMessage, AndroidBundle.message("android.inline.style.title"));
       return;
     }
 
-    for (StyleUsageData info : inlineInfos) {
-      info.inline(myAttributeValues, myParentStyleRef);
+    for (LayoutUsageData info : inlineInfos) {
+      try {
+        info.inline(myLayoutRootTag);
+      }
+      catch (AndroidRefactoringErrorException e) {
+        LOG.info(e);
+        String message = e.getMessage();
+
+        if (message == null) {
+          message = "Refactoring was performed with errors";
+        }
+        AndroidUtils.reportError(myProject, message, AndroidBundle.message("android.inline.style.title"));
+        return;
+      }
     }
-    myStyleTag.delete();
+    if (myUsageElement == null) {
+      myLayoutFile.delete();
+    }
   }
 
   @Override
   protected String getCommandName() {
-    return AndroidBundle.message("android.inline.style.command.name", myStyleName);
+    return AndroidBundle.message("android.inline.layout.command.name", myLayoutFile.getName());
   }
 
   @Override
