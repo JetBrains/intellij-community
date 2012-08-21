@@ -36,10 +36,8 @@ import java.util.Collections;
  */
 public abstract class IncrementalTestCase extends JpsBuildTestCase {
   private final String groupName;
-  private final String tempDir = FileUtil.toSystemDependentName(new File(System.getProperty("java.io.tmpdir")).getCanonicalPath());
-
-  private String baseDir;
-  private String workDir;
+  private File baseDir;
+  private File workDir;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected IncrementalTestCase(final String name) throws Exception {
@@ -51,19 +49,12 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    baseDir = PathManagerEx.getTestDataPath() + File.separator + "compileServer" + File.separator + "incremental" + File.separator;
+    baseDir = new File(PathManagerEx.getTestDataPath() + File.separator + "compileServer" + File.separator + "incremental" + File.separator + groupName + File.separator + getProjectName());
+    workDir = FileUtil.createTempDirectory("jps-build", null);
 
-    for (int i = 0; ; i++) {
-      final File tmp = new File(tempDir + File.separator + "__temp__" + i);
-      if (tmp.mkdir()) {
-        workDir = tmp.getPath() + File.separator;
-        break;
-      }
-    }
+    FileUtil.copyDir(baseDir, workDir);
 
-    FileUtil.copyDir(new File(getBaseDir()), new File(getWorkDir()));
-
-    Utils.setSystemRoot(new File(workDir));
+    Utils.setSystemRoot(workDir);
   }
 
   @Override
@@ -72,78 +63,12 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       super.tearDown();
     }
     finally {
-      delete(new File(workDir));
-    }
-  }
-
-  private String getDir(final String prefix) {
-    return prefix + groupName + File.separator + getProjectName();
-  }
-
-  private String getBaseDir() {
-    return getDir(baseDir);
-  }
-
-  private String getWorkDir() {
-    return getDir(workDir);
-  }
-
-  private static void delete(final File file) throws Exception {
-    final File[] files = file.listFiles();
-    if (files != null) {
-      // is directory
-      for (File f : files) {
-        delete(f);
-      }
-    }
-    if (!file.delete()) {
-      throw new IOException("could not delete file or directory " + file.getPath());
-    }
-  }
-
-  private static void copy(final File input, final File output) throws Exception {
-    if (input.isDirectory()) {
-      if (output.mkdirs()) {
-        final File[] files = input.listFiles();
-
-        if (files != null) {
-          for (File f : files) {
-            copy(f, new File(output.getPath(), f.getName()));
-          }
-        }
-      }
-      else {
-        throw new IOException("unable to create directory " + output.getPath());
-      }
-    }
-    else if (input.isFile()) {
-      FileReader in = null;
-      FileWriter out = null;
-
-      try {
-        in = new FileReader(input);
-        out = new FileWriter(output);
-        int c;
-        while ((c = in.read()) != -1) out.write(c);
-      }
-      finally {
-        try {
-          if (in != null) {
-            in.close();
-          }
-        }
-        finally {
-          if (out != null) {
-            out.close();
-          }
-        }
-      }
+      FileUtil.delete(workDir);
     }
   }
 
   private void modify() throws Exception {
-    final File dir = new File(getBaseDir());
-    final File[] files = dir.listFiles(new FileFilter() {
+    final File[] files = baseDir.listFiles(new FileFilter() {
       public boolean accept(final File pathname) {
         final String name = pathname.getName();
 
@@ -157,28 +82,27 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
       final boolean copy = name.endsWith(".java.new");
       final String postfix = name.substring(0, name.length() - (copy ? ".new" : ".remove").length());
       final int pathSep = postfix.indexOf("$");
-      final String basename = pathSep == -1 ? postfix : postfix.substring(pathSep + 1);
-      final String path =
-        getWorkDir() + File.separator + (pathSep == -1 ? "src" : postfix.substring(0, pathSep).replace('-', File.separatorChar));
-      final File output = new File(path, basename);
+      final String baseName = pathSep == -1 ? postfix : postfix.substring(pathSep + 1);
+      final File path = new File(workDir, (pathSep == -1 ? "src" : postfix.substring(0, pathSep).replace('-', File.separatorChar)));
+      final File output = new File(path, baseName);
 
       if (copy) {
-        copy(input, output);
+        FileUtil.copyContent(input, output);
       }
       else {
-        output.delete();
+        FileUtil.delete(output);
       }
     }
   }
 
   public void doTest() throws Exception {
-    final String projectPath = getWorkDir() + File.separator + ".idea";
+    final String projectPath = workDir.getAbsolutePath();
 
     initJdk("IDEA jdk");
 
     loadProject(projectPath);
 
-    final TestJavaBuilderLogger javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(getWorkDir() + File.separator));
+    final TestJavaBuilderLogger javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/");
     final ProjectDescriptor projectDescriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
       final IncProjectBuilder builder = createBuilder(projectDescriptor);
@@ -216,7 +140,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
       makeDump.close();
 
-      final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(getBaseDir() + ".log")));
+      final String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(new File(baseDir.getAbsolutePath() + ".log")));
       final String actual = javaBuilderLogger.myLog.toString();
 
       assertEquals(expected, actual);
