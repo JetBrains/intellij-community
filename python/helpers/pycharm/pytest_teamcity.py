@@ -67,6 +67,8 @@ if PYVERSION > [1, 4, 0]:
     items[nodeid] = name
 
   def pytest_runtest_logreport(report):
+    if report.when != "call":
+      return
     name = items[report.nodeid]
     if report.failed:
       messages.testFailed(name, details=report.longrepr)
@@ -126,7 +128,8 @@ else:
       messages.testFailed(name, details=report.longrepr)
     elif report.skipped:
       messages.testIgnored(name)
-    messages.testFinished(name)
+    else:
+      messages.testFinished(name)
 
   def pytest_collectreport(report):
     if report.collector.name != "()":
