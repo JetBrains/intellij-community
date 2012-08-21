@@ -101,4 +101,32 @@ class VirtualFileWrapper implements IAbstractFile {
   public VirtualFile getFile() {
     return myFile;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    VirtualFileWrapper wrapper = (VirtualFileWrapper)o;
+
+    if (!myFile.equals(wrapper.myFile)) {
+      return false;
+    }
+    if (!myProject.equals(wrapper.myProject)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myProject.hashCode();
+    result = 31 * result + myFile.hashCode();
+    return result;
+  }
 }

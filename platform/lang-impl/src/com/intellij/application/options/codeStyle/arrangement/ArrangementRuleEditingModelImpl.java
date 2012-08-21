@@ -129,7 +129,8 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         // No refresh is necessary.
         return;
       }
-      else if (myTopMost.getUserObject().equals(node.getUserObject())) {
+      ArrangementSettingsNode setting = myTopMost.getBackingSetting();
+      if (setting != null && setting.equals(node.getBackingSetting())) {
         myTopMost = node;
         return;
       }
@@ -181,7 +182,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
       return;
     }
 
-    Pair<ArrangementTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped);
+    Pair<ArrangementTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode newBottom = replacement.first;
     ArrangementTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
     final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop, myTreeModel);

@@ -24,6 +24,13 @@ import com.siyeh.ipp.psiutils.ParenthesesUtils;
 class UnnecessaryParenthesesPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
+    if (element instanceof PsiParameterList) {
+      final PsiElement parent = element.getParent();
+      if (parent instanceof PsiLambdaExpression && ((PsiParameterList)element).getParametersCount() == 1) {
+        final PsiParameter parameter = ((PsiParameterList)element).getParameters()[0];
+        return parameter.getTypeElement() == null && element.getFirstChild() != parameter && element.getLastChild() != parameter;
+      }
+    }
     if (!(element instanceof PsiParenthesizedExpression)) {
       return false;
     }

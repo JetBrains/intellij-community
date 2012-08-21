@@ -94,6 +94,10 @@
             text="Inline _Style..." description="Inlines Android style">
       <add-to-group group-id="RefactoringMenu"/>
     </action>
+    <action id="AndroidInlineIncludeAction" class="org.jetbrains.android.refactoring.AndroidInlineIncludeAction"
+            text="Inline _Layout..." description="Inlines included Android layout">
+      <add-to-group group-id="RefactoringMenu"/>
+    </action>
   </actions>
 
   <depends>JUnit</depends>
@@ -247,7 +251,8 @@
     <compileServer.plugin classpath="jps/android-jps-plugin.jar;android-common.jar;android-rt.jar"/>
     <compileServer.plugin classpath="sdklib.jar;common.jar;jarutils.jar;androidprefs.jar"/>
 
-    <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler" order="last"/>
+    <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineStyleHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.android.refactoring.AndroidInlineLayoutHandler"/>
   </extensions>
 
   <extensionPoints>

@@ -176,34 +176,38 @@ public class ArrangementConfigUtil {
    * @param uiParentNode UI tree node which should hold UI nodes created for representing given settings node;
    *                     <code>null</code> as an indication that we want to create a standalone nodes hierarchy
    * @param settingsNode settings node which should be represented at the UI tree denoted by the given UI tree node
+   * @param model        tree model to use for the tree modification
    * @return             pair {@code (bottom-most leaf node created; number of rows created)}
    */
   @NotNull
   public static Pair<ArrangementTreeNode, Integer> map(@Nullable ArrangementTreeNode uiParentNode,
-                                                       @NotNull HierarchicalArrangementSettingsNode settingsNode)
+                                                       @NotNull HierarchicalArrangementSettingsNode settingsNode,
+                                                       @Nullable DefaultTreeModel model)
   {
     ArrangementTreeNode uiNode = null;
     int rowsCreated = 0;
-    if (uiParentNode != null) {
-      for (int i = uiParentNode.getChildCount() - 1; i >= 0; i--) {
-        ArrangementTreeNode child = uiParentNode.getChildAt(i);
-        if (settingsNode.getCurrent().equals(child.getUserObject())) {
-          uiNode = child;
-          break;
-        }
+    if (uiParentNode != null && uiParentNode.getChildCount() > 0) {
+      ArrangementTreeNode child = uiParentNode.getChildAt(uiParentNode.getChildCount() - 1);
+      if (settingsNode.getCurrent().equals(child.getBackingSetting())) {
+        uiNode = child;
       }
     }
     if (uiNode == null) {
       uiNode = new ArrangementTreeNode(settingsNode.getCurrent());
       if (uiParentNode != null) {
-        uiParentNode.add(uiNode);
+        if (model == null) {
+          uiParentNode.add(uiNode);
+        }
+        else {
+          model.insertNodeInto(uiNode, uiParentNode, uiParentNode.getChildCount());
+        }
       }
       rowsCreated++;
     }
     ArrangementTreeNode leaf = uiNode;
     HierarchicalArrangementSettingsNode childSettingsNode = settingsNode.getChild();
     if (childSettingsNode != null) {
-      Pair<ArrangementTreeNode, Integer> pair = map(uiNode, childSettingsNode);
+      Pair<ArrangementTreeNode, Integer> pair = map(uiNode, childSettingsNode, model);
       leaf = pair.first;
       rowsCreated += pair.second;
     }
@@ -481,14 +485,14 @@ public class ArrangementConfigUtil {
     ArrangementTreeNode mergeCandidate = null;
     if (index > 0) {
       mergeCandidate = parent.getChildAt(index - 1);
-      if (!mergeCandidate.equals(child)) {
+      if (!hasEqualSetting(mergeCandidate, child)) {
         mergeCandidate = null;
       }
     }
 
     if (index < parent.getChildCount()) {
       ArrangementTreeNode n = parent.getChildAt(index);
-      if (n.equals(child)) {
+      if (hasEqualSetting(n, child)) {
         mergeCandidate = n;
         anchorAbove = true;
       }
@@ -503,5 +507,14 @@ public class ArrangementConfigUtil {
       insert(mergeCandidate, anchorAbove ? 0 : mergeCandidate.getChildCount(), child.getChildAt(0), treeModel);
     }
     return true;
+  }
+
+  private static boolean hasEqualSetting(@NotNull ArrangementTreeNode node1, @NotNull ArrangementTreeNode node2) {
+    ArrangementSettingsNode setting1 = node1.getBackingSetting();
+    ArrangementSettingsNode setting2 = node2.getBackingSetting();
+    if (setting1 == null || setting2 == null) {
+      return false;
+    }
+    return setting1.equals(setting2);
   }
 }

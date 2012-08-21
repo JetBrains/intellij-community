@@ -17,7 +17,6 @@ package com.intellij.core;
 
 import com.intellij.mock.MockFileIndexFacade;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,7 +44,7 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
     super(parentDisposable, applicationEnvironment);
 
     myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myPsiManager));
-    myProject.registerService(JavaPsiImplementationHelper.class, new CoreJavaPsiImplementationHelper());
+    myProject.registerService(JavaPsiImplementationHelper.class, createJavaPsiImplementationHelper());
     myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myPsiManager));
     myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
     myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myMessageBus));
@@ -62,6 +61,10 @@ public class JavaCoreProjectEnvironment  extends CoreProjectEnvironment {
     JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject, myPsiManager, myFileManager, myMessageBus);
     registerProjectComponent(JavaPsiFacade.class, javaPsiFacade);
     myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
+  }
+
+  protected CoreJavaPsiImplementationHelper createJavaPsiImplementationHelper() {
+    return new CoreJavaPsiImplementationHelper();
   }
 
   protected JavaFileManager createCoreFileManager() {

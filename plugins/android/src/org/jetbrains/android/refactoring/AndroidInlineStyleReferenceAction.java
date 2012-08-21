@@ -47,7 +47,7 @@ public class AndroidInlineStyleReferenceAction extends AndroidBaseXmlRefactoring
     if (file == null) {
       return;
     }
-    final StyleUsageData usageData = AndroidInlineUtil.getUsageData(tag);
+    final StyleUsageData usageData = AndroidInlineUtil.getStyleUsageData(tag);
 
     if (usageData == null) {
       return;
@@ -87,7 +87,7 @@ public class AndroidInlineStyleReferenceAction extends AndroidBaseXmlRefactoring
 
   @Override
   protected boolean isEnabledForTags(@NotNull XmlTag[] tags) {
-    return tags.length == 1 && AndroidInlineUtil.getUsageData(tags[0]) != null;
+    return tags.length == 1 && AndroidInlineUtil.getStyleUsageData(tags[0]) != null;
   }
 
   @Override

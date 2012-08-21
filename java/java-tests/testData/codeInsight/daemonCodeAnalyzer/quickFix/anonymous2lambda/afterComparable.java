@@ -1,7 +1,7 @@
 // "Replace with lambda" "true"
 class Test {
   {
-    Comparable<String> c = (o)->{
+    Comparable<String> c = o->{
         return 0;
     }; 
   }

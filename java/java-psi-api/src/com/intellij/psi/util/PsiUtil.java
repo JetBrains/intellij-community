@@ -259,6 +259,8 @@ public final class PsiUtil extends PsiUtilCore {
       }
       else if (declarationScope instanceof PsiMethod) {
         codeBlock = ((PsiMethod)declarationScope).getBody();
+      } else if (declarationScope instanceof PsiLambdaExpression) {
+        codeBlock = ((PsiLambdaExpression)declarationScope).getBody();
       }
     }
     else if (variable instanceof PsiResourceVariable) {

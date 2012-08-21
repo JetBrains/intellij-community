@@ -316,6 +316,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       if (highlightInfo != null) return false;
       highlightInfo = HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, expression, finalVarProblems);
       if (highlightInfo != null) return false;
+      if (variable instanceof PsiParameter && PsiUtil.isAccessedForWriting(expression)) return false;
     }
     return true;
   }

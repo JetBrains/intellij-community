@@ -8,7 +8,7 @@ class InferenceOnMethodCallSite {
     <Z> void m(In<Z> s) { }
 
     {
-        m(<error descr="Cyclic inference">( ) -> Collections.emptyList()</error>);
+        m(() -> Collections.emptyList());
         m((In<String>)() -> Collections.emptyList(), () ->  new ArrayList<String>());
         m(() ->Collections.<String>emptyList(), () -> new ArrayList<String>());
         m(() -> Collections.<String>emptyList());

@@ -54,6 +54,6 @@ public interface ArrangementRuleEditingModel {
   void addListener(@NotNull Listener listener);
   
   interface Listener {
-    void onChanged(@NotNull TreeNode topMost, @NotNull TreeNode bottomMost);
+    void onChanged(@NotNull ArrangementTreeNode topMost, @NotNull ArrangementTreeNode bottomMost);
   }
 }

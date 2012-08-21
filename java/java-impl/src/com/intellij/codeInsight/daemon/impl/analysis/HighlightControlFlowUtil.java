@@ -687,6 +687,13 @@ public class HighlightControlFlowUtil {
     if (variable.hasModifierProperty(PsiModifier.FINAL)) return null;
     final PsiClass innerClass = getInnerClassVariableReferencedFrom(variable, context);
     if (innerClass != null) {
+      if (variable instanceof PsiParameter) {
+        final PsiElement parent = variable.getParent();
+        if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression && 
+            notAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()))) {
+          return null;
+        }
+      }
       String description = JavaErrorMessages.message("variable.must.be.final", context.getText());
 
       final HighlightInfo highlightInfo = HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, context, description);
@@ -701,7 +708,7 @@ public class HighlightControlFlowUtil {
           if (parent instanceof PsiParameterList && parent.getParent() == lambdaExpression) {
             return null;
           }
-          effectivelyFinal = isAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()));
+          effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()));
         } else {
           final ControlFlow controlFlow;
           try {
@@ -715,7 +722,7 @@ public class HighlightControlFlowUtil {
             final Collection<ControlFlowUtil.VariableInfo> initializedTwice = ControlFlowUtil.getInitializedTwice(controlFlow);
             effectivelyFinal = !initializedTwice.contains(new ControlFlowUtil.VariableInfo(variable, null));
             if (effectivelyFinal) {
-              effectivelyFinal = isAccessedForWriting(variable, new LocalSearchScope(lambdaExpression));
+              effectivelyFinal = notAccessedForWriting(variable, new LocalSearchScope(lambdaExpression));
             }
           } else {
             effectivelyFinal = false;
@@ -729,7 +736,7 @@ public class HighlightControlFlowUtil {
     return null;
   }
 
-  private static boolean isAccessedForWriting(PsiVariable variable, final LocalSearchScope searchScope) {
+  private static boolean notAccessedForWriting(PsiVariable variable, final LocalSearchScope searchScope) {
     for (PsiReference reference : ReferencesSearch.search(variable, searchScope)) {
       final PsiElement element = reference.getElement();
       if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) {

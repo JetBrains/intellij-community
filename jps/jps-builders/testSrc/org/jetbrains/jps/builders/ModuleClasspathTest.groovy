@@ -12,8 +12,8 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
   protected void setUp() {
     super.setUp()
     myModel.getGlobal().getLibraryCollection().findLibrary("1.6").delete()
-    initJdk("1.6", "/jdk.jar")
-    initJdk("1.5", "/jdk15.jar")
+    addJdk("1.6", "/jdk.jar")
+    addJdk("1.5", "/jdk15.jar")
     loadProject("moduleClasspath/moduleClasspath.ipr")
   }
 

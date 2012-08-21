@@ -46,6 +46,11 @@ public class AndroidResourceReferenceBase extends PsiReferenceBase.Poly<XmlEleme
   }
 
   @NotNull
+  public ResourceValue getResourceValue() {
+    return myResourceValue;
+  }
+
+  @NotNull
   public PsiElement[] computeTargetElements() {
     final ResolveResult[] resolveResults = multiResolve(false);
     final List<PsiElement> results = new ArrayList<PsiElement>();
