@@ -173,7 +173,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
       PyFileImpl importSourceFile = (PyFileImpl)sourceFile;
       PsiElement res = importSourceFile.findExportedName(refText);
       // allow importing from this source if it either declares the name itself or represents a higher-level package that reexports the name
-      if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) &&
+      if (res != null && !(res instanceof PyFile) && !(res instanceof PyImportElement) && res.getContainingFile() != null &&
           PsiTreeUtil.isAncestor(source, res.getContainingFile(), false)) {
         existingImportFile = importSourceFile;
         fix.addImport(res, importSourceFile, importElement);
