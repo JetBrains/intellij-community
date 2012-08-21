@@ -80,6 +80,11 @@ public class PyNames {
   public static final String SEQUENCE = "Sequence";
   public static final String MAPPING = "Mapping";
 
+  public static final String COMPLEX = "Complex";
+  public static final String REAL = "Real";
+  public static final String RATIONAL = "Rational";
+  public static final String INTEGRAL = "Integral";
+
   public static final String CONTAINS = "__contains__";
   public static final String HASH = "__hash__";
   public static final String ITER = "__iter__";
@@ -328,7 +333,7 @@ public class PyNames {
   );
 
   public static Set<String> BuiltinInterfaces = ImmutableSet.of(
-      CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING
+      CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING, COMPLEX, REAL, RATIONAL, INTEGRAL
   );
 
   /**

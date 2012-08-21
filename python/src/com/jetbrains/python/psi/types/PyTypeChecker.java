@@ -50,9 +50,6 @@ public class PyTypeChecker {
     if (actual instanceof PyTypeReference) {
       return match(expected, ((PyTypeReference)actual).resolve(null, context), context, substitutions, false);
     }
-    if (isUnknown(actual)) {
-      return true;
-    }
     if (expected instanceof PyGenericType && substitutions != null) {
       final PyGenericType generic = (PyGenericType)expected;
       final PyType subst = substitutions.get(generic);
@@ -71,6 +68,9 @@ public class PyTypeChecker {
         substitutions.put(generic, actual);
         return true;
       }
+    }
+    if (isUnknown(actual)) {
+      return true;
     }
     if (actual instanceof PyUnionType) {
       for (PyType m : ((PyUnionType)actual).getMembers()) {
@@ -149,7 +149,7 @@ public class PyTypeChecker {
   }
 
   public static boolean isUnknown(@Nullable PyType type) {
-    if (type == null || type instanceof PyTypeReference) {
+    if (type == null || type instanceof PyTypeReference || type instanceof PyGenericType) {
       return true;
     }
     if (type instanceof PyUnionType) {
@@ -165,29 +165,34 @@ public class PyTypeChecker {
 
   public static boolean hasGenerics(@Nullable PyType type, @NotNull TypeEvalContext context) {
     final Set<PyGenericType> collected = new HashSet<PyGenericType>();
-    collectGenerics(type, context, collected);
+    collectGenerics(type, context, collected, new HashSet<PyType>());
     return !collected.isEmpty();
   }
 
-  private static void collectGenerics(@Nullable PyType type, @NotNull TypeEvalContext context, @NotNull Set<PyGenericType> collected) {
+  private static void collectGenerics(@Nullable PyType type, @NotNull TypeEvalContext context, @NotNull Set<PyGenericType> collected,
+                                      @NotNull Set<PyType> visited) {
+    if (visited.contains(type)) {
+      return;
+    }
+    visited.add(type);
     if (type instanceof PyGenericType) {
       collected.add((PyGenericType)type);
     }
     else if (type instanceof PyUnionType) {
       final PyUnionType union = (PyUnionType)type;
       for (PyType t : union.getMembers()) {
-        collectGenerics(t, context, collected);
+        collectGenerics(t, context, collected, visited);
       }
     }
     else if (type instanceof PyCollectionType) {
       final PyCollectionType collection = (PyCollectionType)type;
-      collectGenerics(collection.getElementType(context), context, collected);
+      collectGenerics(collection.getElementType(context), context, collected, visited);
     }
     else if (type instanceof PyTupleType) {
       final PyTupleType tuple = (PyTupleType)type;
       final int n = tuple.getElementCount();
       for (int i = 0; i < n; i++) {
-        collectGenerics(tuple.getElementType(i), context, collected);
+        collectGenerics(tuple.getElementType(i), context, collected, visited);
       }
     }
   }
@@ -252,7 +257,7 @@ public class PyTypeChecker {
     // Collect generic params of object type
     final Set<PyGenericType> generics = new LinkedHashSet<PyGenericType>();
     final PyType qualifierType = receiver != null ? receiver.getType(context) : null;
-    collectGenerics(qualifierType, context, generics);
+    collectGenerics(qualifierType, context, generics, new HashSet<PyType>());
     for (PyGenericType t : generics) {
       substitutions.put(t, t);
     }

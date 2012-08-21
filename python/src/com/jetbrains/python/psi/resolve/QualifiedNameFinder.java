@@ -31,7 +31,7 @@ public class QualifiedNameFinder {
    *         the name with fewest qualifiers is selected.
    */
   @Nullable
-  public static String findShortestImportableName(PsiElement foothold, @NotNull VirtualFile vfile) {
+  public static String findShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
     final PyQualifiedName qName = findShortestImportableQName(foothold, vfile);
     return qName == null ? null : qName.toString();
   }

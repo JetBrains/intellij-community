@@ -175,6 +175,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-7244
+  public void testAttributesOfGenerics() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);

@@ -419,6 +419,8 @@
     <applicationService serviceInterface="com.jetbrains.python.packaging.PyPackageManagers"
                         serviceImplementation="com.jetbrains.python.packaging.PyPackageManagersImpl"/>
 
+    <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
+
     <!-- Cython -->
     <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>
@@ -603,6 +605,9 @@
 
     <lang.lineWrapStrategy language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateLineWrapPositionStrategy"/>
 
+    <fileBasedIndex implementation="com.jetbrains.django.lang.template.DjangoBlockInheritanceIndex"/>
+    <definitionsSearch implementation="com.jetbrains.django.lang.template.DjangoBlockInheritorsSearchExecutor"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
     <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
@@ -638,9 +643,6 @@
     <projectService serviceInterface="org.jetbrains.yaml.YAMLElementGenerator"
                     serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 
-    <fileBasedIndex implementation="com.jetbrains.django.lang.template.DjangoBlockInheritanceIndex"/>
-    <definitionsSearch implementation="com.jetbrains.django.lang.template.DjangoBlockInheritorsSearchExecutor"/>
-
     <!-- Buildout -->
     <facetType implementation="com.jetbrains.python.buildout.BuildoutFacetType"/>
     <framework.detector implementation="com.jetbrains.python.buildout.BuildoutFrameworkDetector"/>
@@ -659,8 +661,6 @@
                     serviceImplementation="com.jetbrains.python.testing.TestRunnerService"/>
 
     <problemFileHighlightFilter implementation="com.jetbrains.python.buildout.config.BuildoutCfgProblemFileHighlightFilter"/>
-
-    <qualifiedNameProvider implementation="com.jetbrains.python.actions.PyQualifiedNameProvider"/>
 
     <!-- Mako files -->
     <multiLangCommenter implementation="com.jetbrains.python.templateLanguages.TemplatesCommentProvider"/>
@@ -822,6 +822,9 @@
 
     <!-- Packaging -->
     <keywordArgumentProvider implementation="com.jetbrains.python.packaging.setupPy.SetupKeywordArgumentProvider"/>
+
+    <!-- SQLAlchemy -->
+    <typeProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyTypeProvider"/>
   </extensions>
 
   <project-components>

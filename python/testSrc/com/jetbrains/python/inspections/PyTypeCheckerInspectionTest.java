@@ -140,4 +140,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testAssignedOperator() {
     doTest();
   }
+
+  // PY-7244
+  public void testGenericArguments() {
+    doTest();
+  }
 }
