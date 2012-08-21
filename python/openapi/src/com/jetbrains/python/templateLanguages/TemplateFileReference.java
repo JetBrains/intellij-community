@@ -16,20 +16,34 @@
 package com.jetbrains.python.templateLanguages;
 
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.ElementManipulators;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.*;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.psi.PsiReferenceEx;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+
 /**
  * @author yole
  */
 public class TemplateFileReference extends FileReference implements PsiReferenceEx {
+  @NotNull private final FileReferenceSet myReferenceSet;
+
   public TemplateFileReference(@NotNull FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
     super(fileReferenceSet, range, index, text);
+    myReferenceSet = fileReferenceSet;
   }
 
   @Nullable
@@ -42,5 +56,73 @@ public class TemplateFileReference extends FileReference implements PsiReference
   @Override
   public String getUnresolvedDescription() {
     return "Template file '" + getCanonicalText() + "' not found";
+  }
+
+  @Override
+  public PsiElement bindToElement(@NotNull PsiElement element, boolean absolute) throws IncorrectOperationException {
+    if (!(element instanceof PsiFileSystemItem)) {
+      throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
+    }
+
+    final PsiFileSystemItem fileSystemItem = (PsiFileSystemItem)element;
+    VirtualFile dstVFile = fileSystemItem.getVirtualFile();
+    if (dstVFile == null) throw new IncorrectOperationException("Cannot bind to non-physical element:" + element);
+
+    PsiFile file = getElement().getContainingFile();
+    PsiElement contextPsiFile = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
+    if (contextPsiFile != null) file = contextPsiFile.getContainingFile(); // use host file!
+    final VirtualFile curVFile = file.getVirtualFile();
+    if (curVFile == null) throw new IncorrectOperationException("Cannot bind from non-physical element:" + file);
+
+    final Project project = element.getProject();
+
+    String newName;
+
+    PsiFileSystemItem curItem = null;
+    PsiFileSystemItem dstItem = null;
+
+    final FileReferenceHelper helper = FileReferenceHelperRegistrar.getNotNullHelper(file);
+
+    PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
+    PsiFileSystemItem _curItem = helper.getPsiFileSystemItem(project, curVFile);
+    if (_dstItem != null && _curItem != null) {
+      curItem = _curItem;
+      dstItem = _dstItem;
+    }
+
+    final Collection<PsiFileSystemItem> contexts = myReferenceSet.getDefaultContexts();
+    switch (contexts.size()) {
+      case 0:
+        break;
+      default:
+        for (PsiFileSystemItem context : contexts) {
+          final VirtualFile contextFile = context.getVirtualFile();
+          assert contextFile != null;
+          if (VfsUtil.isAncestor(contextFile, dstVFile, true)) {
+            final String path = VfsUtilCore.getRelativePath(dstVFile, contextFile, '/');
+            if (path != null) {
+              return rename(path.replace("/", myReferenceSet.getSeparatorString()));
+            }
+          }
+        }
+    }
+    if (curItem == null) {
+      throw new IncorrectOperationException("Cannot find path between files; " +
+                                            "src = " + curVFile.getPresentableUrl() + "; " +
+                                            "dst = " + dstVFile.getPresentableUrl() + "; " +
+                                            "Contexts: " + contexts);
+    }
+    if (curItem.equals(dstItem)) {
+      if (getCanonicalText().equals(dstItem.getName())) {
+        return getElement();
+      }
+      return ElementManipulators.getManipulator(getElement()).handleContentChange(getElement(), getRangeInElement(), file.getName());
+    }
+    newName = PsiFileSystemItemUtil.getRelativePath(curItem, dstItem);
+    if (newName == null) {
+      return getElement();
+    }
+
+    return rename(newName);
   }
 }
