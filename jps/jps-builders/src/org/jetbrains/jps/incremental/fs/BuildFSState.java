@@ -70,11 +70,19 @@ public class BuildFSState extends FSState {
   public boolean markDirty(@Nullable CompileContext context, File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null) {
-      if (getContextModules(context).contains(rd.module)) {
+      if (isInCurrentContextModules(context, rd)) {
         roundDelta.markRecompile(rd.root, file);
       }
     }
     return super.markDirty(context, file, rd, tsStorage);
+  }
+
+  private static boolean isInCurrentContextModules(CompileContext context, RootDescriptor rd) {
+    if (context == null) {
+      return false;
+    }
+    Set<String> modules = CONTEXT_MODULES_KEY.get(context, Collections.<String>emptySet());
+    return modules.contains(rd.module) && rd.isTestRoot == context.isCompilingTests();
   }
 
   @Override
@@ -83,7 +91,7 @@ public class BuildFSState extends FSState {
     if (marked) {
       final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
       if (roundDelta != null) {
-        if (getContextModules(context).contains(rd.module)) {
+        if (isInCurrentContextModules(context, rd)) {
           roundDelta.markRecompile(rd.root, file);
         }
       }
@@ -205,11 +213,6 @@ public class BuildFSState extends FSState {
       }
     }
     return marked;
-  }
-
-  @NotNull
-  private static Set<String> getContextModules(@Nullable CompileContext context) {
-    return context != null? CONTEXT_MODULES_KEY.get(context, Collections.<String>emptySet()) : Collections.<String>emptySet();
   }
 
   private static void setContextModules(@Nullable CompileContext context, @Nullable Set<String> modules) {

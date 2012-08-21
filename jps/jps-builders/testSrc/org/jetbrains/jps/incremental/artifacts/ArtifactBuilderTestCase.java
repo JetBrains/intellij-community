@@ -21,19 +21,19 @@ import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.AllProjectScope;
 import org.jetbrains.jps.incremental.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompileScope;
-import org.jetbrains.jps.incremental.IncProjectBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.artifact.DirectoryArtifactType;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
-import org.jetbrains.jps.model.java.*;
+import org.jetbrains.jps.model.java.JpsJavaLibraryType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
@@ -127,20 +127,9 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   protected JpsModule addModule(String moduleName, String... srcPaths) {
     if (myJdk == null) {
-      myJdk = initJdk("1.6");
+      myJdk = addJdk("1.6");
     }
-    final JpsModule module = myJpsProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
-    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, myJdk.createReference());
-    module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
-    if (srcPaths.length > 0) {
-      for (String srcPath : srcPaths) {
-        module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(srcPath));
-        module.addSourceRoot(JpsPathUtil.pathToUrl(srcPath), JavaSourceRootType.SOURCE);
-      }
-      final String outputUrl = JpsPathUtil.pathToUrl(getAbsolutePath("out/production/" + moduleName));
-      JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module).setOutputUrl(outputUrl);
-    }
-    return module;
+    return addModule(moduleName, srcPaths, getAbsolutePath("out/production/" + moduleName), myJdk);
   }
 
   protected JpsLibrary addProjectLibrary(String name, String jarPath) {
@@ -155,19 +144,18 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected void buildArtifacts(JpsArtifact... artifact) {
-    doBuild(false, false, artifact);
+    doBuild(false, artifact).assertSuccessful();
   }
 
-  private void doBuild(boolean force, final boolean shouldFail, JpsArtifact... artifacts) {
+  private BuildResult doBuild(boolean force, JpsArtifact... artifacts) {
     if (myDescriptor == null) {
       myDescriptor = createProjectDescriptor(new BuildLoggingManager(myArtifactBuilderLogger, new JavaBuilderLoggerImpl()));
       myDescriptor.incUsageCounter();
     }
     myArtifactBuilderLogger.clear();
-    IncProjectBuilder builder = createBuilder(myDescriptor);
     final CompileScope scope = new AllProjectScope(myDescriptor.project, myDescriptor.jpsProject,
                                                    new HashSet<JpsArtifact>(Arrays.asList(artifacts)), force);
-    doBuild(builder, scope, shouldFail, !force, false);
+    return doBuild(myDescriptor, scope, !force, false, false);
   }
 
   protected static String getJUnitJarPath() {
@@ -181,7 +169,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected void assertBuildFailed(JpsArtifact a) {
-    doBuild(false, true, a);
+    doBuild(false, a).assertFailed();
   }
 
   protected static void change(String filePath) {

@@ -16,18 +16,25 @@
 package org.jetbrains.ether;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.jps.JpsPathUtil;
+import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.module.JpsModule;
 
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.PrintStream;
 import java.util.Collections;
 
 /**
@@ -38,6 +45,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   private final String groupName;
   private File baseDir;
   private File workDir;
+  private JpsSdk<JpsDummyElement> myJdk;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected IncrementalTestCase(final String name) throws Exception {
@@ -55,6 +63,16 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     FileUtil.copyDir(baseDir, workDir);
 
     Utils.setSystemRoot(workDir);
+    String outputPath = getAbsolutePath("out");
+    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myJpsProject).setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
+  }
+
+  protected String getUrl(String pathRelativeToProjectRoot) {
+    return JpsPathUtil.pathToUrl(getAbsolutePath(pathRelativeToProjectRoot));
+  }
+
+  protected String getAbsolutePath(final String pathRelativeToProjectRoot) {
+    return FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/" + pathRelativeToProjectRoot;
   }
 
   @Override
@@ -96,45 +114,39 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
   }
 
   public void doTest() throws Exception {
-    final String projectPath = workDir.getAbsolutePath();
+    if (new File(workDir, ".idea").exists()) {
+      getOrCreateJdk();
+      loadProject(workDir.getAbsolutePath());
+    }
+    else {
+      addModule();
+    }
 
-    initJdk("IDEA jdk");
+    doTestBuild();
+  }
 
-    loadProject(projectPath);
+  protected JpsModule addModule() {
+    String moduleName = StringUtil.capitalize(getProjectName());
+    String srcPath = getAbsolutePath("src");
+    return addModule(moduleName, new String[]{srcPath}, null, getOrCreateJdk());
+  }
 
-    final TestJavaBuilderLogger javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/");
-    final ProjectDescriptor projectDescriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
+  protected BuildResult doTestBuild() throws Exception {
+    final TestJavaBuilderLogger
+      javaBuilderLogger = new TestJavaBuilderLogger(FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/");
+    final ProjectDescriptor
+      projectDescriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), javaBuilderLogger));
     try {
-      final IncProjectBuilder builder = createBuilder(projectDescriptor);
-      doBuild(builder, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false, false, true);
+      doBuild(projectDescriptor, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false,
+              true, false).assertSuccessful();
 
       modify();
 
-      if (SystemInfo.isUnix) {
-        Thread.sleep(1000L);
-      }
-
-      final IncProjectBuilder makeBuilder = createBuilder(projectDescriptor);
-
-      class MH implements MessageHandler {
-        boolean myErrors = false;
-
-        @Override
-        public void processMessage(final BuildMessage msg) {
-          if (msg.getKind() == BuildMessage.Kind.ERROR)
-            myErrors = true;
-        }
-      }
-
-      final MH handler = new MH();
-
-      makeBuilder.addMessageHandler(handler);
-
-      makeBuilder.build(new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
+      BuildResult result = doBuild(projectDescriptor, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
 
       final ByteArrayOutputStream makeDump = new ByteArrayOutputStream();
 
-      if (!handler.myErrors) {
+      if (result.isSuccessful()) {
         projectDescriptor.dataManager.getMappings().toStream(new PrintStream(makeDump));
       }
 
@@ -145,8 +157,9 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
       assertEquals(expected, actual);
 
-      if (!handler.myErrors) {
-        createBuilder(projectDescriptor).build(new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false, true, false);
+      if (result.isSuccessful()) {
+        doBuild(projectDescriptor, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), true), false,
+                true, false).assertSuccessful();
 
         final ByteArrayOutputStream rebuildDump = new ByteArrayOutputStream();
 
@@ -156,10 +169,18 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
         assertEquals(rebuildDump.toString(), makeDump.toString());
       }
+      return result;
     }
     finally {
       projectDescriptor.release();
     }
+  }
+
+  private JpsSdk<JpsDummyElement> getOrCreateJdk() {
+    if (myJdk == null) {
+      myJdk = addJdk("IDEA jdk");
+    }
+    return myJdk;
   }
 
   private static class TestJavaBuilderLogger implements JavaBuilderLogger {

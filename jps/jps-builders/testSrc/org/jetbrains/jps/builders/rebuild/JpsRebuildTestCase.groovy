@@ -21,7 +21,7 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
   @Override
   protected void setUp() {
     super.setUp()
-    initJdk("1.6")
+    addJdk("1.6")
   }
 
   def doTest(String projectPath, Closure initProject, Closure expectedOutput) {
@@ -52,7 +52,7 @@ abstract class JpsRebuildTestCase extends JpsBuildTestCase {
     def descriptor = createProjectDescriptor(new BuildLoggingManager(new ArtifactBuilderLoggerImpl(), new JavaBuilderLoggerImpl()))
     try {
       def scope = new AllProjectScope(myProject, myJpsProject, new HashSet<JpsArtifact>(JpsArtifactService.getInstance().getArtifacts(myJpsProject)), true)
-      doBuild(createBuilder(descriptor), scope, false, false, true)
+      doBuild(descriptor, scope, false, true, false).assertSuccessful()
     }
     finally {
       descriptor.release();
