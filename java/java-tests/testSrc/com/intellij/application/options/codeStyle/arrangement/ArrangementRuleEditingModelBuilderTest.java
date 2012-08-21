@@ -60,8 +60,7 @@ public class ArrangementRuleEditingModelBuilderTest extends AbstractArrangementR
     assertEquals(and(atom(PUBLIC), atom(STATIC)), modifiersUiNode.getBackingSetting());
   }
 
-  // TODO den uncomment
-  //@Test
+  @Test
   public void addToExistingLayer() {
     myBuilder.build(and(atom(PUBLIC), atom(STATIC), atom(FIELD)), myTree, myRoot, myGrouper, myRowMappings);
     myBuilder.build(and(atom(PRIVATE), atom(FIELD)), myTree, myRoot, myGrouper, myRowMappings);

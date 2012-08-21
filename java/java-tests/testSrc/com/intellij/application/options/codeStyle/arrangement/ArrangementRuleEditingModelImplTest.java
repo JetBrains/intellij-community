@@ -171,18 +171,17 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     checkTreeNodesConsistency();
   }
 
-  // TODO den uncomment
-  //@Test
+  @Test
   public void removeLastRowConditionFromMultiChildrenParent() {
     configure(and(atom(FIELD), atom(PUBLIC)));
     configure(and(atom(FIELD), atom(STATIC)));
 
+    assertEquals(2, myRowMappings.size());
     ArrangementRuleEditingModel siblingModel = myRowMappings.get(2);
     assertNotNull(siblingModel);
     
     ArrangementRuleEditingModel modelToChange = myRowMappings.get(3);
     assertNotNull(modelToChange);
-    assertEquals(2, myRowMappings.size());
 
     modelToChange.removeAndCondition(atom(STATIC));
 
@@ -199,7 +198,7 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
 
     ArrangementTreeNode publicNode = compositeFieldNode.getFirstChild();
     assertNotNull(publicNode);
-    assertEquals(atom(PUBLIC), publicNode.getUserObject());
+    assertEquals(atom(PUBLIC), publicNode.getBackingSetting());
 
     ArrangementTreeNode atomFieldNode = compositeFieldNode.getNextSibling();
     assertNotNull(atomFieldNode);

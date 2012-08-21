@@ -94,7 +94,7 @@ public class ArrangementRuleEditingModelBuilder {
 
     HierarchicalArrangementSettingsNode grouped = grouper.group(setting);
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
-    Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped);
+    Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped, treeModel);
     ArrangementTreeNode topMostNode = ArrangementConfigUtil.getLastBefore(pair.first, root);
     int row = initialInsertRow + pair.second - 1;
     ArrangementRuleEditingModelImpl model = new ArrangementRuleEditingModelImpl(
