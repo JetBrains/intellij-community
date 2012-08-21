@@ -30,8 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.TreeModelEvent;
-import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
@@ -114,7 +112,6 @@ public class ArrangementRuleTree {
         onMouseClicked(e);
       }
     });
-    myTreeModel.addTreeModelListener(new MyTreeModelListener());
     
     List<ArrangementSettingsNode> rules = new ArrayList<ArrangementSettingsNode>();
     rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
@@ -145,6 +142,9 @@ public class ArrangementRuleTree {
     
     for (TreePath p = path; p != null; p = p.getParentPath()) {
       int row = myTree.getRowForPath(p);
+      if (row < 0) {
+        row = ((ArrangementTreeNode)p.getLastPathComponent()).getRow();
+      }
       if (row < 0) {
         return;
       }
@@ -299,7 +299,7 @@ public class ArrangementRuleTree {
   private void onModelChange(@NotNull ArrangementTreeNode topMost, @NotNull ArrangementTreeNode bottomMost) {
     expandAll(myTree, new TreePath(topMost.getPath()));
     mySelectionModel.clearSelection();
-    mySkipSelectionChange = true;
+    //mySkipSelectionChange = true;
     try {
       for (ArrangementTreeNode node = bottomMost; node != null; node = node.getParent()) {
         TreePath path = new TreePath(node.getPath());
@@ -329,12 +329,8 @@ public class ArrangementRuleTree {
                                                   boolean expanded,
                                                   boolean leaf,
                                                   int row,
-                                                  boolean hasFocus) {
-      // TODO den remove
-      if (row > 0) {
-        myTree.getPathForRow(row);
-      }
-
+                                                  boolean hasFocus)
+    {
       ArrangementSettingsNode node = ((ArrangementTreeNode)value).getBackingSetting();
       if (node == null) {
         return EMPTY_RENDERER;
@@ -386,29 +382,6 @@ public class ArrangementRuleTree {
     @Override
     public void onChanged(@NotNull ArrangementTreeNode topMost, @NotNull ArrangementTreeNode bottomMost) {
       onModelChange(topMost, bottomMost); 
-    }
-  }
-  
-  private class MyTreeModelListener implements TreeModelListener {
-    @Override
-    public void treeNodesChanged(TreeModelEvent e) {
-      // TODO den implement 
-    }
-
-    @Override
-    public void treeNodesInserted(TreeModelEvent e) {
-      //expandAll(myTree, e.getTreePath());
-    }
-
-    @Override
-    public void treeNodesRemoved(TreeModelEvent e) {
-      // TODO den implement
-      int i = 1;
-    }
-
-    @Override
-    public void treeStructureChanged(TreeModelEvent e) {
-      // TODO den implement 
     }
   }
 }

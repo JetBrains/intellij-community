@@ -228,7 +228,7 @@ four =      '4'()
   }
   
   private static def doReplace(initial, from, to, replacement) {
-    ArrangementConfigUtil.replace(from, to, replacement, new DefaultTreeModel(initial))
+    ArrangementConfigUtil.replace(from, to, replacement, new DefaultTreeModel(initial), true)
   }
 
   private static def doInsert(parent, i, child) {

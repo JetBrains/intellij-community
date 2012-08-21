@@ -44,7 +44,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @NotNull private final DefaultTreeModel                                   myTreeModel;
   @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myRowMappings;
   @NotNull private final ArrangementSettingsGrouper                         myGrouper;
-  private final          int                                                myRowShift;
+  private final          boolean                                            myRootVisible;
 
   @NotNull private ArrangementTreeNode     myTopMost;
   @NotNull private ArrangementTreeNode     myBottomMost;
@@ -54,17 +54,17 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   /**
    * Creates new <code>ArrangementRuleEditingModelImpl</code> object.
    *
-   * @param model      tree model which holds target ui nodes. Basically, we need to perform ui nodes modification via it in order
-   *                   to generate corresponding events automatically
-   * @param node       backing settings node
-   * @param topMost    there is a possible case that a single settings node is shown in more than one visual line
+   * @param model        tree model which holds target ui nodes. Basically, we need to perform ui nodes modification via it in order
+   *                     to generate corresponding events automatically
+   * @param node         backing settings node
+   * @param topMost      there is a possible case that a single settings node is shown in more than one visual line
    *                     ({@link HierarchicalArrangementSettingsNode}). This argument is the top-most UI node used for the
    *                     settings node representation
-   * @param bottomMost bottom-most UI node used for the given settings node representation 
-   * @param grouper    strategy that encapsulates information on how settings node should be displayed
-   * @param mappings   {@code 'row -> model'} mappings
-   * @param row        row number for which current model is registered at the given model mappings
-   * @param shift      specifies a shift to be applied to the node rows on model modification. Primary intention is to handle
+   * @param bottomMost   bottom-most UI node used for the given settings node representation 
+   * @param grouper      strategy that encapsulates information on how settings node should be displayed
+   * @param mappings     {@code 'row -> model'} mappings
+   * @param row          row number for which current model is registered at the given model mappings
+   * @param rootVisible  determines if the root should be count during rows calculations
    */
   public ArrangementRuleEditingModelImpl(@NotNull DefaultTreeModel model,
                                          @NotNull ArrangementSettingsNode node,
@@ -73,7 +73,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
                                          @NotNull ArrangementSettingsGrouper grouper,
                                          @NotNull TIntObjectHashMap<ArrangementRuleEditingModelImpl> mappings,
                                          int row,
-                                         int shift)
+                                         boolean rootVisible)
   {
     myTreeModel = model;
     mySettingsNode = node;
@@ -82,7 +82,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     myGrouper = grouper;
     myRowMappings = mappings;
     myRow = row;
-    myRowShift = shift;
+    myRootVisible = rootVisible;
     refreshConditions();
   }
 
@@ -185,7 +185,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     Pair<ArrangementTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode newBottom = replacement.first;
     ArrangementTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
-    final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop, myTreeModel);
+    final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop, myTreeModel, myRootVisible);
     myTopMost = newTop;
     myBottomMost = newBottom;
 
@@ -198,8 +198,8 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         if (row == myRow) {
           return true;
         }
-        if (rowChanges.containsKey(row - myRowShift)) {
-          newMappings.put(rowChanges.get(row - myRowShift) + myRowShift, model);
+        if (rowChanges.containsKey(row)) {
+          newMappings.put(rowChanges.get(row), model);
         }
         else {
           newMappings.put(row, model);
@@ -208,7 +208,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         return true;
       }
     });
-    myRow = ArrangementConfigUtil.getRow(myBottomMost) + myRowShift;
+    myRow = ArrangementConfigUtil.getRow(myBottomMost, myRootVisible);
     newMappings.put(myRow, this);
 
     myRowMappings.clear();
