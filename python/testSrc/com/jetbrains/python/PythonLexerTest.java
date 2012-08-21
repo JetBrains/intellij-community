@@ -232,6 +232,19 @@ public class PythonLexerTest extends PyLexerTestCase {
            "Py:STATEMENT_BREAK");
   }
 
+
+  // PY-7255
+  public void testDocstringInDict() {
+    doTest("d = {\n" +
+           "    'foo':\n" +
+           "        'bar'\n" +
+           "        'baz'\n" +
+           "}",
+           "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", "Py:LBRACE", "Py:LINE_BREAK",
+           "Py:SINGLE_QUOTED_STRING", "Py:COLON", "Py:LINE_BREAK", "Py:SINGLE_QUOTED_STRING", "Py:LINE_BREAK",
+           "Py:SINGLE_QUOTED_STRING", "Py:LINE_BREAK", "Py:RBRACE", "Py:STATEMENT_BREAK");
+  }
+
   // PY-3067
   public void testErrorOpenParInMethod() {
     doTest("class C:\n" +

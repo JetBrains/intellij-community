@@ -70,6 +70,7 @@ APOS_STRING_CHAR = [^\\'] | {ANY_ESCAPE_SEQUENCE} | {ONE_TWO_APOS}
 TRIPLE_APOS_LITERAL = {THREE_APOS} {APOS_STRING_CHAR}* {THREE_APOS}?
 
 %state PENDING_DOCSTRING
+%state IN_DOCSTRING_OWNER
 %state USUAL
 %{
 private int getSpaceLength(CharSequence string) {
@@ -92,7 +93,7 @@ return yylength()-i-1;
 .                     { yypushback(1); yybegin(PENDING_DOCSTRING);}
 }
 
-<USUAL> {
+<USUAL, IN_DOCSTRING_OWNER> {
 {LONGINTEGER}         { return PyTokenTypes.INTEGER_LITERAL; }
 {INTEGER}             { return PyTokenTypes.INTEGER_LITERAL; }
 {FLOATNUMBER}         { return PyTokenTypes.FLOAT_LITERAL; }
@@ -104,9 +105,9 @@ return yylength()-i-1;
 "and"                 { return PyTokenTypes.AND_KEYWORD; }
 "assert"              { return PyTokenTypes.ASSERT_KEYWORD; }
 "break"               { return PyTokenTypes.BREAK_KEYWORD; }
-"class"               { return PyTokenTypes.CLASS_KEYWORD; }
+"class"               { yybegin(IN_DOCSTRING_OWNER); return PyTokenTypes.CLASS_KEYWORD; }
 "continue"            { return PyTokenTypes.CONTINUE_KEYWORD; }
-"def"                 { return PyTokenTypes.DEF_KEYWORD; }
+"def"                 { yybegin(IN_DOCSTRING_OWNER); return PyTokenTypes.DEF_KEYWORD; }
 "del"                 { return PyTokenTypes.DEL_KEYWORD; }
 "elif"                { return PyTokenTypes.ELIF_KEYWORD; }
 "else"                { return PyTokenTypes.ELSE_KEYWORD; }
@@ -172,13 +173,17 @@ return yylength()-i-1;
 "@"                   { return PyTokenTypes.AT; }
 ","                   { return PyTokenTypes.COMMA; }
 ":"                   { return PyTokenTypes.COLON; }
-":"(\ )*"\n"          { yypushback(yylength()-1); yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }
+
 "."                   { return PyTokenTypes.DOT; }
 "`"                   { return PyTokenTypes.TICK; }
 "="                   { return PyTokenTypes.EQ; }
 ";"                   { return PyTokenTypes.SEMICOLON; }
 
 .                     { return PyTokenTypes.BAD_CHARACTER; }
+}
+
+<IN_DOCSTRING_OWNER> {
+":"(\ )*"\n"          { yypushback(yylength()-1); yybegin(PENDING_DOCSTRING); return PyTokenTypes.COLON; }
 }
 
 <PENDING_DOCSTRING> {

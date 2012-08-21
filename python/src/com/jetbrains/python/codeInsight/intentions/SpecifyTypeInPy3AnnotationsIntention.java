@@ -4,6 +4,8 @@ import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -139,22 +141,33 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
             Callable callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(PyResolveContext.defaultContext());
             if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() == null) {
               final String functionSignature = "def " + callable.getName() + callable.getParameterList().getText();
+              String functionText = functionSignature +
+                                  " -> object:";
+              for (PyStatement st : ((PyFunction)callable).getStatementList().getStatements()) {
+                functionText = functionText + "\n\t" + st.getText();
+              }
               final PyFunction function = elementGenerator.createFromText(LanguageLevel.forElement(problemElement), PyFunction.class,
-                                                                          functionSignature +
-                                                                          " -> object:\n\t" +
-                                                                          ((PyFunction)callable).getStatementList().getText());
+                                                                          functionText);
               callable = (PyFunction)callable.replace(function);
               callable = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(callable);
 
               final PyExpression value = ((PyFunction)callable).getAnnotation().getValue();
               final int offset = value.getTextOffset();
-              editor.getCaretModel().moveToOffset(offset);
 
               final TemplateBuilder builder = TemplateBuilderFactory.getInstance().
                 createTemplateBuilder(value);
               builder.replaceRange(TextRange.create(0, PyNames.OBJECT.length()), PyNames.OBJECT);
               Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
-              TemplateManager.getInstance(project).startTemplate(editor, template);
+              OpenFileDescriptor descriptor = new OpenFileDescriptor(
+                project,
+                value.getContainingFile().getVirtualFile(),
+                offset
+              );
+              Editor targetEditor = FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+              if (targetEditor != null) {
+                targetEditor.getCaretModel().moveToOffset(offset);
+                TemplateManager.getInstance(project).startTemplate(targetEditor, template);
+              }
             }
           }
         }
