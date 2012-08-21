@@ -24,6 +24,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
@@ -203,7 +204,7 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
   }
 
   @Nullable
-  private PyType getGenericReturnType(TypeEvalContext typeEvalContext, @Nullable PyQualifiedExpression callSite) {
+  private PyType getGenericReturnType(@NotNull TypeEvalContext typeEvalContext, @Nullable PyQualifiedExpression callSite) {
     if (typeEvalContext.maySwitchToAST(this)) {
       PyAnnotation anno = getAnnotation();
       if (anno != null) {
@@ -621,6 +622,27 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
             }
           }
         }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedName() {
+    String name = getName();
+    if (name == null) {
+      return null;
+    }
+    PyClass containingClass = getContainingClass();
+    if (containingClass != null) {
+      return containingClass.getQualifiedName() + "." + name;
+    }
+    if (PsiTreeUtil.getStubOrPsiParent(this) instanceof PyFile) {
+      VirtualFile virtualFile = getContainingFile().getVirtualFile();
+      if (virtualFile != null) {
+        final String packageName = QualifiedNameFinder.findShortestImportableName(this, virtualFile);
+        return packageName + "." + name;
       }
     }
     return null;

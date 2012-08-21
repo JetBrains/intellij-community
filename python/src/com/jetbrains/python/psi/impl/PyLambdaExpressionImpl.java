@@ -58,4 +58,10 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
     super.subtreeChanged();
     ControlFlowCache.clear(this);
   }
+
+  @Nullable
+  @Override
+  public String getQualifiedName() {
+    return null;
+  }
 }

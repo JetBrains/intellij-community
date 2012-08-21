@@ -21,10 +21,10 @@ public interface PyTypeProvider {
   PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor);
 
   @Nullable
-  PyType getParameterType(PyNamedParameter param, final PyFunction func, TypeEvalContext context);
+  PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context);
 
   @Nullable
-  PyType getReturnType(PyFunction function, @Nullable PyQualifiedExpression callSite, TypeEvalContext context);
+  PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context);
 
   @Nullable
   PyType getIterationType(PyClass iterable);

@@ -75,12 +75,12 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
-  public PyType getParameterType(PyNamedParameter param, PyFunction func, TypeEvalContext context) {
+  public PyType getParameterType(@NotNull PyNamedParameter param, @NotNull PyFunction func, @NotNull TypeEvalContext context) {
     return null;
   }
 
   @Override
-  public PyType getReturnType(PyFunction function, @Nullable PyQualifiedExpression callSite, TypeEvalContext context) {
+  public PyType getReturnType(@NotNull PyFunction function, @Nullable PyQualifiedExpression callSite, @NotNull TypeEvalContext context) {
     ReturnTypeDescriptor descriptor;
     synchronized (myMethodToReturnTypeMap) {
       descriptor = myMethodToReturnTypeMap.get(function.getName());
