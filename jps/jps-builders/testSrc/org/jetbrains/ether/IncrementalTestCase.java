@@ -16,13 +16,16 @@
 package org.jetbrains.ether;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.AllProjectScope;
+import org.jetbrains.jps.incremental.BuildLoggingManager;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactBuilderLoggerImpl;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -141,6 +144,10 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
               true, false).assertSuccessful();
 
       modify();
+      if (SystemInfo.isUnix) {
+        Thread.sleep(1000L);
+      }
+
 
       BuildResult result = doBuild(projectDescriptor, new AllProjectScope(myProject, myJpsProject, Collections.<JpsArtifact>emptySet(), false), true, false, false);
 
