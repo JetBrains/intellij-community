@@ -76,29 +76,6 @@ public class ArrangementTreeNode extends DefaultMutableTreeNode {
   }
 
   @Override
-  public int hashCode() {
-    return mySettings != null ? mySettings.hashCode() : 0;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-
-    ArrangementTreeNode node = (ArrangementTreeNode)o;
-
-    if (mySettings != null ? !mySettings.equals(node.mySettings) : node.mySettings != null) {
-      return false;
-    }
-
-    return true;
-  }
-
-  @Override
   public ArrangementTreeNode getParent() {
     return (ArrangementTreeNode)super.getParent();
   }

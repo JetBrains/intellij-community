@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
@@ -112,6 +114,7 @@ public class ArrangementRuleTree {
         onMouseClicked(e);
       }
     });
+    myTreeModel.addTreeModelListener(new MyTreeModelListener());
     
     List<ArrangementSettingsNode> rules = new ArrayList<ArrangementSettingsNode>();
     rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
@@ -122,12 +125,12 @@ public class ArrangementRuleTree {
     rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
                 .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
                 .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
+    //rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
+    //            .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+    //            .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
+    //rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
+    //            .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+    //            .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
     map(root, rules, grouper);
 
     expandAll(myTree, new TreePath(root));
@@ -156,7 +159,7 @@ public class ArrangementRuleTree {
   private static void expandAll(Tree tree, TreePath parent) {
     // Traverse children
     TreeNode node = (TreeNode)parent.getLastPathComponent();
-    if (node.getChildCount() >= 0) {
+    if (node.getChildCount() > 0) {
       for (Enumeration e = node.children(); e.hasMoreElements(); ) {
         TreeNode n = (TreeNode)e.nextElement();
         TreePath path = parent.pathByAddingChild(n);
@@ -293,15 +296,19 @@ public class ArrangementRuleTree {
     }
   }
 
-  private void onModelChange(@NotNull TreeNode topMost, @NotNull TreeNode bottomMost) {
+  private void onModelChange(@NotNull ArrangementTreeNode topMost, @NotNull ArrangementTreeNode bottomMost) {
     mySkipSelectionChange = true;
     try {
-      for (DefaultMutableTreeNode node = (DefaultMutableTreeNode)bottomMost; node != null; node = (DefaultMutableTreeNode)node.getParent()) {
+      for (ArrangementTreeNode node = bottomMost; node != null; node = node.getParent()) {
         TreePath path = new TreePath(node.getPath());
         int row = myTree.getRowForPath(path);
         myRenderers.remove(row);
+        myTreeModel.nodeChanged(node);
         mySelectionModel.addSelectionPath(path);
-        getNodeComponentAt(row, (ArrangementSettingsNode)node.getUserObject()).setSelected(true);
+        ArrangementSettingsNode setting = node.getBackingSetting();
+        if (setting != null) {
+          getNodeComponentAt(row, setting).setSelected(true);
+        }
         if (node == topMost) {
           break;
         }
@@ -309,8 +316,6 @@ public class ArrangementRuleTree {
     }
     finally {
       mySkipSelectionChange = false;
-      // TODO den check
-      //expandAll(myTree, new TreePath(myTreeModel.getRoot()));
     }
   }
   
@@ -322,14 +327,19 @@ public class ArrangementRuleTree {
                                                   boolean expanded,
                                                   boolean leaf,
                                                   int row,
-                                                  boolean hasFocus)
-    {
-      if (row < 0) {
-        return EMPTY_RENDERER;
+                                                  boolean hasFocus) {
+      // TODO den remove
+      if (row > 0) {
+        myTree.getPathForRow(row);
       }
-      ArrangementSettingsNode node = (ArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
+
+      ArrangementSettingsNode node = ((ArrangementTreeNode)value).getBackingSetting();
       if (node == null) {
         return EMPTY_RENDERER;
+      }
+
+      if (row < 0) {
+        return myFactory.getComponent(node).getUiComponent();
       }
       return getNodeComponentAt(row, node).getUiComponent();
     }
@@ -372,8 +382,31 @@ public class ArrangementRuleTree {
   
   private class MyModelChangeListener implements ArrangementRuleEditingModel.Listener {
     @Override
-    public void onChanged(@NotNull TreeNode topMost, @NotNull TreeNode bottomMost) {
+    public void onChanged(@NotNull ArrangementTreeNode topMost, @NotNull ArrangementTreeNode bottomMost) {
       onModelChange(topMost, bottomMost); 
+    }
+  }
+  
+  private class MyTreeModelListener implements TreeModelListener {
+    @Override
+    public void treeNodesChanged(TreeModelEvent e) {
+      // TODO den implement 
+    }
+
+    @Override
+    public void treeNodesInserted(TreeModelEvent e) {
+      //expandAll(myTree, e.getTreePath());
+    }
+
+    @Override
+    public void treeNodesRemoved(TreeModelEvent e) {
+      // TODO den implement
+      int i = 1;
+    }
+
+    @Override
+    public void treeStructureChanged(TreeModelEvent e) {
+      // TODO den implement 
     }
   }
 }

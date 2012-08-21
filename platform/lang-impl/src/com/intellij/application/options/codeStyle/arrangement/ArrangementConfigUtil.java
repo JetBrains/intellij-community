@@ -485,14 +485,14 @@ public class ArrangementConfigUtil {
     ArrangementTreeNode mergeCandidate = null;
     if (index > 0) {
       mergeCandidate = parent.getChildAt(index - 1);
-      if (!mergeCandidate.equals(child)) {
+      if (!hasEqualSetting(mergeCandidate, child)) {
         mergeCandidate = null;
       }
     }
 
     if (index < parent.getChildCount()) {
       ArrangementTreeNode n = parent.getChildAt(index);
-      if (n.equals(child)) {
+      if (hasEqualSetting(n, child)) {
         mergeCandidate = n;
         anchorAbove = true;
       }
@@ -507,5 +507,14 @@ public class ArrangementConfigUtil {
       insert(mergeCandidate, anchorAbove ? 0 : mergeCandidate.getChildCount(), child.getChildAt(0), treeModel);
     }
     return true;
+  }
+
+  private static boolean hasEqualSetting(@NotNull ArrangementTreeNode node1, @NotNull ArrangementTreeNode node2) {
+    ArrangementSettingsNode setting1 = node1.getBackingSetting();
+    ArrangementSettingsNode setting2 = node2.getBackingSetting();
+    if (setting1 == null || setting2 == null) {
+      return false;
+    }
+    return setting1.equals(setting2);
   }
 }
