@@ -104,7 +104,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
 
-  protected static WrapType getWrapType(final int type) {
+  public static WrapType getWrapType(final int type) {
     if (type == CodeStyleSettings.DO_NOT_WRAP) return WrapType.NONE;
     if (type == CodeStyleSettings.WRAP_ALWAYS) return WrapType.ALWAYS;
     if (type == CodeStyleSettings.WRAP_AS_NEEDED) return WrapType.NORMAL;
