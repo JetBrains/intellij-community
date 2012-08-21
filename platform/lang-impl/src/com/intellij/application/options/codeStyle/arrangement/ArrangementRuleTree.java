@@ -297,6 +297,8 @@ public class ArrangementRuleTree {
   }
 
   private void onModelChange(@NotNull ArrangementTreeNode topMost, @NotNull ArrangementTreeNode bottomMost) {
+    expandAll(myTree, new TreePath(topMost.getPath()));
+    mySelectionModel.clearSelection();
     mySkipSelectionChange = true;
     try {
       for (ArrangementTreeNode node = bottomMost; node != null; node = node.getParent()) {
