@@ -46,7 +46,7 @@ public abstract class DataManager {
   /**
    * @return {@link DataContext} constructed by the specified <code>component</code>
    */
-  public abstract DataContext getDataContext(@NotNull Component component);
+  public abstract DataContext getDataContext(Component component);
 
   /**
    * @return {@link DataContext} constructed be the specified <code>component</code>

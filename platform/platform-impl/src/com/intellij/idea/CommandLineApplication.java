@@ -69,7 +69,7 @@ public class CommandLineApplication {
       return new CommandLineDataContext();
     }
 
-    public DataContext getDataContext(@NotNull Component component) {
+    public DataContext getDataContext(Component component) {
       return getDataContext();
     }
 

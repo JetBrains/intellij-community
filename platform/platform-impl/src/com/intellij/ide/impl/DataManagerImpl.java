@@ -176,7 +176,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return data;
   }
 
-  public DataContext getDataContext(@NotNull Component component) {
+  public DataContext getDataContext(Component component) {
     return new MyDataContext(component);
   }
 
