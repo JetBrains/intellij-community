@@ -50,7 +50,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  public PyType getParameterType(final PyNamedParameter param, final PyFunction func, TypeEvalContext context) {
+  public PyType getParameterType(@NotNull final PyNamedParameter param, @NotNull final PyFunction func, @NotNull TypeEvalContext context) {
     if (!(param.getParent() instanceof PyParameterList)) return null;
     List<PyNamedParameter> params = ParamHelper.collectNamedParameters((PyParameterList) param.getParent());
     final int index = params.indexOf(param);

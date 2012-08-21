@@ -318,14 +318,38 @@ public class PyBuiltinCache {
     synchronized (myStdlibTypeCache) {
       final Ref<PyType> ref = myStdlibTypeCache.get(key);
       if (ref != null) {
-        final PyType pyType = ref.get();
-        if (pyType instanceof PyClassType && !((PyClassType)pyType).isValid()) {
+        if (!isValid(ref.get())) {
           myStdlibTypeCache.clear();
           return null;
         }
       }
       return ref;
     }
+  }
+
+  private static boolean isValid(@Nullable PyType type) {
+    if (type instanceof PyCollectionType) {
+      final PyType elementType = ((PyCollectionType)type).getElementType(TypeEvalContext.fastStubOnly(null));
+      if (!isValid(elementType)) {
+        return false;
+      }
+    }
+
+    if (type instanceof PyClassType) {
+      return ((PyClassType)type).isValid();
+    }
+    else if (type instanceof PyUnionType) {
+      for (PyType member : ((PyUnionType)type).getMembers()) {
+        if (!isValid(member)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    else if (type instanceof PyFunctionType) {
+      return ((PyFunctionType)type).getFunction().isValid();
+    }
+    return true;
   }
 
   public void storeStdlibType(@NotNull String key, @Nullable PyType result) {
