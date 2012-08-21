@@ -1,9 +1,9 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -59,28 +59,12 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
     PyStringLiteralExpression string = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyStringLiteralExpression.class);
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     if (string != null) {
-      StringBuilder strBuilder = new StringBuilder();
-      List<ASTNode> nodes = string.getStringNodes();
-      if (nodes.size() == 1)
-        strBuilder.append(string.getText());
-      else {
-        // There possible situation that several triple quoted string are situated together
-        String firstNode = nodes.get(0).getText();
-        strBuilder.append(firstNode.substring(0, firstNode.length()-3));
-        for (int i = 1; i != nodes.size(); ++i) {
-          ASTNode node = nodes.get(i);
-          String text = node.getText();
-          if (text.length() > 3)
-            strBuilder.append(text.substring(3, text.length()-3));
-        }
-        strBuilder.append(firstNode.substring(0, 3));
-      }
-      String stringText = strBuilder.toString();
-      String[] subStrings = stringText.split("\n");
+      String stringText = string.getStringValue();
+      List<String> subStrings = StringUtil.split(stringText, "\n", false, true);
 
-      Character firstQuote = stringText.charAt(0);
+      Character firstQuote = string.getText().charAt(0);
       StringBuilder result = new StringBuilder();
-      if (subStrings.length != 1)
+      if (subStrings.size() != 1)
         result.append("(");
       boolean lastString = false;
       for (String s : subStrings) {
@@ -93,9 +77,9 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
         result.append(validSubstring);
         result.append(firstQuote);
         if (!lastString)
-          result.append(" ").append(firstQuote).append("\\n").append(firstQuote).append("\n");
+          result.append(" ").append("\n");
       }
-      if (subStrings.length != 1)
+      if (subStrings.size() != 1)
         result.append(")");
       PyExpressionStatement e = elementGenerator.createFromText(LanguageLevel.forElement(string), PyExpressionStatement.class, result.toString());
       string.replace(e.getExpression());
@@ -111,7 +95,7 @@ public class PyConvertTripleQuotedStringIntention extends BaseIntentionAction {
       subString = convertToValidSubString(trimmed.substring(0, trimmed.length() - 3), firstQuote);
     }
     else {
-      s = s.trim();
+      s = StringUtil.escapeStringCharacters(s);
       StringBuilder stringBuilder = new StringBuilder();
       for (Character ch : s.toCharArray()) {
         if (ch == firstQuote) {
