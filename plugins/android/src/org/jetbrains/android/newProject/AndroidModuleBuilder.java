@@ -37,6 +37,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -141,7 +142,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
         entry.setScope(DependencyScope.PROVIDED);
       }
 
-      StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         public void run() {
           ApplicationManager.getApplication().invokeLater(new Runnable() {
             public void run() {
