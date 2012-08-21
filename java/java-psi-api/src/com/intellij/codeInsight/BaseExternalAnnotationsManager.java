@@ -262,6 +262,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   protected void dropCache() {
+    myExternalAnnotations.clear();
+    annotationsFileToDataAndModificationStamp.clear();
     cache.clear();
   }
 

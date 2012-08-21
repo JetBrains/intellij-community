@@ -91,11 +91,15 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
-        myExternalAnnotations.clear();
-        annotationsFileToDataAndModificationStamp.clear();
-        myHasAnyAnnotationsRoots = ThreeState.UNSURE;
+        dropCache();
       }
     });
+  }
+
+  @Override
+  protected void dropCache() {
+    super.dropCache();
+    myHasAnyAnnotationsRoots = ThreeState.UNSURE;
   }
 
   @Override
