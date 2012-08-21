@@ -65,7 +65,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (isSplitLine != null) {
       return Result.Continue;
     }
-    Document doc = editor.getDocument();
+    final Document doc = editor.getDocument();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(doc);
     final PsiElement element = file.findElementAt(offset);
     CodeInsightSettings codeInsightSettings = CodeInsightSettings.getInstance();
@@ -145,6 +145,14 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (!PyCodeInsightSettings.getInstance().INSERT_BACKSLASH_ON_WRAP) {
       return Result.Continue;
     }
+    return checkInsertBackslash(file, caretOffset, dataContext, offset, doc);
+  }
+
+  private static Result checkInsertBackslash(PsiFile file,
+                                             Ref<Integer> caretOffset,
+                                             DataContext dataContext,
+                                             int offset,
+                                             Document doc) {
     if (offset > 0) {
       final PsiElement beforeCaret = file.findElementAt(offset - 1);
       if (beforeCaret instanceof PsiWhiteSpace && beforeCaret.getText().indexOf('\\') >= 0) {
