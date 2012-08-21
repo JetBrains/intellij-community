@@ -19,6 +19,7 @@ package org.jetbrains.jps.incremental.artifacts.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -261,7 +262,7 @@ public class JarsBuilder {
   private static void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
                                              final String relativeOutputPath, final Set<String> writtenPaths)
     throws IOException {
-    final long timestamp = root.getRootFile().lastModified();
+    final long timestamp = FileSystemUtil.lastModified(root.getRootFile());
     root.processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath) throws IOException {

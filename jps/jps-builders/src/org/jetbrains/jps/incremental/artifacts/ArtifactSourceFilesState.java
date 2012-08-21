@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -117,7 +118,7 @@ public class ArtifactSourceFilesState extends CompositeStorageOwner {
       boolean upToDate = false;
       if (!forceMarkDirty && state != null) {
         for (ArtifactSourceTimestampStorage.PerArtifactTimestamp artifactTimestamp : state) {
-          if (artifactTimestamp.myArtifactId == myArtifactId && artifactTimestamp.myTimestamp == file.lastModified()) {
+          if (artifactTimestamp.myArtifactId == myArtifactId && artifactTimestamp.myTimestamp == FileSystemUtil.lastModified(file)) {
             upToDate = true;
             break;
           }

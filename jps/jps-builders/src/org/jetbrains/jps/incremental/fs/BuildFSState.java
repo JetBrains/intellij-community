@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -165,7 +166,7 @@ public class BuildFSState extends FSState {
       for (File file : files) {
         if (!excludes.isExcluded(file)) {
           if (scope.isAffected(rd.module, file)) {
-            final long stamp = file.lastModified();
+            final long stamp = FileSystemUtil.lastModified(file);
             if (!rd.isGeneratedSources && stamp > compilationStartStamp) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
@@ -202,8 +203,8 @@ public class BuildFSState extends FSState {
     if (paths != null) {
       for (String path : paths) {
         File file = new File(FileUtil.toSystemDependentName(path));
-        long stamp = file.lastModified();
-        if (stamp > compilationStartStamp + 1000) {//todo[nik] this is added to fix tests on Linux
+        long stamp = FileSystemUtil.lastModified(file);
+        if (stamp > compilationStartStamp + 1000) {//todo[nik] do we really need this?
           delta.markRecompile(descriptor.getRootIndex(), path);
         }
         else {
