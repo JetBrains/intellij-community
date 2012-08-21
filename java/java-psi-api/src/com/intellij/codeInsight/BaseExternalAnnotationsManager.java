@@ -220,8 +220,23 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     final List<PsiFile> files = myExternalAnnotations.get(fqn);
     if (files == NULL) return null;
     if (files != null) {
-      for (Iterator<PsiFile> it = files.iterator(); it.hasNext();) {
-        if (!it.next().isValid()) it.remove();
+      boolean hasInvalidFiles = false;
+      for (PsiFile file : files) {
+        if (!file.isValid()) {
+          hasInvalidFiles = true;
+          break;
+        }
+      }
+      if (hasInvalidFiles) {
+        ArrayList<PsiFile> onlyValid = new ArrayList<PsiFile>();
+        for (PsiFile file : files) {
+          if (file.isValid()) {
+            onlyValid.add(file);
+          }
+        }
+        onlyValid.trimToSize();
+        myExternalAnnotations.put(fqn, onlyValid);
+        return onlyValid;
       }
       return files;
     }
@@ -230,7 +245,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       return null;
     }
 
-    List<PsiFile> possibleAnnotationsXmls = new ArrayList<PsiFile>();
+    ArrayList<PsiFile> possibleAnnotationsXmls = new ArrayList<PsiFile>();
     for (VirtualFile root : getExternalAnnotationsRoots(virtualFile)) {
       final VirtualFile ext = root.findFileByRelativePath(packageName.replace(".", "/") + "/" + ANNOTATIONS_XML);
       if (ext == null) continue;
@@ -238,6 +253,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       possibleAnnotationsXmls.add(psiFile);
     }
     if (!possibleAnnotationsXmls.isEmpty()) {
+      possibleAnnotationsXmls.trimToSize();
       myExternalAnnotations.put(fqn, possibleAnnotationsXmls);
       return possibleAnnotationsXmls;
     }
