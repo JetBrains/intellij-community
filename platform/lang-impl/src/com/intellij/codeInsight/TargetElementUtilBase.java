@@ -143,7 +143,7 @@ public class TargetElementUtilBase {
     return result;
   }
 
-  public static boolean inVirtualSpace(Editor editor, int offset) {
+  public static boolean inVirtualSpace(@NotNull Editor editor, int offset) {
     if (offset == editor.getCaretModel().getOffset()) {
       return EditorUtil.inVirtualSpace(editor, editor.getCaretModel().getLogicalPosition());
     }

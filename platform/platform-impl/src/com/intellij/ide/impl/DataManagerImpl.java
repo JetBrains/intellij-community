@@ -176,7 +176,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return data;
   }
 
-  public DataContext getDataContext(Component component) {
+  public DataContext getDataContext(@NotNull Component component) {
     return new MyDataContext(component);
   }
 
@@ -292,7 +292,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
 
   @Nullable
-  public <T> T loadFromDataContext(DataContext dataContext, Key<T> dataKey) {
+  public <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey) {
     return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
   }
 
