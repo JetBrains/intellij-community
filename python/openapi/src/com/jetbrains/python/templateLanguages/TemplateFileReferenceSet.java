@@ -4,8 +4,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonStringUtil;
@@ -91,5 +93,10 @@ public class TemplateFileReferenceSet extends FileReferenceSet {
 
   protected List<VirtualFile> getRoots(Module module) {
     return TemplatesService.getInstance(module).getTemplateFolders();
+  }
+
+  @Override
+  public FileReference createFileReference(TextRange range, int index, String text) {
+    return new TemplateFileReference(this, range, index, text);
   }
 }
