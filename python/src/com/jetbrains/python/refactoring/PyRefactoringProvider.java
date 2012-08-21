@@ -56,6 +56,7 @@ public class PyRefactoringProvider extends RefactoringSupportProvider {
 
   @Override
   public boolean isInplaceRenameAvailable(PsiElement element, PsiElement context) {
+    if (context != null && context.getContainingFile() != element.getContainingFile()) return false;
     PyFunction containingFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (containingFunction != null) {
       if (element instanceof PyTargetExpression || element instanceof PyFunction || element instanceof PyClass) {
