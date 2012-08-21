@@ -114,6 +114,7 @@ public class EnterHandler extends BaseEnterHandler {
     documentManager.commitDocument(document);
 
     boolean forceIndent = false;
+    boolean forceSkipIndent = false;
     Ref<Integer> caretOffsetRef = new Ref<Integer>(caretOffset);
     Ref<Integer> caretAdvanceRef = new Ref<Integer>(0);
 
@@ -131,6 +132,9 @@ public class EnterHandler extends BaseEnterHandler {
         if (result == EnterHandlerDelegate.Result.DefaultForceIndent) {
           forceIndent = true;
         }
+        else if (result == EnterHandlerDelegate.Result.DefaultSkipIndent) {
+          forceSkipIndent = true;
+        }
         break;
       }
     }
@@ -142,7 +146,7 @@ public class EnterHandler extends BaseEnterHandler {
       !isFirstColumn && !(caretOffset >= text.length() || text.charAt(caretOffset) == ' ' || text.charAt(caretOffset) == '\t');
     editor.getCaretModel().moveToOffset(caretOffset);
     myOriginalHandler.execute(editor, dataContext);
-    if (!editor.isInsertMode()) {
+    if (!editor.isInsertMode() || forceSkipIndent) {
       return;
     }
 
