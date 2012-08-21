@@ -23,16 +23,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.module.impl.ModuleImpl;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -114,9 +111,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     return module;
   }
 
-  public Module loadModule(final String modulePath, Project project) throws InvalidDataException,
-                                                                            IOException,
-                                                                            JDOMException {
+  protected Module loadModule(final String modulePath) {
     return loadModule(new File(modulePath));
   }
 
