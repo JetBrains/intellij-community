@@ -50,7 +50,7 @@ public class EditConfigurationDialog extends DialogWrapper {
       myEditDeviceForm.reset(device);
     }
 
-    myDeviceConfiguratorPanel = new DeviceConfiguratorPanel(config) {
+    myDeviceConfiguratorPanel = new DeviceConfiguratorPanel() {
       @Override
       public void applyEditors() {
         try {
@@ -84,6 +84,9 @@ public class EditConfigurationDialog extends DialogWrapper {
         config.setRegionQualifier(null);
       }
     };
+    if (config != null) {
+      myDeviceConfiguratorPanel.init(config);
+    }
     myDeviceConfiguratorPanelWrapper.add(myDeviceConfiguratorPanel, BorderLayout.CENTER);
 
     myEditDeviceForm.getNameField().getDocument().addDocumentListener(myDeviceConfiguratorPanel.getUpdatingDocumentListener());

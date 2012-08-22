@@ -20,7 +20,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Implementors of the interface encapsulate optimize imports process for the language.
+ * Implementers of the interface encapsulate optimize imports process for the language.
  * Should be registered as "com.intellij.lang.importOptimizer" extension.
  * @author max
  * @see LanguageImportStatements
@@ -35,13 +35,13 @@ public interface ImportOptimizer {
   boolean supports(PsiFile file);
 
   /**
-   * Implementors of the method are expected to perform all necessary calculations synchronously and return a <code>Runnable</code>,
+   * Implementers of the method are expected to perform all necessary calculations synchronously and return a <code>Runnable</code>,
    * which performs modifications based on preprocessing results.
-   * processFile() is guaranteed to run with {@link com.intellij.openapi.application.Application#runReadAction(Runnable)} priviledges and
+   * processFile() is guaranteed to run with {@link com.intellij.openapi.application.Application#runReadAction(Runnable)} privileges and
    * the Runnable returned is guaranteed to run with {@link com.intellij.openapi.application.Application#runWriteAction(Runnable)} privileges.
    *
    * One can theoretically delay all the calculation until Runnable is called but this code will be executed in Swing thread thus
-   * lenghty calculations may block user interface for some significant time.
+   * lengthy calculations may block user interface for some significant time.
    *
    * @param file to optimize an imports in. It's guaranteed to have a language this <code>ImportOptimizer</code> have been
    * issued from.

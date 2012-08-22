@@ -167,7 +167,7 @@
       <add-to-group group-id="EditorToggleActions"/>
     </action>
 
-    <action id="ShowUsagesSettings" class="com.intellij.find.actions.ShowUsagesAction$ShowSettings"/>
+    <action id="ShowSettingsAndFindUsages" class="com.intellij.find.actions.FindUsagesAction$ShowSettingsAndFindUsages"/>
     <action id="ProjectViewChangeView" class="com.intellij.ide.projectView.actions.ChangeProjectViewAction"/>
 
     <action id="RecentChanges" class="com.intellij.history.integration.ui.actions.RecentChangesAction">

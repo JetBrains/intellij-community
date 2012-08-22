@@ -28,7 +28,6 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsagePresentation;
 import com.intellij.usages.impl.GroupNode;
-import com.intellij.usages.impl.NullUsage;
 import com.intellij.usages.impl.UsageNode;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
@@ -78,13 +77,13 @@ class ShowUsagesTableCellRenderer implements TableCellRenderer {
     if (column == 0) {
       GroupNode parent = (GroupNode)usageNode.getParent();
       appendGroupText(parent, panel, fileBgColor);
-      if (usage == NullUsage.INSTANCE) {
+      if (usage == ShowUsagesAction.MORE_USAGES_SEPARATOR) {
           textChunks.append("...<");
           textChunks.append("more usages", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           textChunks.append(">...");
       }
     }
-    else if (usage != NullUsage.INSTANCE) {
+    else if (usage != ShowUsagesAction.MORE_USAGES_SEPARATOR) {
       UsagePresentation presentation = usage.getPresentation();
       TextChunk[] text = presentation.getText();
 

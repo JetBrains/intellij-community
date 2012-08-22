@@ -222,6 +222,7 @@ public class ArrangementConfigUtil {
    * @param to           indicates end of the node sub-hierarchy to be replaced (inclusive)
    * @param replacement  root of the node sub-hierarchy which should replace the one identified by the given 'start' and 'end' nodes
    * @param treeModel    model which should hold ui nodes
+   * @param rootVisible  determines if the root should be count during rows calculations
    * @return             collection of row changes at the form {@code 'old row -> new row'}
    */
   @SuppressWarnings("AssignmentToForLoopParameter")
@@ -229,15 +230,16 @@ public class ArrangementConfigUtil {
   public static TIntIntHashMap replace(@NotNull ArrangementTreeNode from,
                                        @NotNull ArrangementTreeNode to,
                                        @NotNull ArrangementTreeNode replacement,
-                                       @NotNull DefaultTreeModel treeModel)
+                                       @NotNull DefaultTreeModel treeModel,
+                                       boolean rootVisible)
   {
-    markRows(from);
+    markRows(from, rootVisible);
     if (from == to) {
       ArrangementTreeNode parent = from.getParent();
       int index = parent.getIndex(from);
       treeModel.removeNodeFromParent(from);
       treeModel.insertNodeInto(replacement, parent, index);
-      return collectRowChangesAndUnmark(parent);
+      return collectRowChangesAndUnmark(parent, rootVisible);
     }
 
     // The algorithm looks as follows:
@@ -342,17 +344,18 @@ public class ArrangementConfigUtil {
     }
     //endregion
     
-    return collectRowChangesAndUnmark(root);
+    return collectRowChangesAndUnmark(root, rootVisible);
   }
 
   /**
    * Enriches every node at the hierarchy denoted by the given node by information about it's row. 
    * 
-   * @param node  reference to the target hierarchy
+   * @param node         reference to the target hierarchy
+   * @param rootVisible  determines if the root should be count during rows calculations
    */
-  private static void markRows(@NotNull ArrangementTreeNode node) {
+  private static void markRows(@NotNull ArrangementTreeNode node, boolean rootVisible) {
     ArrangementTreeNode root = getRoot(node);
-    int row = 0;
+    int row = rootVisible ? 0 : -1;
     Stack<ArrangementTreeNode> nodes = new Stack<ArrangementTreeNode>();
     nodes.push(root);
     while (!nodes.isEmpty()) {
@@ -375,7 +378,7 @@ public class ArrangementConfigUtil {
 
   /**
    * Processes hierarchy denoted by the given node assuming that every node there contains information about its initial row
-   * (see {@link #markRows(ArrangementTreeNode)}).
+   * (see {@link #markRows(ArrangementTreeNode, boolean)}).
    * <p/>
    * Collects all row changes and returns them. All row information is dropped from the nodes during the current method processing.
    * 
@@ -383,10 +386,10 @@ public class ArrangementConfigUtil {
    * @return      collection of row changes at the form {@code 'old row -> new row'}
    */
   @NotNull
-  private static TIntIntHashMap collectRowChangesAndUnmark(@NotNull ArrangementTreeNode node) {
+  private static TIntIntHashMap collectRowChangesAndUnmark(@NotNull ArrangementTreeNode node, boolean rootVisible) {
     @NotNull TIntIntHashMap changes = new TIntIntHashMap();
     ArrangementTreeNode root = getRoot(node);
-    int row = 0;
+    int row = rootVisible ? 0 : -1;
     Stack<ArrangementTreeNode> nodes = new Stack<ArrangementTreeNode>();
     nodes.push(root);
     while (!nodes.isEmpty()) {
@@ -406,12 +409,13 @@ public class ArrangementConfigUtil {
   /**
    * Allows to map given node to its row at the hierarchy.
    * 
-   * @param node  target node
-   * @return      given node's row at the nodes hierarchy (0-based)
+   * @param node         target node
+   * @param rootVisible  determines if the root should be count on rows calculation
+   * @return             given node's row at the nodes hierarchy (0-based)
    */
-  public static int getRow(@NotNull ArrangementTreeNode node) {
+  public static int getRow(@NotNull ArrangementTreeNode node, boolean rootVisible) {
     ArrangementTreeNode root = getRoot(node);
-    int row = 0;
+    int row = rootVisible ? 0 : -1;
     Stack<ArrangementTreeNode> nodes = new Stack<ArrangementTreeNode>();
     nodes.push(root);
     while (!nodes.isEmpty()) {
@@ -485,14 +489,14 @@ public class ArrangementConfigUtil {
     ArrangementTreeNode mergeCandidate = null;
     if (index > 0) {
       mergeCandidate = parent.getChildAt(index - 1);
-      if (!mergeCandidate.equals(child)) {
+      if (!hasEqualSetting(mergeCandidate, child)) {
         mergeCandidate = null;
       }
     }
 
     if (index < parent.getChildCount()) {
       ArrangementTreeNode n = parent.getChildAt(index);
-      if (n.equals(child)) {
+      if (hasEqualSetting(n, child)) {
         mergeCandidate = n;
         anchorAbove = true;
       }
@@ -507,5 +511,14 @@ public class ArrangementConfigUtil {
       insert(mergeCandidate, anchorAbove ? 0 : mergeCandidate.getChildCount(), child.getChildAt(0), treeModel);
     }
     return true;
+  }
+
+  private static boolean hasEqualSetting(@NotNull ArrangementTreeNode node1, @NotNull ArrangementTreeNode node2) {
+    ArrangementSettingsNode setting1 = node1.getBackingSetting();
+    ArrangementSettingsNode setting2 = node2.getBackingSetting();
+    if (setting1 == null || setting2 == null) {
+      return false;
+    }
+    return setting1.equals(setting2);
   }
 }

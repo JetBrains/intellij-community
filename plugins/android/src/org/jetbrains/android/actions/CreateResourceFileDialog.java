@@ -80,6 +80,8 @@ public class CreateResourceFileDialog extends DialogWrapper {
                                   Collection<CreateTypedResourceFileAction> actions,
                                   @Nullable ResourceType predefinedResourceType,
                                   @Nullable String predefinedFileName,
+                                  @Nullable String predefinedRootElement,
+                                  @Nullable FolderConfiguration predefinedConfig,
                                   boolean chooseFileName,
                                   @NotNull Module module,
                                   boolean chooseModule) {
@@ -111,7 +113,7 @@ public class CreateResourceFileDialog extends DialogWrapper {
       }
     }
 
-    myDeviceConfiguratorPanel = new DeviceConfiguratorPanel(null) {
+    myDeviceConfiguratorPanel = new DeviceConfiguratorPanel() {
       @Override
       public void applyEditors() {
         try {
@@ -137,6 +139,9 @@ public class CreateResourceFileDialog extends DialogWrapper {
         setOKActionEnabled(myDirectoryNameTextField.getText().length() > 0);
       }
     };
+    if (predefinedConfig != null) {
+      myDeviceConfiguratorPanel.init(predefinedConfig);
+    }
 
     myResourceTypeCombo.getComboBox().addActionListener(new ActionListener() {
       @Override
@@ -191,6 +196,12 @@ public class CreateResourceFileDialog extends DialogWrapper {
     myDeviceConfiguratorWrapper.add(myDeviceConfiguratorPanel, BorderLayout.CENTER);
     setOKActionEnabled(myDirectoryNameTextField.getText().length() > 0);
     updateRootElementTextField();
+
+    if (predefinedRootElement != null) {
+      myRootElementLabel.setVisible(false);
+      myRootElementFieldWrapper.setVisible(false);
+      myRootElementField.setText(predefinedRootElement);
+    }
     init();
 
     setTitle(AndroidBundle.message("new.resource.dialog.title"));

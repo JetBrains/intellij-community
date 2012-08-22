@@ -20,6 +20,7 @@ import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.find.FindBundle;
+import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -30,6 +31,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +52,11 @@ public class FindUsagesAction extends AnAction {
 
     UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
     if (usageTargets != null) {
-      usageTargets[0].findUsages();
+      UsageTarget target = usageTargets[0];
+      if (target instanceof PsiElementUsageTarget) {
+        PsiElement element = ((PsiElementUsageTarget)target).getElement();
+        startFindUsages(element);
+      }
       return;
     }
 
@@ -58,10 +64,14 @@ public class FindUsagesAction extends AnAction {
     chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
       @Override
       public boolean execute(@NotNull final PsiElement element) {
-        new PsiElement2UsageTargetAdapter(element).findUsages();
+        startFindUsages(element);
         return false;
       }
     });
+  }
+
+  protected void startFindUsages(@NotNull PsiElement element) {
+    new PsiElement2UsageTargetAdapter(element).findUsages();
   }
 
   @Override
@@ -69,8 +79,9 @@ public class FindUsagesAction extends AnAction {
     FindUsagesInFileAction.updateFindUsagesAction(event);
   }
 
-  static void chooseAmbiguousTargetAndPerform(@NotNull final Project project, final Editor editor,
-                                                      PsiElementProcessor<PsiElement> processor) {
+  static void chooseAmbiguousTargetAndPerform(@NotNull final Project project,
+                                              Editor editor,
+                                              @NotNull PsiElementProcessor<PsiElement> processor) {
     if (editor == null) {
       Messages.showMessageDialog(project, FindBundle.message("find.no.usages.at.cursor.error"), CommonBundle.getErrorTitle(),
                                  Messages.getErrorIcon());
@@ -83,5 +94,11 @@ public class FindUsagesAction extends AnAction {
       }
     }
   }
-  
+
+  public static class ShowSettingsAndFindUsages extends FindUsagesAction {
+    @Override
+    protected void startFindUsages(@NotNull PsiElement element) {
+      FindManager.getInstance(element.getProject()).findUsages(element, true);
+    }
+  }
 }

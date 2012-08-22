@@ -28,6 +28,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -39,7 +40,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
@@ -348,7 +349,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         if (isEmpty(xsltFile)) {
             myXsltFile = null;
         } else {
-            myXsltFile = FILE_POINTER_MANAGER.create(VfsUtil.pathToUrl(xsltFile).replace(File.separatorChar, '/'), getProject(), null);
+            myXsltFile = FILE_POINTER_MANAGER.create(VfsUtilCore.pathToUrl(xsltFile).replace(File.separatorChar, '/'), getProject(), null);
         }
     }
 
@@ -399,7 +400,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
         if (isEmpty(xmlInputFile)) {
             myXmlInputFile = null;
         } else {
-            myXmlInputFile = FILE_POINTER_MANAGER.create(VfsUtil.pathToUrl(xmlInputFile).replace(File.separatorChar, '/'), getProject(), null);
+            myXmlInputFile = FILE_POINTER_MANAGER.create(VfsUtilCore.pathToUrl(xmlInputFile).replace(File.separatorChar, '/'), getProject(), null);
         }
     }
 
@@ -482,9 +483,9 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
 
     @Nullable
     public Module getEffectiveModule() {
-        assert myJdkChoice == JdkChoice.FROM_MODULE;
+        //assert myJdkChoice == JdkChoice.FROM_MODULE;
 
-        Module module = getModule();
+        Module module = myJdkChoice == JdkChoice.FROM_MODULE ? getModule() : null;
         if (module == null && myXsltFile != null) {
             final VirtualFile file = myXsltFile.getFile();
             if (file != null) {
@@ -541,7 +542,7 @@ public final class XsltRunConfiguration extends RunConfigurationBase implements 
             } else if ("html".equals(method)) {
                 setFileType(StdFileTypes.HTML);
             } else if ("text".equals(method)) {
-                setFileType(StdFileTypes.PLAIN_TEXT);
+                setFileType(FileTypes.PLAIN_TEXT);
             }
         }
 

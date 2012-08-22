@@ -144,7 +144,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
               true, false).assertSuccessful();
 
       modify();
-      if (SystemInfo.isUnix) {
+      if (SystemInfo.isMac) {//todo[nik] check if FileSystemUtil.lastModified return accurate result for mac and remove this
         Thread.sleep(1000L);
       }
 

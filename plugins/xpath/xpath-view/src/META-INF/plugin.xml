@@ -108,6 +108,8 @@
     <lang.refactoringSupport language="XML" implementationClass="org.intellij.lang.xpath.xslt.refactoring.XsltRefactoringSupportProvider" />
     <inlineActionHandler implementation="org.intellij.lang.xpath.xslt.refactoring.VariableInlineHandler" />
 
+    <extendWordSelectionHandler implementation="org.intellij.lang.xpath.XPathStringLiteralSelectioner"/>
+
     <localInspection shortName="XsltUnusedDeclaration" displayName="Unused Variable/Parameter" groupName="XSLT" enabledByDefault="true"
                      level="WARNING" implementationClass="org.intellij.lang.xpath.xslt.validation.inspections.UnusedElementInspection"/>
     <localInspection shortName="XsltTemplateInvocation" displayName="Template Invocation Problems" groupName="XSLT" enabledByDefault="true"

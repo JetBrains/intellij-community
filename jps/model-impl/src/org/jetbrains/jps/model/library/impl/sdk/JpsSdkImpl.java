@@ -61,10 +61,10 @@ public class JpsSdkImpl<P extends JpsElement> extends JpsCompositeElementBase<Jp
   }
 
   @Override
-  public void applyChanges(@NotNull JpsSdkImpl<P> element) {
-    super.applyChanges(element);
-    setHomePath(element.getHomePath());
-    setVersionString(element.getVersionString());
+  public void applyChanges(@NotNull JpsSdkImpl<P> modified) {
+    super.applyChanges(modified);
+    setHomePath(modified.getHomePath());
+    setVersionString(modified.getVersionString());
   }
 
   @Override
