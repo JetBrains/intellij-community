@@ -48,6 +48,7 @@ import org.jetbrains.android.facet.AndroidFacetConfiguration;
 import org.jetbrains.android.facet.AndroidFacetType;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.*;
+import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +58,7 @@ import org.jetbrains.idea.maven.importing.FacetImporter;
 import org.jetbrains.idea.maven.importing.MavenModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.idea.maven.model.MavenArtifact;
+import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
@@ -119,10 +121,8 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     if (hasApkSources) {
-      Notifications.Bus.notify(new Notification("Importing Error", "Error when importing module " + facet.getModule().getName(),
-                                                "'apksources' dependency is deprecated and can be poorly supported by IDE. " +
-                                                "It is strongly recommended to use 'apklib' dependency instead.",
-                                                NotificationType.ERROR, null));
+      reportError("'apksources' dependency is deprecated and can be poorly supported by IDE. " +
+                  "It is strongly recommended to use 'apklib' dependency instead.", facet.getModule().getName());
     }
   }
 
@@ -372,7 +372,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       }
     }
     else {
-      LOG.info("Cannot find file " + artifactFile.getPath());
+      reportError("Cannot find file " + artifactFile.getPath(), genModuleName);
     }
 
     final VirtualFile vApklibDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(targetDirPath);
@@ -394,7 +394,8 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       contentEntry.addSourceFolder(sourceRoot, false);
     }
     else {
-      LOG.info("Cannot find " + AndroidMavenUtil.APK_LIB_ARTIFACT_SOURCE_ROOT + " directory in " + vApklibDir.getPath());
+      reportError("Cannot find " + AndroidMavenUtil.APK_LIB_ARTIFACT_SOURCE_ROOT + " directory in " + vApklibDir.getPath(),
+                  genModuleName);
     }
 
     final AndroidFacet facet = AndroidUtils.addAndroidFacet(apklibModuleModel.getModule(), vApklibDir, true);
@@ -421,6 +422,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
                                                                 MavenProjectsTree mavenTree,
                                                                 MavenArtifact artifact,
                                                                 Map<MavenProject, String> mavenProject2ModuleName) {
+    final String apklibModuleName = apklibModuleModel.getModule().getName();
     final AndroidExternalApklibDependenciesManager adm = AndroidExternalApklibDependenciesManager.getInstance(project);
     final AndroidExternalApklibDependenciesManager.MyResolvedInfo resolvedInfo =
       adm.getResolvedInfoForArtifact(artifact.getMavenId());
@@ -438,16 +440,20 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         apklibModuleModel.setSdk(sdk);
         moveJdkOrderEntryDown(apklibModuleModel);
       }
+      else {
+        reportError("Cannot find appropriate Android platform", apklibModuleName);
+      }
 
       for (AndroidExternalApklibDependenciesManager.MavenDependencyInfo depArtifactInfo : resolvedInfo.getApklibDependencies()) {
-        final MavenId depMavenId = new MavenId(depArtifactInfo.getGroupId(), depArtifactInfo.getArtifactId(), 
+        final MavenId depMavenId = new MavenId(depArtifactInfo.getGroupId(), depArtifactInfo.getArtifactId(),
                                                depArtifactInfo.getVersion());
 
         final String type = depArtifactInfo.getType();
-        
+        final String scope = depArtifactInfo.getScope();
+
         if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(type)) {
           final MavenProject depProject = mavenTree.findProject(depMavenId);
-          
+
           if (depProject != null) {
             final String depModuleName = mavenProject2ModuleName.get(depProject);
 
@@ -474,12 +480,35 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
               newLibEntry.setScope(libEntry.getScope());
             }
           }
+          else {
+            final String message = "Cannot find library " + libraryName + " in the dependencies of module '" +
+                                   rootModel.getModule().getName() + "'";
+            if (MavenConstants.SCOPE_COMPILE.equals(scope) ||
+                MavenConstants.SCOPE_RUNTIME.equals(scope) ||
+                MavenConstants.SCOPE_PROVIDEED.equals(scope)) {
+              reportError(message, apklibModuleName);
+            }
+            else {
+              LOG.info(message);
+            }
+          }
         }
       }
     }
     else {
-      LOG.info("Cannot find sdk info for artifact " + artifact.getMavenId().getKey());
+      reportError("Cannot find sdk info for artifact " + artifact.getMavenId().getKey(), apklibModuleName);
     }
+  }
+
+  private static void reportError(String message, String modName) {
+    reportMessage(message, modName, NotificationType.ERROR);
+  }
+
+  private static void reportMessage(String message, String modName, NotificationType notificationType) {
+    Notifications.Bus.notify(new Notification(AndroidBundle.message("android.facet.importing.notification.group"),
+                                              AndroidBundle.message("android.facet.importing.title", modName),
+                                              message, notificationType, null));
+    LOG.debug(message);
   }
 
   @Nullable
@@ -515,7 +544,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(depArtifact.getType()) &&
           mavenProjectsManager.findProject(depArtifact) == null) {
 
-        doResolveApklibArtifact(project, depArtifact, embedder, mavenProjectsManager);
+        doResolveApklibArtifact(project, depArtifact, embedder, mavenProjectsManager, mavenProject.getName());
       }
     }
   }
@@ -523,16 +552,17 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   private void doResolveApklibArtifact(Project project,
                                        MavenArtifact artifact,
                                        MavenEmbedderWrapper embedder,
-                                       MavenProjectsManager mavenProjectsManager) throws MavenProcessCanceledException {
+                                       MavenProjectsManager mavenProjectsManager,
+                                       String moduleName) throws MavenProcessCanceledException {
     final File depArtifacetFile = new File(FileUtil.getNameWithoutExtension(artifact.getPath()) + ".pom");
     if (!depArtifacetFile.exists()) {
-      LOG.info("Cannot find file " + depArtifacetFile.getPath());
+      reportError("Cannot find file " + depArtifacetFile.getPath(), moduleName);
       return;
     }
 
     final VirtualFile vDepArtifactFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(depArtifacetFile);
     if (vDepArtifactFile == null) {
-      LOG.error("Cannot find file " + depArtifacetFile.getPath() + " in VFS");
+      reportError("Cannot find file " + depArtifacetFile.getPath() + " in VFS", moduleName);
       return;
     }
 
@@ -561,7 +591,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       final String depArtifactLibraryName = depArtifact.getLibraryName();
 
       dependencies.add(new AndroidExternalApklibDependenciesManager.MavenDependencyInfo(
-        depArtifact.getMavenId(), depArtifact.getType(), depArtifactLibraryName));
+        depArtifact.getMavenId(), depArtifact.getType(), depArtifact.getScope(), depArtifactLibraryName));
     }
 
     final AndroidExternalApklibDependenciesManager apklibDependenciesManager =
@@ -589,6 +619,9 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
 
       if (platformLib != null) {
         model.setSdk(platformLib);
+      }
+      else {
+        reportError("Cannot find appropriate Android platform", model.getModule().getName());
       }
     }
     moveJdkOrderEntryDown(model);
