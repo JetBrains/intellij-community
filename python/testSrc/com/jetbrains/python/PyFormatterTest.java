@@ -158,7 +158,7 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
-  public void _testLiterals() {  // PY-6751
+  public void testLiterals() {  // PY-6751
     doTest();
   }
 

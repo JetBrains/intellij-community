@@ -232,7 +232,7 @@ public class PyBlock implements ASTBlock {
     }
     if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
       ASTNode prevNonSpace = findPrevNonSpaceNode(child);
-      if (prevNonSpace != null && prevNonSpace.getElementType() == PyTokenTypes.COMMA) {
+      if (prevNonSpace != null && prevNonSpace.getElementType() == PyTokenTypes.COMMA && myContext.getMode() == FormattingMode.ADJUST_INDENT) {
         return true;
       }
       return false;
