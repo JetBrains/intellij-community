@@ -73,16 +73,15 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
     if (myInitialized) return true;
     myStaticGenericInfo.buildMethodMaps();
 
-    final XmlElement element = myInvocationHandler.getXmlElement();
-    if (element == null) return true;
+    if (!myInvocationHandler.exists()) return true;
 
-    return ourGuard.doPreventingRecursion(element, false, new Computable<Boolean>() {
+    return ourGuard.doPreventingRecursion(myInvocationHandler, false, new Computable<Boolean>() {
       @Override
       public Boolean compute() {
         DomExtensionsRegistrarImpl registrar = runDomExtenders();
 
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (element) {
+        synchronized (myInvocationHandler) {
           if (!myInitialized) {
             if (registrar != null) {
               applyExtensions(registrar);

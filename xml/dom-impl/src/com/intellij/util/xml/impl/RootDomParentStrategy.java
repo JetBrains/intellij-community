@@ -64,6 +64,11 @@ public class RootDomParentStrategy implements DomParentStrategy {
     return myFileElement.getFile();
   }
 
+  @Override
+  public boolean isPhysical() {
+    return true;
+  }
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof RootDomParentStrategy)) return false;

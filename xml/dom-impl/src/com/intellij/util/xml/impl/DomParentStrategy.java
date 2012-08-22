@@ -39,4 +39,6 @@ public interface DomParentStrategy {
   String checkValidity();
 
   XmlFile getContainingFile(DomInvocationHandler handler);
+
+  boolean isPhysical();
 }

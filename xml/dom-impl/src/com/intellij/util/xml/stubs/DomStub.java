@@ -21,10 +21,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.EvaluatedXmlNameImpl;
 import com.intellij.util.xml.XmlName;
-import com.intellij.util.xml.impl.CollectionElementInvocationHandler;
-import com.intellij.util.xml.impl.DomChildDescriptionImpl;
-import com.intellij.util.xml.impl.DomInvocationHandler;
-import com.intellij.util.xml.impl.DomManagerImpl;
+import com.intellij.util.xml.impl.*;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -49,7 +47,7 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
   public abstract List<DomStub> getChildrenStubs();
 
   public int getChildIndex(DomStub child) {
-    List<DomStub> stubs = getChildrenByName(child.getName());
+    List<DomStub> stubs = getChildrenByName(XmlUtil.getLocalName(child.getName()));
     return stubs.indexOf(child);
   }
 
@@ -57,11 +55,11 @@ public abstract class DomStub extends ObjectStubBase<DomStub> {
     return myName.getString();
   }
 
-  public List<DomStub> getChildrenByName(final String localName) {
+  public List<DomStub> getChildrenByName(final CharSequence localName) {
     return ContainerUtil.filter(getChildrenStubs(), new Condition<DomStub>() {
       @Override
       public boolean value(DomStub stub) {
-        return stub.getName().equals(localName);
+        return stub instanceof ElementStub && XmlUtil.getLocalName(stub.getName()).equals(localName);
       }
     });
   }

@@ -56,4 +56,6 @@ public interface AbstractDomChildrenDescription extends AnnotatedElement, PomTar
 
   @Nullable
   DomElement getDomDeclaration();
+
+  boolean isStubbed();
 }

@@ -18,7 +18,6 @@ package com.intellij.util.xml.impl;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -85,6 +84,11 @@ public class VirtualDomParentStrategy implements DomParentStrategy {
   @Override
   public XmlFile getContainingFile(DomInvocationHandler handler) {
     return DomImplUtil.getFile(handler);
+  }
+
+  @Override
+  public boolean isPhysical() {
+    return false;
   }
 
   public boolean equals(final Object o) {

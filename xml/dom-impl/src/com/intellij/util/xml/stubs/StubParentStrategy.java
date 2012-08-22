@@ -30,17 +30,7 @@ public class StubParentStrategy implements DomParentStrategy {
 
   public static StubParentStrategy createAttributeStrategy(@Nullable AttributeStub stub, @NotNull final DomStub parent) {
     if (stub == null) {
-      return new StubParentStrategy(parent) {
-        @Override
-        public DomInvocationHandler getParentHandler() {
-          return parent.getHandler();
-        }
-
-        @Override
-        public XmlElement getXmlElement() {
-          return null;
-        }
-      };
+      return new Empty(parent);
     }
     else {
       return new StubParentStrategy(stub) {
@@ -59,7 +49,7 @@ public class StubParentStrategy implements DomParentStrategy {
 
   protected final DomStub myStub;
 
-  public StubParentStrategy(DomStub stub) {
+  public StubParentStrategy(@NotNull DomStub stub) {
     myStub = stub;
   }
 
@@ -112,9 +102,38 @@ public class StubParentStrategy implements DomParentStrategy {
     return getParentHandler().getFile();
   }
 
+  @Override
+  public boolean isPhysical() {
+    return true;
+  }
+
   @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   @Override
   public boolean equals(Object obj) {
     return PhysicalDomParentStrategy.strategyEquals(this, obj);
+  }
+
+  public static class Empty extends StubParentStrategy {
+    private final DomStub myParent;
+
+    public Empty(DomStub parent) {
+      super(parent);
+      myParent = parent;
+    }
+
+    @Override
+    public DomInvocationHandler getParentHandler() {
+      return myParent.getHandler();
+    }
+
+    @Override
+    public XmlElement getXmlElement() {
+      return null;
+    }
+
+    @Override
+    public boolean isPhysical() {
+      return false;
+    }
   }
 }

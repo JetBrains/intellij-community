@@ -18,10 +18,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xml.reflect.DomAttributeChildDescription;
-import com.intellij.util.xml.reflect.DomCollectionChildDescription;
-import com.intellij.util.xml.reflect.DomFixedChildDescription;
-import com.intellij.util.xml.reflect.DomGenericInfo;
+import com.intellij.util.xml.reflect.*;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -454,5 +451,20 @@ public class DomUtil {
     }
 
     return Pair.create(startToken.getTextRange().shiftRight(-tag.getTextRange().getStartOffset()), (PsiElement)tag);
+  }
+
+  public static <T extends DomElement> List<T> getChildrenOf(DomElement parent, final Class<T> type) {
+    final ArrayList<T> list = new ArrayList<T>();
+    List<? extends AbstractDomChildrenDescription> descriptions = parent.getGenericInfo().getChildrenDescriptions();
+    for (AbstractDomChildrenDescription description : descriptions) {
+      if (description.getType() instanceof Class && type.isAssignableFrom((Class<?>)description.getType())) {
+        for (T value : (List<T>)description.getValues(parent)) {
+          if (value.exists()) {
+            list.add(value);
+          }
+        }
+      }
+    }
+    return list;
   }
 }

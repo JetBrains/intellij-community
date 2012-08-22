@@ -15,18 +15,13 @@
  */
 package com.intellij.util.xml.stubs;
 
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.intellij.psi.stubs.ObjectStubTree;
-import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomManager;
+import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.stubs.model.Bar;
 import com.intellij.util.xml.stubs.model.Foo;
@@ -42,7 +37,7 @@ public class DomStubUsingTest extends DomStubTest {
 
   public void testFoo() throws Exception {
 
-    DomFileElement<Foo> fileElement = prepare("foo.xml");
+    DomFileElement<Foo> fileElement = prepare("foo.xml", Foo.class);
     PsiFile file = fileElement.getFile();
     assertFalse(file.getNode().isParsed());
 
@@ -71,7 +66,7 @@ public class DomStubUsingTest extends DomStubTest {
   }
 
   public void testAccessingPsi() throws Exception {
-    DomFileElement<Foo> element = prepare("foo.xml");
+    DomFileElement<Foo> element = prepare("foo.xml", Foo.class);
     assertNotNull(element.getXmlElement());
 
     XmlTag tag = element.getRootTag();
@@ -88,7 +83,7 @@ public class DomStubUsingTest extends DomStubTest {
   }
 
   public void testConverters() throws Exception {
-    DomFileElement<Foo> element = prepare("converters.xml");
+    DomFileElement<Foo> element = prepare("converters.xml", Foo.class);
     Bar bar = element.getRootElement().getBars().get(0);
     PsiClass value = bar.getClazz().getValue();
     assertNotNull(value);
@@ -97,7 +92,7 @@ public class DomStubUsingTest extends DomStubTest {
   }
 
   public void testParent() throws Exception {
-    DomFileElement<Foo> element = prepare("parent.xml");
+    DomFileElement<Foo> element = prepare("parent.xml", Foo.class);
 
     Bar bar = element.getRootElement().getBars().get(0);
     GenericAttributeValue<Integer> notStubbed = bar.getNotStubbed();
@@ -111,20 +106,11 @@ public class DomStubUsingTest extends DomStubTest {
     assertEquals(bar, parent);
   }
 
-  private DomFileElement<Foo> prepare(String path) {
-    PsiFile file = myFixture.configureByFile(path);
-    assertFalse(file.getNode().isParsed());
-    VirtualFile virtualFile = file.getVirtualFile();
-    ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
-    assertNotNull(tree);
+  public void testChildrenOfType() throws Exception {
 
-    ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
-
-    file = getPsiManager().findFile(virtualFile);
-    assertFalse(file.getNode().isParsed());
-
-    DomFileElement<Foo> fileElement = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, Foo.class);
-    assertNotNull(fileElement);
-    return fileElement;
+    DomFileElement<Foo> element = prepare("foo.xml", Foo.class);
+    Foo foo = element.getRootElement();
+    List<Bar> bars = DomUtil.getChildrenOf(foo, Bar.class);
+    assertEquals(2, bars.size());
   }
 }

@@ -29,9 +29,11 @@ import java.util.List;
 public class ElementStub extends DomStub {
 
   private final List<DomStub> myChildren = new SmartList<DomStub>();
+  private final boolean myCustom;
 
-  public ElementStub(@Nullable ElementStub parent, StringRef name) {
+  public ElementStub(@Nullable ElementStub parent, StringRef name, boolean custom) {
     super(parent, name);
+    myCustom = custom;
   }
 
   void addChild(DomStub child) {
@@ -57,5 +59,9 @@ public class ElementStub extends DomStub {
   public boolean equals(Object obj) {
     if (obj == this) return true;
     return obj instanceof ElementStub && id == ((ElementStub)obj).id && myName.equals(((ElementStub)obj).myName);
+  }
+
+  public boolean isCustom() {
+    return myCustom;
   }
 }

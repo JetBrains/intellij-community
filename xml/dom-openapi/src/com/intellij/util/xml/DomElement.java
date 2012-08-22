@@ -15,16 +15,16 @@
  */
 package com.intellij.util.xml;
 
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.xml.reflect.DomGenericInfo;
-import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomGenericInfo;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Type;
 
@@ -58,6 +58,11 @@ public interface DomElement extends AnnotatedElement, UserDataHolder {
   void undefine();
 
   boolean isValid();
+
+  /**
+   * @return true if corresponding XML element exists
+   */
+  boolean exists();
 
   @NotNull
   DomGenericInfo getGenericInfo();

@@ -24,6 +24,7 @@ import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.FileStub;
@@ -46,12 +47,13 @@ public class DomStubBuilderVisitor implements DomElementVisitor {
   public void visitDomElement(DomElement element) {
 
     if (element.getAnnotation(Stubbed.class) != null ||
-        element.getChildDescription().getAnnotation(Stubbed.class) != null) {
+        element.getChildDescription().isStubbed()) {
 
       XmlElement xmlElement = element.getXmlElement();
       if (xmlElement instanceof XmlTag) {
         ElementStub old = myRoot;
-        myRoot = new ElementStub(myRoot, StringRef.fromString(((PsiNamedElement)xmlElement).getName()));
+        boolean custom = element.getChildDescription() instanceof CustomDomChildrenDescription;
+        myRoot = new ElementStub(myRoot, StringRef.fromString(((PsiNamedElement)xmlElement).getName()), custom);
         List<DomElement> children = DomUtil.getDefinedChildren(element, true, true);
         for (DomElement child : children) {
           visitDomElement(child);

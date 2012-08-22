@@ -33,11 +33,12 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
   @Override
   public void serialize(ElementStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
+    dataStream.writeBoolean(stub.isCustom());
   }
 
   @Override
   public ElementStub deserialize(StubInputStream dataStream, ElementStub parentStub) throws IOException {
-    return new ElementStub(parentStub, dataStream.readName());
+    return new ElementStub(parentStub, dataStream.readName(), dataStream.readBoolean());
   }
 
   @Override
