@@ -157,7 +157,7 @@
   <properties>
     <idea9.version>9.0.4</idea9.version>
     <idea10.version>10.5.4</idea10.version>
-    <idea11.version>11.1.2</idea11.version>
+    <idea11.version>11.1.3</idea11.version>
     <idea12.version>12.0-SNAPSHOT</idea12.version>
 
     <!-- maven.build.timestamp since 2.1.0-M1 -->
@@ -341,7 +341,7 @@
 
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>2.3.2</version>
+          <version>2.5.1</version>
           <configuration>
             <source>1.6</source>
             <target>1.6</target>
@@ -355,31 +355,30 @@
         </plugin>
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
-          <version>2.3.1</version>
+          <version>2.4</version>
         </plugin>
         <plugin>
           <artifactId>maven-source-plugin</artifactId>
-          <version>2.1.2</version>
+          <version>2.2</version>
           <configuration>
             <includePom>true</includePom>
           </configuration>
         </plugin>
         <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-dependency-plugin</artifactId>
-          <version>2.3</version>
+          <version>2.5</version>
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>2.8</version>
+          <version>2.8.1</version>
         </plugin>
         <plugin>
           <artifactId>maven-assembly-plugin</artifactId>
-          <version>2.2.1</version>
+          <version>2.3</version>
         </plugin>
         <plugin>
           <artifactId>maven-release-plugin</artifactId>
-          <version>2.2.1</version>
+          <version>2.3.2</version>
         </plugin>
         <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
