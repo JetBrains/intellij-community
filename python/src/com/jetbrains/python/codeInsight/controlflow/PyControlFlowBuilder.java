@@ -96,7 +96,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyElement(PyElement node) {
-    if (node instanceof PsiNamedElement) {
+    if (node instanceof PsiNamedElement && !(node instanceof PyKeywordArgument)) {
       myBuilder.startNode(node);
       myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, node, node.getName(), ReadWriteInstruction.ACCESS.WRITE));
     }

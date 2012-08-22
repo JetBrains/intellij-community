@@ -11,6 +11,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -24,7 +25,12 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
     public void tokenize(@NotNull PyStringLiteralExpression element, TokenConsumer consumer) {
       Splitter splitter = PlainTextSplitter.getInstance();
       String text = element.getText();
-      if (text.startsWith("u") || text.startsWith("U") || text.startsWith("r") || text.startsWith("R") ||
+      if (text.indexOf('\\') >= 0) {
+        MyTextRangeConsumer textRangeConsumer = new MyTextRangeConsumer(element, consumer);
+        ((PyStringLiteralExpressionImpl) element).iterateCharacterRanges(textRangeConsumer);
+        textRangeConsumer.processCurrentToken();   // process last token
+      }
+      else if (text.startsWith("u") || text.startsWith("U") || text.startsWith("r") || text.startsWith("R") ||
           text.startsWith("b") || text.startsWith("B")) {
         List<TextRange> valueTextRanges = element.getStringValueTextRanges();
         for (TextRange valueTextRange : valueTextRanges) {
@@ -34,6 +40,40 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
       }
       else {
         consumer.consumeToken(element, splitter);
+      }
+    }
+
+    private static class MyTextRangeConsumer implements PyStringLiteralExpressionImpl.TextRangeConsumer {
+      private final StringBuilder myCurrentToken = new StringBuilder();
+      private final PyStringLiteralExpression myElement;
+      private final TokenConsumer myTokenConsumer;
+      private int myTokenStart;
+
+      public MyTextRangeConsumer(PyStringLiteralExpression element, TokenConsumer tokenConsumer) {
+        myElement = element;
+        myTokenConsumer = tokenConsumer;
+      }
+
+      @Override
+      public boolean process(int startOffset, int endOffset, String value) {
+        if (endOffset == startOffset + 1) {
+          if (myCurrentToken.length() == 0) {
+            myTokenStart = startOffset;
+          }
+          myCurrentToken.append(value);
+        }
+        else {
+          if (myCurrentToken.length() > 0) {
+            processCurrentToken();
+            myCurrentToken.setLength(0);
+          }
+        }
+        return true;
+      }
+
+      private void processCurrentToken() {
+        String token = myCurrentToken.toString();
+        myTokenConsumer.consumeToken(myElement, token, false, myTokenStart, TextRange.allOf(token), PlainTextSplitter.getInstance());
       }
     }
   }

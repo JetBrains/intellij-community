@@ -1,6 +1,7 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -11,6 +12,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,11 +22,10 @@ import java.util.Set;
 /**
  * @author yole
  */
-public class DocStringParameterReference extends PsiReferenceBase<PsiElement> {
-  String myType;
-  public DocStringParameterReference(PsiElement element,
-                                     TextRange range,
-                                     String refType) {
+public class DocStringParameterReference extends PsiReferenceBase<PsiElement> implements PsiReferenceEx {
+  private final String myType;
+
+  public DocStringParameterReference(PsiElement element, TextRange range, String refType) {
     super(element, range);
     myType = refType;
   }
@@ -109,5 +110,22 @@ public class DocStringParameterReference extends PsiReferenceBase<PsiElement> {
   
   public String getType() {
     return myType;
+  }
+
+  @Nullable
+  @Override
+  public HighlightSeverity getUnresolvedHighlightSeverity(TypeEvalContext context) {
+    return HighlightSeverity.WEAK_WARNING;
+  }
+
+  @Nullable
+  @Override
+  public String getUnresolvedDescription() {
+    PyDocStringOwner owner = PsiTreeUtil.getParentOfType(getElement(), PyDocStringOwner.class);
+    if (owner instanceof PyFunction) {
+      PyFunction function = (PyFunction)owner;
+      return "Function '" + function.getName() + "' does not have a parameter '" + getCanonicalText() + "'";
+    }
+    return null;
   }
 }

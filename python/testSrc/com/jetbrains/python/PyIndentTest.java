@@ -303,6 +303,16 @@ public class PyIndentTest extends PyTestCase {
            "     <caret>)");
   }
 
+  public void testRespectDedent() {  // PY-3009
+    doTest("if True:\n" +
+           "    bar\n" +
+           "<caret>",
+           "if True:\n" +
+           "    bar\n" +
+           "\n" +
+           "<caret>");
+  }
+
   /*
   TODO: formatter core problem?
   public void testAlignListBeforeEquals() throws Exception {

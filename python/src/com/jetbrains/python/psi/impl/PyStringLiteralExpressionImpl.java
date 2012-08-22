@@ -326,7 +326,7 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     return new StringLiteralTextEscaper(this);
   }
 
-  private interface TextRangeConsumer {
+  public interface TextRangeConsumer {
     boolean process(int startOffset, int endOffset, String value);
   }
 
