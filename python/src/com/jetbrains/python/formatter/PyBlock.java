@@ -126,7 +126,7 @@ public class PyBlock implements ASTBlock {
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
       if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
-          !ourBrackets.contains(childType)) {
+          !ourBrackets.contains(childType) && childType != PyTokenTypes.COMMA) {
         wrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
       if (needListAlignment(child) && !isEmptyList(_node.getPsi())) {
