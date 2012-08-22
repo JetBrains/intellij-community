@@ -9,5 +9,6 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public interface InstructionTypeCallback {
+  @Nullable
   PyType getType(TypeEvalContext context, @Nullable PsiElement anchor);
 }

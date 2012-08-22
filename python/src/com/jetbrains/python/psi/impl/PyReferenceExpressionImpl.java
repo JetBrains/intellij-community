@@ -281,9 +281,11 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   public static PyType getTypeFromTarget(@NotNull final PsiElement target,
                                          final TypeEvalContext context,
                                          PyReferenceExpression anchor) {
-    final PyType pyType = getReferenceTypeFromProviders(target, context, anchor);
-    if (pyType != null) {
-      return pyType;
+    if (!(target instanceof PyTargetExpression)) {  // PyTargetExpression will ask about its type itself
+      final PyType pyType = getReferenceTypeFromProviders(target, context, anchor);
+      if (pyType != null) {
+        return pyType;
+      }
     }
     if (target instanceof PyTargetExpression) {
       final String name = ((PyTargetExpression)target).getName();
@@ -329,7 +331,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (propertyDecorator != null) {
           return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);
         }
-        for (PyDecorator decorator: decoratorList.getDecorators()) {
+        for (PyDecorator decorator : decoratorList.getDecorators()) {
           final PyQualifiedName qName = decorator.getQualifiedName();
           if (qName != null && (qName.endsWith(PyNames.SETTER) || qName.endsWith(PyNames.DELETER))) {
             return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);
@@ -342,7 +344,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
     if (target instanceof PsiDirectory) {
       PsiFile file = ((PsiDirectory)target).findFile(PyNames.INIT_DOT_PY);
-      if (file != null) return getTypeFromTarget(file, context, anchor);
+      if (file != null) {
+        return getTypeFromTarget(file, context, anchor);
+      }
     }
     return null;
   }
