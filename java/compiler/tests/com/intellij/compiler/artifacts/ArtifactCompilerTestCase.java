@@ -2,15 +2,12 @@ package com.intellij.compiler.artifacts;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.CompilerProjectExtension;
@@ -50,13 +47,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
   protected void setUp() throws Exception {
     super.setUp();
     if (useJps()) {
-      new WriteAction() {
-        protected void run(final Result result) {
-          CompilerWorkspaceConfiguration.getInstance(myProject).USE_COMPILE_SERVER = true;
-          ApplicationManagerEx.getApplicationEx().doNotSave(false);
-          ProjectJdkTable.getInstance().addJdk(getTestProjectJdk());
-        }
-      }.execute();
+      CompilerTestUtil.enableExternalCompiler(myProject);
     }
   }
 
@@ -77,13 +68,7 @@ public abstract class ArtifactCompilerTestCase extends PackagingElementsTestCase
       }
     }
     if (useJps()) {
-      new WriteAction() {
-        protected void run(final Result result) {
-          CompilerWorkspaceConfiguration.getInstance(myProject).USE_COMPILE_SERVER = false;
-          ApplicationManagerEx.getApplicationEx().doNotSave();
-          ProjectJdkTable.getInstance().removeJdk(getTestProjectJdk());
-        }
-      }.execute();
+      CompilerTestUtil.disableExternalCompiler(myProject);
     }
 
     super.tearDown();
