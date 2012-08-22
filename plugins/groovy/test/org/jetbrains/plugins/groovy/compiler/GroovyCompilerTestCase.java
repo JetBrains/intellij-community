@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.application.ApplicationConfiguration;
@@ -33,14 +32,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.roots.*;
@@ -94,13 +91,8 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
         //noinspection ConstantConditions
         CompilerProjectExtension.getInstance(getProject()).setCompilerOutputUrl(myMainOutput.findOrCreateDir("out").getUrl());
         if (useJps()) {
-          ApplicationManagerEx.getApplicationEx().doNotSave(false);
-          CompilerWorkspaceConfiguration.getInstance(getProject()).USE_COMPILE_SERVER = true;
-
-          JavaAwareProjectJdkTableImpl jdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
-          Sdk internalJdk = jdkTable.getInternalJdk();
-          jdkTable.addJdk(internalJdk);
-          ModuleRootModificationUtil.setModuleSdk(myModule, internalJdk);
+          CompilerTestUtil.enableExternalCompiler(getProject());
+          ModuleRootModificationUtil.setModuleSdk(myModule, JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk());
         }
       }
     }.execute();
@@ -125,15 +117,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       public void run() {
         try {
           if (useJps()) {
-            CompilerWorkspaceConfiguration.getInstance(getProject()).USE_COMPILE_SERVER = false;
-            ApplicationManagerEx.getApplicationEx().doNotSave(true);
-            new WriteCommandAction(getProject()) {
-              @Override
-              protected void run(Result result) throws Throwable {
-                final JavaAwareProjectJdkTableImpl jdkTable = JavaAwareProjectJdkTableImpl.getInstanceEx();
-                jdkTable.removeJdk(jdkTable.getInternalJdk());
-              }
-            }.execute();
+            CompilerTestUtil.disableExternalCompiler(getProject());
           }
 
           myMainOutput.tearDown();
