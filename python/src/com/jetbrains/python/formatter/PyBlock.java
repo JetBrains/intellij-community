@@ -28,6 +28,7 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * @author yole
  */
 public class PyBlock implements ASTBlock {
+  private final PyBlock myParent;
   private final Alignment _alignment;
   private final Indent _indent;
   private final ASTNode _node;
@@ -54,11 +55,13 @@ public class PyBlock implements ASTBlock {
                                                               PyTokenTypes.LBRACE, PyTokenTypes.RBRACE,
                                                               PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET);
 
-  public PyBlock(final ASTNode node,
+  public PyBlock(final PyBlock parent,
+                 final ASTNode node,
                  final Alignment alignment,
                  final Indent indent,
                  final Wrap wrap,
                  final PyBlockContext context) {
+    myParent = parent;
     _alignment = alignment;
     _indent = indent;
     _node = node;
@@ -134,8 +137,13 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.BINARY_EXPRESSION &&
-             PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(childType)) {
-      childAlignment = getAlignmentForChildren();
+             (PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(childType) || PyTokenTypes.OPERATIONS.contains(childType))) {
+      if (grandparentType == PyElementTypes.BINARY_EXPRESSION && myParent != null) {
+        childAlignment = myParent.getAlignmentForChildren();
+      }
+      else {
+        childAlignment = getAlignmentForChildren();
+      }
     }
 
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
@@ -190,7 +198,7 @@ public class PyBlock implements ASTBlock {
       childIndent = Indent.getNormalIndent();
     }
 
-    return new PyBlock(child, childAlignment, childIndent, wrap, myContext);
+    return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
   }
 
   private static boolean isEmptyList(PsiElement psi) {

@@ -35,7 +35,7 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, C
     }
     final CommonCodeStyleSettings codeStyleSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     final PyBlockContext context = new PyBlockContext(codeStyleSettings, createSpacingBuilder(settings), mode);
-    final PyBlock block = new PyBlock(element.getNode(), null, Indent.getNoneIndent(), null, context);
+    final PyBlock block = new PyBlock(null, element.getNode(), null, Indent.getNoneIndent(), null, context);
     if (DUMP_FORMATTING_AST) {
       FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
     }
