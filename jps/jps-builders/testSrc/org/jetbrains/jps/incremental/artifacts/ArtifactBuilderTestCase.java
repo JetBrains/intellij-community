@@ -28,6 +28,7 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.AllProjectScope;
 import org.jetbrains.jps.incremental.BuildLoggingManager;
 import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.java.JavaBuilderLoggerImpl;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
@@ -184,7 +185,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
       if (newContent != null) {
         FileUtil.writeToFile(file, newContent);
       }
-      boolean updated = file.setLastModified(FileSystemUtil.lastModified(file) + 10);
+      boolean updated = file.setLastModified(FileSystemUtil.lastModified(file) + Utils.TIMESTAMP_ACCURACY);
       assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
     }
     catch (IOException e) {

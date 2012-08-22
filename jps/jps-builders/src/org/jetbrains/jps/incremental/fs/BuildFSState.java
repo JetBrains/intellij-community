@@ -204,13 +204,8 @@ public class BuildFSState extends FSState {
       for (String path : paths) {
         File file = new File(FileUtil.toSystemDependentName(path));
         long stamp = FileSystemUtil.lastModified(file);
-        if (stamp > compilationStartStamp + 1000) {//todo[nik] do we really need this?
-          delta.markRecompile(descriptor.getRootIndex(), path);
-        }
-        else {
-          marked = true;
-          storage.update(descriptor.getArtifactId(), path, stamp);
-        }
+        marked = true;
+        storage.update(descriptor.getArtifactId(), path, stamp);
       }
     }
     return marked;
