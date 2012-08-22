@@ -652,6 +652,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                                      PsiClassType.ClassResolveResult resolveResult,
                                                                                      PsiMethod method, PsiLambdaExpression lambdaExpression) {
     final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
+    if (parameters.length == 0) return null;
     final PsiType[] lambdaArgs = new PsiType[parameters.length];
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
