@@ -53,11 +53,12 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
 
     final Collection<SchemaTypeInfo> node = map.get(new SchemaTypeInfo("tConversationNode", true, ourNs));
     Assert.assertNotNull(node);
-    Assert.assertEquals(2, node.size());
+    Assert.assertEquals(3, node.size());
 
     final Set<SchemaTypeInfo> expected = new HashSet<SchemaTypeInfo>();
     expected.add(new SchemaTypeInfo("tConversation", true, ourNs));
     expected.add(new SchemaTypeInfo("tCallConversation", true, ourNs));
+    expected.add(new SchemaTypeInfo("tSubConversation", true, ourNs));
     for (SchemaTypeInfo info : node) {
       expected.remove(info);
     }
@@ -65,13 +66,13 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
     //
     final Collection<SchemaTypeInfo> stringNode = map.get(new SchemaTypeInfo("string", true, "http://www.w3.org/2001/XMLSchema"));
     Assert.assertNotNull(stringNode);
-    Assert.assertEquals(5, stringNode.size());
+    Assert.assertEquals(9, stringNode.size());
     Assert.assertTrue(stringNode.contains(new SchemaTypeInfo("tAdHocOrdering", true, ourNs)));
     Assert.assertTrue(stringNode.contains(new SchemaTypeInfo("tEventBasedGatewayType", true, ourNs)));
     //
     final Collection<SchemaTypeInfo> baseNode = map.get(new SchemaTypeInfo("tBaseElement", true, ourNs));
     Assert.assertNotNull(baseNode);
-    Assert.assertEquals(17, baseNode.size());
+    Assert.assertEquals(39, baseNode.size());
     Assert.assertTrue(baseNode.contains(new SchemaTypeInfo("tAuditing", true, ourNs)));
     Assert.assertTrue(baseNode.contains(new SchemaTypeInfo("tDataInput", true, ourNs)));
     Assert.assertTrue(baseNode.contains(new SchemaTypeInfo("tDataOutput", true, ourNs)));
