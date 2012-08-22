@@ -203,7 +203,8 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
 
     while (! queue.isEmpty()) {
       final SchemaTypeInfo info = queue.removeFirst();
-      final List<Set<SchemaTypeInfo>> childrenOfType = SchemaTypeInheritanceIndex.getDirectChildrenOfType(project, info.getNamespaceUri(), info.getTagName());
+      final List<Set<SchemaTypeInfo>> childrenOfType = SchemaTypeInheritanceIndex.getDirectChildrenOfType(project, info.getNamespaceUri(),
+        info.getTagName(), file.getContainingFile().getVirtualFile());
       for (Set<SchemaTypeInfo> infos : childrenOfType) {
         for (SchemaTypeInfo typeInfo : infos) {
           if (typeInfo.isIsTypeName()) {

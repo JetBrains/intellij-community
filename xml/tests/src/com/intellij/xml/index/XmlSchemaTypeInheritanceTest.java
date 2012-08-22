@@ -83,7 +83,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
     myFixture.copyDirectoryToProject("", "");
 
     final Project project = getProject();
-    final List<Set<SchemaTypeInfo>> childrenOfType = SchemaTypeInheritanceIndex.getDirectChildrenOfType(project, "http://a.b.c", "baseSimpleType");
+    final List<Set<SchemaTypeInfo>> childrenOfType = SchemaTypeInheritanceIndex.getDirectChildrenOfType(project, "http://a.b.c", "baseSimpleType", null);
     Assert.assertNotNull(childrenOfType);
 
     final Set<SchemaTypeInfo> expected = new HashSet<SchemaTypeInfo>();
@@ -100,7 +100,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
 
     Assert.assertTrue(expected.isEmpty());
     //
-    final List<Set<SchemaTypeInfo>> childrenOfSimple4Type = SchemaTypeInheritanceIndex.getDirectChildrenOfType(project, "http://a.b.c", "extSimple4");
+    final List<Set<SchemaTypeInfo>> childrenOfSimple4Type = SchemaTypeInheritanceIndex.getDirectChildrenOfType(project, "http://a.b.c", "extSimple4", null);
     Assert.assertNotNull(childrenOfSimple4Type);
     final Set<SchemaTypeInfo> expectedSimple4 = new HashSet<SchemaTypeInfo>();
     expectedSimple4.add(new SchemaTypeInfo("extSimple5", true, "http://a.b.c"));

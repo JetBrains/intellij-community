@@ -15,8 +15,12 @@
  */
 package com.intellij.xml.index;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.EncoderDecoder;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
@@ -31,10 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created with IntelliJ IDEA.
@@ -46,10 +47,30 @@ import java.util.Set;
  */
 public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
   private static final ID<String, Set<SchemaTypeInfo>> NAME = ID.create("SchemaTypeInheritance");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.index.SchemaTypeInheritanceIndex");
 
-  public static List<Set<SchemaTypeInfo>> getDirectChildrenOfType(final Project project, final String ns, final String name) {
+  public static List<Set<SchemaTypeInfo>> getDirectChildrenOfType(final Project project,
+                                                                  final String ns,
+                                                                  final String name,
+                                                                  VirtualFile file) {
+    GlobalSearchScope filter = createFilter(project);
     final List<Set<SchemaTypeInfo>>
-      list = FileBasedIndex.getInstance().getValues(NAME, NsPlusTag.INSTANCE.encode(Pair.create(ns, name)), createFilter(project));
+      list = FileBasedIndex.getInstance().getValues(NAME, NsPlusTag.INSTANCE.encode(Pair.create(ns, name)), filter);
+    if (file != null && ! filter.accept(file)) {
+      // still take current file into account
+      try {
+        final MultiMap<SchemaTypeInfo,SchemaTypeInfo> multiMap =
+                      XsdComplexTypeInfoBuilder.parse(CharArrayUtil.readerFromCharSequence(VfsUtil.loadText(file)));
+        final SchemaTypeInfo info = new SchemaTypeInfo(name, true, ns);
+        Collection<SchemaTypeInfo> infos = multiMap.get(info);
+        if (infos != null && ! infos.isEmpty()) {
+          list.add(new HashSet<SchemaTypeInfo>(infos));
+        }
+      }
+      catch (IOException e) {
+        LOG.info(e);
+      }
+    }
     return list;
   }
 
