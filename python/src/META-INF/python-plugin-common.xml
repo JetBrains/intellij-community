@@ -448,10 +448,6 @@
     <configurationType implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationProducer"/>
 
-    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
-    <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
-    <lang.substitutor language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
-    <lang.substitutor language="JavaScript" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
     <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoErrorFilter"/>
 
     <lang.parserDefinition language="DjangoTemplate"
@@ -714,7 +710,7 @@
                      implementationClass="com.jetbrains.mako.inspection.MakoArgumentListInspection"/>
 
     <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
-                    serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
+                    serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesServiceImpl"/>
 
     <!-- Jinja2 -->
     <fileTypeFactory implementation="com.jetbrains.jinja2.Jinja2FileTypeFactory"/>

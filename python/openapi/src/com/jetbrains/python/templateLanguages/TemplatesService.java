@@ -1,14 +1,21 @@
 package com.jetbrains.python.templateLanguages;
 
+import com.google.common.collect.Lists;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageExtensionPoint;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import com.intellij.util.xmlb.annotations.Transient;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,12 +24,7 @@ import java.util.List;
 /**
  * User: catherine
  */
-@State(name = "TemplatesService",
-      storages = {
-      @Storage( file = "$MODULE_FILE$")
-      }
-)
-public class TemplatesService implements PersistentStateComponent<TemplatesService> {
+public abstract class TemplatesService {
   public static final String NONE = "None";
   public static final String DJANGO = "Django";
   public static final String MAKO = "Mako";
@@ -31,12 +33,9 @@ public class TemplatesService implements PersistentStateComponent<TemplatesServi
   private static List<String> ALL_TEMPLATE_LANGUAGES = ContainerUtil.immutableList(NONE,
                                                                                    DJANGO,
                                                                                    MAKO,
-                                                                                   JINJA2);
+                                                                                  JINJA2);
 
-  public String TEMPLATE_CONFIGURATION = NONE;
-  public boolean TEMPLATES_IN_JAVASCRIPT = false;
-  public List<String> TEMPLATE_FOLDERS = new ArrayList<String>();
-  private final List<VirtualFile> myTemplateFolders = new ArrayList<VirtualFile>();
+  public abstract Language getSelectedTemplateLanguage();
 
   public static TemplatesService getInstance(Module module) {
     return ModuleServiceManager.getService(module, TemplatesService.class);
@@ -46,57 +45,17 @@ public class TemplatesService implements PersistentStateComponent<TemplatesServi
     return ALL_TEMPLATE_LANGUAGES;
   }
 
-  @Override
-  public TemplatesService getState() {
-    return this;
-  }
+  public abstract void setTemplateLanguage(String templateLanguage);
 
-  @Override
-  public void loadState(TemplatesService state) {
-    XmlSerializerUtil.copyBean(state, this);
-    locateTemplateFolders();
-  }
+  public abstract List<VirtualFile> getTemplateFolders();
 
-  private void locateTemplateFolders() {
-    myTemplateFolders.clear();
-    for (String path : TEMPLATE_FOLDERS) {
-      final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
-      if (virtualFile != null) {
-        myTemplateFolders.add(virtualFile);
-      }
-    }
-  }
+  public abstract void setTemplateFolders(VirtualFile... roots);
 
-  public void setTemplateLanguage(String templateLanguage) {
-    TEMPLATE_CONFIGURATION = templateLanguage;
-  }
+  public abstract void setTemplateFolderPaths(String... paths);
 
-  public List<VirtualFile> getTemplateFolders() {
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (VirtualFile templateFolder : myTemplateFolders) {
-      if (templateFolder.isValid()) {
-        result.add(templateFolder);
-      }
-    }
-    return result;
-  }
+  public abstract String getTemplateLanguage();
 
-  public void setTemplateFolders(VirtualFile... roots) {
-    myTemplateFolders.clear();
-    Collections.addAll(myTemplateFolders, roots);
-    TEMPLATE_FOLDERS.clear();
-    for (VirtualFile root : roots) {
-      TEMPLATE_FOLDERS.add(root.getPath());
-    }
-  }
-
-  public void setTemplateFolderPaths(String... paths) {
-    TEMPLATE_FOLDERS.clear();
-    Collections.addAll(TEMPLATE_FOLDERS, paths);
-    locateTemplateFolders();
-  }
-
-  public String getTemplateLanguage() {
-    return TEMPLATE_CONFIGURATION;
-  }
+  public abstract List<String> getTemplateFileTypes();
+  public abstract void setTemplateFileTypes(List<String> fileTypes);
 }
+
