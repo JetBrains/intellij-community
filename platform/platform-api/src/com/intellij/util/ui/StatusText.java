@@ -34,6 +34,7 @@ public abstract class StatusText {
 
   @Nullable
   private Component myOwner;
+  private Component myMouseTarget;
   private final MouseMotionListener myMouseMotionListener;
   private final ClickListener myClickListener;
 
@@ -67,10 +68,10 @@ public abstract class StatusText {
       @Override
       public void mouseMoved(final MouseEvent e) {
         if (findActionListenerAt(e.getPoint()) != null) {
-          myOwner.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          myMouseTarget.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
         else {
-          myOwner.setCursor(Cursor.getDefaultCursor());
+          myMouseTarget.setCursor(Cursor.getDefaultCursor());
         }
       }
     };
@@ -82,24 +83,31 @@ public abstract class StatusText {
   }
 
   public void attachTo(@Nullable Component owner) {
-    if (myOwner != null) {
-      myClickListener.uninstall(myOwner);
-      myOwner.removeMouseMotionListener(myMouseMotionListener);
+    attachTo(owner, owner);
+  }
+
+  public void attachTo(@Nullable Component owner, @Nullable Component mouseTarget) {
+    if (myMouseTarget != null) {
+      myClickListener.uninstall(myMouseTarget);
+      myMouseTarget.removeMouseMotionListener(myMouseMotionListener);
     }
 
     myOwner = owner;
+    myMouseTarget = mouseTarget;
 
-    if (myOwner != null) {
-      myClickListener.installOn(myOwner);
-      myOwner.addMouseMotionListener(myMouseMotionListener);
+    if (myMouseTarget != null) {
+      myClickListener.installOn(myMouseTarget);
+      myMouseTarget.addMouseMotionListener(myMouseMotionListener);
     }
   }
 
   protected abstract boolean isStatusVisible();
 
   @Nullable
-  private ActionListener findActionListenerAt(final Point point) {
+  private ActionListener findActionListenerAt(Point point) {
     if (!isStatusVisible()) return null;
+
+    point = SwingUtilities.convertPoint(myMouseTarget, point, myOwner);
 
     Rectangle b = getTextComponentBound();
     if (b.contains(point)) {
