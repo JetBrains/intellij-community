@@ -8,6 +8,7 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.editor.PythonEnterHandler;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,13 +31,12 @@ public class RemoveUnnecessaryBackslashQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement problemElement = descriptor.getPsiElement();
     if (problemElement != null) {
-      PyElement parent = PsiTreeUtil.getParentOfType(problemElement, PySequenceExpression.class, PyDictLiteralExpression.class,
-                                                     PyParenthesizedExpression.class, PyArgumentList.class, PyParameterList.class);
+      PsiElement parent = PsiTreeUtil.getParentOfType(problemElement, PythonEnterHandler.IMPLICIT_WRAP_CLASSES);
       removeBackSlash(parent);
     }
   }
   
-  private static void removeBackSlash(PyElement parent) {
+  private static void removeBackSlash(PsiElement parent) {
     if (parent != null) {
       Stack<PsiElement> stack = new Stack<PsiElement>();
       if (parent instanceof PyParenthesizedExpression)
