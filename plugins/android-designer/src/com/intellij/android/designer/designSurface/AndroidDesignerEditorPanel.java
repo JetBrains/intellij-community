@@ -62,6 +62,7 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.refactoring.AndroidExtractAsIncludeAction;
 import org.jetbrains.android.refactoring.AndroidExtractStyleAction;
+import org.jetbrains.android.refactoring.AndroidInlineIncludeAction;
 import org.jetbrains.android.refactoring.AndroidInlineStyleReferenceAction;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
@@ -171,6 +172,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
     action = manager.getAction(AndroidExtractAsIncludeAction.ACTION_ID);
     group.add(new AndroidRefactoringActionWrapper("E_xtract Layout", action));
+
+    action = manager.getAction(AndroidInlineIncludeAction.ACTION_ID);
+    group.add(new AndroidRefactoringActionWrapper("I_nline Layout", action));
     return group;
   }
 

@@ -6,6 +6,7 @@ import com.android.io.IAbstractResource;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,7 +75,7 @@ class VirtualFolderWrapper implements IAbstractFolder {
         result.add(name);
       }
     }
-    return result.toArray(new String[result.size()]);
+    return ArrayUtil.toStringArray(result);
   }
 
   @Override
@@ -104,5 +105,33 @@ class VirtualFolderWrapper implements IAbstractFolder {
   @Override
   public boolean delete() {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    VirtualFolderWrapper wrapper = (VirtualFolderWrapper)o;
+
+    if (!myFolder.equals(wrapper.myFolder)) {
+      return false;
+    }
+    if (!myProject.equals(wrapper.myProject)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myProject.hashCode();
+    result = 31 * result + myFolder.hashCode();
+    return result;
   }
 }

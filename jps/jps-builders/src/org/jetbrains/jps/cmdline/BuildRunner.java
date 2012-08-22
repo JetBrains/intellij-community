@@ -145,14 +145,9 @@ public class BuildRunner {
                                                      Collection<String> paths, boolean includeTests) throws Exception {
     final Timestamps timestamps = pd.timestamps.getStorage();
     Set<JpsArtifact> artifacts = new HashSet<JpsArtifact>();
-    if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
-      artifacts.addAll(JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false));
-    }
-    else {
-      for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false)) {
-        if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
-          artifacts.add(artifact);
-        }
+    for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false)) {
+      if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
+        artifacts.add(artifact);
       }
     }
 

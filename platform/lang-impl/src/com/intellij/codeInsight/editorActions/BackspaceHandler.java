@@ -162,19 +162,8 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (caretPos.line == 0 || caretPos.column == 0) {
       return null;
     }
-
-    final CharSequence charSeq = editor.getDocument().getCharsSequence();
-    // smart backspace is activated only if all characters in the check range are whitespace characters
-    for(int pos=0; pos<caretPos.column; pos++) {
-      // use logicalPositionToOffset to make sure tabs are handled correctly
-      final LogicalPosition checkPos = new LogicalPosition(caretPos.line, pos);
-      final int offset = editor.logicalPositionToOffset(checkPos);
-      if (offset < charSeq.length()) {
-        final char c = charSeq.charAt(offset);
-        if (c != '\t' && c != ' ' && c != '\n') {
-          return null;
-        }
-      }
+    if (!isWhitespaceBeforeCaret(editor)) {
+      return null;
     }
 
     // Decrease column down to indentation * n
@@ -184,5 +173,23 @@ public class BackspaceHandler extends EditorWriteActionHandler {
       column = 0;
     }
     return new LogicalPosition(caretPos.line, column);
+  }
+
+  public static boolean isWhitespaceBeforeCaret(Editor editor) {
+    final LogicalPosition caretPos = editor.getCaretModel().getLogicalPosition();
+    final CharSequence charSeq = editor.getDocument().getCharsSequence();
+    // smart backspace is activated only if all characters in the check range are whitespace characters
+    for(int pos=0; pos<caretPos.column; pos++) {
+      // use logicalPositionToOffset to make sure tabs are handled correctly
+      final LogicalPosition checkPos = new LogicalPosition(caretPos.line, pos);
+      final int offset = editor.logicalPositionToOffset(checkPos);
+      if (offset < charSeq.length()) {
+        final char c = charSeq.charAt(offset);
+        if (c != '\t' && c != ' ' && c != '\n') {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 }

@@ -17,8 +17,8 @@ public abstract class JpsCompositeElementBase<Self extends JpsCompositeElementBa
     myContainer = new JpsElementContainerImpl(original.myContainer, this);
   }
 
-  public void applyChanges(@NotNull Self element) {
-    myContainer.applyChanges(element.myContainer);
+  public void applyChanges(@NotNull Self modified) {
+    myContainer.applyChanges(modified.myContainer);
   }
 
   @Override

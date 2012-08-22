@@ -1,11 +1,11 @@
 Cleaning output files:
-out/production/nonIncremental1/A/A.class
+out/production/NonIncremental1/A/A.class
 End of files
 Compiling files:
 src/A/A.java
 End of files
 Cleaning output files:
-out/production/nonIncremental1/A/C.class
+out/production/NonIncremental1/A/C.class
 End of files
 Compiling files:
 src/A/C.java

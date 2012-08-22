@@ -137,6 +137,11 @@ public class FileSystemUtil {
     return getAttributes(file.getPath());
   }
 
+  public static long lastModified(@NotNull File file) {
+    FileAttributes attributes = getAttributes(file);
+    return attributes != null ? attributes.lastModified : 0;
+  }
+
   public static boolean isSymLink(@NotNull final String path) {
     if (SystemInfo.areSymLinksSupported) {
       final FileAttributes attributes = getAttributes(path);

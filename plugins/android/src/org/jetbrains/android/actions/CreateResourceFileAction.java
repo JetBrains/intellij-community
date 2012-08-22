@@ -17,6 +17,7 @@
 package org.jetbrains.android.actions;
 
 import com.android.AndroidConstants;
+import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.resources.ResourceType;
 import com.intellij.CommonBundle;
 import com.intellij.ide.actions.CreateElementActionBase;
@@ -96,8 +97,11 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   public static XmlFile createFileResource(@NotNull AndroidFacet facet,
                                            @NotNull final ResourceType resType,
                                            @Nullable String resName,
+                                           @Nullable String rootElement,
+                                           @Nullable FolderConfiguration config,
                                            boolean chooseResName) {
-    final PsiElement[] elements = doCreateFileResource(facet, resType, resName, chooseResName);
+    final PsiElement[] elements = doCreateFileResource(facet, resType, resName, rootElement,
+                                                       config, chooseResName);
     if (elements.length == 0) {
       return null;
     }
@@ -109,6 +113,8 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   private static PsiElement[] doCreateFileResource(@NotNull AndroidFacet facet,
                                                    @NotNull final ResourceType resType,
                                                    @Nullable String resName,
+                                                   @Nullable String rootElement,
+                                                   @Nullable FolderConfiguration config,
                                                    boolean chooseResName) {
     final CreateResourceFileAction action = getInstance();
 
@@ -119,8 +125,8 @@ public class CreateResourceFileAction extends CreateElementActionBase {
       selectedModule = facet.getModule();
     }
     else {
-      final MyDialog dialog =
-        new MyDialog(facet, action.mySubactions.values(), resType, resName, chooseResName, action, facet.getModule(), true);
+      final MyDialog dialog = new MyDialog(facet, action.mySubactions.values(), resType, resName, rootElement,
+                                           config, chooseResName, action, facet.getModule(), true);
       dialog.show();
       if (!dialog.isOK()) {
         return PsiElement.EMPTY_ARRAY;
@@ -165,7 +171,7 @@ public class CreateResourceFileAction extends CreateElementActionBase {
     LOG.assertTrue(facet != null);
 
     final MyDialog dialog =
-      new MyDialog(facet, mySubactions.values(), null, null, true, CreateResourceFileAction.this, facet.getModule(), false) {
+      new MyDialog(facet, mySubactions.values(), null, null, null, null, true, CreateResourceFileAction.this, facet.getModule(), false) {
       @Override
       protected InputValidator createValidator(@NotNull String subdirName) {
         return CreateResourceFileAction.this.createValidator(project, directory, subdirName);
@@ -240,11 +246,14 @@ public class CreateResourceFileAction extends CreateElementActionBase {
                        Collection<CreateTypedResourceFileAction> actions,
                        @Nullable ResourceType predefinedResourceType,
                        @Nullable String predefinedFileName,
+                       @Nullable String predefinedRootElement,
+                       @Nullable FolderConfiguration predefinedConfig,
                        boolean chooseFileName,
                        @NotNull CreateResourceFileAction action,
                        @NotNull Module module,
                        boolean chooseModule) {
-      super(facet, actions, predefinedResourceType, predefinedFileName, chooseFileName, module, chooseModule);
+      super(facet, actions, predefinedResourceType, predefinedFileName, predefinedRootElement,
+            predefinedConfig, chooseFileName, module, chooseModule);
       myAction = action;
     }
 

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout android:orientation="vertical"
+              android:layout_width="fill_parent"
+              android:layout_height="fill_parent">
+    <include layout="@layout/includ<caret>ed"/>
+</LinearLayout>

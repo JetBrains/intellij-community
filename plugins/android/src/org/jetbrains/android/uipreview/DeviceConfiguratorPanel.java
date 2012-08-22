@@ -70,7 +70,7 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
   };
 
   @SuppressWarnings("unchecked")
-  public DeviceConfiguratorPanel(FolderConfiguration config) {
+  public DeviceConfiguratorPanel() {
     super(new BorderLayout());
 
     createUIComponents();
@@ -146,18 +146,6 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
     for (String name : myEditors.keySet()) {
       final MyQualifierEditor editor = myEditors.get(name);
       myQualifierOptionsPanel.add(editor.getComponent(), name);
-    }
-
-    if (config != null) {
-      myChosenQualifiersConfig.set(config);
-      myAvailableQualifiersConfig.substract(config);
-
-      for (ResourceQualifier qualifier : config.getQualifiers()) {
-        final MyQualifierEditor editor = myEditors.get(qualifier.getShortName());
-        if (editor != null) {
-          editor.reset(qualifier);
-        }
-      }
     }
 
     myAvailableQualifiersList.setCellRenderer(new DefaultListCellRenderer() {
@@ -237,6 +225,18 @@ public abstract class DeviceConfiguratorPanel extends JPanel {
         updateQualifierEditor();
       }
     });
+  }
+
+  public void init(@NotNull FolderConfiguration config) {
+    myChosenQualifiersConfig.set(config);
+    myAvailableQualifiersConfig.substract(config);
+
+    for (ResourceQualifier qualifier : config.getQualifiers()) {
+      final MyQualifierEditor editor = myEditors.get(qualifier.getShortName());
+      if (editor != null) {
+        editor.reset(qualifier);
+      }
+    }
   }
 
   protected void createDefaultConfig(FolderConfiguration config) {

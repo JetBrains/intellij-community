@@ -105,7 +105,7 @@ public class ArrangementRuleEditingModelBuilder {
       grouper,
       rowMappings,
       row,
-      tree.isRootVisible() ? 0 : -1
+      tree.isRootVisible()
     );
     rowMappings.put(row, model);
   }

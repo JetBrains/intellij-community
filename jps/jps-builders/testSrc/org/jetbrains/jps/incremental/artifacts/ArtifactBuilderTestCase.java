@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.artifacts;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -183,7 +184,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
       if (newContent != null) {
         FileUtil.writeToFile(file, newContent);
       }
-      boolean updated = file.setLastModified(file.lastModified() + 1000);
+      boolean updated = file.setLastModified(FileSystemUtil.lastModified(file) + 10);
       assertTrue("Cannot modify timestamp for " + file.getAbsolutePath(), updated);
     }
     catch (IOException e) {
