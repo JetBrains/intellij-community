@@ -51,6 +51,7 @@ public class ArrangementRuleTree {
   @NotNull private final List<ArrangementRuleSelectionListener> myListeners           = new ArrayList<ArrangementRuleSelectionListener>();
   @NotNull private final TreeSelectionModel                     mySelectionModel      = new MySelectionModel();
   @NotNull private final MyModelChangeListener                  myModelChangeListener = new MyModelChangeListener();
+  @NotNull private final MyModelNodesRefresher                  myModelNodesRefresher = new MyModelNodesRefresher();
 
   @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>        myRenderers =
     new TIntObjectHashMap<ArrangementNodeComponent>();
@@ -398,8 +399,12 @@ public class ArrangementRuleTree {
   }
 
   private void onModelChange(@NotNull ArrangementRuleEditingModelImpl model, @NotNull final TIntIntHashMap rowChanges) {
+    // Refresh models.
+    myModels.forEachValue(myModelNodesRefresher);
+
     // Shift row-based caches.
-    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> changedModelMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
+    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> changedModelMappings =
+      new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
     final TIntObjectHashMap<ArrangementNodeComponent> changedRendererMappings = new TIntObjectHashMap<ArrangementNodeComponent>();
     rowChanges.forEachEntry(new TIntIntProcedure() {
       @Override
@@ -524,6 +529,14 @@ public class ArrangementRuleTree {
     @Override
     public void onChanged(@NotNull ArrangementRuleEditingModelImpl model, @NotNull TIntIntHashMap rowChanges) {
       onModelChange(model, rowChanges); 
+    }
+  }
+  
+  private class MyModelNodesRefresher implements TObjectProcedure<ArrangementRuleEditingModelImpl> {
+    @Override
+    public boolean execute(ArrangementRuleEditingModelImpl model) {
+      model.refreshTreeNodes(); 
+      return true;
     }
   }
 }

@@ -99,6 +99,10 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     return mySettingsNode;
   }
 
+  public int getRow() {
+    return myRow;
+  }
+
   @NotNull
   public ArrangementTreeNode getTopMost() {
     return myTopMost;

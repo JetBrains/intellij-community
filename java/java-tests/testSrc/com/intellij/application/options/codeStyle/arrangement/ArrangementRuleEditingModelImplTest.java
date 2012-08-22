@@ -15,12 +15,8 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
-import gnu.trove.TObjectProcedure;
 import org.junit.Test;
-
-import javax.swing.tree.DefaultMutableTreeNode;
 
 import static com.intellij.psi.codeStyle.arrangement.ArrangementUtil.and;
 import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.FIELD;
@@ -51,14 +47,13 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
   @Test
   public void buildNewSingleLevel() {
     configure(atom(PUBLIC));
-    ArrangementRuleEditingModel model = myRowMappings.get(1);
+    ArrangementRuleEditingModelImpl model = myRowMappings.get(1);
     assertNotNull(model);
     assertEquals(1, myRowMappings.size());
     
     model.addAndCondition(atom(FIELD));
 
-    assertEquals(1, myRowMappings.size());
-    assertSame(model, myRowMappings.get(2));
+    assertEquals(2, model.getRow());
     assertEquals(and(atom(FIELD), atom(PUBLIC)), model.getSettingsNode());
 
     ArrangementTreeNode fieldNode = myRoot.getFirstChild();
@@ -117,14 +112,13 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
   @Test
   public void removeLastRowCondition() {
     configure(and(atom(FIELD), atom(PUBLIC)));
-    ArrangementRuleEditingModel model = myRowMappings.get(2);
+    ArrangementRuleEditingModelImpl model = myRowMappings.get(2);
     assertNotNull(model);
     assertEquals(1, myRowMappings.size());
 
     model.removeAndCondition(atom(PUBLIC));
 
-    assertEquals(1, myRowMappings.size());
-    assertSame(model, myRowMappings.get(1));
+    assertEquals(1, model.getRow());
     assertEquals(atom(FIELD), model.getSettingsNode());
 
     ArrangementTreeNode fieldNode = myRoot.getFirstChild();
@@ -134,26 +128,24 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     assertEquals(0, fieldNode.getChildCount());
   }
 
-  // TODO den uncomment
-  //@Test
+  @Test
   public void removeFirstRowConditionFromMultiChildrenParent() {
     configure(and(atom(FIELD), atom(PUBLIC)));
     configure(and(atom(FIELD), atom(STATIC)));
     
-    ArrangementRuleEditingModel modelToChange = myRowMappings.get(2);
+    ArrangementRuleEditingModelImpl modelToChange = myRowMappings.get(2);
     assertNotNull(modelToChange);
     
-    ArrangementRuleEditingModel siblingModel = myRowMappings.get(3);
+    ArrangementRuleEditingModelImpl siblingModel = myRowMappings.get(3);
     assertNotNull(siblingModel);
     assertEquals(2, myRowMappings.size());
     
     modelToChange.removeAndCondition(atom(PUBLIC));
     
-    assertEquals(2, myRowMappings.size());
-    assertSame(modelToChange, myRowMappings.get(1));
+    assertSame(1, modelToChange.getRow());
     assertEquals(atom(FIELD), modelToChange.getSettingsNode());
     
-    assertSame(siblingModel, myRowMappings.get(3));
+    assertSame(3, siblingModel.getRow());
     assertEquals(and(atom(FIELD), atom(STATIC)), siblingModel.getSettingsNode());
 
     ArrangementTreeNode atomFieldNode = myRoot.getFirstChild();
@@ -167,8 +159,6 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     ArrangementTreeNode staticNode = layeredFieldNode.getFirstChild();
     assertNotNull(staticNode);
     assertEquals(atom(STATIC), staticNode.getBackingSetting());
-    
-    checkTreeNodesConsistency();
   }
 
   @Test
@@ -203,26 +193,5 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     ArrangementTreeNode atomFieldNode = compositeFieldNode.getNextSibling();
     assertNotNull(atomFieldNode);
     assertEquals(atom(FIELD), atomFieldNode.getBackingSetting());
-
-    checkTreeNodesConsistency();
-  }
-  
-  private void checkTreeNodesConsistency() {
-    final Ref<DefaultMutableTreeNode> rootRef = new Ref<DefaultMutableTreeNode>();
-    myRowMappings.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
-      @Override
-      public boolean execute(ArrangementRuleEditingModelImpl model) {
-        ArrangementTreeNode root = ArrangementConfigUtil.getRoot(model.getTopMost());
-        assertSame(root, ArrangementConfigUtil.getRoot(model.getBottomMost()));
-
-        if (rootRef.get() == null) {
-          rootRef.set(root);
-        }
-        else {
-          assertSame(rootRef.get(), root);
-        }
-        return true;
-      }
-    });
   }
 }

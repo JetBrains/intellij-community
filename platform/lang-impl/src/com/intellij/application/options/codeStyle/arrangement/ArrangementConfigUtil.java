@@ -218,8 +218,8 @@ public class ArrangementConfigUtil {
    * Utility method which helps to replace node sub-hierarchy identified by the given start and end nodes (inclusive) by
    * a sub-hierarchy which is denoted by the given root. 
    * 
-   * @param from         indicates start of the node sub-hierarchy to be replaced (inclusive)
-   * @param to           indicates end of the node sub-hierarchy to be replaced (inclusive)
+   * @param from         indicates start of the node sub-hierarchy (top-most node) to be replaced (inclusive)
+   * @param to           indicates end of the node sub-hierarchy (bottom-most node) to be replaced (inclusive)
    * @param replacement  root of the node sub-hierarchy which should replace the one identified by the given 'start' and 'end' nodes
    * @param treeModel    model which should hold ui nodes
    * @param rootVisible  determines if the root should be count during rows calculations
@@ -323,8 +323,8 @@ public class ArrangementConfigUtil {
       cutHierarchy = parentCopy;
     }
     //endregion
-    
-    int insertionIndex = root.getIndex(from) + 1; 
+
+    int childCountBefore = root.getChildCount();
     
     //region Remove target sub-hierarchy
     for (ArrangementTreeNode current = to; current != root;) {
@@ -338,6 +338,7 @@ public class ArrangementConfigUtil {
     //endregion
 
     //region Insert nodes.
+    int insertionIndex = root.getChildCount() < childCountBefore ? childCountBefore - 1 : childCountBefore;
     boolean merged = insert(root, insertionIndex, replacement, treeModel);
     if (cutHierarchy != null) {
       insert(root, insertionIndex + (merged ? 0 : 1), cutHierarchy, treeModel);
@@ -483,13 +484,14 @@ public class ArrangementConfigUtil {
     if (child.getChildCount() <= 0) {
       // Don't merge the last child.
       treeModel.insertNodeInto(child, parent, index);
+      return false;
     }
 
     boolean anchorAbove = false;
     ArrangementTreeNode mergeCandidate = null;
     if (index > 0) {
       mergeCandidate = parent.getChildAt(index - 1);
-      if (!hasEqualSetting(mergeCandidate, child)) {
+      if (mergeCandidate.getChildCount() <= 0 /* don't merge into leaf node*/ || !hasEqualSetting(mergeCandidate, child)) {
         mergeCandidate = null;
       }
     }
