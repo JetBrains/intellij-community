@@ -80,9 +80,7 @@ four =      '4'()
           '3'()}
 from =  '4' {
 to =      '5'()
-          '6'()
-        }
-        
+          '6'()}
       }
     
     // Modify.
@@ -100,8 +98,42 @@ to =      '5'()
           '3'()
           '5'()}
         '4' {
-          '6'()
-        }
+          '6'()}
+      }
+    assertNodesEqual(expected, initial)
+    checkRowMappings([:], rowMappings)
+  }
+  
+  @Test
+  void replaceWithTwoLevelMergeToNodeAbove() {
+        // Init.
+    def node;
+    def initial = new TreeNodeBuilder().
+      '0' {
+        '1'() {
+          '2'()
+          '3'()}
+node =  '4'()
+        '5'() {
+          '6'()}        
+      }
+    
+    // Modify.
+    def replacement = new TreeNodeBuilder().
+      '1' {
+        '4'()
+      }
+    def rowMappings = doReplace(initial, node, node, replacement)
+    
+    // Check.
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()
+          '3'()
+          '4'()}
+        '5' {
+          '6'()}
       }
     assertNodesEqual(expected, initial)
     checkRowMappings([:], rowMappings)

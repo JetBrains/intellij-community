@@ -238,7 +238,7 @@ public class ArrangementConfigUtil {
       ArrangementTreeNode parent = from.getParent();
       int index = parent.getIndex(from);
       treeModel.removeNodeFromParent(from);
-      treeModel.insertNodeInto(replacement, parent, index);
+      insert(parent, index, replacement, treeModel);
       return collectRowChangesAndUnmark(parent, rootVisible);
     }
 
