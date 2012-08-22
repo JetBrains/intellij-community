@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.generation.ClassMember;
 import com.intellij.codeInsight.generation.GenerateConstructorHandler;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -60,7 +61,7 @@ public class GenerateConstructorTest extends LightCodeInsightTestCase {
       protected ClassMember[] chooseMembers(ClassMember[] members,
                                             boolean allowEmptySelection,
                                             boolean copyJavadocCheckbox,
-                                            Project project) {
+                                            Project project, Editor editor) {
         if (preSelect) {
           final List<ClassMember> preselection = GenerateConstructorHandler.preselect(members);
           return preselection.toArray(new ClassMember[preselection.size()]);

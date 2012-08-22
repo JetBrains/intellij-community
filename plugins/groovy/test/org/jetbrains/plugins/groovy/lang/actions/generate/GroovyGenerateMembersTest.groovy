@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.actions.generate;
 import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.RunResult
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiFile
@@ -322,7 +323,7 @@ class Foo {
       protected void run(Result result) throws Throwable {
         new GenerateGetterHandler() {
           @Nullable
-          protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
+          protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
             return members
           }
         }.invoke(project, myFixture.editor, myFixture.file);
@@ -338,7 +339,7 @@ class Foo {
       protected void run(Result result) throws Throwable {
         new GenerateSetterHandler() {
           @Nullable
-          protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
+          protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
             return members
           }
         }.invoke(project, myFixture.editor, myFixture.file);
@@ -357,7 +358,7 @@ class Foo {
     GenerateMembersHandlerBase handler
     if (javaHandler) {
       handler = new GenerateConstructorHandler() {
-        @Override protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
+        @Override protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project, Editor editor) {
           return members;
         }
       }

@@ -34,10 +34,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -173,7 +170,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   @Nullable
   protected ClassMember[] chooseOriginalMembers(PsiClass aClass, Project project) {
     ClassMember[] allMembers = getAllOriginalMembers(aClass);
-    return chooseMembers(allMembers, false, false, project);
+    return chooseMembers(allMembers, false, false, project, null);
   }
 
   @Nullable
@@ -182,8 +179,30 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
   }
 
   @Nullable
-  protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmptySelection, boolean copyJavadocCheckbox, Project project) {
+  protected ClassMember[] chooseMembers(ClassMember[] members,
+                                        boolean allowEmptySelection,
+                                        boolean copyJavadocCheckbox,
+                                        Project project,
+                                        @Nullable Editor editor) {
     MemberChooser<ClassMember> chooser = createMembersChooser(members, allowEmptySelection, copyJavadocCheckbox, project);
+    if (editor != null) {
+      final int offset = editor.getCaretModel().getOffset();
+
+      ClassMember preselection = null;
+      for (ClassMember member : members) {
+        if (member instanceof PsiElementClassMember) {
+          final PsiDocCommentOwner owner = ((PsiElementClassMember)member).getElement();
+          if (owner != null && owner.getTextRange().contains(offset)) {
+            preselection = member;
+            break;
+          }
+        }
+      }
+      if (preselection != null) {
+        chooser.selectElements(new ClassMember[]{preselection});
+      }
+    }
+
     chooser.show();
     myToCopyJavaDoc = chooser.isCopyJavadoc();
     final List<ClassMember> list = chooser.getSelectedElements();
