@@ -26,12 +26,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -39,6 +40,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -49,14 +51,17 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,24 +77,27 @@ import java.util.List;
 
 public class ShowUsagesAction extends AnAction implements PopupAction {
   private final boolean showSettingsDialogBefore;
-
   private static final int USAGES_PAGE_SIZE = 100;
-  private static final Comparator<Object> USAGE_COMPARATOR = new Comparator<Object>() {
+
+  static final NullUsage MORE_USAGES_SEPARATOR = NullUsage.INSTANCE;
+  private static final UsageNode MORE_USAGES_SEPARATOR_NODE = UsageViewImpl.NULL_NODE;
+
+  private static final Comparator<Object> USAGE_NODE_COMPARATOR = new Comparator<Object>() {
     @Override
     public int compare(Object c1, Object c2) {
       if (!(c1 instanceof UsageNode)) return 1;
       if (!(c2 instanceof UsageNode)) return -1;
       Usage o1 = ((UsageNode)c1).getUsage();
       Usage o2 = ((UsageNode)c2).getUsage();
-      if (o1 == NullUsage.INSTANCE) return 1;
-      if (o2 == NullUsage.INSTANCE) return -1;
+      if (o1 == MORE_USAGES_SEPARATOR) return 1;
+      if (o2 == MORE_USAGES_SEPARATOR) return -1;
 
       VirtualFile v1 = UsageListCellRenderer.getVirtualFile(o1);
       VirtualFile v2 = UsageListCellRenderer.getVirtualFile(o2);
       String name1 = v1 == null ? null : v1.getName();
       String name2 = v2 == null ? null : v2.getName();
       int i = Comparing.compare(name1, name2);
-      if (i!=0) return i;
+      if (i != 0) return i;
 
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
         return ((Comparable)o1).compareTo(o2);
@@ -129,11 +137,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     myUsageViewSettings.GROUP_BY_SCOPE = false;
   }
 
-  public static class ShowSettings extends ShowUsagesAction {
-    public ShowSettings() {
-      super(true);
-    }
-  }
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -149,7 +152,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       return;
     }
 
-    myWidth = -1;
     final RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
@@ -199,16 +201,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                  @NotNull final RelativePoint popupPosition,
                                  final int maxUsages,
                                  @NotNull final FindUsagesOptions options) {
-    UsageViewPresentation presentation = new UsageViewPresentation();
-    presentation.setDetachedMode(true);
-
     final UsageViewSettings usageViewSettings = UsageViewSettings.getInstance();
     final UsageViewSettings savedGlobalSettings = new UsageViewSettings();
 
     savedGlobalSettings.loadState(usageViewSettings);
     usageViewSettings.loadState(myUsageViewSettings);
 
-    UsageViewManager manager = UsageViewManager.getInstance(handler.getProject());
+    final Project project = handler.getProject();
+    UsageViewManager manager = UsageViewManager.getInstance(project);
+    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
+    final UsageViewPresentation presentation = findUsagesManager.createPresentation(handler, options);
+    presentation.setDetachedMode(true);
     final UsageViewImpl usageView = (UsageViewImpl)manager.createUsageView(UsageTarget.EMPTY_ARRAY, Usage.EMPTY_ARRAY, presentation, null);
 
     Disposer.register(usageView, new Disposable() {
@@ -221,42 +224,131 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     final List<Usage> usages = new ArrayList<Usage>();
     final Set<UsageNode> visibleNodes = new LinkedHashSet<UsageNode>();
+
+    final MyTable table = new MyTable();
+    final AsyncProcessIcon processIcon = new AsyncProcessIcon("xxx");
+    final JBPopup popup = createUsagePopup(usages, visibleNodes, handler, editor, popupPosition, maxUsages, usageView, options, table, presentation,
+                                           processIcon);
+
+    Disposer.register(popup, usageView);
+
+    // show popup only if find usages takes more than 300ms, otherwise it would flicker needlessly
+    Alarm alarm = new Alarm(usageView);
+    alarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        showPopupIfNeedTo(popup, popupPosition);
+      }
+    }, 300);
+
+    final PingEDT pingEDT = new PingEDT("Rebuild popup in EDT", new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return popup.isDisposed();
+      }
+    }, 1000, new Runnable() {
+      @Override
+      public void run() {
+        rebuildPopup(usageView, usages, table, popup, presentation, popupPosition);
+      }
+    });
+
+    final MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
+    messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
+      @Override
+      public void run() {
+        pingEDT.ping();
+      }
+    });
+
+
     Processor<Usage> collect = new Processor<Usage>() {
       private final UsageTarget[] myUsageTarget = {new PsiElement2UsageTargetAdapter(handler.getPsiElement())};
       @Override
       public boolean process(@NotNull Usage usage) {
         synchronized (usages) {
-          if (visibleNodes.size() > maxUsages) return false;
+          if (visibleNodes.size() >= maxUsages) return false;
           if(UsageViewManager.isSelfUsage(usage, myUsageTarget)) return true;
           UsageNode node = usageView.doAppendUsage(usage);
-          if (node != null) {
-            if (visibleNodes.size() == maxUsages) {
-              usageView.removeUsage(usage);
-              visibleNodes.add(UsageViewImpl.NULL_NODE);
-              return false;
-            }
-            visibleNodes.add(node);
-          }
           usages.add(usage);
+          if (node != null) {
+            visibleNodes.add(node);
+            boolean continueSearch = true;
+            if (visibleNodes.size() == maxUsages) {
+              visibleNodes.add(MORE_USAGES_SEPARATOR_NODE);
+              usages.add(MORE_USAGES_SEPARATOR);
+              continueSearch = false;
+            }
+            pingEDT.ping();
+            //rebuildPopup(usageView, usages, table, popup, presentation, popupPosition);
+            return continueSearch;
+          }
         }
+
         return true;
       }
     };
-    FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(handler.getProject())).getFindUsagesManager();
-    presentation = findUsagesManager.processUsages(handler, collect, options);
-    if (presentation == null) {
-      Disposer.dispose(usageView);
-      return;
-    }
-    final String title = presentation.getTabText();
 
-    JBPopup popup = createUsagePopup(usages, visibleNodes, title, handler, editor, popupPosition, maxUsages, usageView, options);
-    if (popup == null) {
-      Disposer.dispose(usageView);
+    final ProgressIndicator indicator = FindUsagesManager.startProcessUsages(handler, collect, options, new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Disposer.dispose(processIcon);
+            Container parent = processIcon.getParent();
+            parent.remove(processIcon);
+            parent.repaint();
+            synchronized (usages) {
+              if (visibleNodes.isEmpty()) {
+                if (usages.isEmpty()) {
+                  String text = UsageViewBundle.message("no.usages.found.in", searchScopePresentableName(options, project));
+                  showHint(text, editor, popupPosition, handler, maxUsages, options);
+                  popup.cancel();
+                }
+                else {
+                  // all usages filtered out
+                }
+              }
+              else if (visibleNodes.size() == 1) {
+                if (usages.size() == 1) {
+                  //the only usage
+                  Usage usage = visibleNodes.iterator().next().getUsage();
+                  String message = UsageViewBundle.message("show.usages.only.usage", searchScopePresentableName(options, project));
+                  navigateAndHint(usage, message, handler, popupPosition, maxUsages, options);
+                  popup.cancel();
+                }
+                else {
+                  assert usages.size() > 1 : usages;
+                  // usage view can filter usages down to one
+                  Usage visibleUsage = visibleNodes.iterator().next().getUsage();
+                  if (areAllUsagesInOneLine(visibleUsage, usages)) {
+                    String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(), searchScopePresentableName(options, project));
+                    navigateAndHint(visibleUsage, hint, handler, popupPosition, maxUsages, options);
+                    popup.cancel();
+                  }
+                }
+              }
+            }
+          }
+        }, project.getDisposed());
+      }
+    });
+    Disposer.register(popup, new Disposable() {
+      @Override
+      public void dispose() {
+        indicator.cancel();
+      }
+    });
+  }
+
+  private static boolean showPopupIfNeedTo(@NotNull JBPopup popup, @NotNull RelativePoint popupPosition) {
+    if (!popup.isDisposed() && !popup.isVisible()) {
+      popup.show(popupPosition);
+      return true;
     }
     else {
-      Disposer.register(popup, usageView);
-      popup.show(popupPosition);
+      return false;
     }
   }
 
@@ -284,7 +376,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                          @NotNull final Runnable cancelAction,
                                          final int maxUsages,
                                          @NotNull final FindUsagesOptions options) {
-    JComponent label = HintUtil.createInformationLabel(suggestSecondInvocation(options, handler, text));
+    JComponent label = HintUtil.createInformationLabel(suggestSecondInvocation(options, handler, text+"&nbsp;"));
     InplaceButton button = createSettingsButton(handler, popupPosition, editor, maxUsages, cancelAction);
 
     JPanel panel = new JPanel(new BorderLayout()) {
@@ -363,71 +455,52 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return scope;
   }
 
-  @Nullable
+  @NotNull
   private JBPopup createUsagePopup(@NotNull final List<Usage> usages,
                                    @NotNull Set<UsageNode> visibleNodes,
-                                   @Nullable final String title,
                                    @NotNull final FindUsagesHandler handler,
                                    final Editor editor,
                                    @NotNull final RelativePoint popupPosition,
                                    final int maxUsages,
                                    @NotNull final UsageViewImpl usageView,
-                                   @NotNull final FindUsagesOptions options) {
-    boolean hasMore = visibleNodes.remove(UsageViewImpl.NULL_NODE);
+                                   @NotNull final FindUsagesOptions options,
+                                   @NotNull final JTable table,
+                                   @NotNull final UsageViewPresentation presentation,
+                                   @NotNull final AsyncProcessIcon processIcon) {
+    final String title = presentation.getTabText();
+    boolean hadMoreSeparator = visibleNodes.remove(MORE_USAGES_SEPARATOR_NODE);
 
     final Project project = handler.getProject();
 
-    if (visibleNodes.isEmpty()) {
-      if (usages.isEmpty()) {
-        String text = UsageViewBundle.message("no.usages.found.in", searchScopePresentableName(options, project));
-        showHint(text, editor, popupPosition, handler, maxUsages, options);
-        return null;
-      }
-      else {
-        // all usages filtered out
-      }
-    }
-    if (visibleNodes.size() == 1 && usages.size() == 1) {
-      //the only usage
-      Usage usage = visibleNodes.iterator().next().getUsage();
-      navigateAndHint(usage, UsageViewBundle.message("show.usages.only.usage",
-                                                     searchScopePresentableName(options, project)), handler, popupPosition,
-                      maxUsages, options);
-      return null;
-    }
-    if (visibleNodes.size() == 1 && usages.size() >= 1) {
-      // usage view can filter usages down to one
-      Usage usage = visibleNodes.iterator().next().getUsage();
-      if (areAllUsagesInThisLine(usage, usages)) {
-        String hint = UsageViewBundle.message("all.usages.are.in.this.line", usages.size(),
-                                              searchScopePresentableName(options, project));
-        navigateAndHint(usage, hint, handler, popupPosition, maxUsages, options);
-        return null;
-      }
-    }
-
-    if (hasMore) {
-      usages.add(NullUsage.INSTANCE);
-      visibleNodes.add(UsageViewImpl.NULL_NODE);
+    if (hadMoreSeparator) {
+      usages.add(MORE_USAGES_SEPARATOR);
+      visibleNodes.add(MORE_USAGES_SEPARATOR_NODE);
     }
     List<UsageNode> outNodes = new ArrayList<UsageNode>();
     addUsageNodes(usageView.getRoot(), usageView, outNodes);
     int filtered = filtered(usages, usageView);
 
-    final JTable table = new MyTable();
     TableScrollingUtil.installActions(table);
     final Vector<Object> data = new Vector<Object>();
-    setModel(table, visibleNodes, usageView, data, filtered);
+    setTableModel(table, visibleNodes, usageView, data, filtered, presentation);
+
+    table.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight()+2);
+    table.setShowGrid(false);
+    table.setShowVerticalLines(false);
+    table.setShowHorizontalLines(false);
+    table.setTableHeader(null);
+    table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
+    table.setIntercellSpacing(new Dimension(0, 0));
 
     final Runnable navigateRunnable = new Runnable() {
       @Override
       public void run() {
         int[] selected = table.getSelectedRows();
         for (int i : selected) {
-          Object value = table.getValueAt(i,0);
+          Object value = table.getValueAt(i, 0);
           if (value instanceof UsageNode) {
             Usage usage = ((UsageNode)value).getUsage();
-            if (usage == NullUsage.INSTANCE) {
+            if (usage == MORE_USAGES_SEPARATOR) {
               appendMoreUsages(editor, popupPosition, handler, maxUsages);
               return;
             }
@@ -460,7 +533,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         UsageNode node = (UsageNode)element;
         GroupNode group = (GroupNode)node.getParent();
         Usage usage = node.getUsage();
-        if (usage == NullUsage.INSTANCE) return "";
+        if (usage == MORE_USAGES_SEPARATOR) return "";
         return usage.getPresentation().getPlainText() + group.toString();
       }
 
@@ -476,14 +549,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     PopupChooserBuilder builder = new PopupChooserBuilder(table);
     if (title != null) {
-      String s;
-      if (hasMore) {
-        s = "<b>Some</b> " + title + " " + "<b>(Only " + (visibleNodes.size() - 1) + " usages shown)</b>";
-      }
-      else {
-        s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + " found)";
-      }
-      builder.setTitle("<html>" + s + "</html>");
+      String result = getFullTitle(usages, title, hadMoreSeparator, visibleNodes.size() - 1);
+      builder.setTitle(result);
       builder.setAdText(getSecondInvocationTitle(options, handler));
     }
 
@@ -518,7 +585,18 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
         popup[0].cancel();
       }
     });
-    builder.setCommandButton(button);
+
+    ActiveComponent iconComp = new ActiveComponent() {
+      @Override
+      public void setActive(boolean active) {
+      }
+
+      @Override
+      public JComponent getComponent() {
+        return processIcon;
+      }
+    };
+    builder.setCommandButton(new CompositeActiveComponent(iconComp, button));
 
     DefaultActionGroup toolbar = new DefaultActionGroup();
     usageView.addFilteringActions(toolbar);
@@ -549,20 +627,30 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     builder.setSettingButton(toolBar);
 
     popup[0] = builder.createPopup();
+    JComponent content = popup[0].getContent();
+
+    myWidth = (int)(toolBar.getPreferredSize().getWidth()
+                  + new JLabel(getFullTitle(usages, title, hadMoreSeparator, visibleNodes.size() - 1)).getPreferredSize().getWidth()
+                  + button.getPreferredSize().getWidth());
+    myWidth = -1;
     for (AnAction action : toolbar.getChildren(null)) {
       action.unregisterCustomShortcutSet(usageView.getComponent());
-      action.registerCustomShortcutSet(action.getShortcutSet(), popup[0].getContent());
+      action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }
 
-    final MessageBusConnection messageBusConnection = project.getMessageBus().connect(usageView);
-    messageBusConnection.subscribe(UsageFilteringRuleProvider.RULES_CHANGED, new Runnable() {
-      @Override
-      public void run() {
-        rebuildPopup(usageView, usages, table, popup[0]);
-      }
-    });
-
     return popup[0];
+  }
+
+  @NotNull
+  private static String getFullTitle(@NotNull List<Usage> usages, @NotNull String title, boolean hadMoreSeparator, int visibleNodesCount) {
+    String s;
+    if (hadMoreSeparator) {
+      s = "<b>Some</b> " + title + " " + "<b>(Only " + visibleNodesCount + " usages shown)</b>";
+    }
+    else {
+      s = title + " (" + UsageViewBundle.message("usages.n", usages.size()) + ")";
+    }
+    return "<html><nobr>" + s + "</nobr></html>";
   }
 
   @NotNull
@@ -591,8 +679,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     if (getShowUsagesShortcut() != null) {
        GlobalSearchScope maximalScope = getMaximalScope(handler);
        if (!notNullizeScope(options, handler.getProject()).equals(maximalScope)) {
-         return "Press " + KeymapUtil.getShortcutText(getShowUsagesShortcut()) +
-              " again to search in " + maximalScope.getDisplayName();
+         return "Press " + KeymapUtil.getShortcutText(getShowUsagesShortcut()) + " again to search in " + maximalScope.getDisplayName();
        }
      }
      return null;
@@ -610,7 +697,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   @Nullable
   private static KeyboardShortcut getShowUsagesShortcut() {
-    return ActionManagerEx.getInstanceEx().getKeyboardShortcut("ShowUsages");
+    return ActionManager.getInstance().getKeyboardShortcut("ShowUsages");
   }
 
   private static int filtered(@NotNull List<Usage> usages, @NotNull UsageViewImpl usageView) {
@@ -628,10 +715,10 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return element.getTextRange().getStartOffset();
   }
 
-  private static boolean areAllUsagesInThisLine(@NotNull Usage usage, @NotNull List<Usage> usages) {
-    Editor editor = getEditorFor(usage);
+  private static boolean areAllUsagesInOneLine(@NotNull Usage visibleUsage, @NotNull List<Usage> usages) {
+    Editor editor = getEditorFor(visibleUsage);
     if (editor == null) return false;
-    int offset = getUsageOffset(usage);
+    int offset = getUsageOffset(visibleUsage);
     if (offset == -1) return false;
     int lineNumber = editor.getDocument().getLineNumber(offset);
     for (Usage other : usages) {
@@ -645,16 +732,22 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     return true;
   }
 
-  private static int setModel(@NotNull JTable table,
-                              @NotNull Collection<UsageNode> visibleNodes,
-                              @NotNull UsageViewImpl usageView,
-                              @NotNull final Vector<Object> data,
-                              int filtered) {
+  private static int setTableModel(@NotNull JTable table,
+                                   @NotNull Collection<UsageNode> visibleNodes,
+                                   @NotNull UsageViewImpl usageView,
+                                   @NotNull final Vector<Object> data,
+                                   int filtered,
+                                   @NotNull UsageViewPresentation presentation) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (filtered != 0) {
       data.add(UsageViewBundle.message("usages.were.filtered.out", filtered));
     }
     data.addAll(visibleNodes);
-    Collections.sort(data, USAGE_COMPARATOR);
+    if (data.isEmpty()) {
+      String progressText = UsageViewManagerImpl.getProgressTitle(presentation);
+      data.add(progressText);
+    }
+    Collections.sort(data, USAGE_NODE_COMPARATOR);
     AbstractTableModel model = new AbstractTableModel() {
       @Override
       public int getRowCount() {
@@ -673,18 +766,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     };
     table.setModel(model);
 
-    table.setRowHeight(PlatformIcons.CLASS_ICON.getIconHeight()+2);
-    table.setShowGrid(false);
-    table.setShowVerticalLines(false);
-    table.setShowHorizontalLines(false);
-    table.setTableHeader(null);
-    table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
     ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(usageView);
     for (int i=0;i<table.getColumnModel().getColumnCount();i++) {
       TableColumn column = table.getColumnModel().getColumn(i);
       column.setCellRenderer(renderer);
     }
-    table.setIntercellSpacing(new Dimension(0, 0));
 
     int colsNum = table.getColumnModel().getColumnCount();
 
@@ -701,13 +787,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     }
 
     totalWidth += calcMaxWidth(table, colsNum - 1);
-
-    Dimension dimension = new Dimension(totalWidth, table.getRowHeight() * data.size());
-    table.setMinimumSize(dimension);
-    table.setSize(dimension);
-    table.setPreferredSize(dimension);
-    table.setMaximumSize(dimension);
-    table.setPreferredScrollableViewportSize(dimension);
 
     return totalWidth;
   }
@@ -729,33 +808,88 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
   private void rebuildPopup(@NotNull final UsageViewImpl usageView,
                             @NotNull final List<Usage> usages,
                             @NotNull final JTable table,
-                            @NotNull final JBPopup popup) {
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        JComponent content = popup.getContent();
-        Window window = SwingUtilities.windowForComponent(content);
-        Dimension d = window.getSize();
+                            @NotNull final JBPopup popup,
+                            @NotNull final UsageViewPresentation presentation,
+                            @NotNull final RelativePoint popupPosition) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (popup.isDisposed()) return;
 
-        final List<UsageNode> nodes = new ArrayList<UsageNode>();
-        addUsageNodes(usageView.getRoot(), usageView, nodes);
-        int filtered = filtered(usages, usageView);
-
-        int old = table.getModel().getRowCount();
-        Vector<Object> data = new Vector<Object>();
-        int width = setModel(table, nodes, usageView, data, filtered);
-
-
-        if (myWidth == -1) myWidth = width;
-        Dimension newDim = new Dimension(Math.max(width, d.width + width - myWidth), d.height + (data.size() - old) * table.getRowHeight());
-        myWidth = width;
-        window.setSize(newDim);
-        window.validate();
-        window.repaint();
-        table.revalidate();
-        table.repaint();
+    final List<UsageNode> nodes = new ArrayList<UsageNode>();
+    int filtered;
+    String fullTitle;
+    synchronized (usages) {
+      // open up popup as soon as several usages 've been found
+      if (!popup.isVisible() && (usages.size() <= 1 || !showPopupIfNeedTo(popup, popupPosition))) {
+        return;
       }
-    });
+      addUsageNodes(usageView.getRoot(), usageView, nodes);
+      boolean shouldShowMoreSeparator = usages.contains(MORE_USAGES_SEPARATOR);
+      if (shouldShowMoreSeparator) {
+        nodes.add(MORE_USAGES_SEPARATOR_NODE);
+      }
+      filtered = filtered(usages, usageView);
+
+      String title = presentation.getTabText();
+      fullTitle = getFullTitle(usages, title, shouldShowMoreSeparator, nodes.size() - (shouldShowMoreSeparator ? 1 : 0));
+    }
+
+    ((AbstractPopup)popup).setCaption(fullTitle);
+
+    JComponent content = popup.getContent();
+    Window window = SwingUtilities.windowForComponent(content);
+    Dimension d = window.getSize();
+
+    Vector<Object> data = new Vector<Object>();
+    int width = setTableModel(table, nodes, usageView, data, filtered, presentation);
+    width = (int)Math.max(d.getWidth(), width);
+    Dimension headerSize = ((AbstractPopup)popup).getHeaderPreferredSize();
+    width = Math.max((int)headerSize.getWidth(), width);
+    width = Math.max(myWidth, width);
+
+    if (myWidth == -1) myWidth = width;
+    int newWidth = Math.max(width, d.width + width - myWidth);
+
+    myWidth = newWidth;
+
+    int rowsToShow = Math.min(30, data.size());
+    Dimension dimension = new Dimension(newWidth, table.getRowHeight() * rowsToShow);
+    Rectangle rectangle = fitToScreen(dimension, popupPosition, table);
+    dimension = rectangle.getSize();
+    Point location = window.getLocation();
+    if (!location.equals(rectangle.getLocation())) {
+      window.setLocation(rectangle.getLocation());
+    }
+
+    table.setSize(dimension);
+    //table.setPreferredSize(dimension);
+    //table.setMaximumSize(dimension);
+    //table.setPreferredScrollableViewportSize(dimension);
+
+
+    Dimension footerSize = ((AbstractPopup)popup).getFooterPreferredSize();
+
+    int newHeight = (int)(dimension.height + headerSize.getHeight() + footerSize.getHeight()) + 4/* invisible borders, margins etc*/;
+    Dimension newDim = new Dimension(dimension.width, newHeight);
+    window.setSize(newDim);
+    window.setMinimumSize(newDim);
+    window.setMaximumSize(newDim);
+
+    window.validate();
+    window.repaint();
+    table.revalidate();
+    table.repaint();
+  }
+
+  private static Rectangle fitToScreen(@NotNull Dimension newDim, @NotNull RelativePoint popupPosition, JTable table) {
+    Rectangle rectangle = new Rectangle(popupPosition.getScreenPoint(), newDim);
+    ScreenUtil.fitToScreen(rectangle);
+    if (rectangle.getHeight() != newDim.getHeight()) {
+      int newHeight = (int)rectangle.getHeight();
+      int roundedHeight = newHeight - newHeight % table.getRowHeight();
+      rectangle.setSize((int)rectangle.getWidth(), Math.max(roundedHeight, table.getRowHeight()));
+    }
+    return rectangle;
+
   }
 
   private void appendMoreUsages(Editor editor, @NotNull RelativePoint popupPosition, @NotNull FindUsagesHandler handler, int maxUsages) {

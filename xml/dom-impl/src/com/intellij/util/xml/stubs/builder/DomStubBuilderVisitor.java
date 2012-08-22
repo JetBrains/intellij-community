@@ -15,7 +15,6 @@
  */
 package com.intellij.util.xml.stubs.builder;
 
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.stubs.Stubbed;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
@@ -24,6 +23,9 @@ import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
+import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
+import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.FileStub;
@@ -46,12 +48,17 @@ public class DomStubBuilderVisitor implements DomElementVisitor {
   public void visitDomElement(DomElement element) {
 
     if (element.getAnnotation(Stubbed.class) != null ||
-        element.getChildDescription().getAnnotation(Stubbed.class) != null) {
+        element.getChildDescription().isStubbed()) {
 
       XmlElement xmlElement = element.getXmlElement();
+      AbstractDomChildrenDescription description = element.getChildDescription();
+      String nsKey = description instanceof DomChildrenDescription ? ((DomChildrenDescription)description).getXmlName().getNamespaceKey() : "";
       if (xmlElement instanceof XmlTag) {
         ElementStub old = myRoot;
-        myRoot = new ElementStub(myRoot, StringRef.fromString(((PsiNamedElement)xmlElement).getName()));
+        myRoot = new ElementStub(myRoot,
+                                 StringRef.fromString(((XmlTag)xmlElement).getName()),
+                                 StringRef.fromNullableString(nsKey),
+                                 description instanceof CustomDomChildrenDescription);
         List<DomElement> children = DomUtil.getDefinedChildren(element, true, true);
         for (DomElement child : children) {
           visitDomElement(child);
@@ -62,6 +69,7 @@ public class DomStubBuilderVisitor implements DomElementVisitor {
       }
       else if (xmlElement instanceof XmlAttribute) {
         new AttributeStub(myRoot, StringRef.fromString(((XmlAttribute)xmlElement).getLocalName()),
+                          StringRef.fromNullableString(nsKey),
                           ((XmlAttribute)xmlElement).getValue());
       }
     }

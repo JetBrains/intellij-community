@@ -3,7 +3,6 @@ package org.jetbrains.jps.builders;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.Function;
 import junit.framework.Assert;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
@@ -14,24 +13,22 @@ import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.idea.IdeaProjectLoader;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.ProjectTimestamps;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.JpsProject;
-import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,16 +49,16 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     Utils.setSystemRoot(FileUtil.createTempDirectory("compile-server", null));
   }
 
-  protected JpsSdk<JpsDummyElement> initJdk(final String name) {
+  protected JpsSdk<JpsDummyElement> addJdk(final String name) {
     try {
-      return initJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
+      return addJdk(name, FileUtil.toSystemIndependentName(ClasspathBootstrap.getResourcePath(Object.class).getCanonicalPath()));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
 
-  protected JpsSdk<JpsDummyElement> initJdk(final String name, final String path) {
+  protected JpsSdk<JpsDummyElement> addJdk(final String name, final String path) {
     String homePath = System.getProperty("java.home");
     String versionString = System.getProperty("java.version");
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> jdk = myModel.getGlobal().addSdk(name, homePath, versionString, JpsJavaSdkType.INSTANCE);
@@ -112,39 +109,40 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     return null;
   }
 
-
-  protected static IncProjectBuilder createBuilder(ProjectDescriptor projectDescriptor) {
-    return new IncProjectBuilder(projectDescriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL, null);
+  protected JpsModule addModule(String moduleName,
+                                String[] srcPaths,
+                                @Nullable final String outputPath,
+                                final JpsSdk<JpsDummyElement> jdk) {
+    final JpsModule module = myJpsProject.addModule(moduleName, JpsJavaModuleType.INSTANCE);
+    module.getSdkReferencesTable().setSdkReference(JpsJavaSdkType.INSTANCE, jdk.createReference());
+    module.getDependenciesList().addSdkDependency(JpsJavaSdkType.INSTANCE);
+    if (srcPaths.length > 0) {
+      for (String srcPath : srcPaths) {
+        module.getContentRootsList().addUrl(JpsPathUtil.pathToUrl(srcPath));
+        module.addSourceRoot(JpsPathUtil.pathToUrl(srcPath), JavaSourceRootType.SOURCE);
+      }
+      JpsJavaModuleExtension extension = JpsJavaExtensionService.getInstance().getOrCreateModuleExtension(module);
+      if (outputPath != null) {
+        extension.setOutputUrl(JpsPathUtil.pathToUrl(outputPath));
+      }
+      else {
+        extension.setInheritOutput(true);
+      }
+    }
+    return module;
   }
 
-  protected static void doBuild(IncProjectBuilder builder, CompileScope scope, boolean shouldFail, final boolean isMake,
-                                final boolean isRebuild) {
-    final List<BuildMessage> errorMessages = new ArrayList<BuildMessage>();
-    final List<BuildMessage> infoMessages = new ArrayList<BuildMessage>();
-    builder.addMessageHandler(new MessageHandler() {
-      @Override
-      public void processMessage(BuildMessage msg) {
-        if (msg.getKind() == BuildMessage.Kind.ERROR) {
-          errorMessages.add(msg);
-        }
-        else {
-          infoMessages.add(msg);
-        }
-      }
-    });
+  protected BuildResult doBuild(final ProjectDescriptor descriptor, CompileScope scope,
+                                final boolean make, final boolean rebuild, final boolean forceCleanCaches) {
+    IncProjectBuilder builder = new IncProjectBuilder(descriptor, BuilderRegistry.getInstance(), Collections.<String, String>emptyMap(), CanceledStatus.NULL, null);
+    BuildResult result = new BuildResult();
+    builder.addMessageHandler(result);
     try {
-      builder.build(scope, isMake, isRebuild, false);
+      builder.build(scope, make, rebuild, forceCleanCaches);
     }
     catch (RebuildRequestedException e) {
       Assert.fail(e.getMessage());
     }
-    if (shouldFail) {
-      Assert.assertFalse("Build not failed as expected", errorMessages.isEmpty());
-    }
-    else {
-      final Function<BuildMessage,String> toStringFunction = StringUtil.createToStringFunction(BuildMessage.class);
-      Assert.assertTrue("Build failed. \nErrors:\n" + StringUtil.join(errorMessages, toStringFunction, "\n") +
-                        "\nInfo messages:\n" + StringUtil.join(infoMessages, toStringFunction, "\n"), errorMessages.isEmpty());
-    }
+    return result;
   }
 }

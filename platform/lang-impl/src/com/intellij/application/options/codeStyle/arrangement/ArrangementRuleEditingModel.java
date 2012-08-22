@@ -50,10 +50,4 @@ public interface ArrangementRuleEditingModel {
   void addAndCondition(@NotNull ArrangementSettingsAtomNode node);
 
   void removeAndCondition(@NotNull ArrangementSettingsNode node);
-  
-  void addListener(@NotNull Listener listener);
-  
-  interface Listener {
-    void onChanged(@NotNull TreeNode topMost, @NotNull TreeNode bottomMost);
-  }
 }

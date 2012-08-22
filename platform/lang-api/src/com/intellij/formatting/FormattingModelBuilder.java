@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
  */
 
 public interface FormattingModelBuilder {
+  
   /**
    * Requests building the formatting model for a section of the file containing
    * the specified PSI element and its children.

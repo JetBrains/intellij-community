@@ -15,8 +15,7 @@
  */
 package com.siyeh.ipp.parenthesis;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -34,11 +33,22 @@ public class RemoveUnnecessaryParenthesesIntention extends Intention {
   @Override
   public void processIntention(@NotNull PsiElement element)
     throws IncorrectOperationException {
+    if (element instanceof PsiParameterList) {
+      stripLambdaParameterParentheses((PsiParameterList)element);
+      return;
+    }
     PsiExpression expression = (PsiExpression)element;
     while (expression.getParent() instanceof PsiExpression) {
       expression = (PsiExpression)expression.getParent();
       assert expression != null;
     }
     ParenthesesUtils.removeParentheses(expression, false);
+  }
+
+  public static void stripLambdaParameterParentheses(PsiParameterList element) {
+    final PsiLambdaExpression expression =
+      (PsiLambdaExpression)JavaPsiFacade
+        .getElementFactory(element.getProject()).createExpressionFromText(element.getParameters()[0].getName() + "->{}",element);
+    element.replace(expression.getParameterList());
   }
 }

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public class ProjectViewModuleNode extends AbstractModuleNode {
@@ -45,7 +46,11 @@ public class ProjectViewModuleNode extends AbstractModuleNode {
 
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
-    ModuleRootManager rootManager = ModuleRootManager.getInstance(getValue());
+    Module module = getValue();
+    if (module == null) {  // module has been disposed
+      return Collections.emptyList();
+    }
+    ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     ModuleFileIndex moduleFileIndex = rootManager.getFileIndex();
 
     final VirtualFile[] contentRoots = rootManager.getContentRoots();

@@ -77,6 +77,7 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepend
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
@@ -914,6 +915,11 @@ public class BuildManager implements ApplicationComponent{
     final Channel serverChannel = bootstrap.bind(new InetSocketAddress(listenPort));
     myAllOpenChannels.add(serverChannel);
     return listenPort;
+  }
+
+  @TestOnly
+  public void stopWatchingProject(Project project) {
+    myProjectDataMap.remove(getProjectPath(project));
   }
 
   private static String classpathToString(List<File> cp) {

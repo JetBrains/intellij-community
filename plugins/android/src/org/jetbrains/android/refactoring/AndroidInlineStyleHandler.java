@@ -76,6 +76,6 @@ public class AndroidInlineStyleHandler extends InlineActionHandler {
       return null;
     }
     final XmlTag tag = PsiTreeUtil.getParentOfType(usageElement, XmlTag.class, false);
-    return tag != null ? AndroidInlineUtil.getUsageData(tag) : null;
+    return tag != null ? AndroidInlineUtil.getStyleUsageData(tag) : null;
   }
 }

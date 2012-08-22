@@ -142,7 +142,18 @@ public class MergeMethodArguments extends FixableUsageInfo {
   private String getMergedParam(PsiCallExpression call) {
     final PsiExpression[] args = call.getArgumentList().getExpressions();
     StringBuffer newExpression = new StringBuffer();
-    final String qualifiedName = myContainingClass != null ? myContainingClass.getQualifiedName() + "." + className : StringUtil.getQualifiedName(packageName, className);
+    final String qualifiedName;
+    if (myContainingClass != null) {
+      final String containingClassQName = myContainingClass.getQualifiedName();
+      if (containingClassQName != null) {
+        qualifiedName = containingClassQName + "." + className;
+      } else {
+        qualifiedName = className;
+      }
+    }
+    else {
+      qualifiedName = StringUtil.getQualifiedName(packageName, className);
+    }
     newExpression.append("new ").append(qualifiedName);
     if (!typeParams.isEmpty()) {
       final JavaResolveResult resolvant = call.resolveMethodGenerics();

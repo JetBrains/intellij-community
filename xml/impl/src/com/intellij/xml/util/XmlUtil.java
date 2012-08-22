@@ -596,6 +596,14 @@ public class XmlUtil {
            : doctype;
   }
 
+  public static CharSequence getLocalName(final CharSequence tagName) {
+    int pos = StringUtil.indexOf(tagName, ':');
+    if (pos == -1) {
+      return tagName;
+    }
+    return tagName.subSequence(pos + 1, tagName.length());
+  }
+
   private static class XmlElementProcessor {
     private final PsiElementProcessor processor;
     private final PsiFile targetFile;

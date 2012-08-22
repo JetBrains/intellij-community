@@ -39,6 +39,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   public static <T extends DomElement> DomAnchorImpl<T> createAnchor(@NotNull T t) {
     return createAnchor(t, false);
   }
+
   public static <T extends DomElement> DomAnchorImpl<T> createAnchor(@NotNull T t, boolean usePsi) {
     if (usePsi) {
       final XmlElement element = t.getXmlElement();
@@ -344,5 +345,37 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       result = 31 * result + (myProject != null ? myProject.hashCode() : 0);
       return result;
     }
+  }
+
+  private static class StubAnchor<T extends DomElement> implements DomAnchor<T> {
+
+    private final DomInvocationHandler myHandler;
+
+    private StubAnchor(DomInvocationHandler handler) {
+      myHandler = handler;
+    }
+
+    @Nullable
+    @Override
+    public T retrieveDomElement() {
+      return (T)myHandler.getProxy();
+    }
+
+    @NotNull
+    @Override
+    public XmlFile getContainingFile() {
+      return myHandler.getFile();
+    }
+
+    @Nullable
+    @Override
+    public PsiElement getPsiElement() {
+      return myHandler.getXmlElement();
+    }
+  }
+
+  public static <T extends DomElement> DomAnchor<T> createStubAnchor(T element) {
+    DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
+    return handler.getStub() == null ? createAnchor(element, true) : new StubAnchor<T>(handler);
   }
 }

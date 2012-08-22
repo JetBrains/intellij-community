@@ -24,8 +24,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,12 +59,13 @@ public class ArrangementRuleTree {
   @NotNull private final DefaultTreeModel                myTreeModel;
   @NotNull private final Tree                            myTree;
   @NotNull private final ArrangementNodeComponentFactory myFactory;
-
+  
+  private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
   public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
     myFactory = new ArrangementNodeComponentFactory(displayManager);
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+    ArrangementTreeNode root = new ArrangementTreeNode(null);
     myTreeModel = new DefaultTreeModel(root);
     myTree = new Tree(myTreeModel) {
       @Override
@@ -102,8 +102,16 @@ public class ArrangementRuleTree {
     mySelectionModel.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        setSelection(e.getOldLeadSelectionPath(), false);
-        setSelection(e.getNewLeadSelectionPath(), true);
+        if (myExplicitSelectionChange) {
+          return;
+        }
+        TreePath[] paths = e.getPaths();
+        if (paths == null) {
+          return;
+        }
+        for (int i = 0; i < paths.length; i++) {
+          setSelection(paths[i], e.isAddedPath(i));
+        }
       }
     });
     myTree.addMouseListener(new MouseAdapter() {
@@ -143,6 +151,9 @@ public class ArrangementRuleTree {
     for (TreePath p = path; p != null; p = p.getParentPath()) {
       int row = myTree.getRowForPath(p);
       if (row < 0) {
+        row = ((ArrangementTreeNode)p.getLastPathComponent()).getRow();
+      }
+      if (row < 0) {
         return;
       }
       ArrangementNodeComponent component = myRenderers.get(row);
@@ -156,7 +167,7 @@ public class ArrangementRuleTree {
   private static void expandAll(Tree tree, TreePath parent) {
     // Traverse children
     TreeNode node = (TreeNode)parent.getLastPathComponent();
-    if (node.getChildCount() >= 0) {
+    if (node.getChildCount() > 0) {
       for (Enumeration e = node.children(); e.hasMoreElements(); ) {
         TreeNode n = (TreeNode)e.nextElement();
         TreePath path = parent.pathByAddingChild(n);
@@ -168,7 +179,7 @@ public class ArrangementRuleTree {
     tree.expandPath(parent);
   }
 
-  private void map(@NotNull DefaultMutableTreeNode root,
+  private void map(@NotNull ArrangementTreeNode root,
                    @NotNull List<ArrangementSettingsNode> settings,
                    @NotNull ArrangementSettingsGrouper grouper)
   {
@@ -293,24 +304,63 @@ public class ArrangementRuleTree {
     }
   }
 
-  private void onModelChange(@NotNull TreeNode topMost, @NotNull TreeNode bottomMost) {
-    mySkipSelectionChange = true;
+  private void onModelChange(@NotNull ArrangementRuleEditingModelImpl model, @NotNull final TIntIntHashMap rowChanges) {
+    // Shift row-based caches.
+    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> changedModelMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
+    final TIntObjectHashMap<ArrangementNodeComponent> changedRendererMappings = new TIntObjectHashMap<ArrangementNodeComponent>();
+    rowChanges.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int oldRow, int newRow) {
+        ArrangementRuleEditingModelImpl m = myModels.remove(oldRow);
+        if (m != null) {
+          changedModelMappings.put(newRow, m);
+        }
+
+        ArrangementNodeComponent renderer = myRenderers.remove(oldRow);
+        if (renderer != null) {
+          changedRendererMappings.put(newRow, renderer);
+        }
+        return true;
+      }
+    });
+    putAll(changedModelMappings, myModels);
+    putAll(changedRendererMappings, myRenderers);
+
+    // Perform necessary actions for the changed model.
+    ArrangementTreeNode topMost = model.getTopMost();
+    ArrangementTreeNode bottomMost = model.getBottomMost();
+    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
+    mySelectionModel.clearSelection();
+    myExplicitSelectionChange = true;
     try {
-      for (DefaultMutableTreeNode node = (DefaultMutableTreeNode)bottomMost; node != null; node = (DefaultMutableTreeNode)node.getParent()) {
+      for (ArrangementTreeNode node = bottomMost; node != null; node = node.getParent()) {
         TreePath path = new TreePath(node.getPath());
         int row = myTree.getRowForPath(path);
         myRenderers.remove(row);
         myTreeModel.nodeChanged(node);
         mySelectionModel.addSelectionPath(path);
-        getNodeComponentAt(row, (ArrangementSettingsNode)node.getUserObject()).setSelected(true);
+        ArrangementSettingsNode setting = node.getBackingSetting();
+        if (setting != null) {
+          getNodeComponentAt(row, setting).setSelected(true);
+        }
         if (node == topMost) {
           break;
         }
       }
     }
     finally {
-      mySkipSelectionChange = false;
+      myExplicitSelectionChange = false;
     }
+  }
+
+  private static <T> void putAll(@NotNull TIntObjectHashMap<T> from, @NotNull final TIntObjectHashMap<T> to) {
+    from.forEachEntry(new TIntObjectProcedure<T>() {
+      @Override
+      public boolean execute(int key, T value) {
+        to.put(key, value);
+        return true;
+      }
+    });
   }
   
   private class MyCellRenderer implements TreeCellRenderer {
@@ -321,11 +371,16 @@ public class ArrangementRuleTree {
                                                   boolean expanded,
                                                   boolean leaf,
                                                   int row,
-                                                  boolean hasFocus) {
-      if (row < 0) {
+                                                  boolean hasFocus)
+    {
+      ArrangementSettingsNode node = ((ArrangementTreeNode)value).getBackingSetting();
+      if (node == null) {
         return EMPTY_RENDERER;
       }
-      ArrangementSettingsNode node = (ArrangementSettingsNode)((DefaultMutableTreeNode)value).getUserObject();
+
+      if (row < 0) {
+        return myFactory.getComponent(node).getUiComponent();
+      }
       return getNodeComponentAt(row, node).getUiComponent();
     }
   }
@@ -365,10 +420,11 @@ public class ArrangementRuleTree {
     }
   }
   
-  private class MyModelChangeListener implements ArrangementRuleEditingModel.Listener {
+  private class MyModelChangeListener implements ArrangementRuleEditingModelImpl.Listener {
+
     @Override
-    public void onChanged(@NotNull TreeNode topMost, @NotNull TreeNode bottomMost) {
-      onModelChange(topMost, bottomMost); 
+    public void onChanged(@NotNull ArrangementRuleEditingModelImpl model, @NotNull TIntIntHashMap rowChanges) {
+      onModelChange(model, rowChanges); 
     }
   }
 }

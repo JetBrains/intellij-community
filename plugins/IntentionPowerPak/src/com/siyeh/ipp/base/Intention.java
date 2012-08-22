@@ -54,10 +54,13 @@ public abstract class Intention extends BaseElementAtCaretIntentionAction {
     if (matchingElement == null) {
       return;
     }
-    processIntention(matchingElement);
+    processIntention(editor, matchingElement);
   }
 
   protected abstract void processIntention(@NotNull PsiElement element) throws IncorrectOperationException;
+  protected void processIntention(Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    processIntention(element);
+  }
 
   @NotNull
   protected abstract PsiElementPredicate getElementPredicate();

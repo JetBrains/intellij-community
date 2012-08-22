@@ -115,9 +115,9 @@ public class Standalone {
 
   public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, BuildType buildType, Set<String> modulesSet,
                               List<String> artifactsList, final boolean includeTests, final MessageHandler messageHandler) throws Exception {
-    final BuildRunner buildRunner = new BuildRunner(loader, modulesSet, buildType, artifactsList, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
+    final BuildRunner buildRunner = new BuildRunner(loader, modulesSet, artifactsList, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
-    buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, includeTests);
+    buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, includeTests, buildType);
   }
 
   private static class ConsoleMessageHandler implements MessageHandler {

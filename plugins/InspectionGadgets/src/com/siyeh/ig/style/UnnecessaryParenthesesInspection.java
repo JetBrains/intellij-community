@@ -36,6 +36,7 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreParenthesesOnConditionals = false;
+  public boolean ignoreParenthesesOnLambdaParameter = false;
 
   @Override
   @NotNull
@@ -61,6 +62,8 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message(
       "unnecessary.parentheses.conditional.option"),
                              "ignoreParenthesesOnConditionals");
+    optionsPanel.addCheckbox("Ignore parentheses around single no formal type lambda parameter",
+                             "ignoreParenthesesOnLambdaParameter");
     return optionsPanel;
   }
 
@@ -80,10 +83,14 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor)
       throws IncorrectOperationException {
-      final PsiExpression expression =
-        (PsiExpression)descriptor.getPsiElement();
-      ParenthesesUtils.removeParentheses(expression,
-                                         ignoreClarifyingParentheses);
+      final PsiElement element = descriptor.getPsiElement();
+      if (element instanceof PsiParameterList) {
+        final PsiLambdaExpression expression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(element.getProject())
+          .createExpressionFromText(((PsiParameterList)element).getParameters()[0].getName() + "->{}",element);
+            element.replace(expression.getParameterList());
+      } else {
+        ParenthesesUtils.removeParentheses((PsiExpression)element, ignoreClarifyingParentheses);
+      }
     }
   }
 
@@ -92,8 +99,17 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
     return new UnnecessaryParenthesesFix();
   }
 
-  private class UnnecessaryParenthesesVisitor
-    extends BaseInspectionVisitor {
+  private class UnnecessaryParenthesesVisitor extends BaseInspectionVisitor {
+    @Override
+    public void visitParameterList(PsiParameterList list) {
+      super.visitParameterList(list);
+      if (!ignoreParenthesesOnLambdaParameter && list.getParent() instanceof PsiLambdaExpression && list.getParametersCount() == 1) {
+        final PsiParameter parameter = list.getParameters()[0];
+        if (parameter.getTypeElement() == null && list.getFirstChild() != parameter && list.getLastChild() != parameter) {
+          registerError(list);
+        }
+      }
+    }
 
     @Override
     public void visitParenthesizedExpression(

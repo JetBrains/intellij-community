@@ -2,6 +2,7 @@ package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,11 +71,19 @@ public class BuildFSState extends FSState {
   public boolean markDirty(@Nullable CompileContext context, File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
     if (roundDelta != null) {
-      if (getContextModules(context).contains(rd.module)) {
+      if (isInCurrentContextModules(context, rd)) {
         roundDelta.markRecompile(rd.root, file);
       }
     }
     return super.markDirty(context, file, rd, tsStorage);
+  }
+
+  private static boolean isInCurrentContextModules(CompileContext context, RootDescriptor rd) {
+    if (context == null) {
+      return false;
+    }
+    Set<String> modules = CONTEXT_MODULES_KEY.get(context, Collections.<String>emptySet());
+    return modules.contains(rd.module) && rd.isTestRoot == context.isCompilingTests();
   }
 
   @Override
@@ -83,7 +92,7 @@ public class BuildFSState extends FSState {
     if (marked) {
       final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
       if (roundDelta != null) {
-        if (getContextModules(context).contains(rd.module)) {
+        if (isInCurrentContextModules(context, rd)) {
           roundDelta.markRecompile(rd.root, file);
         }
       }
@@ -157,7 +166,7 @@ public class BuildFSState extends FSState {
       for (File file : files) {
         if (!excludes.isExcluded(file)) {
           if (scope.isAffected(rd.module, file)) {
-            final long stamp = file.lastModified();
+            final long stamp = FileSystemUtil.lastModified(file);
             if (!rd.isGeneratedSources && stamp > compilationStartStamp) {
               // if the file was modified after the compilation had started,
               // do not save the stamp considering file dirty
@@ -194,22 +203,12 @@ public class BuildFSState extends FSState {
     if (paths != null) {
       for (String path : paths) {
         File file = new File(FileUtil.toSystemDependentName(path));
-        long stamp = file.lastModified();
-        if (stamp > compilationStartStamp + 1000) {//todo[nik] this is added to fix tests on Linux
-          delta.markRecompile(descriptor.getRootIndex(), path);
-        }
-        else {
-          marked = true;
-          storage.update(descriptor.getArtifactId(), path, stamp);
-        }
+        long stamp = FileSystemUtil.lastModified(file);
+        marked = true;
+        storage.update(descriptor.getArtifactId(), path, stamp);
       }
     }
     return marked;
-  }
-
-  @NotNull
-  private static Set<String> getContextModules(@Nullable CompileContext context) {
-    return context != null? CONTEXT_MODULES_KEY.get(context, Collections.<String>emptySet()) : Collections.<String>emptySet();
   }
 
   private static void setContextModules(@Nullable CompileContext context, @Nullable Set<String> modules) {

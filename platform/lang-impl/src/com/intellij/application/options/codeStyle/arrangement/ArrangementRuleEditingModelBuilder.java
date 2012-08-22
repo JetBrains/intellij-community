@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
 /**
@@ -68,7 +69,7 @@ public class ArrangementRuleEditingModelBuilder {
   @SuppressWarnings("MethodMayBeStatic")
   public void build(@NotNull ArrangementSettingsNode setting,
                     @NotNull JTree tree,
-                    @NotNull DefaultMutableTreeNode root,
+                    @NotNull ArrangementTreeNode root,
                     @NotNull ArrangementSettingsGrouper grouper,
                     @NotNull TIntObjectHashMap<ArrangementRuleEditingModelImpl> rowMappings)
   {
@@ -92,11 +93,19 @@ public class ArrangementRuleEditingModelBuilder {
     }
 
     HierarchicalArrangementSettingsNode grouped = grouper.group(setting);
-    Pair<DefaultMutableTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped);
-    DefaultMutableTreeNode topMostNode = (DefaultMutableTreeNode)ArrangementConfigUtil.getLastBefore(pair.first, root);
+    DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
+    Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped, treeModel);
+    ArrangementTreeNode topMostNode = ArrangementConfigUtil.getLastBefore(pair.first, root);
     int row = initialInsertRow + pair.second - 1;
-    ArrangementRuleEditingModelImpl model
-      = new ArrangementRuleEditingModelImpl(setting, topMostNode, pair.first, grouper, rowMappings, row);
+    ArrangementRuleEditingModelImpl model = new ArrangementRuleEditingModelImpl(
+      treeModel,
+      setting,
+      topMostNode,
+      pair.first,
+      grouper,
+      row,
+      tree.isRootVisible()
+    );
     rowMappings.put(row, model);
   }
 

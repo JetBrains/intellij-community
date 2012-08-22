@@ -1,12 +1,13 @@
 package org.jetbrains.android.refactoring;
 
+import com.android.AndroidConstants;
+import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.resources.ResourceType;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
-import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidatorEx;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
@@ -15,16 +16,14 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
+import org.jetbrains.android.actions.CreateResourceFileAction;
 import org.jetbrains.android.dom.layout.Include;
 import org.jetbrains.android.dom.layout.LayoutViewElement;
 import org.jetbrains.android.facet.AndroidFacet;
-import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
-import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +41,7 @@ public class AndroidExtractAsIncludeAction extends AndroidBaseLayoutRefactoringA
 
   private final MyTestConfig myTestConfig;
 
+  @SuppressWarnings("UnusedDeclaration")
   public AndroidExtractAsIncludeAction() {
     myTestConfig = null;
   }
@@ -134,57 +134,40 @@ public class AndroidExtractAsIncludeAction extends AndroidBaseLayoutRefactoringA
 
     final List<XmlTag> tagsInRange = collectAllTags(from, to);
     assert tagsInRange.size() > 0 : "there is no tag inside the range";
+    final String fileName = myTestConfig != null ? myTestConfig.myLayoutFileName : null;
+    final String dirName = dir.getName();
+    final FolderConfiguration config = dirName.length() > 0
+                                       ? FolderConfiguration.getConfig(dirName.split(AndroidConstants.RES_QUALIFIER_SEP))
+                                       : null;
 
-    final String title = AndroidBundle.message("android.extract.as.include.title");
-    final String fileName;
-
-    if (myTestConfig != null) {
-      fileName = myTestConfig.myLayoutFileName;
-    }
-    else {
-      fileName = Messages.showInputDialog(project, "Enter new layout file name", title, Messages.getQuestionIcon(),
-                                          null, new MyInputValidatorEx(dir));
-    }
-
-    if (fileName == null) {
-      return;
-    }
-    final String fileName1 = addXmlExtensionIfNecessary(fileName);
-
-    new WriteCommandAction.Simple(project, "Extract '" + fileName1 + "' layout", file) {
+    CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override
-      protected void run() throws Throwable {
-        doRefactor(project, file, from, to, dir, parentTag, fileName1, tagsInRange.size() > 1);
-      }
+      public void run() {
+        final XmlFile newFile =
+          CreateResourceFileAction.createFileResource(facet, ResourceType.LAYOUT, fileName, "temp_root", config, true);
 
-      @Override
-      protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
-        return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
+        if (newFile != null) {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              doRefactor(facet, file, newFile, from, to, parentTag, tagsInRange.size() > 1);
+            }
+          });
+        }
       }
-    }.execute();
+    }, "Extract Android Layout", null, UndoConfirmationPolicy.REQUEST_CONFIRMATION);
   }
 
-  private static void doRefactor(Project project,
+  private static void doRefactor(AndroidFacet facet,
                                  PsiFile file,
+                                 XmlFile newFile,
                                  PsiElement from,
                                  PsiElement to,
-                                 PsiDirectory dir,
                                  XmlTag parentTag,
-                                 String fileName,
                                  boolean wrapWithMerge) {
+    final Project project = facet.getModule().getProject();
     final String textToExtract = file.getText().substring(from.getTextRange().getStartOffset(),
                                                           to.getTextRange().getEndOffset());
-    final XmlFile newFile;
-    try {
-      final PsiFile f = dir.createFile(fileName);
-      assert f instanceof XmlFile;
-      newFile = (XmlFile)f;
-    }
-    catch (Exception e) {
-      AndroidUtils.reportError(project, e.getClass().getName() + ": " + e.getMessage(),
-                               AndroidBundle.message("android.extract.as.include.title"));
-      return;
-    }
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     final Document document = documentManager.getDocument(newFile);
     assert document != null;
@@ -236,7 +219,7 @@ public class AndroidExtractAsIncludeAction extends AndroidBaseLayoutRefactoringA
         }
       }
     }
-    final String resourceName = AndroidCommonUtils.getResourceName(ResourceType.LAYOUT.getName(), fileName);
+    final String resourceName = AndroidCommonUtils.getResourceName(ResourceType.LAYOUT.getName(), newFile.getName());
     final XmlTag includeTag = elementFactory.createTagFromText("<include layout=\"@layout/" + resourceName + "\"/>");
     parentTag.addAfter(includeTag, to);
     parentTag.deleteChildRange(from, to);
@@ -304,40 +287,6 @@ public class AndroidExtractAsIncludeAction extends AndroidBaseLayoutRefactoringA
 
     MyTestConfig(@NotNull String layoutFileName) {
       myLayoutFileName = layoutFileName;
-    }
-  }
-
-  private static class MyInputValidatorEx implements InputValidatorEx {
-    private final PsiDirectory myDirectory;
-
-    public MyInputValidatorEx(@NotNull PsiDirectory directory) {
-      myDirectory = directory;
-    }
-
-    @Nullable
-    @Override
-    public String getErrorText(String inputString) {
-      if (inputString.length() == 0) {
-        return null;
-      }
-      final String fileName = addXmlExtensionIfNecessary(inputString);
-      try {
-        myDirectory.checkCreateFile(fileName);
-      }
-      catch (IncorrectOperationException e) {
-        return e.getMessage();
-      }
-      return null;
-    }
-
-    @Override
-    public boolean checkInput(String inputString) {
-      return inputString.length() > 0;
-    }
-
-    @Override
-    public boolean canClose(String inputString) {
-      return checkInput(inputString) && getErrorText(inputString) == null;
     }
   }
 }

@@ -1,11 +1,11 @@
 Cleaning output files:
-out/production/classAsArgument/A.class
+out/production/ClassAsArgument/A.class
 End of files
 Compiling files:
 src/A.java
 End of files
 Cleaning output files:
-out/production/classAsArgument/Annotated.class
+out/production/ClassAsArgument/Annotated.class
 End of files
 Compiling files:
 src/Annotated.java

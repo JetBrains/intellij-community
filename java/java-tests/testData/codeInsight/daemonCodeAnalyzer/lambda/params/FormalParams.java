@@ -30,6 +30,8 @@ class ReturnTypeCompatibility {
 
     public static void main(String[] args) {
         call((String i)->{ return i;});
+        call(<error descr="Cyclic inference">i->{ return i;}</error>);
+        call(<error descr="Cyclic inference">i->""</error>);
         call<error descr="'call(ReturnTypeCompatibility.I1<java.lang.Integer>)' in 'ReturnTypeCompatibility' cannot be applied to '(<lambda expression>)'">((int i)->{ return i;})</error>;
     }
 }

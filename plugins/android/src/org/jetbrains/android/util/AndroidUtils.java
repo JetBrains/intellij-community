@@ -388,33 +388,6 @@ public class AndroidUtils {
     return exitCode == 0 ? ExecutionStatus.SUCCESS : ExecutionStatus.ERROR;
   }
 
-  public static void runExternalTool(@NotNull GeneralCommandLine commandLine, @Nullable final Project project) {
-    final StringBuildingOutputProcessor processor = new StringBuildingOutputProcessor();
-    String result;
-    boolean success = false;
-    try {
-      success = executeCommand(commandLine, processor, WaitingStrategies.WaitForever.getInstance()) == ExecutionStatus.SUCCESS;
-      result = processor.getMessage();
-    }
-    catch (ExecutionException e) {
-      result = e.getMessage();
-    }
-
-    if (result != null) {
-      final ConsoleViewContentType contentType = success ?
-                                                 ConsoleViewContentType.NORMAL_OUTPUT :
-                                                 ConsoleViewContentType.ERROR_OUTPUT;
-      final String finalResult = result;
-      assert project != null;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          printMessageToConsole(project, finalResult, contentType);
-        }
-      });
-    }
-  }
-
   @NotNull
   public static String getSimpleNameByRelativePath(@NotNull String relativePath) {
     relativePath = FileUtil.toSystemIndependentName(relativePath);
@@ -425,22 +398,15 @@ public class AndroidUtils {
     return relativePath.substring(index + 1);
   }
 
-  public static void printMessageToConsole(@NotNull final Project project,
-                                           @NotNull final String s,
-                                           @NotNull final ConsoleViewContentType contentType) {
-    activateConsoleToolWindow(project, new Runnable() {
-      @Override
-      public void run() {
-        final ConsoleView consoleView = project.getUserData(CONSOLE_VIEW_KEY);
+  public static void printMessageToConsole(@NotNull Project project, @NotNull String s, @NotNull ConsoleViewContentType contentType) {
+    final ConsoleView consoleView = project.getUserData(CONSOLE_VIEW_KEY);
 
-        if (consoleView != null) {
-          consoleView.print(s + '\n', contentType);
-        }
-      }
-    });
+    if (consoleView != null) {
+      consoleView.print(s + '\n', contentType);
+    }
   }
 
-  private static void activateConsoleToolWindow(@NotNull Project project, @NotNull final Runnable runAfterActivation) {
+  public static void activateConsoleToolWindow(@NotNull Project project, @NotNull final Runnable runAfterActivation) {
     final ToolWindowManager manager = ToolWindowManager.getInstance(project);
     final String toolWindowId = AndroidBundle.message("android.console.tool.window.title");
 

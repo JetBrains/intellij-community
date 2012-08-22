@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.io.FileSystemUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
@@ -173,7 +174,7 @@ public class FSOperations {
     else { // is file
       boolean markDirty = forceDirty;
       if (!markDirty) {
-        markDirty = tsStorage.getStamp(file) != file.lastModified();
+        markDirty = tsStorage.getStamp(file) != FileSystemUtil.lastModified(file);
       }
       if (markDirty) {
         // if it is full project rebuild, all storages are already completely cleared;

@@ -91,3 +91,27 @@ class Sample {
                 runnable2.run();        // prints 444
         }
 }
+
+class ParameterIsEffectivelyFinal {
+  {
+    Comparable<String> c = o->{
+      new Runnable() {
+        @Override
+        public void run() {
+          System.out.println(o);
+        }
+      }.run();
+      return 0;
+    };
+    Comparable<String> c1 = o->{
+      o = "";
+      new Runnable() {
+        @Override
+        public void run() {
+          System.out.println(<error descr="Variable 'o' is accessed from within inner class. Needs to be declared final.">o</error>);
+        }
+      }.run();
+      return 0;
+    };
+  }
+}

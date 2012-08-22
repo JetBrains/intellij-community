@@ -78,4 +78,23 @@ public class UnnecessaryParenthesesInspection
             System.out.println(64 / (2 * 16 / 4 * 2 * 2));
         }
     }
+
+    class ParenthesesAroundLambda {
+      interface I {
+        void foo(int x, int y);
+      }
+      interface J {
+        void foo(int x);
+      }
+
+      {
+        I i = (x, y) -> {};
+        I i1 = (int x, int y) -> {};
+  
+        J j = (x) -> {};
+        J j1 = (int x) -> {};
+        J j2 = x -> {};
+      }
+    }
+
 }

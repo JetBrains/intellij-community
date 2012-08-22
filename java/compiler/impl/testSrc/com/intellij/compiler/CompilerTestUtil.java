@@ -2,8 +2,13 @@ package com.intellij.compiler;
 
 import com.intellij.compiler.impl.TranslatingCompilerFilesMonitor;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacSettings;
+import com.intellij.compiler.server.BuildManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMUtil;
@@ -54,5 +59,28 @@ public class CompilerTestUtil {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public static void enableExternalCompiler(final Project project) {
+    new WriteAction() {
+      protected void run(final Result result) {
+        CompilerWorkspaceConfiguration.getInstance(project).USE_COMPILE_SERVER = true;
+        ApplicationManagerEx.getApplicationEx().doNotSave(false);
+        JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
+        table.addJdk(table.getInternalJdk());
+      }
+    }.execute();
+  }
+
+  public static void disableExternalCompiler(final Project project) {
+    new WriteAction() {
+      protected void run(final Result result) {
+        CompilerWorkspaceConfiguration.getInstance(project).USE_COMPILE_SERVER = false;
+        ApplicationManagerEx.getApplicationEx().doNotSave(true);
+        JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
+        table.removeJdk(table.getInternalJdk());
+        BuildManager.getInstance().stopWatchingProject(project);
+      }
+    }.execute();
   }
 }

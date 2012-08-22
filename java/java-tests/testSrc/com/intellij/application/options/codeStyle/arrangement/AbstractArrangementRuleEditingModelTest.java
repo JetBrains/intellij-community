@@ -41,14 +41,14 @@ public abstract class AbstractArrangementRuleEditingModelTest {
 
   @NotNull protected ArrangementRuleEditingModelBuilder                 myBuilder;
   @NotNull protected JTree                                              myTree;
-  @NotNull protected DefaultMutableTreeNode                             myRoot;
+  @NotNull protected ArrangementTreeNode                                myRoot;
   @NotNull protected TIntObjectHashMap<ArrangementRuleEditingModelImpl> myRowMappings;
   @NotNull protected JavaRearranger                                     myGrouper;
 
   @Before
   public void setUp() {
     myBuilder = new ArrangementRuleEditingModelBuilder();
-    myRoot = new DefaultMutableTreeNode();
+    myRoot = new ArrangementTreeNode(null);
     myTree = new Tree(myRoot);
     myTree.expandPath(new TreePath(myRoot));
     myRowMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();

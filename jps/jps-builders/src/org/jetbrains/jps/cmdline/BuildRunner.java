@@ -33,7 +33,6 @@ public class BuildRunner {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildRunner");
   private final JpsModelLoader myModelLoader;
   private final Set<String> myModules;
-  private BuildType myBuildType;
   private final List<String> myArtifacts;
   private final List<String> myFilePaths;
   private final Map<String, String> myBuilderParams;
@@ -41,22 +40,15 @@ public class BuildRunner {
 
   public BuildRunner(JpsModelLoader modelLoader,
                      Set<String> modules,
-                     BuildType buildType,
                      List<String> artifacts, List<String> filePaths, Map<String, String> builderParams) {
     myModelLoader = modelLoader;
     myModules = modules;
-    myBuildType = buildType;
     myArtifacts = artifacts;
     myFilePaths = filePaths;
     myBuilderParams = builderParams;
   }
 
   public ProjectDescriptor load(MessageHandler msgHandler, File dataStorageRoot, BuildFSState fsState) throws IOException {
-    if (!dataStorageRoot.exists()) {
-      // invoked the very first time for this project. Force full rebuild
-      myBuildType = BuildType.PROJECT_REBUILD;
-    }
-
     final boolean inMemoryMappingsDelta = System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
     ProjectTimestamps projectTimestamps = null;
     BuildDataManager dataManager = null;
@@ -91,18 +83,18 @@ public class BuildRunner {
   }
 
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
-                       MessageHandler msgHandler, final boolean includeTests) throws Exception {
+                       MessageHandler msgHandler, final boolean includeTests, BuildType buildType) throws Exception {
     for (int attempt = 0; attempt < 2; attempt++) {
       if (myForceCleanCaches && myModules.isEmpty() && myFilePaths.isEmpty()) {
         // if compilation scope is the whole project and cache rebuild is forced, use PROJECT_REBUILD for faster compilation
-        myBuildType = BuildType.PROJECT_REBUILD;
+        buildType = BuildType.PROJECT_REBUILD;
       }
 
-      final CompileScope compileScope = createCompilationScope(myBuildType, pd, myModules, myArtifacts, myFilePaths, includeTests);
+      final CompileScope compileScope = createCompilationScope(buildType, pd, myModules, myArtifacts, myFilePaths, includeTests);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, constantSearch);
       builder.addMessageHandler(msgHandler);
       try {
-        switch (myBuildType) {
+        switch (buildType) {
           case PROJECT_REBUILD:
             builder.build(compileScope, false, true, myForceCleanCaches);
             break;
@@ -134,10 +126,6 @@ public class BuildRunner {
     }
   }
 
-  public BuildType getBuildType() {
-    return myBuildType;
-  }
-
   private static CompileScope createCompilationScope(BuildType buildType,
                                                      ProjectDescriptor pd,
                                                      Set<String> modules,
@@ -145,14 +133,9 @@ public class BuildRunner {
                                                      Collection<String> paths, boolean includeTests) throws Exception {
     final Timestamps timestamps = pd.timestamps.getStorage();
     Set<JpsArtifact> artifacts = new HashSet<JpsArtifact>();
-    if (artifactNames.isEmpty() && buildType == BuildType.PROJECT_REBUILD) {
-      artifacts.addAll(JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false));
-    }
-    else {
-      for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false)) {
-        if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
-          artifacts.add(artifact);
-        }
+    for (JpsArtifact artifact : JpsBuilderArtifactService.getInstance().getArtifacts(pd.jpsModel, false)) {
+      if (artifactNames.contains(artifact.getName()) && !StringUtil.isEmpty(artifact.getOutputPath())) {
+        artifacts.add(artifact);
       }
     }
 

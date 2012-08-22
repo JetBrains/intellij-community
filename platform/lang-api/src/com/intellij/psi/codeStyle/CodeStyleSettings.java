@@ -113,14 +113,14 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     return (T)myCustomSettings.get(aClass);
   }
 
+  @Override
   public CodeStyleSettings clone() {
     CodeStyleSettings clone = new CodeStyleSettings();
     clone.copyFrom(this);
     return clone;
   }
 
-  private void copyCustomSettingsFrom(CodeStyleSettings from) {
-    assert from != this;
+  private void copyCustomSettingsFrom(@NotNull CodeStyleSettings from) {
     myCustomSettings.clear();
     for (final CustomCodeStyleSettings settings : from.myCustomSettings.values()) {
       addCustomSettings((CustomCodeStyleSettings) settings.clone());
@@ -560,6 +560,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   private CodeStyleSettings myParentSettings;
   private boolean myLoadedAdditionalIndentOptions;
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
@@ -592,9 +593,9 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
           final Element additionalIndentElement = (Element)o;
           final String fileTypeId = additionalIndentElement.getAttributeValue(FILETYPE);
 
-          if (fileTypeId != null && fileTypeId.length() > 0) {
+          if (fileTypeId != null && !fileTypeId.isEmpty()) {
             FileType target = FileTypeManager.getInstance().getFileTypeByExtension(fileTypeId);
-            if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().length() == 0) {
+            if (FileTypes.UNKNOWN == target || FileTypes.PLAIN_TEXT == target || target.getDefaultExtension().isEmpty()) {
               target = new TempFileType(fileTypeId);
             }
 
@@ -619,7 +620,8 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
   private void copyOldIndentOptions(@NonNls final String extension, final IndentOptions options) {
     final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(extension);
-    if (fileType != FileTypes.UNKNOWN && fileType != FileTypes.PLAIN_TEXT && !myAdditionalIndentOptions.containsKey(fileType) && fileType.getDefaultExtension().length() != 0) {
+    if (fileType != FileTypes.UNKNOWN && fileType != FileTypes.PLAIN_TEXT && !myAdditionalIndentOptions.containsKey(fileType) &&
+        !fileType.getDefaultExtension().isEmpty()) {
       registerAdditionalIndentOptions(fileType, options);
       //
       // Upgrade to version 11
@@ -680,20 +682,21 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
         OTHER_INDENT_OPTIONS.SMART_TABS = value;
         optionsImported = true;
       } else if ("SPACE_AFTER_UNARY_OPERATOR".equals(name)) {
-        final boolean value = Boolean.valueOf(option.getAttributeValue("value")).booleanValue();
-        SPACE_AROUND_UNARY_OPERATOR = value;
+        SPACE_AROUND_UNARY_OPERATOR = Boolean.valueOf(option.getAttributeValue("value")).booleanValue();
         optionsImported = true;
       }
     }
     return optionsImported;
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     final CodeStyleSettings parentSettings = new CodeStyleSettings();
     DefaultJDOMExternalizer.writeExternal(this, element, new DifferenceFilter<CodeStyleSettings>(this, parentSettings));
     List<CustomCodeStyleSettings> customSettings = new ArrayList<CustomCodeStyleSettings>(myCustomSettings.values());
     
     Collections.sort(customSettings, new Comparator<CustomCodeStyleSettings>(){
+      @Override
       public int compare(final CustomCodeStyleSettings o1, final CustomCodeStyleSettings o2) {
         return o1.getTagName().compareTo(o2.getTagName());
       }
@@ -707,6 +710,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
 
     final FileType[] fileTypes = myAdditionalIndentOptions.keySet().toArray(new FileType[myAdditionalIndentOptions.keySet().size()]);
     Arrays.sort(fileTypes, new Comparator<FileType>() {
+      @Override
       public int compare(final FileType o1, final FileType o2) {
         return o1.getDefaultExtension().compareTo(o2.getDefaultExtension());
       }
@@ -717,7 +721,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       Element additionalIndentOptions = new Element(ADDITIONAL_INDENT_OPTIONS);
       indentOptions.serialize(additionalIndentOptions, getDefaultIndentOptions(fileType)) ;
       additionalIndentOptions.setAttribute(FILETYPE,fileType.getDefaultExtension());
-      if (additionalIndentOptions.getChildren().size() > 0) {
+      if (!additionalIndentOptions.getChildren().isEmpty()) {
         element.addContent(additionalIndentOptions);
       }
     }
@@ -828,6 +832,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       return null;
     }
 
+    @Override
     public void readExternal(@NonNls Element element) throws InvalidDataException {
       myPatterns.clear();
       myNames.clear();
@@ -845,6 +850,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       }
     }
 
+    @Override
     public void writeExternal(Element parentNode) throws WriteExternalException {
       for (int i = 0; i < myPatterns.size(); i++) {
         String pattern = myPatterns.get(i);
@@ -946,33 +952,40 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
       myExtension = extension;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return "TempFileType";
     }
 
+    @Override
     @NotNull
     public String getDescription() {
       return "TempFileType";
     }
 
+    @Override
     @NotNull
     public String getDefaultExtension() {
       return myExtension;
     }
 
+    @Override
     public Icon getIcon() {
       return null;
     }
 
+    @Override
     public boolean isBinary() {
       return false;
     }
 
+    @Override
     public boolean isReadOnly() {
       return false;
     }
 
+    @Override
     public String getCharset(@NotNull VirtualFile file, byte[] content) {
       return null;
     }

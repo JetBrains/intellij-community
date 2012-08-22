@@ -15,11 +15,13 @@
  */
 package com.intellij.application.options.codeStyle.arrangement
 
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.junit.Test
 
-import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.DefaultTreeModel
 
 import static org.junit.Assert.assertEquals
 /**
@@ -50,7 +52,7 @@ four =      '4'()
       '1' {
         '4'()
       }
-    def rowMappings = ArrangementConfigUtil.replace(one, four, replacement)
+    def rowMappings = doReplace(initial, one, four, replacement)
     
     // Check
     def expected = new TreeNodeBuilder().
@@ -108,8 +110,8 @@ four =      '4'()
          }
          '5'()
        }
-
-    ArrangementConfigUtil.insert(initial, 0, toAdd)
+    
+    doInsert(initial, 0, toAdd)
     assertNodesEqual(expected, initial)
   }
 
@@ -145,7 +147,7 @@ four =      '4'()
          '5'()
        }
 
-    ArrangementConfigUtil.insert(initial, 1, toAdd)
+    doInsert(initial, 1, toAdd)
     assertNodesEqual(expected, initial)
   }
 
@@ -181,7 +183,7 @@ four =      '4'()
               '5'()
             }
 
-    ArrangementConfigUtil.insert(initial, 2, toAdd)
+    doInsert(initial, 2, toAdd)
     assertNodesEqual(expected, initial)
   }
   
@@ -221,11 +223,19 @@ four =      '4'()
          }
        }
 
-    ArrangementConfigUtil.insert(initial, 3, toAdd)
+    doInsert(initial, 3, toAdd)
     assertNodesEqual(expected, initial)
   }
   
-  private static void assertNodesEqual(@NotNull DefaultMutableTreeNode expected, @NotNull DefaultMutableTreeNode actual) {
+  private static def doReplace(initial, from, to, replacement) {
+    ArrangementConfigUtil.replace(from, to, replacement, new DefaultTreeModel(initial), true)
+  }
+
+  private static def doInsert(parent, i, child) {
+    ArrangementConfigUtil.insert(parent, i, child, new DefaultTreeModel(ArrangementConfigUtil.getRoot(parent)))
+  }
+  
+  private static void assertNodesEqual(@NotNull ArrangementTreeNode expected, @NotNull ArrangementTreeNode actual) {
     assertEquals(expected.userObject, actual.userObject)
     assertEquals(expected.childCount, actual.childCount)
     for (i in 0..<expected.childCount) {
@@ -238,14 +248,14 @@ public class TreeNodeBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name) {
-    def result = new DefaultMutableTreeNode(name)
+    def result = new ArrangementTreeNode(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, name))
     currentNode?.add(result)
     result
   }
   
   @Nullable
-  DefaultMutableTreeNode getCurrentNode() {
-    getCurrent() as DefaultMutableTreeNode
+  ArrangementTreeNode getCurrentNode() {
+    getCurrent() as ArrangementTreeNode
   }
 
   @Override protected void setParent(Object parent, Object child) { }

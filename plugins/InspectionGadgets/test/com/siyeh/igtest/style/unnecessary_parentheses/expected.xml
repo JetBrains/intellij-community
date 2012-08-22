@@ -134,4 +134,11 @@
     <problem_class>Unnecessary parentheses</problem_class>
     <description>Parentheses around &lt;code&gt;(true)&lt;/code&gt; are unnecessary #loc</description>
   </problem>
+
+  <problem>
+    <file>UnnecessaryParenthesesInspection.java</file>
+    <line>94</line>
+    <problem_class>Unnecessary parentheses</problem_class>
+    <description>Parentheses around &lt;code&gt;(x)&lt;/code&gt; are unnecessary #loc</description>
+  </problem>
 </problems>
