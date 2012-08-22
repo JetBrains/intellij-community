@@ -160,7 +160,7 @@ public class PyBlock implements ASTBlock {
       }
     }
     else if (parentType == PyElementTypes.DICT_LITERAL_EXPRESSION || parentType == PyElementTypes.SET_LITERAL_EXPRESSION) {
-      if (childType == PyTokenTypes.RBRACE) {
+      if (childType == PyTokenTypes.RBRACE || !hasLineBreaksBefore(child, 1)) {
         childIndent = Indent.getNoneIndent();
       }
       else {
@@ -238,10 +238,14 @@ public class PyBlock implements ASTBlock {
       if (!mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
         return false;
       }
+      if (child.getElementType() == PyTokenTypes.COMMA) {
+        return false;
+      }
       PyArgumentList argList = (PyArgumentList)_node.getPsi();
       if (argList != null) {
         PyExpression[] arguments = argList.getArguments();
-        return arguments.length > 1 || (arguments.length == 1 && PyPsiUtils.getNextComma(arguments[0].getNode()) != null);
+        return arguments.length > 1 || hasLineBreaksBefore(child, 1) || (
+          arguments.length == 1 && PyPsiUtils.getNextComma(arguments[0].getNode()) != null);
       }
       return false;
     }
