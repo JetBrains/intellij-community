@@ -33,9 +33,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.KeyedLazyInstanceEP;
-import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.containers.WeakValueHashMap;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,44 +57,40 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     registerRules();
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
   @Nullable
-  private Object getData(String dataId, final Component focusedComponent) {
+  private Object getData(@NotNull String dataId, final Component focusedComponent) {
     for (Component c = focusedComponent; c != null; c = c.getParent()) {
       final DataProvider dataProvider = getDataProvider(c);
       if (dataProvider == null) continue;
-
-      final Set<String> set = StringSetSpinAllocator.alloc();
-      try {
-        Object data = getDataFromProvider(dataProvider, dataId, set);
-        if (data != null) return data;
-      }
-      finally {
-        StringSetSpinAllocator.dispose(set);
-      }
+      Object data = getDataFromProvider(dataProvider, dataId, null);
+      if (data != null) return data;
     }
     return null;
   }
 
   @Nullable
-  private Object getDataFromProvider(final DataProvider provider, String dataId, final Set<String> alreadyComputedIds) {
-    if (alreadyComputedIds.contains(dataId)) return null;
-
-    alreadyComputedIds.add(dataId);
+  private Object getDataFromProvider(@NotNull final DataProvider provider, @NotNull String dataId, @Nullable Set<String> alreadyComputedIds) {
+    if (alreadyComputedIds != null && alreadyComputedIds.contains(dataId)) return null;
     try {
       Object data = provider.getData(dataId);
       if (data != null) return validated(data, dataId, provider);
 
       GetDataRule dataRule = getDataRule(dataId);
       if (dataRule != null) {
+        final Set<String> ids = alreadyComputedIds == null ? new THashSet<String>() : alreadyComputedIds;
+        ids.add(dataId);
         data = dataRule.getData(new DataProvider() {
+          @Override
           public Object getData(String dataId) {
-            return getDataFromProvider(provider, dataId, alreadyComputedIds);
+            return getDataFromProvider(provider, dataId, ids);
           }
         });
 
@@ -104,7 +100,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       return null;
     }
     finally {
-      alreadyComputedIds.remove(dataId);
+      if (alreadyComputedIds != null) alreadyComputedIds.remove(dataId);
     }
   }
 
@@ -125,7 +121,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
 
   @Nullable
-  public GetDataRule getDataRule(String dataId) {
+  public GetDataRule getDataRule(@NotNull String dataId) {
     GetDataRule rule = getRuleFromMap(dataId);
     if (rule != null) {
       return rule;
@@ -134,8 +130,10 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     final GetDataRule plainRule = getRuleFromMap(AnActionEvent.uninjectedId(dataId));
     if (plainRule != null) {
       return new GetDataRule() {
+        @Override
         public Object getData(final DataProvider dataProvider) {
           return plainRule.getData(new DataProvider() {
+            @Override
             @Nullable
             public Object getData(@NonNls String dataId) {
               return dataProvider.getData(AnActionEvent.injectedId(dataId));
@@ -149,7 +147,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
 
   @Nullable
-  private GetDataRule getRuleFromMap(final String dataId) {
+  private GetDataRule getRuleFromMap(@NotNull String dataId) {
     GetDataRule rule = myDataConstantToRuleMap.get(dataId);
     if (rule == null && !myDataConstantToRuleMap.containsKey(dataId)) {
       final KeyedLazyInstanceEP<GetDataRule>[] eps = Extensions.getExtensions(GetDataRule.EP_NAME);
@@ -164,7 +162,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
 
   @Nullable
-  private static Object validated(Object data, String dataId, Object dataSource) {
+  private static Object validated(@NotNull Object data, @NotNull String dataId, @NotNull Object dataSource) {
     Object invalidData = DataValidator.findInvalidData(dataId, data, dataSource);
     if (invalidData != null) {
       return null;
@@ -176,10 +174,12 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     return data;
   }
 
+  @Override
   public DataContext getDataContext(Component component) {
     return new MyDataContext(component);
   }
 
+  @Override
   public DataContext getDataContext(@NotNull Component component, int x, int y) {
     if (x < 0 || x >= component.getWidth() || y < 0 || y >= component.getHeight()) {
       throw new IllegalArgumentException("wrong point: x=" + x + "; y=" + y);
@@ -201,6 +201,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myWindowManager = windowManager;
   }
 
+  @Override
   @NotNull
   public DataContext getDataContext() {
     return getDataContext(getFocusedComponent());
@@ -211,6 +212,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     final AsyncResult<DataContext> context = new AsyncResult<DataContext>();
 
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(new Runnable() {
+      @Override
       public void run() {
         context.setDone(getDataContext());
       }
@@ -280,17 +282,20 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myDataConstantToRuleMap.put(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "DataManager";
   }
 
+  @Override
   public <T> void saveInDataContext(DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data) {
     if (dataContext instanceof UserDataHolder) {
       ((UserDataHolder)dataContext).putUserData(dataKey, data);
     }
   }
 
+  @Override
   @Nullable
   public <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey) {
     return dataContext instanceof UserDataHolder ? ((UserDataHolder)dataContext).getUserData(dataKey) : null;
@@ -300,7 +305,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     public static final NullResult INSTANCE = new NullResult();
   }
   
-  private static Set<String> ourSafeKeys = new HashSet<String>(Arrays.asList(
+  private static final Set<String> ourSafeKeys = new HashSet<String>(Arrays.asList(
     PlatformDataKeys.PROJECT.getName(),
     PlatformDataKeys.EDITOR.getName(),
     PlatformDataKeys.IS_MODAL_CONTEXT.getName(),
@@ -314,8 +319,8 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     // the weak reference. For example, Swing often remembers menu items
     // that have DataContext as a field.
     private final WeakReference<Component> myRef;
-    private WeakValueHashMap<Key, Object> mySavedData;
-    private WeakValueHashMap<String, Object> myCachedData = new WeakValueHashMap<String, Object>();
+    private WeakValueHashMap<Key, Object> myUserData;
+    private final WeakValueHashMap<String, Object> myCachedData = new WeakValueHashMap<String, Object>();
 
     public MyDataContext(final Component component) {
       myEventCount = -1;
@@ -329,7 +334,9 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       myEventCount = eventCount;
     }
 
+    @Override
     public Object getData(String dataId) {
+      if (dataId == null) return null;
       int currentEventCount = IdeEventQueue.getInstance().getEventCount();
       if (myEventCount != -1 && myEventCount != currentEventCount) {
         LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
@@ -351,33 +358,29 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     }
 
     @Nullable
-    private Object doGetData(String dataId) {
-      Component _component = myRef.get();
+    private Object doGetData(@NotNull String dataId) {
+      Component component = myRef.get();
       if (PlatformDataKeys.IS_MODAL_CONTEXT.is(dataId)) {
-        if (_component != null) {
-          return IdeKeyEventDispatcher.isModalContext(_component) ? Boolean.TRUE : Boolean.FALSE;
-        }
-        else {
+        if (component == null) {
           return null;
         }
+        return IdeKeyEventDispatcher.isModalContext(component) ? Boolean.TRUE : Boolean.FALSE;
       }
-      else if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
-        return _component;
+      if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
+        return component;
       }
-      else if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
-        return _component != null ? ModalityState.stateForComponent(_component) : ModalityState.NON_MODAL;
+      if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
+        return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
-      else if (PlatformDataKeys.EDITOR.is(dataId)) {
-        Editor editor = (Editor)(((DataManagerImpl)DataManager.getInstance()).getData(dataId, _component));
+      if (PlatformDataKeys.EDITOR.is(dataId)) {
+        Editor editor = (Editor)((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
         return validateEditor(editor);
       }
-      else {
-        return (((DataManagerImpl)DataManager.getInstance()).getData(dataId, _component));
-      }
+      return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
     }
 
     @Nullable
-    private Editor validateEditor(Editor editor) {
+    private static Editor validateEditor(Editor editor) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       if (focusOwner instanceof JComponent) {
         final JComponent jComponent = (JComponent)focusOwner;
@@ -389,11 +392,12 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
 
     @NonNls
     public String toString() {
-      return "component=" + String.valueOf(myRef.get());
+      return "component=" + myRef.get();
     }
 
     @Override
     public <T> T getUserData(@NotNull Key<T> key) {
+      //noinspection unchecked
       return (T)getOrCreateMap().get(key);
     }
 
@@ -403,11 +407,11 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     }
 
     private WeakValueHashMap<Key, Object> getOrCreateMap() {
-      if (mySavedData == null) {
-        mySavedData = new WeakValueHashMap<Key, Object>();
+      WeakValueHashMap<Key, Object> userData = myUserData;
+      if (userData == null) {
+        myUserData = userData = new WeakValueHashMap<Key, Object>();
       }
-      return mySavedData;
+      return userData;
     }
   }
-
 }

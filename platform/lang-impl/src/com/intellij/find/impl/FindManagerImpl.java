@@ -700,7 +700,12 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   @Override
   public void findUsages(@NotNull PsiElement element) {
-    myFindUsagesManager.findUsages(element, null, null);
+    findUsages(element, false);
+  }
+
+  @Override
+  public void findUsages(@NotNull PsiElement element, boolean showDialog) {
+    myFindUsagesManager.findUsages(element, null, null, showDialog);
   }
 
   @Override
@@ -716,7 +721,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       Document document = editor.getDocument();
       PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
 
-      myFindUsagesManager.findUsages(element, psiFile, fileEditor);
+      myFindUsagesManager.findUsages(element, psiFile, fileEditor, false);
     }
   }
 

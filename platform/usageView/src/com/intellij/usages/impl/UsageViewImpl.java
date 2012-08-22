@@ -616,7 +616,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @Nullable
   public static KeyboardShortcut getShowUsagesWithSettingsShortcut() {
-    return ActionManager.getInstance().getKeyboardShortcut("ShowUsagesSettings");
+    return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
   }
 
   private class CloseAction extends CloseTabToolbarAction {

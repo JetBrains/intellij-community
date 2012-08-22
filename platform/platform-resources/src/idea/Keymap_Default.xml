@@ -61,7 +61,7 @@
   <action id="ShowUsages">
     <keyboard-shortcut first-keystroke="control alt F7"/>
   </action>
-  <action id="ShowUsagesSettings">
+  <action id="ShowSettingsAndFindUsages">
     <keyboard-shortcut first-keystroke="control shift alt F7"/>
   </action>
   <action id="UsageView.Include">
