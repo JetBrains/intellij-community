@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -26,17 +23,20 @@ import org.jetbrains.annotations.NotNull;
 
 public class MarkerInterfaceInspection extends BaseInspection {
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("marker.interface.display.name");
   }
 
+  @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message(
       "marker.interface.problem.descriptor");
   }
 
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new MarkerInterfaceVisitor();
   }
@@ -45,7 +45,6 @@ public class MarkerInterfaceInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so that it doesn't drill down to inner classes
       if (!aClass.isInterface() || aClass.isAnnotationType()) {
         return;
       }
@@ -57,9 +56,22 @@ public class MarkerInterfaceInspection extends BaseInspection {
       if (methods.length != 0) {
         return;
       }
-      final PsiClassType[] extendsList = aClass.getExtendsListTypes();
-      if (extendsList.length > 1) {
-        return;
+      final PsiReferenceList extendsList = aClass.getExtendsList();
+      if (extendsList != null) {
+        final PsiJavaCodeReferenceElement[] referenceElements = extendsList.getReferenceElements();
+        if (referenceElements.length > 0) {
+          if (referenceElements.length > 1) {
+            return;
+          }
+          final PsiReferenceParameterList parameterList = referenceElements[0].getParameterList();
+          if (parameterList == null) {
+            return;
+          }
+          final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+          if (typeParameterElements.length != 0) {
+            return;
+          }
+        }
       }
       registerClassError(aClass);
     }
