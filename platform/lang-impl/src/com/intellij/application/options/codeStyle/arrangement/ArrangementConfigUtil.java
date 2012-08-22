@@ -339,7 +339,7 @@ public class ArrangementConfigUtil {
 
     //region Insert nodes.
     int insertionIndex = root.getChildCount() < childCountBefore ? childCountBefore - 1 : childCountBefore;
-    boolean merged = insert(root, insertionIndex, replacement, treeModel);
+    insert(root, insertionIndex, replacement, treeModel);
     if (cutHierarchy != null) {
       List<ArrangementTreeNode> toInsert = new ArrayList<ArrangementTreeNode>();
       if (hasEqualSetting(root, cutHierarchy)) {
@@ -529,9 +529,11 @@ public class ArrangementConfigUtil {
   private static boolean hasEqualSetting(@NotNull ArrangementTreeNode node1, @NotNull ArrangementTreeNode node2) {
     ArrangementSettingsNode setting1 = node1.getBackingSetting();
     ArrangementSettingsNode setting2 = node2.getBackingSetting();
-    if (setting1 == null || setting2 == null) {
-      return false;
+    if (setting1 == null) {
+      return setting2 == null;
     }
-    return setting1.equals(setting2);
+    else {
+      return setting1.equals(setting2);
+    }
   }
 }
