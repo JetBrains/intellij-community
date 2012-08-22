@@ -30,10 +30,12 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
@@ -41,7 +43,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.net.NetUtils;
@@ -169,9 +171,12 @@ public class XsltCommandLineState extends CommandLineState {
 
         parameters.setMainClass("org.intellij.plugins.xslt.run.rt.XSLTRunner");
 
-        parameters.setWorkingDirectory(isEmpty(myXsltRunConfiguration.myWorkingDirectory) ?
-                new File(myXsltRunConfiguration.getXsltFile()).getParentFile().getAbsolutePath() :
-                myXsltRunConfiguration.myWorkingDirectory);
+      if (isEmpty(myXsltRunConfiguration.myWorkingDirectory)) {
+        parameters.setWorkingDirectory(new File(myXsltRunConfiguration.getXsltFile()).getParentFile().getAbsolutePath());
+      } else {
+        parameters.setWorkingDirectory(expandPath(myXsltRunConfiguration.myWorkingDirectory, myXsltRunConfiguration.getEffectiveModule(),
+                                                  myXsltRunConfiguration.getProject()));
+      }
 
         myExtensionData = new UserDataHolderBase();
         final List<XsltRunnerExtension> extensions = XsltRunnerExtension.getExtensions(myXsltRunConfiguration, myIsDebugger);
@@ -183,6 +188,14 @@ public class XsltCommandLineState extends CommandLineState {
 
         return parameters;
     }
+
+  protected static String expandPath(String path, Module module, Project project) {
+    path = PathMacroManager.getInstance(project).expandPath(path);
+    if (module != null) {
+      path = PathMacroManager.getInstance(module).expandPath(path);
+    }
+    return path;
+  }
 
     public int getPort() {
         return myPort;
@@ -206,7 +219,7 @@ public class XsltCommandLineState extends CommandLineState {
                                         BrowserUtil.launchBrowser(myXsltRunConfiguration.myOutputFile);
                                     }
                                     if (myXsltRunConfiguration.myOpenOutputFile) {
-                                        final String url = VfsUtil.pathToUrl(myXsltRunConfiguration.myOutputFile);
+                                        final String url = VfsUtilCore.pathToUrl(myXsltRunConfiguration.myOutputFile);
                                         final VirtualFile fileByUrl = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url.replace(File.separatorChar, '/'));
                                         if (fileByUrl != null) {
                                             fileByUrl.refresh(false, false);
