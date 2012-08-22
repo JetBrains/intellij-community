@@ -32,7 +32,7 @@ public class FileStub extends ElementStub {
   private final XmlFileHeader myHeader;
 
   public FileStub(StringRef tagName, StringRef tagNamespace, StringRef publicId, StringRef systemId) {
-    super(null, tagName);
+    super(null, tagName, tagNamespace, false);
     myHeader = new XmlFileHeader(tagName == null ? null : tagName.getString(),
                                  tagNamespace == null ? null : tagNamespace.getString(),
                                  publicId == null ? null : publicId.getString(),
@@ -40,7 +40,7 @@ public class FileStub extends ElementStub {
   }
 
   public FileStub(XmlFileHeader header) {
-    super(null, StringRef.fromString(header.getRootTagLocalName()));
+    super(null, StringRef.fromString(header.getRootTagLocalName()), StringRef.fromString(header.getRootTagNamespace()), false);
     myHeader = header;
   }
 

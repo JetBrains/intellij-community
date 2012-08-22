@@ -16,6 +16,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.LogUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.util.containers.SLRUCache;
@@ -40,6 +41,8 @@ import java.util.concurrent.locks.Lock;
  * Author: dmitrylomov
  */
 public class StubSerializationHelper {
+
+  private final static Logger LOG = Logger.getInstance(StubSerializationHelper.class);
   private AbstractStringEnumerator myNameStorage;
 
   protected final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<ObjectStubSerializer>();
@@ -171,8 +174,9 @@ public class StubSerializationHelper {
   private Stub deserialize(StubInputStream stream, Stub parentStub) throws IOException {
     final int id = DataInputOutputUtil.readINT(stream);
     final ObjectStubSerializer serializer = getClassById(id);
-
-    assert serializer != null : "No serializer registered for stub: ID=" + id + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null");
+    if (serializer == null) {
+      LOG.error("No serializer registered for stub: ID=" + id + "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() : "null"));
+    }
 
     Stub stub = serializer.deserialize(stream, parentStub);
     int childCount = DataInputOutputUtil.readINT(stream);

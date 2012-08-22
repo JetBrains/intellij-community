@@ -13,7 +13,6 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.stubs.Stubbed;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
@@ -27,6 +26,7 @@ import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.DomStub;
+import com.intellij.util.xml.stubs.ElementStub;
 import com.intellij.util.xml.stubs.StubParentStrategy;
 import net.sf.cglib.proxy.AdvancedProxy;
 import net.sf.cglib.proxy.InvocationHandler;
@@ -255,6 +255,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
 
   public XmlElement getXmlElement() {
     return getParentStrategy().getXmlElement();
+  }
+
+  public boolean exists() {
+    return getParentStrategy().isPhysical();
   }
 
   private DomParentStrategy getParentStrategy() {
@@ -553,7 +557,14 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @NotNull
   final IndexedElementInvocationHandler getFixedChild(final Pair<FixedChildDescriptionImpl, Integer> info) {
     final FixedChildDescriptionImpl description = info.first;
-    final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
+    XmlName xmlName = description.getXmlName();
+    final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(xmlName);
+    if (myStub != null && description.isStubbed()) {
+      List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName(), xmlName.getNamespaceKey());
+      DomStub stub = stubs.isEmpty() ? null : stubs.get(0);
+      DomParentStrategy strategy = stub == null ? new StubParentStrategy.Empty(myStub) : new StubParentStrategy(stub);
+      return new IndexedElementInvocationHandler(evaluatedXmlName, description, 0, strategy, myManager, (ElementStub)stub);
+    }
     final XmlTag tag = getXmlTag();
     final int index = info.second;
     if (tag != null) {
@@ -586,7 +597,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @NotNull
   final AttributeChildInvocationHandler getAttributeChild(final AttributeChildDescriptionImpl description) {
     final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
-    if (myStub != null && description.getAnnotation(Stubbed.class) != null) {
+    if (myStub != null && description.isStubbed()) {
       AttributeStub stub = myStub.getAttributeStub(description.getXmlName());
       StubParentStrategy strategy = StubParentStrategy.createAttributeStrategy(stub, myStub);
       return new AttributeChildInvocationHandler(evaluatedXmlName, description, myManager, strategy, stub);
@@ -758,15 +769,31 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   }
 
   public List<? extends DomElement> getCollectionChildren(final AbstractCollectionChildDescription description, final NotNullFunction<DomInvocationHandler, List<XmlTag>> tagsGetter) {
-    if (myStub != null && description.getAnnotation(Stubbed.class) != null) {
-      XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
-      List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName());
-      return ContainerUtil.map(stubs, new Function<DomStub, DomElement>() {
-        @Override
-        public DomElement fun(DomStub stub) {
-          return stub.getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy();
-        }
-      });
+    if (myStub != null && description.isStubbed()) {
+      if (description instanceof DomChildDescriptionImpl) {
+        XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
+        List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName(), xmlName.getNamespaceKey());
+        return ContainerUtil.map(stubs, new Function<DomStub, DomElement>() {
+          @Override
+          public DomElement fun(DomStub stub) {
+            return stub.getOrCreateHandler((DomChildDescriptionImpl)description, myManager).getProxy();
+          }
+        });
+      }
+      else if (description instanceof CustomDomChildrenDescriptionImpl) {
+        List<DomStub> stubs = myStub.getChildrenStubs();
+        return ContainerUtil.mapNotNull(stubs, new NullableFunction<DomStub, DomElement>() {
+          @Nullable
+          @Override
+          public DomElement fun(DomStub stub) {
+            if (stub instanceof ElementStub && ((ElementStub)stub).isCustom()) {
+              EvaluatedXmlName name = new DummyEvaluatedXmlName(stub.getName(), null);
+              return new CollectionElementInvocationHandler(name, (CustomDomChildrenDescriptionImpl)description, myManager, (ElementStub)stub).getProxy();
+            }
+            return null;
+          }
+        });
+      }
     }
     XmlTag tag = getXmlTag();
     if (tag == null) return Collections.emptyList();

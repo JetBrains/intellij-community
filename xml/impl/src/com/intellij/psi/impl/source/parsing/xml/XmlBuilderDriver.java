@@ -178,7 +178,7 @@ public class XmlBuilderDriver {
       }
     }
 
-    CharSequence localName = getLocalName(tagName);
+    CharSequence localName = XmlUtil.getLocalName(tagName);
     String namespace = getNamespace(tagName);
 
     XmlBuilder.ProcessingOrder order = builder.startTag(localName, namespace, node.getStartOffset(), node.getEndOffset(), headerEndOffset);
@@ -261,14 +261,6 @@ public class XmlBuilderDriver {
     }
 
     return "";
-  }
-
-  private static CharSequence getLocalName(final CharSequence tagName) {
-    int pos = StringUtil.indexOf(tagName, ':');
-    if (pos == -1) {
-      return tagName;
-    }
-    return tagName.subSequence(pos + 1, tagName.length());
   }
 
   private void checkForXmlns(LighterASTNode attrNode, FlyweightCapableTreeStructure<LighterASTNode> structure) {

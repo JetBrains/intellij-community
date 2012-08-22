@@ -100,7 +100,7 @@ public class CodeFormatterFacade {
       }
 
       //final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
-      final FormattingModel model = builder.createModel(elementToFormat, mySettings);
+      final FormattingModel model = CoreFormatterUtil.buildModel(builder, elementToFormat, mySettings, FormattingMode.REFORMAT);
       if (file.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(
@@ -193,7 +193,7 @@ public class CodeFormatterFacade {
             return;
           }
 
-          final FormattingModel originalModel = builder.createModel(file, mySettings);
+          final FormattingModel originalModel = CoreFormatterUtil.buildModel(builder, file, mySettings, FormattingMode.REFORMAT);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
                                                                          document,
                                                                          project, mySettings, file.getFileType(), file);

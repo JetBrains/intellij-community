@@ -28,6 +28,7 @@ import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 public class LazyParseableElement extends CompositeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.LazyParseableElement");
@@ -147,6 +148,9 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   private void ensureParsed() {
+    if (!ourParsingAllowed) {
+      LOG.error("Parsing not allowed!!!");
+    }
     CharSequence text = myText();
     if (text == null) return;
 
@@ -219,5 +223,12 @@ public class LazyParseableElement extends CompositeElement {
       CharArrayUtil.getChars(text, buffer, start);
     }
     return start + text.length();
+  }
+
+  private static boolean ourParsingAllowed = true;
+
+  @TestOnly
+  public static void setParsingAllowed(boolean allowed) {
+    ourParsingAllowed = allowed;
   }
 }

@@ -332,6 +332,11 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
     return checkValidity() == null;
   }
 
+  @Override
+  public boolean exists() {
+    return true;
+  }
+
   @Nullable
   public String checkValidity() {
     if (!myFile.isValid()) {

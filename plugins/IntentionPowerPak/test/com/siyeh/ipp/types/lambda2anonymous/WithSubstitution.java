@@ -8,7 +8,7 @@ class Test2 {
     static <T> I<T> bar(I<T> i){return i;}
  
     {
-        bar((lis<caret>t)->{
+        bar((List<String> lis<caret>t)->{
             return "sss";
         });
     }

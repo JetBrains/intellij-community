@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ public class Utils {
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
   public static final boolean IS_TEST_MODE = Boolean.parseBoolean(System.getProperty("test.mode", "false"));
+  public static final long TIMESTAMP_ACCURACY = SystemInfo.isMac ? 1000 : 1;
 
   private Utils() {
   }

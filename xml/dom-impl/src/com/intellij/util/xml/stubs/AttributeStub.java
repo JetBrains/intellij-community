@@ -29,8 +29,8 @@ public class AttributeStub extends DomStub {
 
   private final String myValue;
 
-  public AttributeStub(DomStub parent, StringRef name, String value) {
-    super(parent, name);
+  public AttributeStub(DomStub parent, StringRef name, StringRef namespace, String value) {
+    super(parent, name, namespace);
     myValue = value;
   }
 

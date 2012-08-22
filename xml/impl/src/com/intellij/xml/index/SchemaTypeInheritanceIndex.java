@@ -15,8 +15,13 @@
  */
 package com.intellij.xml.index;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.PairConvertor;
 import com.intellij.util.containers.EncoderDecoder;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
@@ -46,11 +51,52 @@ import java.util.Set;
  */
 public class SchemaTypeInheritanceIndex extends XmlIndex<Set<SchemaTypeInfo>> {
   private static final ID<String, Set<SchemaTypeInfo>> NAME = ID.create("SchemaTypeInheritance");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.index.SchemaTypeInheritanceIndex");
 
-  public static List<Set<SchemaTypeInfo>> getDirectChildrenOfType(final Project project, final String ns, final String name) {
+  private static List<Set<SchemaTypeInfo>> getDirectChildrenOfType(final Project project,
+                                                                  final String ns,
+                                                                  final String name) {
+    GlobalSearchScope filter = createFilter(project);
     final List<Set<SchemaTypeInfo>>
-      list = FileBasedIndex.getInstance().getValues(NAME, NsPlusTag.INSTANCE.encode(Pair.create(ns, name)), createFilter(project));
+      list = FileBasedIndex.getInstance().getValues(NAME, NsPlusTag.INSTANCE.encode(Pair.create(ns, name)), filter);
     return list;
+  }
+
+  public static PairConvertor<String, String, List<Set<SchemaTypeInfo>>> getWorker(final Project project, final VirtualFile currentFile) {
+    return new MyWorker(currentFile, project);
+  }
+
+  private static class MyWorker implements PairConvertor<String, String, List<Set<SchemaTypeInfo>>> {
+    private final Project myProject;
+    private final VirtualFile myCurrentFile;
+    private final GlobalSearchScope myFilter;
+    private final boolean myShouldParseCurrent;
+    private MultiMap<SchemaTypeInfo,SchemaTypeInfo> myMap;
+
+    private MyWorker(VirtualFile currentFile, Project project) {
+      myCurrentFile = currentFile;
+      myProject = project;
+
+      myFilter = createFilter(project);
+      myShouldParseCurrent = (myCurrentFile != null && ! myFilter.contains(myCurrentFile));
+    }
+
+    @Override
+    public List<Set<SchemaTypeInfo>> convert(String ns, String name) {
+      List<Set<SchemaTypeInfo>> type = getDirectChildrenOfType(myProject, ns, name);
+      if (myShouldParseCurrent) {
+        if (myMap == null) {
+          try {
+            myMap = XsdComplexTypeInfoBuilder.parse(CharArrayUtil.readerFromCharSequence(VfsUtil.loadText(myCurrentFile)));
+            type.add(new HashSet<SchemaTypeInfo>(myMap.get(new SchemaTypeInfo(name, true, ns))));
+          }
+          catch (IOException e) {
+            LOG.info(e);
+          }
+        }
+      }
+      return type;
+    }
   }
 
   @Override

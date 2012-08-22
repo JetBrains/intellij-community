@@ -19,10 +19,12 @@ import com.intellij.ide.presentation.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.stubs.Stubbed;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
@@ -61,6 +63,15 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
     if (myCustomAnnotations == null) myCustomAnnotations = new THashMap<Class, Annotation>();
     myCustomAnnotations.put(annotation.annotationType(), annotation);
   }
+
+  private NotNullLazyValue<Boolean> myStubbed = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return myType instanceof Class && DomReflectionUtil.findAnnotationDFS((Class)myType, Stubbed.class) != null ||
+             getAnnotation(Stubbed.class) != null;
+    }
+  };
 
   @Override
   public boolean equals(Object o) {
@@ -187,5 +198,10 @@ public abstract class AbstractDomChildDescriptionImpl implements AbstractDomChil
       return anchor.retrieveDomElement();
     }
     return null;
+  }
+
+  @Override
+  public boolean isStubbed() {
+    return myStubbed.getValue();
   }
 }

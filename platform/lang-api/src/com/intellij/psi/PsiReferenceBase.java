@@ -102,9 +102,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   protected TextRange calculateDefaultRangeInElement() {
-    final ElementManipulator<T> manipulator = getManipulator();
-    assert manipulator != null: "Cannot find manipulator for " + myElement;
-    return manipulator.getRangeInElement(myElement);
+    return getManipulator().getRangeInElement(myElement);
   }
 
   @NotNull
@@ -113,9 +111,7 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
   }
 
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
-    final ElementManipulator<T> manipulator = getManipulator();
-    assert manipulator != null: "Cannot find manipulator for " + myElement;
-    return manipulator.handleContentChange(myElement, getRangeInElement(), newElementName);
+    return getManipulator().handleContentChange(myElement, getRangeInElement(), newElementName);
   }                                                              
 
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
@@ -134,9 +130,12 @@ public abstract class PsiReferenceBase<T extends PsiElement> implements PsiRefer
     return new Immediate<T>(element, range, resolveTo);
   }
 
-  @Nullable
   ElementManipulator<T> getManipulator() {
-    return ElementManipulators.getManipulator(myElement);
+    ElementManipulator<T> manipulator = ElementManipulators.getManipulator(myElement);
+    if (manipulator == null) {
+      LOG.error("Cannot find manipulator for " + myElement + " in " + this + " class " + getClass());
+    }
+    return manipulator;
   }
 
   public boolean isSoft() {

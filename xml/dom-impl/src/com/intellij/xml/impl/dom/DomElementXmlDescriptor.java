@@ -171,6 +171,11 @@ public class DomElementXmlDescriptor extends AbstractDomChildrenDescriptor {
     public DomElement getDomDeclaration() {
       return myDomElement;
     }
+
+    @Override
+    public boolean isStubbed() {
+      return false;
+    }
   }
 
 }

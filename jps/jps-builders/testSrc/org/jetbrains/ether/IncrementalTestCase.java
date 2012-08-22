@@ -16,7 +16,6 @@
 package org.jetbrains.ether;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.jps.JpsPathUtil;
@@ -144,8 +143,8 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
               true, false).assertSuccessful();
 
       modify();
-      if (SystemInfo.isMac) {//todo[nik] check if FileSystemUtil.lastModified return accurate result for mac and remove this
-        Thread.sleep(1000L);
+      if (Utils.TIMESTAMP_ACCURACY > 1) {
+        Thread.sleep(Utils.TIMESTAMP_ACCURACY);
       }
 
 

@@ -36,7 +36,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
         Component child = e.getChild();
         if (child instanceof JBTable) {
           myEmptyText = ((ComponentWithEmptyText)child).getEmptyText();
-          myEmptyText.attachTo(JBViewport.this);
+          myEmptyText.attachTo(JBViewport.this, child);
         }
       }
 

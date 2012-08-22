@@ -594,12 +594,14 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
       final PsiParameter[] methodParameters = method.getParameterList().getParameters();
       final PsiSubstitutor subst = resolveResult.getSubstitutor();
+      final boolean methodParamsDependOnTypeParams = methodParamsDependOnTypeParams(lambdaExpression, methodParameters, subst);
       final PsiType returnType = subst.substitute(method.getReturnType());
       if (returnType != null && returnType != PsiType.VOID) {
         Pair<PsiType, ConstraintType> constraint = null;
         final List<PsiExpression> expressions = lambdaExpression.getReturnExpressions();
         for (final PsiExpression expression : expressions) {
           final boolean independent = LambdaUtil.isFreeFromTypeInferenceArgs(methodParameters, lambdaExpression, expression);
+          if (independent && methodParamsDependOnTypeParams) return FAILED_INFERENCE;
           if (!independent && lowerBound != PsiType.NULL) {
             return null;
           }
@@ -645,6 +647,17 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       }
     }
     return null;
+  }
+
+  private static boolean methodParamsDependOnTypeParams(PsiLambdaExpression lambdaExpression,
+                                                        PsiParameter[] methodParameters,
+                                                        PsiSubstitutor subst) {
+    for (PsiParameter parameter : methodParameters) {
+      if (LambdaUtil.dependsOnTypeParams(subst.substitute(parameter.getType()), lambdaExpression)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

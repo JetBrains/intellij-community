@@ -18,10 +18,14 @@ package com.intellij.util.xml.stubs;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.stubs.ObjectStubTree;
 import com.intellij.psi.stubs.StubTreeLoader;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.stubs.model.Foo;
@@ -66,5 +70,22 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
   protected void doBuilderTest(String file, String stubText) {
     ElementStub stub = getRootStub(file);
     assertEquals(stubText, DebugUtil.stubTreeToString(stub));
+  }
+
+  protected <T extends DomElement> DomFileElement<T> prepare(String path, Class<T> domClass) {
+    PsiFile file = myFixture.configureByFile(path);
+    assertFalse(file.getNode().isParsed());
+    VirtualFile virtualFile = file.getVirtualFile();
+    ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
+    assertNotNull(tree);
+
+    ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
+
+    file = getPsiManager().findFile(virtualFile);
+    assertFalse(file.getNode().isParsed());
+
+    DomFileElement<T> fileElement = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, domClass);
+    assertNotNull(fileElement);
+    return fileElement;
   }
 }

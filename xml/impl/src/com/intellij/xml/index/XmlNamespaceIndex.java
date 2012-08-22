@@ -17,6 +17,7 @@ package com.intellij.xml.index;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -158,9 +159,13 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
                                     @Nullable final String version,
                                     @NotNull PsiFile file) {
 
+    if (DumbService.isDumb(file.getProject())) return null;
+
     IndexedRelevantResource<String,XsdNamespaceBuilder> resource =
       guessSchema(namespace, tagName, version, ModuleUtilCore.findModuleForPsiElement(file));
-    return resource == null ? null : (XmlFile)file.getManager().findFile(resource.getFile());
+    if (resource == null) return null;
+    PsiFile psiFile = file.getManager().findFile(resource.getFile());
+    return psiFile instanceof XmlFile ? (XmlFile)psiFile : null;
   }
 
   @Nullable

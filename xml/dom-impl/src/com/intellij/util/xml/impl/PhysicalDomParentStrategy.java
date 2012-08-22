@@ -92,6 +92,11 @@ public class PhysicalDomParentStrategy implements DomParentStrategy {
     return DomImplUtil.getFile(handler);
   }
 
+  @Override
+  public boolean isPhysical() {
+    return true;
+  }
+
   @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
   public boolean equals(final Object o) {
     return strategyEquals(this, o);

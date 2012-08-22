@@ -38,12 +38,13 @@ public class AttributeStubSerializer implements ObjectStubSerializer<AttributeSt
   @Override
   public void serialize(AttributeStub stub, StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
+    dataStream.writeName(stub.getNamespaceKey());
     dataStream.writeUTFFast(stub.getValue() == null ? "" : stub.getValue());
   }
 
   @Override
   public AttributeStub deserialize(StubInputStream dataStream, ElementStub parentStub) throws IOException {
-    return new AttributeStub(parentStub, dataStream.readName(), dataStream.readUTFFast());
+    return new AttributeStub(parentStub, dataStream.readName(), dataStream.readName(), dataStream.readUTFFast());
   }
 
   @Override

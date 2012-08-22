@@ -29,6 +29,7 @@ import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.PairConvertor;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.hash.HashMap;
@@ -201,9 +202,11 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
 
     queue.add(new SchemaTypeInfo(localName, true, nsUri));
 
+    final PairConvertor<String,String,List<Set<SchemaTypeInfo>>> worker =
+      SchemaTypeInheritanceIndex.getWorker(project, file.getContainingFile().getVirtualFile());
     while (! queue.isEmpty()) {
       final SchemaTypeInfo info = queue.removeFirst();
-      final List<Set<SchemaTypeInfo>> childrenOfType = SchemaTypeInheritanceIndex.getDirectChildrenOfType(project, info.getNamespaceUri(), info.getTagName());
+      final List<Set<SchemaTypeInfo>> childrenOfType = worker.convert(info.getNamespaceUri(), info.getTagName());
       for (Set<SchemaTypeInfo> infos : childrenOfType) {
         for (SchemaTypeInfo typeInfo : infos) {
           if (typeInfo.isIsTypeName()) {
@@ -222,12 +225,17 @@ public class SchemaDefinitionsSearch implements QueryExecutor<PsiElement, PsiEle
     return name;
   }
 
-  private String getDefaultNs(XmlFile file) {
-    String nsUri;
-    final XmlTag tag = file.getDocument().getRootTag();
-    XmlAttribute xmlns = tag.getAttribute("xmlns", XmlUtil.XML_SCHEMA_URI);
-    xmlns = xmlns == null ? tag.getAttribute("xmlns") : xmlns;
-    nsUri = xmlns == null ? null : xmlns.getValue();
-    return nsUri;
+  private String getDefaultNs(final XmlFile file) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        String nsUri;
+        final XmlTag tag = file.getDocument().getRootTag();
+        XmlAttribute xmlns = tag.getAttribute("xmlns", XmlUtil.XML_SCHEMA_URI);
+        xmlns = xmlns == null ? tag.getAttribute("xmlns") : xmlns;
+        nsUri = xmlns == null ? null : xmlns.getValue();
+        return nsUri;
+      }
+    });
   }
 }

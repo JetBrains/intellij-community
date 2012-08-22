@@ -53,11 +53,12 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
 
     final Collection<SchemaTypeInfo> node = map.get(new SchemaTypeInfo("tConversationNode", true, ourNs));
     Assert.assertNotNull(node);
-    Assert.assertEquals(2, node.size());
+    Assert.assertEquals(3, node.size());
 
     final Set<SchemaTypeInfo> expected = new HashSet<SchemaTypeInfo>();
     expected.add(new SchemaTypeInfo("tConversation", true, ourNs));
     expected.add(new SchemaTypeInfo("tCallConversation", true, ourNs));
+    expected.add(new SchemaTypeInfo("tSubConversation", true, ourNs));
     for (SchemaTypeInfo info : node) {
       expected.remove(info);
     }
@@ -65,13 +66,13 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
     //
     final Collection<SchemaTypeInfo> stringNode = map.get(new SchemaTypeInfo("string", true, "http://www.w3.org/2001/XMLSchema"));
     Assert.assertNotNull(stringNode);
-    Assert.assertEquals(5, stringNode.size());
+    Assert.assertEquals(9, stringNode.size());
     Assert.assertTrue(stringNode.contains(new SchemaTypeInfo("tAdHocOrdering", true, ourNs)));
     Assert.assertTrue(stringNode.contains(new SchemaTypeInfo("tEventBasedGatewayType", true, ourNs)));
     //
     final Collection<SchemaTypeInfo> baseNode = map.get(new SchemaTypeInfo("tBaseElement", true, ourNs));
     Assert.assertNotNull(baseNode);
-    Assert.assertEquals(17, baseNode.size());
+    Assert.assertEquals(39, baseNode.size());
     Assert.assertTrue(baseNode.contains(new SchemaTypeInfo("tAuditing", true, ourNs)));
     Assert.assertTrue(baseNode.contains(new SchemaTypeInfo("tDataInput", true, ourNs)));
     Assert.assertTrue(baseNode.contains(new SchemaTypeInfo("tDataOutput", true, ourNs)));
@@ -83,7 +84,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
     myFixture.copyDirectoryToProject("", "");
 
     final Project project = getProject();
-    final List<Set<SchemaTypeInfo>> childrenOfType = SchemaTypeInheritanceIndex.getDirectChildrenOfType(project, "http://a.b.c", "baseSimpleType");
+    final List<Set<SchemaTypeInfo>> childrenOfType = SchemaTypeInheritanceIndex.getWorker(project, null).convert("http://a.b.c", "baseSimpleType");
     Assert.assertNotNull(childrenOfType);
 
     final Set<SchemaTypeInfo> expected = new HashSet<SchemaTypeInfo>();
@@ -100,7 +101,7 @@ public class XmlSchemaTypeInheritanceTest extends CodeInsightFixtureTestCase {
 
     Assert.assertTrue(expected.isEmpty());
     //
-    final List<Set<SchemaTypeInfo>> childrenOfSimple4Type = SchemaTypeInheritanceIndex.getDirectChildrenOfType(project, "http://a.b.c", "extSimple4");
+    final List<Set<SchemaTypeInfo>> childrenOfSimple4Type = SchemaTypeInheritanceIndex.getWorker(project, null).convert("http://a.b.c", "extSimple4");
     Assert.assertNotNull(childrenOfSimple4Type);
     final Set<SchemaTypeInfo> expectedSimple4 = new HashSet<SchemaTypeInfo>();
     expectedSimple4.add(new SchemaTypeInfo("extSimple5", true, "http://a.b.c"));

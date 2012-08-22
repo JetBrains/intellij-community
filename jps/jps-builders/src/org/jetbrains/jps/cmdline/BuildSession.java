@@ -49,6 +49,7 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final Map<Pair<String, String>, ConstantSearchFuture> mySearchTasks = Collections.synchronizedMap(new HashMap<Pair<String, String>, ConstantSearchFuture>());
   private final ConstantSearch myConstantSearch = new ConstantSearch();
   private final BuildRunner myBuildRunner;
+  private BuildType myBuildType;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -69,7 +70,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     // session params
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
-    BuildType myBuildType = convertCompileType(params.getBuildType());
+    myBuildType = convertCompileType(params.getBuildType());
     Set<String> modules = new HashSet<String>(params.getModuleNameList());
     List<String> artifacts = params.getArtifactNameList();
     List<String> filePaths = params.getFilePathList();
@@ -79,7 +80,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     }
     myInitialFSDelta = delta;
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(myProjectPath, globalOptionsPath, pathVars, globalEncoding, ignorePatterns, null);
-    myBuildRunner = new BuildRunner(loader, modules, myBuildType, artifacts, filePaths, builderParams);
+    myBuildRunner = new BuildRunner(loader, modules, artifacts, filePaths, builderParams);
   }
 
   public void run() {
@@ -145,9 +146,13 @@ final class BuildSession implements Runnable, CanceledStatus {
 
     try {
       final boolean shouldApplyEvent = loadFsState(fsState, dataStorageRoot, myInitialFSDelta);
-      if (shouldApplyEvent && myBuildRunner.getBuildType() == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
+      if (shouldApplyEvent && myBuildType == BuildType.MAKE && !containsChanges(myInitialFSDelta) && !fsState.hasWorkToDo()) {
         applyFSEvent(null, myInitialFSDelta);
         return;
+      }
+      if (!dataStorageRoot.exists()) {
+        // invoked the very first time for this project. Force full rebuild
+        myBuildType = BuildType.PROJECT_REBUILD;
       }
       ProjectDescriptor pd = myBuildRunner.load(msgHandler, dataStorageRoot, fsState);
       myProjectDescriptor = pd;
@@ -161,7 +166,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       // ensure events from controller are processed after FSState initialization
       myEventsProcessor.startProcessing();
 
-      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, true);
+      myBuildRunner.runBuild(pd, cs, myConstantSearch, msgHandler, true, myBuildType);
     }
     finally {
       saveData(fsState, dataStorageRoot);

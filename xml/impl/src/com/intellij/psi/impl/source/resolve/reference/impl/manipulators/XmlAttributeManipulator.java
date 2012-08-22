@@ -16,6 +16,8 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.manipulators;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
 import com.intellij.psi.PsiElement;
@@ -23,12 +25,13 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.lang.ASTNode;
 
 /**
  * @author Gregory.Shrago
  */
 public class XmlAttributeManipulator extends AbstractElementManipulator<XmlAttribute> {
+
+  private final static Logger LOG = Logger.getInstance(XmlAttributeManipulator.class);
 
   public XmlAttribute handleContentChange(XmlAttribute attribute, TextRange range, String newContent) throws IncorrectOperationException {
     String attr = attribute.getText();
@@ -66,6 +69,10 @@ public class XmlAttributeManipulator extends AbstractElementManipulator<XmlAttri
   public TextRange getRangeInElement(final XmlAttribute attribute) {
     final XmlAttributeValue value = attribute.getValueElement();
     if (value == null) return TextRange.from(0, 0);
-    return attribute.getValueTextRange().shiftRight(value.getStartOffsetInParent());
+    TextRange range = attribute.getValueTextRange();
+    if (range == null) {
+      LOG.error("Null range in " + attribute + " '" + attribute.getText() + "'");
+    }
+    return range.shiftRight(value.getStartOffsetInParent());
   }
 }

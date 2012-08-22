@@ -285,7 +285,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(containingFile);
     if (builder != null) {
-      final FormattingModel model = builder.createModel(containingFile, getSettings());
+      final FormattingModel model = CoreFormatterUtil.buildModel(builder, containingFile, getSettings(), FormattingMode.REFORMAT);
       FormatterEx.getInstanceEx().formatAroundRange(model, getSettings(), textRange, containingFile.getFileType());
     }
 
@@ -334,7 +334,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   }
 
   private int doAdjustLineIndentByOffset(@NotNull PsiFile file, int offset) {
-    return new CodeStyleManagerRunnable<Integer>(this) {
+    return new CodeStyleManagerRunnable<Integer>(this, FormattingMode.ADJUST_INDENT) {
       @Override
       protected Integer doPerform(int offset, TextRange range) {
         return FormatterEx.getInstanceEx().adjustLineIndent(myModel, mySettings, myIndentOptions, offset, mySignificantRange);
@@ -354,7 +354,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
   @Override
   public void adjustLineIndent(@NotNull PsiFile file, TextRange rangeToAdjust) throws IncorrectOperationException {
-    new CodeStyleManagerRunnable<Object>(this) {
+    new CodeStyleManagerRunnable<Object>(this, FormattingMode.ADJUST_INDENT) {
       @Override
       protected Object doPerform(int offset, TextRange range) {
         FormatterEx.getInstanceEx().adjustLineIndentsForRange(myModel, mySettings, myIndentOptions, range);
@@ -366,7 +366,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   @Override
   @Nullable
   public String getLineIndent(@NotNull PsiFile file, int offset) {
-    return new CodeStyleManagerRunnable<String>(this) {
+    return new CodeStyleManagerRunnable<String>(this, FormattingMode.ADJUST_INDENT) {
       @Override
       protected boolean useDocumentBaseFormattingModel() {
         return false;

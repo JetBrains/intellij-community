@@ -136,12 +136,17 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
   private void updateCustomButton() {
     final Object item = myScopeComboBox.getSelectedItem();
     if (item instanceof String) {
-      @SuppressWarnings({"SuspiciousMethodCalls"})
-      final Color color = ColorUtil.getColor(myScopeNames.get(item).getClass());
+      Color color = myConfiguration == null ? null : ColorUtil.fromHex(myConfiguration.getColorName(), null);
       final CustomColorButton button = (CustomColorButton)myColorToButtonMap.get(CUSTOM_COLOR_NAME);
+
+      if (color == null) {
+        color = ColorUtil.getColor(myScopeNames.get(item).getClass());
+      }
+
       if (color != null) {
         button.setColor(color);
         button.setSelected(true);
+        button.repaint();
       }
     }
   }

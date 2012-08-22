@@ -65,6 +65,11 @@ public class MockDomElement extends UserDataHolderBase implements DomElement{
   }
 
   @Override
+  public boolean exists() {
+    throw new UnsupportedOperationException("Method exists is not yet implemented in " + getClass().getName());
+  }
+
+  @Override
   @NotNull
   public DomGenericInfo getGenericInfo() {
     throw new UnsupportedOperationException("Method getGenericInfo is not yet implemented in " + getClass().getName());

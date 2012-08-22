@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreeNode;
 
 /**
  * // TODO den add doc
@@ -98,6 +97,16 @@ public class ArrangementTreeNode extends DefaultMutableTreeNode {
   @Override
   public ArrangementTreeNode getNextSibling() {
     return (ArrangementTreeNode)super.getNextSibling();
+  }
+
+  @Override
+  public ArrangementTreeNode getNextNode() {
+    return (ArrangementTreeNode)super.getNextNode();
+  }
+
+  @Override
+  public ArrangementTreeNode getPreviousNode() {
+    return (ArrangementTreeNode)super.getPreviousNode();
   }
 
   @Override

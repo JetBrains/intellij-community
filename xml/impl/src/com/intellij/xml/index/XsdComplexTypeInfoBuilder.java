@@ -15,6 +15,7 @@
  */
 package com.intellij.xml.index;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
@@ -38,6 +39,7 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
   // base type -> inherited types
   private final MultiMap<SchemaTypeInfo, SchemaTypeInfo> myMap;
   private NameSpaceHelper myNameSpaceHelper;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.xml.index.XsdComplexTypeInfoBuilder");
 
   public void setNameSpaceHelper(NameSpaceHelper nameSpaceHelper) {
     myNameSpaceHelper = nameSpaceHelper;
@@ -55,8 +57,7 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
       NanoXmlUtil.parse(reader, builder, helper);
       final MultiMap<SchemaTypeInfo,SchemaTypeInfo> map = builder.getMap();
       return map;
-    }
-    finally {
+    } finally {
       try {
         if (reader != null) {
           reader.close();
@@ -169,7 +170,7 @@ public class XsdComplexTypeInfoBuilder extends NanoXmlUtil.IXMLBuilderAdapter {
     nsUri = (nsUri == null ? ns : nsURI);*/
 
     final boolean isAnonymous = SIGN.equals(typeName);
-    if (isAnonymous) {
+    if (isAnonymous && myCurrentElementName != null) {
       myMap.putValue(createSchemaTypeInfo(value, true), createSchemaTypeInfo(myCurrentElementName, false));
     } else {
       myMap.putValue(createSchemaTypeInfo(value, true), createSchemaTypeInfo(typeName, true));
