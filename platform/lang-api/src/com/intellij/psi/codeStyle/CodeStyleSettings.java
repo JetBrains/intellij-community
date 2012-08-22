@@ -991,7 +991,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
     }
   }
 
-  public CommonCodeStyleSettings getCommonSettings(@NotNull Language lang) {
+  public CommonCodeStyleSettings getCommonSettings(Language lang) {
     return myCommonSettingsManager.getCommonSettings(lang);
   }
 
