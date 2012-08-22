@@ -141,6 +141,7 @@ public class PyBlock implements ASTBlock {
              PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens().contains(childType)) {
       childAlignment = getAlignmentForChildren();
     }
+
     if (parentType == PyElementTypes.LIST_LITERAL_EXPRESSION) {
       if (childType == PyTokenTypes.RBRACKET || childType == PyTokenTypes.LBRACKET) {
         childIndent = Indent.getNoneIndent();
@@ -224,8 +225,14 @@ public class PyBlock implements ASTBlock {
     IElementType childType = child.getElementType();
     ASTNode firstGrandchild = child.getFirstChildNode();
     IElementType firstGrandchildType = firstGrandchild == null ? null : firstGrandchild.getElementType();
-    if (PyTokenTypes.OPEN_BRACES.contains(childType) || PyTokenTypes.OPEN_BRACES.contains(firstGrandchildType)) {
+    if (PyTokenTypes.OPEN_BRACES.contains(childType)) {
       return false;
+    }
+    if (PyTokenTypes.OPEN_BRACES.contains(firstGrandchildType)) {
+      PsiElement psi = child.getPsi();
+      if (psi instanceof PySequenceExpression && ((PySequenceExpression)psi).getElements().length == 0) {
+        return false;
+      }
     }
     if (PyTokenTypes.CLOSE_BRACES.contains(childType)) {
       ASTNode prevNonSpace = findPrevNonSpaceNode(child);

@@ -158,6 +158,15 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void _testLiterals() {  // PY-6751
+    doTest();
+  }
+
+  public void testTupleInArgList() {
+    settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest();
+  }
+
   public void testPsiFormatting() { // IDEA-69724
     String initial =
       "def method_name(\n" +
