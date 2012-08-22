@@ -60,7 +60,8 @@ public class ArrangementRuleTree {
   @NotNull private final DefaultTreeModel                myTreeModel;
   @NotNull private final Tree                            myTree;
   @NotNull private final ArrangementNodeComponentFactory myFactory;
-
+  
+  private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
   public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
@@ -102,8 +103,16 @@ public class ArrangementRuleTree {
     mySelectionModel.addTreeSelectionListener(new TreeSelectionListener() {
       @Override
       public void valueChanged(TreeSelectionEvent e) {
-        setSelection(e.getOldLeadSelectionPath(), false);
-        setSelection(e.getNewLeadSelectionPath(), true);
+        if (myExplicitSelectionChange) {
+          return;
+        }
+        TreePath[] paths = e.getPaths();
+        if (paths == null) {
+          return;
+        }
+        for (int i = 0; i < paths.length; i++) {
+          setSelection(paths[i], e.isAddedPath(i));
+        }
       }
     });
     myTree.addMouseListener(new MouseAdapter() {
@@ -299,7 +308,7 @@ public class ArrangementRuleTree {
   private void onModelChange(@NotNull ArrangementTreeNode topMost, @NotNull ArrangementTreeNode bottomMost) {
     expandAll(myTree, new TreePath(topMost.getPath()));
     mySelectionModel.clearSelection();
-    //mySkipSelectionChange = true;
+    myExplicitSelectionChange = true;
     try {
       for (ArrangementTreeNode node = bottomMost; node != null; node = node.getParent()) {
         TreePath path = new TreePath(node.getPath());
@@ -317,7 +326,7 @@ public class ArrangementRuleTree {
       }
     }
     finally {
-      mySkipSelectionChange = false;
+      myExplicitSelectionChange = false;
     }
   }
   
