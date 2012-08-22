@@ -310,9 +310,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
                                                                              augAssignment != null ? augAssignment : anchor,
                                                                              true);
           if (!defs.isEmpty()) {
-            PyType type = defs.get(0).getType(context);
+            PyType type = defs.get(0).getType(context, anchor);
             for (int i = 1; i < defs.size(); i++) {
-              type = PyUnionType.union(type, defs.get(i).getType(context));
+              type = PyUnionType.union(type, defs.get(i).getType(context, anchor));
             }
             return type;
           }
