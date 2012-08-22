@@ -238,6 +238,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     }
 
     updateStatusLabel(true);
+    updateIconProgress();
 
     myAnimator.stopMovie();
     myTreeBuilder.updateFromRoot();
