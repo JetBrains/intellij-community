@@ -124,11 +124,11 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   // returns true if processor is run or is going to be run after showing popup
-  public static boolean chooseAmbiguousTarget(final Editor editor,
+  public static boolean chooseAmbiguousTarget(@NotNull Editor editor,
                                               int offset,
-                                              PsiElementProcessor<PsiElement> processor,
-                                              String titlePattern,
-                                              PsiElement[] elements) {
+                                              @NotNull PsiElementProcessor<PsiElement> processor,
+                                              @NotNull String titlePattern,
+                                              @Nullable PsiElement[] elements) {
     if (TargetElementUtilBase.inVirtualSpace(editor, offset)) {
       return false;
     }
@@ -149,15 +149,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (elements.length > 1) {
       String title;
 
-      if (reference != null) {
+      if (reference == null) {
+        title = titlePattern;
+      }
+      else {
         final TextRange range = reference.getRangeInElement();
         final String elementText = reference.getElement().getText();
         LOG.assertTrue(range.getStartOffset() >= 0 && range.getEndOffset() <= elementText.length(), Arrays.toString(elements));
         final String refText = range.substring(elementText);
         title = MessageFormat.format(titlePattern, refText);
-      }
-      else {
-        title = titlePattern;
       }
 
       NavigationUtil.getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title, processor).showInBestPositionFor(editor);

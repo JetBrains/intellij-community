@@ -46,17 +46,15 @@ public class AnActionEvent implements PlaceProvider<String> {
   private static final Map<String, String> ourInjectedIds = new HashMap<String, String>();
 
   /**
-   * @throws IllegalArgumentException <code>dataContext</code> is <code>null</code> or
+   * @throws IllegalArgumentException if <code>dataContext</code> is <code>null</code> or
    * <code>place</code> is <code>null</code> or <code>presentation</code> is <code>null</code>
    */
-  public AnActionEvent(
-    InputEvent inputEvent,
-    @NotNull DataContext dataContext,
-    @NotNull @NonNls String place,
-    @NotNull Presentation presentation,
-    ActionManager actionManager,
-    @JdkConstants.InputEventMask int modifiers
-  ){
+  public AnActionEvent(InputEvent inputEvent,
+                       @NotNull DataContext dataContext,
+                       @NotNull @NonNls String place,
+                       @NotNull Presentation presentation,
+                       ActionManager actionManager,
+                       @JdkConstants.InputEventMask int modifiers) {
     // TODO[vova,anton] make this constructor package local. No one is allowed to create AnActionEvents
     myInputEvent = inputEvent;
     myActionManager = actionManager;
@@ -96,7 +94,7 @@ public class AnActionEvent implements PlaceProvider<String> {
   }
   
   @NonNls
-  public static String uninjectedId(String dataId) {
+  public static String uninjectedId(@NotNull String dataId) {
     return StringUtil.trimStart(dataId, ourInjectedPrefix);
   }
 
@@ -112,6 +110,7 @@ public class AnActionEvent implements PlaceProvider<String> {
       return myDataContext;
     }
     return new DataContext() {
+      @Override
       @Nullable
       public Object getData(@NonNls String dataId) {
         Object injected = myDataContext.getData(injectedId(dataId));
@@ -140,6 +139,7 @@ public class AnActionEvent implements PlaceProvider<String> {
    * @return the place identifier
    * @see ActionPlaces
    */
+  @Override
   @NotNull
   public String getPlace() {
     return myPlace;
@@ -176,7 +176,7 @@ public class AnActionEvent implements PlaceProvider<String> {
     return myWorksInInjected;
   }
 
-  public void accept(AnActionEventVisitor visitor) {
+  public void accept(@NotNull AnActionEventVisitor visitor) {
     visitor.visitEvent(this);
   }
 }

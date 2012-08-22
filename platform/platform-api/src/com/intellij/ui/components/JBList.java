@@ -29,6 +29,7 @@ import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +43,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   private StatusText myEmptyText;
   private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
-  private AsyncProcessIcon myBusyIcon;
+  @Nullable private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
 
 
@@ -50,17 +51,18 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     init();
   }
 
-  public JBList(ListModel dataModel) {
+  public JBList(@NotNull ListModel dataModel) {
     super(dataModel);
     init();
   }
 
-  public JBList(Object... listData) {
+  public JBList(@NotNull Object... listData) {
     super(createDefaultListModel(listData));
     init();
   }
 
-  public static DefaultListModel createDefaultListModel(Object... items) {
+  @NotNull
+  public static DefaultListModel createDefaultListModel(@NotNull Object... items) {
     final DefaultListModel model = new DefaultListModel();
     for (Object item : items) {
       model.add(model.getSize(), item);
@@ -68,7 +70,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     return model;
   }
 
-  public JBList(Collection items) {
+  public JBList(@NotNull Collection items) {
     this(ArrayUtil.toObjectArray(items));
   }
 
@@ -199,17 +201,23 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     return myExpandableItemsHandler;
   }
 
-  public <T> void installCellRenderer(final @NotNull NotNullFunction<T, JComponent> fun) {
+  public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {
     setCellRenderer(new DefaultListCellRenderer() {
+      @NotNull
       @Override
-      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+      public Component getListCellRendererComponent(@NotNull JList list,
+                                                    Object value,
+                                                    int index,
+                                                    boolean isSelected,
+                                                    boolean cellHasFocus) {
         @SuppressWarnings({"unchecked"})
-        final JComponent comp = fun.fun((T)value);  
+        final JComponent comp = fun.fun((T)value);
         comp.setOpaque(true);
         if (isSelected) {
           comp.setBackground(list.getSelectionBackground());
           comp.setForeground(list.getSelectionForeground());
-        } else {
+        }
+        else {
           comp.setBackground(list.getBackground());
           comp.setForeground(list.getForeground());
         }
@@ -218,7 +226,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     });
   }
 
-  public void setDataProvider(DataProvider provider) {
+  public void setDataProvider(@NotNull DataProvider provider) {
     DataManager.registerDataProvider(this, provider);
   }
 

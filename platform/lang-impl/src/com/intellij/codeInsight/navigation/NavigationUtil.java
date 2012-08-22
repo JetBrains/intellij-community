@@ -48,12 +48,17 @@ public final class NavigationUtil {
   private NavigationUtil() {
   }
 
-  public static JBPopup getPsiElementPopup(PsiElement[] elements, String title) {
+  @NotNull
+  public static JBPopup getPsiElementPopup(@NotNull PsiElement[] elements, String title) {
     return getPsiElementPopup(elements, new DefaultPsiElementCellRenderer(), title);
   }
 
-  public static JBPopup getPsiElementPopup(final PsiElement[] elements, final PsiElementListCellRenderer<PsiElement> renderer, final String title) {
+  @NotNull
+  public static JBPopup getPsiElementPopup(@NotNull PsiElement[] elements,
+                                           @NotNull final PsiElementListCellRenderer<PsiElement> renderer,
+                                           final String title) {
     return getPsiElementPopup(elements, renderer, title, new PsiElementProcessor<PsiElement>() {
+      @Override
       public boolean execute(@NotNull final PsiElement element) {
         Navigatable descriptor = EditSourceUtil.getDescriptor(element);
         if (descriptor != null && descriptor.canNavigate()) {
@@ -64,15 +69,19 @@ public final class NavigationUtil {
     });
   }
 
-  public static <T extends PsiElement> JBPopup getPsiElementPopup(final T[] elements, final PsiElementListCellRenderer<T> renderer,
-                                                                  final String title, final PsiElementProcessor<T> processor) {
+  @NotNull
+  public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
+                                                                  @NotNull final PsiElementListCellRenderer<T> renderer,
+                                                                  final String title,
+                                                                  @NotNull final PsiElementProcessor<T> processor) {
     return getPsiElementPopup(elements, renderer, title, processor, null);
   }
 
-  public static <T extends PsiElement> JBPopup getPsiElementPopup(final T[] elements,
-                                                                  final PsiElementListCellRenderer<T> renderer,
-                                                                  final String title,
-                                                                  final PsiElementProcessor<T> processor,
+  @NotNull
+  public static <T extends PsiElement> JBPopup getPsiElementPopup(@NotNull T[] elements,
+                                                                  @NotNull final PsiElementListCellRenderer<T> renderer,
+                                                                  @Nullable final String title,
+                                                                  @NotNull final PsiElementProcessor<T> processor,
                                                                   @Nullable final T selection) {
     final JList list = new JBList(elements);
     list.setCellRenderer(renderer);
@@ -81,6 +90,7 @@ public final class NavigationUtil {
     }
 
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         int[] ids = list.getSelectedIndices();
         if (ids == null || ids.length == 0) return;
@@ -116,7 +126,8 @@ public final class NavigationUtil {
 
     if (searchForOpen) {
       elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, null);
-    } else {
+    }
+    else {
       elt.putUserData(FileEditorManager.USE_CURRENT_WINDOW, true);
     }
 
@@ -130,11 +141,9 @@ public final class NavigationUtil {
   }
 
 
-
   private static boolean activatePsiElementIfOpen(@NotNull PsiElement elt, boolean searchForOpen) {
     if (!elt.isValid()) return false;
     elt = elt.getNavigationElement();
-    if (elt == null) return false;
     final PsiFile file = elt.getContainingFile();
     if (file == null || !file.isValid()) return false;
 

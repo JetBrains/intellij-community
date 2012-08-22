@@ -192,12 +192,20 @@ public abstract class FindManager {
   public abstract boolean canFindUsages(@NotNull PsiElement element);
 
   /**
-   * Shows the Find Usages dialog and performs the Find Usages operation for the
-   * specified element.
+   * Performs the Find Usages operation for the specified element.
    *
    * @param element the element to find the usages for.
    */
   public abstract void findUsages(@NotNull PsiElement element);
+
+  /**
+   * Shows the Find Usages dialog (if {@code showDialog} is true} and performs the Find Usages operation for the
+   * specified element.
+   *
+   * @param element the element to find the usages for.
+   * @param showDialog true if find usages settings dialog needs to be shown.
+   */
+  public abstract void findUsages(@NotNull PsiElement element, boolean showDialog);
 
   /**
    * Performs a "Find Usages in File" operation for the specified element.

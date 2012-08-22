@@ -46,7 +46,7 @@ public abstract class DataManager {
   /**
    * @return {@link DataContext} constructed by the specified <code>component</code>
    */
-  public abstract DataContext getDataContext(@NotNull Component component);
+  public abstract DataContext getDataContext(Component component);
 
   /**
    * @return {@link DataContext} constructed be the specified <code>component</code>
@@ -71,9 +71,9 @@ public abstract class DataManager {
    * @return value stored by {@link #saveInDataContext(com.intellij.openapi.actionSystem.DataContext, com.intellij.openapi.util.Key, Object)}
    */
   @Nullable
-  public abstract <T> T loadFromDataContext(DataContext dataContext, Key<T> dataKey);
+  public abstract <T> T loadFromDataContext(@NotNull DataContext dataContext, @NotNull Key<T> dataKey);
 
-  public static void registerDataProvider(JComponent component, DataProvider provider) {
+  public static void registerDataProvider(@NotNull JComponent component, @NotNull DataProvider provider) {
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, provider);
   }
 
