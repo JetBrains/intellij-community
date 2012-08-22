@@ -16,23 +16,28 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.remote.PyRemoteInterpreterException;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.remote.PythonRemoteSdkAdditionalData;
@@ -149,6 +154,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
               exceptions.add(e);
             }
           }
+          manager.refresh();
           return exceptions;
         }
       }, progressTitle, successTitle, "Installed packages: " + PyPackageUtil.requirementsToString(requirements),
@@ -166,12 +172,16 @@ public class PyPackageManagerImpl extends PyPackageManager {
       run(new MultiExternalRunnable() {
         @Override
         public List<PyExternalProcessException> run(@NotNull ProgressIndicator indicator) {
+          final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk);
           try {
-            ((PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(mySdk)).uninstall(packages);
+            manager.uninstall(packages);
             return list();
           }
           catch (PyExternalProcessException e) {
             return list(e);
+          }
+          finally {
+            manager.refresh();
           }
         }
       }, "Uninstalling packages", "Packages uninstalled successfully", "Uninstalled packages: " + packagesString,
@@ -226,10 +236,6 @@ public class PyPackageManagerImpl extends PyPackageManager {
               if (myListener != null) {
                 myListener.finished(exceptions);
               }
-              VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
-              if (exceptions.isEmpty()) {
-                PythonSdkType.getInstance().setupSdkPaths(mySdk);
-              }
               final Notification notification = notificationRef.get();
               if (notification != null) {
                 notification.notify(myProject);
@@ -250,6 +256,36 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
       return b.toString();
     }
+  }
+
+  @Override
+  public void refresh() {
+    final Application application = ApplicationManager.getApplication();
+    application.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        application.runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            syncFiles(mySdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+          }
+        });
+        PythonSdkType.getInstance().setupSdkPaths(mySdk);
+        clearCaches();
+      }
+    });
+  }
+
+  private void syncFiles(VirtualFile[] files) {
+    // Similar to LocalFileSystemImpl.syncFiles(), VirtualFile.refresh() doesn't run update index tasks immediately, so we get stale virtual
+    // files when we want to bind a stub to an AST. Another option is to use VirtualFileManager.refreshWithoutFileWatcher(), but it takes
+    // more time to refresh the whole local file system
+    for (VirtualFile root : files) {
+      if (root instanceof NewVirtualFile && root.getFileSystem() instanceof LocalFileSystem) {
+        ((NewVirtualFile)root).markDirtyRecursively();
+      }
+    }
+    LocalFileSystem.getInstance().refreshFiles(Arrays.asList(files), false, true, null);
   }
 
   private void installManagement(String name) throws PyExternalProcessException {
@@ -290,6 +326,28 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   PyPackageManagerImpl(@NotNull Sdk sdk) {
     mySdk = sdk;
+    final Application app = ApplicationManager.getApplication();
+    final MessageBusConnection connection = app.getMessageBus().connect();
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void before(@NotNull List<? extends VFileEvent> events) {}
+
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        final VirtualFile[] roots = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+        for (VFileEvent event : events) {
+          final VirtualFile file = event.getFile();
+          if (file != null) {
+            for (VirtualFile root : roots) {
+              if (VfsUtilCore.isAncestor(root, file, false)) {
+                clearCaches();
+                return;
+              }
+            }
+          }
+        }
+      }
+    });
   }
 
   public Sdk getSdk() {
@@ -469,16 +527,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
     return null;
   }
 
-  public void clearCaches() {
+  private void clearCaches() {
     myPackagesCache = null;
     myExceptionCache = null;
-    VirtualFile libDir = PyProjectScopeBuilder.findLibDir(mySdk);
-    if (libDir != null) {
-      VirtualFile sitePackages = libDir.findChild(PyNames.SITE_PACKAGES);
-      if (sitePackages != null) {
-        sitePackages.refresh(true, true);
-      }
-    }
   }
 
   private static <T> List<T> list(T... xs) {
