@@ -33,6 +33,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -51,22 +52,23 @@ public class ArrangementRuleTree {
   @NotNull private final TreeSelectionModel                     mySelectionModel      = new MySelectionModel();
   @NotNull private final MyModelChangeListener                  myModelChangeListener = new MyModelChangeListener();
 
-  @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>    myRenderers =
+  @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>        myRenderers =
     new TIntObjectHashMap<ArrangementNodeComponent>();
   @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myModels    =
     new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
 
+  @NotNull private final ArrangementTreeNode             myRoot;
   @NotNull private final DefaultTreeModel                myTreeModel;
   @NotNull private final Tree                            myTree;
   @NotNull private final ArrangementNodeComponentFactory myFactory;
-  
+
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
   public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
     myFactory = new ArrangementNodeComponentFactory(displayManager);
-    ArrangementTreeNode root = new ArrangementTreeNode(null);
-    myTreeModel = new DefaultTreeModel(root);
+    myRoot = new ArrangementTreeNode(null);
+    myTreeModel = new DefaultTreeModel(myRoot);
     myTree = new Tree(myTreeModel) {
       @Override
       protected void setExpandedState(TreePath path, boolean state) {
@@ -110,7 +112,7 @@ public class ArrangementRuleTree {
           return;
         }
         for (int i = 0; i < paths.length; i++) {
-          setSelection(paths[i], e.isAddedPath(i));
+          onSelectionChange(paths[i], e.isAddedPath(i));
         }
       }
     });
@@ -118,6 +120,20 @@ public class ArrangementRuleTree {
       @Override
       public void mouseClicked(MouseEvent e) {
         onMouseClicked(e);
+      }
+    });
+    
+    // Setup the tree to perform rule-aware navigation via up/down arrow keys.
+    myTree.getActionMap().put("selectNext", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        selectNextRule();
+      }
+    });
+    myTree.getActionMap().put("selectPrevious", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        selectPreviousRule();
       }
     });
     
@@ -136,14 +152,99 @@ public class ArrangementRuleTree {
     rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
                 .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
                 .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    map(root, rules, grouper);
+    map(myRoot, rules, grouper);
 
-    expandAll(myTree, new TreePath(root));
+    expandAll(myTree, new TreePath(myRoot));
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
   }
+  
+  private void selectPreviousRule() {
+    ArrangementTreeNode currentSelectionBottom = getCurrentSelectionBottom();
 
-  private void setSelection(@Nullable final TreePath path, boolean selected) {
+    if (currentSelectionBottom == null) {
+      return;
+    }
+    
+    for (ArrangementTreeNode parent = currentSelectionBottom.getParent();
+         parent != null;
+         currentSelectionBottom = parent, parent = parent.getParent())
+    {
+      int i = parent.getIndex(currentSelectionBottom);
+      if (i <= 0) {
+        continue;
+      }
+      ArrangementTreeNode toSelect = parent.getChildAt(i - 1);
+      while (toSelect.getChildCount() > 0) {
+        toSelect = toSelect.getLastChild();
+      }
+      mySelectionModel.setSelectionPath(new TreePath(toSelect.getPath()));
+      break;
+    }
+  }
+
+  private void selectNextRule() {
+    ArrangementTreeNode currentSelectionBottom = getCurrentSelectionBottom();
+    if (currentSelectionBottom == null) {
+      if (myRoot.getChildCount() > 0) {
+        mySelectionModel.setSelectionPath(new TreePath(myRoot.getFirstChild().getPath()));
+      }
+      return;
+    }
+
+    for (ArrangementTreeNode parent = currentSelectionBottom.getParent();
+         parent != null;
+         currentSelectionBottom = parent, parent = parent.getParent())
+    {
+      int i = parent.getIndex(currentSelectionBottom);
+      if (i < parent.getChildCount() - 1) {
+        mySelectionModel.setSelectionPath(new TreePath(parent.getChildAt(i + 1).getPath()));
+        break;
+      }
+    }
+  }
+
+  @Nullable
+  private ArrangementTreeNode getCurrentSelectionBottom() {
+    TreePath[] paths = mySelectionModel.getSelectionPaths();
+    if (paths == null) {
+      return null;
+    }
+
+    ArrangementTreeNode currentSelectionBottom = null;
+    for (TreePath treePath : paths) {
+      ArrangementTreeNode last = (ArrangementTreeNode)treePath.getLastPathComponent();
+      if (last.getChildCount() <= 0) {
+        currentSelectionBottom = last;
+        break;
+      }
+    }
+
+    if (currentSelectionBottom == null) {
+      return null;
+    }
+    return currentSelectionBottom;
+  }
+
+  private void doClearSelection() {
+    mySelectionModel.clearSelection();
+    myRenderers.forEachValue(new TObjectProcedure<ArrangementNodeComponent>() {
+      @Override
+      public boolean execute(ArrangementNodeComponent node) {
+        node.setSelected(false);
+        return true;
+      }
+    });
+    myTree.repaint();
+  }
+
+  /**
+   * Updates renderer's {@link ArrangementNodeComponent#setSelected(boolean) 'selected'} state on tree ndoe selection change.
+   * 
+   * @param path      changed selection path
+   * @param selected  <code>true</code> if given path is selected now; <code>false</code> if given path was selected anymore
+   */
+  private void onSelectionChange(@Nullable final TreePath path, boolean selected) {
     if (path == null) {
       return;
     }
@@ -242,15 +343,7 @@ public class ArrangementRuleTree {
       return;
     }
     // Clear selection
-    mySelectionModel.clearSelection();
-    myRenderers.forEachValue(new TObjectProcedure<ArrangementNodeComponent>() {
-      @Override
-      public boolean execute(ArrangementNodeComponent node) {
-        node.setSelected(false);
-        return true;
-      }
-    });
-    myTree.repaint();
+    doClearSelection();
   }
   
   @Nullable
@@ -330,7 +423,7 @@ public class ArrangementRuleTree {
     ArrangementTreeNode topMost = model.getTopMost();
     ArrangementTreeNode bottomMost = model.getBottomMost();
     expandAll(myTree, new TreePath(myTreeModel.getRoot()));
-    mySelectionModel.clearSelection();
+    doClearSelection();
     myExplicitSelectionChange = true;
     try {
       for (ArrangementTreeNode node = bottomMost; node != null; node = node.getParent()) {
@@ -399,21 +492,27 @@ public class ArrangementRuleTree {
       if (mySkipSelectionChange) {
         return;
       }
-
-      DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
+      
+      clearSelection();
+      ArrangementTreeNode component = (ArrangementTreeNode)path.getLastPathComponent();
+      
+      // Select all nodes which correspond to the first rule under the node denoted by the given path
+      // in case when non-leaf is selected.
       if (component.getChildCount() > 0) {
-        // Select all nodes which correspond to the first rule under the node denoted by the given path
-        // in case when non-leaf is selected.
-        clearSelection();
-        for (DefaultMutableTreeNode node = component; node != null; node = (DefaultMutableTreeNode)node.getChildAt(0)) {
+        for (ArrangementTreeNode node = component.getChildAt(0); node != null; node = node.getChildAt(0)) {
           addSelectionPath(new TreePath(node.getPath()));
           if (node.getChildCount() <= 0) {
             break;
           }
         }
       }
-      else {
-        super.setSelectionPath(path);
+      
+      // Select the node itself.
+      super.addSelectionPath(path);
+      
+      // Select parent nodes from the same rule.
+      for (ArrangementTreeNode node = component.getParent(); node != null && node != myRoot; node = node.getParent()) {
+        addSelectionPath(new TreePath(node.getPath()));
       }
       
       notifySelectionListeners(getActiveModel());
