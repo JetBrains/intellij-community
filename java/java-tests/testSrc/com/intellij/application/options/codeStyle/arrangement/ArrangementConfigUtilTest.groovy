@@ -139,6 +139,40 @@ node =  '4'()
     checkRowMappings([:], rowMappings)
   }
   
+    @Test
+  void replaceWithTwoLevelMergeToNodeBelow() {
+        // Init.
+    def from;
+    def to;
+    def initial = new TreeNodeBuilder().
+      '0' {
+from =  '1'() {
+          '2'()
+to =      '3'()}
+        '4'() {
+          '5'() }        
+      }
+    
+    // Modify.
+    def replacement = new TreeNodeBuilder().
+      '4' {
+        '3'()
+      }
+    def rowMappings = doReplace(initial, from, to, replacement)
+    
+    // Check.
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()}
+        '4' {
+          '3'()
+          '5'()}
+      }
+    assertNodesEqual(expected, initial)
+    checkRowMappings([:], rowMappings)
+  }
+  
   @Test
   void addWithoutMergeAbove() {
     def initial = new TreeNodeBuilder().

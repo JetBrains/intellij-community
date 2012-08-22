@@ -341,7 +341,18 @@ public class ArrangementConfigUtil {
     int insertionIndex = root.getChildCount() < childCountBefore ? childCountBefore - 1 : childCountBefore;
     boolean merged = insert(root, insertionIndex, replacement, treeModel);
     if (cutHierarchy != null) {
-      insert(root, insertionIndex + (merged ? 0 : 1), cutHierarchy, treeModel);
+      List<ArrangementTreeNode> toInsert = new ArrayList<ArrangementTreeNode>();
+      if (hasEqualSetting(root, cutHierarchy)) {
+        for (int i = 0; i < cutHierarchy.getChildCount(); i++) {
+          toInsert.add(cutHierarchy.getChildAt(i));
+        }
+      }
+      else {
+        toInsert.add(cutHierarchy);
+      }
+      for (ArrangementTreeNode node : toInsert) {
+        insert(root, root.getChildCount(), node, treeModel);
+      }
     }
     //endregion
     
