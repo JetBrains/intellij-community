@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,20 @@ public class CoreFormatterUtil {
 
   private CoreFormatterUtil() {
   }
-
+  
+  @NotNull
+  public static FormattingModel buildModel(@NotNull FormattingModelBuilder builder,
+                                           @NotNull PsiElement element,
+                                           @NotNull CodeStyleSettings settings,
+                                           @NotNull FormattingMode mode) {
+    if (builder instanceof FormattingModelBuilderEx) {
+      return ((FormattingModelBuilderEx)builder).createModel(element, settings, mode);
+    }
+    else {
+      return builder.createModel(element, settings);
+    }
+  }
+  
   /**
    * Checks if there is an {@link AlignmentImpl} object that should be used during adjusting
    * {@link AbstractBlockWrapper#getWhiteSpace() white space} of the given block.
