@@ -21,8 +21,6 @@ import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.TIntIntHashMap;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -36,13 +34,14 @@ import java.util.Set;
  */
 public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingModel {
 
+  private static final TIntIntHashMap EMPTY_CHANGES = new TIntIntHashMap();
+
   @NotNull private static final MyConditionsBuilder CONDITIONS_BUILDER = new MyConditionsBuilder();
 
   @NotNull private final Set<Listener> myListeners  = new HashSet<Listener>();
   @NotNull private final Set<Object>   myConditions = new HashSet<Object>();
 
   @NotNull private final DefaultTreeModel                                   myTreeModel;
-  @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myRowMappings;
   @NotNull private final ArrangementSettingsGrouper                         myGrouper;
   private final          boolean                                            myRootVisible;
 
@@ -62,7 +61,6 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    *                     settings node representation
    * @param bottomMost   bottom-most UI node used for the given settings node representation 
    * @param grouper      strategy that encapsulates information on how settings node should be displayed
-   * @param mappings     {@code 'row -> model'} mappings
    * @param row          row number for which current model is registered at the given model mappings
    * @param rootVisible  determines if the root should be count during rows calculations
    */
@@ -71,7 +69,6 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
                                          @NotNull ArrangementTreeNode topMost,
                                          @NotNull ArrangementTreeNode bottomMost,
                                          @NotNull ArrangementSettingsGrouper grouper,
-                                         @NotNull TIntObjectHashMap<ArrangementRuleEditingModelImpl> mappings,
                                          int row,
                                          boolean rootVisible)
   {
@@ -80,7 +77,6 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     myTopMost = topMost;
     myBottomMost = bottomMost;
     myGrouper = grouper;
-    myRowMappings = mappings;
     myRow = row;
     myRootVisible = rootVisible;
     refreshConditions();
@@ -140,26 +136,28 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   
   @Override
   public void addAndCondition(@NotNull ArrangementSettingsAtomNode node) {
-    doAddAndCondition(node);
+    TIntIntHashMap rowChanges = doAddAndCondition(node);
     refreshConditions();
-    notifyListeners();
+    notifyListeners(rowChanges);
   }
   
-  private void doAddAndCondition(@NotNull ArrangementSettingsAtomNode node) {
+  @NotNull
+  private TIntIntHashMap doAddAndCondition(@NotNull ArrangementSettingsAtomNode node) {
     ArrangementSettingsNode newNode = ArrangementUtil.and(mySettingsNode.clone(), node);
-    applyNewSetting(newNode);
+    return applyNewSetting(newNode);
   }
 
   @Override
   public void removeAndCondition(@NotNull ArrangementSettingsNode node) {
-    doRemoveAndCondition(node);
+    TIntIntHashMap rowChanges = doRemoveAndCondition(node);
     refreshConditions();
-    notifyListeners();
+    notifyListeners(rowChanges);
   }
   
-  private void doRemoveAndCondition(@NotNull ArrangementSettingsNode node) {
+  @NotNull
+  private TIntIntHashMap doRemoveAndCondition(@NotNull ArrangementSettingsNode node) {
     if (!(mySettingsNode instanceof ArrangementSettingsCompositeNode)) {
-      return;
+      return EMPTY_CHANGES;
     }
 
     ArrangementSettingsNode newNode = mySettingsNode.clone();
@@ -169,17 +167,18 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
       newNode = composite.getOperands().iterator().next();
     }
 
-    applyNewSetting(newNode);
+    return applyNewSetting(newNode);
   }
 
-  private void applyNewSetting(@NotNull ArrangementSettingsNode newNode) {
+  @NotNull
+  private TIntIntHashMap applyNewSetting(@NotNull ArrangementSettingsNode newNode) {
     mySettingsNode = newNode;
     HierarchicalArrangementSettingsNode grouped = myGrouper.group(newNode);
     int newDepth = ArrangementConfigUtil.getDepth(grouped);
     int oldDepth = ArrangementConfigUtil.distance(myTopMost, myBottomMost);
     if (oldDepth == newDepth) {
       myBottomMost.setSettings(ArrangementConfigUtil.getLast(grouped).getCurrent());
-      return;
+      return EMPTY_CHANGES;
     }
 
     Pair<ArrangementTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped, null);
@@ -188,47 +187,20 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop, myTreeModel, myRootVisible);
     myTopMost = newTop;
     myBottomMost = newBottom;
-
-    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> newMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
-
-    // Update model mappings.
-    myRowMappings.forEachEntry(new TIntObjectProcedure<ArrangementRuleEditingModelImpl>() {
-      @Override
-      public boolean execute(int row, ArrangementRuleEditingModelImpl model) {
-        if (row == myRow) {
-          return true;
-        }
-        if (rowChanges.containsKey(row)) {
-          newMappings.put(rowChanges.get(row), model);
-        }
-        else {
-          newMappings.put(row, model);
-        }
-        model.refreshTreeNodes();
-        return true;
-      }
-    });
-    myRow = ArrangementConfigUtil.getRow(myBottomMost, myRootVisible);
-    newMappings.put(myRow, this);
-
-    myRowMappings.clear();
-    newMappings.forEachEntry(new TIntObjectProcedure<ArrangementRuleEditingModelImpl>() {
-      @Override
-      public boolean execute(int row, ArrangementRuleEditingModelImpl model) {
-        myRowMappings.put(row, model);
-        return true;
-      }
-    });
+    rowChanges.remove(myRow);
+    int newRow = ArrangementConfigUtil.getRow(myBottomMost, myRootVisible);
+    rowChanges.put(myRow, newRow);
+    myRow = newRow;
+    return rowChanges;
   }
 
-  @Override
   public void addListener(@NotNull Listener listener) {
     myListeners.add(listener);
   }
 
-  private void notifyListeners() {
+  private void notifyListeners(@NotNull TIntIntHashMap rowChanges) {
     for (Listener listener : myListeners) {
-      listener.onChanged(myTopMost, myBottomMost);
+      listener.onChanged(this, rowChanges);
     }
   }
 
@@ -252,5 +224,9 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         operand.invite(this);
       } 
     }
+  }
+
+  public interface Listener {
+    void onChanged(@NotNull ArrangementRuleEditingModelImpl model, @NotNull TIntIntHashMap rowChanges);
   }
 }

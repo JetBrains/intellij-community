@@ -103,7 +103,6 @@ public class ArrangementRuleEditingModelBuilder {
       topMostNode,
       pair.first,
       grouper,
-      rowMappings,
       row,
       tree.isRootVisible()
     );

@@ -24,8 +24,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TObjectProcedure;
+import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,12 +130,12 @@ public class ArrangementRuleTree {
     rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
                 .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
                 .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    //rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-    //            .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-    //            .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
-    //rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-    //            .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-    //            .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
+    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
+    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
     map(root, rules, grouper);
 
     expandAll(myTree, new TreePath(root));
@@ -305,8 +304,32 @@ public class ArrangementRuleTree {
     }
   }
 
-  private void onModelChange(@NotNull ArrangementTreeNode topMost, @NotNull ArrangementTreeNode bottomMost) {
-    expandAll(myTree, new TreePath(topMost.getPath()));
+  private void onModelChange(@NotNull ArrangementRuleEditingModelImpl model, @NotNull final TIntIntHashMap rowChanges) {
+    // Shift row-based caches.
+    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> changedModelMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
+    final TIntObjectHashMap<ArrangementNodeComponent> changedRendererMappings = new TIntObjectHashMap<ArrangementNodeComponent>();
+    rowChanges.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int oldRow, int newRow) {
+        ArrangementRuleEditingModelImpl m = myModels.remove(oldRow);
+        if (m != null) {
+          changedModelMappings.put(newRow, m);
+        }
+
+        ArrangementNodeComponent renderer = myRenderers.remove(oldRow);
+        if (renderer != null) {
+          changedRendererMappings.put(newRow, renderer);
+        }
+        return true;
+      }
+    });
+    putAll(changedModelMappings, myModels);
+    putAll(changedRendererMappings, myRenderers);
+
+    // Perform necessary actions for the changed model.
+    ArrangementTreeNode topMost = model.getTopMost();
+    ArrangementTreeNode bottomMost = model.getBottomMost();
+    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
     mySelectionModel.clearSelection();
     myExplicitSelectionChange = true;
     try {
@@ -328,6 +351,16 @@ public class ArrangementRuleTree {
     finally {
       myExplicitSelectionChange = false;
     }
+  }
+
+  private static <T> void putAll(@NotNull TIntObjectHashMap<T> from, @NotNull final TIntObjectHashMap<T> to) {
+    from.forEachEntry(new TIntObjectProcedure<T>() {
+      @Override
+      public boolean execute(int key, T value) {
+        to.put(key, value);
+        return true;
+      }
+    });
   }
   
   private class MyCellRenderer implements TreeCellRenderer {
@@ -387,10 +420,11 @@ public class ArrangementRuleTree {
     }
   }
   
-  private class MyModelChangeListener implements ArrangementRuleEditingModel.Listener {
+  private class MyModelChangeListener implements ArrangementRuleEditingModelImpl.Listener {
+
     @Override
-    public void onChanged(@NotNull ArrangementTreeNode topMost, @NotNull ArrangementTreeNode bottomMost) {
-      onModelChange(topMost, bottomMost); 
+    public void onChanged(@NotNull ArrangementRuleEditingModelImpl model, @NotNull TIntIntHashMap rowChanges) {
+      onModelChange(model, rowChanges); 
     }
   }
 }
