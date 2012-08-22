@@ -33,7 +33,7 @@ public class SourceLineCounterUtil {
 
   public static void collectSrcLinesForUntouchedFiles(final List<Integer> uncoveredLines,
                                                       byte[] content, final boolean excludeLines) {
-    final ClassReader reader = new ClassReader(content, 0, content.length);
+    final ClassReader reader = new ClassReader(content);
     final SourceLineCounter collector = new SourceLineCounter(null, excludeLines);
     reader.accept(collector, 0);
     final TIntObjectHashMap lines = collector.getSourceLines();
