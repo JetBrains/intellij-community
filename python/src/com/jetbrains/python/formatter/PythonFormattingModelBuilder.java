@@ -20,24 +20,31 @@ import static com.jetbrains.python.PyTokenTypes.*;
 /**
  * @author yole
  */
-public class PythonFormattingModelBuilder implements FormattingModelBuilder, CustomFormattingModelBuilder {
+public class PythonFormattingModelBuilder implements FormattingModelBuilderEx, CustomFormattingModelBuilder {
   private static final boolean DUMP_FORMATTING_AST = false;
 
   @NotNull
-  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
+  @Override
+  public FormattingModel createModel(@NotNull PsiElement element,
+                                     @NotNull CodeStyleSettings settings,
+                                     @NotNull FormattingMode mode) {
     if (DUMP_FORMATTING_AST) {
       ASTNode fileNode = element.getContainingFile().getNode();
       System.out.println("AST tree for " + element.getContainingFile().getName() + ":");
       printAST(fileNode, 0);
     }
     final CommonCodeStyleSettings codeStyleSettings = settings.getCommonSettings(PythonLanguage.getInstance());
-    final PyBlock block =
-      new PyBlock(element.getNode(), null, Indent.getNoneIndent(), null, codeStyleSettings,
-                  createSpacingBuilder(settings));
+    final PyBlockContext context = new PyBlockContext(codeStyleSettings, createSpacingBuilder(settings), mode);
+    final PyBlock block = new PyBlock(element.getNode(), null, Indent.getNoneIndent(), null, context);
     if (DUMP_FORMATTING_AST) {
       FormattingModelDumper.dumpFormattingModel(block, 2, System.out);
     }
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
+  }
+
+  @NotNull
+  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
+    return createModel(element, settings, FormattingMode.REFORMAT);
   }
 
   protected SpacingBuilder createSpacingBuilder(CodeStyleSettings settings) {

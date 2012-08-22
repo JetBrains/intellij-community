@@ -5,7 +5,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -33,8 +32,7 @@ public class PyBlock implements ASTBlock {
   private final Indent _indent;
   private final ASTNode _node;
   private final Wrap _wrap;
-  private final CommonCodeStyleSettings mySettings;
-  private final SpacingBuilder mySpacingBuilder;
+  private final PyBlockContext myContext;
   private List<PyBlock> _subBlocks = null;
   private Alignment myChildAlignment;
   private static final boolean DUMP_FORMATTING_BLOCKS = false;
@@ -60,14 +58,12 @@ public class PyBlock implements ASTBlock {
                  final Alignment alignment,
                  final Indent indent,
                  final Wrap wrap,
-                 final CommonCodeStyleSettings settings,
-                 SpacingBuilder spacingBuilder) {
+                 final PyBlockContext context) {
     _alignment = alignment;
     _indent = indent;
     _node = node;
     _wrap = wrap;
-    mySettings = settings;
-    mySpacingBuilder = spacingBuilder;
+    myContext = context;
   }
 
   @NotNull
@@ -194,7 +190,7 @@ public class PyBlock implements ASTBlock {
       childIndent = Indent.getNormalIndent();
     }
 
-    return new PyBlock(child, childAlignment, childIndent, wrap, mySettings, mySpacingBuilder);
+    return new PyBlock(child, childAlignment, childIndent, wrap, myContext);
   }
 
   private static boolean isEmptyList(PsiElement psi) {
@@ -242,7 +238,7 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     if (_node.getElementType() == PyElementTypes.ARGUMENT_LIST) {
-      if (!mySettings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
+      if (!myContext.getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS) {
         return false;
       }
       if (child.getElementType() == PyTokenTypes.COMMA) {
@@ -257,7 +253,7 @@ public class PyBlock implements ASTBlock {
       return false;
     }
     if (_node.getElementType() == PyElementTypes.PARAMETER_LIST) {
-      return mySettings.ALIGN_MULTILINE_PARAMETERS;
+      return myContext.getSettings().ALIGN_MULTILINE_PARAMETERS;
     }
     if (child.getElementType() == PyTokenTypes.COMMA) {
       return false;
@@ -326,7 +322,7 @@ public class PyBlock implements ASTBlock {
 
   @Nullable
   public Spacing getSpacing(Block child1, Block child2) {
-    return mySpacingBuilder.getSpacing(this, child1, child2);
+    return myContext.getSpacingBuilder().getSpacing(this, child1, child2);
   }
 
   @NotNull
@@ -387,7 +383,7 @@ public class PyBlock implements ASTBlock {
     // correct indent manually.
     if (statementListsBelow > 0) { // was 1... strange
       @SuppressWarnings("ConstantConditions")
-      int indent = mySettings.getIndentOptions().INDENT_SIZE;
+      int indent = myContext.getSettings().getIndentOptions().INDENT_SIZE;
       return new ChildAttributes(Indent.getSpaceIndent(indent * statementListsBelow), null);
     }
 
@@ -416,7 +412,7 @@ public class PyBlock implements ASTBlock {
   @Nullable
   private Alignment getChildAlignment() {
     if (ourListElementTypes.contains(_node.getElementType())) {
-      if (_node.getPsi() instanceof PyParameterList && !mySettings.ALIGN_MULTILINE_PARAMETERS) {
+      if (_node.getPsi() instanceof PyParameterList && !myContext.getSettings().ALIGN_MULTILINE_PARAMETERS) {
         return null;
       }
       if (_node.getPsi() instanceof PyDictLiteralExpression) {
