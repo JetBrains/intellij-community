@@ -21,8 +21,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.StringRef;
 import com.intellij.util.xml.EvaluatedXmlNameImpl;
 import com.intellij.util.xml.XmlName;
-import com.intellij.util.xml.impl.*;
+import com.intellij.util.xml.impl.CollectionElementInvocationHandler;
+import com.intellij.util.xml.impl.DomChildDescriptionImpl;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.xml.util.XmlUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -33,33 +37,40 @@ import java.util.List;
  */
 public abstract class DomStub extends ObjectStubBase<DomStub> {
 
-  protected final StringRef myName;
+  protected final StringRef myLocalName;
+  private final StringRef myNamespace;
   private DomInvocationHandler myHandler;
 
-  public DomStub(DomStub parent, StringRef name) {
+  public DomStub(DomStub parent, @NotNull StringRef localName, StringRef namespace) {
     super(parent);
+    myNamespace = namespace;
     if (parent != null) {
       ((ElementStub)parent).addChild(this);
     }
-    myName = name;
+    myLocalName = localName;
   }
 
   public abstract List<DomStub> getChildrenStubs();
 
   public int getChildIndex(DomStub child) {
-    List<DomStub> stubs = getChildrenByName(XmlUtil.getLocalName(child.getName()));
+    List<DomStub> stubs = getChildrenByName(XmlUtil.getLocalName(child.getName()), child.getNamespaceKey());
     return stubs.indexOf(child);
   }
 
   public String getName() {
-    return myName.getString();
+    return myLocalName.getString();
   }
 
-  public List<DomStub> getChildrenByName(final CharSequence localName) {
+  public String getNamespaceKey() {
+    return myNamespace.getString();
+  }
+
+  public List<DomStub> getChildrenByName(final CharSequence name, final String nsKey) {
+    final String s = nsKey == null ? "" : nsKey;
     return ContainerUtil.filter(getChildrenStubs(), new Condition<DomStub>() {
       @Override
       public boolean value(DomStub stub) {
-        return stub instanceof ElementStub && XmlUtil.getLocalName(stub.getName()).equals(localName);
+        return XmlUtil.getLocalName(stub.getName()).equals(name) && stub.getNamespaceKey().equals(s);
       }
     });
   }

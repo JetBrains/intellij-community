@@ -18,6 +18,7 @@ package com.intellij.util.xml.stubs;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -31,8 +32,8 @@ public class ElementStub extends DomStub {
   private final List<DomStub> myChildren = new SmartList<DomStub>();
   private final boolean myCustom;
 
-  public ElementStub(@Nullable ElementStub parent, StringRef name, boolean custom) {
-    super(parent, name);
+  public ElementStub(@Nullable ElementStub parent, @NotNull StringRef name, StringRef namespace, boolean custom) {
+    super(parent, name, namespace);
     myCustom = custom;
   }
 
@@ -58,7 +59,7 @@ public class ElementStub extends DomStub {
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
-    return obj instanceof ElementStub && id == ((ElementStub)obj).id && myName.equals(((ElementStub)obj).myName);
+    return obj instanceof ElementStub && id == ((ElementStub)obj).id && myLocalName.equals(((ElementStub)obj).myLocalName);
   }
 
   public boolean isCustom() {

@@ -19,6 +19,8 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -96,6 +98,11 @@ public class StringRef {
 
   public static StringRef fromString(String source) {
     return source == null ? null : new StringRef(source);
+  }
+
+  @NotNull
+  public static StringRef fromNullableString(String source) {
+    return source == null ? new StringRef("") : new StringRef(source);
   }
 
   public static StringRef fromStream(DataInput in, AbstractStringEnumerator store) throws IOException {

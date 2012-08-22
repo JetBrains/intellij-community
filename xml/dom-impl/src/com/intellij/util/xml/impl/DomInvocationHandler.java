@@ -557,9 +557,10 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
   @NotNull
   final IndexedElementInvocationHandler getFixedChild(final Pair<FixedChildDescriptionImpl, Integer> info) {
     final FixedChildDescriptionImpl description = info.first;
-    final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(description.getXmlName());
+    XmlName xmlName = description.getXmlName();
+    final EvaluatedXmlName evaluatedXmlName = createEvaluatedXmlName(xmlName);
     if (myStub != null && description.isStubbed()) {
-      List<DomStub> stubs = myStub.getChildrenByName(description.getXmlName().getLocalName());
+      List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName(), xmlName.getNamespaceKey());
       DomStub stub = stubs.isEmpty() ? null : stubs.get(0);
       DomParentStrategy strategy = stub == null ? new StubParentStrategy.Empty(myStub) : new StubParentStrategy(stub);
       return new IndexedElementInvocationHandler(evaluatedXmlName, description, 0, strategy, myManager, (ElementStub)stub);
@@ -771,7 +772,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
     if (myStub != null && description.isStubbed()) {
       if (description instanceof DomChildDescriptionImpl) {
         XmlName xmlName = ((DomChildDescriptionImpl)description).getXmlName();
-        List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName());
+        List<DomStub> stubs = myStub.getChildrenByName(xmlName.getLocalName(), xmlName.getNamespaceKey());
         return ContainerUtil.map(stubs, new Function<DomStub, DomElement>() {
           @Override
           public DomElement fun(DomStub stub) {
