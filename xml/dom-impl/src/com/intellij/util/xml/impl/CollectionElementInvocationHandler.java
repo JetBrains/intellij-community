@@ -91,6 +91,10 @@ public class CollectionElementInvocationHandler extends DomInvocationHandler<Abs
 
   @Override
   public int hashCode() {
+    ElementStub stub = getStub();
+    if (stub != null) {
+      return stub.getName().hashCode() + stub.id;
+    }
     final XmlElement element = getXmlElement();
     return element == null ? super.hashCode() : element.hashCode();
   }
