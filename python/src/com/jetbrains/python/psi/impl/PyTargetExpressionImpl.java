@@ -98,6 +98,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   public PyType getType(@NotNull TypeEvalContext context) {
+    return getTypeWithAnchor(context, null);
+  }
+
+  @Nullable
+  public PyType getTypeWithAnchor(TypeEvalContext context, @Nullable PsiElement anchor) {
     if (!TypeEvalStack.mayEvaluate(this)) {
       return null;
     }
@@ -106,6 +111,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         // no type for __all__, to avoid unresolved reference errors for expressions where a qualifier is a name
         // imported via __all__
         return null;
+      }
+      final PyType pyType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(this, context, anchor);
+      if (pyType != null) {
+        return pyType;
       }
       if (!context.maySwitchToAST(this)) {
         final PsiElement value = getStub() != null ? findAssignedValueByStub() : findAssignedValue();

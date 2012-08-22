@@ -29,7 +29,15 @@ import org.jetbrains.annotations.Nullable;
 public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   private boolean needPostProcess = false;
 
-  private static final Class[] IMPLICIT_WRAP_CLASSES = new Class[]{
+  public static final Class[] IMPLICIT_WRAP_CLASSES = new Class[] {
+    PySequenceExpression.class,
+    PyDictLiteralExpression.class,
+    PyParenthesizedExpression.class,
+    PyArgumentList.class,
+    PyParameterList.class
+  };
+
+  private static final Class[] WRAPPABLE_CLASSES = new Class[]{
     PsiComment.class,
     PyParenthesizedExpression.class,
     PyListCompExpression.class,
@@ -116,13 +124,11 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
       final boolean isEscapedBackslash = "\\".equals(doc.getText(TextRange.create(offset-2, offset - 1))) && nextIsBackslash;
       if (nextIsBackslash && !isEscapedQuote && !isEscapedBackslash) return Result.Continue;
 
-      final PsiElement parent = string.getParent();
       final StringBuilder replacementString = new StringBuilder();
       needPostProcess = true;
-      if (parent instanceof PySequenceExpression || parent instanceof PyParenthesizedExpression ||
-          parent instanceof PyBinaryExpression || parent instanceof PyKeyValueExpression ||
-          parent instanceof PyNamedParameter || parent instanceof PyArgumentList) {
-        replacementString.append(quote + pref + quote);
+
+      if (PsiTreeUtil.getParentOfType(string, IMPLICIT_WRAP_CLASSES) != null) {
+        replacementString.append(quote).append(pref).append(quote);
         doc.insertString(offset, replacementString);
         caretOffset.set(caretOffset.get() + 1);
         return Result.Continue;
@@ -132,7 +138,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
           replacementString.append(quote);
           caretOffset.set(caretOffset.get() + 1);
         }
-        replacementString.append(quote + " \\" + pref);
+        replacementString.append(quote).append(" \\").append(pref);
         if (!isEscapedQuote)
           replacementString.append(quote);
         doc.insertString(offset, replacementString.toString());
@@ -187,7 +193,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     PsiElement wrappableAfter = findWrappable(file, offset, false);
     if (!(wrappableBefore instanceof PsiComment)) {
       while (wrappableBefore != null) {
-        PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, IMPLICIT_WRAP_CLASSES);
+        PsiElement next = PsiTreeUtil.getParentOfType(wrappableBefore, WRAPPABLE_CLASSES);
         if (next == null) {
           break;
         }
@@ -196,7 +202,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     }
     if (!(wrappableAfter instanceof PsiComment)) {
       while (wrappableAfter != null) {
-        PsiElement next = PsiTreeUtil.getParentOfType(wrappableAfter, IMPLICIT_WRAP_CLASSES);
+        PsiElement next = PsiTreeUtil.getParentOfType(wrappableAfter, WRAPPABLE_CLASSES);
         if (next == null) {
           break;
         }
@@ -234,8 +240,8 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   @Nullable
   private static PsiElement findWrappable(PsiFile file, int offset, boolean before) {
     PsiElement wrappable = before
-                                 ? findBeforeCaret(file, offset, IMPLICIT_WRAP_CLASSES)
-                                 : findAfterCaret(file, offset, IMPLICIT_WRAP_CLASSES);
+                                 ? findBeforeCaret(file, offset, WRAPPABLE_CLASSES)
+                                 : findAfterCaret(file, offset, WRAPPABLE_CLASSES);
     if (wrappable == null) {
       PsiElement emptyTuple = before
                               ? findBeforeCaret(file, offset, PyTupleExpression.class)

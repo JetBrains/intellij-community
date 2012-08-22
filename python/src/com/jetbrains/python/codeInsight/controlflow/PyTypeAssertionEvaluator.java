@@ -1,11 +1,12 @@
 package com.jetbrains.python.codeInsight.controlflow;
 
-import com.intellij.util.Function;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.CollectionFactory;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,9 +44,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         final PyExpression typeElement = args[1];
         final boolean positive = myPositive;
         if (!processTuple(target, typeElement)) {
-          pushAssertion(target, new Function<TypeEvalContext, PyType>() {
+          pushAssertion(target, new InstructionTypeCallback() {
             @Override
-            public PyType fun(TypeEvalContext context) {
+            public PyType getType(TypeEvalContext context, PsiElement anchor) {
               final List<PyType> types = new ArrayList<PyType>();
               types.add(context.getType(typeElement));
               return createAssertionType(context.getType(target), types, positive, context);
@@ -59,9 +60,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (args.length == 1 && args[0] instanceof PyReferenceExpression) {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
         final boolean positive = myPositive;
-        pushAssertion(target, new Function<TypeEvalContext, PyType>() {
+        pushAssertion(target, new InstructionTypeCallback() {
           @Override
-          public PyType fun(TypeEvalContext context) {
+          public PyType getType(TypeEvalContext context, PsiElement anchor) {
             final List<PyType> types = new ArrayList<PyType>();
             types.add(PyTypeParser.getTypeByName(target, PyNames.CALLABLE));
             return createAssertionType(context.getType(target), types, positive, context);
@@ -74,9 +75,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   @Override
   public void visitPyReferenceExpression(final PyReferenceExpression node) {
     if (node.getParent() instanceof PyIfPart) {
-      pushAssertion(node, new Function<TypeEvalContext, PyType>() {
+      pushAssertion(node, new InstructionTypeCallback() {
         @Override
-        public PyType fun(TypeEvalContext context) {
+        public PyType getType(TypeEvalContext context, PsiElement anchor) {
           final List<PyType> types = new ArrayList<PyType>();
           types.add(PyNoneType.INSTANCE);
           return createAssertionType(context.getType(node), types, false, context);
@@ -95,9 +96,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression) {
         final PyReferenceExpression target = (PyReferenceExpression)lhs;
         if (PyNames.NONE.equals(rhs.getName())) {
-          pushAssertion(target, new Function<TypeEvalContext, PyType>() {
+          pushAssertion(target, new InstructionTypeCallback() {
             @Override
-            public PyType fun(TypeEvalContext context) {
+            public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
               final List<PyType> types = new ArrayList<PyType>();
               types.add(PyNoneType.INSTANCE);
               return createAssertionType(context.getType(target), types, false, context);
@@ -117,9 +118,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (contained instanceof PyTupleExpression) {
         final PyTupleExpression tuple = (PyTupleExpression)contained;
         final boolean positive = myPositive;
-        pushAssertion(target, new Function<TypeEvalContext, PyType>() {
+        pushAssertion(target, new InstructionTypeCallback() {
           @Override
-          public PyType fun(TypeEvalContext context) {
+          public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
             final List<PyType> types = new ArrayList<PyType>();
             for (PyExpression e : tuple.getElements()) {
               types.add(context.getType(e));
@@ -133,6 +134,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     return pushed;
   }
 
+  @Nullable
   private static PyType createAssertionType(PyType initial, List<PyType> types, boolean positive, TypeEvalContext context) {
     final List<PyType> members = new ArrayList<PyType>();
     for (PyType t : types) {
@@ -151,15 +153,15 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     return initial;
   }
 
-  private void pushAssertion(PyReferenceExpression element, Function<TypeEvalContext, PyType> getType) {
+  private void pushAssertion(PyReferenceExpression element, InstructionTypeCallback getType) {
     myStack.push(new Assertion(element, getType));
   }
 
   static class Assertion {
     private final PyReferenceExpression element;
-    private Function<TypeEvalContext, PyType> myFunction;
+    private InstructionTypeCallback myFunction;
 
-    Assertion(PyReferenceExpression element, Function<TypeEvalContext, PyType> getType) {
+    Assertion(PyReferenceExpression element, InstructionTypeCallback getType) {
       this.element = element;
       this.myFunction = getType;
     }
@@ -168,7 +170,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       return element;
     }
 
-    public Function<TypeEvalContext, PyType> getTypeEvalFunction() {
+    public InstructionTypeCallback getTypeEvalFunction() {
       return myFunction;
     }
   }
