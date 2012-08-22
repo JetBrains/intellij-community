@@ -342,6 +342,7 @@ public class CodeFormatterFacade {
       if (!hasTabs) {
         if (Math.min(endLineOffset, endOffsetToUse) - startLineOffset > mySettings.RIGHT_MARGIN) {
           preferredWrapPosition = startLineOffset + mySettings.RIGHT_MARGIN - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
+          wrapLine = true;
         }
       }
       else if (canOptimize) {
