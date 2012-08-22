@@ -53,10 +53,7 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.java.ReplaceExpressionUtil;
 import com.intellij.psi.scope.processor.VariablesProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
-import com.intellij.psi.util.PsiExpressionTrimRenderer;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.*;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
@@ -458,7 +455,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       }
       if (endElement == null || endOffset < endElement.getTextRange().getEndOffset()) return null;
 
-      final PsiType componentType = psiSubstitutor.substitute(psiType.getComponentType());
+      final PsiType componentType = TypeConversionUtil.erasure(psiSubstitutor.substitute(psiType.getComponentType()));
       try {
         final PsiExpression expressionFromText =
           elementFactory.createExpressionFromText("new " + componentType.getCanonicalText() + "[]{" + text + "}", parent);
