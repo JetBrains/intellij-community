@@ -793,6 +793,19 @@ public class TemplateState implements Disposable {
       public <T> T getProperty(Key<T> key) {
         return (T)myProperties.get(key);
       }
+
+      @Nullable
+      @Override
+      public PsiElement getPsiElementAtStartOffset() {
+        Project project = getProject();
+        int templateStartOffset = getTemplateStartOffset();
+        int offset = templateStartOffset > 0 ? getTemplateStartOffset() - 1 : getTemplateStartOffset();
+
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+
+        PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(getEditor().getDocument());
+        return file == null ? null : file.findElementAt(offset);
+      }
     };
   }
 
