@@ -139,8 +139,9 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     Disposer.register(project, component);
     if (showExpanded) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
-          if (!editor.isDisposed()) {
+          if (!editor.isDisposed() && editor.getComponent().isShowing()) {
             component.showPopup();
           }
         }
@@ -155,6 +156,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     return myDisposed;
   }
 
+  @Override
   public void dispose() {
     myDisposed = true;
     myComponentHint.hide();
@@ -170,6 +172,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
   }
 
+  @Override
   public void editorScrolled() {
     closePopup();
   }
@@ -217,11 +220,13 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
 
     PriorityQuestionAction action = new PriorityQuestionAction() {
+      @Override
       public boolean execute() {
         showPopup();
         return true;
       }
 
+      @Override
       public int getPriority() {
         return -10;
       }
@@ -371,6 +376,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }, this);
   }
 
+  @Override
   public void hide() {
     Disposer.dispose(this);
   }
@@ -457,6 +463,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
 
     Disposer.register(this, myPopup);
     Disposer.register(myPopup, new Disposable() {
+      @Override
       public void dispose() {
         ApplicationManager.getApplication().assertIsDispatchThread();
       }
@@ -479,6 +486,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       super(component);
     }
 
+    @Override
     public void show(@NotNull final JComponent parentComponent,
                      final int x,
                      final int y,
@@ -488,6 +496,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       if (myShouldDelay) {
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(new Runnable() {
+          @Override
           public void run() {
             showImpl(parentComponent, x, y, focusBackComponent);
           }
@@ -503,12 +512,14 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       super.show(parentComponent, x, y, focusBackComponent, new HintHint(parentComponent, new Point(x, y)));
     }
 
+    @Override
     public void hide() {
       super.hide();
       myVisible = false;
       myAlarm.cancelAllRequests();
     }
 
+    @Override
     public boolean isVisible() {
       return myVisible || super.isVisible();
     }
@@ -531,6 +542,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       LOG.assertTrue(myActionFamilyName != null, "action "+action.getClass()+" family returned null");
     }
 
+    @Override
     @NotNull
     public String getText() {
       return mySettings.isEnabled(myAction) ?
@@ -538,19 +550,23 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
              CodeInsightBundle.message("enable.intention.action", myActionFamilyName);
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getText();
     }
 
+    @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return true;
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       mySettings.setEnabled(myAction, !mySettings.isEnabled(myAction));
     }
 
+    @Override
     public boolean startInWriteAction() {
       return false;
     }
@@ -592,6 +608,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         @Override
         public void run() {
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               configurable.selectIntention(myFamilyName);
             }
