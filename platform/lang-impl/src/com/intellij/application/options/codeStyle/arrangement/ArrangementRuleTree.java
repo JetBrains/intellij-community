@@ -567,7 +567,7 @@ public class ArrangementRuleTree {
     }
   }
   
-  private class MyModelNodesRefresher implements TObjectProcedure<ArrangementRuleEditingModelImpl> {
+  private static class MyModelNodesRefresher implements TObjectProcedure<ArrangementRuleEditingModelImpl> {
     @Override
     public boolean execute(ArrangementRuleEditingModelImpl model) {
       model.refreshTreeNodes(); 
