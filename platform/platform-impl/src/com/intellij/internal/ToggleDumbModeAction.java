@@ -15,19 +15,19 @@
  */
 package com.intellij.internal;
 
+import com.intellij.ide.caches.CacheUpdater;
+import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBScrollPane;
+import com.intellij.openapi.vfs.VirtualFile;
 
-import javax.swing.*;
-import java.awt.*;
+import java.util.Arrays;
 
 /**
  * @author peter
@@ -36,26 +36,42 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
   private volatile boolean myDumb = false;
 
   public void actionPerformed(final AnActionEvent e) {
+    if (myDumb) {
+      myDumb = false;
+    }
+    else {
+      myDumb = true;
+      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      if (project == null) return;
 
-    JDialog dialog = new JDialog();
+      CacheUpdater updater = new CacheUpdater() {
+        public int getNumberOfPendingUpdateJobs() {
+          return 0;
+        }
 
+        public VirtualFile[] queryNeededFiles(ProgressIndicator indicator) {
+          while (myDumb) {
+            try {
+              Thread.sleep(100);
+            }
+            catch (InterruptedException e1) {
+            }
+          }
+          return VirtualFile.EMPTY_ARRAY;
+        }
 
-    dialog.setLayout(new BorderLayout());
-    JBList list = new JBList();
+        public void processFile(FileContent fileContent) {
+        }
 
-    list.setVisibleRowCount(4);
-    list.setPreferredSize(new Dimension(20, 80));
+        public void updatingDone() {
+        }
 
-    list.setModel(new CollectionListModel<String>("sakdjjakjdh asdjhasd", "kasdkjahdkjahdk akjdh kjahd kjas d"));
-
-    JBScrollPane scroll = new JBScrollPane(list);
-    scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    dialog.add(scroll);
-
-    dialog.setSize(150, 300);
-
-    dialog.setModal(true);
-    dialog.setVisible(true);  }
+        public void canceled() {
+        }
+      };
+      DumbServiceImpl.getInstance(project).queueCacheUpdateInDumbMode(Arrays.asList(updater));
+    }
+  }
 
   @Override
   public void update(final AnActionEvent e) {
