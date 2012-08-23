@@ -116,6 +116,14 @@ public class WebServer {
     Runtime.getRuntime().addShutdownHook(new Thread(createShutdownTask()));
   }
 
+  public static void removePluggableHandlers(ChannelPipeline pipeline) {
+    for (String name : pipeline.getNames()) {
+      if (name.startsWith("pluggable_")) {
+        pipeline.remove(name);
+      }
+    }
+  }
+
   private static class ChannelPipelineFactoryImpl implements ChannelPipelineFactory {
     private final Computable<Consumer<ChannelPipeline>[]> pipelineConsumers;
     private final DefaultHandler defaultHandler;

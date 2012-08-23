@@ -53,7 +53,7 @@ public class XmlRpcServerImpl extends SimpleChannelUpstreamHandler implements Xm
 
   @Override
   public void consume(ChannelPipeline pipeline) {
-    pipeline.addLast("xmlRpc", this);
+    pipeline.addLast("pluggable_xmlRpc", this);
   }
 
   public int getPortNumber() {
