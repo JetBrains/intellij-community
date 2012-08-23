@@ -148,6 +148,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return false;
   }
 
+  @NotNull
   @Override
   public StatusText getEmptyText() {
     return myEmptyText;
@@ -157,6 +158,11 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @NotNull
   public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
+  }
+
+  @Override
+  public void setExpandableItemsEnabled(boolean enabled) {
+    myExpandableItemsHandler.setEnabled(enabled);
   }
 
   @Override

@@ -17,6 +17,7 @@ package com.intellij.ui.components;
 
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,6 +60,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
     myEmptyText.clear();
   }
 
+  @NotNull
   @Override
   public StatusText getEmptyText() {
     return myEmptyText;
