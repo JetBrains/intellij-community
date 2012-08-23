@@ -74,7 +74,7 @@ public class SdkConfigurationUtil {
     VirtualFile suggestedDir = suggestedPath == null
                                ? null
                                : LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(suggestedPath));
-    FileChooser.chooseFiles(descriptor, project, suggestedDir, new Consumer<List<VirtualFile>>() {
+    FileChooser.chooseFiles(descriptor, project, suggestedDir, new FileChooser.FileChooserConsumer() {
       @Override
       public void consume(List<VirtualFile> selectedFiles) {
         for (SdkType sdkType : sdkTypes) {
@@ -83,6 +83,11 @@ public class SdkConfigurationUtil {
             return;
           }
         }
+        onSdkCreatedCallBack.consume(null);
+      }
+
+      @Override
+      public void cancelled() {
         onSdkCreatedCallBack.consume(null);
       }
     });
