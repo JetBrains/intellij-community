@@ -209,8 +209,8 @@ public class QueueProcessor<T> {
           try {
             LOG.error(t);
           }
-          catch (Exception ignore) {
-            // should survive assertions
+          catch (Throwable e2) {
+            e2.printStackTrace();
           }
         }
       }
