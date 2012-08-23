@@ -40,8 +40,20 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl");
   private final AnnotationSession myAnnotationSession;
 
+  private final boolean myBatchMode;
+
   public AnnotationHolderImpl(@NotNull AnnotationSession session) {
+    this(session, false);
+  }
+
+  public AnnotationHolderImpl(@NotNull AnnotationSession session, boolean batchMode) {
     myAnnotationSession = session;
+    myBatchMode = batchMode;
+  }
+
+  @Override
+  public boolean isBatchMode() {
+    return myBatchMode;
   }
 
   @Override

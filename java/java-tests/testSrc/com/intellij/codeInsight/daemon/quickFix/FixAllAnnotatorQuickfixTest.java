@@ -68,7 +68,7 @@ public class FixAllAnnotatorQuickfixTest extends LightQuickFixTestCase {
     public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
       if (element instanceof PsiMethod) {
         Annotation annotation = holder.createErrorAnnotation(((PsiMethod)element).getNameIdentifier(), null);
-        annotation.registerFix(new MyFix());
+        annotation.registerUniversalFix(new MyFix(), null, null);
         annotation.setTextAttributes(CodeInsightColors.DOC_COMMENT_TAG_VALUE);
       }
     }

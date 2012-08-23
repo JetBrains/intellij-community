@@ -179,4 +179,6 @@ public interface AnnotationHolder {
 
 
   AnnotationSession getCurrentAnnotationSession();
+
+  boolean isBatchMode();
 }
