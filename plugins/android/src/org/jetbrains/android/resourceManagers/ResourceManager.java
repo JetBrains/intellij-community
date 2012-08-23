@@ -433,7 +433,7 @@ public abstract class ResourceManager {
   public List<ResourceElement> findValueResources(@NotNull String resourceType,
                                                   @NotNull String resourceName,
                                                   boolean distinguishDelimitersInName) {
-    final List<ValueResourceInfoImpl> resources = findValueResourceInfos(resourceType, resourceName, distinguishDelimitersInName);
+    final List<ValueResourceInfoImpl> resources = findValueResourceInfos(resourceType, resourceName, distinguishDelimitersInName, false);
     final List<ResourceElement> result = new ArrayList<ResourceElement>();
 
     for (ValueResourceInfoImpl resource : resources) {
@@ -449,14 +449,14 @@ public abstract class ResourceManager {
   @NotNull
   public List<ValueResourceInfoImpl> findValueResourceInfos(@NotNull String resourceType,
                                                             @NotNull final String resourceName,
-                                                            final boolean distinguishDelimetersInName) {
+                                                            final boolean distinguishDelimetersInName,
+                                                            boolean searchAttrs) {
     final ResourceType type = ResourceType.getEnum(resourceType);
-    if (type == null || !AndroidResourceUtil.VALUE_RESOURCE_TYPES.contains(type)) {
-      // do not search for styleables and atts here because we don't want to resolve references to it
+    if (type == null ||
+        !AndroidResourceUtil.VALUE_RESOURCE_TYPES.contains(type) &&
+        (type != ResourceType.ATTR || !searchAttrs)) {
       return Collections.emptyList();
     }
-
-      new HashMap<VirtualFile, Set<AndroidValueResourcesIndex.MyResourceInfo>>();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(myModule.getProject());
     final List<ValueResourceInfoImpl> result = new ArrayList<ValueResourceInfoImpl>();
     final Set<VirtualFile> valueResourceFiles = getAllValueResourceFiles();

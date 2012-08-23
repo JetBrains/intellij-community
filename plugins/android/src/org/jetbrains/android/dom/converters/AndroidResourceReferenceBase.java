@@ -116,7 +116,8 @@ public class AndroidResourceReferenceBase extends PsiReferenceBase.Poly<XmlEleme
     if (manager != null) {
       String resName = resValue.getResourceName();
       if (resName != null) {
-        List<ValueResourceInfoImpl> valueResources = manager.findValueResourceInfos(resType, resName, false);
+        final boolean attrReference = resValue.getPrefix() == '?';
+        List<ValueResourceInfoImpl> valueResources = manager.findValueResourceInfos(resType, resName, false, attrReference);
 
         for (final ValueResourceInfo resource : valueResources) {
           elements.add(new LazyValueResourceElementWrapper(resource, myElement));

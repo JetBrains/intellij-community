@@ -66,7 +66,7 @@ public class ResourceValue {
     if (s == null) {
       return null;
     }
-    if (s.startsWith("@")) {
+    if (s.startsWith("@") || s.startsWith("?")) {
       return reference(s, true);
     }
     else if (!withPrefix) {
@@ -92,9 +92,11 @@ public class ResourceValue {
       assert value.length() > 0;
       result.myPrefix = value.charAt(0);
     }
+    final int startIndex = withPrefix ? 1 : 0;
     int pos = value.indexOf('/');
+
     if (pos > 0) {
-      String resType = value.substring(withPrefix ? 1 : 0, pos);
+      String resType = value.substring(startIndex, pos);
       int colonIndex = resType.indexOf(':');
       if (colonIndex > 0) {
         result.myPackage = resType.substring(0, colonIndex);
@@ -117,10 +119,13 @@ public class ResourceValue {
     }
     else {
       int colonIndex = value.indexOf(':');
-      if (colonIndex > 0) {
-        result.myPackage = value.substring(0, colonIndex);
+      if (colonIndex > startIndex) {
+        result.myPackage = value.substring(startIndex, colonIndex);
+        result.myResourceName = value.substring(colonIndex + 1);
       }
-      result.myResourceName = value.substring(colonIndex + 1);
+      else {
+        result.myResourceName = value.substring(startIndex);
+      }
     }
     return result;
   }

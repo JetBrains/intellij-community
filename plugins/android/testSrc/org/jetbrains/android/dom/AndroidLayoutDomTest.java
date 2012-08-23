@@ -667,6 +667,64 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testAttrReferences1() throws Throwable {
+    copyFileToProject("attrReferences_attrs.xml", "res/values/attrReferences_attrs.xml");
+    doTestHighlighting();
+  }
+
+  public void testAttrReferences2() throws Throwable {
+    doTestAttrReferenceCompletionVariants("?");
+  }
+
+  public void testAttrReferences3() throws Throwable {
+    doTestAttrReferenceCompletionVariants("attr");
+  }
+
+  private void doTestAttrReferenceCompletionVariants(String prefix) throws IOException {
+    copyFileToProject("attrReferences_attrs.xml", "res/values/attrReferences_attrs.xml");
+    VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    final List<String> variants = myFixture.getLookupElementStrings();
+    assertNotNull(variants);
+    assertTrue(variants.size() > 0);
+    assertFalse(containElementStartingWith(variants, prefix));
+  }
+
+  public void testAttrReferences4() throws Throwable {
+    doTestAttrReferenceCompletion("myA\n");
+  }
+
+  public void testAttrReferences5() throws Throwable {
+    doTestAttrReferenceCompletion("textAppear\n");
+  }
+
+  public void testAttrReferences6() throws Throwable {
+    doTestAttrReferenceCompletion("myA\n");
+  }
+
+  public void testAttrReferences7() throws Throwable {
+    doTestAttrReferenceCompletion("android:textAppear\n");
+  }
+
+  private void doTestAttrReferenceCompletion(String textToType) throws IOException {
+    copyFileToProject("attrReferences_attrs.xml", "res/values/attrReferences_attrs.xml");
+    VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type(textToType);
+    myFixture.checkResultByFile(testFolder + '/' + getTestName(true) + "_after.xml");
+  }
+
+  private static boolean containElementStartingWith(List<String> elements, String prefix) {
+    for (String element : elements) {
+      if (element.startsWith(prefix)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void doCreateFileResourceFromUsage(VirtualFile virtualFile) {
     myFixture.configureFromExistingVirtualFile(virtualFile);
     final List<HighlightInfo> infos = myFixture.doHighlighting();

@@ -1,0 +1,20 @@
+<resources>
+  <attr name="myAttr" format="integer"/>
+
+  <style name="myStyle1" parent="<error>?myAttr</error>">
+  </style>
+  <style name="myStyle2" parent="<error>?attr/myAttr</error>">
+  </style>
+  <style name="myStyle3" parent="<error>attr/myAttr</error>">
+  </style>
+  <style name="myStyle4" parent="<error>myAttr</error>">
+  </style>
+  <style name="myStyle5" parent="<error>android:textAppearance</error>">
+  </style>
+  <style name="myStyle6" parent="<error>android:attr/textAppearance</error>">
+  </style>
+  <style name="myStyle7" parent="<error>?android:attr/textAppearance</error>">
+  </style>
+  <style name="myStyle8" parent="<error>?android:textAppearance</error>">
+  </style>
+</resources>

@@ -317,6 +317,14 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     myFixture.checkResultByFile("res/values/bools.xml", testFolder + '/' + getTestName(true) + "_bools_after.xml", true);
   }
 
+  public void testAttrReferenceCompletion() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testAttrReferenceHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
   private void doCreateValueResourceFromUsage(VirtualFile virtualFile) {
     myFixture.configureFromExistingVirtualFile(virtualFile);
     final List<HighlightInfo> infos = myFixture.doHighlighting();
