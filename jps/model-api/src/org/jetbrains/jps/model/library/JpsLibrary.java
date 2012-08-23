@@ -1,6 +1,7 @@
 package org.jetbrains.jps.model.library;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsNamedElement;
 import org.jetbrains.jps.model.JpsReferenceableElement;
@@ -31,6 +32,10 @@ public interface JpsLibrary extends JpsNamedElement, JpsReferenceableElement<Jps
 
   @NotNull
   JpsLibraryType<?> getType();
+
+  @Nullable
+  <P extends JpsElement>
+  JpsTypedLibrary<P> asTyped(@NotNull JpsLibraryType<P> type);
 
   @NotNull
   JpsElement getProperties();

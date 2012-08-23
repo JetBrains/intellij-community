@@ -22,6 +22,10 @@ public interface JpsLibraryCollection {
   @NotNull
   List<JpsLibrary> getLibraries();
 
+  @NotNull
+  <P extends JpsElement>
+  Iterable<JpsTypedLibrary<P>> getLibraries(@NotNull JpsLibraryType<P> type);
+
   void addLibrary(@NotNull JpsLibrary library);
 
   @Nullable
