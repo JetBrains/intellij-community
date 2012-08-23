@@ -525,6 +525,7 @@ public class NameUtilTest extends UsefulTestCase {
    final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
 
    assertTrue(c.matchingFragments("a", "Ant") != null);
+   assertTrue(c.matchingFragments("an", "Changes") != null);
    assertTrue(c.matchingFragments("a", "Changes") != null);
  }
 }
