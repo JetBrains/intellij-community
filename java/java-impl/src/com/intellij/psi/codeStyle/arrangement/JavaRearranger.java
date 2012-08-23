@@ -127,12 +127,12 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   @NotNull
   @Override
-  public HierarchicalArrangementSettingsNode group(@NotNull ArrangementMatchCondition node) {
-    final Ref<HierarchicalArrangementSettingsNode> result = new Ref<HierarchicalArrangementSettingsNode>();
+  public HierarchicalArrangementConditionNode group(@NotNull ArrangementMatchCondition node) {
+    final Ref<HierarchicalArrangementConditionNode> result = new Ref<HierarchicalArrangementConditionNode>();
     node.invite(new ArrangementSettingsNodeVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition setting) {
-        result.set(new HierarchicalArrangementSettingsNode(setting));
+        result.set(new HierarchicalArrangementConditionNode(setting));
       }
 
       @Override
@@ -145,10 +145,10 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
           }
         }
         if (typeNode == null) {
-          result.set(new HierarchicalArrangementSettingsNode(setting));
+          result.set(new HierarchicalArrangementConditionNode(setting));
         }
         else {
-          HierarchicalArrangementSettingsNode parent = new HierarchicalArrangementSettingsNode(typeNode);
+          HierarchicalArrangementConditionNode parent = new HierarchicalArrangementConditionNode(typeNode);
           ArrangementCompositeMatchCondition compositeWithoutType = new ArrangementCompositeMatchCondition(setting.getOperator());
           for (ArrangementMatchCondition n : setting.getOperands()) {
             if (n != typeNode) {
@@ -156,10 +156,10 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
             }
           }
           if (compositeWithoutType.getOperands().size() == 1) {
-            parent.setChild(new HierarchicalArrangementSettingsNode(compositeWithoutType.getOperands().iterator().next()));
+            parent.setChild(new HierarchicalArrangementConditionNode(compositeWithoutType.getOperands().iterator().next()));
           }
           else {
-            parent.setChild(new HierarchicalArrangementSettingsNode(compositeWithoutType));
+            parent.setChild(new HierarchicalArrangementConditionNode(compositeWithoutType));
           }
           result.set(parent);
         }

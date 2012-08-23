@@ -18,7 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
 import gnu.trove.TIntObjectHashMap;
@@ -45,11 +45,11 @@ public class ArrangementRuleEditingModelBuilder {
    * <pre>
    * <ol>
    *   <li>
-   *     {@link HierarchicalArrangementSettingsNode Groups} given {@link ArrangementMatchCondition settings} using
+   *     {@link HierarchicalArrangementConditionNode Groups} given {@link ArrangementMatchCondition settings} using
    *     the given {@link ArrangementSettingsGrouper#group(ArrangementMatchCondition) strategy};
    *   </li>
    *   <li>
-   *     Build {@link DefaultMutableTreeNode tree nodes} for the {@link HierarchicalArrangementSettingsNode groiping-aware nodes}
+   *     Build {@link DefaultMutableTreeNode tree nodes} for the {@link HierarchicalArrangementConditionNode groiping-aware nodes}
    *     and register them within the target tree structure (denoted by the given settings root element);
    *   </li>
    *   <li>
@@ -92,7 +92,7 @@ public class ArrangementRuleEditingModelBuilder {
       initialInsertRow--;
     }
 
-    HierarchicalArrangementSettingsNode grouped = grouper.group(matchCondition);
+    HierarchicalArrangementConditionNode grouped = grouper.group(matchCondition);
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
     Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped, treeModel);
     ArrangementTreeNode topMostNode = ArrangementConfigUtil.getLastBefore(pair.first, root);

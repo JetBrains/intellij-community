@@ -20,7 +20,7 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.Stack;
@@ -121,15 +121,15 @@ public class ArrangementConfigUtil {
     return null;
   }
 
-  public static int getDepth(@NotNull HierarchicalArrangementSettingsNode node) {
-    HierarchicalArrangementSettingsNode child = node.getChild();
+  public static int getDepth(@NotNull HierarchicalArrangementConditionNode node) {
+    HierarchicalArrangementConditionNode child = node.getChild();
     return child == null ? 1 : 1 + getDepth(child);
   }
 
   @NotNull
-  public static HierarchicalArrangementSettingsNode getLast(@NotNull HierarchicalArrangementSettingsNode node) {
-    HierarchicalArrangementSettingsNode result = node;
-    for (HierarchicalArrangementSettingsNode child = node.getChild(); child != null; child = child.getChild()) {
+  public static HierarchicalArrangementConditionNode getLast(@NotNull HierarchicalArrangementConditionNode node) {
+    HierarchicalArrangementConditionNode result = node;
+    for (HierarchicalArrangementConditionNode child = node.getChild(); child != null; child = child.getChild()) {
       result = child;
     }
     return result;
@@ -175,25 +175,25 @@ public class ArrangementConfigUtil {
   /**
    * @param uiParentNode UI tree node which should hold UI nodes created for representing given settings node;
    *                     <code>null</code> as an indication that we want to create a standalone nodes hierarchy
-   * @param settingsNode settings node which should be represented at the UI tree denoted by the given UI tree node
+   * @param conditionNode settings node which should be represented at the UI tree denoted by the given UI tree node
    * @param model        tree model to use for the tree modification
    * @return             pair {@code (bottom-most leaf node created; number of rows created)}
    */
   @NotNull
   public static Pair<ArrangementTreeNode, Integer> map(@Nullable ArrangementTreeNode uiParentNode,
-                                                       @NotNull HierarchicalArrangementSettingsNode settingsNode,
+                                                       @NotNull HierarchicalArrangementConditionNode conditionNode,
                                                        @Nullable DefaultTreeModel model)
   {
     ArrangementTreeNode uiNode = null;
     int rowsCreated = 0;
     if (uiParentNode != null && uiParentNode.getChildCount() > 0) {
       ArrangementTreeNode child = uiParentNode.getChildAt(uiParentNode.getChildCount() - 1);
-      if (settingsNode.getCurrent().equals(child.getBackingSetting())) {
+      if (conditionNode.getCurrent().equals(child.getBackingSetting())) {
         uiNode = child;
       }
     }
     if (uiNode == null) {
-      uiNode = new ArrangementTreeNode(settingsNode.getCurrent());
+      uiNode = new ArrangementTreeNode(conditionNode.getCurrent());
       if (uiParentNode != null) {
         if (model == null) {
           uiParentNode.add(uiNode);
@@ -205,9 +205,9 @@ public class ArrangementConfigUtil {
       rowsCreated++;
     }
     ArrangementTreeNode leaf = uiNode;
-    HierarchicalArrangementSettingsNode childSettingsNode = settingsNode.getChild();
-    if (childSettingsNode != null) {
-      Pair<ArrangementTreeNode, Integer> pair = map(uiNode, childSettingsNode, model);
+    HierarchicalArrangementConditionNode childConditionNode = conditionNode.getChild();
+    if (childConditionNode != null) {
+      Pair<ArrangementTreeNode, Integer> pair = map(uiNode, childConditionNode, model);
       leaf = pair.first;
       rowsCreated += pair.second;
     }

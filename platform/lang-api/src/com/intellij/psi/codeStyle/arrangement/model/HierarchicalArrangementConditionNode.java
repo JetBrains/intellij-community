@@ -27,12 +27,12 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since 8/8/12 1:23 PM
  */
-public class HierarchicalArrangementSettingsNode {
+public class HierarchicalArrangementConditionNode {
 
-  @NotNull private final ArrangementMatchCondition           myCurrent;
-  @Nullable private      HierarchicalArrangementSettingsNode myChild;
+  @NotNull private final ArrangementMatchCondition            myCurrent;
+  @Nullable private      HierarchicalArrangementConditionNode myChild;
 
-  public HierarchicalArrangementSettingsNode(@NotNull ArrangementMatchCondition current) {
+  public HierarchicalArrangementConditionNode(@NotNull ArrangementMatchCondition current) {
     myCurrent = current;
   }
 
@@ -42,11 +42,11 @@ public class HierarchicalArrangementSettingsNode {
   }
 
   @Nullable
-  public HierarchicalArrangementSettingsNode getChild() {
+  public HierarchicalArrangementConditionNode getChild() {
     return myChild;
   }
 
-  public void setChild(@Nullable HierarchicalArrangementSettingsNode child) {
+  public void setChild(@Nullable HierarchicalArrangementConditionNode child) {
     myChild = child;
   }
 

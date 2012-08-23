@@ -350,8 +350,11 @@ public class ArrangementRuleTree {
   }
 
   private void removeConditionFromActiveModel(@NotNull ArrangementAtomMatchCondition condition) {
-    // TODO den implement
-    System.out.println("Remove condition " + condition);
+    ArrangementRuleEditingModel model = getActiveModel();
+    if (model != null) {
+      model.removeAndCondition(condition);
+      notifySelectionListeners(model);
+    }
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
@@ -368,6 +371,7 @@ public class ArrangementRuleTree {
   private void onMouseClicked(@NotNull MouseEvent e) {
     ArrangementNodeComponent component = getNodeComponentAt(e.getLocationOnScreen());
     if (component != null) {
+      component.handleMouseClick(e);
       return;
     }
     // Clear selection

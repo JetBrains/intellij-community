@@ -73,8 +73,9 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
     }
   };
 
-  @NotNull private final  ArrangementAtomMatchCondition mySetting;
-  @Nullable private final ActionButton                  myCloseButton;
+  @NotNull private final  ArrangementAtomMatchCondition           myCondition;
+  @Nullable private final ActionButton                            myCloseButton;
+  @Nullable private final Consumer<ArrangementAtomMatchCondition> myCloseCallback;
 
   @Nullable private Dimension mySize;
   @Nullable private Rectangle myScreenBounds;
@@ -85,14 +86,15 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   private boolean myCloseButtonHovered;
 
   public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
-                                      @NotNull ArrangementAtomMatchCondition setting,
+                                      @NotNull ArrangementAtomMatchCondition condition,
                                       @Nullable Consumer<ArrangementAtomMatchCondition> closeCallback)
   {
-    mySetting = setting;
+    myCondition = condition;
+    myCloseCallback = closeCallback;
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    myLabel.setText(manager.getDisplayValue(setting));
+    myLabel.setText(manager.getDisplayValue(condition));
     
-    int width = manager.getMaxWidth(setting.getType());
+    int width = manager.getMaxWidth(condition.getType());
     int height = myLabel.getPreferredSize().height;
     final ArrangementRemoveConditionAction action;
     if (closeCallback == null) {
@@ -162,7 +164,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   @NotNull
   @Override
   public ArrangementAtomMatchCondition getMatchCondition() {
-    return mySetting;
+    return myCondition;
   }
 
   @NotNull
@@ -225,6 +227,14 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
     }
     boolean mouseOverButton = buttonBounds.contains(event.getLocationOnScreen());
     return (mouseOverButton ^ myCloseButtonHovered) ? buttonBounds : null;
+  }
+
+  @Override
+  public void handleMouseClick(@NotNull MouseEvent event) {
+    Rectangle buttonBounds = getCloseButtonScreenLocation();
+    if (buttonBounds != null && buttonBounds.contains(event.getLocationOnScreen()) && myCloseCallback != null) {
+      myCloseCallback.consume(myCondition);
+    }
   }
 
   @Nullable

@@ -57,7 +57,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    *                     to generate corresponding events automatically
    * @param node         backing settings node
    * @param topMost      there is a possible case that a single settings node is shown in more than one visual line
-   *                     ({@link HierarchicalArrangementSettingsNode}). This argument is the top-most UI node used for the
+   *                     ({@link HierarchicalArrangementConditionNode}). This argument is the top-most UI node used for the
    *                     settings node representation
    * @param bottomMost   bottom-most UI node used for the given settings node representation 
    * @param grouper      strategy that encapsulates information on how settings node should be displayed
@@ -139,21 +139,21 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   }
   
   @Override
-  public void addAndCondition(@NotNull ArrangementAtomMatchCondition setting) {
-    TIntIntHashMap rowChanges = doAddAndCondition(setting);
+  public void addAndCondition(@NotNull ArrangementAtomMatchCondition condition) {
+    TIntIntHashMap rowChanges = doAddAndCondition(condition);
     refreshConditions();
     notifyListeners(rowChanges);
   }
   
   @NotNull
-  private TIntIntHashMap doAddAndCondition(@NotNull ArrangementAtomMatchCondition setting) {
-    ArrangementMatchCondition newNode = ArrangementUtil.and(myMatchCondition.clone(), setting);
-    return applyNewSetting(newNode);
+  private TIntIntHashMap doAddAndCondition(@NotNull ArrangementAtomMatchCondition condition) {
+    ArrangementMatchCondition newNode = ArrangementUtil.and(myMatchCondition.clone(), condition);
+    return applyNewCondition(newNode);
   }
 
   @Override
-  public void removeAndCondition(@NotNull ArrangementMatchCondition node) {
-    TIntIntHashMap rowChanges = doRemoveAndCondition(node);
+  public void removeAndCondition(@NotNull ArrangementMatchCondition condition) {
+    TIntIntHashMap rowChanges = doRemoveAndCondition(condition);
     refreshConditions();
     notifyListeners(rowChanges);
   }
@@ -171,13 +171,13 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
       newNode = composite.getOperands().iterator().next();
     }
 
-    return applyNewSetting(newNode);
+    return applyNewCondition(newNode);
   }
 
   @NotNull
-  private TIntIntHashMap applyNewSetting(@NotNull ArrangementMatchCondition newNode) {
+  private TIntIntHashMap applyNewCondition(@NotNull ArrangementMatchCondition newNode) {
     myMatchCondition = newNode;
-    HierarchicalArrangementSettingsNode grouped = myGrouper.group(newNode);
+    HierarchicalArrangementConditionNode grouped = myGrouper.group(newNode);
     int newDepth = ArrangementConfigUtil.getDepth(grouped);
     int oldDepth = ArrangementConfigUtil.distance(myTopMost, myBottomMost);
     if (oldDepth == newDepth) {

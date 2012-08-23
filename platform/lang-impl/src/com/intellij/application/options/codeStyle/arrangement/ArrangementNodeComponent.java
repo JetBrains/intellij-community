@@ -68,4 +68,6 @@ public interface ArrangementNodeComponent {
    */
   @Nullable
   Rectangle handleMouseMove(@NotNull MouseEvent event);
+
+  void handleMouseClick(@NotNull MouseEvent event);
 }

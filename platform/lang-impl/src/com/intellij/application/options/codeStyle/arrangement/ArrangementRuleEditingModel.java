@@ -45,7 +45,7 @@ public interface ArrangementRuleEditingModel {
    */
   boolean hasCondition(@NotNull Object key);
   
-  void addAndCondition(@NotNull ArrangementAtomMatchCondition setting);
+  void addAndCondition(@NotNull ArrangementAtomMatchCondition condition);
 
-  void removeAndCondition(@NotNull ArrangementMatchCondition node);
+  void removeAndCondition(@NotNull ArrangementMatchCondition condition);
 }

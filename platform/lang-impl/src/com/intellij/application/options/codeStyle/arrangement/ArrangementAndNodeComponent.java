@@ -208,6 +208,18 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
   }
 
   @Override
+  public void handleMouseClick(@NotNull MouseEvent event) {
+    Point location = event.getLocationOnScreen();
+    for (ArrangementNodeComponent component : myComponents) {
+      Rectangle bounds = component.getScreenBounds();
+      if (bounds != null && bounds.contains(location)) {
+        component.handleMouseClick(event);
+        return;
+      }
+    }
+  }
+
+  @Override
   public String toString() {
     return String.format("(%s)", StringUtil.join(myComponents, " and "));
   }
