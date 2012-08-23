@@ -1438,26 +1438,24 @@ public class HighlightUtil {
       String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
       return JavaErrorMessages.message("private.symbol", symbolName, containerName);
     }
+    else if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
+      String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
+      return JavaErrorMessages.message("protected.symbol", symbolName, containerName);
+    }
     else {
-      if (refElement.hasModifierProperty(PsiModifier.PROTECTED)) {
+      PsiClass packageLocalClass = getPackageLocalClassInTheMiddle(reference);
+      if (packageLocalClass != null) {
+        refElement = packageLocalClass;
+        symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
+      }
+      if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
         String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
-        return JavaErrorMessages.message("protected.symbol", symbolName, containerName);
+        return JavaErrorMessages.message("package.local.symbol", symbolName, containerName);
       }
       else {
-        PsiClass packageLocalClass = getPackageLocalClassInTheMiddle(reference);
-        if (packageLocalClass != null) {
-          refElement = packageLocalClass;
-          symbolName = HighlightMessageUtil.getSymbolName(refElement, result.getSubstitutor());
-        }
-        if (refElement.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) || packageLocalClass != null) {
-          String containerName = HighlightMessageUtil.getSymbolName(refElement.getParent(), result.getSubstitutor());
-          return JavaErrorMessages.message("package.local.symbol", symbolName, containerName);
-        }
-        else {
-          String containerName = HighlightMessageUtil.getSymbolName(
-            refElement instanceof PsiTypeParameter ? refElement.getParent().getParent() : refElement.getParent(), result.getSubstitutor());
-          return JavaErrorMessages.message("visibility.access.problem", symbolName, containerName);
-        }
+        PsiElement symbol = refElement instanceof PsiTypeParameter ? refElement.getParent().getParent() : refElement.getParent();
+        String containerName = symbol == null ? "?" : HighlightMessageUtil.getSymbolName(symbol, result.getSubstitutor());
+        return JavaErrorMessages.message("visibility.access.problem", symbolName, containerName);
       }
     }
   }
