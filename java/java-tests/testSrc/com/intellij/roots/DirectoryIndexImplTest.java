@@ -34,6 +34,7 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -75,6 +76,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
       public void run() {
         try {
           myRootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
+          assertNotNull(myRootVFile);
           /*
             root
                 module1
@@ -94,26 +96,26 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
                     module1
           */
 
-          myModule1Dir = myRootVFile.createChildDirectory(null, "module1");
-          mySrcDir1 = myModule1Dir.createChildDirectory(null, "src1");
-          myPack1Dir = mySrcDir1.createChildDirectory(null, "pack1");
-          myTestSrc1 = mySrcDir1.createChildDirectory(null, "testSrc");
-          myPack2Dir = myTestSrc1.createChildDirectory(null, "pack2");
-          myLibDir = myModule1Dir.createChildDirectory(null, "lib");
-          myLibSrcDir = myLibDir.createChildDirectory(null, "src");
-          myLibClsDir = myLibDir.createChildDirectory(null, "cls");
+          myModule1Dir = myRootVFile.createChildDirectory(DirectoryIndexImplTest.this, "module1");
+          mySrcDir1 = myModule1Dir.createChildDirectory(DirectoryIndexImplTest.this, "src1");
+          myPack1Dir = mySrcDir1.createChildDirectory(DirectoryIndexImplTest.this, "pack1");
+          myTestSrc1 = mySrcDir1.createChildDirectory(DirectoryIndexImplTest.this, "testSrc");
+          myPack2Dir = myTestSrc1.createChildDirectory(DirectoryIndexImplTest.this, "pack2");
+          myLibDir = myModule1Dir.createChildDirectory(DirectoryIndexImplTest.this, "lib");
+          myLibSrcDir = myLibDir.createChildDirectory(DirectoryIndexImplTest.this, "src");
+          myLibClsDir = myLibDir.createChildDirectory(DirectoryIndexImplTest.this, "cls");
 
-          myModule2Dir = myModule1Dir.createChildDirectory(null, "module2");
-          mySrcDir2 = myModule2Dir.createChildDirectory(null, "src2");
-          myCvsDir = mySrcDir2.createChildDirectory(null, "CVS");
-          myExcludeDir = mySrcDir2.createChildDirectory(null, "excluded");
+          myModule2Dir = myModule1Dir.createChildDirectory(DirectoryIndexImplTest.this, "module2");
+          mySrcDir2 = myModule2Dir.createChildDirectory(DirectoryIndexImplTest.this, "src2");
+          myCvsDir = mySrcDir2.createChildDirectory(DirectoryIndexImplTest.this, "CVS");
+          myExcludeDir = mySrcDir2.createChildDirectory(DirectoryIndexImplTest.this, "excluded");
 
-          myModule3Dir = myRootVFile.createChildDirectory(null, "module3");
+          myModule3Dir = myRootVFile.createChildDirectory(DirectoryIndexImplTest.this, "module3");
 
-          myOutputDir = myRootVFile.createChildDirectory(null, "out");
-          myModule1OutputDir = myOutputDir.createChildDirectory(null, "module1");
+          myOutputDir = myRootVFile.createChildDirectory(DirectoryIndexImplTest.this, "out");
+          myModule1OutputDir = myOutputDir.createChildDirectory(DirectoryIndexImplTest.this, "module1");
 
-          CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(myOutputDir.getUrl());
+          getCompilerProjectExtension().setCompilerOutputUrl(myOutputDir.getUrl());
 
           // fill roots of module1
           {
@@ -127,7 +129,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
 
           // fill roots of module2
           {
-            VirtualFile moduleFile = myModule2Dir.createChildData(null, "module2.iml");
+            VirtualFile moduleFile = myModule2Dir.createChildData(DirectoryIndexImplTest.this, "module2.iml");
             myModule2 = moduleManager.newModule(moduleFile.getPath(), StdModuleTypes.JAVA.getId());
 
             PsiTestUtil.addContentRoot(myModule2, myModule2Dir);
@@ -139,7 +141,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
 
           // fill roots of module3
           {
-            VirtualFile moduleFile = myModule3Dir.createChildData(null, "module3.iml");
+            VirtualFile moduleFile = myModule3Dir.createChildData(DirectoryIndexImplTest.this, "module3.iml");
             myModule3 = moduleManager.newModule(moduleFile.getPath(), StdModuleTypes.JAVA.getId());
 
             PsiTestUtil.addContentRoot(myModule3, myModule3Dir);
@@ -153,6 +155,12 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     });
 
     myIndex = DirectoryIndex.getInstance(myProject);
+  }
+
+  private CompilerProjectExtension getCompilerProjectExtension() {
+    final CompilerProjectExtension instance = CompilerProjectExtension.getInstance(myProject);
+    assertNotNull(instance);
+    return instance;
   }
 
   public void testDirInfos() {
@@ -192,47 +200,47 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   }
 
   public void testDeleteDir() throws Exception {
-    VirtualFile subdir1 = mySrcDir1.createChildDirectory(null, "subdir1");
-    VirtualFile subdir2 = subdir1.createChildDirectory(null, "subdir2");
-    subdir2.createChildDirectory(null, "subdir3");
+    VirtualFile subdir1 = mySrcDir1.createChildDirectory(this, "subdir1");
+    VirtualFile subdir2 = subdir1.createChildDirectory(this, "subdir2");
+    subdir2.createChildDirectory(this, "subdir3");
 
     myIndex.checkConsistency();
 
-    subdir1.delete(null);
+    subdir1.delete(this);
 
     myIndex.checkConsistency();
   }
 
   public void testMoveDir() throws Exception {
-    VirtualFile subdir = mySrcDir2.createChildDirectory(null, "subdir1");
-    subdir.createChildDirectory(null, "subdir2");
+    VirtualFile subdir = mySrcDir2.createChildDirectory(this, "subdir1");
+    subdir.createChildDirectory(this, "subdir2");
 
     myIndex.checkConsistency();
 
-    subdir.move(null, mySrcDir1);
+    subdir.move(this, mySrcDir1);
 
     myIndex.checkConsistency();
   }
 
   public void testRenameDir() throws Exception {
-    VirtualFile subdir = mySrcDir2.createChildDirectory(null, "subdir1");
-    subdir.createChildDirectory(null, "subdir2");
+    VirtualFile subdir = mySrcDir2.createChildDirectory(this, "subdir1");
+    subdir.createChildDirectory(this, "subdir2");
 
     myIndex.checkConsistency();
 
-    subdir.rename(null, "abcd");
+    subdir.rename(this, "abc.d");
 
     myIndex.checkConsistency();
   }
 
   public void testRenameRoot() throws Exception {
-    myModule1Dir.rename(null, "newName");
+    myModule1Dir.rename(this, "newName");
 
     myIndex.checkConsistency();
   }
 
   public void testMoveRoot() throws Exception {
-    myModule1Dir.move(null, myModule3Dir);
+    myModule1Dir.move(this, myModule3Dir);
 
     myIndex.checkConsistency();
   }
@@ -241,8 +249,8 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        VirtualFile newDir = myModule1Dir.getParent().createChildDirectory(null, "newDir");
-        newDir.createChildDirectory(null, "subdir");
+        VirtualFile newDir = myModule1Dir.getParent().createChildDirectory(DirectoryIndexImplTest.this, "newDir");
+        newDir.createChildDirectory(DirectoryIndexImplTest.this, "subdir");
 
         myIndex.checkConsistency();
         PsiTestUtil.addContentRoot(myModule, newDir);
@@ -254,7 +262,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   }
 
   public void testChangeIgnoreList() throws Exception {
-    myModule1Dir.createChildDirectory(null, "newDir");
+    myModule1Dir.createChildDirectory(this, "newDir");
 
     myIndex.checkConsistency();
 
@@ -287,8 +295,8 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        VirtualFile newModuleContent = myRootVFile.createChildDirectory(null, "newModule");
-        newModuleContent.createChildDirectory(null, "subDir");
+        VirtualFile newModuleContent = myRootVFile.createChildDirectory(DirectoryIndexImplTest.this, "newModule");
+        newModuleContent.createChildDirectory(DirectoryIndexImplTest.this, "subDir");
         ModuleManager moduleManager = ModuleManager.getInstance(myProject);
         Module module = moduleManager.newModule(myRootVFile.getPath() + "/newModule.iml", StdModuleTypes.JAVA.getId());
         PsiTestUtil.addContentRoot(module, newModuleContent);
@@ -309,19 +317,19 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   }
 
   public void testResettingProjectOutputPath() throws Exception {
-    VirtualFile output1 = myModule1Dir.createChildDirectory(null, "output1");
-    VirtualFile output2 = myModule1Dir.createChildDirectory(null, "output2");
+    VirtualFile output1 = myModule1Dir.createChildDirectory(this, "output1");
+    VirtualFile output2 = myModule1Dir.createChildDirectory(this, "output2");
 
     assertNotNull(myIndex.getInfoForDirectory(output1));
     assertNotNull(myIndex.getInfoForDirectory(output2));
 
-    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(output1.getUrl());
+    getCompilerProjectExtension().setCompilerOutputUrl(output1.getUrl());
     fireRootsChanged();
 
     assertNull(myIndex.getInfoForDirectory(output1));
     assertNotNull(myIndex.getInfoForDirectory(output2));
 
-    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(output2.getUrl());
+    getCompilerProjectExtension().setCompilerOutputUrl(output2.getUrl());
     fireRootsChanged();
 
     assertNotNull(myIndex.getInfoForDirectory(output1));
@@ -333,20 +341,18 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   }
 
   public void testExcludedDirShouldBeExcludedRightAfterItsCreation() throws Exception {
-    VirtualFile excluded = myModule1Dir.createChildDirectory(null, "excluded");
-    VirtualFile projectOutput = myModule1Dir.createChildDirectory(null, "projectOutput");
-    VirtualFile module2Output = myModule1Dir.createChildDirectory(null, "module2Output");
-    VirtualFile module2TestOutput = myModule2Dir.createChildDirectory(null, "module2TestOutput");
+    VirtualFile excluded = myModule1Dir.createChildDirectory(this, "excluded");
+    VirtualFile projectOutput = myModule1Dir.createChildDirectory(this, "projectOutput");
+    VirtualFile module2Output = myModule1Dir.createChildDirectory(this, "module2Output");
+    VirtualFile module2TestOutput = myModule2Dir.createChildDirectory(this, "module2TestOutput");
 
     assertNotNull(myIndex.getInfoForDirectory(excluded));
     assertNotNull(myIndex.getInfoForDirectory(projectOutput));
     assertNotNull(myIndex.getInfoForDirectory(module2Output));
     assertNotNull(myIndex.getInfoForDirectory(module2TestOutput));
 
-    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(projectOutput.getUrl());
+    getCompilerProjectExtension().setCompilerOutputUrl(projectOutput.getUrl());
 
-    final VirtualFile finalModule2Output = module2Output;
-    final VirtualFile finalModule2TestOutput = module2TestOutput;
     PsiTestUtil.addExcludedRoot(myModule, excluded);
     PsiTestUtil.setCompilerOutputPath(myModule2, module2Output.getUrl(), false);
     PsiTestUtil.setCompilerOutputPath(myModule2, module2TestOutput.getUrl(), true);
@@ -357,10 +363,10 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     assertNull(myIndex.getInfoForDirectory(module2Output));
     assertNull(myIndex.getInfoForDirectory(module2TestOutput));
 
-    excluded.delete(null);
-    projectOutput.delete(null);
-    module2Output.delete(null);
-    module2TestOutput.delete(null);
+    excluded.delete(this);
+    projectOutput.delete(this);
+    module2Output.delete(this);
+    module2TestOutput.delete(this);
 
     final List<Boolean> isExcluded = new ArrayList<Boolean>();
     VirtualFileListener l = new VirtualFileAdapter() {
@@ -371,10 +377,10 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     };
     VirtualFileManager.getInstance().addVirtualFileListener(l);
     try {
-      excluded = myModule1Dir.createChildDirectory(null, excluded.getName());
-      projectOutput = myModule1Dir.createChildDirectory(null, projectOutput.getName());
-      module2Output = myModule1Dir.createChildDirectory(null, module2Output.getName());
-      module2TestOutput = myModule2Dir.createChildDirectory(null, module2TestOutput.getName());
+      excluded = myModule1Dir.createChildDirectory(this, excluded.getName());
+      projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
+      module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
+      module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
     }
     finally {
       VirtualFileManager.getInstance().removeVirtualFileListener(l);
@@ -393,13 +399,13 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   }
 
   public void testExcludesShouldBeRecognizedRightOnRefresh() throws Exception {
-    final VirtualFile dir = myModule1Dir.createChildDirectory(null, "dir");
-    final VirtualFile excluded = dir.createChildDirectory(null, "excluded");
+    final VirtualFile dir = myModule1Dir.createChildDirectory(this, "dir");
+    final VirtualFile excluded = dir.createChildDirectory(this, "excluded");
     PsiTestUtil.addExcludedRoot(myModule, excluded);
     new WriteCommandAction.Simple(getProject()) {
       @Override
       protected void run() throws Throwable {
-        dir.delete(null);
+        dir.delete(DirectoryIndexImplTest.this);
       }
     }.execute().throwException();
 
@@ -438,14 +444,14 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
       public void run() {
         ModifiableRootModel rootModel = ModuleRootManager.getInstance(myModule).getModifiableModel();
         rootModel.getContentEntries()[0]
-          .addExcludeFolder(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(f.getParentFile().getParent())));
+          .addExcludeFolder(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(f.getParentFile().getParent())));
         rootModel.commit();
 
         rootModel = ModuleRootManager.getInstance(myModule2).getModifiableModel();
-        rootModel.addContentEntry(VfsUtil.pathToUrl(FileUtil.toSystemIndependentName(f.getPath())));
+        rootModel.addContentEntry(VfsUtilCore.pathToUrl(FileUtil.toSystemIndependentName(f.getPath())));
         rootModel.commit();
 
-        f.mkdirs();
+        assertTrue(f.getPath(), f.exists() || f.mkdirs());
         LocalFileSystem.getInstance().refresh(false);
       }
     });
@@ -478,7 +484,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
                          boolean isTestSource,
                          boolean isInLibrary,
                          boolean isInLibrarySource,
-                         String packageName,
+                         @Nullable String packageName,
                          Module[] modulesOfOrderEntries) {
     DirectoryInfo info = myIndex.getInfoForDirectory(dir);
     assertNotNull(info);

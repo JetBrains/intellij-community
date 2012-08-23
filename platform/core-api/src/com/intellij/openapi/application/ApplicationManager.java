@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class ApplicationManager {
    *
    * @return <code>Application</code>
    */
-  public static Application getApplication(){
+  public static Application getApplication() {
     return ourApplication;
   }
 
@@ -55,7 +55,7 @@ public class ApplicationManager {
     setApplication(instance);
   }
 
-  public static void setApplication(Application instance, 
+  public static void setApplication(Application instance,
                                     Getter<FileTypeRegistry> fileTypeRegistryGetter,
                                     Getter<EncodingRegistry> encodingRegistryGetter,
                                     @NotNull Disposable parent) {
@@ -69,6 +69,7 @@ public class ApplicationManager {
           setApplication(old);
           //noinspection AssignmentToStaticFieldFromInstanceMethod
           FileTypeRegistry.ourInstanceGetter = oldFileTypeRegistry;
+          //noinspection AssignmentToStaticFieldFromInstanceMethod
           EncodingRegistry.ourInstanceGetter = oldEncodingRegistry;
         }
       }
