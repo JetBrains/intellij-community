@@ -18,8 +18,8 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
 import gnu.trove.TObjectIntHashMap;
@@ -67,8 +67,8 @@ public class ArrangementNodeDisplayManager {
   }
 
   @NotNull
-  public String getDisplayValue(@NotNull ArrangementSettingsAtomNode node) {
-    return getDisplayValue(node.getValue());
+  public String getDisplayValue(@NotNull ArrangementAtomMatchCondition setting) {
+    return getDisplayValue(setting.getValue());
   }
 
   @NotNull

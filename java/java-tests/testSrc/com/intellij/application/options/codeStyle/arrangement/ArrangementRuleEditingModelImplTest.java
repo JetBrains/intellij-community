@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import org.junit.Test;
 
 import static com.intellij.psi.codeStyle.arrangement.ArrangementUtil.and;
@@ -39,9 +39,9 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
 
     ArrangementTreeNode child = myRoot.getFirstChild();
     assertNotNull(child);
-    ArrangementSettingsNode expectedSettingsNode = and(atom(PUBLIC), atom(STATIC));
-    assertEquals(expectedSettingsNode, child.getBackingSetting());
-    assertEquals(expectedSettingsNode, model.getSettingsNode());
+    ArrangementMatchCondition expectedMatchCondition = and(atom(PUBLIC), atom(STATIC));
+    assertEquals(expectedMatchCondition, child.getBackingSetting());
+    assertEquals(expectedMatchCondition, model.getMatchCondition());
   }
 
   @Test
@@ -54,7 +54,7 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     model.addAndCondition(atom(FIELD));
 
     assertEquals(2, model.getRow());
-    assertEquals(and(atom(FIELD), atom(PUBLIC)), model.getSettingsNode());
+    assertEquals(and(atom(FIELD), atom(PUBLIC)), model.getMatchCondition());
 
     ArrangementTreeNode fieldNode = myRoot.getFirstChild();
     assertNotNull(fieldNode);
@@ -76,7 +76,7 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
 
     assertEquals(1, myRowMappings.size());
     assertSame(model, myRowMappings.get(2));
-    assertEquals(and(atom(FIELD), atom(PUBLIC), atom(STATIC)), model.getSettingsNode());
+    assertEquals(and(atom(FIELD), atom(PUBLIC), atom(STATIC)), model.getMatchCondition());
 
     ArrangementTreeNode fieldNode = myRoot.getFirstChild();
     assertNotNull(fieldNode);
@@ -98,7 +98,7 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
 
     assertEquals(1, myRowMappings.size());
     assertSame(model, myRowMappings.get(2));
-    assertEquals(and(atom(FIELD), atom(STATIC)), model.getSettingsNode());
+    assertEquals(and(atom(FIELD), atom(STATIC)), model.getMatchCondition());
 
     ArrangementTreeNode fieldNode = myRoot.getFirstChild();
     assertNotNull(fieldNode);
@@ -119,7 +119,7 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     model.removeAndCondition(atom(PUBLIC));
 
     assertEquals(1, model.getRow());
-    assertEquals(atom(FIELD), model.getSettingsNode());
+    assertEquals(atom(FIELD), model.getMatchCondition());
 
     ArrangementTreeNode fieldNode = myRoot.getFirstChild();
     assertNotNull(fieldNode);
@@ -143,10 +143,10 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     modelToChange.removeAndCondition(atom(PUBLIC));
     
     assertSame(1, modelToChange.getRow());
-    assertEquals(atom(FIELD), modelToChange.getSettingsNode());
+    assertEquals(atom(FIELD), modelToChange.getMatchCondition());
     
     assertSame(3, siblingModel.getRow());
-    assertEquals(and(atom(FIELD), atom(STATIC)), siblingModel.getSettingsNode());
+    assertEquals(and(atom(FIELD), atom(STATIC)), siblingModel.getMatchCondition());
 
     ArrangementTreeNode atomFieldNode = myRoot.getFirstChild();
     assertNotNull(atomFieldNode);
@@ -177,10 +177,10 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
 
     assertEquals(2, myRowMappings.size());
     assertSame(siblingModel, myRowMappings.get(2));
-    assertEquals(and(atom(FIELD), atom(PUBLIC)), siblingModel.getSettingsNode());
+    assertEquals(and(atom(FIELD), atom(PUBLIC)), siblingModel.getMatchCondition());
 
     assertSame(modelToChange, myRowMappings.get(3));
-    assertEquals(atom(FIELD), modelToChange.getSettingsNode());
+    assertEquals(atom(FIELD), modelToChange.getMatchCondition());
 
     ArrangementTreeNode compositeFieldNode = myRoot.getFirstChild();
     assertNotNull(compositeFieldNode);

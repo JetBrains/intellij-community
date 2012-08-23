@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.settings;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,5 +46,5 @@ public interface ArrangementSettingsGrouper {
    * @return      grouping-aware node
    */
   @NotNull
-  HierarchicalArrangementSettingsNode group(@NotNull ArrangementSettingsNode node);
+  HierarchicalArrangementSettingsNode group(@NotNull ArrangementMatchCondition node);
 }

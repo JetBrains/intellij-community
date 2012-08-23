@@ -16,7 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
@@ -30,7 +30,7 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 /**
- * {@link ArrangementNodeComponent} for {@link ArrangementSettingsAtomNode} representation.
+ * {@link ArrangementNodeComponent} for {@link ArrangementAtomMatchCondition} representation.
  * <p/>
  * Not thread-safe.
  * 
@@ -73,8 +73,8 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
     }
   };
 
-  @NotNull private final  ArrangementSettingsAtomNode mySettingsNode;
-  @Nullable private final ActionButton                myCloseButton;
+  @NotNull private final  ArrangementAtomMatchCondition mySetting;
+  @Nullable private final ActionButton                  myCloseButton;
 
   @Nullable private Dimension mySize;
   @Nullable private Rectangle myScreenBounds;
@@ -85,14 +85,14 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   private boolean myCloseButtonHovered;
 
   public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
-                                      @NotNull ArrangementSettingsAtomNode node,
-                                      @Nullable Consumer<ArrangementSettingsAtomNode> closeCallback)
+                                      @NotNull ArrangementAtomMatchCondition setting,
+                                      @Nullable Consumer<ArrangementAtomMatchCondition> closeCallback)
   {
-    mySettingsNode = node;
+    mySetting = setting;
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
-    myLabel.setText(manager.getDisplayValue(node));
+    myLabel.setText(manager.getDisplayValue(setting));
     
-    int width = manager.getMaxWidth(node.getType());
+    int width = manager.getMaxWidth(setting.getType());
     int height = myLabel.getPreferredSize().height;
     final ArrangementRemoveConditionAction action;
     if (closeCallback == null) {
@@ -161,8 +161,8 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
   @NotNull
   @Override
-  public ArrangementSettingsAtomNode getSettingsNode() {
-    return mySettingsNode;
+  public ArrangementAtomMatchCondition getMatchCondition() {
+    return mySetting;
   }
 
   @NotNull

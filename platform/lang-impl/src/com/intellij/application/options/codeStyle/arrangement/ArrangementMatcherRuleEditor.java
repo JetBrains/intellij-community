@@ -16,8 +16,8 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.MultiRowFlowPanel;
@@ -80,7 +80,7 @@ public class ArrangementMatcherRuleEditor extends JPanel {
 
     JPanel valuesPanel = new MultiRowFlowPanel(FlowLayout.LEFT, 8, 5);
     for (Object value : manager.sort(values)) {
-      ArrangementAtomNodeComponent component = new ArrangementAtomNodeComponent(manager, new ArrangementSettingsAtomNode(key, value), null);
+      ArrangementAtomNodeComponent component = new ArrangementAtomNodeComponent(manager, new ArrangementAtomMatchCondition(key, value), null);
       myComponents.put(value, component);
       valuesPanel.add(component.getUiComponent());
     }
@@ -110,7 +110,7 @@ public class ArrangementMatcherRuleEditor extends JPanel {
       return;
     }
 
-    Map<ArrangementSettingType, Collection<?>> available = ArrangementConfigUtil.buildAvailableOptions(myFilter, model.getSettingsNode());
+    Map<ArrangementSettingType, Collection<?>> available = ArrangementConfigUtil.buildAvailableOptions(myFilter, model.getMatchCondition());
     for (Collection<?> ids : available.values()) {
       for (Object id : ids) {
         ArrangementAtomNodeComponent component = myComponents.get(id);
@@ -138,30 +138,30 @@ public class ArrangementMatcherRuleEditor extends JPanel {
     if (component == null) {
       return;
     }
-    ArrangementSettingsAtomNode settingsNode = component.getSettingsNode();
-    boolean remove = myModel.hasCondition(settingsNode.getValue());
+    ArrangementAtomMatchCondition setting = component.getMatchCondition();
+    boolean remove = myModel.hasCondition(setting.getValue());
     component.setSelected(!remove);
     repaintComponent(component);
     if (remove) {
-      myModel.removeAndCondition(settingsNode);
+      myModel.removeAndCondition(setting);
       return;
     }
     
     Collection<Set<?>> mutexes = myFilter.getMutexes();
     for (Set<?> mutex : mutexes) {
-      if (!mutex.contains(settingsNode.getValue())) {
+      if (!mutex.contains(setting.getValue())) {
         continue;
       }
       for (Object key : mutex) {
         if (myModel.hasCondition(key)) {
           ArrangementAtomNodeComponent componentToDeselect = myComponents.get(key);
           componentToDeselect.setSelected(false);
-          myModel.removeAndCondition(componentToDeselect.getSettingsNode());
+          myModel.removeAndCondition(componentToDeselect.getMatchCondition());
           repaintComponent(componentToDeselect);
         }
       }
     }
-    myModel.addAndCondition(settingsNode);
+    myModel.addAndCondition(setting);
   }
 
   @Nullable

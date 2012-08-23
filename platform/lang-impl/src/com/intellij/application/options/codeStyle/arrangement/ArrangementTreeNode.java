@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,31 +31,31 @@ public class ArrangementTreeNode extends DefaultMutableTreeNode {
 
   private static final int NO_ROW = -1;
 
-  @Nullable private ArrangementSettingsNode mySettings;
-  private           int                     myRow;
+  @Nullable private ArrangementMatchCondition mySettings;
+  private           int                       myRow;
 
-  public ArrangementTreeNode(@Nullable ArrangementSettingsNode settings) {
+  public ArrangementTreeNode(@Nullable ArrangementMatchCondition settings) {
     this(settings, NO_ROW);
   }
 
-  public ArrangementTreeNode(@Nullable ArrangementSettingsNode settings, int row) {
+  public ArrangementTreeNode(@Nullable ArrangementMatchCondition settings, int row) {
     mySettings = settings;
     myRow = row;
   }
 
   @Nullable
-  public ArrangementSettingsNode getBackingSetting() {
+  public ArrangementMatchCondition getBackingSetting() {
     return mySettings;
   }
 
-  public void setSettings(@Nullable ArrangementSettingsNode settings) {
+  public void setSettings(@Nullable ArrangementMatchCondition settings) {
     mySettings = settings;
   }
 
   public boolean isRowSet() {
     return myRow >= 0;
   }
-  
+
   public int getRow() {
     return myRow;
   }

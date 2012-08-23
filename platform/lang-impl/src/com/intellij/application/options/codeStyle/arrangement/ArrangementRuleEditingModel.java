@@ -17,15 +17,13 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.tree.TreeNode;
 
 /**
  * Combines and encapsulates information about arrangement matcher rules representation (tree nodes) and
- * underlying {@link ArrangementSettingsNode data model}.
+ * underlying {@link ArrangementMatchCondition data model}.
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
  * 
@@ -35,7 +33,7 @@ import javax.swing.tree.TreeNode;
 public interface ArrangementRuleEditingModel {
   
   @NotNull
-  ArrangementSettingsNode getSettingsNode();
+  ArrangementMatchCondition getMatchCondition();
 
   /**
    * Allows to answer if current model has a registered condition for the given key. A key is expected to be one of the standard
@@ -47,7 +45,7 @@ public interface ArrangementRuleEditingModel {
    */
   boolean hasCondition(@NotNull Object key);
   
-  void addAndCondition(@NotNull ArrangementSettingsAtomNode node);
+  void addAndCondition(@NotNull ArrangementAtomMatchCondition setting);
 
-  void removeAndCondition(@NotNull ArrangementSettingsNode node);
+  void removeAndCondition(@NotNull ArrangementMatchCondition node);
 }

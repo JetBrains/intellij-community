@@ -16,15 +16,13 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.CompositeArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNodeVisitor;
+import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -116,18 +114,18 @@ public class ArrangementUtil {
   //region Rule composition
 
   @NotNull
-  public static ArrangementSettingsNode and(@NotNull ArrangementSettingsNode... nodes) {
-    final ArrangementSettingsCompositeNode result = new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND);
+  public static ArrangementMatchCondition and(@NotNull ArrangementMatchCondition... nodes) {
+    final ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND);
     final ArrangementSettingsNodeVisitor visitor = new ArrangementSettingsNodeVisitor() {
       @Override
-      public void visit(@NotNull ArrangementSettingsAtomNode node) {
+      public void visit(@NotNull ArrangementAtomMatchCondition node) {
         result.addOperand(node);
       }
 
       @Override
-      public void visit(@NotNull ArrangementSettingsCompositeNode node) {
-        if (node.getOperator() == ArrangementSettingsCompositeNode.Operator.AND) {
-          for (ArrangementSettingsNode operand : node.getOperands()) {
+      public void visit(@NotNull ArrangementCompositeMatchCondition node) {
+        if (node.getOperator() == ArrangementCompositeMatchCondition.Operator.AND) {
+          for (ArrangementMatchCondition operand : node.getOperands()) {
             operand.invite(this);
           }
         }
@@ -136,7 +134,7 @@ public class ArrangementUtil {
         }
       }
     };
-    for (ArrangementSettingsNode node : nodes) {
+    for (ArrangementMatchCondition node : nodes) {
       node.invite(visitor);
     }
     return result;

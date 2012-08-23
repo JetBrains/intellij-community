@@ -17,10 +17,9 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
@@ -68,10 +67,10 @@ public class ArrangementRuleTree {
   private boolean mySkipSelectionChange;
 
   public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
-    myFactory = new ArrangementNodeComponentFactory(displayManager, new Consumer<ArrangementSettingsAtomNode>() {
+    myFactory = new ArrangementNodeComponentFactory(displayManager, new Consumer<ArrangementAtomMatchCondition>() {
       @Override
-      public void consume(@NotNull ArrangementSettingsAtomNode node) {
-        removeConditionFromActiveModel(node);
+      public void consume(@NotNull ArrangementAtomMatchCondition setting) {
+        removeConditionFromActiveModel(setting);
       }
     });
     myRoot = new ArrangementTreeNode(null);
@@ -150,21 +149,21 @@ public class ArrangementRuleTree {
       }
     });
     
-    List<ArrangementSettingsNode> rules = new ArrayList<ArrangementSettingsNode>();
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL)));
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
+    List<ArrangementMatchCondition> rules = new ArrayList<ArrangementMatchCondition>();
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL)));
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
     map(myRoot, rules, grouper);
 
     expandAll(myTree, new TreePath(myRoot));
@@ -294,12 +293,12 @@ public class ArrangementRuleTree {
   }
 
   private void map(@NotNull ArrangementTreeNode root,
-                   @NotNull List<ArrangementSettingsNode> settings,
+                   @NotNull List<ArrangementMatchCondition> matchConditions,
                    @NotNull ArrangementSettingsGrouper grouper)
   {
     ArrangementRuleEditingModelBuilder builder = new ArrangementRuleEditingModelBuilder();
-    for (ArrangementSettingsNode setting : settings) {
-      builder.build(setting, myTree, root, grouper, myModels);
+    for (ArrangementMatchCondition matchCondition : matchConditions) {
+      builder.build(matchCondition, myTree, root, grouper, myModels);
     }
     myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
       @Override
@@ -342,7 +341,7 @@ public class ArrangementRuleTree {
   }
 
   @NotNull
-  private ArrangementNodeComponent getNodeComponentAt(int row, @NotNull ArrangementSettingsNode node) {
+  private ArrangementNodeComponent getNodeComponentAt(int row, @NotNull ArrangementMatchCondition node) {
     ArrangementNodeComponent result = myRenderers.get(row);
     if (result == null) {
       myRenderers.put(row, result = myFactory.getComponent(node));
@@ -350,7 +349,7 @@ public class ArrangementRuleTree {
     return result;
   }
 
-  private void removeConditionFromActiveModel(@NotNull ArrangementSettingsAtomNode condition) {
+  private void removeConditionFromActiveModel(@NotNull ArrangementAtomMatchCondition condition) {
     // TODO den implement
     System.out.println("Remove condition " + condition);
   }
@@ -469,9 +468,9 @@ public class ArrangementRuleTree {
         myRenderers.remove(row);
         myTreeModel.nodeChanged(node);
         mySelectionModel.addSelectionPath(path);
-        ArrangementSettingsNode setting = node.getBackingSetting();
-        if (setting != null) {
-          getNodeComponentAt(row, setting).setSelected(true);
+        ArrangementMatchCondition matchCondition = node.getBackingSetting();
+        if (matchCondition != null) {
+          getNodeComponentAt(row, matchCondition).setSelected(true);
         }
         if (node == topMost) {
           break;
@@ -503,7 +502,7 @@ public class ArrangementRuleTree {
                                                   int row,
                                                   boolean hasFocus)
     {
-      ArrangementSettingsNode node = ((ArrangementTreeNode)value).getBackingSetting();
+      ArrangementMatchCondition node = ((ArrangementTreeNode)value).getBackingSetting();
       if (node == null) {
         return EMPTY_RENDERER;
       }

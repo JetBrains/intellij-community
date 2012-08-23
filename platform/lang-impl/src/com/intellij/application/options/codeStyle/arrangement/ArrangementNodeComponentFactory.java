@@ -26,30 +26,30 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ArrangementNodeComponentFactory {
 
-  @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
-  private Consumer<ArrangementSettingsAtomNode> myRemoveConditionCallback;
+  @NotNull private final ArrangementNodeDisplayManager           myDisplayManager;
+  private                Consumer<ArrangementAtomMatchCondition> myRemoveConditionCallback;
 
   public ArrangementNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
-                                         @NotNull Consumer<ArrangementSettingsAtomNode> removeConditionCallback)
+                                         @NotNull Consumer<ArrangementAtomMatchCondition> removeConditionCallback)
   {
     myDisplayManager = manager;
     myRemoveConditionCallback = removeConditionCallback;
   }
 
   @NotNull
-  public ArrangementNodeComponent getComponent(@NotNull ArrangementSettingsNode node) {
+  public ArrangementNodeComponent getComponent(@NotNull ArrangementMatchCondition node) {
     final Ref<ArrangementNodeComponent> ref = new Ref<ArrangementNodeComponent>();
     node.invite(new ArrangementSettingsNodeVisitor() {
       @Override
-      public void visit(@NotNull ArrangementSettingsAtomNode node) {
-        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, node, myRemoveConditionCallback));
+      public void visit(@NotNull ArrangementAtomMatchCondition setting) {
+        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, setting, myRemoveConditionCallback));
       }
 
       @Override
-      public void visit(@NotNull ArrangementSettingsCompositeNode node) {
-        switch (node.getOperator()) {
+      public void visit(@NotNull ArrangementCompositeMatchCondition setting) {
+        switch (setting.getOperator()) {
           case AND:
-            ref.set(new ArrangementAndNodeComponent(node, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
+            ref.set(new ArrangementAndNodeComponent(setting, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
           case OR: // TODO den implement
         }
       }

@@ -16,9 +16,9 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNodeVisitor;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * {@link ArrangementNodeComponent Component} for showing {@link ArrangementSettingsCompositeNode composite nodes}.
+ * {@link ArrangementNodeComponent Component} for showing {@link ArrangementCompositeMatchCondition composite nodes}.
  * <p/>
  * Not thread-safe.
  * 
@@ -46,35 +46,35 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
 
   @NotNull private final List<ArrangementNodeComponent> myComponents = new ArrayList<ArrangementNodeComponent>();
 
-  @NotNull private final ArrangementSettingsCompositeNode mySettingsNode;
-  @Nullable private      Rectangle                        myScreenBounds;
+  @NotNull private final ArrangementCompositeMatchCondition mySetting;
+  @Nullable private      Rectangle                          myScreenBounds;
 
-  public ArrangementAndNodeComponent(@NotNull ArrangementSettingsCompositeNode node,
+  public ArrangementAndNodeComponent(@NotNull ArrangementCompositeMatchCondition setting,
                                      @NotNull ArrangementNodeComponentFactory factory,
                                      @NotNull ArrangementNodeDisplayManager manager)
   {
-    mySettingsNode = node;
+    mySetting = setting;
     setLayout(null);
     int x = 0;
-    final Map<Object, ArrangementSettingsNode> operands = new HashMap<Object, ArrangementSettingsNode>();
+    final Map<Object, ArrangementMatchCondition> operands = new HashMap<Object, ArrangementMatchCondition>();
     ArrangementSettingsNodeVisitor visitor = new ArrangementSettingsNodeVisitor() {
       @Override
-      public void visit(@NotNull ArrangementSettingsAtomNode node) {
+      public void visit(@NotNull ArrangementAtomMatchCondition node) {
         operands.put(node.getValue(), node);
       }
 
       @Override
-      public void visit(@NotNull ArrangementSettingsCompositeNode node) {
-        operands.put(node, node); 
+      public void visit(@NotNull ArrangementCompositeMatchCondition node) {
+        operands.put(node, node);
       }
     };
-    for (ArrangementSettingsNode operand : node.getOperands()) {
+    for (ArrangementMatchCondition operand : setting.getOperands()) {
       operand.invite(visitor);
     }
-    
+
     List<Object> ordered = manager.sort(operands.keySet());
     for (Object key : ordered) {
-      ArrangementSettingsNode operand = operands.get(key);
+      ArrangementMatchCondition operand = operands.get(key);
       assert operand != null;
       ArrangementNodeComponent component = factory.getComponent(operand);
       myComponents.add(component);
@@ -88,8 +88,8 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
 
   @NotNull
   @Override
-  public ArrangementSettingsNode getSettingsNode() {
-    return mySettingsNode;
+  public ArrangementMatchCondition getMatchCondition() {
+    return mySetting;
   }
 
   @NotNull

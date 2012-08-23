@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,7 @@ import java.awt.event.MouseEvent;
 public interface ArrangementNodeComponent {
   
   @NotNull
-  ArrangementSettingsNode getSettingsNode();
+  ArrangementMatchCondition getMatchCondition();
   
   // TODO den add doc
   @NotNull

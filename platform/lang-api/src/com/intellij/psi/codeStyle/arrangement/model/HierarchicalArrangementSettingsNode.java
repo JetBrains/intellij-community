@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * {@link #getCurrent() Wraps} {@link ArrangementSettingsNode} in order to allow to build {@link #getChild() hierarchy}
+ * {@link #getCurrent() Wraps} {@link ArrangementMatchCondition} in order to allow to build {@link #getChild() hierarchy}
  * from a plain sequence of them
  * <p/>
  * Not thread-safe.
@@ -29,15 +29,15 @@ import org.jetbrains.annotations.Nullable;
  */
 public class HierarchicalArrangementSettingsNode {
 
-  @NotNull private final ArrangementSettingsNode             myCurrent;
+  @NotNull private final ArrangementMatchCondition           myCurrent;
   @Nullable private      HierarchicalArrangementSettingsNode myChild;
 
-  public HierarchicalArrangementSettingsNode(@NotNull ArrangementSettingsNode current) {
+  public HierarchicalArrangementSettingsNode(@NotNull ArrangementMatchCondition current) {
     myCurrent = current;
   }
 
   @NotNull
-  public ArrangementSettingsNode getCurrent() {
+  public ArrangementMatchCondition getCurrent() {
     return myCurrent;
   }
 
@@ -49,7 +49,7 @@ public class HierarchicalArrangementSettingsNode {
   public void setChild(@Nullable HierarchicalArrangementSettingsNode child) {
     myChild = child;
   }
-  
+
   @Override
   public String toString() {
     return myCurrent.toString();

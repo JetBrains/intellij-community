@@ -18,8 +18,8 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -58,7 +58,7 @@ public class ArrangementConfigUtil {
    */
   @NotNull
   public static Map<ArrangementSettingType, Collection<?>> buildAvailableOptions(@NotNull ArrangementStandardSettingsAware filter,
-                                                                                 @Nullable ArrangementSettingsNode settings)
+                                                                                 @Nullable ArrangementMatchCondition settings)
   {
     Map<ArrangementSettingType, Collection<?>> result = new EnumMap<ArrangementSettingType, Collection<?>>(ArrangementSettingType.class);
     processData(filter, settings, result, ArrangementSettingType.TYPE, ArrangementEntryType.values());
@@ -67,7 +67,7 @@ public class ArrangementConfigUtil {
   }
 
   private static <T> void processData(@NotNull ArrangementStandardSettingsAware filter,
-                                      @Nullable ArrangementSettingsNode settings,
+                                      @Nullable ArrangementMatchCondition settings,
                                       @NotNull Map<ArrangementSettingType, Collection<?>> result,
                                       @NotNull ArrangementSettingType type,
                                       @NotNull T[] values)
@@ -89,7 +89,7 @@ public class ArrangementConfigUtil {
 
   public static boolean isEnabled(@NotNull Object conditionId,
                                   @NotNull ArrangementStandardSettingsAware filter,
-                                  @Nullable ArrangementSettingsNode settings)
+                                  @Nullable ArrangementMatchCondition settings)
   {
     if (conditionId instanceof ArrangementEntryType) {
       return filter.isEnabled((ArrangementEntryType)conditionId, settings);
@@ -527,13 +527,13 @@ public class ArrangementConfigUtil {
   }
 
   private static boolean hasEqualSetting(@NotNull ArrangementTreeNode node1, @NotNull ArrangementTreeNode node2) {
-    ArrangementSettingsNode setting1 = node1.getBackingSetting();
-    ArrangementSettingsNode setting2 = node2.getBackingSetting();
-    if (setting1 == null) {
-      return setting2 == null;
+    ArrangementMatchCondition matchCondition1 = node1.getBackingSetting();
+    ArrangementMatchCondition matchCondition2 = node2.getBackingSetting();
+    if (matchCondition1 == null) {
+      return matchCondition2 == null;
     }
     else {
-      return setting1.equals(setting2);
+      return matchCondition1.equals(matchCondition2);
     }
   }
 }

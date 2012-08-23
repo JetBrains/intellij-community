@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ArrangementSettingsNodeVisitor {
 
-  void visit(@NotNull ArrangementSettingsAtomNode node);
+  void visit(@NotNull ArrangementAtomMatchCondition setting);
   
-  void visit(@NotNull ArrangementSettingsCompositeNode node);
+  void visit(@NotNull ArrangementCompositeMatchCondition setting);
 }

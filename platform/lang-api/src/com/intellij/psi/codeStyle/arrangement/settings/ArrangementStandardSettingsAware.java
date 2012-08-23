@@ -17,7 +17,7 @@ package com.intellij.psi.codeStyle.arrangement.settings;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ public interface ArrangementStandardSettingsAware {
    *                 (<code>null</code> to indicate a query if given entry type is supported in general)
    * @return         <code>true</code> if given entry type is supported; <code>false</code> otherwise
    */
-  boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementSettingsNode current);
+  boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementMatchCondition current);
 
   /**
    * Allows to answer if given modifier can be applied for the rule specified by the given settings node.
@@ -51,7 +51,7 @@ public interface ArrangementStandardSettingsAware {
    *                 (<code>null</code> to indicate a query if given modifier is supported in general)
    * @return         <code>true</code> if given modifier is supported; <code>false</code> otherwise
    */
-  boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementSettingsNode current);
+  boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatchCondition current);
 
   /**
    * @return    collections of mutual exclusion settings. E.g. not more than one visibility modifier can be used for a single

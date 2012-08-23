@@ -22,26 +22,28 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 
 /**
- * // TODO den add doc
+ * Encapsulates composite match condition, e.g. "an entry has type 'field' and modifier 'static'".
+ * <p/>
+ * Thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 1:18 PM
  */
-public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode {
+public class ArrangementCompositeMatchCondition implements ArrangementMatchCondition {
 
-  @NotNull private final Set<ArrangementSettingsNode> myOperands = new HashSet<ArrangementSettingsNode>();
+  @NotNull private final Set<ArrangementMatchCondition> myOperands = new HashSet<ArrangementMatchCondition>();
   @NotNull private final Operator myOperator;
 
-  public ArrangementSettingsCompositeNode(@NotNull Operator operator) {
+  public ArrangementCompositeMatchCondition(@NotNull Operator operator) {
     myOperator = operator;
   }
 
   @NotNull
-  public Set<ArrangementSettingsNode> getOperands() {
+  public Set<ArrangementMatchCondition> getOperands() {
     return myOperands;
   }
 
-  public ArrangementSettingsCompositeNode addOperand(@NotNull ArrangementSettingsNode node) {
+  public ArrangementCompositeMatchCondition addOperand(@NotNull ArrangementMatchCondition node) {
     myOperands.add(node);
     return this;
   }
@@ -55,12 +57,12 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
   public void invite(@NotNull ArrangementSettingsNodeVisitor visitor) {
     visitor.visit(this);
   }
-  
+
   @NotNull
   @Override
-  public ArrangementSettingsCompositeNode clone() {
-    ArrangementSettingsCompositeNode result = new ArrangementSettingsCompositeNode(myOperator);
-    for (ArrangementSettingsNode operand : myOperands) {
+  public ArrangementCompositeMatchCondition clone() {
+    ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(myOperator);
+    for (ArrangementMatchCondition operand : myOperands) {
       result.addOperand(operand.clone());
     }
     return result;
@@ -82,12 +84,12 @@ public class ArrangementSettingsCompositeNode implements ArrangementSettingsNode
       return false;
     }
 
-    ArrangementSettingsCompositeNode node = (ArrangementSettingsCompositeNode)o;
+    ArrangementCompositeMatchCondition setting = (ArrangementCompositeMatchCondition)o;
 
-    if (!myOperands.equals(node.myOperands)) {
+    if (!myOperands.equals(setting.myOperands)) {
       return false;
     }
-    if (myOperator != node.myOperator) {
+    if (myOperator != setting.myOperator) {
       return false;
     }
 
