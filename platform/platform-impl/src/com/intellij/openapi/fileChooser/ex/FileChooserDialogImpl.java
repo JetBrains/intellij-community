@@ -120,6 +120,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     prepareAndShow(toSelect);
     if (myChosenFiles.length > 0) {
       callback.consume(Arrays.asList(myChosenFiles));
+    } else if (callback instanceof FileChooser.FileChooserConsumer){
+      ((FileChooser.FileChooserConsumer)callback).cancelled();
     }
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.mac;
 
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
@@ -111,6 +112,8 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
               }
             }
           });
+        } else if (impl.myCallback instanceof FileChooser.FileChooserConsumer) {
+          ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled();
         }
       }
       finally {
