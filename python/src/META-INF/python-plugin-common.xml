@@ -103,6 +103,7 @@
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.DjangoTemplateLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType"/>
+    <xdebugger.settings implementation="com.jetbrains.python.debugger.PyDebuggerSettings"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
 
