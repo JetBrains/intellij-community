@@ -18,19 +18,21 @@ package com.intellij.psi.codeStyle.arrangement.model;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * // TODO den add doc
+ * Encapsulates a single atom match condition, e.g. 'entry type is field' or 'entry has 'static' modifier' etc.
+ * <p/>
+ * Not thread-safe..
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 1:17 PM
  */
-public class ArrangementSettingsAtomNode implements ArrangementSettingsNode {
+public class ArrangementAtomMatchCondition implements ArrangementMatchCondition {
 
   @NotNull private final ArrangementSettingType myType;
   @NotNull private final Object                 myValue;
   
   private boolean myInverted;
 
-  public ArrangementSettingsAtomNode(@NotNull ArrangementSettingType type, @NotNull Object value) {
+  public ArrangementAtomMatchCondition(@NotNull ArrangementSettingType type, @NotNull Object value) {
     myType = type;
     myValue = value;
   }
@@ -75,15 +77,15 @@ public class ArrangementSettingsAtomNode implements ArrangementSettingsNode {
       return false;
     }
 
-    ArrangementSettingsAtomNode node = (ArrangementSettingsAtomNode)o;
+    ArrangementAtomMatchCondition setting = (ArrangementAtomMatchCondition)o;
 
-    if (myInverted != node.myInverted) {
+    if (myInverted != setting.myInverted) {
       return false;
     }
-    if (myType != node.myType) {
+    if (myType != setting.myType) {
       return false;
     }
-    if (!myValue.equals(node.myValue)) {
+    if (!myValue.equals(setting.myValue)) {
       return false;
     }
 
@@ -92,8 +94,8 @@ public class ArrangementSettingsAtomNode implements ArrangementSettingsNode {
 
   @NotNull
   @Override
-  public ArrangementSettingsAtomNode clone() {
-    ArrangementSettingsAtomNode result = new ArrangementSettingsAtomNode(myType, myValue);
+  public ArrangementAtomMatchCondition clone() {
+    ArrangementAtomMatchCondition result = new ArrangementAtomMatchCondition(myType, myValue);
     result.setInverted(myInverted);
     return result;
   }

@@ -147,6 +147,7 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_END, KeyEvent.SHIFT_DOWN_MASK), "selectLastRowExtendSelection");
   }
 
+  @NotNull
   @Override
   public StatusText getEmptyText() {
     return myTable.getEmptyText();
@@ -156,6 +157,11 @@ public class ElementsChooser<T> extends JPanel implements ComponentWithEmptyText
   @Override
   public ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
     return myTable.getExpandableItemsHandler();
+  }
+
+  @Override
+  public void setExpandableItemsEnabled(boolean enabled) {
+    myTable.setExpandableItemsEnabled(enabled);
   }
 
   public void setSingleSelectionMode() {

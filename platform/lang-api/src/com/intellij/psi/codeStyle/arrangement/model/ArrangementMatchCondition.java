@@ -15,18 +15,21 @@
  */
 package com.intellij.psi.codeStyle.arrangement.model;
 
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * // TODO den add doc
+ * Generic data model for {@link ArrangementEntryMatcher arrangement entry matcher}.
+ * <p/>
+ * Implementations of this interface are not obliged to be thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 11:13 AM
  */
-public interface ArrangementSettingsNode extends Cloneable {
+public interface ArrangementMatchCondition extends Cloneable {
 
   void invite(@NotNull ArrangementSettingsNodeVisitor visitor);
 
   @NotNull
-  ArrangementSettingsNode clone();
+  ArrangementMatchCondition clone();
 }

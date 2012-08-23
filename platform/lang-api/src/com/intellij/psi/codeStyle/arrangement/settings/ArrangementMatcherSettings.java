@@ -15,10 +15,9 @@
  */
 package com.intellij.psi.codeStyle.arrangement.settings;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNodeVisitor;
+import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +26,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Encapsulates information about {@link ArrangementSettingsNode standard arrangement match rule settings}.
+ * Encapsulates information about {@link ArrangementMatchCondition standard arrangement match rule settings}.
  * <p/>
  * Not thread-safe.
  * 
@@ -36,23 +35,23 @@ import java.util.Set;
  */
 public class ArrangementMatcherSettings implements Cloneable {
 
-  @NotNull private final List<ArrangementSettingsNode>  myConditions    = new ArrayList<ArrangementSettingsNode>();
-  @NotNull private final Set<Object>                    myValues        = new HashSet<Object>();
-  @NotNull private final ArrangementSettingsNodeVisitor myAddVisitor    = new MyAddVisitor();
-  @NotNull private final ArrangementSettingsNodeVisitor myRemoveVisitor = new MyRemoveVisitor();
+  @NotNull private final List<ArrangementMatchCondition> myConditions    = new ArrayList<ArrangementMatchCondition>();
+  @NotNull private final Set<Object>                     myValues        = new HashSet<Object>();
+  @NotNull private final ArrangementSettingsNodeVisitor  myAddVisitor    = new MyAddVisitor();
+  @NotNull private final ArrangementSettingsNodeVisitor  myRemoveVisitor = new MyRemoveVisitor();
 
   @NotNull
-  public List<ArrangementSettingsNode> getConditions() {
+  public List<ArrangementMatchCondition> getConditions() {
     return myConditions;
   }
 
-  public boolean addCondition(@NotNull ArrangementSettingsNode condition) {
+  public boolean addCondition(@NotNull ArrangementMatchCondition condition) {
     int size = myConditions.size();
     condition.invite(myAddVisitor);
     return myConditions.size() > size;
   }
 
-  public boolean removeCondition(@NotNull ArrangementSettingsNode condition) {
+  public boolean removeCondition(@NotNull ArrangementMatchCondition condition) {
     int size = myConditions.size();
     condition.invite(myRemoveVisitor);
     return myConditions.size() < size;
@@ -72,14 +71,14 @@ public class ArrangementMatcherSettings implements Cloneable {
 
   private class MyAddVisitor implements ArrangementSettingsNodeVisitor {
     @Override
-    public void visit(@NotNull ArrangementSettingsAtomNode node) {
-      myConditions.add(node);
-      myValues.add(node.getValue());
+    public void visit(@NotNull ArrangementAtomMatchCondition setting) {
+      myConditions.add(setting);
+      myValues.add(setting.getValue());
     }
 
     @Override
-    public void visit(@NotNull ArrangementSettingsCompositeNode node) {
-      for (ArrangementSettingsNode n : node.getOperands()) {
+    public void visit(@NotNull ArrangementCompositeMatchCondition setting) {
+      for (ArrangementMatchCondition n : setting.getOperands()) {
         n.invite(this);
       }
     }
@@ -87,14 +86,14 @@ public class ArrangementMatcherSettings implements Cloneable {
 
   private class MyRemoveVisitor implements ArrangementSettingsNodeVisitor {
     @Override
-    public void visit(@NotNull ArrangementSettingsAtomNode node) {
-      myConditions.remove(node);
-      myValues.remove(node.getValue());
+    public void visit(@NotNull ArrangementAtomMatchCondition setting) {
+      myConditions.remove(setting);
+      myValues.remove(setting.getValue());
     }
 
     @Override
-    public void visit(@NotNull ArrangementSettingsCompositeNode node) {
-      for (ArrangementSettingsNode n : node.getOperands()) {
+    public void visit(@NotNull ArrangementCompositeMatchCondition setting) {
+      for (ArrangementMatchCondition n : setting.getOperands()) {
         n.invite(this);
       }
     }

@@ -18,9 +18,9 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
-import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.Stack;
@@ -58,7 +58,7 @@ public class ArrangementConfigUtil {
    */
   @NotNull
   public static Map<ArrangementSettingType, Collection<?>> buildAvailableOptions(@NotNull ArrangementStandardSettingsAware filter,
-                                                                                 @Nullable ArrangementSettingsNode settings)
+                                                                                 @Nullable ArrangementMatchCondition settings)
   {
     Map<ArrangementSettingType, Collection<?>> result = new EnumMap<ArrangementSettingType, Collection<?>>(ArrangementSettingType.class);
     processData(filter, settings, result, ArrangementSettingType.TYPE, ArrangementEntryType.values());
@@ -67,7 +67,7 @@ public class ArrangementConfigUtil {
   }
 
   private static <T> void processData(@NotNull ArrangementStandardSettingsAware filter,
-                                      @Nullable ArrangementSettingsNode settings,
+                                      @Nullable ArrangementMatchCondition settings,
                                       @NotNull Map<ArrangementSettingType, Collection<?>> result,
                                       @NotNull ArrangementSettingType type,
                                       @NotNull T[] values)
@@ -89,7 +89,7 @@ public class ArrangementConfigUtil {
 
   public static boolean isEnabled(@NotNull Object conditionId,
                                   @NotNull ArrangementStandardSettingsAware filter,
-                                  @Nullable ArrangementSettingsNode settings)
+                                  @Nullable ArrangementMatchCondition settings)
   {
     if (conditionId instanceof ArrangementEntryType) {
       return filter.isEnabled((ArrangementEntryType)conditionId, settings);
@@ -121,15 +121,15 @@ public class ArrangementConfigUtil {
     return null;
   }
 
-  public static int getDepth(@NotNull HierarchicalArrangementSettingsNode node) {
-    HierarchicalArrangementSettingsNode child = node.getChild();
+  public static int getDepth(@NotNull HierarchicalArrangementConditionNode node) {
+    HierarchicalArrangementConditionNode child = node.getChild();
     return child == null ? 1 : 1 + getDepth(child);
   }
 
   @NotNull
-  public static HierarchicalArrangementSettingsNode getLast(@NotNull HierarchicalArrangementSettingsNode node) {
-    HierarchicalArrangementSettingsNode result = node;
-    for (HierarchicalArrangementSettingsNode child = node.getChild(); child != null; child = child.getChild()) {
+  public static HierarchicalArrangementConditionNode getLast(@NotNull HierarchicalArrangementConditionNode node) {
+    HierarchicalArrangementConditionNode result = node;
+    for (HierarchicalArrangementConditionNode child = node.getChild(); child != null; child = child.getChild()) {
       result = child;
     }
     return result;
@@ -175,25 +175,25 @@ public class ArrangementConfigUtil {
   /**
    * @param uiParentNode UI tree node which should hold UI nodes created for representing given settings node;
    *                     <code>null</code> as an indication that we want to create a standalone nodes hierarchy
-   * @param settingsNode settings node which should be represented at the UI tree denoted by the given UI tree node
+   * @param conditionNode settings node which should be represented at the UI tree denoted by the given UI tree node
    * @param model        tree model to use for the tree modification
    * @return             pair {@code (bottom-most leaf node created; number of rows created)}
    */
   @NotNull
   public static Pair<ArrangementTreeNode, Integer> map(@Nullable ArrangementTreeNode uiParentNode,
-                                                       @NotNull HierarchicalArrangementSettingsNode settingsNode,
+                                                       @NotNull HierarchicalArrangementConditionNode conditionNode,
                                                        @Nullable DefaultTreeModel model)
   {
     ArrangementTreeNode uiNode = null;
     int rowsCreated = 0;
     if (uiParentNode != null && uiParentNode.getChildCount() > 0) {
       ArrangementTreeNode child = uiParentNode.getChildAt(uiParentNode.getChildCount() - 1);
-      if (settingsNode.getCurrent().equals(child.getBackingSetting())) {
+      if (conditionNode.getCurrent().equals(child.getBackingSetting())) {
         uiNode = child;
       }
     }
     if (uiNode == null) {
-      uiNode = new ArrangementTreeNode(settingsNode.getCurrent());
+      uiNode = new ArrangementTreeNode(conditionNode.getCurrent());
       if (uiParentNode != null) {
         if (model == null) {
           uiParentNode.add(uiNode);
@@ -205,9 +205,9 @@ public class ArrangementConfigUtil {
       rowsCreated++;
     }
     ArrangementTreeNode leaf = uiNode;
-    HierarchicalArrangementSettingsNode childSettingsNode = settingsNode.getChild();
-    if (childSettingsNode != null) {
-      Pair<ArrangementTreeNode, Integer> pair = map(uiNode, childSettingsNode, model);
+    HierarchicalArrangementConditionNode childConditionNode = conditionNode.getChild();
+    if (childConditionNode != null) {
+      Pair<ArrangementTreeNode, Integer> pair = map(uiNode, childConditionNode, model);
       leaf = pair.first;
       rowsCreated += pair.second;
     }
@@ -527,13 +527,13 @@ public class ArrangementConfigUtil {
   }
 
   private static boolean hasEqualSetting(@NotNull ArrangementTreeNode node1, @NotNull ArrangementTreeNode node2) {
-    ArrangementSettingsNode setting1 = node1.getBackingSetting();
-    ArrangementSettingsNode setting2 = node2.getBackingSetting();
-    if (setting1 == null) {
-      return setting2 == null;
+    ArrangementMatchCondition matchCondition1 = node1.getBackingSetting();
+    ArrangementMatchCondition matchCondition2 = node2.getBackingSetting();
+    if (matchCondition1 == null) {
+      return matchCondition2 == null;
     }
     else {
-      return setting1.equals(setting2);
+      return matchCondition1.equals(matchCondition2);
     }
   }
 }

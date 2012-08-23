@@ -2,6 +2,7 @@ package org.jetbrains.jps.model.library.impl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.JpsPathUtil;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.impl.JpsElementCollectionImpl;
@@ -35,6 +36,13 @@ public class JpsLibraryImpl<P extends JpsElement> extends JpsNamedCompositeEleme
   @NotNull
   public JpsLibraryType<P> getType() {
     return myLibraryType;
+  }
+
+  @Nullable
+  @Override
+  public <P extends JpsElement> JpsTypedLibrary<P> asTyped(@NotNull JpsLibraryType<P> type) {
+    //noinspection unchecked
+    return myLibraryType.equals(type) ? (JpsTypedLibrary<P>)this : null;
   }
 
   @NotNull

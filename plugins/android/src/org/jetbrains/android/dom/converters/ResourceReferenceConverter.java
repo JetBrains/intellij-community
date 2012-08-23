@@ -55,6 +55,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
   private boolean myWithPrefix = true;
   private boolean myWithExplicitResourceType = true;
   private boolean myQuiet = false;
+  private boolean myAllowAttributeReferences = true;
 
   public ResourceReferenceConverter() {
     this(new ArrayList<String>());
@@ -77,6 +78,10 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
 
   public void setQuiet(boolean quiet) {
     myQuiet = quiet;
+  }
+
+  public void setAllowAttributeReferences(boolean allowAttributeReferences) {
+    myAllowAttributeReferences = allowAttributeReferences;
   }
 
   @NotNull
@@ -126,10 +131,12 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
       else {
         result.add(ResourceValue.literal(systemPrefix));
       }
+      final char prefix = myWithPrefix ? '@' : 0;
+
       if (recommendedTypes.size() == 1) {
         String type = recommendedTypes.iterator().next();
         boolean explicitResourceType = value.startsWith(getTypePrefix(resourcePackage, type)) || myWithExplicitResourceType;
-        addResourceReferenceValues(facet, type, resourcePackage, result, explicitResourceType);
+        addResourceReferenceValues(facet, prefix, type, resourcePackage, result, explicitResourceType);
       }
       else {
         final Set<String> filteringSet = SYSTEM_RESOURCE_PACKAGE.equals(resourcePackage)
@@ -140,7 +147,7 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
           final String type = resourceType.getName();
           String typePrefix = getTypePrefix(resourcePackage, type);
           if (value.startsWith(typePrefix)) {
-            addResourceReferenceValues(facet, type, resourcePackage, result, true);
+            addResourceReferenceValues(facet, prefix, type, resourcePackage, result, true);
           }
           else if (recommendedTypes.contains(type) &&
                    (filteringSet == null || filteringSet.contains(type))) {
@@ -148,6 +155,9 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
           }
         }
       }
+    }
+    if (myAllowAttributeReferences) {
+      completeAttributeReferences(value, facet, result);
     }
     final ResolvingConverter<String> additionalConverter = getAdditionalConverter(context);
 
@@ -157,6 +167,19 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
       }
     }
     return result;
+  }
+
+  private static void completeAttributeReferences(String value, AndroidFacet facet, Set<ResourceValue> result) {
+    if (StringUtil.startsWith(value, "?attr/")) {
+      addResourceReferenceValues(facet, '?', ResourceType.ATTR.getName(), null, result, true);
+    }
+    else if (StringUtil.startsWith(value, "?android:attr/")) {
+      addResourceReferenceValues(facet, '?', ResourceType.ATTR.getName(), SYSTEM_RESOURCE_PACKAGE, result, true);
+    }
+    else if (StringUtil.startsWithChar(value, '?')) {
+      addResourceReferenceValues(facet, '?', ResourceType.ATTR.getName(), null, result, false);
+      addResourceReferenceValues(facet, '?', ResourceType.ATTR.getName(), SYSTEM_RESOURCE_PACKAGE, result, false);
+    }
   }
 
   @NotNull
@@ -205,21 +228,22 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
     return types;
   }
 
-  private void addResourceReferenceValues(AndroidFacet facet,
-                                          String type,
-                                          String resPackage,
-                                          Collection<ResourceValue> result,
-                                          boolean explicitResourceType) {
+  private static void addResourceReferenceValues(AndroidFacet facet,
+                                                 char prefix,
+                                                 String type,
+                                                 @Nullable String resPackage,
+                                                 Collection<ResourceValue> result,
+                                                 boolean explicitResourceType) {
     final ResourceManager manager = facet.getResourceManager(resPackage);
     if (manager != null) {
       for (String name : manager.getResourceNames(type)) {
-        result.add(referenceTo(type, resPackage, name, explicitResourceType));
+        result.add(referenceTo(prefix, type, resPackage, name, explicitResourceType));
       }
     }
   }
 
-  private ResourceValue referenceTo(String type, String resPackage, String name, boolean explicitResourceType) {
-    return ResourceValue.referenceTo(myWithPrefix ? '@' : 0, resPackage, explicitResourceType ? type : null, name);
+  private static ResourceValue referenceTo(char prefix, String type, String resPackage, String name, boolean explicitResourceType) {
+    return ResourceValue.referenceTo(prefix, resPackage, explicitResourceType ? type : null, name);
   }
 
   public ResourceValue fromString(@Nullable @NonNls String s, ConvertContext context) {
@@ -236,8 +260,28 @@ public class ResourceReferenceConverter extends ResolvingConverter<ResourceValue
         return null;
       }
     }
-    if (parsed != null && parsed.getResourceType() == null && myResourceTypes.size() == 1) {
-      parsed.setResourceType(myResourceTypes.get(0));
+    if (parsed != null) {
+      final String resType = parsed.getResourceType();
+
+      if (parsed.getPrefix() == '?') {
+        if (!myAllowAttributeReferences) {
+          return null;
+        }
+        if (resType == null) {
+          parsed.setResourceType(ResourceType.ATTR.getName());
+        }
+        else if (!ResourceType.ATTR.getName().equals(resType)) {
+          return null;
+        }
+      }
+      else if (resType == null && parsed.isReference()) {
+        if (myWithExplicitResourceType && !"@null".equals(s)) {
+          return null;
+        }
+        if (myResourceTypes.size() == 1) {
+          parsed.setResourceType(myResourceTypes.get(0));
+        }
+      }
     }
     return parsed;
   }

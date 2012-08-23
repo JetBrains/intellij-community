@@ -33,7 +33,7 @@ public class MethodSignatureBackedByPsiMethod extends MethodSignatureBase {
     super(substitutor, parameterTypes, methodTypeParameters);
     myIsRaw = isRaw;
     if (!method.isValid()) {
-      LOG.error("Invalid method: "+method);
+      LOG.error("Invalid method: "+method, new PsiInvalidElementAccessException(method));
     }
     myMethod = method;
   }

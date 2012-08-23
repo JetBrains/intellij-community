@@ -20,14 +20,19 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerAdapter;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiFile;
@@ -87,9 +92,13 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
 
   public void projectOpened() {
     if (myProject != null) {
-      FileEditorManagerListener listener = new FileEditorManagerAdapter() {
-        public void fileOpened(FileEditorManager fileEditorManager, VirtualFile virtualFile) {
-          if (virtualFile.isWritable() && NewFileTracker.getInstance().contains(virtualFile)) {
+      final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+      DocumentListener listener = new DocumentAdapter() {
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          final Document document = e.getDocument();
+          final VirtualFile virtualFile = fileDocumentManager.getFile(document);
+          if (virtualFile != null && NewFileTracker.getInstance().contains(virtualFile)) {
             NewFileTracker.getInstance().remove(virtualFile);
             if (FileTypeUtil.getInstance().isSupportedFile(virtualFile)) {
               final Module module = ProjectRootManager.getInstance(myProject).getFileIndex().getModuleForFile(virtualFile);
@@ -100,7 +109,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
                     public void run() {
                       if (myProject.isDisposed()) return;
                       if (file.isValid() && file.isWritable()) {
-                        final CopyrightProfile opts = getInstance(myProject).getCopyrightOptions(file);
+                        final CopyrightProfile opts = getCopyrightOptions(file);
                         if (opts != null) {
                           new UpdateCopyrightProcessor(myProject, module, file).run();
                         }
@@ -113,8 +122,10 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
           }
         }
       };
-
-      FileEditorManager.getInstance(myProject).addFileEditorManagerListener(listener, myProject);
+      final EditorFactory factory = EditorFactory.getInstance();
+      if (factory != null) {
+        factory.getEventMulticaster().addDocumentListener(listener, myProject);
+      }
     }
   }
 

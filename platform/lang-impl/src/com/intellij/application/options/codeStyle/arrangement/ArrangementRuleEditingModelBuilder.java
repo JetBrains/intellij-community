@@ -17,8 +17,8 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
-import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
 import gnu.trove.TIntObjectHashMap;
@@ -31,7 +31,7 @@ import javax.swing.tree.TreeNode;
 
 /**
  * Holds glue logic between arrangement settings and their representation -
- * '{@link ArrangementSettingsNode} -&gt; {@link ArrangementRuleEditingModel}'
+ * '{@link ArrangementMatchCondition} -&gt; {@link ArrangementRuleEditingModel}'
  * <p/>
  * Thread-safe.
  *
@@ -45,11 +45,11 @@ public class ArrangementRuleEditingModelBuilder {
    * <pre>
    * <ol>
    *   <li>
-   *     {@link HierarchicalArrangementSettingsNode Groups} given {@link ArrangementSettingsNode settings} using
-   *     the given {@link ArrangementSettingsGrouper#group(ArrangementSettingsNode) strategy};
+   *     {@link HierarchicalArrangementConditionNode Groups} given {@link ArrangementMatchCondition settings} using
+   *     the given {@link ArrangementSettingsGrouper#group(ArrangementMatchCondition) strategy};
    *   </li>
    *   <li>
-   *     Build {@link DefaultMutableTreeNode tree nodes} for the {@link HierarchicalArrangementSettingsNode groiping-aware nodes}
+   *     Build {@link DefaultMutableTreeNode tree nodes} for the {@link HierarchicalArrangementConditionNode groiping-aware nodes}
    *     and register them within the target tree structure (denoted by the given settings root element);
    *   </li>
    *   <li>
@@ -58,7 +58,7 @@ public class ArrangementRuleEditingModelBuilder {
    * </ol>
    * </pre>
    *
-   * @param setting     target settings to process
+   * @param matchCondition     target settings to process
    * @param tree        UI tree which shows arrangement matcher rules
    * @param root        UI tree settings root to use (may be not the same as the tree root)
    * @param grouper     strategy that knows how to
@@ -67,7 +67,7 @@ public class ArrangementRuleEditingModelBuilder {
    * @param rowMappings container to hold built {@link ArrangementRuleEditingModel editing models} (UI tree row numbers are used as keys)
    */
   @SuppressWarnings("MethodMayBeStatic")
-  public void build(@NotNull ArrangementSettingsNode setting,
+  public void build(@NotNull ArrangementMatchCondition matchCondition,
                     @NotNull JTree tree,
                     @NotNull ArrangementTreeNode root,
                     @NotNull ArrangementSettingsGrouper grouper,
@@ -92,14 +92,14 @@ public class ArrangementRuleEditingModelBuilder {
       initialInsertRow--;
     }
 
-    HierarchicalArrangementSettingsNode grouped = grouper.group(setting);
+    HierarchicalArrangementConditionNode grouped = grouper.group(matchCondition);
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
     Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped, treeModel);
     ArrangementTreeNode topMostNode = ArrangementConfigUtil.getLastBefore(pair.first, root);
     int row = initialInsertRow + pair.second - 1;
     ArrangementRuleEditingModelImpl model = new ArrangementRuleEditingModelImpl(
       treeModel,
-      setting,
+      matchCondition,
       topMostNode,
       pair.first,
       grouper,

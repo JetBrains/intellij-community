@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement.settings;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
-import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,12 +39,12 @@ public interface ArrangementSettingsGrouper {
    *     |
    *      ---public---static---final
    * </pre>
-   * That means that we'll return a {@link HierarchicalArrangementSettingsNode} with condition <code>'type: field'</code> and
+   * That means that we'll return a {@link HierarchicalArrangementConditionNode} with condition <code>'type: field'</code> and
    * a single child node with composite <code>'AND'</code> condition <code>'modifier: public; modifier: static; modifier: final'</code>.
    *
    * @param node  settings node which conditions should be grouped
    * @return      grouping-aware node
    */
   @NotNull
-  HierarchicalArrangementSettingsNode group(@NotNull ArrangementSettingsNode node);
+  HierarchicalArrangementConditionNode group(@NotNull ArrangementMatchCondition node);
 }

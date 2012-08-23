@@ -74,4 +74,6 @@ public interface ModuleSettings extends ComponentManagerSettings {
   boolean hasModuleLibrary(String libraryName);
 
   List<Element> getOrderEntries();
+
+  void addFacetElement(@NotNull String facetTypeId, @NotNull String facetName, Element configuration);
 }

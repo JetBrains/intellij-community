@@ -27,11 +27,11 @@ public class DummyEvaluatedXmlName implements EvaluatedXmlName {
   private final XmlName myXmlName;
   private final String myNamespace;
 
-  public DummyEvaluatedXmlName(final String localName, final String namespace) {
+  public DummyEvaluatedXmlName(final String localName, @NotNull final String namespace) {
     this(new XmlName(localName), namespace);
   }
 
-  public DummyEvaluatedXmlName(final XmlName xmlName, final String namespace) {
+  public DummyEvaluatedXmlName(final XmlName xmlName, @NotNull final String namespace) {
     myXmlName = xmlName;
     myNamespace = namespace;
   }

@@ -18,16 +18,15 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.psi.codeStyle.arrangement.JavaRearranger;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.ui.treeStructure.Tree;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.Arrays;
 
@@ -55,11 +54,11 @@ public abstract class AbstractArrangementRuleEditingModelTest {
     myGrouper = new JavaRearranger();
   }
 
-  protected void configure(@NotNull ArrangementSettingsNode settingsNode) {
-    myBuilder.build(settingsNode, myTree, myRoot, myGrouper, myRowMappings);
+  protected void configure(@NotNull ArrangementMatchCondition matchCondition) {
+    myBuilder.build(matchCondition, myTree, myRoot, myGrouper, myRowMappings);
   }
 
-  protected static ArrangementSettingsAtomNode atom(@NotNull Object condition) {
+  protected static ArrangementAtomMatchCondition atom(@NotNull Object condition) {
     final ArrangementSettingType type;
     if (condition instanceof ArrangementEntryType) {
       type = ArrangementSettingType.TYPE;
@@ -70,7 +69,7 @@ public abstract class AbstractArrangementRuleEditingModelTest {
     else {
       throw new IllegalArgumentException(String.format("Unexpected condition of class %s: %s", condition.getClass(), condition));
     }
-    return new ArrangementSettingsAtomNode(type, condition);
+    return new ArrangementAtomMatchCondition(type, condition);
   }
 
   protected void checkRows(int... rows) {

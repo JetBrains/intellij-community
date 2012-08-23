@@ -20,4 +20,6 @@ import org.jetbrains.annotations.NotNull;
 public interface ComponentWithExpandableItems<T> {
   @NotNull
   ExpandableItemsHandler<T> getExpandableItemsHandler();
+
+  void setExpandableItemsEnabled(boolean enabled);
 }

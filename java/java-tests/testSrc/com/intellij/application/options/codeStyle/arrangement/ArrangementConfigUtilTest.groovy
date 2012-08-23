@@ -16,7 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
 import gnu.trove.TIntIntHashMap
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -351,7 +351,7 @@ public class TreeNodeBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name) {
-    def result = new ArrangementTreeNode(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, name))
+    def result = new ArrangementTreeNode(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, name))
     currentNode?.add(result)
     result
   }
