@@ -2737,18 +2737,24 @@ public class AbstractTreeUi {
       return;
     }
 
+    boolean reallyRemoved = false;
     for (int i = 0; i < parent.getChildCount(); i++) {
       TreeNode child = parent.getChildAt(i);
       if (removeIfLoading(child)) {
+        reallyRemoved = true;
         i--;
       }
     }
 
     if (parent == getRootNode() && !myTree.isRootVisible() && parent.getChildCount() == 0) {
       insertLoadingNode(parent, false);
+      reallyRemoved = false;
     }
 
     maybeReady();
+    if (reallyRemoved) {
+      myTreeModel.nodeStructureChanged(parent);
+    }
   }
 
   private void processNodeActionsIfReady(final DefaultMutableTreeNode node) {
