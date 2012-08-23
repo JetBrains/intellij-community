@@ -143,6 +143,7 @@
     <compiler implementation="org.jetbrains.android.compiler.AndroidPngFilesCachingCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidResourcesPackagingCompiler"/>
     <compiler implementation="org.jetbrains.android.compiler.AndroidPackagingCompiler"/>
+    <compiler.makeDependencyProcessor implementation="org.jetbrains.android.compiler.AndroidDependencyProcessor"/>
 
     <completion.contributor language="XML" implementationClass="org.jetbrains.android.AndroidCompletionContributor"
                             id="compositieAttributeValues" order="first"/>

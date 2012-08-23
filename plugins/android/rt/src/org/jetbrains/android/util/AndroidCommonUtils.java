@@ -38,7 +38,7 @@ public class AndroidCommonUtils {
   private static final Pattern ERROR_PATTERN = Pattern.compile(".*error.*");
   private static final Pattern EXCEPTION_PATTERN = Pattern.compile(".*exception.*");
 
-  private static final Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
+  public static final Pattern R_PATTERN = Pattern.compile("R(\\$.*)?\\.class");
   private static final Pattern MANIFEST_PATTERN = Pattern.compile("Manifest(\\$.*)?\\.class");
   private static final String BUILD_CONFIG_CLASS_NAME = "BuildConfig.class";
 
