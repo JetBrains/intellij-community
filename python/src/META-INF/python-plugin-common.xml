@@ -298,8 +298,9 @@
     <localInspection language="Python" shortName="PyMandatoryEncodingInspection" displayName="No encoding specified for file" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMandatoryEncodingInspection"/>
     <localInspection language="Python" shortName="PyPackageRequirementsInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.requirements" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
 
-    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.PythonTemplateContextType"/>
-    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.CollectionElementNameMacro"/>
+    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.PyRefactoringProvider"/>
@@ -332,7 +333,7 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
-    <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.PyDefaultLiveTemplatesProvider"/>
+    <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
 
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
