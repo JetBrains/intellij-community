@@ -327,6 +327,10 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
         if (!file.isValid()) {
           continue;
         }
+        if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
+          .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) {
+          return false;
+        }
         final XmlDocument document = file.getDocument();
         if (document == null) {
           continue;
@@ -345,10 +349,6 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
           for (final XmlTag annotationTag : tag.getSubTags()) {
             if (!Comparing.strEqual(annotationTag.getAttributeValue("name"), annotationFQN)) {
               continue;
-            }
-            if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
-              .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) {
-              return false;
             }
             CommandProcessor.getInstance().executeCommand(myPsiManager.getProject(), new Runnable() {
               @Override
