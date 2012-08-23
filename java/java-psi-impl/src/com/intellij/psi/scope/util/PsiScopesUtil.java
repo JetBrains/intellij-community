@@ -57,7 +57,9 @@ public class PsiScopesUtil {
                                    @NotNull final PsiElement entrance,
                                    @Nullable final PsiElement maxScope,
                                    @NotNull final ResolveState state) {
-    LOG.assertTrue(entrance.isValid(), entrance);
+    if (!entrance.isValid()) {
+      LOG.error(new PsiInvalidElementAccessException(entrance));
+    }
     PsiElement prevParent = entrance;
     PsiElement scope = entrance;
 

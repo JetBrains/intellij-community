@@ -16,32 +16,54 @@
 
 package com.intellij.psi;
 
+import com.intellij.lang.Language;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.ref.SoftReference;
 
 /**
  * @author mike
  */
 public class PsiInvalidElementAccessException extends RuntimeException {
-  private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, exceptions are stored in IdeaLogger
+  private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, since exceptions are stored in IdeaLogger
 
   public PsiInvalidElementAccessException(PsiElement element) {
-    super(element != null ? "Element: " + element.getClass() : "Unknown psi element");
-    myElementReference = new SoftReference<PsiElement>(element);
+    this(element, null, null);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, String message) {
-    super(message);
-    myElementReference = new SoftReference<PsiElement>(element);
+    this(element, message, null);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, Throwable cause) {
-    super(cause);
-    myElementReference = new SoftReference<PsiElement>(element);
+    this(element, null, cause);
   }
 
   public PsiInvalidElementAccessException(PsiElement element, String message, Throwable cause) {
-    super(message, cause);
+    super((element != null ? "Element: " + element.getClass() + " because: " + reason(element) : "Unknown psi element") +
+          (message == null ? "" : "; " + message), cause);
     myElementReference = new SoftReference<PsiElement>(element);
+  }
+
+  @NonNls
+  @NotNull
+  private static String reason(@NotNull PsiElement element){
+    PsiFile file = element.getContainingFile();
+    if (file == null) return element.getParent() == null ? "parent is null" : "containing file is null";
+    FileViewProvider provider = file.getViewProvider();
+    VirtualFile vFile = provider.getVirtualFile();
+    if (!vFile.isValid()) return vFile+" is invalid";
+    if (!provider.isPhysical()) return "non-physical provider"; // "dummy" file
+    PsiManager manager = file.getManager();
+    if (manager.getProject().isDisposed()) return "project is disposed";
+    Language language = file.getLanguage();
+    if (language != provider.getBaseLanguage()) return "File language:"+language+" != Provider base language:"+provider.getBaseLanguage();
+
+    FileViewProvider provider1 = manager.findViewProvider(vFile);
+    if (provider != provider1) return "different providers: "+provider+"("+Integer.toHexString(System.identityHashCode(provider))+"); "+provider1+"("+Integer.toHexString(System.identityHashCode(provider1))+")";
+    return "psi is outdated";
   }
 
   public PsiElement getPsiElement() {
