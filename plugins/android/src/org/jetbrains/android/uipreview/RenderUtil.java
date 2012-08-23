@@ -1,6 +1,8 @@
 package org.jetbrains.android.uipreview;
 
-import com.android.ide.common.rendering.api.*;
+import com.android.ide.common.rendering.api.RenderResources;
+import com.android.ide.common.rendering.api.RenderSession;
+import com.android.ide.common.rendering.api.Result;
 import com.android.ide.common.resources.ResourceDeltaKind;
 import com.android.ide.common.resources.ResourceFolder;
 import com.android.ide.common.resources.ResourceRepository;
@@ -100,13 +102,17 @@ public class RenderUtil {
     if (factory == null) {
       throw new RenderingException(AndroidBundle.message("android.layout.preview.cannot.load.library.error"));
     }
+    final List<AndroidFacet> allLibraries = AndroidUtils.getAllAndroidDependencies(module, true);
+    final List<ProjectResources> libResources = new ArrayList<ProjectResources>();
+    final List<ProjectResources> emptyResList = Collections.emptyList();
 
-    final ProjectResources projectResources = new ProjectResources();
+    for (AndroidFacet libFacet : allLibraries) {
+      if (!libFacet.equals(facet)) {
+        libResources.add(loadProjectResources(libFacet, null, null, emptyResList));
+      }
+    }
+    final ProjectResources projectResources = loadProjectResources(facet, layoutXmlText, layoutXmlFile, libResources);
 
-    final VirtualFile[] resourceDirs = facet.getLocalResourceManager().getAllResourceDirs();
-    final IAbstractFolder[] resFolders = toAbstractFolders(resourceDirs);
-
-    loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolders);
     final int minSdkVersion = getMinSdkVersion(facet);
     String missingRClassMessage = null;
     boolean missingRClass = false;
@@ -204,6 +210,23 @@ public class RenderUtil {
     }
 
     return new RenderingResult(warnMessages, session);
+  }
+
+  @NotNull
+  private static ProjectResources loadProjectResources(@NotNull AndroidFacet facet,
+                                                       @Nullable String layoutXmlText,
+                                                       @Nullable VirtualFile layoutXmlFile,
+                                                       @NotNull List<ProjectResources> libResources)
+    throws IOException, RenderingException {
+    final ProjectResources projectResources = new ProjectResources(libResources);
+    final VirtualFile resourceDir = facet.getLocalResourceManager().getResourceDir();
+
+    if (resourceDir != null) {
+      final IAbstractFolder resFolder = new BufferingFolderWrapper(new File(
+        FileUtil.toSystemDependentName(resourceDir.getPath())));
+      loadResources(projectResources, layoutXmlText, layoutXmlFile, resFolder);
+    }
+    return projectResources;
   }
 
   private static void reportBrokenClassesWarning(@NotNull List<FixableIssueMessage> warnMessages,
@@ -458,18 +481,6 @@ public class RenderUtil {
       }
     }
     return -1;
-  }
-
-  @NotNull
-  private static IAbstractFolder[] toAbstractFolders(@NotNull VirtualFile[] folders) {
-    final IAbstractFolder[] result = new IAbstractFolder[folders.length];
-
-    for (int i = 0; i < folders.length; i++) {
-      final VirtualFile folder = folders[i];
-      final String folderPath = FileUtil.toSystemDependentName(folder.getPath());
-      result[i] = new BufferingFolderWrapper(new File(folderPath));
-    }
-    return result;
   }
 
   public static void loadResources(@NotNull ResourceRepository repository,
