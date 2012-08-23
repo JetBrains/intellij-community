@@ -600,7 +600,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
           queueUpdate(new Runnable() {
             public void run() {
               final VirtualFile virtualFile = file.getVirtualFile();
-              if (virtualFile != null) {
+              if (virtualFile != null && virtualFile.isValid()) {
                 final PsiFileSystemItem newFile = file.isValid() ? file :
                                                   (file.isDirectory() ? PsiManager.getInstance(myProject).findDirectory(virtualFile)
                                                                       : PsiManager.getInstance(myProject).findFile(virtualFile));
