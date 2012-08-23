@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -223,7 +224,7 @@ public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V>
 
   @Override
   public String toString() {
-    String s = "ConcurrentWeakValueHashMap size:" + size() + " [";
+    @NonNls String s = "ConcurrentWeakValueHashMap size:" + size() + " [";
     for (K k : myMap.keySet()) {
       Object v = get(k);
       s += "'"+k + "': '" +v+"', ";

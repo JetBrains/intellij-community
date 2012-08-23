@@ -23,6 +23,7 @@
 package com.intellij.util.containers;
 
 import gnu.trove.TObjectHashingStrategy;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.SoftReference;
@@ -33,40 +34,38 @@ import java.util.concurrent.ConcurrentMap;
  * Fully copied from java.util.SoftHashMap except "get" method optimization.
  */
 public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implements ConcurrentMap<K,V> {
-
-  private static interface Key<K>{
-    public K get();
+  private interface Key<K>{
+    K get();
   }
 
-  private static class SoftKey extends SoftReference implements Key{
+  private static class SoftKey<K> extends SoftReference<K> implements Key<K> {
     private final int myHash;	/* Hashcode of key, stored here since the key may be tossed by the GC */
 
-    private SoftKey(Object k) {
+    private SoftKey(K k) {
       super(k);
       myHash = k.hashCode();
     }
 
-    public static SoftKey create(Object k) {
-      return k != null ? new SoftKey(k) : null;
+    public static<K> SoftKey<K> create(K k) {
+      return k == null ? null : new SoftKey<K>(k);
     }
 
-    private SoftKey(Object k, ReferenceQueue q) {
+    private SoftKey(K k, ReferenceQueue<? super K> q) {
       super(k, q);
       myHash = k.hashCode();
     }
 
-    private static SoftKey create(Object k, ReferenceQueue q) {
-      return k != null ? new SoftKey(k, q) : null;
+    private static <K> SoftKey<K> create(K k, ReferenceQueue<? super K> q) {
+      return k == null ? null : new SoftKey<K>(k, q);
     }
 
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
-      Object t = this.get();
+      Object t = get();
       Object u = ((Key)o).get();
-      if ((t == null) || (u == null)) return false;
-      if (t == u) return true;
-      return t.equals(u);
+      if (t == null || u == null) return false;
+      return t == u || t.equals(u);
     }
 
     public int hashCode() {
@@ -74,27 +73,27 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
     }
   }
 
-  private static class HardKey implements Key{
-    private final Object myObject;
+  private static class HardKey<K> implements Key<K> {
+    private final K myObject;
     private final int myHash;
 
-    public HardKey(Object object) {
+    public HardKey(K object) {
       myObject = object;
       myHash = object.hashCode();
     }
 
-    public Object get() {
+    @Override
+    public K get() {
       return myObject;
     }
 
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
-      Object t = this.get();
+      Object t = get();
       Object u = ((Key)o).get();
-      if ((t == null) || (u == null)) return false;
-      if (t == u) return true;
-      return t.equals(u);
+      if (t == null || u == null) return false;
+      return t == u || t.equals(u);
     }
 
     public int hashCode() {
@@ -102,10 +101,10 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
     }
   }
 
-  private final ConcurrentMap myMap;
-  private static final Object NULL_KEY = new Object();
+  private final ConcurrentMap<Key<K>, V> myMap;
+  private static final Key<?> NULL_KEY = new HardKey<Object>("");
 
-  private final ReferenceQueue myReferenceQueue = new ReferenceQueue();
+  private final ReferenceQueue<K> myReferenceQueue = new ReferenceQueue<K>();
 
   private void processQueue() {
     SoftKey wk;
@@ -115,28 +114,30 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
   }
 
   public ConcurrentSoftHashMap(int initialCapacity, float loadFactor) {
-    myMap = new ConcurrentHashMap(initialCapacity, loadFactor, 4);
+    myMap = new ConcurrentHashMap<Key<K>, V>(initialCapacity, loadFactor, 4);
   }
 
   public ConcurrentSoftHashMap(int initialCapacity) {
-    myMap = new ConcurrentHashMap(initialCapacity);
+    myMap = new ConcurrentHashMap<Key<K>, V>(initialCapacity);
   }
 
   public ConcurrentSoftHashMap() {
-    myMap = new ConcurrentHashMap();
+    myMap = new ConcurrentHashMap<Key<K>, V>();
   }
 
-  public ConcurrentSoftHashMap(Map t) {
+  public ConcurrentSoftHashMap(@NotNull Map<? extends K, ? extends V> t) {
     this(Math.max(2 * t.size(), 11), 0.75f);
     putAll(t);
   }
 
   public ConcurrentSoftHashMap(final TObjectHashingStrategy<K> hashingStrategy) {
     myMap = new ConcurrentHashMap<Key<K>, V>(new TObjectHashingStrategy<Key<K>>() {
+      @Override
       public int computeHashCode(final Key<K> object) {
         return hashingStrategy.computeHashCode(object.get());
       }
 
+      @Override
       public boolean equals(final Key<K> o1, final Key<K> o2) {
         return hashingStrategy.equals(o1.get(), o2.get());
       }
@@ -144,104 +145,113 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
   }
 
 
+  @Override
   public int size() {
     return entrySet().size();
   }
 
+  @Override
   public boolean isEmpty() {
     return entrySet().isEmpty();
   }
 
+  @Override
   public boolean containsKey(Object key) {
     // optimization:
     if (key == null){
       return myMap.containsKey(NULL_KEY);
     }
     else{
-      HardKey hardKey = new HardKey(key);
-      boolean result = myMap.containsKey(hardKey);
-      return result;
+      HardKey<Object> hardKey = new HardKey<Object>(key);
+      return myMap.containsKey(hardKey);
     }
     //return myMap.containsKey(SoftKey.create(key));
   }
 
+  @Override
   public V get(Object key) {
     //return myMap.get(SoftKey.create(key));
     // optimization:
     if (key == null){
-      return (V)myMap.get(NULL_KEY);
+      return myMap.get(NULL_KEY);
     }
     else{
-      HardKey hardKey = new HardKey(key);
-      Object result = myMap.get(hardKey);
+      HardKey<Object> hardKey = new HardKey<Object>(key);
+      V result = myMap.get(hardKey);
       return (V)result;
     }
   }
 
+  @Override
   public V put(K key, V value) {
     processQueue();
-    SoftKey softKey = SoftKey.create(key, myReferenceQueue);
-    return (V)myMap.put(softKey == null ? NULL_KEY : softKey, value);
+    SoftKey<K> softKey = SoftKey.create(key, myReferenceQueue);
+    Key<K> sk = softKey == null ? (Key<K>)NULL_KEY : softKey;
+    return myMap.put(sk, value);
   }
 
+  @Override
   public V remove(Object key) {
     processQueue();
 
     // optimization:
     if (key == null){
-      return (V)myMap.remove(NULL_KEY);
+      return myMap.remove(NULL_KEY);
     }
     else{
-      HardKey hardKey = new HardKey(key);
-      Object result = myMap.remove(hardKey);
-      return (V)result;
+      HardKey<Object> hardKey = new HardKey<Object>(key);
+      return myMap.remove(hardKey);
     }
     //return myMap.remove(SoftKey.create(key));
   }
 
+  @Override
   public void clear() {
     processQueue();
     myMap.clear();
   }
 
-  static private class Entry implements Map.Entry {
-    private final Map.Entry ent;
-    private final Object key;	/* Strong reference to key, so that the GC
+  private static class Entry<K,V> implements Map.Entry<K,V> {
+    private final Map.Entry<K,V> ent;
+    private final K key;	/* Strong reference to key, so that the GC
                                  will leave it alone as long as this Entry
                                  exists */
 
-    Entry(Map.Entry ent, Object key) {
+    Entry(Map.Entry<K,V> ent, K key) {
       this.ent = ent;
       this.key = key;
     }
 
-    public Object getKey() {
+    @Override
+    public K getKey() {
       return key;
     }
 
-    public Object getValue() {
+    @Override
+    public V getValue() {
       return ent.getValue();
     }
 
-    public Object setValue(Object value) {
+    @Override
+    public V setValue(V value) {
       return ent.setValue(value);
     }
 
     private static boolean valEquals(Object o1, Object o2) {
-      return (o1 == null) ? (o2 == null) : o1.equals(o2);
+      return o1 == null ? o2 == null : o1.equals(o2);
     }
 
     public boolean equals(Object o) {
       if (!(o instanceof Map.Entry)) return false;
       Map.Entry e = (Map.Entry)o;
-      return (valEquals(key, e.getKey())
-        && valEquals(getValue(), e.getValue()));
+      return valEquals(key, e.getKey())
+        && valEquals(getValue(), e.getValue());
     }
 
     public int hashCode() {
       Object v;
-      return (((key == null) ? 0 : key.hashCode())
-        ^ (((v = getValue()) == null) ? 0 : v.hashCode()));
+      return (key == null ? 0 : key.hashCode())
+        ^ ((v = getValue()) == null ? 0 : v.hashCode());
     }
 
   }
@@ -250,18 +260,20 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
   private class EntrySet extends AbstractSet {
     Set hashEntrySet = myMap.entrySet();
 
+    @Override
     public Iterator iterator() {
 
       return new Iterator() {
         Iterator hashIterator = hashEntrySet.iterator();
         Entry next = null;
 
+        @Override
         public boolean hasNext() {
           while(hashIterator.hasNext()){
             Map.Entry ent = (Map.Entry)hashIterator.next();
             SoftKey wk = (SoftKey)ent.getKey();
             Object k = null;
-            if ((wk != null) && ((k = wk.get()) == null)){
+            if (wk != null && (k = wk.get()) == null){
               /* Soft key has been cleared by GC */
               continue;
             }
@@ -271,14 +283,16 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
           return false;
         }
 
+        @Override
         public Object next() {
-          if ((next == null) && !hasNext())
+          if (next == null && !hasNext())
             throw new NoSuchElementException();
           Entry e = next;
           next = null;
           return e;
         }
 
+        @Override
         public void remove() {
           hashIterator.remove();
         }
@@ -286,28 +300,31 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
       };
     }
 
+    @Override
     public boolean isEmpty() {
-      return !(iterator().hasNext());
+      return !iterator().hasNext();
     }
 
+    @Override
     public int size() {
       int j = 0;
       for(Iterator i = iterator(); i.hasNext(); i.next()) j++;
       return j;
     }
 
+    @Override
     public boolean remove(Object o) {
       processQueue();
       if (!(o instanceof Map.Entry)) return false;
-      Map.Entry e = (Map.Entry)o;
-      Object ev = e.getValue();
+      Map.Entry<K,V> e = (Map.Entry)o;
+      V ev = e.getValue();
 
       // optimization:
-      HardKey key = new HardKey(o);
+      HardKey<K> key = new HardKey<K>(e.getKey());
       //SoftKey key = SoftKey.create(e.getKey());
 
-      Object hv = myMap.get(key);
-      boolean toRemove = hv == null ? (ev == null && myMap.containsKey(key)) : hv.equals(ev);
+      V hv = myMap.get(key);
+      boolean toRemove = hv == null ? ev == null && myMap.containsKey(key) : hv.equals(ev);
       if (toRemove){
         myMap.remove(key);
       }
@@ -316,43 +333,50 @@ public final class ConcurrentSoftHashMap<K,V> extends AbstractMap<K,V> implement
 
     public int hashCode() {
       int h = 0;
-      for(Iterator i = hashEntrySet.iterator(); i.hasNext();){
-        Map.Entry ent = (Map.Entry)i.next();
+      for (Object aHashEntrySet : hashEntrySet) {
+        Map.Entry ent = (Map.Entry)aHashEntrySet;
         SoftKey wk = (SoftKey)ent.getKey();
+        if (wk == null) {
+          continue;
+        }
         Object v;
-        if (wk == null) continue;
-        h += (wk.hashCode()
-          ^ (((v = ent.getValue()) == null) ? 0 : v.hashCode()));
+        h += wk.hashCode()
+             ^ ((v = ent.getValue()) == null ? 0 : v.hashCode());
       }
       return h;
     }
 
   }
 
-  private Set entrySet = null;
+  private Set<Map.Entry<K,V>> entrySet = null;
 
+  @Override
   public Set<Map.Entry<K,V>> entrySet() {
     if (entrySet == null) entrySet = new EntrySet();
     return entrySet;
   }
 
-  public V putIfAbsent(final K key, final V value) {
+  @Override
+  public V putIfAbsent(@NotNull final K key, final V value) {
     processQueue();
-    return (V)myMap.putIfAbsent(SoftKey.create(key, myReferenceQueue), value);
+    return myMap.putIfAbsent(SoftKey.create(key, myReferenceQueue), value);
   }
 
-  public boolean remove(final Object key, final Object value) {
+  @Override
+  public boolean remove(@NotNull final Object key, final Object value) {
     processQueue();
-    return myMap.remove(SoftKey.create(key, myReferenceQueue), value);
+    return myMap.remove(SoftKey.create((K)key, myReferenceQueue), value);
   }
 
-  public boolean replace(final K key, final V oldValue, final V newValue) {
+  @Override
+  public boolean replace(@NotNull final K key, @NotNull final V oldValue, @NotNull final V newValue) {
     processQueue();
     return myMap.replace(SoftKey.create(key, myReferenceQueue), oldValue,newValue);
   }
 
-  public V replace(final K key, final V value) {
+  @Override
+  public V replace(@NotNull final K key, @NotNull final V value) {
     processQueue();
-    return (V)myMap.replace(SoftKey.create(key, myReferenceQueue), value);
+    return myMap.replace(SoftKey.create(key, myReferenceQueue), value);
   }
 }
