@@ -132,7 +132,9 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
                 }
               }
 
-              derived.setName(targetClass.getName());
+              final String targetClassName = targetClass.getName();
+              LOG.assertTrue(targetClassName != null, targetClass);
+              derived.setName(targetClassName);
 
               ConstructorBodyGenerator generator = ConstructorBodyGenerator.INSTANCE.forLanguage(derived.getLanguage());
               if (generator != null) {
