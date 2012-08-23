@@ -1055,19 +1055,18 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
     SVNURL url = selectedNode.getURL();
 
-    final String relativePath;
-    if (selectedNode.isRepositoryRoot()) {
-      relativePath = "";
-    } else {
-      final SVNDirEntry dirEntry = selectedNode.getSVNDirEntry();
-      if (dirEntry == null) {
-        return;
-      }
+    String relativePath = "";
+    final SVNDirEntry dirEntry = selectedNode.getSVNDirEntry();
+    if (dirEntry != null) {
       if (dirEntry.getRepositoryRoot() != null) {
-        relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toString());
+        if (! dirEntry.getRepositoryRoot().equals(url)) {
+          relativePath = SVNPathUtil.getRelativePath(dirEntry.getRepositoryRoot().toString(), url.toString());
+        }
       } else {
         relativePath = dirEntry.getRelativePath();
       }
+    } else {
+      relativePath = url.getPath();
     }
 
     File dir = selectFile(SvnBundle.message("svn.checkout.destination.directory.title"),
