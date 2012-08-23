@@ -59,7 +59,7 @@ public class InitializeFinalFieldInConstructorFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myField == null || myField.hasModifierProperty(PsiModifier.STATIC) || !myField.isValid() || myField.hasInitializer()) {
+    if (!myField.isValid() || myField.hasModifierProperty(PsiModifier.STATIC) || myField.hasInitializer()) {
       return false;
     }
 
