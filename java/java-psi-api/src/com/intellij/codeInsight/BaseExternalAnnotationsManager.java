@@ -189,6 +189,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (!file.isValid()) continue;
       MultiMap<String, AnnotationData> fileData = getDataFromFile(file);
       for (AnnotationData annotationData : ContainerUtil.concat(fileData.get(externalName), fileData.get(oldExternalName))) {
+        // don't add annotation, if there already is one with this FQ name
+        if (result.containsKey(annotationData.annotationClassFqName)) continue;
+
         try {
           result.put(annotationData.annotationClassFqName,
                      JavaPsiFacade.getInstance(myPsiManager.getProject()).getElementFactory().createAnnotationFromText(
@@ -254,6 +257,22 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
     if (!possibleAnnotationsXmls.isEmpty()) {
       possibleAnnotationsXmls.trimToSize();
+
+      // sorting by writability: writable go first
+      Collections.sort(possibleAnnotationsXmls, new Comparator<PsiFile>() {
+        @Override
+        public int compare(PsiFile f1, PsiFile f2) {
+          boolean w1 = f1.isWritable();
+          boolean w2 = f2.isWritable();
+          if (w1 == w2) {
+            return 0;
+          }
+          else {
+            return w1 ? -1 : 1;
+          }
+        }
+      });
+
       myExternalAnnotations.put(fqn, possibleAnnotationsXmls);
       return possibleAnnotationsXmls;
     }
