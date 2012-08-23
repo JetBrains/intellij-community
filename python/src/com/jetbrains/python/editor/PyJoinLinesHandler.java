@@ -420,11 +420,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
         int last = right_range.getEndOffset();
         while (pos < last && " \t".indexOf(text.charAt(pos)) >= 0) pos += 1;
         int right = pos - initial_pos + 1; // account for the '#'
-        initial_pos = req.leftElem().getTextRange().getEndOffset() - 1;
-        pos = initial_pos;
-        while (" \t".indexOf(text.charAt(pos)) >= 0) pos -=1; // we'll end up at '#' if nothing else
-        int left = initial_pos - pos;
-        return new Result(" ", 0, left, right);
+        return new Result(" ", 0, 0, right);
       }
       return null;
     }
