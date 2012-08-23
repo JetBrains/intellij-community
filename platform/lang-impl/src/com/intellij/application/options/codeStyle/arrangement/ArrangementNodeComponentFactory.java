@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -26,9 +27,13 @@ import org.jetbrains.annotations.NotNull;
 public class ArrangementNodeComponentFactory {
 
   @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
+  private Consumer<ArrangementSettingsAtomNode> myRemoveConditionCallback;
 
-  public ArrangementNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager) {
+  public ArrangementNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
+                                         @NotNull Consumer<ArrangementSettingsAtomNode> removeConditionCallback)
+  {
     myDisplayManager = manager;
+    myRemoveConditionCallback = removeConditionCallback;
   }
 
   @NotNull
@@ -37,13 +42,14 @@ public class ArrangementNodeComponentFactory {
     node.invite(new ArrangementSettingsNodeVisitor() {
       @Override
       public void visit(@NotNull ArrangementSettingsAtomNode node) {
-        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, node));
+        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, node, myRemoveConditionCallback));
       }
 
       @Override
       public void visit(@NotNull ArrangementSettingsCompositeNode node) {
         switch (node.getOperator()) {
-          case AND: ref.set(new ArrangementAndNodeComponent(node, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
+          case AND:
+            ref.set(new ArrangementAndNodeComponent(node, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
           case OR: // TODO den implement
         }
       }

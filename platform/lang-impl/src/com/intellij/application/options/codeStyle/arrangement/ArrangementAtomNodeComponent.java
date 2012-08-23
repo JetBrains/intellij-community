@@ -15,9 +15,11 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,9 +27,12 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 /**
- * // TODO den add doc
+ * {@link ArrangementNodeComponent} for {@link ArrangementSettingsAtomNode} representation.
+ * <p/>
+ * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 10:06 AM
@@ -68,7 +73,8 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
     }
   };
 
-  @NotNull private final ArrangementSettingsAtomNode mySettingsNode;
+  @NotNull private final  ArrangementSettingsAtomNode mySettingsNode;
+  @Nullable private final ActionButton                myCloseButton;
 
   @Nullable private Dimension mySize;
   @Nullable private Rectangle myScreenBounds;
@@ -76,18 +82,60 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   private boolean myEnabled = true;
   private boolean mySelected;
   private boolean myInverted;
+  private boolean myCloseButtonHovered;
 
-  public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager, @NotNull ArrangementSettingsAtomNode node) {
+  public ArrangementAtomNodeComponent(@NotNull ArrangementNodeDisplayManager manager,
+                                      @NotNull ArrangementSettingsAtomNode node,
+                                      @Nullable Consumer<ArrangementSettingsAtomNode> closeCallback)
+  {
     mySettingsNode = node;
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setText(manager.getDisplayValue(node));
-    mySize = new Dimension(manager.getMaxWidth(node.getType()), myLabel.getPreferredSize().height);
+    
+    int width = manager.getMaxWidth(node.getType());
+    int height = myLabel.getPreferredSize().height;
+    final ArrangementRemoveConditionAction action;
+    if (closeCallback == null) {
+      myCloseButton = null;
+      action = null;
+    }
+    else {
+      action = new ArrangementRemoveConditionAction();
+
+      Icon buttonIcon = action.getTemplatePresentation().getIcon();
+      Dimension buttonSize = new Dimension(buttonIcon.getIconWidth(), buttonIcon.getIconHeight());
+      myCloseButton = new ActionButton(action, action.getTemplatePresentation().clone(), ArrangementConstants.RULE_TREE_PLACE, buttonSize) {
+        @Override
+        protected Icon getIcon() {
+          return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
+        }
+      };
+      Dimension preferredButtonSize = myCloseButton.getPreferredSize();
+      width += preferredButtonSize.width;
+      height = Math.max(height, preferredButtonSize.height);
+    }
+    
+    mySize = new Dimension(width, height);
     
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
 
-    JPanel labelPanel = new JPanel(new GridBagLayout());
+    JPanel labelPanel = new JPanel(new GridBagLayout()) {
+      @Override
+      public void paint(Graphics g) {
+        Rectangle buttonBounds = getCloseButtonScreenLocation();
+        if (buttonBounds != null && action != null) {
+          Point mouseScreenLocation = MouseInfo.getPointerInfo().getLocation();
+          myCloseButtonHovered = buttonBounds.contains(mouseScreenLocation);
+        }
+        super.paint(g);
+      }
+    };
     myLabel.setBackground(Color.red);
     labelPanel.add(myLabel, constraints);
+    if (myCloseButton != null) {
+      labelPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.EAST).insets(0, 0, 0, 0));
+    }
+    
     labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
     labelPanel.setOpaque(false);
 
@@ -166,6 +214,30 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
    */
   public void setInverted(boolean inverted) {
     myInverted = inverted;
+  }
+
+  @Nullable
+  @Override
+  public Rectangle handleMouseMove(@NotNull MouseEvent event) {
+    Rectangle buttonBounds = getCloseButtonScreenLocation();
+    if (buttonBounds == null) {
+      return null;
+    }
+    boolean mouseOverButton = buttonBounds.contains(event.getLocationOnScreen());
+    return (mouseOverButton ^ myCloseButtonHovered) ? buttonBounds : null;
+  }
+
+  @Nullable
+  private Rectangle getCloseButtonScreenLocation() {
+    if (myCloseButton == null || myScreenBounds == null) {
+      return null;
+    }
+
+    Rectangle buttonBounds = myCloseButton.getBounds();
+    buttonBounds = SwingUtilities.convertRectangle(myCloseButton.getParent(), buttonBounds, myRenderer);
+    buttonBounds.x += myScreenBounds.x;
+    buttonBounds.y += myScreenBounds.y;
+    return buttonBounds;
   }
 
   @Override

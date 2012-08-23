@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Consumer;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,12 @@ public class ArrangementRuleTree {
   private boolean mySkipSelectionChange;
 
   public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
-    myFactory = new ArrangementNodeComponentFactory(displayManager);
+    myFactory = new ArrangementNodeComponentFactory(displayManager, new Consumer<ArrangementSettingsAtomNode>() {
+      @Override
+      public void consume(@NotNull ArrangementSettingsAtomNode node) {
+        removeConditionFromActiveModel(node);
+      }
+    });
     myRoot = new ArrangementTreeNode(null);
     myTreeModel = new DefaultTreeModel(myRoot);
     myTree = new Tree(myTreeModel) {
@@ -117,6 +123,12 @@ public class ArrangementRuleTree {
         }
       }
     });
+    myTree.addMouseMotionListener(new MouseAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        onMouseMoved(e);
+      }
+    });
     myTree.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
@@ -159,7 +171,7 @@ public class ArrangementRuleTree {
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
   }
-  
+
   private void selectPreviousRule() {
     ArrangementTreeNode currentSelectionBottom = getCurrentSelectionBottom();
 
@@ -338,6 +350,22 @@ public class ArrangementRuleTree {
     return result;
   }
 
+  private void removeConditionFromActiveModel(@NotNull ArrangementSettingsAtomNode condition) {
+    // TODO den implement
+    System.out.println("Remove condition " + condition);
+  }
+
+  private void onMouseMoved(@NotNull MouseEvent e) {
+    ArrangementNodeComponent component = getNodeComponentAt(e.getLocationOnScreen());
+    if (component == null) {
+      return;
+    }
+    Rectangle changedScreenRectangle = component.handleMouseMove(e);
+    if (changedScreenRectangle != null) {
+      repaintScreenBounds(changedScreenRectangle);
+    }
+  }
+  
   private void onMouseClicked(@NotNull MouseEvent e) {
     ArrangementNodeComponent component = getNodeComponentAt(e.getLocationOnScreen());
     if (component != null) {
@@ -381,10 +409,14 @@ public class ArrangementRuleTree {
   private void repaintComponent(@NotNull ArrangementNodeComponent component) {
     Rectangle bounds = component.getScreenBounds();
     if (bounds != null) {
-      Point location = bounds.getLocation();
-      SwingUtilities.convertPointFromScreen(location, myTree);
-      myTree.repaint(location.x, location.y, bounds.width, bounds.height);
+      repaintScreenBounds(bounds);
     }
+  }
+
+  private void repaintScreenBounds(@NotNull Rectangle bounds) {
+    Point location = bounds.getLocation();
+    SwingUtilities.convertPointFromScreen(location, myTree);
+    myTree.repaint(location.x, location.y, bounds.width, bounds.height);
   }
 
   private void notifySelectionListeners(@Nullable ArrangementRuleEditingModel model) {

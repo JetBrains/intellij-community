@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -192,6 +193,18 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
       }
       x += BUBBLE_CONNECTOR_LENGTH;
     }
+  }
+
+  @Override
+  public Rectangle handleMouseMove(@NotNull MouseEvent event) {
+    Point location = event.getLocationOnScreen();
+    for (ArrangementNodeComponent component : myComponents) {
+      Rectangle bounds = component.getScreenBounds();
+      if (bounds != null && bounds.contains(location)) {
+        return component.handleMouseMove(event);
+      }
+    }
+    return null;
   }
 
   @Override

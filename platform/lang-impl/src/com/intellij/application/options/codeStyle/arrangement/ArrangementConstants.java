@@ -25,6 +25,7 @@ public class ArrangementConstants {
 
   @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU = "Arrangement.RuleEditor.Context.Menu";
   @NonNls public static final String RULE_EDITOR_PLACE                     = "Arrangement.RuleEditor.Place";
+  @NonNls public static final String RULE_TREE_PLACE                       = "Arrangement.RuleTree.Place";
 
   private ArrangementConstants() {
   }

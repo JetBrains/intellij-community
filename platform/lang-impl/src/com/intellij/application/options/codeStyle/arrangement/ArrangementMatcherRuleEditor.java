@@ -80,7 +80,7 @@ public class ArrangementMatcherRuleEditor extends JPanel {
 
     JPanel valuesPanel = new MultiRowFlowPanel(FlowLayout.LEFT, 8, 5);
     for (Object value : manager.sort(values)) {
-      ArrangementAtomNodeComponent component = new ArrangementAtomNodeComponent(manager, new ArrangementSettingsAtomNode(key, value));
+      ArrangementAtomNodeComponent component = new ArrangementAtomNodeComponent(manager, new ArrangementSettingsAtomNode(key, value), null);
       myComponents.put(value, component);
       valuesPanel.add(component.getUiComponent());
     }
