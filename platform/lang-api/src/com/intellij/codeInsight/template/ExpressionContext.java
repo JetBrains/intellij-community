@@ -19,7 +19,9 @@ package com.intellij.codeInsight.template;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public interface ExpressionContext {
   @NonNls Key<String> SELECTION = Key.create("SELECTION");
@@ -30,5 +32,7 @@ public interface ExpressionContext {
   int getTemplateStartOffset();
   int getTemplateEndOffset();
   <T> T getProperty(Key<T> key);
+  @Nullable
+  PsiElement getPsiElementAtStartOffset();
 }
 
