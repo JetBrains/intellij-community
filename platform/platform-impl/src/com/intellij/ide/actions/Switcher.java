@@ -442,7 +442,8 @@ public class Switcher extends AnAction implements DumbAware {
         new NameFilteringListModel<FileInfo>(files, new Function<FileInfo, String>() {
           @Override
           public String fun(FileInfo info) {
-            return info.getFirst().getName();
+            final VirtualFile file = info.getFirst();
+            return file instanceof VirtualFilePathWrapper ? ((VirtualFilePathWrapper)file).getPresentablePath() : file.getName();
           }
         }, new Condition<String>() {
           @Override
@@ -925,10 +926,13 @@ public class Switcher extends AnAction implements DumbAware {
 
       @Override
       protected String getElementText(Object element) {
-        return element instanceof ToolWindow
-               ? ids.get(element)
-               : element instanceof FileInfo
-                 ? ((FileInfo)element).getFirst().getName() : "";
+        if (element instanceof ToolWindow) {
+          return ids.get(element);
+        } else if (element instanceof FileInfo) {
+          final VirtualFile file = ((FileInfo)element).getFirst();
+          return file instanceof VirtualFilePathWrapper ? ((VirtualFilePathWrapper)file).getPresentablePath() : file.getName();
+        }
+        return "";
       }
 
       @Override
