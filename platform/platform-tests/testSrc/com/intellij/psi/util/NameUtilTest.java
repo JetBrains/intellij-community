@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.text.Matcher;
@@ -519,4 +520,11 @@ public class NameUtilTest extends UsefulTestCase {
       }
     }).cpuBound().attempts(20).assertTiming();
   }
+
+ public void testSpeedSearchComparator() {
+   final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
+
+   assertTrue(c.matchingFragments("a", "Ant") != null);
+   assertTrue(c.matchingFragments("a", "Changes") != null);
+ }
 }
