@@ -85,8 +85,8 @@ public class QueueProcessor<T> {
           try {
             LOG.error(e);
           }
-          catch (Exception ignore) {
-            // should survive assertions
+          catch (Throwable e2) {
+            e2.printStackTrace();
           }
         }
         runnable.run();
