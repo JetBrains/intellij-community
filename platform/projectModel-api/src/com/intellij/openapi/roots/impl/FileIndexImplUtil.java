@@ -21,9 +21,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("UnusedDeclaration")
 public class FileIndexImplUtil {
   private FileIndexImplUtil() { }
 
+  /**
+   * @deprecated use {@linkplain VfsUtilCore#iterateChildrenRecursively(com.intellij.openapi.vfs.VirtualFile,
+   *             com.intellij.openapi.vfs.VirtualFileFilter, com.intellij.openapi.roots.ContentIterator)} (to remove in IDEA 13)
+   */
   public static boolean iterateRecursively(@NotNull final VirtualFile root,
                                            @NotNull final VirtualFileFilter filter,
                                            @NotNull final ContentIterator iterator) {

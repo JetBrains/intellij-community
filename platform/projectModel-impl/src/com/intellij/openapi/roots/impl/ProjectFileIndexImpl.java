@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
@@ -67,7 +68,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
           if (parentInfo != null && parentInfo.module != null) continue; // inner content - skip it
         }
 
-        boolean finished = FileIndexImplUtil.iterateRecursively(contentRoot, myContentFilter, iterator);
+        boolean finished = VfsUtilCore.iterateChildrenRecursively(contentRoot, myContentFilter, iterator);
         if (!finished) return false;
       }
     }
@@ -85,7 +86,7 @@ public class ProjectFileIndexImpl implements ProjectFileIndex {
   }
 
   public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
-    return FileIndexImplUtil.iterateRecursively(dir, myContentFilter, iterator);
+    return VfsUtilCore.iterateChildrenRecursively(dir, myContentFilter, iterator);
   }
 
   public boolean isIgnored(@NotNull VirtualFile file) {

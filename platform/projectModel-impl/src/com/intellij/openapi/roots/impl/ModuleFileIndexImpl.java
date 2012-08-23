@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.SmartList;
@@ -57,7 +58,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
         if (parentInfo != null && myModule.equals(parentInfo.module)) continue; // inner content - skip it
       }
 
-      boolean finished = FileIndexImplUtil.iterateRecursively(contentRoot, myContentFilter, iterator);
+      boolean finished = VfsUtilCore.iterateChildrenRecursively(contentRoot, myContentFilter, iterator);
       if (!finished) return false;
     }
 
@@ -66,7 +67,7 @@ public class ModuleFileIndexImpl implements ModuleFileIndex {
 
   @Override
   public boolean iterateContentUnderDirectory(@NotNull VirtualFile dir, @NotNull ContentIterator iterator) {
-    return FileIndexImplUtil.iterateRecursively(dir, myContentFilter, iterator);
+    return VfsUtilCore.iterateChildrenRecursively(dir, myContentFilter, iterator);
   }
 
   @Override

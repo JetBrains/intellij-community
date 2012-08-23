@@ -29,12 +29,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.profile.ProjectProfileManager;
@@ -269,7 +269,7 @@ public class AnalysisScope {
       if (mySearchInLibraries) {
         final VirtualFile[] libraryRoots = LibraryUtil.getLibraryRoots(myProject, false, false);
         for (VirtualFile libraryRoot : libraryRoots) {
-          FileIndexImplUtil.iterateRecursively(libraryRoot, VirtualFileFilter.ALL, contentIterator);
+          VfsUtilCore.iterateChildrenRecursively(libraryRoot, VirtualFileFilter.ALL, contentIterator);
         }
       }
     }
@@ -396,7 +396,7 @@ public class AnalysisScope {
     final Project project = dir.getProject();
     final PsiManager psiManager = PsiManager.getInstance(project);
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    FileIndexImplUtil.iterateRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, new ContentIterator() {
+    VfsUtilCore.iterateChildrenRecursively(dir.getVirtualFile(), VirtualFileFilter.ALL, new ContentIterator() {
       @Override
       @SuppressWarnings({"SimplifiableIfStatement"})
       public boolean processFile(@NotNull final VirtualFile fileOrDir) {

@@ -34,9 +34,11 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
@@ -45,17 +47,17 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.*;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.usages.*;
+import com.intellij.usages.FindUsagesProcessPresentation;
+import com.intellij.usages.UsageLimitUtil;
+import com.intellij.usages.UsageTarget;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
@@ -454,7 +456,7 @@ public class FindInProjectUtil {
       }
     };
     for (VirtualFile file : files) {
-      if (!FileIndexImplUtil.iterateRecursively(file, contentFilter, iterator)) return false;
+      if (!VfsUtilCore.iterateChildrenRecursively(file, contentFilter, iterator)) return false;
     }
     return true;
   }
