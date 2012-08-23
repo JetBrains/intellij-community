@@ -69,7 +69,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
       HintManager.getInstance().showErrorHint(editor, getNothingAcceptedMessage());
       return null;
     }
-    return chooseMembers(allMembers, false, false, project);
+    return chooseMembers(allMembers, false, false, project, editor);
   }
 
   protected abstract String getNothingFoundMessage();

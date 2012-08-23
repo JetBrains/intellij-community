@@ -26,7 +26,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -82,7 +81,12 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       if (!c.isInheritor(activityClass, true)) {
         throw new RuntimeConfigurationError(AndroidBundle.message("not.activity.subclass.error", ACTIVITY_CLASS));
       }
-      if (!isActivityLaunchable(facet.getModule(), c)) {
+
+      final Activity activity = AndroidDomUtil.getActivityDomElementByClass(facet.getModule(), c);
+      if (activity == null) {
+        throw new RuntimeConfigurationError(AndroidBundle.message("activity.not.declared.in.manifest", c.getName()));
+      }
+      if (!isActivityLaunchable(activity)) {
         throw new RuntimeConfigurationError(AndroidBundle.message("activity.not.launchable.error", AndroidUtils.LAUNCH_ACTION_NAME));
       }
     }
@@ -170,13 +174,10 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
     return new MyApplicationLauncher(activityToLaunch);
   }
 
-  private static boolean isActivityLaunchable(@NotNull Module module, PsiClass c) {
-    Activity activity = AndroidDomUtil.getActivityDomElementByClass(module, c);
-    if (activity != null) {
-      for (IntentFilter filter : activity.getIntentFilters()) {
-        if (AndroidDomUtil.containsAction(filter, AndroidUtils.LAUNCH_ACTION_NAME)) {
-          return true;
-        }
+  private static boolean isActivityLaunchable(Activity activity) {
+    for (IntentFilter filter : activity.getIntentFilters()) {
+      if (AndroidDomUtil.containsAction(filter, AndroidUtils.LAUNCH_ACTION_NAME)) {
+        return true;
       }
     }
     return false;

@@ -18,10 +18,7 @@ package com.intellij.ui.table;
 import com.intellij.Patches;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.ComponentWithExpandableItems;
-import com.intellij.ui.ExpandableItemsHandler;
-import com.intellij.ui.ExpandableItemsHandlerFactory;
-import com.intellij.ui.TableCell;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.*;
@@ -300,6 +297,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
   }
 
+  @NotNull
   @Override
   public StatusText getEmptyText() {
     return myEmptyText;
@@ -309,6 +307,11 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
   @NotNull
   public ExpandableItemsHandler<TableCell> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
+  }
+
+  @Override
+  public void setExpandableItemsEnabled(boolean enabled) {
+    myExpandableItemsHandler.setEnabled(enabled);
   }
 
   public void removeNotify() {
@@ -460,12 +463,12 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   private static boolean isTableDecorationSupported() {
     return UIUtil.isUnderAlloyLookAndFeel()
-      || UIUtil.isUnderNativeMacLookAndFeel()
-      || UIUtil.isUnderDarcula()
-      || UIUtil.isUnderQuaquaLookAndFeel()
-      || UIUtil.isUnderMetalLookAndFeel()
-      || UIUtil.isUnderNimbusLookAndFeel()
-      || UIUtil.isUnderWindowsLookAndFeel();
+           || UIUtil.isUnderNativeMacLookAndFeel()
+           || UIUtil.isUnderDarcula()
+           || UIUtil.isUnderQuaquaLookAndFeel()
+           || UIUtil.isUnderMetalLookAndFeel()
+           || UIUtil.isUnderNimbusLookAndFeel()
+           || UIUtil.isUnderWindowsLookAndFeel();
   }
 
   public void disableTypeAheadInCellEditors() {
@@ -474,8 +477,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
   @Override
   public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
-    final Component result = super.prepareRenderer(renderer, row, column);
-    final boolean selected = myExpandableItemsHandler.getExpandedItems().contains(new TableCell(row, column));
+    Component result = super.prepareRenderer(renderer, row, column);
 
     // Fix GTK background
     if (UIUtil.isUnderGTKLookAndFeel()) {
@@ -483,7 +485,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     if (isTableDecorationSupported() && isStriped() && result instanceof JComponent) {
-      final Color bg =  row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
+      final Color bg = row % 2 == 1 ? getBackground() : UIUtil.getDecoratedRowColor();
       final JComponent c = (JComponent)result;
       final boolean cellSelected = isCellSelected(row, column);
       if (!cellSelected) {
@@ -492,31 +494,13 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         for (Component child : c.getComponents()) {
           child.setBackground(bg);
         }
-      } 
+      }
     }
 
-    if (!selected) return result;
-
-    return new JComponent() {
-      {
-        add(result);
-        setOpaque(false);
-        setLayout(new AbstractLayoutManager() {
-          @Override
-          public Dimension preferredLayoutSize(Container parent) {
-            return result.getPreferredSize();
-          }
-
-          @Override
-          public void layoutContainer(Container parent) {
-            Dimension size = parent.getSize();
-            Insets i = parent.getInsets();
-            Dimension pref = result.getPreferredSize();
-            result.setBounds(i.left, i.top, Math.max(pref.width, size.width - i.left - i.right), size.height - i.top - i.bottom);
-          }
-        });
-      }
-    };
+    if (myExpandableItemsHandler.getExpandedItems().contains(new TableCell(row, column))) {
+      result = new ExpandedItemRendererComponentWrapper(result);
+    }
+    return result;
   }
 
   private final class MyCellEditorRemover implements PropertyChangeListener {

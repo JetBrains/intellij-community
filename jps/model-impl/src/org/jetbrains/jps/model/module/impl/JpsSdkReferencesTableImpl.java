@@ -46,25 +46,6 @@ public class JpsSdkReferencesTableImpl extends JpsCompositeElementBase<JpsSdkRef
     return myContainer.getChild(new JpsSdkReferenceRole<P>(type));
   }
 
-  private static class JpsSdkReferenceRole<P extends JpsElement> extends JpsElementChildRoleBase<JpsSdkReference<P>> {
-    private final JpsSdkType<P> myType;
-
-    private JpsSdkReferenceRole(@NotNull JpsSdkType<P> type) {
-      super("sdk reference " + type);
-      myType = type;
-    }
-
-    @Override
-    public int hashCode() {
-      return myType.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof JpsSdkReferenceRole && myType.equals(((JpsSdkReferenceRole)obj).myType);
-    }
-  }
-
   private static class JpsSdkReferencesTableRole extends JpsElementChildRoleBase<JpsSdkReferencesTable> implements JpsElementCreator<JpsSdkReferencesTable> {
     public JpsSdkReferencesTableRole() {
       super("sdk references");

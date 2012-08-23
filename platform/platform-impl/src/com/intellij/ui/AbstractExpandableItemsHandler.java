@@ -144,8 +144,6 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   @Override
   public void setEnabled(boolean enabled) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     isEnabled = enabled;
     if (!isEnabled) hideHint();
   }
@@ -153,8 +151,6 @@ abstract public class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   @NotNull
   @Override
   public Collection<KeyType> getExpandedItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     return myKey == null ? Collections.<KeyType>emptyList() : Collections.singleton(myKey);
   }
 

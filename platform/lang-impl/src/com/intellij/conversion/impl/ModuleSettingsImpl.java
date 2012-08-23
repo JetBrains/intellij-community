@@ -32,6 +32,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.JDomSerializationUtil;
 import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 
 import java.io.File;
@@ -81,6 +82,17 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
 
   public Element getFacetElement(@NotNull String facetTypeId) {
     return ContainerUtil.getFirstItem(getFacetElements(facetTypeId), null);
+  }
+
+  @Override
+  public void addFacetElement(@NotNull String facetTypeId, @NotNull String facetName, Element configuration) {
+    Element componentElement = JDomSerializationUtil.findOrCreateComponentElement(getRootElement(), FacetManagerImpl.COMPONENT_NAME);
+    Element facetElement = new Element(JpsFacetSerializer.FACET_TAG);
+    facetElement.setAttribute(JpsFacetSerializer.TYPE_ATTRIBUTE, facetTypeId);
+    facetElement.setAttribute(JpsFacetSerializer.NAME_ATTRIBUTE, facetName);
+    configuration.setName(JpsFacetSerializer.CONFIGURATION_TAG);
+    facetElement.addContent(configuration);
+    componentElement.addContent(facetElement);
   }
 
   public void setModuleType(@NotNull String moduleType) {

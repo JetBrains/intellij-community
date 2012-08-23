@@ -56,17 +56,19 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private final boolean myRunAnnotators;
   private final DumbService myDumbService;
   private HighlightInfoHolder myHolder;
+  private boolean myBatchMode;
 
   @SuppressWarnings("UnusedDeclaration")
   public DefaultHighlightVisitor(@NotNull Project project) {
-    this(project, true, true);
+    this(project, true, true, false);
   }
-  public DefaultHighlightVisitor(@NotNull Project project, boolean highlightErrorElements, boolean runAnnotators) {
+  public DefaultHighlightVisitor(@NotNull Project project, boolean highlightErrorElements, boolean runAnnotators, boolean batchMode) {
     myProject = project;
     myHighlightErrorElements = highlightErrorElements;
     myRunAnnotators = runAnnotators;
     myErrorFilters = Extensions.getExtensions(FILTER_EP_NAME, project);
     myDumbService = DumbService.getInstance(project);
+    myBatchMode = batchMode;
   }
                                                      
   @Override
@@ -80,7 +82,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
                          @NotNull final HighlightInfoHolder holder,
                          @NotNull final Runnable action) {
     myHolder = holder;
-    myAnnotationHolder = new AnnotationHolderImpl(holder.getAnnotationSession());
+    myAnnotationHolder = new AnnotationHolderImpl(holder.getAnnotationSession(), myBatchMode);
     try {
       action.run();
     }
@@ -102,7 +104,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     }
     if (myAnnotationHolder.hasAnnotations()) {
       for (Annotation annotation : myAnnotationHolder) {
-        myHolder.add(HighlightInfo.fromAnnotation(annotation));
+        myHolder.add(HighlightInfo.fromAnnotation(annotation, null, myBatchMode));
       }
       myAnnotationHolder.clear();
     }
@@ -111,7 +113,7 @@ public class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   @Override
   @NotNull
   public HighlightVisitor clone() {
-    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators);
+    return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode);
   }
 
   @Override

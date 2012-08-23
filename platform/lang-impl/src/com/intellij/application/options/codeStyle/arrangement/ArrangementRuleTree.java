@@ -17,13 +17,13 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsCompositeNode;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Consumer;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +33,7 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -50,23 +51,30 @@ public class ArrangementRuleTree {
   @NotNull private final List<ArrangementRuleSelectionListener> myListeners           = new ArrayList<ArrangementRuleSelectionListener>();
   @NotNull private final TreeSelectionModel                     mySelectionModel      = new MySelectionModel();
   @NotNull private final MyModelChangeListener                  myModelChangeListener = new MyModelChangeListener();
+  @NotNull private final MyModelNodesRefresher                  myModelNodesRefresher = new MyModelNodesRefresher();
 
-  @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>    myRenderers =
+  @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>        myRenderers =
     new TIntObjectHashMap<ArrangementNodeComponent>();
   @NotNull private final TIntObjectHashMap<ArrangementRuleEditingModelImpl> myModels    =
     new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
 
+  @NotNull private final ArrangementTreeNode             myRoot;
   @NotNull private final DefaultTreeModel                myTreeModel;
   @NotNull private final Tree                            myTree;
   @NotNull private final ArrangementNodeComponentFactory myFactory;
-  
+
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
   public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
-    myFactory = new ArrangementNodeComponentFactory(displayManager);
-    ArrangementTreeNode root = new ArrangementTreeNode(null);
-    myTreeModel = new DefaultTreeModel(root);
+    myFactory = new ArrangementNodeComponentFactory(displayManager, new Consumer<ArrangementAtomMatchCondition>() {
+      @Override
+      public void consume(@NotNull ArrangementAtomMatchCondition setting) {
+        removeConditionFromActiveModel(setting);
+      }
+    });
+    myRoot = new ArrangementTreeNode(null);
+    myTreeModel = new DefaultTreeModel(myRoot);
     myTree = new Tree(myTreeModel) {
       @Override
       protected void setExpandedState(TreePath path, boolean state) {
@@ -110,8 +118,14 @@ public class ArrangementRuleTree {
           return;
         }
         for (int i = 0; i < paths.length; i++) {
-          setSelection(paths[i], e.isAddedPath(i));
+          onSelectionChange(paths[i], e.isAddedPath(i));
         }
+      }
+    });
+    myTree.addMouseMotionListener(new MouseAdapter() {
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        onMouseMoved(e);
       }
     });
     myTree.addMouseListener(new MouseAdapter() {
@@ -121,29 +135,128 @@ public class ArrangementRuleTree {
       }
     });
     
-    List<ArrangementSettingsNode> rules = new ArrayList<ArrangementSettingsNode>();
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL)));
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
-    rules.add(new ArrangementSettingsCompositeNode(ArrangementSettingsCompositeNode.Operator.AND)
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    map(root, rules, grouper);
+    // Setup the tree to perform rule-aware navigation via up/down arrow keys.
+    myTree.getActionMap().put("selectNext", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        selectNextRule();
+      }
+    });
+    myTree.getActionMap().put("selectPrevious", new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        selectPreviousRule();
+      }
+    });
+    
+    List<ArrangementMatchCondition> rules = new ArrayList<ArrangementMatchCondition>();
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL)));
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
+                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
+    map(myRoot, rules, grouper);
 
-    expandAll(myTree, new TreePath(root));
+    expandAll(myTree, new TreePath(myRoot));
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
   }
 
-  private void setSelection(@Nullable final TreePath path, boolean selected) {
+  private void selectPreviousRule() {
+    ArrangementTreeNode currentSelectionBottom = getCurrentSelectionBottom();
+
+    if (currentSelectionBottom == null) {
+      return;
+    }
+    
+    for (ArrangementTreeNode parent = currentSelectionBottom.getParent();
+         parent != null;
+         currentSelectionBottom = parent, parent = parent.getParent())
+    {
+      int i = parent.getIndex(currentSelectionBottom);
+      if (i <= 0) {
+        continue;
+      }
+      ArrangementTreeNode toSelect = parent.getChildAt(i - 1);
+      while (toSelect.getChildCount() > 0) {
+        toSelect = toSelect.getLastChild();
+      }
+      mySelectionModel.setSelectionPath(new TreePath(toSelect.getPath()));
+      break;
+    }
+  }
+
+  private void selectNextRule() {
+    ArrangementTreeNode currentSelectionBottom = getCurrentSelectionBottom();
+    if (currentSelectionBottom == null) {
+      if (myRoot.getChildCount() > 0) {
+        mySelectionModel.setSelectionPath(new TreePath(myRoot.getFirstChild().getPath()));
+      }
+      return;
+    }
+
+    for (ArrangementTreeNode parent = currentSelectionBottom.getParent();
+         parent != null;
+         currentSelectionBottom = parent, parent = parent.getParent())
+    {
+      int i = parent.getIndex(currentSelectionBottom);
+      if (i < parent.getChildCount() - 1) {
+        mySelectionModel.setSelectionPath(new TreePath(parent.getChildAt(i + 1).getPath()));
+        break;
+      }
+    }
+  }
+
+  @Nullable
+  private ArrangementTreeNode getCurrentSelectionBottom() {
+    TreePath[] paths = mySelectionModel.getSelectionPaths();
+    if (paths == null) {
+      return null;
+    }
+
+    ArrangementTreeNode currentSelectionBottom = null;
+    for (TreePath treePath : paths) {
+      ArrangementTreeNode last = (ArrangementTreeNode)treePath.getLastPathComponent();
+      if (last.getChildCount() <= 0) {
+        currentSelectionBottom = last;
+        break;
+      }
+    }
+
+    if (currentSelectionBottom == null) {
+      return null;
+    }
+    return currentSelectionBottom;
+  }
+
+  private void doClearSelection() {
+    mySelectionModel.clearSelection();
+    myRenderers.forEachValue(new TObjectProcedure<ArrangementNodeComponent>() {
+      @Override
+      public boolean execute(ArrangementNodeComponent node) {
+        node.setSelected(false);
+        return true;
+      }
+    });
+    myTree.repaint();
+  }
+
+  /**
+   * Updates renderer's {@link ArrangementNodeComponent#setSelected(boolean) 'selected'} state on tree ndoe selection change.
+   * 
+   * @param path      changed selection path
+   * @param selected  <code>true</code> if given path is selected now; <code>false</code> if given path was selected anymore
+   */
+  private void onSelectionChange(@Nullable final TreePath path, boolean selected) {
     if (path == null) {
       return;
     }
@@ -180,12 +293,12 @@ public class ArrangementRuleTree {
   }
 
   private void map(@NotNull ArrangementTreeNode root,
-                   @NotNull List<ArrangementSettingsNode> settings,
+                   @NotNull List<ArrangementMatchCondition> matchConditions,
                    @NotNull ArrangementSettingsGrouper grouper)
   {
     ArrangementRuleEditingModelBuilder builder = new ArrangementRuleEditingModelBuilder();
-    for (ArrangementSettingsNode setting : settings) {
-      builder.build(setting, myTree, root, grouper, myModels);
+    for (ArrangementMatchCondition matchCondition : matchConditions) {
+      builder.build(matchCondition, myTree, root, grouper, myModels);
     }
     myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
       @Override
@@ -228,7 +341,7 @@ public class ArrangementRuleTree {
   }
 
   @NotNull
-  private ArrangementNodeComponent getNodeComponentAt(int row, @NotNull ArrangementSettingsNode node) {
+  private ArrangementNodeComponent getNodeComponentAt(int row, @NotNull ArrangementMatchCondition node) {
     ArrangementNodeComponent result = myRenderers.get(row);
     if (result == null) {
       myRenderers.put(row, result = myFactory.getComponent(node));
@@ -236,21 +349,33 @@ public class ArrangementRuleTree {
     return result;
   }
 
+  private void removeConditionFromActiveModel(@NotNull ArrangementAtomMatchCondition condition) {
+    ArrangementRuleEditingModel model = getActiveModel();
+    if (model != null) {
+      model.removeAndCondition(condition);
+      notifySelectionListeners(model);
+    }
+  }
+
+  private void onMouseMoved(@NotNull MouseEvent e) {
+    ArrangementNodeComponent component = getNodeComponentAt(e.getLocationOnScreen());
+    if (component == null) {
+      return;
+    }
+    Rectangle changedScreenRectangle = component.handleMouseMove(e);
+    if (changedScreenRectangle != null) {
+      repaintScreenBounds(changedScreenRectangle);
+    }
+  }
+  
   private void onMouseClicked(@NotNull MouseEvent e) {
     ArrangementNodeComponent component = getNodeComponentAt(e.getLocationOnScreen());
     if (component != null) {
+      component.handleMouseClick(e);
       return;
     }
     // Clear selection
-    mySelectionModel.clearSelection();
-    myRenderers.forEachValue(new TObjectProcedure<ArrangementNodeComponent>() {
-      @Override
-      public boolean execute(ArrangementNodeComponent node) {
-        node.setSelected(false);
-        return true;
-      }
-    });
-    myTree.repaint();
+    doClearSelection();
   }
   
   @Nullable
@@ -287,10 +412,14 @@ public class ArrangementRuleTree {
   private void repaintComponent(@NotNull ArrangementNodeComponent component) {
     Rectangle bounds = component.getScreenBounds();
     if (bounds != null) {
-      Point location = bounds.getLocation();
-      SwingUtilities.convertPointFromScreen(location, myTree);
-      myTree.repaint(location.x, location.y, bounds.width, bounds.height);
+      repaintScreenBounds(bounds);
     }
+  }
+
+  private void repaintScreenBounds(@NotNull Rectangle bounds) {
+    Point location = bounds.getLocation();
+    SwingUtilities.convertPointFromScreen(location, myTree);
+    myTree.repaint(location.x, location.y, bounds.width, bounds.height);
   }
 
   private void notifySelectionListeners(@Nullable ArrangementRuleEditingModel model) {
@@ -305,8 +434,14 @@ public class ArrangementRuleTree {
   }
 
   private void onModelChange(@NotNull ArrangementRuleEditingModelImpl model, @NotNull final TIntIntHashMap rowChanges) {
+    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
+    
+    // Refresh models.
+    myModels.forEachValue(myModelNodesRefresher);
+
     // Shift row-based caches.
-    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> changedModelMappings = new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
+    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> changedModelMappings =
+      new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
     final TIntObjectHashMap<ArrangementNodeComponent> changedRendererMappings = new TIntObjectHashMap<ArrangementNodeComponent>();
     rowChanges.forEachEntry(new TIntIntProcedure() {
       @Override
@@ -322,26 +457,49 @@ public class ArrangementRuleTree {
         }
         return true;
       }
+
+      
     });
     putAll(changedModelMappings, myModels);
     putAll(changedRendererMappings, myRenderers);
+    
+    // Drop JTree visual caches.
+    rowChanges.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int oldRow, int newRow) {
+        refreshTreeNode(oldRow);
+        refreshTreeNode(newRow); 
+        return true;
+      }
+      private void refreshTreeNode(int row) {
+        TreePath path = myTree.getPathForRow(row);
+        if (path == null) {
+          return;
+        }
+        TreeNode node = (TreeNode)path.getLastPathComponent();
+        if (node == null) {
+          return;
+        }
+        myTreeModel.nodeStructureChanged(node);
+      }
+    });
 
     // Perform necessary actions for the changed model.
     ArrangementTreeNode topMost = model.getTopMost();
     ArrangementTreeNode bottomMost = model.getBottomMost();
-    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
-    mySelectionModel.clearSelection();
+    doClearSelection();
     myExplicitSelectionChange = true;
     try {
       for (ArrangementTreeNode node = bottomMost; node != null; node = node.getParent()) {
         TreePath path = new TreePath(node.getPath());
         int row = myTree.getRowForPath(path);
         myRenderers.remove(row);
+        mySelectionModel.addSelectionPath(path);
         myTreeModel.nodeChanged(node);
         mySelectionModel.addSelectionPath(path);
-        ArrangementSettingsNode setting = node.getBackingSetting();
-        if (setting != null) {
-          getNodeComponentAt(row, setting).setSelected(true);
+        ArrangementMatchCondition matchCondition = node.getBackingCondition();
+        if (matchCondition != null) {
+          getNodeComponentAt(row, matchCondition).setSelected(true);
         }
         if (node == topMost) {
           break;
@@ -373,7 +531,7 @@ public class ArrangementRuleTree {
                                                   int row,
                                                   boolean hasFocus)
     {
-      ArrangementSettingsNode node = ((ArrangementTreeNode)value).getBackingSetting();
+      ArrangementMatchCondition node = ((ArrangementTreeNode)value).getBackingCondition();
       if (node == null) {
         return EMPTY_RENDERER;
       }
@@ -399,21 +557,27 @@ public class ArrangementRuleTree {
       if (mySkipSelectionChange) {
         return;
       }
-
-      DefaultMutableTreeNode component = (DefaultMutableTreeNode)path.getLastPathComponent();
+      
+      clearSelection();
+      ArrangementTreeNode component = (ArrangementTreeNode)path.getLastPathComponent();
+      
+      // Select all nodes which correspond to the first rule under the node denoted by the given path
+      // in case when non-leaf is selected.
       if (component.getChildCount() > 0) {
-        // Select all nodes which correspond to the first rule under the node denoted by the given path
-        // in case when non-leaf is selected.
-        clearSelection();
-        for (DefaultMutableTreeNode node = component; node != null; node = (DefaultMutableTreeNode)node.getChildAt(0)) {
+        for (ArrangementTreeNode node = component.getChildAt(0); node != null; node = node.getChildAt(0)) {
           addSelectionPath(new TreePath(node.getPath()));
           if (node.getChildCount() <= 0) {
             break;
           }
         }
       }
-      else {
-        super.setSelectionPath(path);
+      
+      // Select the node itself.
+      super.addSelectionPath(path);
+      
+      // Select parent nodes from the same rule.
+      for (ArrangementTreeNode node = component.getParent(); node != null && node != myRoot; node = node.getParent()) {
+        addSelectionPath(new TreePath(node.getPath()));
       }
       
       notifySelectionListeners(getActiveModel());
@@ -425,6 +589,14 @@ public class ArrangementRuleTree {
     @Override
     public void onChanged(@NotNull ArrangementRuleEditingModelImpl model, @NotNull TIntIntHashMap rowChanges) {
       onModelChange(model, rowChanges); 
+    }
+  }
+  
+  private static class MyModelNodesRefresher implements TObjectProcedure<ArrangementRuleEditingModelImpl> {
+    @Override
+    public boolean execute(ArrangementRuleEditingModelImpl model) {
+      model.refreshTreeNodes(); 
+      return true;
     }
   }
 }

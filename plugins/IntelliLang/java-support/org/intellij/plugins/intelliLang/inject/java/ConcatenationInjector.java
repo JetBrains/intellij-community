@@ -282,7 +282,12 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         Language language = null;
         for (int idx = 0, len = text.length(); idx != -1 && language == null; idx = StringUtil.indexOfAny(text, " \t\r\n,", idx + 1, len)) {
           String id = idx > 0 ? text.substring(0, idx).trim() : text;
-          language = Language.findLanguageByID(id);
+          for (Language l : Language.getRegisteredLanguages()) {
+            if (id.equalsIgnoreCase(l.getID())) {
+              language = l;
+              break;
+            }
+          }
         }
         if (language != null) {
           final BaseInjection injection = new BaseInjection(LanguageInjectionSupport.JAVA_SUPPORT_ID);

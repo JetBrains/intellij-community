@@ -138,6 +138,8 @@ public class GotoLineNumberDialog extends DialogWrapper {
     myField = new MyTextField();
     panel.add(myField, gbConstraints);
     myField.setToolTipText(IdeBundle.message("tooltip.syntax.linenumber.columnnumber"));
+    LogicalPosition position = myEditor.getCaretModel().getLogicalPosition();
+    myField.setText(String.format("%d:%d", position.line + 1, position.column + 1));
 
     if (isInternal()) {
       gbConstraints.gridy = 1;

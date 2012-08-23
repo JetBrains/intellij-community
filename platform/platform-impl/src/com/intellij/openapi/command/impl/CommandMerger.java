@@ -185,11 +185,12 @@ public class CommandMerger {
   }
 
   private boolean affectsMultiplePhysicalDocs() {
-    int count = 0;
+    Set<VirtualFile> affectedFiles = new HashSet<VirtualFile>();
     for (DocumentReference each : myAllAffectedDocuments) {
       VirtualFile file = each.getFile();
-      if (file instanceof LightVirtualFile) continue;
-      if (++count > 1) return true;
+      if (file == null || file instanceof LightVirtualFile) continue;
+      affectedFiles.add(file);
+      if (affectedFiles.size() > 1) return true;
     }
     return false;
   }

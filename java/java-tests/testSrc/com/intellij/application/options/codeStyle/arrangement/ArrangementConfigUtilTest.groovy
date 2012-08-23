@@ -16,7 +16,8 @@
 package com.intellij.application.options.codeStyle.arrangement
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsAtomNode
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
+import gnu.trove.TIntIntHashMap
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.junit.Test
@@ -41,10 +42,8 @@ one =    '1' {
           '2' {
             '3'()
 four =      '4'()
-            '5'()
-          }
-          '6'()
-        }
+            '5'()}
+          '6'()}
       }
     
     // Modify.
@@ -59,22 +58,158 @@ four =      '4'()
       '0' {
         '1' {
           '2' {
-            '3'()
-          }
+            '3'()}
           '4'()
           '2' {
-            '5'()
-          }
-          '6'()
-        }
+            '5'()}
+          '6'()}
       }
     assertNodesEqual(expected, initial)
-    
-    assertEquals(2, rowMappings.size())
-    assertEquals(6, rowMappings.get(5))
-    assertEquals(7, rowMappings.get(6))
+    checkRowMappings([5 : 6, 6 : 7], rowMappings)
   }
 
+  @Test
+  void replaceWithMergeToNodeAbove() {
+        // Init.
+    def from;
+    def to;
+    def initial = new TreeNodeBuilder().
+      '0' {
+        '1'() {
+          '2'()
+          '3'()}
+from =  '4' {
+to =      '5'()
+          '6'()}
+      }
+    
+    // Modify.
+    def replacement = new TreeNodeBuilder().
+      '1' {
+        '5'()
+      }
+    def rowMappings = doReplace(initial, from, to, replacement)
+    
+    // Check.
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()
+          '3'()
+          '5'()}
+        '4' {
+          '6'()}
+      }
+    assertNodesEqual(expected, initial)
+    checkRowMappings([:], rowMappings)
+  }
+  
+  @Test
+  void replaceWithTwoLevelMergeToNodeAbove() {
+        // Init.
+    def node;
+    def initial = new TreeNodeBuilder().
+      '0' {
+        '1'() {
+          '2'()
+          '3'()}
+node =  '4'()
+        '5'() {
+          '6'()}        
+      }
+    
+    // Modify.
+    def replacement = new TreeNodeBuilder().
+      '1' {
+        '4'()
+      }
+    def rowMappings = doReplace(initial, node, node, replacement)
+    
+    // Check.
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()
+          '3'()
+          '4'()}
+        '5' {
+          '6'()}
+      }
+    assertNodesEqual(expected, initial)
+    checkRowMappings([:], rowMappings)
+  }
+  
+    @Test
+  void replaceWithTwoLevelMergeToNodeBelow() {
+    // Init.
+    def from;
+    def to;
+    def initial = new TreeNodeBuilder().
+      '0' {
+from =  '1'() {
+          '2'()
+to =      '3'()}
+        '4'() {
+          '5'() }        
+      }
+    
+    // Modify.
+    def replacement = new TreeNodeBuilder().
+      '4' {
+        '3'()
+      }
+    def rowMappings = doReplace(initial, from, to, replacement)
+    
+    // Check.
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()}
+        '4' {
+          '3'()
+          '5'()}
+      }
+    assertNodesEqual(expected, initial)
+    checkRowMappings([:], rowMappings)
+  }
+
+  @Test
+  void replaceFirstChildWithMergeBelow() {
+    // Init.
+    def from;
+    def to;
+    def initial = new TreeNodeBuilder().
+      '0' {
+from =  '1'() {
+to =      '2'()}
+        '3'() {
+          '4'() }
+        '1' {
+          '5'()
+          '6'()}
+      }
+    
+    // Modify.
+    def replacement = new TreeNodeBuilder().
+      '3' {
+        '2'()
+      }
+    def rowMappings = doReplace(initial, from, to, replacement)
+    
+    // Check.
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '3' {
+          '2'()
+          '4'()}
+        '1' {
+          '5'()
+          '6'()}
+      }
+    assertNodesEqual(expected, initial)
+    checkRowMappings([ 4 : 3, 5 : 4, 6 : 5, 7 : 6 ], rowMappings)
+  }
+  
   @Test
   void addWithoutMergeAbove() {
     def initial = new TreeNodeBuilder().
@@ -242,13 +377,18 @@ four =      '4'()
       assertNodesEqual(expected.getChildAt(i), actual.getChildAt(i))
     }
   }
+
+  private static void checkRowMappings(@NotNull Map<Integer, Integer> expected, @NotNull TIntIntHashMap actual) {
+    assertEquals(expected.size(), actual.size())
+    expected.each {key, value -> assertEquals(value, actual.get(key)) }
+  }
 }
 
 public class TreeNodeBuilder extends BuilderSupport {
 
   @Override
   protected Object createNode(Object name) {
-    def result = new ArrangementTreeNode(new ArrangementSettingsAtomNode(ArrangementSettingType.MODIFIER, name))
+    def result = new ArrangementTreeNode(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, name))
     currentNode?.add(result)
     result
   }

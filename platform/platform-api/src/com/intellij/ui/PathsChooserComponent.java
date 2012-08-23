@@ -97,6 +97,7 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
     reset();
   }
 
+  @NotNull
   @Override
   public StatusText getEmptyText() {
     return myList.getEmptyText();

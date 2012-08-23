@@ -23,5 +23,6 @@ import com.android.resources.ResourceType;
 public class ParentStyleConverter extends ResourceReferenceConverter {
   public ParentStyleConverter() {
     super(ResourceType.STYLE.getName(), false, false);
+    setAllowAttributeReferences(false);
   }
 }

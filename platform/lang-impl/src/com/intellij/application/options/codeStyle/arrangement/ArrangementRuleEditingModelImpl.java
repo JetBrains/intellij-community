@@ -34,21 +34,19 @@ import java.util.Set;
  */
 public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingModel {
 
-  private static final TIntIntHashMap EMPTY_CHANGES = new TIntIntHashMap();
-
   @NotNull private static final MyConditionsBuilder CONDITIONS_BUILDER = new MyConditionsBuilder();
 
   @NotNull private final Set<Listener> myListeners  = new HashSet<Listener>();
   @NotNull private final Set<Object>   myConditions = new HashSet<Object>();
 
-  @NotNull private final DefaultTreeModel                                   myTreeModel;
-  @NotNull private final ArrangementSettingsGrouper                         myGrouper;
-  private final          boolean                                            myRootVisible;
+  @NotNull private final DefaultTreeModel           myTreeModel;
+  @NotNull private final ArrangementSettingsGrouper myGrouper;
+  private final          boolean                    myRootVisible;
 
-  @NotNull private ArrangementTreeNode     myTopMost;
-  @NotNull private ArrangementTreeNode     myBottomMost;
-  @NotNull private ArrangementSettingsNode mySettingsNode;
-  private          int                     myRow;
+  @NotNull private ArrangementTreeNode       myTopMost;
+  @NotNull private ArrangementTreeNode       myBottomMost;
+  @NotNull private ArrangementMatchCondition myMatchCondition;
+  private          int                       myRow;
 
   /**
    * Creates new <code>ArrangementRuleEditingModelImpl</code> object.
@@ -57,7 +55,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    *                     to generate corresponding events automatically
    * @param node         backing settings node
    * @param topMost      there is a possible case that a single settings node is shown in more than one visual line
-   *                     ({@link HierarchicalArrangementSettingsNode}). This argument is the top-most UI node used for the
+   *                     ({@link HierarchicalArrangementConditionNode}). This argument is the top-most UI node used for the
    *                     settings node representation
    * @param bottomMost   bottom-most UI node used for the given settings node representation 
    * @param grouper      strategy that encapsulates information on how settings node should be displayed
@@ -65,7 +63,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    * @param rootVisible  determines if the root should be count during rows calculations
    */
   public ArrangementRuleEditingModelImpl(@NotNull DefaultTreeModel model,
-                                         @NotNull ArrangementSettingsNode node,
+                                         @NotNull ArrangementMatchCondition node,
                                          @NotNull ArrangementTreeNode topMost,
                                          @NotNull ArrangementTreeNode bottomMost,
                                          @NotNull ArrangementSettingsGrouper grouper,
@@ -73,7 +71,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
                                          boolean rootVisible)
   {
     myTreeModel = model;
-    mySettingsNode = node;
+    myMatchCondition = node;
     myTopMost = topMost;
     myBottomMost = bottomMost;
     myGrouper = grouper;
@@ -86,7 +84,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     myConditions.clear();
     CONDITIONS_BUILDER.conditions = myConditions;
     try {
-      mySettingsNode.invite(CONDITIONS_BUILDER);
+      myMatchCondition.invite(CONDITIONS_BUILDER);
     }
     finally {
       CONDITIONS_BUILDER.conditions = null;
@@ -95,8 +93,12 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
 
   @NotNull
   @Override
-  public ArrangementSettingsNode getSettingsNode() {
-    return mySettingsNode;
+  public ArrangementMatchCondition getMatchCondition() {
+    return myMatchCondition;
+  }
+
+  public int getRow() {
+    return myRow;
   }
 
   @NotNull
@@ -125,8 +127,8 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
         // No refresh is necessary.
         return;
       }
-      ArrangementSettingsNode setting = myTopMost.getBackingSetting();
-      if (setting != null && setting.equals(node.getBackingSetting())) {
+      ArrangementMatchCondition matchCondition = myTopMost.getBackingCondition();
+      if (matchCondition != null && matchCondition.equals(node.getBackingCondition())) {
         myTopMost = node;
         return;
       }
@@ -135,63 +137,79 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   }
   
   @Override
-  public void addAndCondition(@NotNull ArrangementSettingsAtomNode node) {
-    TIntIntHashMap rowChanges = doAddAndCondition(node);
-    refreshConditions();
-    notifyListeners(rowChanges);
+  public void addAndCondition(@NotNull ArrangementAtomMatchCondition condition) {
+    ArrangementMatchCondition newCondition = ArrangementUtil.and(myMatchCondition.clone(), condition);
+    applyNewCondition(newCondition);
   }
   
-  @NotNull
-  private TIntIntHashMap doAddAndCondition(@NotNull ArrangementSettingsAtomNode node) {
-    ArrangementSettingsNode newNode = ArrangementUtil.and(mySettingsNode.clone(), node);
-    return applyNewSetting(newNode);
-  }
-
   @Override
-  public void removeAndCondition(@NotNull ArrangementSettingsNode node) {
-    TIntIntHashMap rowChanges = doRemoveAndCondition(node);
-    refreshConditions();
-    notifyListeners(rowChanges);
+  public void removeAndCondition(@NotNull ArrangementMatchCondition condition) {
+    if (!(myMatchCondition instanceof ArrangementCompositeMatchCondition)) {
+      // TODO den implement
+      return;
+    }
+
+    ArrangementMatchCondition newCondition = myMatchCondition.clone();
+    ArrangementCompositeMatchCondition composite = (ArrangementCompositeMatchCondition)newCondition;
+    composite.getOperands().remove(condition);
+    if (composite.getOperands().size() == 1) {
+      newCondition = composite.getOperands().iterator().next();
+    }
+    applyNewCondition(newCondition);
   }
   
-  @NotNull
-  private TIntIntHashMap doRemoveAndCondition(@NotNull ArrangementSettingsNode node) {
-    if (!(mySettingsNode instanceof ArrangementSettingsCompositeNode)) {
-      return EMPTY_CHANGES;
-    }
-
-    ArrangementSettingsNode newNode = mySettingsNode.clone();
-    ArrangementSettingsCompositeNode composite = (ArrangementSettingsCompositeNode)newNode;
-    composite.getOperands().remove(node);
-    if (composite.getOperands().size() == 1) {
-      newNode = composite.getOperands().iterator().next();
-    }
-
-    return applyNewSetting(newNode);
-  }
-
-  @NotNull
-  private TIntIntHashMap applyNewSetting(@NotNull ArrangementSettingsNode newNode) {
-    mySettingsNode = newNode;
-    HierarchicalArrangementSettingsNode grouped = myGrouper.group(newNode);
-    int newDepth = ArrangementConfigUtil.getDepth(grouped);
-    int oldDepth = ArrangementConfigUtil.distance(myTopMost, myBottomMost);
-    if (oldDepth == newDepth) {
-      myBottomMost.setSettings(ArrangementConfigUtil.getLast(grouped).getCurrent());
-      return EMPTY_CHANGES;
-    }
-
+  private void applyNewCondition(@NotNull ArrangementMatchCondition newNode) {
+    myMatchCondition = newNode;
+    HierarchicalArrangementConditionNode grouped = myGrouper.group(newNode);
     Pair<ArrangementTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode newBottom = replacement.first;
     ArrangementTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
     final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop, myTreeModel, myRootVisible);
-    myTopMost = newTop;
     myBottomMost = newBottom;
+    for (ArrangementTreeNode node = myBottomMost.getParent(); node != null; node = node.getParent()) {
+      // There is a possible case that top condition is merged into existing one, hence, we need to refresh it.
+      ArrangementMatchCondition condition = node.getBackingCondition();
+      if (condition != null && condition.equals(newTop.getBackingCondition())) {
+        newTop = node;
+      }
+    }
+    myTopMost = newTop;
     rowChanges.remove(myRow);
     int newRow = ArrangementConfigUtil.getRow(myBottomMost, myRootVisible);
     rowChanges.put(myRow, newRow);
     myRow = newRow;
-    return rowChanges;
+    refreshConditions();
+    notifyListeners(rowChanges);
+  }
+
+  @Override
+  public void replaceCondition(@NotNull ArrangementAtomMatchCondition from, @NotNull ArrangementAtomMatchCondition to)
+    throws IllegalArgumentException
+  {
+    for (ArrangementTreeNode node = myBottomMost; node != null; node = node.getParent()) {
+      if (from.equals(node.getBackingCondition())) {
+        ArrangementMatchCondition newCondition;
+        if (myMatchCondition.equals(from)) {
+          newCondition = to;
+        }
+        else {
+          assert myMatchCondition instanceof ArrangementCompositeMatchCondition;
+          ArrangementCompositeMatchCondition composite = (ArrangementCompositeMatchCondition)myMatchCondition;
+          ArrangementCompositeMatchCondition newComposite = composite.clone();
+          newComposite.getOperands().remove(from);
+          newComposite.getOperands().add(to);
+          newCondition = newComposite;
+        }
+        applyNewCondition(newCondition);
+        return;
+      }
+      if (node == myTopMost) {
+        throw new IllegalArgumentException(String.format(
+          "Can't perform arrangement match condition modification ('%s' -> '%s'). Reason: target condition doesn't have "
+          + "'%s' condition - %s",
+          from, to, from, myMatchCondition));
+      }
+    }
   }
 
   public void addListener(@NotNull Listener listener) {
@@ -206,7 +224,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
 
   @Override
   public String toString() {
-    return "model for " + mySettingsNode;
+    return "model for " + myMatchCondition;
   }
 
   private static class MyConditionsBuilder implements ArrangementSettingsNodeVisitor {
@@ -214,13 +232,13 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     @NotNull Set<Object> conditions;
 
     @Override
-    public void visit(@NotNull ArrangementSettingsAtomNode node) {
-      conditions.add(node.getValue()); 
+    public void visit(@NotNull ArrangementAtomMatchCondition setting) {
+      conditions.add(setting.getValue()); 
     }
 
     @Override
-    public void visit(@NotNull ArrangementSettingsCompositeNode node) {
-      for (ArrangementSettingsNode operand : node.getOperands()) {
+    public void visit(@NotNull ArrangementCompositeMatchCondition setting) {
+      for (ArrangementMatchCondition operand : setting.getOperands()) {
         operand.invite(this);
       } 
     }

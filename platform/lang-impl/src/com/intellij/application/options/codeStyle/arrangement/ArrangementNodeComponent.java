@@ -15,13 +15,14 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNode;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseEvent;
 
 /**
  * // TODO den add doc
@@ -32,7 +33,7 @@ import java.awt.*;
 public interface ArrangementNodeComponent {
   
   @NotNull
-  ArrangementSettingsNode getSettingsNode();
+  ArrangementMatchCondition getMatchCondition();
   
   // TODO den add doc
   @NotNull
@@ -54,4 +55,19 @@ public interface ArrangementNodeComponent {
    * @param selected  flag that indicates if current component should be drawn as 'selected'
    */
   void setSelected(boolean selected);
+
+  /**
+   * Instructs current component about mose move event.
+   * <p/>
+   * Primary intention is to allow to react on event like 'on mouse hover' etc. We can't do that by subscribing to the
+   * mouse events at the {@link #getUiComponent() corresponding UI control} because it's used only as a renderer and is not put
+   * to the containers hierarchy, hence, doesn't receive mouse events.
+   * 
+   * @param event  target mouse move event
+   * @return       bounds to be repainted (in screen coordinates) if any; <code>null</code> otherwise
+   */
+  @Nullable
+  Rectangle handleMouseMove(@NotNull MouseEvent event);
+
+  void handleMouseClick(@NotNull MouseEvent event);
 }

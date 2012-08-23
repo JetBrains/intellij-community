@@ -39,6 +39,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
       "\n" +
       "class <caret>Test {\n" +
       "}",
+      
       "import static java.util.concurrent\n" +
       "        .atomic.AtomicInteger.*;\n" +
       "\n" +

@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -25,25 +26,30 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ArrangementNodeComponentFactory {
 
-  @NotNull private final ArrangementNodeDisplayManager myDisplayManager;
+  @NotNull private final ArrangementNodeDisplayManager           myDisplayManager;
+  private                Consumer<ArrangementAtomMatchCondition> myRemoveConditionCallback;
 
-  public ArrangementNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager) {
+  public ArrangementNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
+                                         @NotNull Consumer<ArrangementAtomMatchCondition> removeConditionCallback)
+  {
     myDisplayManager = manager;
+    myRemoveConditionCallback = removeConditionCallback;
   }
 
   @NotNull
-  public ArrangementNodeComponent getComponent(@NotNull ArrangementSettingsNode node) {
+  public ArrangementNodeComponent getComponent(@NotNull ArrangementMatchCondition node) {
     final Ref<ArrangementNodeComponent> ref = new Ref<ArrangementNodeComponent>();
     node.invite(new ArrangementSettingsNodeVisitor() {
       @Override
-      public void visit(@NotNull ArrangementSettingsAtomNode node) {
-        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, node));
+      public void visit(@NotNull ArrangementAtomMatchCondition setting) {
+        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, setting, myRemoveConditionCallback));
       }
 
       @Override
-      public void visit(@NotNull ArrangementSettingsCompositeNode node) {
-        switch (node.getOperator()) {
-          case AND: ref.set(new ArrangementAndNodeComponent(node, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
+      public void visit(@NotNull ArrangementCompositeMatchCondition setting) {
+        switch (setting.getOperator()) {
+          case AND:
+            ref.set(new ArrangementAndNodeComponent(setting, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
           case OR: // TODO den implement
         }
       }

@@ -28,6 +28,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -166,6 +167,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     }
   }
 
+  @NotNull
   @Override
   public StatusText getEmptyText() {
     return myTable.getEmptyText();

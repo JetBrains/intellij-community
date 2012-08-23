@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentWithExpandableItems;
 import com.intellij.ui.ExpandableItemsHandler;
 import com.intellij.ui.ExpandableItemsHandlerFactory;
+import com.intellij.ui.ExpandedItemRendererComponentWrapper;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -40,8 +41,8 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public class JBList extends JList implements ComponentWithEmptyText, ComponentWithExpandableItems<Integer>{
-  private StatusText myEmptyText;
-  private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
+  @NotNull private StatusText myEmptyText;
+  @NotNull private ExpandableItemsHandler<Integer> myExpandableItemsHandler;
 
   @Nullable private AsyncProcessIcon myBusyIcon;
   private boolean myBusy;
@@ -172,14 +173,9 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
       }
     };
 
-
-    if (shouldInstallItemTooltipExpander()) myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+    myExpandableItemsHandler = ExpandableItemsHandlerFactory.install(this);
+    setCellRenderer(new DefaultListCellRenderer());
   }
-
-  protected boolean shouldInstallItemTooltipExpander() {
-    return true;
-  }
-
 
   public boolean isEmpty() {
     return getItemsCount() == 0;
@@ -190,6 +186,7 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
     return model == null ? 0 : model.getSize();
   }
 
+  @NotNull
   @Override
   public StatusText getEmptyText() {
     return myEmptyText;
@@ -199,6 +196,25 @@ public class JBList extends JList implements ComponentWithEmptyText, ComponentWi
   @NotNull
   public ExpandableItemsHandler<Integer> getExpandableItemsHandler() {
     return myExpandableItemsHandler;
+  }
+
+  @Override
+  public void setExpandableItemsEnabled(boolean enabled) {
+    myExpandableItemsHandler.setEnabled(enabled);
+  }
+
+  @Override
+  public void setCellRenderer(final ListCellRenderer cellRenderer) {
+    super.setCellRenderer(new ListCellRenderer() {
+      @Override
+      public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        Component result = cellRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (myExpandableItemsHandler != null && myExpandableItemsHandler.getExpandedItems().contains(index)) {
+          result = new ExpandedItemRendererComponentWrapper(result);
+        }
+        return result;
+      }
+    });
   }
 
   public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {

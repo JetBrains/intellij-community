@@ -109,6 +109,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("it", false, false, false, "java.lang.String"));
   }
 
+  public void testFromInjected() throws Exception {
+    doTest(new MockIntroduceVariableHandler("regexp", false, false, false, "java.lang.String"));
+  }
+
   public void testSCR10412() throws Exception {
     doTest(new MockIntroduceVariableHandler("newVar", false, false, false, "java.lang.String[]"));
   }

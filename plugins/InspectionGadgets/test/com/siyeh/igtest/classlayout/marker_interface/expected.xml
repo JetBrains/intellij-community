@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>MarkerInterface.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Marker interface</problem_class>
+    <description>Marker interface &lt;code&gt;MarkerInterface&lt;/code&gt; #loc</description>
+  </problem>
+
+  <problem>
+    <file>MarkerInterface.java</file>
+    <line>5</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Marker interface</problem_class>
+    <description>Marker interface &lt;code&gt;X&lt;/code&gt; #loc</description>
+  </problem>
+</problems>

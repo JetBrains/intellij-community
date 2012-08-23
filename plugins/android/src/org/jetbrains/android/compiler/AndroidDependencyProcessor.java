@@ -50,7 +50,7 @@ public class AndroidDependencyProcessor implements DependencyProcessor {
       @Override
       public void run() {
         final PsiClass[] classes =
-          JavaPsiFacade.getInstance(project).findClasses(topLevelClassName, GlobalSearchScope.allScope(project));
+          JavaPsiFacade.getInstance(project).findClasses(topLevelClassName, GlobalSearchScope.projectScope(project));
 
         for (PsiClass aClass : classes) {
           final Collection<PsiReference> references = searcher.findReferences(aClass, true);

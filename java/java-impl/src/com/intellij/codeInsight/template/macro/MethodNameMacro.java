@@ -18,8 +18,10 @@ package com.intellij.codeInsight.template.macro;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.LangBundle;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NotNull;
 
 public class MethodNameMacro extends Macro {
@@ -38,14 +40,7 @@ public class MethodNameMacro extends Macro {
   }
 
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
-    Project project = context.getProject();
-    int templateStartOffset = context.getTemplateStartOffset();
-    final int offset = templateStartOffset > 0 ? context.getTemplateStartOffset() - 1 : context.getTemplateStartOffset();
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
-    PsiElement place = file.findElementAt(offset);
+    PsiElement place = context.getPsiElementAtStartOffset();
     while(place != null){
       if (place instanceof PsiMethod){
         return new TextResult(((PsiMethod)place).getName());

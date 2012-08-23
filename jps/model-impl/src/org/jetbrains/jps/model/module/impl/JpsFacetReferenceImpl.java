@@ -1,8 +1,6 @@
 package org.jetbrains.jps.model.module.impl;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsNamedElementReferenceImpl;
 import org.jetbrains.jps.model.module.JpsFacet;
 import org.jetbrains.jps.model.module.JpsFacetReference;
@@ -24,11 +22,5 @@ public class JpsFacetReferenceImpl extends JpsNamedElementReferenceImpl<JpsFacet
   @Override
   public JpsFacetReferenceImpl createCopy() {
     return new JpsFacetReferenceImpl(this);
-  }
-
-  @Override
-  public JpsElementReference<JpsFacet> asExternal(@NotNull JpsModel model) {
-    model.registerExternalReference(this);
-    return this;
   }
 }

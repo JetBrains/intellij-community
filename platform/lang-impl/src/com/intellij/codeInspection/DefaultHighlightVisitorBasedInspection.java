@@ -167,7 +167,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
           @NotNull
           @Override
           protected HighlightVisitor[] createHighlightVisitors() {
-            return new HighlightVisitor[]{new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators)};
+            return new HighlightVisitor[]{new DefaultHighlightVisitor(project, highlightErrorElements, runAnnotators, true)};
           }
 
           @Override

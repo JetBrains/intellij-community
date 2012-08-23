@@ -395,10 +395,10 @@ public class HighlightInfo implements Segment {
 
 
   public static HighlightInfo fromAnnotation(@NotNull Annotation annotation) {
-    return fromAnnotation(annotation, null);
+    return fromAnnotation(annotation, null, false);
   }
 
-  public static HighlightInfo fromAnnotation(@NotNull Annotation annotation, @Nullable TextRange fixedRange) {
+  public static HighlightInfo fromAnnotation(@NotNull Annotation annotation, @Nullable TextRange fixedRange, boolean batchMode) {
     final TextAttributes forcedAttributes = annotation.getEnforcedTextAttributes();
     final TextAttributesKey forcedAttributesKey = forcedAttributes == null ? annotation.getTextAttributes() : null;
 
@@ -409,14 +409,21 @@ public class HighlightInfo implements Segment {
                                            annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping(), annotation.isFileLevelAnnotation());
     info.setGutterIconRenderer(annotation.getGutterIconRenderer());
     info.setProblemGroup(annotation.getProblemGroup());
-    List<Annotation.QuickFixInfo> fixes = annotation.getQuickFixes();
+    if (batchMode) {
+      appendFixes(fixedRange, info, annotation.getBatchFixes());
+    } else {
+      appendFixes(fixedRange, info, annotation.getQuickFixes());
+    }
+    return info;
+  }
+
+  private static void appendFixes(TextRange fixedRange, HighlightInfo info, List<Annotation.QuickFixInfo> fixes) {
     if (fixes != null) {
       for (final Annotation.QuickFixInfo quickFixInfo : fixes) {
         QuickFixAction.registerQuickFixAction(info, fixedRange != null ? fixedRange : quickFixInfo.textRange, quickFixInfo.quickFix,
                                               quickFixInfo.key != null ? quickFixInfo.key : HighlightDisplayKey.find(DefaultHighlightVisitorBasedInspection.AnnotatorBasedInspection.ANNOTATOR_SHORT_NAME));
       }
     }
-    return info;
   }
 
   public static HighlightInfoType convertType(Annotation annotation) {

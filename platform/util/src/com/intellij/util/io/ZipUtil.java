@@ -179,34 +179,44 @@ public class ZipUtil {
 
   public static boolean isZipContainsFolder(File zip) throws IOException {
     ZipFile zipFile = new ZipFile(zip);
-    Enumeration en = zipFile.entries();
+    try {
+      Enumeration en = zipFile.entries();
 
-    while (en.hasMoreElements()) {
-      ZipEntry zipEntry = (ZipEntry)en.nextElement();
-
-      // we do not necessarily get a separate entry for the subdirectory when the file
-      // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
-      // is found anywhere in the path
-      if (zipEntry.getName().indexOf('/') >= 0) {
-        return true;
+      while (en.hasMoreElements()) {
+        ZipEntry zipEntry = (ZipEntry)en.nextElement();
+  
+        // we do not necessarily get a separate entry for the subdirectory when the file
+        // in the ZIP archive is placed in a subdirectory, so we need to check if the slash
+        // is found anywhere in the path
+        if (zipEntry.getName().indexOf('/') >= 0) {
+          return true;
+        }
       }
+      zipFile.close();
+      return false;
     }
-    zipFile.close();
-    return false;
+    finally {
+      zipFile.close();
+    }
   }
 
   public static boolean isZipContainsEntry(File zip, String relativePath) throws IOException {
     ZipFile zipFile = new ZipFile(zip);
-    Enumeration en = zipFile.entries();
+    try {
+      Enumeration en = zipFile.entries();
 
-    while (en.hasMoreElements()) {
-      ZipEntry zipEntry = (ZipEntry)en.nextElement();
-      if (relativePath.equals(zipEntry.getName())) {
-        return true;
+      while (en.hasMoreElements()) {
+        ZipEntry zipEntry = (ZipEntry)en.nextElement();
+        if (relativePath.equals(zipEntry.getName())) {
+          return true;
+        }
       }
+      zipFile.close();
+      return false;
     }
-    zipFile.close();
-    return false;
+    finally {
+      zipFile.close();
+    }
   }
 
   /*

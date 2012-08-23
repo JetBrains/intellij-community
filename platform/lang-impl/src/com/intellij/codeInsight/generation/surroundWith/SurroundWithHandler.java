@@ -39,6 +39,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -86,11 +87,12 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
 
   @Nullable
   public static List<AnAction> buildSurroundActions(final Project project, final Editor editor, PsiFile file, @Nullable Surrounder surrounder){
-    if (!editor.getSelectionModel().hasSelection()) {
-      editor.getSelectionModel().selectLineAtCaret();
+    SelectionModel selectionModel = editor.getSelectionModel();
+    if (!selectionModel.hasSelection() && !selectionModel.hasBlockSelection()) {
+      selectionModel.selectLineAtCaret();
     }
-    int startOffset = editor.getSelectionModel().getSelectionStart();
-    int endOffset = editor.getSelectionModel().getSelectionEnd();
+    int startOffset = selectionModel.getSelectionStart();
+    int endOffset = selectionModel.getSelectionEnd();
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 

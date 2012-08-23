@@ -787,7 +787,7 @@ public abstract class DomInvocationHandler<T extends AbstractDomChildDescription
           @Override
           public DomElement fun(DomStub stub) {
             if (stub instanceof ElementStub && ((ElementStub)stub).isCustom()) {
-              EvaluatedXmlName name = new DummyEvaluatedXmlName(stub.getName(), null);
+              EvaluatedXmlName name = new DummyEvaluatedXmlName(stub.getName(), "");
               return new CollectionElementInvocationHandler(name, (CustomDomChildrenDescriptionImpl)description, myManager, (ElementStub)stub).getProxy();
             }
             return null;

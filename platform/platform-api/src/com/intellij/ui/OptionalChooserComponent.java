@@ -43,6 +43,7 @@ public abstract class OptionalChooserComponent<T> implements CheckBoxListListene
     reset();
   }
 
+  @NotNull
   @Override
   public StatusText getEmptyText() {
     return myList.getEmptyText();

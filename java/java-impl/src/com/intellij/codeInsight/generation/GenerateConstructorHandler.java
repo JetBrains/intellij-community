@@ -119,7 +119,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       members = ClassMember.EMPTY_ARRAY;
     }
     else{
-      members = chooseMembers(allMembers, true, false, project);
+      members = chooseMembers(allMembers, true, false, project, null);
       if (members == null) return null;
     }
     if (baseConstructors != null) {

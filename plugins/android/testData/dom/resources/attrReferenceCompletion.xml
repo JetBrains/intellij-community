@@ -1,0 +1,6 @@
+<resources>
+  <attr name="myAttr" format="integer"/>
+
+  <style name="myStyle" parent="?<caret>">
+  </style>
+</resources>

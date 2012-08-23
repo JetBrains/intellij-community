@@ -179,6 +179,7 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
     }
 
     final EditorSearchComponent header = new EditorSearchComponent(editor, project);
+    header.setRegexp(false);
     editor.setHeaderComponent(header);
   }
 

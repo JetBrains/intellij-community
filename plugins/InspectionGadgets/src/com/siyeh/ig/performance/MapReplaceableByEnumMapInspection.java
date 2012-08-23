@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,15 +29,13 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "map.replaceable.by.enum.map.display.name");
+    return InspectionGadgetsBundle.message("map.replaceable.by.enum.map.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "map.replaceable.by.enum.map.problem.descriptor");
+    return InspectionGadgetsBundle.message("map.replaceable.by.enum.map.problem.descriptor");
   }
 
   @Override
@@ -48,16 +47,19 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
     extends BaseInspectionVisitor {
 
     @Override
-    public void visitNewExpression(
-      @NotNull PsiNewExpression expression) {
+    public void visitNewExpression(@NotNull PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiType type = expression.getType();
       if (!(type instanceof PsiClassType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)type;
+      PsiClassType classType = (PsiClassType)type;
       if (!classType.hasParameters()) {
-        return;
+        final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
+        if (!(expectedType instanceof PsiClassType)) {
+          return;
+        }
+        classType = (PsiClassType)expectedType;
       }
       final PsiType[] typeArguments = classType.getParameters();
       if (typeArguments.length != 2) {
@@ -67,12 +69,10 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
       if (!(argumentType instanceof PsiClassType)) {
         return;
       }
-      if (!TypeUtils.expressionHasTypeOrSubtype(expression,
-                                                CommonClassNames.JAVA_UTIL_MAP)) {
+      if (!TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_UTIL_MAP)) {
         return;
       }
-      if (null != TypeUtils.expressionHasTypeOrSubtype(expression,
-                                                       "java.util.EnumMap", "java.util.concurrent.ConcurrentMap")) {
+      if (null != TypeUtils.expressionHasTypeOrSubtype(expression, "java.util.EnumMap", "java.util.concurrent.ConcurrentMap")) {
         return;
       }
       final PsiClassType argumentClassType = (PsiClassType)argumentType;
@@ -80,13 +80,17 @@ public class MapReplaceableByEnumMapInspection extends BaseInspection {
       if (argumentClass == null || !argumentClass.isEnum()) {
         return;
       }
-      final PsiClass aClass =
-        PsiTreeUtil.getParentOfType(expression, PsiClass.class);
+      final PsiClass aClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
       if (argumentClass.equals(aClass)) {
-        final PsiMember member =
-          PsiTreeUtil.getParentOfType(expression, PsiMember.class);
-        if (member != null &&
-            !member.hasModifierProperty(PsiModifier.STATIC)) {
+        final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class);
+        if (member != null && !member.hasModifierProperty(PsiModifier.STATIC)) {
+          return;
+        }
+      }
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      if (argumentList != null) {
+        final PsiExpression[] arguments = argumentList.getExpressions();
+        if (arguments.length > 0 && TypeUtils.expressionHasTypeOrSubtype(arguments[0], "java.util.Comparator")) {
           return;
         }
       }

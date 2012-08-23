@@ -17,6 +17,7 @@ package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -57,6 +58,7 @@ public final class Annotation implements Segment {
   private GutterIconRenderer myGutterIconRenderer;
   @Nullable
   private String myProblemGroup;
+  private List<QuickFixInfo> myBatchFixes;
 
   public static class QuickFixInfo {
     public final IntentionAction quickFix;
@@ -155,6 +157,28 @@ public final class Annotation implements Segment {
     myQuickFixes.add(new QuickFixInfo(fix, range, key));
   }
 
+  /**
+   * Registers a quickfix which would be available during batch mode only, 
+   * in particular during com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection run 
+   */
+  public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(final T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+    if (range == null) {
+      range = new TextRange(myStartOffset, myEndOffset);
+    }
+
+    if (myBatchFixes == null) {
+      myBatchFixes = new ArrayList<QuickFixInfo>();
+    }
+    myBatchFixes.add(new QuickFixInfo(fix, range, key));
+  }
+
+  /**
+   * Register a quickfix which would be available onTheFly and in the batch mode. Should implement both IntentionAction and LocalQuickFix.
+   */
+  public <T extends IntentionAction & LocalQuickFix> void registerUniversalFix(final T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
+    registerBatchFix(fix, range, key);
+    registerFix(fix, range, key);
+  }
   /**
    * Sets a flag indicating what happens with the annotation when the user starts typing.
    * If the parameter is true, the annotation is removed as soon as the user starts typing
@@ -276,6 +300,11 @@ public final class Annotation implements Segment {
   @Nullable
   public List<QuickFixInfo> getQuickFixes() {
     return myQuickFixes;
+  }
+  
+  @Nullable
+  public List<QuickFixInfo> getBatchFixes() {
+    return myBatchFixes;
   }
 
   /**

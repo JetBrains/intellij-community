@@ -125,6 +125,7 @@ public class ClassFilterEditor extends JPanel implements ComponentWithEmptyText 
     getEmptyText().setText(UIBundle.message("no.patterns"));
   }
 
+  @NotNull
   @Override
   public StatusText getEmptyText() {
     return myTable.getEmptyText();
