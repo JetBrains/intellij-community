@@ -36,8 +36,8 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("safe.delete.text",
-                                  HighlightMessageUtil.getSymbolName(getStartElement(), PsiSubstitutor.EMPTY));
+    PsiElement startElement = getStartElement();
+    return QuickFixBundle.message("safe.delete.text", startElement == null ? "" : HighlightMessageUtil.getSymbolName(startElement, PsiSubstitutor.EMPTY));
   }
 
   @Override
