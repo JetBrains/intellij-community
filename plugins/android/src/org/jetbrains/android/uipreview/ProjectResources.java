@@ -1,14 +1,17 @@
 package org.jetbrains.android.uipreview;
 
+import com.android.ide.common.rendering.api.ResourceValue;
 import com.android.ide.common.resources.InlineResourceItem;
 import com.android.ide.common.resources.IntArrayWrapper;
 import com.android.ide.common.resources.ResourceItem;
 import com.android.ide.common.resources.ResourceRepository;
+import com.android.ide.common.resources.configuration.FolderConfiguration;
 import com.android.resources.ResourceType;
 import com.android.util.Pair;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -33,8 +36,11 @@ public class ProjectResources extends ResourceRepository {
     new TIntObjectHashMap<Pair<ResourceType, String>>();
   private int myDynamicSeed = DYNAMIC_ID_SEED_START;
 
-  public ProjectResources() {
+  private final List<ProjectResources> myLibResources;
+
+  public ProjectResources(@NotNull List<ProjectResources> libResources) {
     super(false);
+    myLibResources = libResources;
   }
 
   @Nullable
@@ -87,6 +93,30 @@ public class ProjectResources extends ResourceRepository {
   @Override
   protected ResourceItem createResourceItem(String name) {
     return new ResourceItem(name);
+  }
+
+  @Override
+  public Map<ResourceType, Map<String, ResourceValue>> getConfiguredResources(FolderConfiguration referenceConfig) {
+    final Map<ResourceType, Map<String, ResourceValue>> result = new HashMap<ResourceType, Map<String, ResourceValue>>();
+
+    for (int i = myLibResources.size() - 1; i >= 0; i--) {
+      putAllResourceEntries(result, myLibResources.get(i).doGetConfiguredResources(referenceConfig));
+    }
+    putAllResourceEntries(result, doGetConfiguredResources(referenceConfig));
+    return result;
+  }
+
+  private static void putAllResourceEntries(Map<ResourceType, Map<String, ResourceValue>> result,
+                                            Map<ResourceType, Map<String, ResourceValue>> from) {
+    for (Map.Entry<ResourceType, Map<String, ResourceValue>> entry : from.entrySet()) {
+      Map<String, ResourceValue> map = result.get(entry.getKey());
+
+      if (map == null) {
+        map = new HashMap<String, ResourceValue>();
+        result.put(entry.getKey(), map);
+      }
+      map.putAll(entry.getValue());
+    }
   }
 
   private int getDynamicId(ResourceType type, String name) {
