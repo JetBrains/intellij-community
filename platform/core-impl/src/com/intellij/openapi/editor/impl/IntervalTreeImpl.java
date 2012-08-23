@@ -137,7 +137,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
           return false;
         }
       }
-      assert false: "interval not found: "+key +"; "+ intervals;
+      assert false: "interval not found: "+key +"; "+ intervals+"; isValid="+key.isValid();
       return false;
     }
 
