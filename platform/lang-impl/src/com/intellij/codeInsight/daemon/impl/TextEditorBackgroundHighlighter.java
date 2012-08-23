@@ -82,7 +82,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     if (myProject.isDisposed()) return Collections.emptyList();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     renewFile();
-    if (myFile == null || !myFile.isPhysical()) return Collections.emptyList();
+    if (myFile == null) return Collections.emptyList();
     if (myCompiled) {
       passesToIgnore = EXCEPT_OVERRIDDEN;
     }
