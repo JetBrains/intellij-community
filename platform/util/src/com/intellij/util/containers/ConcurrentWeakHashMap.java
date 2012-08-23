@@ -87,6 +87,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       myHash = object != null ? object.hashCode() : 0;
     }
 
+    @Override
     public Object get() {
       return myObject;
     }
@@ -146,10 +147,12 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
 
   public ConcurrentWeakHashMap(final TObjectHashingStrategy<K> hashingStrategy) {
     myMap = new ConcurrentHashMap<Key<K>, V>(new TObjectHashingStrategy<Key<K>>() {
+      @Override
       public int computeHashCode(final Key<K> object) {
         return hashingStrategy.computeHashCode(object.get());
       }
 
+      @Override
       public boolean equals(final Key<K> o1, final Key<K> o2) {
         return hashingStrategy.equals(o1.get(), o2.get());
       }
@@ -157,14 +160,17 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
   }
 
 
+  @Override
   public int size() {
     return entrySet().size();
   }
 
+  @Override
   public boolean isEmpty() {
     return entrySet().isEmpty();
   }
 
+  @Override
   public boolean containsKey(Object key) {
     // optimization:
     if (key == null){
@@ -196,6 +202,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     key.setObject(null);
   }
 
+  @Override
   public V get(Object key) {
     //return myMap.get(WeakKey.create(key));
     // optimization:
@@ -210,6 +217,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     }
   }
 
+  @Override
   public V put(K key, V value) {
     processQueue();
     Key<K> weakKey = WeakKey.create(key, myReferenceQueue);
@@ -217,6 +225,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     return myMap.put(o, value);
   }
 
+  @Override
   public V remove(Object key) {
     processQueue();
 
@@ -232,6 +241,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
     }
   }
 
+  @Override
   public void clear() {
     processQueue();
     myMap.clear();
@@ -248,14 +258,17 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
       this.key = key;
     }
 
+    @Override
     public K getKey() {
       return key;
     }
 
+    @Override
     public V getValue() {
       return ent.getValue();
     }
 
+    @Override
     public V setValue(V value) {
       return ent.setValue(value);
     }
@@ -280,11 +293,13 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
   private class EntrySet extends AbstractSet<Map.Entry<K,V>> {
     Set<Map.Entry<Key<K>,V>> hashEntrySet = myMap.entrySet();
 
+    @Override
     public Iterator<Map.Entry<K,V>> iterator() {
       return new Iterator<Map.Entry<K,V>>() {
         Iterator<Map.Entry<Key<K>,V>> hashIterator = hashEntrySet.iterator();
         Entry<K,V> next = null;
 
+        @Override
         public boolean hasNext() {
           while(hashIterator.hasNext()){
             Map.Entry<Key<K>, V> ent = hashIterator.next();
@@ -300,6 +315,7 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
           return false;
         }
 
+        @Override
         public Map.Entry<K, V> next() {
           if (next == null && !hasNext()) {
             throw new NoSuchElementException();
@@ -309,22 +325,26 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
           return e;
         }
 
+        @Override
         public void remove() {
           hashIterator.remove();
         }
       };
     }
 
+    @Override
     public boolean isEmpty() {
       return !iterator().hasNext();
     }
 
+    @Override
     public int size() {
       int j = 0;
       for(Iterator i = iterator(); i.hasNext(); i.next()) j++;
       return j;
     }
 
+    @Override
     public boolean remove(Object o) {
       processQueue();
       if (!(o instanceof Map.Entry)) return false;
@@ -359,26 +379,31 @@ public final class ConcurrentWeakHashMap<K,V> extends AbstractMap<K,V> implement
 
   private Set<Map.Entry<K,V>> entrySet = null;
 
+  @Override
   public Set<Map.Entry<K,V>> entrySet() {
     if (entrySet == null) entrySet = new EntrySet();
     return entrySet;
   }
 
+  @Override
   public V putIfAbsent(@NotNull final K key, final V value) {
     processQueue();
     return myMap.putIfAbsent(WeakKey.create(key, myReferenceQueue), value);
   }
 
+  @Override
   public boolean remove(@NotNull final Object key, final Object value) {
     processQueue();
     return myMap.remove(WeakKey.create((K)key, myReferenceQueue), value);
   }
 
+  @Override
   public boolean replace(@NotNull final K key, @NotNull final V oldValue, @NotNull final V newValue) {
     processQueue();
     return myMap.replace(WeakKey.create(key, myReferenceQueue), oldValue,newValue);
   }
 
+  @Override
   public V replace(@NotNull final K key, @NotNull final V value) {
     processQueue();
     return myMap.replace(WeakKey.create(key, myReferenceQueue), value);
