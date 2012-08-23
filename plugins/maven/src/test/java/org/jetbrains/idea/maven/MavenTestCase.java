@@ -476,8 +476,13 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return file;
   }
 
-  private static void setFileContent(VirtualFile file, String content) throws IOException {
-    file.setBinaryContent(content.getBytes(), file.getModificationStamp() + 4000, file.getTimeStamp() + 4000);
+  private static void setFileContent(final VirtualFile file, final String content) throws IOException {
+    new WriteAction<VirtualFile>() {
+      @Override
+      protected void run(Result<VirtualFile> result) throws Throwable {
+        file.setBinaryContent(content.getBytes(), file.getModificationStamp() + 4000, file.getTimeStamp() + 4000);
+      }
+    }.execute().getResultObject();
   }
 
   protected static void assertPathEquals(String expected, String actual) {
