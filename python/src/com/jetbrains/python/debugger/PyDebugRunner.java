@@ -176,7 +176,9 @@ public class PyDebugRunner extends GenericProgramRunner {
       debugParams.addParameter("--DEBUG");
     }
 
-    //debugParams.addParameter("--save-signatures");
+    if (PyDebuggerSettings.getInstance().getState().isSaveCallSignatures()) {
+      debugParams.addParameter("--save-signatures");
+    }
 
     final String[] debuggerArgs = new String[]{
       CLIENT_PARAM, "127.0.0.1",
