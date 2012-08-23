@@ -188,7 +188,7 @@ public class ArrangementConfigUtil {
     int rowsCreated = 0;
     if (uiParentNode != null && uiParentNode.getChildCount() > 0) {
       ArrangementTreeNode child = uiParentNode.getChildAt(uiParentNode.getChildCount() - 1);
-      if (conditionNode.getCurrent().equals(child.getBackingSetting())) {
+      if (conditionNode.getCurrent().equals(child.getBackingCondition())) {
         uiNode = child;
       }
     }
@@ -316,7 +316,7 @@ public class ArrangementConfigUtil {
         parentCopy.add(cutHierarchy);
       }
       for (int j = i + 1; j < childCount; j++) {
-        ArrangementTreeNode child = parent.getChildAt(j);
+        ArrangementTreeNode child = parent.getChildAt(i + 1);
         treeModel.removeNodeFromParent(child);
         parentCopy.add(child);
       }
@@ -527,8 +527,8 @@ public class ArrangementConfigUtil {
   }
 
   private static boolean hasEqualSetting(@NotNull ArrangementTreeNode node1, @NotNull ArrangementTreeNode node2) {
-    ArrangementMatchCondition matchCondition1 = node1.getBackingSetting();
-    ArrangementMatchCondition matchCondition2 = node2.getBackingSetting();
+    ArrangementMatchCondition matchCondition1 = node1.getBackingCondition();
+    ArrangementMatchCondition matchCondition2 = node2.getBackingCondition();
     if (matchCondition1 == null) {
       return matchCondition2 == null;
     }

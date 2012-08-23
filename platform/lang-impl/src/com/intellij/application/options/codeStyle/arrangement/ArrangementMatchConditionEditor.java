@@ -39,7 +39,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 8/14/12 9:54 AM
  */
-public class ArrangementMatcherRuleEditor extends JPanel {
+public class ArrangementMatchConditionEditor extends JPanel {
 
   @NotNull private final List<JComponent>                          myColoredComponents = new ArrayList<JComponent>();
   @NotNull private final Map<Object, ArrangementAtomNodeComponent> myComponents        =
@@ -48,8 +48,8 @@ public class ArrangementMatcherRuleEditor extends JPanel {
   @NotNull private final ArrangementStandardSettingsAware myFilter;
   @Nullable private      ArrangementRuleEditingModel      myModel;
 
-  public ArrangementMatcherRuleEditor(@NotNull ArrangementStandardSettingsAware filter,
-                                      @NotNull ArrangementNodeDisplayManager displayManager)
+  public ArrangementMatchConditionEditor(@NotNull ArrangementStandardSettingsAware filter,
+                                         @NotNull ArrangementNodeDisplayManager displayManager)
   {
     myFilter = filter;
     init(displayManager);
@@ -138,30 +138,33 @@ public class ArrangementMatcherRuleEditor extends JPanel {
     if (component == null) {
       return;
     }
-    ArrangementAtomMatchCondition setting = component.getMatchCondition();
-    boolean remove = myModel.hasCondition(setting.getValue());
+    ArrangementAtomMatchCondition chosenCondition = component.getMatchCondition();
+    boolean remove = myModel.hasCondition(chosenCondition.getValue());
     component.setSelected(!remove);
     repaintComponent(component);
     if (remove) {
-      myModel.removeAndCondition(setting);
+      myModel.removeAndCondition(chosenCondition);
       return;
     }
     
     Collection<Set<?>> mutexes = myFilter.getMutexes();
     for (Set<?> mutex : mutexes) {
-      if (!mutex.contains(setting.getValue())) {
+      if (!mutex.contains(chosenCondition.getValue())) {
         continue;
       }
       for (Object key : mutex) {
         if (myModel.hasCondition(key)) {
           ArrangementAtomNodeComponent componentToDeselect = myComponents.get(key);
-          componentToDeselect.setSelected(false);
-          myModel.removeAndCondition(componentToDeselect.getMatchCondition());
-          repaintComponent(componentToDeselect);
+          myModel.replaceCondition(componentToDeselect.getMatchCondition(), chosenCondition);
+          
+          // There is a possible case that some conditions become unavailable, e.g. changing type from 'field' to 'method'
+          // makes 'volatile' condition inappropriate.
+          updateState(myModel);
+          return;
         }
       }
     }
-    myModel.addAndCondition(setting);
+    myModel.addAndCondition(chosenCondition);
   }
 
   @Nullable

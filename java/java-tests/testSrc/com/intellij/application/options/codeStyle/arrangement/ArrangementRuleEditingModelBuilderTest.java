@@ -39,7 +39,7 @@ public class ArrangementRuleEditingModelBuilderTest extends AbstractArrangementR
     assertTrue(model.hasCondition(STATIC));
     assertFalse(model.hasCondition(PRIVATE));
     assertEquals(1, myRoot.getChildCount());
-    assertEquals(matchCondition, myRoot.getFirstChild().getBackingSetting());
+    assertEquals(matchCondition, myRoot.getFirstChild().getBackingCondition());
   }
 
   @Test
@@ -51,11 +51,11 @@ public class ArrangementRuleEditingModelBuilderTest extends AbstractArrangementR
 
     ArrangementTreeNode fieldUiNode = myRoot.getFirstChild();
     assertNotNull(fieldUiNode);
-    assertEquals(atom(FIELD), fieldUiNode.getBackingSetting());
+    assertEquals(atom(FIELD), fieldUiNode.getBackingCondition());
 
     ArrangementTreeNode modifiersUiNode = fieldUiNode.getFirstChild();
     assertNotNull(modifiersUiNode);
-    assertEquals(and(atom(PUBLIC), atom(STATIC)), modifiersUiNode.getBackingSetting());
+    assertEquals(and(atom(PUBLIC), atom(STATIC)), modifiersUiNode.getBackingCondition());
   }
 
   @Test
@@ -67,14 +67,14 @@ public class ArrangementRuleEditingModelBuilderTest extends AbstractArrangementR
 
     ArrangementTreeNode fieldUiNode = myRoot.getFirstChild();
     assertNotNull(fieldUiNode);
-    assertEquals(atom(FIELD), fieldUiNode.getBackingSetting());
+    assertEquals(atom(FIELD), fieldUiNode.getBackingCondition());
 
     ArrangementTreeNode publicStaticUiNode = fieldUiNode.getFirstChild();
     assertNotNull(publicStaticUiNode);
-    assertEquals(and(atom(PUBLIC), atom(STATIC)), publicStaticUiNode.getBackingSetting());
+    assertEquals(and(atom(PUBLIC), atom(STATIC)), publicStaticUiNode.getBackingCondition());
 
     ArrangementTreeNode privateUiNode = fieldUiNode.getLastChild();
     assertNotNull(privateUiNode);
-    assertEquals(atom(PRIVATE), privateUiNode.getBackingSetting());
+    assertEquals(atom(PRIVATE), privateUiNode.getBackingCondition());
   }
 }

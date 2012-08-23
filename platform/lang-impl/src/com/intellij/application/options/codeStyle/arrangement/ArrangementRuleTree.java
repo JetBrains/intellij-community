@@ -434,6 +434,8 @@ public class ArrangementRuleTree {
   }
 
   private void onModelChange(@NotNull ArrangementRuleEditingModelImpl model, @NotNull final TIntIntHashMap rowChanges) {
+    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
+    
     // Refresh models.
     myModels.forEachValue(myModelNodesRefresher);
 
@@ -455,14 +457,36 @@ public class ArrangementRuleTree {
         }
         return true;
       }
+
+      
     });
     putAll(changedModelMappings, myModels);
     putAll(changedRendererMappings, myRenderers);
+    
+    // Drop JTree visual caches.
+    rowChanges.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int oldRow, int newRow) {
+        refreshTreeNode(oldRow);
+        refreshTreeNode(newRow); 
+        return true;
+      }
+      private void refreshTreeNode(int row) {
+        TreePath path = myTree.getPathForRow(row);
+        if (path == null) {
+          return;
+        }
+        TreeNode node = (TreeNode)path.getLastPathComponent();
+        if (node == null) {
+          return;
+        }
+        myTreeModel.nodeStructureChanged(node);
+      }
+    });
 
     // Perform necessary actions for the changed model.
     ArrangementTreeNode topMost = model.getTopMost();
     ArrangementTreeNode bottomMost = model.getBottomMost();
-    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
     doClearSelection();
     myExplicitSelectionChange = true;
     try {
@@ -470,9 +494,10 @@ public class ArrangementRuleTree {
         TreePath path = new TreePath(node.getPath());
         int row = myTree.getRowForPath(path);
         myRenderers.remove(row);
+        mySelectionModel.addSelectionPath(path);
         myTreeModel.nodeChanged(node);
         mySelectionModel.addSelectionPath(path);
-        ArrangementMatchCondition matchCondition = node.getBackingSetting();
+        ArrangementMatchCondition matchCondition = node.getBackingCondition();
         if (matchCondition != null) {
           getNodeComponentAt(row, matchCondition).setSelected(true);
         }
@@ -506,7 +531,7 @@ public class ArrangementRuleTree {
                                                   int row,
                                                   boolean hasFocus)
     {
-      ArrangementMatchCondition node = ((ArrangementTreeNode)value).getBackingSetting();
+      ArrangementMatchCondition node = ((ArrangementTreeNode)value).getBackingCondition();
       if (node == null) {
         return EMPTY_RENDERER;
       }

@@ -22,7 +22,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 /**
- * // TODO den add doc
+ * JTree node for arrangement rule tree.
+ * <p/>
+ * The general idea is to provide two additional properties - {@link #getBackingCondition() backing condition} and {@link #getRow() row}
+ * and encapsulate class casts.
  * 
  * @author Denis Zhdanov
  * @since 8/20/12 10:53 PM
@@ -31,25 +34,21 @@ public class ArrangementTreeNode extends DefaultMutableTreeNode {
 
   private static final int NO_ROW = -1;
 
-  @Nullable private ArrangementMatchCondition mySettings;
-  private           int                       myRow;
+  @Nullable private final ArrangementMatchCondition myCondition;
+  private                 int                       myRow;
 
-  public ArrangementTreeNode(@Nullable ArrangementMatchCondition settings) {
-    this(settings, NO_ROW);
+  public ArrangementTreeNode(@Nullable ArrangementMatchCondition condition) {
+    this(condition, NO_ROW);
   }
 
-  public ArrangementTreeNode(@Nullable ArrangementMatchCondition settings, int row) {
-    mySettings = settings;
+  public ArrangementTreeNode(@Nullable ArrangementMatchCondition condition, int row) {
+    myCondition = condition;
     myRow = row;
   }
 
   @Nullable
-  public ArrangementMatchCondition getBackingSetting() {
-    return mySettings;
-  }
-
-  public void setSettings(@Nullable ArrangementMatchCondition settings) {
-    mySettings = settings;
+  public ArrangementMatchCondition getBackingCondition() {
+    return myCondition;
   }
 
   public boolean isRowSet() {
@@ -71,9 +70,10 @@ public class ArrangementTreeNode extends DefaultMutableTreeNode {
   @NotNull
   public ArrangementTreeNode copy() {
     // Settings are copied by-ref intentionally here.
-    return new ArrangementTreeNode(mySettings, myRow);
+    return new ArrangementTreeNode(myCondition, myRow);
   }
 
+  @Nullable
   @Override
   public ArrangementTreeNode getParent() {
     return (ArrangementTreeNode)super.getParent();
@@ -111,6 +111,6 @@ public class ArrangementTreeNode extends DefaultMutableTreeNode {
 
   @Override
   public String toString() {
-    return mySettings == null ? "" : mySettings.toString() + (myRow >= 0 ? ": row=" + myRow : "");
+    return myCondition == null ? "" : myCondition.toString() + (myRow >= 0 ? ": row=" + myRow : "");
   }
 }

@@ -24,7 +24,7 @@ import java.util.Set;
 /**
  * Encapsulates composite match condition, e.g. "an entry has type 'field' and modifier 'static'".
  * <p/>
- * Thread-safe.
+ * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 1:18 PM

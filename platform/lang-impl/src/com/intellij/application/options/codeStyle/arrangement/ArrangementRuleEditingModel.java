@@ -48,4 +48,18 @@ public interface ArrangementRuleEditingModel {
   void addAndCondition(@NotNull ArrangementAtomMatchCondition condition);
 
   void removeAndCondition(@NotNull ArrangementMatchCondition condition);
+
+  /**
+   * We need to be able to replace one condition by another. Most of the time it can be simulated by
+   * {@link #removeAndCondition(ArrangementMatchCondition) 'remove old'} and
+   * {@link #addAndCondition(ArrangementAtomMatchCondition) 'add new'} actions sequence but that doesn't work when
+   * {@link #getMatchCondition() underlying condition} has the only atom condition. Removing it eliminates the condition at all.
+   * 
+   * @param from  condition which should be replaced
+   * @param to    replacement condition
+   * @throws IllegalArgumentException   when given 'from' condition is not a part of the
+   *                                    {@link #getMatchCondition() underlying match condition}
+   */
+  void replaceCondition(@NotNull ArrangementAtomMatchCondition from, @NotNull ArrangementAtomMatchCondition to)
+    throws IllegalArgumentException;
 }
