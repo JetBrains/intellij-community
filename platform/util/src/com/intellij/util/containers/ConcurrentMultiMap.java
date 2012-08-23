@@ -23,6 +23,7 @@ import java.util.Map;
  * @author peter
  */
 public class ConcurrentMultiMap<K,V> extends MultiMap<K,V> {
+  @Override
   protected Map<K, Collection<V>> createMap() {
     return new ConcurrentHashMap<K, Collection<V>>();
   }

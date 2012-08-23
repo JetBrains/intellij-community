@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class ConcurrentInstanceMap<T> extends ConcurrentFactoryMap<Class<? extends T>,T>{
+  @Override
   @NotNull
   protected T create(final Class<? extends T> key) {
     try {

@@ -23,6 +23,7 @@ import java.util.Map;
  */
 public abstract class ConcurrentWeakFactoryMap<T,V> extends FactoryMap<T,V>{
 
+  @Override
   protected Map<T, V> createMap() {
     return new ConcurrentWeakHashMap<T,V>();
   }
