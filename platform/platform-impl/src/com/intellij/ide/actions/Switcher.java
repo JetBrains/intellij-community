@@ -513,6 +513,13 @@ public class Switcher extends AnAction implements DumbAware {
           }).createPopup();
 
       if (isPinnedMode()) {
+        new AnAction(null ,null ,null) {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            changeSelection();
+          }
+        }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), this, myPopup);
+
         new AnAction(null, null, null) {
           @Override
           public void actionPerformed(AnActionEvent e) {
@@ -625,11 +632,15 @@ public class Switcher extends AnAction implements DumbAware {
           break;
       }
       if (e.getKeyCode() == ALT_KEY) {
-        if (isFilesSelected()) {
-          goLeft();
-        } else {
-          goRight();
-        }
+        changeSelection();
+      }
+    }
+
+    private void changeSelection() {
+      if (isFilesSelected()) {
+        goLeft();
+      } else {
+        goRight();
       }
     }
 
@@ -869,6 +880,15 @@ public class Switcher extends AnAction implements DumbAware {
         super(SwitcherPanel.this);
         addChangeListener(this);
         setComparator(new SpeedSearchComparator(false, true));
+      }
+
+      @Override
+      protected void processKeyEvent(KeyEvent e) {
+        final int keyCode = e.getKeyCode();
+        if (keyCode == VK_LEFT || keyCode == VK_RIGHT) {
+          return;
+        }
+        super.processKeyEvent(e);
       }
 
       @Override
