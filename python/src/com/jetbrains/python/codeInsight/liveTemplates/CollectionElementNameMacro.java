@@ -1,4 +1,4 @@
-package com.jetbrains.python.codeInsight;
+package com.jetbrains.python.codeInsight.liveTemplates;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;

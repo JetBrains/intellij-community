@@ -501,7 +501,7 @@ public class PyPackagesPanel extends JPanel {
           final String description = PyPackageManagerImpl.UI.createDescription(exceptions, firstLine);
           packageManager.showInstallationError(myProject, "Failed to install " + name, description);
         }
-        packageManager.clearCaches();
+        packageManager.refresh();
         updatePackages(sdk);
         for (Consumer<Sdk> listener : myPathChangedListeners) {
           listener.consume(sdk);

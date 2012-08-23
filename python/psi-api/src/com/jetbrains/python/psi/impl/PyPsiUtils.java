@@ -343,7 +343,7 @@ public class PyPsiUtils {
       if (value instanceof PySequenceExpression) {
         result.addAll(ContainerUtil.newArrayList(((PySequenceExpression)value).getElements()));
       }
-      else if (value instanceof PyStringLiteralExpression) {
+      else {
         result.add(value);
       }
     }
