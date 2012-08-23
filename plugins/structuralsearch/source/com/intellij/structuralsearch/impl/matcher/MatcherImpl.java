@@ -16,11 +16,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.roots.impl.FileIndexImplUtil;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
@@ -371,7 +370,7 @@ public class MatcherImpl {
               }
             }
           }
-          return VfsUtil.toVirtualFileArray(result);
+          return VfsUtilCore.toVirtualFileArray(result);
         }
       });
 
@@ -387,11 +386,7 @@ public class MatcherImpl {
 
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            FileIndexImplUtil.iterateRecursively(
-              rootFile,
-              filter,
-              ci
-            );
+            VfsUtilCore.iterateChildrenRecursively(rootFile, filter, ci);
           }
         });
 
