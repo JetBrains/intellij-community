@@ -113,7 +113,12 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
             }
           });
         } else if (impl.myCallback instanceof FileChooser.FileChooserConsumer) {
-          ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled();
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled();
+            }
+          });
         }
       }
       finally {
