@@ -77,18 +77,13 @@ public class QueueProcessor<T> {
   private static <T> PairConsumer<T, Runnable> wrappingProcessor(final Consumer<T> processor) {
     return new PairConsumer<T, Runnable>() {
       @Override
-      public void consume(T item, Runnable runnable) {
-        try {
-          processor.consume(item);
-        }
-        catch (Throwable e) {
-          try {
-            LOG.error(e);
+      public void consume(final T item, Runnable runnable) {
+        runSafely(new Runnable() {
+          @Override
+          public void run() {
+            processor.consume(item);
           }
-          catch (Throwable e2) {
-            e2.printStackTrace();
-          }
-        }
+        });
         runnable.run();
       }
     };
@@ -202,17 +197,12 @@ public class QueueProcessor<T> {
       @Override
       public void run() {
         if (myDeathCondition.value(null)) return;
-        try {
-          myProcessor.consume(item, myContinuationContext);
-        }
-        catch (Throwable t) {
-          try {
-            LOG.error(t);
+        runSafely(new Runnable() {
+          @Override
+          public void run() {
+            myProcessor.consume(item, myContinuationContext);
           }
-          catch (Exception ignore) {
-            // should survive assertions
-          }
-        }
+        });
       }
     };
     final Application application = ApplicationManager.getApplication();
@@ -229,6 +219,20 @@ public class QueueProcessor<T> {
       application.executeOnPooledThread(runnable);
     }
     return true;
+  }
+
+  public static void runSafely(Runnable run) {
+    try {
+      run.run();
+    }
+    catch (Throwable e) {
+      try {
+        LOG.error(e);
+      }
+      catch (Throwable e2) {
+        e2.printStackTrace();
+      }
+    }
   }
 
   public boolean isEmpty() {
