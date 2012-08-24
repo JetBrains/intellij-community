@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,15 +51,14 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
 
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(editor, file);
     assert instanceOfExpression.getContainingFile() == file : instanceOfExpression.getContainingFile() + "; file="+file;
-    PsiElement decl = createAndInsertCast(instanceOfExpression);
+    PsiElement decl = createAndInsertCast(instanceOfExpression, editor, file);
     if (decl == null) return;
-    decl = CodeStyleManager.getInstance(project).reformat(decl);
-    CaretModel caretModel = editor.getCaretModel();
-    caretModel.moveToOffset(decl.getTextRange().getEndOffset());
+    decl = CodeStyleManager.getInstance(project).reformat(CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(decl));
+    editor.getCaretModel().moveToOffset(decl.getTextRange().getEndOffset());
   }
 
   @Nullable
-  private static PsiElement createAndInsertCast(final PsiInstanceOfExpression instanceOfExpression) throws IncorrectOperationException {
+  private static PsiElement createAndInsertCast(final PsiInstanceOfExpression instanceOfExpression, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElementFactory factory = JavaPsiFacade.getInstance(instanceOfExpression.getProject()).getElementFactory();
     PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText("((a)b)", instanceOfExpression);
 
@@ -68,8 +68,13 @@ public class CreateCastExpressionFromInstanceofAction extends CreateLocalVarFrom
     cast.getCastType().replace(factory.createTypeElement(castType));
     cast.getOperand().replace(instanceOfExpression.getOperand());
 
-    PsiElement element = insertAtAnchor(instanceOfExpression, statement);
-    return CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(element);
+    final PsiStatement statementInside = isNegated(instanceOfExpression) ? null : getExpressionStatementInside(file, editor);
+    if (statementInside != null) {
+      return statementInside.replace(statement);
+    }
+    else {
+      return insertAtAnchor(instanceOfExpression, statement);
+    }
   }
 
   @Override
