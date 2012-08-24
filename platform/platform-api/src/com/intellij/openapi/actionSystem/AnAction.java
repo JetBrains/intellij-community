@@ -155,7 +155,7 @@ public abstract class AnAction implements PossiblyDumbAware {
     }
   }
 
-  public final void registerCustomShortcutSet(int keyCode, @JdkConstants.InputEventMask int modifiers, JComponent component) {
+  public final void registerCustomShortcutSet(int keyCode, @JdkConstants.InputEventMask int modifiers, @Nullable JComponent component) {
     registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(keyCode, modifiers)), component);
   } 
 
