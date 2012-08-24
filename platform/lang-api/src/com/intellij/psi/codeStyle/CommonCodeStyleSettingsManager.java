@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import org.jdom.Content;
 import org.jdom.Element;
@@ -128,88 +129,98 @@ public class CommonCodeStyleSettingsManager implements JDOMExternalizable {
   }
 
   private void registerCommonSettings(@NotNull Language lang, @NotNull CommonCodeStyleSettings settings) {
-    if (!myCommonSettingsMap.containsKey(lang)) {
-      myCommonSettingsMap.put(lang, settings);
+    synchronized (this) {
+      if (!myCommonSettingsMap.containsKey(lang)) {
+        myCommonSettingsMap.put(lang, settings);
+        settings.getRootSettings(); // check not null
+      }
     }
   }
 
   @NotNull
   public CommonCodeStyleSettingsManager clone(@NotNull CodeStyleSettings parentSettings) {
-    CommonCodeStyleSettingsManager settingsManager = new CommonCodeStyleSettingsManager(parentSettings);
-    if (myCommonSettingsMap != null && !myCommonSettingsMap.isEmpty()) {
-      settingsManager.initCommonSettingsMap();
-      for (Map.Entry<Language, CommonCodeStyleSettings> entry : myCommonSettingsMap.entrySet()) {
-        CommonCodeStyleSettings clonedSettings = entry.getValue().clone(parentSettings);
-        settingsManager.registerCommonSettings(entry.getKey(), clonedSettings);
+    synchronized (this) {
+      CommonCodeStyleSettingsManager settingsManager = new CommonCodeStyleSettingsManager(parentSettings);
+      if (myCommonSettingsMap != null && !myCommonSettingsMap.isEmpty()) {
+        settingsManager.initCommonSettingsMap();
+        for (Map.Entry<Language, CommonCodeStyleSettings> entry : myCommonSettingsMap.entrySet()) {
+          CommonCodeStyleSettings clonedSettings = entry.getValue().clone(parentSettings);
+          settingsManager.registerCommonSettings(entry.getKey(), clonedSettings);
+        }
       }
+      return settingsManager;
     }
-    return settingsManager;
   }
 
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
-    initCommonSettingsMap();
-    final List list = element.getChildren(COMMON_SETTINGS_TAG);
-    for (Object o : list) {
-      final Element commonSettingsElement = (Element)o;
-      final String languageId = commonSettingsElement.getAttributeValue(LANGUAGE_ATTR);
-      if (languageId != null && !languageId.isEmpty()) {
-        Language target = Language.findLanguageByID(languageId);
-        boolean isKnownLanguage = target != null;
-        if (isKnownLanguage) {
-          final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(target);
-          if (provider != null) {
-            CommonCodeStyleSettings settings = provider.getDefaultCommonSettings();
-            if (settings != null) {
-              settings.readExternal(commonSettingsElement);
-              init(settings, target);
+    synchronized (this) {
+      initCommonSettingsMap();
+      final List list = element.getChildren(COMMON_SETTINGS_TAG);
+      for (Object o : list) {
+        final Element commonSettingsElement = (Element)o;
+        final String languageId = commonSettingsElement.getAttributeValue(LANGUAGE_ATTR);
+        if (languageId != null && !languageId.isEmpty()) {
+          Language target = Language.findLanguageByID(languageId);
+          boolean isKnownLanguage = target != null;
+          if (isKnownLanguage) {
+            final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(target);
+            if (provider != null) {
+              CommonCodeStyleSettings settings = provider.getDefaultCommonSettings();
+              if (settings != null) {
+                settings.readExternal(commonSettingsElement);
+                init(settings, target);
+              }
+            }
+            else {
+              isKnownLanguage = false;
             }
           }
-          else {
-            isKnownLanguage = false;
+          if (!isKnownLanguage) {
+            myUnknownSettingsMap.put(languageId, (Content)commonSettingsElement.clone());
           }
         }
-        if (!isKnownLanguage) {
-          myUnknownSettingsMap.put(languageId, (Content)commonSettingsElement.clone());
-        }
       }
+      initNonReadSettings();
     }
-    initNonReadSettings();
   }
 
   @Override
   public void writeExternal(@NotNull Element element) throws WriteExternalException {
-    if (myCommonSettingsMap == null) return;
+    synchronized (this) {
+      if (myCommonSettingsMap == null) return;
 
-    final Map<String, Language> id2lang = new HashMap<String, Language>();
-    for (final Language language : myCommonSettingsMap.keySet()) {
-      id2lang.put(language.getID(), language);
-    }
-
-    final Set<String> langIdList = new HashSet<String>();
-    langIdList.addAll(myUnknownSettingsMap.keySet());
-    langIdList.addAll(id2lang.keySet());
-
-    final String[] languages = langIdList.toArray(new String[langIdList.size()]);
-    Arrays.sort(languages, new Comparator<String>() {
-      public int compare(@NotNull final String o1, final String o2) {
-        return o1.compareTo(o2);
+      final Map<String, Language> id2lang = new HashMap<String, Language>();
+      for (final Language language : myCommonSettingsMap.keySet()) {
+        id2lang.put(language.getID(), language);
       }
-    });
 
-    for (final String id : languages) {
-      final Language language = id2lang.get(id);
-      if (language != null) {
-        final CommonCodeStyleSettings commonSettings = myCommonSettingsMap.get(language);
-        Element commonSettingsElement = new Element(COMMON_SETTINGS_TAG);
-        commonSettings.writeExternal(commonSettingsElement);
-        commonSettingsElement.setAttribute(LANGUAGE_ATTR, language.getID());
-        if (!commonSettingsElement.getChildren().isEmpty()) {
-          element.addContent(commonSettingsElement);
+      final Set<String> langIdList = new HashSet<String>();
+      langIdList.addAll(myUnknownSettingsMap.keySet());
+      langIdList.addAll(id2lang.keySet());
+
+      final String[] languages = ArrayUtil.toStringArray(langIdList);
+      Arrays.sort(languages, new Comparator<String>() {
+        @Override
+        public int compare(@NotNull final String o1, final String o2) {
+          return o1.compareTo(o2);
         }
-      } else {
-        final Content unknown = myUnknownSettingsMap.get(id);
-        if (unknown != null) element.addContent(unknown.detach());
+      });
+
+      for (final String id : languages) {
+        final Language language = id2lang.get(id);
+        if (language != null) {
+          final CommonCodeStyleSettings commonSettings = myCommonSettingsMap.get(language);
+          Element commonSettingsElement = new Element(COMMON_SETTINGS_TAG);
+          commonSettings.writeExternal(commonSettingsElement);
+          commonSettingsElement.setAttribute(LANGUAGE_ATTR, language.getID());
+          if (!commonSettingsElement.getChildren().isEmpty()) {
+            element.addContent(commonSettingsElement);
+          }
+        } else {
+          final Content unknown = myUnknownSettingsMap.get(id);
+          if (unknown != null) element.addContent(unknown.detach());
+        }
       }
     }
   }
