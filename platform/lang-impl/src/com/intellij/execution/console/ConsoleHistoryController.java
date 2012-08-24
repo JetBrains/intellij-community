@@ -47,6 +47,7 @@ import org.xmlpull.v1.XmlSerializer;
 
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -69,15 +70,26 @@ public class ConsoleHistoryController {
   private long myLastSaveStamp;
 
   private String myUserValue;
+  @NotNull
+  private final Charset myCharset;
 
   public ConsoleHistoryController(@NotNull final String type,
                                   @Nullable final String persistenceId,
                                   @NotNull final LanguageConsoleImpl console,
                                   @NotNull final ConsoleHistoryModel model) {
+    this(type, persistenceId, console, model, Charset.defaultCharset());
+  }
+  public ConsoleHistoryController(@NotNull final String type,
+                                  @Nullable final String persistenceId,
+                                  @NotNull final LanguageConsoleImpl console,
+                                  @NotNull final ConsoleHistoryModel model,
+                                  @NotNull final Charset charset)
+  {
     myType = type;
     myId = StringUtil.isEmpty(persistenceId)? console.getProject().getPresentableUrl() : persistenceId;
     myConsole = console;
     myModel = model;
+    myCharset = charset;
   }
 
   public boolean isMultiline() {
@@ -148,7 +160,7 @@ public class ConsoleHistoryController {
     if (!file.exists()) return false;
     HierarchicalStreamReader xmlReader = null;
     try {
-      xmlReader = new XppReader(new FileReader(file));
+      xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), myCharset));
       String text = loadHistory(xmlReader, id);
       if (text != null) {
         setConsoleText(text, false, false);
@@ -185,7 +197,7 @@ public class ConsoleHistoryController {
       catch (Exception e) {
         // not recognized
       }
-      serializer.setOutput(new PrintWriter(os = new SafeFileOutputStream(file)));
+      serializer.setOutput(os = new SafeFileOutputStream(file), myCharset.name());
       saveHistory(serializer);
     }
     catch (Exception ex) {
