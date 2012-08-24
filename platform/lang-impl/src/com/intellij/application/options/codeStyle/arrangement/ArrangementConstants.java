@@ -27,6 +27,8 @@ public class ArrangementConstants {
   @NonNls public static final String RULE_EDITOR_PLACE                     = "Arrangement.RuleEditor.Place";
   @NonNls public static final String RULE_TREE_PLACE                       = "Arrangement.RuleTree.Place";
 
+  public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
+
   private ArrangementConstants() {
   }
 }

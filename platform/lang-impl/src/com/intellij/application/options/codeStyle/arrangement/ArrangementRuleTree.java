@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.*;
@@ -47,6 +48,7 @@ import java.util.List;
 public class ArrangementRuleTree {
 
   @NotNull private static final JLabel EMPTY_RENDERER = new JLabel("");
+  private static final          Logger LOG            = Logger.getInstance("#" + ArrangementRuleTree.class.getName());
 
   @NotNull private final List<ArrangementRuleSelectionListener> myListeners           = new ArrayList<ArrangementRuleSelectionListener>();
   @NotNull private final TreeSelectionModel                     mySelectionModel      = new MySelectionModel();
@@ -169,6 +171,17 @@ public class ArrangementRuleTree {
     expandAll(myTree, new TreePath(myRoot));
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
+    
+    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
+      LOG.info("Arrangement tree is constructed. Models:");
+      myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
+        @Override
+        public boolean execute(ArrangementRuleEditingModelImpl model) {
+          LOG.info(String.format("  row %d, model '%s'", model.getRow(), model.getMatchCondition())); 
+          return true;
+        }
+      });
+    }
   }
 
   private void selectPreviousRule() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.model.*;
@@ -35,6 +36,8 @@ import java.util.Set;
 public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingModel {
 
   @NotNull private static final MyConditionsBuilder CONDITIONS_BUILDER = new MyConditionsBuilder();
+
+  @NotNull private static final Logger LOG = Logger.getInstance("#" + ArrangementRuleEditingModelImpl.class.getName());
 
   @NotNull private final Set<Listener> myListeners  = new HashSet<Listener>();
   @NotNull private final Set<Object>   myConditions = new HashSet<Object>();
@@ -138,12 +141,22 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   
   @Override
   public void addAndCondition(@NotNull ArrangementAtomMatchCondition condition) {
+    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
+      LOG.info(String.format(
+        "Arrangement rule modification - adding a condition '%s'. Model: '%s', row: %d", condition, myMatchCondition, myRow
+      ));
+    }
     ArrangementMatchCondition newCondition = ArrangementUtil.and(myMatchCondition.clone(), condition);
     applyNewCondition(newCondition);
   }
   
   @Override
   public void removeAndCondition(@NotNull ArrangementMatchCondition condition) {
+    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
+      LOG.info(String.format(
+        "Arrangement rule modification - removing a condition '%s'. Model: '%s', row: %d", condition, myMatchCondition, myRow
+      ));
+    }
     if (myMatchCondition.equals(condition)) {
       destroy();
       return;
@@ -178,12 +191,19 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     for (Listener listener : myListeners) {
       listener.onChanged(this, rowChanges);
     }
+
+    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
+      LOG.info(String.format("Arrangement rule is modified: '%s', row: %d", myMatchCondition, myRow));
+    }
   }
 
   @Override
-  public void replaceCondition(@NotNull ArrangementAtomMatchCondition from, @NotNull ArrangementAtomMatchCondition to)
-    throws IllegalArgumentException
-  {
+  public void replaceCondition(@NotNull ArrangementAtomMatchCondition from, @NotNull ArrangementAtomMatchCondition to) {
+    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
+      LOG.info(String.format(
+        "Arrangement rule modification - replacing condition '%s' by '%s'. Model: '%s', row: %d", from, to, myMatchCondition, myRow
+      ));
+    }
     ArrangementMatchCondition newCondition;
     if (myMatchCondition.equals(from)) {
       newCondition = to;
@@ -201,6 +221,9 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
 
   @Override
   public void destroy() {
+    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
+      LOG.info(String.format("Arrangement rule modification - destroy. Model: '%s', row: %d", myMatchCondition, myRow));
+    }
     for (Listener listener : myListeners) {
       listener.beforeModelDestroy(this);
     }
