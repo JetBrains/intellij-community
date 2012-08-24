@@ -114,7 +114,12 @@ public abstract class CreateResourceDirectoryDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myResourceTypeComboBox;
+    if (myResourceTypeComboBox.isEnabled()) {
+      return myResourceTypeComboBox;
+    }
+    else {
+      return myDirectoryNameTextField;
+    }
   }
 
   public InputValidator getValidator() {
