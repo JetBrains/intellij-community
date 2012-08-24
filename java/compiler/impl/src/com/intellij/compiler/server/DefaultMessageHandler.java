@@ -18,6 +18,7 @@ package com.intellij.compiler.server;
 import com.intellij.compiler.make.CachingSearcher;
 import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -47,6 +48,7 @@ import java.util.concurrent.Executor;
  *         Date: 4/18/12
  */
 public abstract class DefaultMessageHandler implements BuilderMessageHandler {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.DefaultMessageHandler");
   private final int MAX_CONSTANT_SEARCHES = Registry.intValue("compiler.max.static.constants.searches");
   private final Project myProject;
   private int myConstantSearchesCount = 0;
@@ -100,17 +102,19 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       if (isDumbMode()) {
         // do not wait until dumb mode finishes
         isSuccess.set(Boolean.FALSE);
+        LOG.debug("Constant search task: cannot search in dumb mode");
       }
       else {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
             try {
-              final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(ownerClassName.replace('$', '.'), GlobalSearchScope.allScope(myProject));
+              String qualifiedName = ownerClassName.replace('$', '.');
+              final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(qualifiedName, GlobalSearchScope.allScope(myProject));
               if (isRemoved) {
                 if (classes.length > 0) {
                   for (PsiClass aClass : classes) {
-                    final boolean sucess = performRemovedConstantSearch(aClass, fieldName, accessFlags, affectedPaths);
-                    if (!sucess) {
+                    final boolean success = performRemovedConstantSearch(aClass, fieldName, accessFlags, affectedPaths);
+                    if (!success) {
                       isSuccess.set(Boolean.FALSE);
                       break;
                     }
@@ -145,15 +149,18 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
                   }
                   if (!foundAtLeastOne) {
                     isSuccess.set(Boolean.FALSE);
+                    LOG.debug("Constant search task: field " + fieldName + " not found in classes " + qualifiedName);
                   }
                 }
                 else {
                   isSuccess.set(Boolean.FALSE);
+                  LOG.debug("Constant search task: class " + qualifiedName + " not found");
                 }
               }
             }
             catch (Throwable e) {
               isSuccess.set(Boolean.FALSE);
+              LOG.debug("Constant search task: failed with message " + e.getMessage());
             }
           }
         });
@@ -166,9 +173,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       if (isSuccess.get()) {
         builder.setIsSuccess(true);
         builder.addAllPath(affectedPaths);
+        LOG.debug("Constant search task: " + affectedPaths.size() + " affected files found");
       }
       else {
         builder.setIsSuccess(false);
+        LOG.debug("Constant search task: unsuccessful");
       }
       Channels.write(channel, CmdlineProtoUtil.toMessage(sessionId, CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
         CmdlineRemoteProto.Message.ControllerMessage.Type.CONSTANT_SEARCH_RESULT).setConstantSearchResult(builder.build()).build()
@@ -215,9 +224,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       }
     }
     catch (PsiInvalidElementAccessException e) {
+      LOG.debug("Constant search task: PIEAE thrown while searching of usages of changed constant");
       return false;
     }
     catch (ProcessCanceledException e) {
+      LOG.debug("Constant search task: PCE thrown while searching of usages of changed constant");
       return false;
     }
     return true;
@@ -257,6 +268,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         }
         catch (PsiInvalidElementAccessException e) {
           result.set(Boolean.FALSE);
+          LOG.debug("Constant search task: PIEAE thrown while searching of usages of removed constant");
           return false;
         }
       }

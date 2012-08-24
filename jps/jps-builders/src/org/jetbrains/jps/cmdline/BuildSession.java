@@ -213,9 +213,11 @@ final class BuildSession implements Runnable, CanceledStatus {
           files.add(new File(path));
         }
         future.setResult(files);
+        LOG.debug("Constant search result: " + files.size() + " affected files found");
       }
       else {
         future.setDone();
+        LOG.debug("Constant search failed");
       }
     }
   }

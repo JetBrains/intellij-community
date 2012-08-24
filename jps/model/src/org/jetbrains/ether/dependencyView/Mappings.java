@@ -831,7 +831,12 @@ public class Mappings {
             debug("Field: ", t.field.name);
 
             if (!affection.isKnown()) {
-              debug("No external dependency information available.");
+              if (myConstantSearch != null) {
+                debug("No external dependency information available.");
+              }
+              else {
+                debug("Constant search service not available.");
+              }
               debug("Trying to soften non-incremental decision.");
               if (!incrementalDecision(t.owner, t.field, affectedFiles, myFilter)) {
                 debug("No luck.");
