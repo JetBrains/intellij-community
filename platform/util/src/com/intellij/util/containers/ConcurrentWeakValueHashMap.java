@@ -17,219 +17,53 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.HashSet;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 
-public final class ConcurrentWeakValueHashMap<K,V> implements ConcurrentMap<K,V> {
-  private final ConcurrentHashMap<K,MyReference<K,V>> myMap;
-  private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
-
-  public ConcurrentWeakValueHashMap(final Map<K, V> map) {
-    this();
-    putAll(map);
+public final class ConcurrentWeakValueHashMap<K,V> extends ConcurrentRefValueHashMap<K,V> {
+  public ConcurrentWeakValueHashMap(Map<K, V> map) {
+    super(map);
   }
 
   public ConcurrentWeakValueHashMap() {
-    myMap = new ConcurrentHashMap<K, MyReference<K,V>>();
-  }
-  public ConcurrentWeakValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
-    myMap = new ConcurrentHashMap<K, MyReference<K,V>>(initialCapacity, loadFactor, concurrencyLevel);
+    super();
   }
 
-  private static class MyReference<K,T> extends WeakReference<T> {
+  public ConcurrentWeakValueHashMap(int initialCapacity, float loadFactor, int concurrencyLevel) {
+    super(initialCapacity, loadFactor, concurrencyLevel);
+  }
+
+  private static class MyWeakReference<K,T> extends WeakReference<T> implements MyReference<K,T> {
     private final K key;
-    public MyReference(K key, T referent, ReferenceQueue<? super T> q) {
+    private MyWeakReference(K key, T referent, ReferenceQueue<T> q) {
       super(referent, q);
       this.key = key;
     }
 
-    public boolean equals(final Object o) {
+    @Override
+    public K getKey() {
+      return key;
+    }
+
+    // MUST work with gced references too for the code in processQueue to work
+    public final boolean equals(final Object o) {
       if (this == o) return true;
       if (o == null || getClass() != o.getClass()) return false;
 
       final MyReference that = (MyReference)o;
 
-      return key.equals(that.key) && Comparing.equal(get(), that.get());
+      return key.equals(that.getKey()) && Comparing.equal(get(), that.get());
     }
 
-    public int hashCode() {
+    public final int hashCode() {
       return key.hashCode();
     }
   }
 
-  private void processQueue() {
-    while(true){
-      MyReference<K,V> ref = (MyReference<K,V>)myQueue.poll();
-      if (ref == null) {
-        break;
-      }
-      if (myMap.get(ref.key) == ref){
-        myMap.remove(ref.key);
-      }
-    }
-  }
-
   @Override
-  public V get(@NotNull Object key) {
-    MyReference<K,V> ref = myMap.get(key);
-    if (ref == null) return null;
-    return ref.get();
-  }
-
-  @Override
-  public V put(@NotNull K key, @NotNull V value) {
-    processQueue();
-    MyReference<K,V> oldRef = myMap.put(key, createRef(key, value));
-    return oldRef != null ? oldRef.get() : null;
-  }
-
-  private MyReference<K, V> createRef(K key, V value) {
-    return new MyReference<K,V>(key, value, myQueue);
-  }
-
-  @Override
-  public V putIfAbsent(@NotNull K key, V value) {
-    while (true) {
-      processQueue();
-      MyReference<K, V> newRef = createRef(key, value);
-      MyReference<K,V> oldRef = myMap.putIfAbsent(key, newRef);
-      if (oldRef == null) return null;
-      final V oldVal = oldRef.get();
-      if (oldVal == null) {
-        if (myMap.replace(key, oldRef, newRef)) return null;
-      }
-      else {
-        return oldVal;
-      }
-    }
-  }
-
-  @Override
-  public boolean remove(@NotNull final Object key, final Object value) {
-    processQueue();
-    return myMap.remove(key, createRef((K)key, (V)value));
-  }
-
-  @Override
-  public boolean replace(@NotNull final K key, @NotNull final V oldValue, @NotNull final V newValue) {
-    processQueue();
-    return myMap.replace(key, createRef(key, oldValue), createRef(key, newValue));
-  }
-
-  @Override
-  public V replace(@NotNull final K key, @NotNull final V value) {
-    processQueue();
-    MyReference<K, V> ref = myMap.replace(key, createRef(key, value));
-    return ref == null ? null : ref.get();
-  }
-
-  @Override
-  public V remove(Object key) {
-    processQueue();
-    MyReference<K,V> ref = myMap.remove(key);
-    return ref != null ? ref.get() : null;
-  }
-
-  @Override
-  public void putAll(Map<? extends K, ? extends V> t) {
-    processQueue();
-    for (K k : t.keySet()) {
-      V v = t.get(k);
-      if (v != null) {
-        put(k, v);
-      }
-    }
-  }
-
-  @Override
-  public void clear() {
-    myMap.clear();
-    processQueue();
-  }
-
-  @Override
-  public int size() {
-    return myMap.size(); //?
-  }
-
-  @Override
-  public boolean isEmpty() {
-    return myMap.isEmpty(); //?
-  }
-
-  @Override
-  public boolean containsKey(Object key) {
-    return get(key) != null;
-  }
-
-  @Override
-  public boolean containsValue(Object value) {
-    throw new RuntimeException("method not implemented");
-  }
-
-  @Override
-  public Set<K> keySet() {
-    return myMap.keySet();
-  }
-
-  @Override
-  public Collection<V> values() {
-    List<V> result = new ArrayList<V>();
-    final Collection<MyReference<K, V>> refs = myMap.values();
-    for (MyReference<K, V> ref : refs) {
-      final V value = ref.get();
-      if (value != null) {
-        result.add(value);
-      }
-    }
-    return result;
-  }
-
-  @Override
-  public Set<Entry<K, V>> entrySet() {
-    final Set<K> keys = keySet();
-    Set<Entry<K, V>> entries = new HashSet<Entry<K, V>>();
-
-    for (final K key : keys) {
-      final V value = get(key);
-      if (value != null) {
-        entries.add(new Entry<K, V>() {
-          @Override
-          public K getKey() {
-            return key;
-          }
-
-          @Override
-          public V getValue() {
-            return value;
-          }
-
-          @Override
-          public V setValue(V value) {
-            throw new UnsupportedOperationException("setValue is not implemented");
-          }
-        });
-      }
-    }
-
-    return entries;
-  }
-
-  @Override
-  public String toString() {
-    @NonNls String s = "ConcurrentWeakValueHashMap size:" + size() + " [";
-    for (K k : myMap.keySet()) {
-      Object v = get(k);
-      s += "'"+k + "': '" +v+"', ";
-    }
-    s += "] ";
-    return s;
+  protected MyReference<K, V> createRef(K key, V value) {
+    return new MyWeakReference<K,V>(key, value, myQueue);
   }
 }
