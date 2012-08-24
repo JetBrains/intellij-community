@@ -6,7 +6,6 @@ import com.intellij.codeInspection.LocalQuickFixProvider;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
@@ -147,12 +146,10 @@ public class ResourceNameConverter extends ResolvingConverter<String> implements
         return LocalQuickFix.EMPTY_ARRAY;
       }
       final PsiFile psiFile = getElement().getContainingFile();
-      final VirtualFile vFile = psiFile != null ? psiFile.getVirtualFile() : null;
-
-      if (vFile == null) {
+      if (psiFile == null) {
         return LocalQuickFix.EMPTY_ARRAY;
       }
-      return new LocalQuickFix[] {new CreateValueResourceQuickFix(myFacet, ResourceType.STYLE, resourceName, psiFile, false, vFile)};
+      return new LocalQuickFix[] {new CreateValueResourceQuickFix(myFacet, ResourceType.STYLE, resourceName, psiFile, false)};
     }
   }
 }

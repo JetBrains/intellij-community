@@ -15,13 +15,16 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.xml.DomFileDescription;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.android.actions.CreateXmlResourceDialog;
+import org.jetbrains.android.dom.resources.ResourcesDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,28 +38,17 @@ public class CreateValueResourceQuickFix implements LocalQuickFix, IntentionActi
   private final String myResourceName;
   private final PsiFile myFile;
   private final boolean myChooseName;
-  private final VirtualFile myDefaultFileToCreate;
-
-  public CreateValueResourceQuickFix(@NotNull AndroidFacet facet,
-                                       @NotNull ResourceType resourceType,
-                                       @NotNull String resourceName,
-                                       @NotNull PsiFile file,
-                                       boolean chooseName) {
-    this(facet, resourceType, resourceName, file, chooseName, null);
-  }
 
   public CreateValueResourceQuickFix(@NotNull AndroidFacet facet,
                                      @NotNull ResourceType resourceType,
                                      @NotNull String resourceName,
                                      @NotNull PsiFile file,
-                                     boolean chooseName,
-                                     @Nullable VirtualFile defaultFileToCreate) {
+                                     boolean chooseName) {
     myFacet = facet;
     myResourceType = resourceType;
     myResourceName = resourceName;
     myFile = file;
     myChooseName = chooseName;
-    myDefaultFileToCreate = defaultFileToCreate;
   }
 
   @NotNull
@@ -99,8 +91,22 @@ public class CreateValueResourceQuickFix implements LocalQuickFix, IntentionActi
     else {
       final String value = myResourceType == ResourceType.STYLEABLE ||
                            myResourceType == ResourceType.ATTR ? "\n" : null;
+
+      VirtualFile defaultFileToCreate = null;
+
+      if (myFile instanceof XmlFile && myFile.isWritable() && myFile.getManager().isInProject(myFile)) {
+        final DomFileDescription<?> description = DomManager.getDomManager(
+          myFile.getProject()).getDomFileDescription((XmlFile)myFile);
+
+        if (description instanceof ResourcesDomFileDescription) {
+          final VirtualFile defaultFile = myFile.getVirtualFile();
+          if (defaultFile != null) {
+            defaultFileToCreate = defaultFile;
+          }
+        }
+      }
       final CreateXmlResourceDialog dialog =
-        new CreateXmlResourceDialog(myFacet.getModule(), myResourceType, myResourceName, value, myChooseName, myDefaultFileToCreate);
+        new CreateXmlResourceDialog(myFacet.getModule(), myResourceType, myResourceName, value, myChooseName, defaultFileToCreate);
       dialog.setTitle("New " + StringUtil.capitalize(myResourceType.getDisplayName()) + " Value Resource");
       dialog.show();
 
