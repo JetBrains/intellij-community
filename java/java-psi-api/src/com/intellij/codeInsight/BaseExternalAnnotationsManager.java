@@ -56,7 +56,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Nullable
-  protected static String getFQN(String packageName, @Nullable VirtualFile virtualFile) {
+  protected static String getFQN(@NotNull String packageName, @NotNull PsiFile psiFile) {
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
     return StringUtil.getQualifiedName(packageName, virtualFile.getNameWithoutExtension());
   }
@@ -227,7 +228,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
     final String packageName = javaFile.getPackageName();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
-    String fqn = getFQN(packageName, virtualFile);
+    String fqn = getFQN(packageName, containingFile);
     if (fqn == null) return null;
     final List<PsiFile> files = myExternalAnnotations.get(fqn);
     if (files == NULL) return null;
