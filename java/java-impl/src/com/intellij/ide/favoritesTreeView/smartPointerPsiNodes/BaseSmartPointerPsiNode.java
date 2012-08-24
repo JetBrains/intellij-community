@@ -21,8 +21,8 @@ import com.intellij.ide.projectView.ProjectViewNodeDecorator;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PackageElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.extensions.Extensions;
@@ -97,8 +97,7 @@ public abstract class BaseSmartPointerPsiNode <Type extends SmartPsiElementPoint
     LOG.assertTrue(value.isValid());
 
     Icon icon = value.getIcon(flags);
-    data.setClosedIcon(icon);
-    data.setOpenIcon(icon);
+    data.setIcon(icon);
     data.setPresentableText(myName);
     if (isDeprecated()) {
       data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);

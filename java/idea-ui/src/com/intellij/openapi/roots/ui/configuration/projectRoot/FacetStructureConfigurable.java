@@ -137,7 +137,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       addFacetTypeNode(InvalidFacetType.getInstance());
     }
     if (!hasFacetTypeNodes) {
-      addNode(new MyNode(new TextConfigurable<String>(NO_FRAMEWORKS_NODE, NO_FRAMEWORKS_NODE, "Facets", "Press '+' button to add a new facet", null, null)), myRoot);
+      addNode(new MyNode(new TextConfigurable<String>(NO_FRAMEWORKS_NODE, NO_FRAMEWORKS_NODE, "Facets", "Press '+' button to add a new facet",
+                                                      null)), myRoot);
     }
     addNode(new MyNode(new FrameworkDetectionConfigurable(myProject)), myRoot);
   }

@@ -44,12 +44,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       if (userObject instanceof NodeDescriptor) {
         descriptor = (NodeDescriptor)userObject;
         color = descriptor.getColor();
-        if (expanded) {
-          setIcon(descriptor.getOpenIcon());
-        }
-        else {
-          setIcon(descriptor.getClosedIcon());
-        }
+        setIcon(descriptor.getIcon());
       }
     }
 

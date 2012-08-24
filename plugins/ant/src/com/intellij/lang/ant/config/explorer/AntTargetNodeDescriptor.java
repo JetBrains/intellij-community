@@ -66,7 +66,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     final CompositeAppearance oldText = myHighlightedText;
     final boolean isMeta = myTarget instanceof MetaTarget;
 
-    myOpenIcon = myClosedIcon = isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target;
+    myIcon = isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target;
 
     myHighlightedText = new CompositeAppearance();
 
@@ -139,7 +139,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
 
   public void customize(@NotNull SimpleColoredComponent component) {
     getHighlightedText().customize(component);
-    component.setIcon(getOpenIcon());
+    component.setIcon(getIcon());
     String toolTipText = getTarget().getNotEmptyDescription();
     component.setToolTipText(toolTipText);
   }
@@ -147,7 +147,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
   @Override
   public void customize(@NotNull final HtmlListCellRenderer renderer) {
     getHighlightedText().customize(renderer);
-    renderer.setIcon(getOpenIcon());
+    renderer.setIcon(getIcon());
     String toolTipText = getTarget().getNotEmptyDescription();
     renderer.setToolTipText(toolTipText);
   }

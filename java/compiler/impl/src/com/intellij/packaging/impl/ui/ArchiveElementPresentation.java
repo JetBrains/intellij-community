@@ -38,7 +38,7 @@ public class ArchiveElementPresentation extends PackagingElementPresentation {
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
-    presentationData.setIcons(PlatformIcons.JAR_ICON);
+    presentationData.setIcon(PlatformIcons.JAR_ICON);
     presentationData.addText(myElement.getArchiveFileName(), mainAttributes);
   }
 

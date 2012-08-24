@@ -64,7 +64,7 @@ public class LibraryElementPresentation extends PackagingElementPresentation {
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myLibrary != null) {
-      presentationData.setIcons(PlatformIcons.LIBRARY_ICON);
+      presentationData.setIcon(PlatformIcons.LIBRARY_ICON);
       presentationData.addText(myLibraryName, mainAttributes);
       presentationData.addText(getLibraryTableComment(myLibrary), commentAttributes);
     }

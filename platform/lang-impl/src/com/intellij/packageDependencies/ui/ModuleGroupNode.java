@@ -47,11 +47,7 @@ public class ModuleGroupNode extends PackageDependenciesNode {
     }
   }
 
-  public Icon getOpenIcon() {
-    return PlatformIcons.OPENED_MODULE_GROUP_ICON;
-  }
-
-  public Icon getClosedIcon() {
+  public Icon getIcon() {
     return PlatformIcons.CLOSED_MODULE_GROUP_ICON;
   }
 

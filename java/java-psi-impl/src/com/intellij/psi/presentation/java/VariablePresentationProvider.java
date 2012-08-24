@@ -18,7 +18,6 @@ package com.intellij.psi.presentation.java;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.ItemPresentationProvider;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -45,7 +44,7 @@ public class VariablePresentationProvider<T extends PsiVariable & NavigationItem
 
       @Override
       public Icon getIcon(boolean open) {
-        return variable.getIcon(Iconable.ICON_FLAG_OPEN);
+        return variable.getIcon(0);
       }
     };
   }

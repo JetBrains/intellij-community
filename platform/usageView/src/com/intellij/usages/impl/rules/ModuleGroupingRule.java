@@ -70,7 +70,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     @Override
     public Icon getIcon(boolean isOpen) {
-      return AllIcons.Nodes.PpLibOpen;
+      return AllIcons.Nodes.PpLibClosed;
     }
 
     @Override

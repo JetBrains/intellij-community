@@ -210,7 +210,7 @@ public class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunner.Sta
   private class SetScriptFileAction extends AnAction {
 
     private SetScriptFileAction() {
-      super("Set Script File", "", AllIcons.Nodes.PackageOpen);
+      super("Set Script File", "", AllIcons.Actions.Menu_open);
     }
 
     @Override

@@ -18,7 +18,6 @@ package org.intellij.plugins.relaxNG.compact.psi.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -140,7 +139,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
 
     @Nullable
     public Icon getIcon() {
-      return RncDefineImpl.this.getIcon(Iconable.ICON_FLAG_CLOSED);
+      return RncDefineImpl.this.getIcon(0);
     }
 
     public String getTypeName() {

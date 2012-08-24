@@ -103,7 +103,7 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
 
         Icon icon;
         if (file.isDirectory()) {
-          icon = expanded ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
+          icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
         }
         else {
           icon = IconUtil.getIcon(file, 0, null);

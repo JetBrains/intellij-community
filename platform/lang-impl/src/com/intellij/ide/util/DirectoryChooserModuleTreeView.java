@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -240,11 +239,10 @@ public class DirectoryChooserModuleTreeView implements DirectoryChooserView {
       else if (value instanceof Module) {
         final Module module = (Module)value;
         append(module.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        int flags1 = expanded ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED;
-        setIcon(ModuleType.get(module).getNodeIcon((flags1 & Iconable.ICON_FLAG_OPEN) != 0));
+        setIcon(ModuleType.get(module).getNodeIcon(false));
       } else if (value instanceof ModuleGroup) {
         append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        setIcon(expanded ? PlatformIcons.OPENED_MODULE_GROUP_ICON : PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+        setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
       }
     }
   }

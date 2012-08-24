@@ -33,7 +33,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -136,25 +135,17 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   protected void setupIcon(PresentationData data, PsiDirectory psiDirectory) {
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
     if (PlatformUtils.isCidr()) {
-      final Icon openIcon = IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_OPEN, myProject);
-      if (openIcon != null) {
-        final Icon closedIcon = IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_CLOSED, myProject);
-        if (closedIcon != null) {
-          data.setOpenIcon(patchIcon(openIcon, virtualFile));
-          data.setClosedIcon(patchIcon(closedIcon, virtualFile));
-        }
+      final Icon icon = IconUtil.getIcon(virtualFile, 0, myProject);
+      if (icon != null) {
+        data.setIcon(patchIcon(icon, virtualFile));
       }
     }
     else {
       for (final IconProvider provider : Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME)) {
-        final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
-        if (openIcon != null) {
-          final Icon closedIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED);
-          if (closedIcon != null) {
-            data.setOpenIcon(patchIcon(openIcon, virtualFile));
-            data.setClosedIcon(patchIcon(closedIcon, virtualFile));
-            return;
-          }
+        final Icon icon = provider.getIcon(psiDirectory, 0);
+        if (icon != null) {
+          data.setIcon(patchIcon(icon, virtualFile));
+          return;
         }
       }
     }

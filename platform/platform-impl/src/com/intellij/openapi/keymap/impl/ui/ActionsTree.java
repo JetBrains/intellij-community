@@ -454,9 +454,9 @@ public class ActionsTree {
           text = group.getName();
 
           changed = originalKeymap != null && isGroupChanged(group, originalKeymap, myKeymap);
-          icon = expanded ? group.getOpenIcon() : group.getIcon();
+          icon = group.getIcon();
           if (icon == null){
-            icon = expanded ? OPEN_ICON : CLOSE_ICON;
+            icon = CLOSE_ICON;
           }
         }
         else if (userObject instanceof String) {

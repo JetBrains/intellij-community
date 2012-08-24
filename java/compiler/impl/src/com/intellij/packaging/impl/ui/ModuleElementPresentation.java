@@ -68,11 +68,10 @@ public class ModuleElementPresentation extends TreeNodePresentation {
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     final Module module = findModule();
     if (myTestOutput) {
-      presentationData.setIcons(PlatformIcons.TEST_SOURCE_FOLDER);
+      presentationData.setIcon(PlatformIcons.TEST_SOURCE_FOLDER);
     }
     else if (module != null) {
-      presentationData.setOpenIcon(ModuleType.get(module).getNodeIcon(true));
-      presentationData.setClosedIcon(ModuleType.get(module).getNodeIcon(false));
+      presentationData.setIcon(ModuleType.get(module).getNodeIcon(false));
     }
     String moduleName;
     if (module != null) {

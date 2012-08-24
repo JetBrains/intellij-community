@@ -319,7 +319,7 @@ public class GradleUtil {
     if (bounds == null) {
       return null;
     }
-    final Icon icon = ((GradleProjectStructureNode)node).getDescriptor().getOpenIcon();
+    final Icon icon = ((GradleProjectStructureNode)node).getDescriptor().getIcon();
     int xAdjustment = 0;
     if (icon != null) {
       xAdjustment = icon.getIconWidth();

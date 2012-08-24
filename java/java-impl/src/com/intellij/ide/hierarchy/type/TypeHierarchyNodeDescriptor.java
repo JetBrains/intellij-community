@@ -56,10 +56,9 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
 
     if (changes && myIsBase) {
       final LayeredIcon icon = new LayeredIcon(2);
-      icon.setIcon(myOpenIcon, 0);
+      icon.setIcon(myIcon, 0);
       icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
-      myOpenIcon = icon;
-      myClosedIcon = myOpenIcon;
+      myIcon = icon;
     }
 
     final PsiClass psiClass = getPsiClass();

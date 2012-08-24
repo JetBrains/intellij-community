@@ -56,7 +56,7 @@ public class TestMethodNode extends MethodNode {
   protected void updateImpl(final PresentationData data) {
     super.updateImpl(data);
 
-    data.setIcons(myIcon);
+    data.setIcon(myIcon);
   }
 
 }

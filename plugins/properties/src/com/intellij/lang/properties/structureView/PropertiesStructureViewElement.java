@@ -18,7 +18,6 @@ package com.intellij.lang.properties.structureView;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.util.Iconable;
 
 import javax.swing.*;
 
@@ -69,7 +68,7 @@ public class PropertiesStructureViewElement implements StructureViewTreeElement 
       }
 
       public Icon getIcon(boolean open) {
-        return myProperty.getIcon(Iconable.ICON_FLAG_OPEN);
+        return myProperty.getIcon(0);
       }
     };
   }

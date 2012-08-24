@@ -130,7 +130,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createMainMenuGroup(Condition<AnAction> filtered) {
-    Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu, AllIcons.Nodes.KeymapMainMenu);
+    Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
     return group;
@@ -208,7 +208,7 @@ public class ActionsTreeUtil {
   public static Group createGroup(ActionGroup actionGroup, String groupName, Icon icon, Icon openIcon, boolean ignore, Condition<AnAction> filtered,
                                   boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
-    Group group = new Group(groupName, actionManager.getId(actionGroup), icon, openIcon);
+    Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
     AnAction[] children = actionGroup instanceof DefaultActionGroup
                           ? ((DefaultActionGroup)actionGroup).getChildActionsOrStubs()
                           : actionGroup.getChildren(null);
@@ -255,8 +255,8 @@ public class ActionsTreeUtil {
     addEditorActions(filtered, editorGroup, ids);
 
     Collections.sort(ids);
-    Group group = new Group(KeyMapBundle.message("editor.actions.group.title"), IdeActions.GROUP_EDITOR, AllIcons.Nodes.KeymapEditor,
-                            AllIcons.Nodes.KeymapEditorOpen);
+    Group group = new Group(KeyMapBundle.message("editor.actions.group.title"), IdeActions.GROUP_EDITOR, AllIcons.Nodes.KeymapEditor
+    );
     for (String id : ids) {
       group.addActionId(id);
     }
@@ -374,7 +374,7 @@ public class ActionsTreeUtil {
       }
     });
 
-    Group group = new Group(KeyMapBundle.message("other.group.title"), AllIcons.Nodes.KeymapOther, AllIcons.Nodes.KeymapOther);
+    Group group = new Group(KeyMapBundle.message("other.group.title"), AllIcons.Nodes.KeymapOther);
     for (String id : result) {
       if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) group.addActionId(id);
     }

@@ -54,15 +54,7 @@ public class BasePsiNode<T extends PsiElement> extends PackageDependenciesNode {
     return element != null && element.isValid() ? element : null;
   }
 
-  public Icon getOpenIcon() {
-    return getIcon();
-  }
-
-  public Icon getClosedIcon() {
-    return getIcon();
-  }
-
-  private Icon getIcon() {
+  public Icon getIcon() {
     final PsiElement element = getPsiElement();
     if (myIcon == null) {
       myIcon = element != null && element.isValid() ? element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS) : null;

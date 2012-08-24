@@ -25,8 +25,8 @@ import javax.swing.*;
 public interface Iconable {
   int ICON_FLAG_VISIBILITY = 0x0001;
   int ICON_FLAG_READ_STATUS = 0x0002;
-  int ICON_FLAG_OPEN = 0x0004;
-  int ICON_FLAG_CLOSED = 0x0008;
+  @Deprecated int ICON_FLAG_OPEN = 0x0004;
+  @Deprecated int ICON_FLAG_CLOSED = 0x0008;
 
   @MagicConstant(flags = {ICON_FLAG_VISIBILITY, ICON_FLAG_OPEN, ICON_FLAG_CLOSED, ICON_FLAG_READ_STATUS})
   @interface IconFlags {}

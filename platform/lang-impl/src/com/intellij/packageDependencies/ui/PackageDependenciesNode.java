@@ -79,11 +79,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     updateMarked(!isMarked, isMarked);
   }
 
-  public Icon getOpenIcon() {
-    return EMPTY_ICON;
-  }
-
-  public Icon getClosedIcon() {
+  public Icon getIcon() {
     return EMPTY_ICON;
   }
 

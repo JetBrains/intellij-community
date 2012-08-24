@@ -62,15 +62,7 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
     return myVFile.getName();
   }
 
-  public Icon getOpenIcon() {
-    return getIcon();
-  }
-
-  public Icon getClosedIcon() {
-    return getIcon();
-  }
-
-  private Icon getIcon() {
+  public Icon getIcon() {
     return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
   }
 

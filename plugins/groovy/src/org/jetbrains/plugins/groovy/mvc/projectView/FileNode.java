@@ -49,6 +49,6 @@ public class FileNode extends AbstractMvcPsiNodeDescriptor {
     final PsiFile value = extractPsiFromValue();
     assert value != null;
     data.setPresentableText(value.getName());
-    data.setIcons(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));
+    data.setIcon(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));
   }
 }

@@ -30,12 +30,7 @@ public class LibraryTreeRenderer extends ColoredTreeCellRenderer {
       Object userObject = node.getUserObject();
       if (userObject instanceof NodeDescriptor) {
         final NodeDescriptor descriptor = (NodeDescriptor)userObject;
-        final Icon closedIcon = descriptor.getClosedIcon();
-        Icon openIcon = descriptor.getOpenIcon();
-        if (openIcon == null) {
-          openIcon = closedIcon;
-        }
-        setIcon(expanded? openIcon : closedIcon);
+        setIcon(descriptor.getIcon());
         append(descriptor.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, descriptor.getColor()));
       }
     }

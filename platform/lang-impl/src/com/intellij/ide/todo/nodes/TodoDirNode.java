@@ -31,7 +31,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -101,8 +100,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
   protected void setupIcon(PresentationData data, PsiDirectory psiDirectory) {
     final VirtualFile virtualFile = psiDirectory.getVirtualFile();
     if (ProjectRootsUtil.isModuleContentRoot(virtualFile, psiDirectory.getProject())) {
-      data.setOpenIcon(patchIcon(new DirectoryIconProvider().getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN), virtualFile));
-      data.setClosedIcon(patchIcon(new DirectoryIconProvider().getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED), virtualFile));
+      data.setIcon(patchIcon(new DirectoryIconProvider().getIcon(psiDirectory, 0), virtualFile));
     } else {
       super.setupIcon(data, psiDirectory);
     }

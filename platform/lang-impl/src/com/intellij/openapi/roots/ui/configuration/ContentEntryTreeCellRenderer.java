@@ -76,14 +76,14 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
       final VirtualFile excludePath = excludeFolder.getFile();
       if (excludePath != null && VfsUtilCore.isAncestor(excludePath, file, false)) {
-        return IconSet.getExcludeIcon(expanded);
+        return IconSet.getExcludeIcon();
       }
     }
 
     final SourceFolder[] sourceFolders = entry.getSourceFolders();
     for (SourceFolder sourceFolder : sourceFolders) {
       if (file.equals(sourceFolder.getFile())) {
-        return IconSet.getSourceRootIcon(sourceFolder.isTestSource(), expanded);
+        return IconSet.getSourceRootIcon(sourceFolder.isTestSource());
       }
     }
 
@@ -95,7 +95,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
         if (currentRoot != null && VfsUtilCore.isAncestor(sourcePath, currentRoot, false)) {
           continue;
         }
-        icon = IconSet.getSourceFolderIcon(sourceFolder.isTestSource(), expanded);
+        icon = IconSet.getSourceFolderIcon(sourceFolder.isTestSource());
         currentRoot = sourcePath;
       }
     }

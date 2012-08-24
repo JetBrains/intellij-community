@@ -42,7 +42,7 @@ class AntKeymapExtension implements KeymapExtension {
   public KeymapGroup createGroup(final Condition<AnAction> filtered, Project project) {
     final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<AntBuildFile, KeymapGroup>();
     final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(KeyMapBundle.message("ant.targets.group.title"),
-                                                                            AllIcons.Nodes.KeymapAnt, AllIcons.Nodes.KeymapAntOpen);
+                                                                            AllIcons.Nodes.KeymapAnt);
 
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     final String[] ids = actionManager.getActionIds(project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX);

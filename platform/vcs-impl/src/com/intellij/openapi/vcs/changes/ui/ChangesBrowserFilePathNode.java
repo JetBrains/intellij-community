@@ -50,7 +50,7 @@ public class ChangesBrowserFilePathNode extends ChangesBrowserNode<FilePath> {
       if (!isLeaf()) {
         appendCount(renderer);
       }
-      renderer.setIcon(expanded ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON);
+      renderer.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
     else {
       if (renderer.isShowFlatten()) {

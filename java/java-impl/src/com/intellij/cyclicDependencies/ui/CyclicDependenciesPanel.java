@@ -431,13 +431,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
         node = (PackageDependenciesNode)((DefaultMutableTreeNode)value).getUserObject(); //cycle node children
       }
       append(node.toString(), attributes);
-
-      if (expanded) {
-        setIcon(node.getOpenIcon());
-      }
-      else {
-        setIcon(node.getClosedIcon());
-      }
+      setIcon(node.getIcon());
     }
   }
 

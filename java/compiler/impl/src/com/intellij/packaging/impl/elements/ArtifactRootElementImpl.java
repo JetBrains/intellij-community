@@ -46,7 +46,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
       @Override
       public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                          SimpleTextAttributes commentAttributes) {
-        presentationData.setIcons(AllIcons.Nodes.Artifact);
+        presentationData.setIcon(AllIcons.Nodes.Artifact);
         presentationData.addText(getPresentableName(), mainAttributes);
       }
 

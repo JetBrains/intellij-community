@@ -44,7 +44,7 @@ public class DebuggerKeymapExtension implements KeymapExtension {
     }
 
     Collections.sort(ids);
-    Group group = new Group(KeyMapBundle.message("debugger.actions.group.title"), IdeActions.GROUP_DEBUGGER, null, null);
+    Group group = new Group(KeyMapBundle.message("debugger.actions.group.title"), IdeActions.GROUP_DEBUGGER, null);
     for (String id : ids) {
       group.addActionId(id);
     }

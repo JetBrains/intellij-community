@@ -138,8 +138,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
       try {
         Icon icon = value.getIcon(flags);
-        data.setClosedIcon(icon);
-        data.setOpenIcon(icon);
+        data.setIcon(icon);
       }
       catch (IndexNotReadyException ignored) {
       }

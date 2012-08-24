@@ -78,7 +78,7 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
   public void update(PresentationData presentation) {
-    presentation.setIcons(PlatformIcons.PROJECT_ICON);
+    presentation.setIcon(PlatformIcons.PROJECT_ICON);
     presentation.setPresentableText(getProject().getName());
   }
 

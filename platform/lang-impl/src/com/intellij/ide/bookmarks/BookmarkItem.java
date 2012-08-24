@@ -18,7 +18,6 @@ package com.intellij.ide.bookmarks;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -60,7 +59,7 @@ public class BookmarkItem extends ItemWrapper {
 
     PsiElement fileOrDir = file.isDirectory() ? psiManager.findDirectory(file) : psiManager.findFile(file);
     if (fileOrDir != null) {
-      renderer.setIcon(fileOrDir.getIcon(Iconable.ICON_FLAG_CLOSED));
+      renderer.setIcon(fileOrDir.getIcon(0));
     }
 
 

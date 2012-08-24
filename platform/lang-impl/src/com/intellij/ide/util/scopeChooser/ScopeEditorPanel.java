@@ -646,12 +646,7 @@ public class ScopeEditorPanel {
                                       boolean hasFocus) {
       if (value instanceof PackageDependenciesNode) {
         PackageDependenciesNode node = (PackageDependenciesNode)value;
-        if (expanded) {
-          setIcon(node.getOpenIcon());
-        }
-        else {
-          setIcon(node.getClosedIcon());
-        }
+        setIcon(node.getIcon());
 
         setForeground(selected && hasFocus ? UIUtil.getTreeSelectionForeground() : UIUtil.getTreeForeground());
         if (!(selected && hasFocus) && node.hasMarked() && !DependencyUISettings.getInstance().UI_FILTER_LEGALS) {

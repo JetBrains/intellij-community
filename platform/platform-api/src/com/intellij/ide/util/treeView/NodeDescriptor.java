@@ -27,8 +27,7 @@ public abstract class NodeDescriptor<E> {
   private final NodeDescriptor myParentDescriptor;
 
   protected String myName;
-  protected Icon myOpenIcon;
-  protected Icon myClosedIcon;
+  protected Icon myIcon;
   protected Color myColor;
 
   private int myIndex = -1;
@@ -64,12 +63,8 @@ public abstract class NodeDescriptor<E> {
     return myName;
   }
 
-  public final Icon getOpenIcon() {
-    return myOpenIcon;
-  }
-
-  public final Icon getClosedIcon() {
-    return myClosedIcon;
+  public final Icon getIcon() {
+    return myIcon;
   }
 
   public final Color getColor() {
@@ -119,8 +114,7 @@ public abstract class NodeDescriptor<E> {
   }
 
   public void applyFrom(NodeDescriptor desc) {
-    myOpenIcon = desc.myOpenIcon;
-    myClosedIcon = desc.myClosedIcon;
+    myIcon = desc.myIcon;
     myName = desc.myName;
     myColor = desc.myColor;
   }

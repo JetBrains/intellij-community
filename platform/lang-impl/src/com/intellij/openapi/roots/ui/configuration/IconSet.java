@@ -27,34 +27,23 @@ import javax.swing.*;
  */
 public class IconSet {
   public static final Icon SOURCE_ROOT_FOLDER = AllIcons.Modules.SourceRootClosed;
-  public static final Icon SOURCE_ROOT_FOLDER_EXPANDED = AllIcons.Modules.SourceRootOpened;
   public static final Icon SOURCE_FOLDER = AllIcons.Modules.SourceClosed;
-  public static final Icon SOURCE_FOLDER_EXPANDED = AllIcons.Modules.SourceOpened;
 
   public static final Icon TEST_ROOT_FOLDER = AllIcons.Modules.TestRootClosed;
-  public static final Icon TEST_ROOT_FOLDER_EXPANDED = AllIcons.Modules.TestRootOpened;
   public static final Icon TEST_SOURCE_FOLDER = AllIcons.Modules.TestSourceClosed;
-  public static final Icon TEST_SOURCE_FOLDER_EXPANDED = AllIcons.Modules.TestSourceOpened;
 
   public static final Icon EXCLUDE_FOLDER = AllIcons.Modules.ExcludeRootClosed;
-  public static final Icon EXCLUDE_FOLDER_EXPANDED = AllIcons.Modules.ExcludeRootOpened;
 
-  public static Icon getSourceRootIcon(boolean isTestSource, final boolean isExpanded) {
-    if (isExpanded) {
-      return isTestSource ? TEST_ROOT_FOLDER_EXPANDED : SOURCE_ROOT_FOLDER_EXPANDED;
-    }
+  public static Icon getSourceRootIcon(boolean isTestSource) {
     return isTestSource ? TEST_ROOT_FOLDER : SOURCE_ROOT_FOLDER;
   }
 
-  public static Icon getSourceFolderIcon(boolean isTestSource, final boolean isExpanded) {
-    if (isExpanded) {
-      return isTestSource ? TEST_SOURCE_FOLDER_EXPANDED : SOURCE_FOLDER_EXPANDED;
-    }
+  public static Icon getSourceFolderIcon(boolean isTestSource) {
     return isTestSource ? TEST_SOURCE_FOLDER : SOURCE_FOLDER;
   }
 
-  public static Icon getExcludeIcon(boolean isExpanded) {
-    return isExpanded? EXCLUDE_FOLDER_EXPANDED : EXCLUDE_FOLDER;
+  public static Icon getExcludeIcon() {
+    return EXCLUDE_FOLDER;
   }
 
 }

@@ -17,7 +17,6 @@ package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.Gray;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -59,8 +58,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   }
 
   protected final boolean apply(PresentationData presentation, @Nullable PresentationData before) {
-    myOpenIcon = presentation.getIcon(true);
-    myClosedIcon = presentation.getIcon(false);
+    myIcon = presentation.getIcon(false);
     myName = presentation.getPresentableText();
     myColor = presentation.getForcedTextForeground();
     boolean updated = before != null ? !presentation.equals(before) : true;

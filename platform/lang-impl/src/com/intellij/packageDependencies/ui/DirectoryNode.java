@@ -197,11 +197,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return toString().hashCode();
   }
 
-  public Icon getOpenIcon() {
-    return PlatformIcons.PACKAGE_OPEN_ICON;
-  }
-
-  public Icon getClosedIcon() {
+  public Icon getIcon() {
     return PlatformIcons.PACKAGE_ICON;
   }
 

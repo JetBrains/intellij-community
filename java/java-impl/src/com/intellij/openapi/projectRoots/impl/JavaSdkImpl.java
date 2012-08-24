@@ -83,11 +83,6 @@ public class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public Icon getIconForExpandedTreeNode() {
-    return AllIcons.Nodes.PpJdkOpen;
-  }
-
-  @Override
   public Icon getIconForAddAction() {
     return AllIcons.General.AddJdk;
   }

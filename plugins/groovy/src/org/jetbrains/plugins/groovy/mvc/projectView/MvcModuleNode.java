@@ -68,8 +68,7 @@ public class MvcModuleNode extends AbstractModuleNode {
       return;
     }
     // change default icon
-    presentation.setOpenIcon(myDescriptor.getModuleNodeIcon());
-    presentation.setClosedIcon(myDescriptor.getModuleNodeIcon());
+    presentation.setIcon(myDescriptor.getModuleNodeIcon());
   }
 
 }

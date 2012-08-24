@@ -113,9 +113,9 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
     }
   }
 
-  public Icon getIcon(boolean expanded) {
+  public Icon getIcon() {
     if (myAddedFile.isDirectory()) {
-      return expanded ? AllIcons.Nodes.FolderOpen : AllIcons.Nodes.Folder;
+      return AllIcons.Nodes.Folder;
     }
     else {
       return IconUtil.getIcon(myAddedFile, 0, myProject);

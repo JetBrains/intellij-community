@@ -68,7 +68,7 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     );
 
     String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
-    DefaultMutableTreeNode module = createNode(moduleName, AllIcons.Nodes.ModuleOpen, GradleTextAttributes.NO_CHANGE);
+    DefaultMutableTreeNode module = createNode(moduleName, AllIcons.Nodes.ModuleClosed, GradleTextAttributes.NO_CHANGE);
 
     String gradleLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.gradle.name");
     DefaultMutableTreeNode gradleLibrary = createNode(

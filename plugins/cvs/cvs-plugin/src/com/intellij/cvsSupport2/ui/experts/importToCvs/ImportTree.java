@@ -91,12 +91,7 @@ public class ImportTree extends NodeRenderer {
     if (!isExcluded(fileElement)) {
       return false;
     }
-    if (expanded) {
-      setIcon(IconLoader.getDisabledIcon(descriptor.getOpenIcon()));
-    }
-    else {
-      setIcon(IconLoader.getDisabledIcon(descriptor.getClosedIcon()));
-    }
+    setIcon(IconLoader.getDisabledIcon(descriptor.getIcon()));
     final String text = tree.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
     append(text, new SimpleTextAttributes(SimpleTextAttributes.STYLE_STRIKEOUT, tree.getForeground()));
     return true;

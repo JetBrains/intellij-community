@@ -158,15 +158,7 @@ public class FileChooserDescriptor implements Cloneable {
     return true;
   }
 
-  public Icon getOpenIcon(final VirtualFile file) {
-    if (file.isDirectory()) {
-      return dressIcon(file, PlatformIcons.DIRECTORY_OPEN_ICON);
-    }
-    // deliberately pass project null: isJavaSourceFile() and excluded from compile information is unavailable for template project
-    return IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null);
-  }
-
-  public Icon getClosedIcon(final VirtualFile file) {
+  public Icon getIcon(final VirtualFile file) {
     if (file.isDirectory()) {
       return dressIcon(file, PlatformIcons.DIRECTORY_CLOSED_ICON);
     }

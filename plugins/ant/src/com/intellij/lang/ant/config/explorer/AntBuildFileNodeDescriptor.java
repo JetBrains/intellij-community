@@ -54,7 +54,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     if (buildModel != null) {
       AntTargetNodeDescriptor.addShortcutText(buildModel.getDefaultTargetActionId(), myAppearance);
     }
-    myOpenIcon = myClosedIcon = AllIcons.Ant.Build;
+    myIcon = AllIcons.Ant.Build;
     myName = myBuildFile.getPresentableName();
     return !Comparing.equal(myAppearance, oldAppearence);
   }

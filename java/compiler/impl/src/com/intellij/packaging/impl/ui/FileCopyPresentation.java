@@ -63,12 +63,12 @@ public class FileCopyPresentation extends PackagingElementPresentation {
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     if (myFile != null && !myFile.isDirectory()) {
-      presentationData.setIcons(VirtualFilePresentation.getIcon(myFile));
+      presentationData.setIcon(VirtualFilePresentation.getIcon(myFile));
       presentationData.addText(myOutputFileName, mainAttributes);
       presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
     }
     else {
-      presentationData.setIcons(AllIcons.FileTypes.Text);
+      presentationData.setIcon(AllIcons.FileTypes.Text);
       presentationData.addText(myOutputFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
       final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
       presentationData.addText("(" + mySourcePath + ")",

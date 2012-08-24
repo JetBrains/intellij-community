@@ -38,8 +38,7 @@ public class DirectoryElementPresentation extends PackagingElementPresentation {
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
-    presentationData.setOpenIcon(PlatformIcons.DIRECTORY_OPEN_ICON);
-    presentationData.setClosedIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
+    presentationData.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
     presentationData.addText(myElement.getDirectoryName(), mainAttributes);
   }
 

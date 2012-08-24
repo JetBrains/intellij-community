@@ -45,7 +45,7 @@ public class ExtractedDirectoryPresentation extends PackagingElementPresentation
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
-    presentationData.setIcons(AllIcons.Nodes.ExtractedFolder);
+    presentationData.setIcon(AllIcons.Nodes.ExtractedFolder);
     final String parentPath = PathUtil.getParentPath(myJarPath);
     if (myFile == null || !myFile.isDirectory()) {
       mainAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;

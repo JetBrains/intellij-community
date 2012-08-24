@@ -606,7 +606,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     return new TextConfigurable<ModuleGroup>(moduleGroup, moduleGroup.toString(),
                                              ProjectBundle.message("module.group.banner.text", moduleGroup.toString()),
                                              ProjectBundle.message("project.roots.module.groups.text"),
-                                             PlatformIcons.OPENED_MODULE_GROUP_ICON, PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+                                             PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
   protected boolean canBeRemoved(final Object[] editableObjects) {

@@ -89,8 +89,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
   public void update(PresentationData presentation) {
     final String[] groupPath = getValue().getGroupPath();
     presentation.setPresentableText(groupPath[groupPath.length-1]);
-    presentation.setOpenIcon(PlatformIcons.OPENED_MODULE_GROUP_ICON);
-    presentation.setClosedIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+    presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
   public String getTestPresentation() {

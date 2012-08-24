@@ -34,6 +34,6 @@ public class InspectionPackageNode extends InspectionTreeNode {
   }
 
   public Icon getIcon(boolean expanded) {
-    return expanded ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON;
+    return PlatformIcons.PACKAGE_ICON;
   }
 }

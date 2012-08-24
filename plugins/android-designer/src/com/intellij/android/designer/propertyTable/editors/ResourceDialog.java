@@ -723,7 +723,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
       TreeNodeDescriptor descriptor = new TreeNodeDescriptor(parentDescriptor, element, element == null ? null : element.toString());
       if (element instanceof ResourceGroup) {
-        descriptor.setIcon(AllIcons.Nodes.TreeOpen, AllIcons.Nodes.TreeClosed);
+        descriptor.setIcon(AllIcons.Nodes.TreeClosed);
       }
       else if (element instanceof ResourceItem) {
         descriptor.setIcon(((ResourceItem)element).getIcon());

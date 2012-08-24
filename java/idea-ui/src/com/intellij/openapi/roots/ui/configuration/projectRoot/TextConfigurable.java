@@ -30,7 +30,6 @@ public class TextConfigurable<T> extends NamedConfigurable<T> {
   private final T myObject;
   private final String myBannerSlogan;
   private final String myDisplayName;
-  private final Icon myOpenedIcon;
   private final Icon myClosedIcon;
   private final String myDescriptionText;
 
@@ -38,11 +37,10 @@ public class TextConfigurable<T> extends NamedConfigurable<T> {
                           final String displayName,
                           final String bannerSlogan,
                           final String descriptionText,
-                          final Icon openedIcon, final Icon closedIcon) {
+                          final Icon closedIcon) {
     myDisplayName = displayName;
     myBannerSlogan = bannerSlogan;
     myDescriptionText = descriptionText;
-    myOpenedIcon = openedIcon;
     myClosedIcon = closedIcon;
     myObject = object;
   }
@@ -86,7 +84,7 @@ public class TextConfigurable<T> extends NamedConfigurable<T> {
   }
 
   public Icon getIcon(final boolean open) {
-    return open ? myOpenedIcon : myClosedIcon;
+    return myClosedIcon;
   }
 
   public JComponent createOptionsPanel() {

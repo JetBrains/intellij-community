@@ -37,28 +37,28 @@ public class DirectoryPresentationProvider implements ItemPresentationProvider<P
 
     if (ProjectRootsUtil.isProjectHome(directory)) {
       final Icon projectIcon = IconLoader.getIcon(ApplicationInfoEx.getInstanceEx().getSmallIconUrl());
-      return new PresentationData(project.getName(), locationString, projectIcon, projectIcon, null);
+      return new PresentationData(project.getName(), locationString, projectIcon, null);
     }
 
     if (ProjectRootsUtil.isModuleContentRoot(directory)) {
       final Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
       assert module != null : directory;
       return new PresentationData(module.getName(), locationString,
-                                  PlatformIcons.CONTENT_ROOT_ICON_OPEN, PlatformIcons.CONTENT_ROOT_ICON_CLOSED, null);
+                                  PlatformIcons.CONTENT_ROOT_ICON_CLOSED, null);
     }
 
     if (ProjectRootsUtil.isSourceRoot(directory)) {
       if (ProjectRootsUtil.isInTestSource(directory)) {
         return new PresentationData(directory.getName(), locationString,
-                                    PlatformIcons.MODULES_TEST_SOURCE_FOLDER, PlatformIcons.MODULES_TEST_SOURCE_FOLDER, null);
+                                    PlatformIcons.MODULES_TEST_SOURCE_FOLDER, null);
       }
       else {
         return new PresentationData(directory.getName(), locationString,
-                                    PlatformIcons.MODULES_SOURCE_FOLDERS_ICON, PlatformIcons.MODULES_SOURCE_FOLDERS_ICON, null);
+                                    PlatformIcons.MODULES_SOURCE_FOLDERS_ICON, null);
       }
     }
 
     return new PresentationData(directory.getName(), locationString,
-                                PlatformIcons.DIRECTORY_OPEN_ICON, PlatformIcons.DIRECTORY_CLOSED_ICON, null);
+                                PlatformIcons.DIRECTORY_CLOSED_ICON, null);
   }
 }

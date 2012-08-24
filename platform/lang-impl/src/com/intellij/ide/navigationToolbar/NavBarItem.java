@@ -50,21 +50,14 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     myIndex = idx;
     isPopupElement = idx == -1;
     if (object != null) {
-      Icon closedIcon = NavBarPresentation.getIcon(object, false);
-      Icon openIcon = NavBarPresentation.getIcon(object, true);
-
-      if (closedIcon == null && openIcon != null) closedIcon = openIcon;
-      if (openIcon == null && closedIcon != null) openIcon = closedIcon;
-      if (openIcon == null) {
-        openIcon = closedIcon = EmptyIcon.create(5);
-      }
       final NavBarPresentation presentation = myPanel.getPresentation();
       myText = NavBarPresentation.getPresentableText(object);
-      myIcon = wrapIcon(openIcon, closedIcon, idx);
+      Icon icon = NavBarPresentation.getIcon(object, false);
+      myIcon = icon != null ? icon : EmptyIcon.create(5);
       myAttributes = presentation.getTextAttributes(object, false);
     } else {
       myText = "Sample";
-      myIcon = PlatformIcons.DIRECTORY_OPEN_ICON;
+      myIcon = PlatformIcons.DIRECTORY_CLOSED_ICON;
       myAttributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
     }
     Disposer.register(parent == null ? panel : parent, this);
@@ -206,16 +199,11 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
   private Icon wrapIcon(final Icon openIcon, final Icon closedIcon, final int idx) {
     return new Icon() {
       public void paintIcon(Component c, Graphics g, int x, int y) {
-        if (myPanel.getModel().getSelectedIndex() == idx && myPanel.isNodePopupActive()) {
-          openIcon.paintIcon(c, g, x, y);
-        }
-        else {
-          closedIcon.paintIcon(c, g, x, y);
-        }
+        closedIcon.paintIcon(c, g, x, y);
       }
 
       public int getIconWidth() {
-        return openIcon.getIconWidth();
+        return closedIcon.getIconWidth();
       }
 
       public int getIconHeight() {

@@ -90,8 +90,4 @@ public class UnknownSdkType extends SdkType{
   public Icon getIcon() {
     return AllIcons.Nodes.UnknownJdkClosed;
   }
-
-  public Icon getIconForExpandedTreeNode() {
-    return AllIcons.Nodes.UnknownJdkOpen;
-  }
 }

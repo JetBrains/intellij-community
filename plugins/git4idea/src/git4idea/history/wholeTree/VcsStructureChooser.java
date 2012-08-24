@@ -379,7 +379,6 @@ public class VcsStructureChooser extends DialogWrapper {
                                                   boolean leaf,
                                                   int row,
                                                   boolean hasFocus) {
-      myTextRenderer.setOpened(expanded);
       invalidate();
       final VirtualFile file = getFile(value);
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;
@@ -417,16 +416,11 @@ public class VcsStructureChooser extends DialogWrapper {
   }
 
   private static class WithModulesListCellRenderer extends VirtualFileListCellRenderer {
-    private boolean opened;
     private final Map<VirtualFile, String> myModules;
 
     private WithModulesListCellRenderer(Project project, final Map<VirtualFile, String> modules) {
       super(project, true);
       myModules = modules;
-    }
-
-    public void setOpened(boolean opened) {
-      this.opened = opened;
     }
 
     @Override
@@ -442,18 +436,10 @@ public class VcsStructureChooser extends DialogWrapper {
     protected void renderIcon(FilePath path) {
       final String module = myModules.get(path.getVirtualFile());
       if (module != null) {
-        if (opened) {
-          setIcon(PlatformIcons.CONTENT_ROOT_ICON_OPEN);
-        } else {
-          setIcon(PlatformIcons.CONTENT_ROOT_ICON_CLOSED);
-        }
+        setIcon(PlatformIcons.CONTENT_ROOT_ICON_CLOSED);
       } else {
         if (path.isDirectory()) {
-          if (opened) {
-            setIcon(PlatformIcons.DIRECTORY_OPEN_ICON);
-          } else {
-            setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
-          }
+          setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
         } else {
           setIcon(path.getFileType().getIcon());
         }

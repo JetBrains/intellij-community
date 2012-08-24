@@ -928,7 +928,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       @Override
       public Icon getIcon(final boolean open) {
-        return PsiFileImpl.this.getIcon(open ? ICON_FLAG_OPEN : ICON_FLAG_CLOSED);
+        return PsiFileImpl.this.getIcon(0);
       }
     };
   }

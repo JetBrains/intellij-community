@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -124,14 +123,10 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
     data.setPresentableText(myPresentableText);
 
     for (final IconProvider provider : Extensions.getExtensions(IconProvider.EXTENSION_POINT_NAME)) {
-      final Icon openIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_OPEN);
-      if (openIcon != null) {
-        final Icon closedIcon = provider.getIcon(psiDirectory, Iconable.ICON_FLAG_CLOSED);
-        if (closedIcon != null) {
-          data.setOpenIcon(openIcon);
-          data.setClosedIcon(closedIcon);
-          return;
-        }
+      final Icon icon = provider.getIcon(psiDirectory, 0);
+      if (icon != null) {
+        data.setIcon(icon);
+        return;
       }
     }
   }

@@ -23,7 +23,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.IconSet;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -51,27 +50,26 @@ public class JavaDirectoryIconProvider extends IconProvider implements DumbAware
       boolean inTestSource = ProjectRootsUtil.isInTestSource(vFile, project);
       boolean isSourceOrTestRoot = ProjectRootsUtil.isSourceOrTestRoot(vFile, project);
       Icon symbolIcon;
-      final boolean isOpen = (flags & Iconable.ICON_FLAG_OPEN) != 0;
       if (isJarRoot) {
         symbolIcon = PlatformIcons.JAR_ICON;
       }
       else if (isContentRoot) {
         Module module = ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(vFile);
         if (module != null) {
-          symbolIcon = ModuleType.get(module).getNodeIcon(isOpen);
+          symbolIcon = ModuleType.get(module).getNodeIcon(false);
         }
         else {
-          symbolIcon = isOpen ? PlatformIcons.CONTENT_ROOT_ICON_OPEN : PlatformIcons.CONTENT_ROOT_ICON_CLOSED;
+          symbolIcon = PlatformIcons.CONTENT_ROOT_ICON_CLOSED;
         }
       }
       else if (isSourceOrTestRoot) {
-        symbolIcon = IconSet.getSourceRootIcon(inTestSource, isOpen);
+        symbolIcon = IconSet.getSourceRootIcon(inTestSource);
       }
       else if (JavaDirectoryService.getInstance().getPackage(psiDirectory) != null) {
-        symbolIcon = isOpen ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON;
+        symbolIcon = PlatformIcons.PACKAGE_ICON;
       }
       else {
-        symbolIcon = isOpen ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
+        symbolIcon = PlatformIcons.DIRECTORY_CLOSED_ICON;
       }
       return ElementBase.createLayeredIcon(element, symbolIcon, 0);
     }

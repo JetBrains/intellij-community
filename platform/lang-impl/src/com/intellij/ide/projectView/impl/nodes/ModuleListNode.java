@@ -70,7 +70,7 @@ public class ModuleListNode extends ProjectViewNode<Module> {
 
   public void update(PresentationData presentation) {
     presentation.setPresentableText("Module Dependencies");
-    presentation.setIcons(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
+    presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
   @Override

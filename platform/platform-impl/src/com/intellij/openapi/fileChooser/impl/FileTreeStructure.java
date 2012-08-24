@@ -183,11 +183,10 @@ public class FileTreeStructure extends AbstractTreeStructure {
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     LOG.assertTrue(element instanceof FileElement, element.getClass().getName());
     VirtualFile file = ((FileElement)element).getFile();
-    Icon openIcon = file == null ? null : myChooserDescriptor.getOpenIcon(file);
-    Icon closedIcon = file == null ? null : myChooserDescriptor.getClosedIcon(file);
+    Icon closedIcon = file == null ? null : myChooserDescriptor.getIcon(file);
     String name = file == null ? null : myChooserDescriptor.getName(file);
     String comment = file == null ? null : myChooserDescriptor.getComment(file);
 
-    return new FileNodeDescriptor(myProject, (FileElement)element, parentDescriptor, openIcon, closedIcon, name, comment);
+    return new FileNodeDescriptor(myProject, (FileElement)element, parentDescriptor, closedIcon, name, comment);
   }
 }

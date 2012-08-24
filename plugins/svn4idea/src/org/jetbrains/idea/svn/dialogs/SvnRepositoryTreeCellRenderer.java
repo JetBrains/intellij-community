@@ -39,7 +39,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
       RepositoryTreeNode node = (RepositoryTreeNode) value;
       if (node.getSVNDirEntry() == null) {
         append(node.getURL().toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        setDirectoryIcon(expanded);
+        setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
       } else {
         String name = node.getSVNDirEntry().getName();
         append(name, node.isCached() ? SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
@@ -56,7 +56,7 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
         if (node.getSVNDirEntry().getKind() == SVNNodeKind.FILE) {
           setIcon(FileTypeManager.getInstance().getFileTypeByFileName(name).getIcon());
         } else {
-          setDirectoryIcon(expanded);
+          setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
         }
       }
     } else if (value instanceof DefaultMutableTreeNode) {
@@ -66,14 +66,6 @@ public class SvnRepositoryTreeCellRenderer extends ColoredTreeCellRenderer {
       } else if (node.getUserObject() instanceof SVNErrorMessage) {
         append(node.getUserObject().toString(), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
-    }
-  }
-
-  private void setDirectoryIcon(final boolean expanded) {
-    if (expanded) {
-      setIcon(PlatformIcons.DIRECTORY_OPEN_ICON);
-    } else {
-      setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
   }
 

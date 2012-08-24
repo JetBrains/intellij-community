@@ -104,7 +104,7 @@ public class PackageChooserDialog extends PackageChooser {
           boolean hasFocus
         ) {
           super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-          setIcon(expanded ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON);
+          setIcon(PlatformIcons.PACKAGE_ICON);
 
           if (value instanceof DefaultMutableTreeNode) {
             DefaultMutableTreeNode node = (DefaultMutableTreeNode)value;

@@ -25,13 +25,13 @@ public abstract class CvsElementFactory {
 
   public static final CvsElementFactory FOLDER_ELEMENT_FACTORY = new CvsElementFactory(){
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
-      return new CvsElement(name, AllIcons.Nodes.TreeClosed, AllIcons.Nodes.TreeOpen);
+      return new CvsElement(name, AllIcons.Nodes.TreeClosed);
     }
   };
 
   public static final CvsElementFactory MODULE_ELEMENT_FACTORY = new CvsElementFactory(){
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
-      return new CvsModule(name, AllIcons.Nodes.ModuleClosed, AllIcons.Nodes.ModuleOpen);
+      return new CvsModule(name, AllIcons.Nodes.ModuleClosed);
     }
   };
 
