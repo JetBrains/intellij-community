@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -184,9 +187,8 @@ public class VfsUtilCore {
     return result.skipToParent != root;
   }
 
+  @SuppressWarnings("UnsafeVfsRecursion")
   public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor) {
-    if (!file.isValid()) return VirtualFileVisitor.CONTINUE;
-
     visitor.pushFrame();
     try {
       final boolean visited = visitor.allowVisitFile(file);
@@ -195,22 +197,26 @@ public class VfsUtilCore {
         if (result.skipChildren) return result;
       }
 
-      if (!visitor.allowVisitChildren(file)) return VirtualFileVisitor.CONTINUE;
+      Iterable<VirtualFile> childrenIterable = null;
 
-      if (!visitor.depthLimitReached()) {
-        final Iterable<VirtualFile> iterable = visitor.getChildrenIterable(file);
-        if (iterable != null) {
-          for (VirtualFile child : iterable) {
-            VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
-            if (result.skipToParent != null && result.skipToParent != child) return result;
+      final AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+      try {
+        if (!file.isValid() || !visitor.allowVisitChildren(file)) return VirtualFileVisitor.CONTINUE;
+        if (!visitor.depthLimitReached()) {
+          childrenIterable = visitor.getChildrenIterable(file);
+          if (childrenIterable == null) {
+            childrenIterable = Arrays.asList(file.getChildren());
           }
         }
-        else {
-          @SuppressWarnings("UnsafeVfsRecursion") VirtualFile[] children = file.getChildren();
-          for (VirtualFile child : children) {
-            VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
-            if (result.skipToParent != null && result.skipToParent != child) return result;
-          }
+      }
+      finally {
+        token.finish();
+      }
+
+      if (childrenIterable != null) {
+        for (VirtualFile child : childrenIterable) {
+          VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
+          if (result.skipToParent != null && result.skipToParent != child) return result;
         }
       }
 

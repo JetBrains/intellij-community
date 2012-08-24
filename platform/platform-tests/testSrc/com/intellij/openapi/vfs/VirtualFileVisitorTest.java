@@ -19,6 +19,7 @@ import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PlatformUltraLiteTestFixture;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import org.jetbrains.annotations.NotNull;
@@ -32,10 +33,13 @@ import java.util.Collections;
 import static org.junit.Assert.assertEquals;
 
 public class VirtualFileVisitorTest {
+  private static PlatformUltraLiteTestFixture myFixture;
   private static VirtualFile myRoot;
 
   @BeforeClass
   public static void setUp() throws Exception {
+    myFixture = PlatformUltraLiteTestFixture.getFixture();
+    myFixture.setUp();
     myRoot =
       dir("/",
           dir("d1",
@@ -54,6 +58,7 @@ public class VirtualFileVisitorTest {
   @AfterClass
   public static void tearDown() throws Exception {
     myRoot = null;
+    myFixture.tearDown();
   }
 
   @Test
