@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.classes.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
@@ -34,7 +35,7 @@ public class PyMemberSelectionTable extends AbstractMemberSelectionTable<PyEleme
     final PsiElement member = memberInfo.getMember();
     Icon overrideIcon = EMPTY_OVERRIDE_ICON;
     if (member instanceof PyFunction && memberInfo.getOverrides() != null && memberInfo.getOverrides()) {
-      overrideIcon = OVERRIDING_METHOD_ICON;
+      overrideIcon = AllIcons.General.OverridingMethod;
     }
     return overrideIcon;
   }

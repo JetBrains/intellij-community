@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Maps;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.AbstractTreeClassChooserDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -13,7 +14,6 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,13 +39,13 @@ public class PyExceptionBreakpointType
   @NotNull
   @Override
   public Icon getEnabledIcon() {
-    return DebuggerIcons.ENABLED_EXCEPTION_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_exception_breakpoint;
   }
 
   @NotNull
   @Override
   public Icon getDisabledIcon() {
-    return DebuggerIcons.DISABLED_EXCEPTION_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_disabled_exception_breakpoint;
   }
 
   @Override

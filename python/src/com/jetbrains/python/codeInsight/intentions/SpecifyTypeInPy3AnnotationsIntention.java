@@ -84,7 +84,13 @@ public class SpecifyTypeInPy3AnnotationsIntention implements IntentionAction {
           if (resolvedReference instanceof PyTargetExpression) {
             final PyExpression assignedValue = ((PyTargetExpression)resolvedReference).findAssignedValue();
             if (assignedValue instanceof PyCallExpression) {
+              final PyExpression callee = ((PyCallExpression)assignedValue).getCallee();
+              if (callee != null) {
+                final PsiReference psiReference = callee.getReference();
+                if (psiReference != null && psiReference.resolve() == null) return false;
+              }
               final Callable callable = ((PyCallExpression)assignedValue).resolveCalleeFunction(PyResolveContext.defaultContext());
+
               if (callable instanceof PyFunction && ((PyFunction)callable).getAnnotation() == null) return true;
             }
           }
