@@ -134,19 +134,19 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       return;
     }
     final String packageName = ((PsiJavaFile)containingFile).getPackageName();
-    final VirtualFile virtualFile = containingFile.getVirtualFile();
-    LOG.assertTrue(virtualFile != null);
-    final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
+    final VirtualFile containingVirtualFile = containingFile.getVirtualFile();
+    LOG.assertTrue(containingVirtualFile != null);
+    final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(containingVirtualFile);
     if (entries.isEmpty()) {
       return;
     }
     for (final OrderEntry entry : entries) {
       if (entry instanceof ModuleOrderEntry) continue;
-      VirtualFile[] virtualFiles = AnnotationOrderRootType.getFiles(entry);
-      virtualFiles = filterByReadOnliness(virtualFiles);
+      VirtualFile[] roots = AnnotationOrderRootType.getFiles(entry);
+      roots = filterByReadOnliness(roots);
 
-      if (virtualFiles.length > 0) {
-        chooseRootAndAnnotateExternally(listOwner, annotationFQName, fromFile, project, packageName, virtualFile, virtualFiles, value);
+      if (roots.length > 0) {
+        chooseRootAndAnnotateExternally(listOwner, annotationFQName, fromFile, project, packageName, containingVirtualFile, roots, value);
       }
       else {
         if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
@@ -155,7 +155,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
         SwingUtilities.invokeLater(new Runnable() {
           @Override
           public void run() {
-            setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, virtualFile, value);
+            setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, containingVirtualFile, value);
           }
         });
       }
@@ -224,10 +224,10 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
                                                @NotNull final Project project,
                                                @NotNull final String packageName,
                                                final VirtualFile virtualFile,
-                                               @NotNull VirtualFile[] virtualFiles,
+                                               @NotNull VirtualFile[] roots,
                                                final PsiNameValuePair[] value) {
-    if (virtualFiles.length > 1) {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>("Annotation Roots", virtualFiles) {
+    if (roots.length > 1) {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>("Annotation Roots", roots) {
         @Override
         public PopupStep onChosen(@NotNull final VirtualFile file, final boolean finalChoice) {
           annotateExternally(file, listOwner, project, packageName, virtualFile, annotationFQName, fromFile, value);
@@ -247,7 +247,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       }).showInBestPositionFor(DataManager.getInstance().getDataContext());
     }
     else {
-      annotateExternally(virtualFiles[0], listOwner, project, packageName, virtualFile, annotationFQName, fromFile, value);
+      annotateExternally(roots[0], listOwner, project, packageName, virtualFile, annotationFQName, fromFile, value);
     }
   }
 
@@ -262,7 +262,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     return VfsUtil.toVirtualFileArray(result);
   }
 
-  private void annotateExternally(@NotNull final VirtualFile file,
+  private void annotateExternally(@NotNull final VirtualFile root,
                                   @NotNull final PsiModifierListOwner listOwner,
                                   @NotNull Project project,
                                   @NotNull final String packageName,
@@ -276,7 +276,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       for (XmlFile xmlFile : xmlFiles) {
         final VirtualFile vXmlFile = xmlFile.getVirtualFile();
         assert vXmlFile != null;
-        if (VfsUtilCore.isAncestor(file, vXmlFile, false)) {
+        if (VfsUtilCore.isAncestor(root, vXmlFile, false)) {
           annotationsXml[0] = xmlFile;
           if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFile)) return;
         }
@@ -290,7 +290,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       @Override
       protected void run(final Result result) throws Throwable {
         if (annotationsXml[0] == null) {
-          annotationsXml[0] = createAnnotationsXml(file, packageName);
+          annotationsXml[0] = createAnnotationsXml(root, packageName);
         }
         if (annotationsXml[0] != null) {
           annotationFiles.add(annotationsXml[0]);
