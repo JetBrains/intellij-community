@@ -930,7 +930,7 @@
     </action>
 
     <action id="NewPythonPackage" class="com.jetbrains.python.actions.CreatePackageAction" text="Python Package"
-            description="Create a new directory and __init__.py inside it" icon="AllIcons.Nodes.PackageClosed">
+            description="Create a new directory and __init__.py inside it" icon="AllIcons.Nodes.Package">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
 
