@@ -21,8 +21,7 @@ import org.jetbrains.annotations.Nullable;
 public interface ExpirableRunnable extends Runnable, Expirable  {
 
   abstract class ForProject implements ExpirableRunnable {
-
-    private Project myProject;
+    private final Project myProject;
 
     protected ForProject(@Nullable Project project) {
       myProject = project;

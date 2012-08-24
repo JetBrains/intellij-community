@@ -121,7 +121,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     Component c = me.getComponent();
     if (me.getID() == MouseEvent.MOUSE_ENTERED) {
       boolean canShow = true;
-      if (me.getComponent() != myCurrentComponent) {
+      if (c != myCurrentComponent) {
         canShow = hideCurrent(me, null, null);
       }
       if (canShow) {
@@ -129,12 +129,12 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_EXITED) {
-      if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
+      if (c == myCurrentComponent || c == myQueuedComponent) {
         hideCurrent(me, null, null);
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_MOVED) {
-      if (me.getComponent() == myCurrentComponent || me.getComponent() == myQueuedComponent) {
+      if (c == myCurrentComponent || c == myQueuedComponent) {
         if (myCurrentTipUi != null && myCurrentTipUi.wasFadedIn()) {
           if (hideCurrent(me, null, null)) {
             maybeShowFor(c, me);
@@ -158,7 +158,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }
     else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
-      if (me.getComponent() == myCurrentComponent) {
+      if (c == myCurrentComponent) {
         hideCurrent(me, null, null);
       }
     }
