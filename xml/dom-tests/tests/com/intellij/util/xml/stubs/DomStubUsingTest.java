@@ -15,14 +15,14 @@
  */
 package com.intellij.util.xml.stubs;
 
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomFileElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.stubs.model.Bar;
 import com.intellij.util.xml.stubs.model.Foo;
 import com.intellij.util.xml.stubs.model.NotStubbed;
@@ -99,8 +99,6 @@ public class DomStubUsingTest extends DomStubTest {
     DomElement parent = notStubbed.getParent();
     assertEquals(bar, parent);
 
-//    SemService.getSemService(getProject()).clearCache();
-
     NotStubbed child = bar.getNotStubbeds().get(0);
     parent = child.getParent();
     assertEquals(bar, parent);
@@ -112,5 +110,16 @@ public class DomStubUsingTest extends DomStubTest {
     Foo foo = element.getRootElement();
     List<Bar> bars = DomUtil.getChildrenOf(foo, Bar.class);
     assertEquals(2, bars.size());
+  }
+
+  public void testFileLoading() throws Exception {
+    XmlFile file = prepareFile("foo.xml");
+    ((PsiManagerImpl)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL);
+    try {
+      DomManager.getDomManager(getProject()).getFileElement(file, Foo.class);
+    }
+    finally {
+      ((PsiManagerImpl)getPsiManager()).setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
+    }
   }
 }

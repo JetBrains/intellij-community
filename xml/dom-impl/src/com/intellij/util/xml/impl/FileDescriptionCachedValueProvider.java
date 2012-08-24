@@ -116,7 +116,7 @@ class FileDescriptionCachedValueProvider<T extends DomElement> implements SemEle
     FileStub stub = null;
     if (file instanceof VirtualFileWithId) {
       ApplicationManager.getApplication().assertReadAccessAllowed();
-      if (!Boolean.TRUE.equals(myXmlFile.getUserData(DomStubBuilder.BUILDING_DOM_STUBS))) {
+      if (!DomStubBuilder.isStubBuilding(myXmlFile)) {
         ObjectStubTree stubTree = StubTreeLoader.getInstance().readOrBuild(myXmlFile.getProject(), file, myXmlFile);
         if (stubTree != null) {
           stub = (FileStub)stubTree.getRoot();

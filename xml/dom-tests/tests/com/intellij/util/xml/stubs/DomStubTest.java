@@ -73,19 +73,25 @@ public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
   }
 
   protected <T extends DomElement> DomFileElement<T> prepare(String path, Class<T> domClass) {
-    PsiFile file = myFixture.configureByFile(path);
+    XmlFile file = prepareFile(path);
+
+    DomFileElement<T> fileElement = DomManager.getDomManager(getProject()).getFileElement(file, domClass);
+    assertNotNull(fileElement);
+    return fileElement;
+  }
+
+  protected XmlFile prepareFile(String path) {
+    XmlFile file = (XmlFile)myFixture.configureByFile(path);
     assertFalse(file.getNode().isParsed());
     VirtualFile virtualFile = file.getVirtualFile();
+    assertNotNull(virtualFile);
     ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
     assertNotNull(tree);
 
     ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();
 
-    file = getPsiManager().findFile(virtualFile);
-    assertFalse(file.getNode().isParsed());
-
-    DomFileElement<T> fileElement = DomManager.getDomManager(getProject()).getFileElement((XmlFile)file, domClass);
-    assertNotNull(fileElement);
-    return fileElement;
+    file = (XmlFile)getPsiManager().findFile(virtualFile);
+    assertNotNull(file);
+    return file;
   }
 }

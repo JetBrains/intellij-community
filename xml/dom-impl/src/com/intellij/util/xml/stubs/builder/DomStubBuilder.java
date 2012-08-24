@@ -37,7 +37,11 @@ import java.io.ByteArrayInputStream;
  */
 public class DomStubBuilder implements BinaryFileStubBuilder {
 
-  public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
+  public static boolean isStubBuilding(PsiFile file) {
+    return Boolean.TRUE.equals(file.getUserData(BUILDING_DOM_STUBS));
+  }
+  private final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
+
   private final static Logger LOG = Logger.getInstance(DomStubBuilder.class);
 
   @Override
