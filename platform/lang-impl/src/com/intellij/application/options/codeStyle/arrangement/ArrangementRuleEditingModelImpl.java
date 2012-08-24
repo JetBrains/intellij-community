@@ -144,11 +144,12 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   
   @Override
   public void removeAndCondition(@NotNull ArrangementMatchCondition condition) {
-    if (!(myMatchCondition instanceof ArrangementCompositeMatchCondition)) {
-      // TODO den implement
+    if (myMatchCondition.equals(condition)) {
+      destroy();
       return;
     }
-
+    
+    assert myMatchCondition instanceof ArrangementCompositeMatchCondition;
     ArrangementMatchCondition newCondition = myMatchCondition.clone();
     ArrangementCompositeMatchCondition composite = (ArrangementCompositeMatchCondition)newCondition;
     composite.getOperands().remove(condition);
@@ -166,60 +167,51 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     ArrangementTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
     final TIntIntHashMap rowChanges = ArrangementConfigUtil.replace(myTopMost, myBottomMost, newTop, myTreeModel, myRootVisible);
     myBottomMost = newBottom;
-    for (ArrangementTreeNode node = myBottomMost.getParent(); node != null; node = node.getParent()) {
-      // There is a possible case that top condition is merged into existing one, hence, we need to refresh it.
-      ArrangementMatchCondition condition = node.getBackingCondition();
-      if (condition != null && condition.equals(newTop.getBackingCondition())) {
-        newTop = node;
-      }
-    }
     myTopMost = newTop;
-    rowChanges.remove(myRow);
+    refreshTreeNodes();
     int newRow = ArrangementConfigUtil.getRow(myBottomMost, myRootVisible);
-    rowChanges.put(myRow, newRow);
-    myRow = newRow;
+    if (myRow != newRow) {
+      rowChanges.put(myRow, newRow);
+      myRow = newRow;
+    }
     refreshConditions();
-    notifyListeners(rowChanges);
+    for (Listener listener : myListeners) {
+      listener.onChanged(this, rowChanges);
+    }
   }
 
   @Override
   public void replaceCondition(@NotNull ArrangementAtomMatchCondition from, @NotNull ArrangementAtomMatchCondition to)
     throws IllegalArgumentException
   {
-    for (ArrangementTreeNode node = myBottomMost; node != null; node = node.getParent()) {
-      if (from.equals(node.getBackingCondition())) {
-        ArrangementMatchCondition newCondition;
-        if (myMatchCondition.equals(from)) {
-          newCondition = to;
-        }
-        else {
-          assert myMatchCondition instanceof ArrangementCompositeMatchCondition;
-          ArrangementCompositeMatchCondition composite = (ArrangementCompositeMatchCondition)myMatchCondition;
-          ArrangementCompositeMatchCondition newComposite = composite.clone();
-          newComposite.getOperands().remove(from);
-          newComposite.getOperands().add(to);
-          newCondition = newComposite;
-        }
-        applyNewCondition(newCondition);
-        return;
-      }
-      if (node == myTopMost) {
-        throw new IllegalArgumentException(String.format(
-          "Can't perform arrangement match condition modification ('%s' -> '%s'). Reason: target condition doesn't have "
-          + "'%s' condition - %s",
-          from, to, from, myMatchCondition));
-      }
+    ArrangementMatchCondition newCondition;
+    if (myMatchCondition.equals(from)) {
+      newCondition = to;
+    }
+    else {
+      assert myMatchCondition instanceof ArrangementCompositeMatchCondition;
+      ArrangementCompositeMatchCondition composite = (ArrangementCompositeMatchCondition)myMatchCondition;
+      ArrangementCompositeMatchCondition newComposite = composite.clone();
+      newComposite.getOperands().remove(from);
+      newComposite.getOperands().add(to);
+      newCondition = newComposite;
+    }
+    applyNewCondition(newCondition);
+  }
+
+  @Override
+  public void destroy() {
+    for (Listener listener : myListeners) {
+      listener.beforeModelDestroy(this);
+    }
+    TIntIntHashMap rowChanges = ArrangementConfigUtil.remove(myTopMost, myBottomMost, myTreeModel, myRootVisible);
+    for (Listener listener : myListeners) {
+      listener.afterModelDestroy(rowChanges);
     }
   }
 
   public void addListener(@NotNull Listener listener) {
     myListeners.add(listener);
-  }
-
-  private void notifyListeners(@NotNull TIntIntHashMap rowChanges) {
-    for (Listener listener : myListeners) {
-      listener.onChanged(this, rowChanges);
-    }
   }
 
   @Override
@@ -246,5 +238,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
 
   public interface Listener {
     void onChanged(@NotNull ArrangementRuleEditingModelImpl model, @NotNull TIntIntHashMap rowChanges);
+    void beforeModelDestroy(@NotNull ArrangementRuleEditingModelImpl model);
+    void afterModelDestroy(@NotNull TIntIntHashMap rowChanges);
   }
 }

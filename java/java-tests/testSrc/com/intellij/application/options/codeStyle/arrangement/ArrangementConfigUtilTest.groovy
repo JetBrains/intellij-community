@@ -51,7 +51,7 @@ four =      '4'()
       '1' {
         '4'()
       }
-    def rowMappings = doReplace(initial, one, four, replacement)
+    def rowMappings = doReplace(one, four, replacement)
     
     // Check
     def expected = new TreeNodeBuilder().
@@ -88,7 +88,7 @@ to =      '5'()
       '1' {
         '5'()
       }
-    def rowMappings = doReplace(initial, from, to, replacement)
+    def rowMappings = doReplace(from, to, replacement)
     
     // Check.
     def expected = new TreeNodeBuilder().
@@ -123,7 +123,7 @@ node =  '4'()
       '1' {
         '4'()
       }
-    def rowMappings = doReplace(initial, node, node, replacement)
+    def rowMappings = doReplace(node, node, replacement)
     
     // Check.
     def expected = new TreeNodeBuilder().
@@ -158,7 +158,7 @@ to =      '3'()}
       '4' {
         '3'()
       }
-    def rowMappings = doReplace(initial, from, to, replacement)
+    def rowMappings = doReplace(from, to, replacement)
     
     // Check.
     def expected = new TreeNodeBuilder().
@@ -194,7 +194,7 @@ to =      '2'()}
       '3' {
         '2'()
       }
-    def rowMappings = doReplace(initial, from, to, replacement)
+    def rowMappings = doReplace(from, to, replacement)
     
     // Check.
     def expected = new TreeNodeBuilder().
@@ -361,13 +361,67 @@ to =      '2'()}
     doInsert(initial, 3, toAdd)
     assertNodesEqual(expected, initial)
   }
+
+  @Test
+  void removeFirst() {
+    def from;
+    def to;
+    def initial = new TreeNodeBuilder().
+      '0' {
+from =  '1' {
+to =      '2'()
+          '3'()}
+        '4'()
+      }
+    
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '3'()}
+        '4'()
+      }
+
+    def rowMappings = doRemove(from, to)
+    assertNodesEqual(expected, initial)
+    checkRowMappings([ 3 : 2, 4 : 3 ], rowMappings)
+  }
+
+  @Test
+  void removeWithMerge() {
+    def from;
+    def to;
+    def initial = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()}
+from =  '3'() {
+to =      '4'()}
+        '1' {
+          '5'()}
+      }
+    
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()
+          '5'()}
+      }
+    
+    def rowMappings = doRemove(from, to)
+    assertNodesEqual(expected, initial)
+    checkRowMappings([ 6 : 3 ], rowMappings)
+  }
   
-  private static def doReplace(initial, from, to, replacement) {
-    ArrangementConfigUtil.replace(from, to, replacement, new DefaultTreeModel(initial), true)
+  private static def doReplace(from, to, replacement) {
+    ArrangementConfigUtil.replace(from, to, replacement, new DefaultTreeModel(ArrangementConfigUtil.getRoot(from)), true)
   }
 
   private static def doInsert(parent, i, child) {
     ArrangementConfigUtil.insert(parent, i, child, new DefaultTreeModel(ArrangementConfigUtil.getRoot(parent)))
+  }
+  
+  private static def doRemove(from, to) {
+    ArrangementConfigUtil.remove(from, to, new DefaultTreeModel(ArrangementConfigUtil.getRoot(from)), true)
   }
   
   private static void assertNodesEqual(@NotNull ArrangementTreeNode expected, @NotNull ArrangementTreeNode actual) {

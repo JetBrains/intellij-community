@@ -36,6 +36,13 @@ public interface ArrangementRuleEditingModel {
   ArrangementMatchCondition getMatchCondition();
 
   /**
+   * Asks current model to destroy itself.
+   * <p/>
+   * The key concern here is to perform necessary tree modification.
+   */
+  void destroy();
+  
+  /**
    * Allows to answer if current model has a registered condition for the given key. A key is expected to be one of the standard
    * keys, e.g. {@link ArrangementEntryType type}, {@link ArrangementModifier modifier} etc. 
    * 

@@ -341,10 +341,10 @@ public class ArrangementRuleTree {
   }
 
   @NotNull
-  private ArrangementNodeComponent getNodeComponentAt(int row, @NotNull ArrangementMatchCondition node) {
+  private ArrangementNodeComponent getNodeComponentAt(int row, @NotNull ArrangementMatchCondition condition) {
     ArrangementNodeComponent result = myRenderers.get(row);
-    if (result == null) {
-      myRenderers.put(row, result = myFactory.getComponent(node));
+    if (result == null || !result.getMatchCondition().equals(condition)) {
+      myRenderers.put(row, result = myFactory.getComponent(condition));
     }
     return result;
   }
@@ -434,55 +434,7 @@ public class ArrangementRuleTree {
   }
 
   private void onModelChange(@NotNull ArrangementRuleEditingModelImpl model, @NotNull final TIntIntHashMap rowChanges) {
-    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
-    
-    // Refresh models.
-    myModels.forEachValue(myModelNodesRefresher);
-
-    // Shift row-based caches.
-    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> changedModelMappings =
-      new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
-    final TIntObjectHashMap<ArrangementNodeComponent> changedRendererMappings = new TIntObjectHashMap<ArrangementNodeComponent>();
-    rowChanges.forEachEntry(new TIntIntProcedure() {
-      @Override
-      public boolean execute(int oldRow, int newRow) {
-        ArrangementRuleEditingModelImpl m = myModels.remove(oldRow);
-        if (m != null) {
-          changedModelMappings.put(newRow, m);
-        }
-
-        ArrangementNodeComponent renderer = myRenderers.remove(oldRow);
-        if (renderer != null) {
-          changedRendererMappings.put(newRow, renderer);
-        }
-        return true;
-      }
-
-      
-    });
-    putAll(changedModelMappings, myModels);
-    putAll(changedRendererMappings, myRenderers);
-    
-    // Drop JTree visual caches.
-    rowChanges.forEachEntry(new TIntIntProcedure() {
-      @Override
-      public boolean execute(int oldRow, int newRow) {
-        refreshTreeNode(oldRow);
-        refreshTreeNode(newRow); 
-        return true;
-      }
-      private void refreshTreeNode(int row) {
-        TreePath path = myTree.getPathForRow(row);
-        if (path == null) {
-          return;
-        }
-        TreeNode node = (TreeNode)path.getLastPathComponent();
-        if (node == null) {
-          return;
-        }
-        myTreeModel.nodeStructureChanged(node);
-      }
-    });
+    processRowChanges(rowChanges);
 
     // Perform necessary actions for the changed model.
     ArrangementTreeNode topMost = model.getTopMost();
@@ -509,6 +461,51 @@ public class ArrangementRuleTree {
     finally {
       myExplicitSelectionChange = false;
     }
+  }
+
+  private void processRowChanges(TIntIntHashMap rowChanges) {
+    expandAll(myTree, new TreePath(myTreeModel.getRoot()));
+
+    // Refresh models.
+    myModels.forEachValue(myModelNodesRefresher);
+
+    // Shift row-based caches.
+    final TIntObjectHashMap<ArrangementRuleEditingModelImpl> changedModelMappings =
+      new TIntObjectHashMap<ArrangementRuleEditingModelImpl>();
+    rowChanges.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int oldRow, int newRow) {
+        ArrangementRuleEditingModelImpl m = myModels.remove(oldRow);
+        if (m != null) {
+          changedModelMappings.put(newRow, m);
+        }
+        return true;
+      }
+
+      
+    });
+    putAll(changedModelMappings, myModels);
+
+    // Drop JTree visual caches.
+    rowChanges.forEachEntry(new TIntIntProcedure() {
+      @Override
+      public boolean execute(int oldRow, int newRow) {
+        refreshTreeNode(oldRow);
+        refreshTreeNode(newRow); 
+        return true;
+      }
+      private void refreshTreeNode(int row) {
+        TreePath path = myTree.getPathForRow(row);
+        if (path == null) {
+          return;
+        }
+        TreeNode node = (TreeNode)path.getLastPathComponent();
+        if (node == null) {
+          return;
+        }
+        myTreeModel.nodeStructureChanged(node);
+      }
+    });
   }
 
   private static <T> void putAll(@NotNull TIntObjectHashMap<T> from, @NotNull final TIntObjectHashMap<T> to) {
@@ -589,6 +586,23 @@ public class ArrangementRuleTree {
     @Override
     public void onChanged(@NotNull ArrangementRuleEditingModelImpl model, @NotNull TIntIntHashMap rowChanges) {
       onModelChange(model, rowChanges); 
+    }
+
+    @Override
+    public void beforeModelDestroy(@NotNull ArrangementRuleEditingModelImpl model) {
+      for (ArrangementTreeNode node = model.getBottomMost(); node != null; node = node.getParent()) {
+        int row = myTree.getRowForPath(new TreePath(node.getPath()));
+        myRenderers.remove(row);
+        myModels.remove(row);
+        if (node == model.getTopMost()) {
+          break;
+        }
+      }
+    }
+
+    @Override
+    public void afterModelDestroy(@NotNull TIntIntHashMap rowChanges) {
+      processRowChanges(rowChanges); 
     }
   }
   

@@ -16,6 +16,7 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import static com.intellij.psi.codeStyle.arrangement.ArrangementUtil.and;
@@ -90,7 +91,7 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
   @Test
   public void removeAndKeepAllLevels() {
     configure(and(atom(FIELD), atom(PUBLIC), atom(STATIC)));
-    ArrangementRuleEditingModel model = myRowMappings.get(2);
+    ArrangementRuleEditingModelImpl model = myRowMappings.get(2);
     assertNotNull(model);
     assertEquals(1, myRowMappings.size());
     
@@ -107,6 +108,8 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     ArrangementTreeNode modifiersNode = fieldNode.getFirstChild();
     assertNotNull(modifiersNode);
     assertEquals(atom(STATIC), modifiersNode.getBackingCondition());
+    
+    checkModelTreeNodesConsistency(model);
   }
 
   @Test
@@ -193,5 +196,12 @@ public class ArrangementRuleEditingModelImplTest extends AbstractArrangementRule
     ArrangementTreeNode atomFieldNode = compositeFieldNode.getNextSibling();
     assertNotNull(atomFieldNode);
     assertEquals(atom(FIELD), atomFieldNode.getBackingCondition());
+  }
+
+  private void checkModelTreeNodesConsistency(@NotNull ArrangementRuleEditingModelImpl model) {
+    model.refreshTreeNodes();
+    ArrangementTreeNode root = ArrangementConfigUtil.getRoot(model.getBottomMost());
+    assertSame(myRoot, root);
+    assertSame(root, ArrangementConfigUtil.getRoot(model.getTopMost()));
   }
 }
