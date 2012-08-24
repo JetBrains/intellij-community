@@ -29,7 +29,6 @@ public abstract class TestsProgressAnimator implements Runnable, Disposable {
   private static final int MOVIE_TIME = 800;
   private static final int FRAME_TIME = MOVIE_TIME / FRAMES_COUNT;
 
-  public static final Icon PAUSED_ICON = AllIcons.RunConfigurations.TestPaused;
   public static final Icon[] FRAMES = new Icon[FRAMES_COUNT];
 
   private long myLastInvocationTime = -1;

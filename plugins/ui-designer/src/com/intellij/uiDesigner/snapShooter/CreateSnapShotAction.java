@@ -325,7 +325,6 @@ public class CreateSnapShotAction extends AnAction {
     @NonNls private static final String SWING_PACKAGE = "javax.swing.";
 
     private final Icon myUnknownComponentIcon = IconLoader.getIcon("/com/intellij/uiDesigner/icons/unknown.png");
-    private final Icon myFormIcon = AllIcons.FileTypes.UiForm;
 
     private MyDialog(Project project, final SnapShotClient client, final PsiDirectory dir) {
       super(project, true);
@@ -375,7 +374,7 @@ public class CreateSnapShotAction extends AnAction {
           }
 
           if (rc.isTopLevel()) {
-            setIcon(myFormIcon);
+            setIcon(AllIcons.FileTypes.UiForm);
           }
           else {
             final Palette palette = Palette.getInstance(myProject);

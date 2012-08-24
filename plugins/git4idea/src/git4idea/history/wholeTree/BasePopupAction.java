@@ -38,7 +38,6 @@ import java.awt.event.MouseEvent;
  * @author irengrig
  */
 public abstract class BasePopupAction extends DumbAwareAction implements CustomComponentAction {
-  private static final Icon ARROWS_ICON = AllIcons.Ide.Statusbar_arrows;
   public static final Color DARKER = UIUtil.getInactiveTextColor().darker().darker();
   protected final JLabel myLabel;
   protected final JPanel myPanel;
@@ -59,7 +58,7 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
     myPanel.add(show);
     myPanel.add(myLabel);
     myPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 3));
-    final JLabel iconLabel = new JLabel(ARROWS_ICON);
+    final JLabel iconLabel = new JLabel(AllIcons.Ide.Statusbar_arrows);
     iconLabel.setBorder(BorderFactory.createEmptyBorder(0,0,0,2));
     myPanel.add(iconLabel, myLabel);
 

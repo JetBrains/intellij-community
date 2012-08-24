@@ -57,7 +57,6 @@ public class ModuleGroupingRule implements UsageGroupingRule {
   }
 
   private static class LibraryUsageGroup implements UsageGroup {
-    public static final Icon LIBRARY_ICON = AllIcons.Nodes.PpLibOpen;
 
     private final OrderEntry myEntry;
 
@@ -71,7 +70,7 @@ public class ModuleGroupingRule implements UsageGroupingRule {
 
     @Override
     public Icon getIcon(boolean isOpen) {
-      return LIBRARY_ICON;
+      return AllIcons.Nodes.PpLibOpen;
     }
 
     @Override

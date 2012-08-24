@@ -52,11 +52,7 @@ import java.util.List;
  *         Date: Jul 16, 2007
  */
 abstract class ProjectLayoutPanel<T> extends JPanel {
-  private static final Icon ICON_MODULE = AllIcons.Nodes.ModuleClosed;
-  private static final Icon RENAME_ICON = IconUtil.getEditIcon();
-  private static final Icon MERGE_ICON = AllIcons.Modules.Merge;
-  private static final Icon SPLIT_ICON = AllIcons.Modules.Split;
-  
+
   private final ElementsChooser<T> myEntriesChooser;
   private final JList myDependenciesList;
   private final ModuleInsight myInsight;
@@ -333,7 +329,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class MergeAction extends AnAction {
     private MergeAction() {
-      super("Merge", "", MERGE_ICON); // todo
+      super("Merge", "", AllIcons.Modules.Merge); // todo
     }
 
     public void actionPerformed(final AnActionEvent e) {
@@ -378,7 +374,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class SplitAction extends AnAction {
     private SplitAction() {
-      super("Split", "", SPLIT_ICON); // todo
+      super("Split", "", AllIcons.Modules.Split); // todo
     }
 
     public void actionPerformed(final AnActionEvent e) {
@@ -415,7 +411,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   private class RenameAction extends AnAction {
     private RenameAction() {
-      super("Rename", "", RENAME_ICON); // todo
+      super("Rename", "", IconUtil.getEditIcon()); // todo
     }
 
     public void actionPerformed(final AnActionEvent e) {

@@ -1,5 +1,6 @@
 package org.intellij.plugins.xsltDebugger;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -14,7 +15,6 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.impl.XsltChecker;
 import org.intellij.plugins.xsltDebugger.impl.XsltDebuggerEditorsProvider;
@@ -77,13 +77,13 @@ public class XsltBreakpointType extends XLineBreakpointType<XBreakpointPropertie
   @NotNull
   @Override
   public Icon getEnabledIcon() {
-    return XsltSupport.createXsltIcon(DebuggerIcons.ENABLED_BREAKPOINT_ICON);
+    return XsltSupport.createXsltIcon(AllIcons.Debugger.Db_set_breakpoint);
   }
 
   @NotNull
   @Override
   public Icon getDisabledIcon() {
-    return XsltSupport.createXsltIcon(DebuggerIcons.DISABLED_BREAKPOINT_ICON);
+    return XsltSupport.createXsltIcon(AllIcons.Debugger.Db_disabled_breakpoint);
   }
 
   @Override

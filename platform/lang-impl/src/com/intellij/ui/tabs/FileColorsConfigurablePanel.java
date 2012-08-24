@@ -46,10 +46,6 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
   private final FileColorSettingsTable myLocalTable;
   private final FileColorSettingsTable mySharedTable;
 
-  private static final Icon SHARE = AllIcons.Actions.Share;
-  private static final Icon UNSHARE = AllIcons.Actions.Unshare;
-
-
   public FileColorsConfigurablePanel(@NotNull final FileColorManagerImpl manager) {
     setLayout(new BorderLayout());
     myManager = manager;
@@ -92,7 +88,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     };
 
     final JPanel panel = ToolbarDecorator.createDecorator(myLocalTable)
-      .addExtraAction(new AnActionButton("Share", SHARE) {
+      .addExtraAction(new AnActionButton("Share", AllIcons.Actions.Share) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           share();
@@ -127,7 +123,7 @@ public class FileColorsConfigurablePanel extends JPanel implements Disposable {
     final JPanel sharedPanel = new JPanel(new BorderLayout());
     sharedPanel.setBorder(IdeBorderFactory.createTitledBorder("Shared colors", false));
     final JPanel shared = ToolbarDecorator.createDecorator(mySharedTable)
-      .addExtraAction(new AnActionButton("Unshare", UNSHARE) {
+      .addExtraAction(new AnActionButton("Unshare", AllIcons.Actions.Unshare) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           unshare();

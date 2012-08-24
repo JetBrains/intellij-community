@@ -70,7 +70,6 @@ import java.util.List;
  */
 abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavigator, DataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.todo.TodoPanel");
-  private static final Icon PREVIEW_ICON = AllIcons.Actions.Preview;
 
   protected Project myProject;
   private final TodoPanelSettings mySettings;
@@ -641,7 +640,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   private final class MyPreviewAction extends ToggleAction {
 
     MyPreviewAction() {
-      super("Preview Usages", null, PREVIEW_ICON);
+      super("Preview Usages", null, AllIcons.Actions.Preview);
     }
 
     public void update(AnActionEvent e) {

@@ -76,7 +76,6 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
 
   private static final Dimension ACTION_BUTTON_SIZE = new Dimension(66, 66);
   private static final Dimension PLUGIN_LOGO_SIZE = new Dimension(16, 16);
-  private static final Icon DEFAULT_ICON = AllIcons.General.ConfigurableDefault;
 
   @NonNls private static final String CAPTION_FONT_NAME = "Tahoma";
   private static final Font TEXT_FONT = new Font(CAPTION_FONT_NAME, Font.PLAIN, 11);
@@ -101,7 +100,6 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   @NonNls private static final String HTML_SUFFIX = "</html>";
   @NonNls private static final String ___HTML_SUFFIX = "...</html>";
   @NonNls private static final String ESC_NEW_LINE = "\\n";
-  public static final Icon ICON = AllIcons.Actions.CloseNew;
 
   private final JPanel myWelcomePanel;
   private final JPanel myMainPanel;
@@ -251,7 +249,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
         public Dimension getPreferredSize() {
           boolean hasIcon = getIcon() != null;
           Dimension preferredSize = super.getPreferredSize();
-          return new Dimension(preferredSize.width + (hasIcon ? 0 : ICON.getIconWidth() + myIconTextGap), preferredSize.height);
+          return new Dimension(preferredSize.width + (hasIcon ? 0 : AllIcons.Actions.CloseNew.getIconWidth() + myIconTextGap), preferredSize.height);
         }
 
         @Override
@@ -319,7 +317,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       actionLabel.addMouseListener(new MouseAdapter() {
         @Override
         public void mouseEntered(MouseEvent e) {
-          actionLabel.setIcon(ICON);
+          actionLabel.setIcon(AllIcons.Actions.CloseNew);
         }
 
         @Override
@@ -791,7 +789,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
 
     private MyActionButton(Icon icon, String displayName) {
       myDisplayName = displayName;
-      myIcon = new LabeledIcon(icon != null ? icon : DEFAULT_ICON, getDisplayName(), null);
+      myIcon = new LabeledIcon(icon != null ? icon : AllIcons.General.ConfigurableDefault, getDisplayName(), null);
     }
 
     private void setupWithinPanel(JPanel panel, int groupIdx, int rowIdx, int columnIdx) {

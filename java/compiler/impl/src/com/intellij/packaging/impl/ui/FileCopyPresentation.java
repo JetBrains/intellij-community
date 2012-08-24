@@ -15,12 +15,12 @@
  */
 package com.intellij.packaging.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.impl.elements.FileCopyElementType;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.ui.SimpleTextAttributes;
@@ -68,7 +68,7 @@ public class FileCopyPresentation extends PackagingElementPresentation {
       presentationData.addText(" (" + mySourcePath + ")", commentAttributes);
     }
     else {
-      presentationData.setIcons(FileCopyElementType.ICON);
+      presentationData.setIcons(AllIcons.FileTypes.Text);
       presentationData.addText(myOutputFileName, SimpleTextAttributes.ERROR_ATTRIBUTES);
       final VirtualFile parentFile = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(mySourcePath));
       presentationData.addText("(" + mySourcePath + ")",

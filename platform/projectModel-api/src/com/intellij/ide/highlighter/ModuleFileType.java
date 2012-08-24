@@ -29,8 +29,6 @@ public class ModuleFileType implements InternalFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "iml";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".iml";
 
-  private static final Icon ICON = AllIcons.Nodes.IdeaModule;
-
   @NotNull
   public String getName() {
     return "IDEA_MODULE";
@@ -47,7 +45,7 @@ public class ModuleFileType implements InternalFileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.IdeaModule;
   }
 
   public boolean isBinary() {

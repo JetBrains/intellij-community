@@ -15,20 +15,20 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
-import com.intellij.packaging.ui.*;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.projectView.PresentationData;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.impl.elements.ArtifactElementType;
-import com.intellij.ide.projectView.PresentationData;
+import com.intellij.packaging.ui.*;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Collections;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author nik
@@ -84,7 +84,7 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
       @Override
       public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                          SimpleTextAttributes commentAttributes) {
-        presentationData.setIcons(PlainArtifactType.ARTIFACT_ICON);
+        presentationData.setIcons(AllIcons.Nodes.Artifact);
         presentationData.addText("Artifacts", mainAttributes);
       }
 

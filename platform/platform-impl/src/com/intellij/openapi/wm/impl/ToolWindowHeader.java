@@ -55,27 +55,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
   @NonNls private static final String HIDE_ACTIVE_SIDE_WINDOW_ACTION_ID = "HideSideWindows";
 
-  private static final Icon ourHideLeftSideIcon = AllIcons.General.HideLeft;
-  private static final Icon ourHideRightSideIcon = AllIcons.General.HideRight;
-  private static final Icon ourHideDownSideIcon = AllIcons.General.HideDown;
-
-  private static final Icon ourHideLeftIcon = AllIcons.General.HideLeftPart;
-  private static final Icon ourHideRightIcon = AllIcons.General.HideRightPart;
-  private static final Icon ourHideDownIcon = AllIcons.General.HideDownPart;
-
-  private static final Icon ourSettingsIcon = AllIcons.General.Gear;
-  private static final Icon ourSeparatorIcon = AllIcons.General.Divider;
-
-  private static final Icon ourHideLeftSideHoveredIcon = AllIcons.General.HideLeftHover;
-  private static final Icon ourHideRightSideHoveredIcon = AllIcons.General.HideRightHover;
-  private static final Icon ourHideDownSideHoveredIcon = AllIcons.General.HideDownHover;
-
-  private static final Icon ourHideLeftHoveredIcon = AllIcons.General.HideLeftPartHover;
-  private static final Icon ourHideRightHoveredIcon = AllIcons.General.HideRightPartHover;
-  private static final Icon ourHideDownHoveredIcon = AllIcons.General.HideDownPartHover;
-
-  private static final Icon ourSettingsHoveredIcon = AllIcons.General.GearHover;
-
   private ToolWindow myToolWindow;
   private WindowInfoImpl myInfo;
   private final ToolWindowHeader.ActionButton myHideButton;
@@ -137,10 +116,10 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
 
         popupMenu.getComponent().show(inputEvent.getComponent(), x, y);
       }
-    }, ourSettingsIcon) {
+    }, AllIcons.General.Gear) {
       @Override
       protected Icon getActiveHoveredIcon() {
-        return ourSettingsHoveredIcon;
+        return AllIcons.General.GearHover;
       }
     };
 
@@ -155,7 +134,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
         sideHidden();
       }
     },
-    ourHideLeftSideIcon, null, null
+                                    AllIcons.General.HideLeft, null, null
     ) {
       @Override
       protected Icon getActiveIcon() {
@@ -245,7 +224,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
       actionAdded = true;
     }
     if (actionAdded) {
-      myButtonPanel.add(new JLabel(ourSeparatorIcon));
+      myButtonPanel.add(new JLabel(AllIcons.General.Divider));
       myButtonPanel.add(Box.createHorizontalStrut(6));
     }
     addDefaultActions(myButtonPanel);
@@ -254,49 +233,49 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
   private static Icon getHideToolWindowIcon(ToolWindow toolWindow) {
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {
-      return ourHideDownIcon;
+      return AllIcons.General.HideDownPart;
     }
     else if (anchor == ToolWindowAnchor.RIGHT) {
-      return ourHideRightIcon;
+      return AllIcons.General.HideRightPart;
     }
 
-    return ourHideLeftIcon;
+    return AllIcons.General.HideLeftPart;
   }
 
   private static Icon getHideIcon(ToolWindow toolWindow) {
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {
-      return ourHideDownSideIcon;
+      return AllIcons.General.HideDown;
     }
     else if (anchor == ToolWindowAnchor.RIGHT) {
-      return ourHideRightSideIcon;
+      return AllIcons.General.HideRight;
     }
 
-    return ourHideLeftSideIcon;
+    return AllIcons.General.HideLeft;
   }
 
   private static Icon getHideToolWindowHoveredIcon(ToolWindow toolWindow) {
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {
-      return ourHideDownHoveredIcon;
+      return AllIcons.General.HideDownPartHover;
     }
     else if (anchor == ToolWindowAnchor.RIGHT) {
-      return ourHideRightHoveredIcon;
+      return AllIcons.General.HideRightPartHover;
     }
 
-    return ourHideLeftHoveredIcon;
+    return AllIcons.General.HideLeftPartHover;
   }
 
   private static Icon getHideHoveredIcon(ToolWindow toolWindow) {
     ToolWindowAnchor anchor = toolWindow.getAnchor();
     if (anchor == ToolWindowAnchor.BOTTOM) {
-      return ourHideDownSideHoveredIcon;
+      return AllIcons.General.HideDownHover;
     }
     else if (anchor == ToolWindowAnchor.RIGHT) {
-      return ourHideRightSideHoveredIcon;
+      return AllIcons.General.HideRightHover;
     }
 
-    return ourHideLeftSideHoveredIcon;
+    return AllIcons.General.HideLeftHover;
   }
 
   @Override

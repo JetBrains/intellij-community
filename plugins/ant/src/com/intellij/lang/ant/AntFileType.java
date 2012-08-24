@@ -28,7 +28,6 @@ public class AntFileType extends LanguageFileType {
 
   @NonNls public static final String DEFAULT_EXTENSION = "ant";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".ant";
-  private static final Icon ICON = AllIcons.FileTypes.Xml;
 
   public AntFileType() {
     super(new AntLanguage());
@@ -53,6 +52,6 @@ public class AntFileType extends LanguageFileType {
 
   @Nullable
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Xml;
   }
 }

@@ -80,7 +80,6 @@ public class MvcConsole implements Disposable {
   private final MyKillProcessAction myKillAction = new MyKillProcessAction();
   private boolean myExecuting = false;
   private final Content myContent;
-  private static final Icon KILL_PROCESS_ICON = AllIcons.Debugger.KillProcess;
 
   public MvcConsole(Project project, TextConsoleBuilderFactory consoleBuilderFactory) {
     myProject = project;
@@ -360,7 +359,7 @@ public class MvcConsole implements Disposable {
     private OSProcessHandler myHandler = null;
 
     public MyKillProcessAction() {
-      super("Kill process", "Kill process", KILL_PROCESS_ICON);
+      super("Kill process", "Kill process", AllIcons.Debugger.KillProcess);
     }
 
     public void setHandler(@Nullable OSProcessHandler handler) {

@@ -91,30 +91,16 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
     return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider));
   }
 
-  private static class IconHolder {
-    private static final Icon JAVA_MODULE_ICON = AllIcons.Modules.Types.JavaModule;
-  }
-
   private static Icon getJavaModuleIcon() {
-
-    return IconHolder.JAVA_MODULE_ICON;
-  }
-
-  private static class JavaModuleOpenIconHolder {
-    private static final Icon JAVA_MODULE_NODE_ICON_OPEN = AllIcons.Nodes.ModuleOpen;
+    return AllIcons.Modules.Types.JavaModule;
   }
 
   private static Icon getJavaModuleNodeIconOpen() {
-    return JavaModuleOpenIconHolder.JAVA_MODULE_NODE_ICON_OPEN;
-  }
-
-  private static class JavaModuleClosedIconHolder {
-    private static final Icon JAVA_MODULE_NODE_ICON_CLOSED = AllIcons.Nodes.ModuleClosed;
+    return AllIcons.Nodes.ModuleOpen;
   }
 
   private static Icon getJavaModuleNodeIconClosed() {
-
-    return JavaModuleClosedIconHolder.JAVA_MODULE_NODE_ICON_CLOSED;
+    return AllIcons.Nodes.ModuleClosed;
   }
 
   private static class WizardIconHolder {

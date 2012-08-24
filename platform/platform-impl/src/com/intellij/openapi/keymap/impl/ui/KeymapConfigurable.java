@@ -15,16 +15,12 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class KeymapConfigurable extends SearchableConfigurable.Parent.Abstract {
-  private static final Icon icon = AllIcons.General.Keymap;
 
   public String getDisplayName() {
     return KeyMapBundle.message("keymap.parent.display.name");

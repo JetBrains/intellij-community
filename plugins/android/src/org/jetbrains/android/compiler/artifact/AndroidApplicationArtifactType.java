@@ -1,6 +1,7 @@
 package org.jetbrains.android.compiler.artifact;
 
 import com.intellij.facet.FacetModel;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.LibrarySourceItem;
@@ -15,7 +16,6 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
@@ -37,7 +37,7 @@ public class AndroidApplicationArtifactType extends ArtifactType {
   @NotNull
   @Override
   public Icon getIcon() {
-    return PlainArtifactType.ARTIFACT_ICON;
+    return AllIcons.Nodes.Artifact;
   }
 
   @Override

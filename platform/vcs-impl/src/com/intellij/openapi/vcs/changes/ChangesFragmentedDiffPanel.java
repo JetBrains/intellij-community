@@ -60,7 +60,6 @@ import com.intellij.util.BeforeAfter;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -616,7 +615,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
 
     private PopupAction() {
       super("Settings", "Settings", AllIcons.General.SecondaryGroup);
-      myUsual = new AnAction("Top | Bottom", "", VcsUtil.ourNotDot) {
+      myUsual = new AnAction("Top | Bottom", "", AllIcons.General.Mdot_empty) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
@@ -627,10 +626,10 @@ public class ChangesFragmentedDiffPanel implements Disposable {
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? VcsUtil.ourNotDot : VcsUtil.ourDot);
+          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? AllIcons.General.Mdot_empty : AllIcons.General.Mdot);
         }
       };
-      myNumbered = new AnAction("Left | Right", "", VcsUtil.ourNotDot) {
+      myNumbered = new AnAction("Left | Right", "", AllIcons.General.Mdot_empty) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           boolean was = myConfiguration.SHORT_DIFF_HORISONTALLY;
@@ -641,7 +640,7 @@ public class ChangesFragmentedDiffPanel implements Disposable {
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? VcsUtil.ourDot : VcsUtil.ourNotDot);
+          e.getPresentation().setIcon(myConfiguration.SHORT_DIFF_HORISONTALLY ? AllIcons.General.Mdot : AllIcons.General.Mdot_empty);
         }
       };
       mySoftWrapsAction = new MyUseSoftWrapsAction(myConfiguration.SOFT_WRAPS_IN_SHORT_DIFF);

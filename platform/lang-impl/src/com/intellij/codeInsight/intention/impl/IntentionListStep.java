@@ -28,6 +28,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInspection.IntentionWrapper;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -356,12 +357,12 @@ class IntentionListStep implements ListPopupStep<IntentionActionWithTextCaching>
     }
 
     if (mySettings.isShowLightBulb(action)) {
-      return myCachedErrorFixes.contains(value) ? IntentionHintComponent.ourQuickFixIcon
-             : myCachedInspectionFixes.contains(value) ? IntentionHintComponent.ourBulbIcon :
-               IntentionHintComponent.ourIntentionIcon;
+      return myCachedErrorFixes.contains(value) ? AllIcons.Actions.QuickfixBulb
+             : myCachedInspectionFixes.contains(value) ? AllIcons.Actions.IntentionBulb :
+               AllIcons.Actions.RealIntentionBulb;
     }
     else {
-      return myCachedErrorFixes.contains(value) ? IntentionHintComponent.ourQuickFixOffIcon : IntentionHintComponent.ourIntentionOffIcon;
+      return myCachedErrorFixes.contains(value) ? AllIcons.Actions.QuickfixOffBulb : AllIcons.Actions.RealIntentionOffBulb;
     }
   }
 

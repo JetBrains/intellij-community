@@ -27,8 +27,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class JavaContentRootPanel extends ContentRootPanel {
-  private static final Icon ADD_PREFIX_ICON = AllIcons.Modules.SetPackagePrefix;
-  private static final Icon ADD_PREFIX_ROLLOVER_ICON = AllIcons.Modules.SetPackagePrefixRollover;
 
   public JavaContentRootPanel(ActionCallback callback) {
     super(callback, true, true);
@@ -43,7 +41,8 @@ public abstract class JavaContentRootPanel extends ContentRootPanel {
   }
 
   private JComponent createAddPrefixComponent(final SourceFolder folder) {
-    final IconActionComponent iconComponent = new IconActionComponent(ADD_PREFIX_ICON, ADD_PREFIX_ROLLOVER_ICON,
+    final IconActionComponent iconComponent = new IconActionComponent(AllIcons.Modules.SetPackagePrefix,
+                                                                      AllIcons.Modules.SetPackagePrefixRollover,
                                                                       ProjectBundle.message("module.paths.package.prefix.tooltip"), new Runnable() {
       public void run() {
         final String message = ProjectBundle.message("module.paths.package.prefix.prompt",

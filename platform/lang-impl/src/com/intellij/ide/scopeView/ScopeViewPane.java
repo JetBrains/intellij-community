@@ -61,7 +61,6 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   private final DependencyValidationManager myDependencyValidationManager;
   private final NamedScopeManager myNamedScopeManager;
   private final NamedScopesHolder.ScopeListener myScopeListener;
-  public static final Icon ICON = AllIcons.Ide.LocalScope;
 
   public ScopeViewPane(final Project project, ProjectView projectView, DependencyValidationManager dependencyValidationManager, NamedScopeManager namedScopeManager) {
     super(project);
@@ -100,7 +99,7 @@ public class ScopeViewPane extends AbstractProjectViewPane {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Ide.LocalScope;
   }
 
   @NotNull

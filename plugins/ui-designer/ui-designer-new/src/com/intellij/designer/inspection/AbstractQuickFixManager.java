@@ -181,9 +181,9 @@ public abstract class AbstractQuickFixManager {
     }
 
     // 4. Show light bulb to fix this error
-    myHint = new LightweightHint(new InspectionHint(error ? ICON_ERROR : ICON));
+    myHint = new LightweightHint(new InspectionHint(error ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb));
     myLastHintBounds = bounds;
-    myHint.show(myComponent, bounds.x - ICON.getIconWidth() - 4, bounds.y, myComponent, new HintHint(myComponent, bounds.getLocation()));
+    myHint.show(myComponent, bounds.x - AllIcons.Actions.IntentionBulb.getIconWidth() - 4, bounds.y, myComponent, new HintHint(myComponent, bounds.getLocation()));
   }
 
   private void showPopup() {
@@ -219,7 +219,9 @@ public abstract class AbstractQuickFixManager {
       Rectangle rc = getErrorBounds();
       if (rc != null) {
         myLastHintBounds = rc;
-        Rectangle hintRect = new Rectangle(rc.x - ICON.getIconWidth() - 4, rc.y, ICON.getIconWidth() + 4, ICON.getIconHeight() + 4);
+        Rectangle hintRect = new Rectangle(rc.x - AllIcons.Actions.IntentionBulb.getIconWidth() - 4, rc.y, AllIcons.Actions.IntentionBulb
+                                                                                                             .getIconWidth() + 4, AllIcons.Actions.IntentionBulb
+                                                                                                                                    .getIconHeight() + 4);
         if (getHintClipRect().contains(hintRect)) {
           myHint.updateLocation(hintRect.x, hintRect.y);
         }
@@ -262,7 +264,7 @@ public abstract class AbstractQuickFixManager {
 
     @Override
     public Icon getIconFor(ErrorInfo value) {
-      return INTENTION_ICON;
+      return AllIcons.Actions.RealIntentionBulb;
     }
 
     @NotNull
@@ -332,11 +334,8 @@ public abstract class AbstractQuickFixManager {
     BorderFactory
       .createCompoundBorder(BorderFactory.createLineBorder(Color.orange, 2), BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
-  private static final Icon INTENTION_ICON = AllIcons.Actions.RealIntentionBulb;
-  private static final Icon ARROW_ICON = AllIcons.General.ArrowDown;
-  private static final Icon INACTIVE_ARROW_ICON = new EmptyIcon(ARROW_ICON.getIconWidth(), ARROW_ICON.getIconHeight());
-  public static final Icon ICON = AllIcons.Actions.IntentionBulb;
-  public static final Icon ICON_ERROR = AllIcons.Actions.QuickfixBulb;
+  private static final Icon INACTIVE_ARROW_ICON = new EmptyIcon(
+    AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
 
   private class InspectionHint extends JLabel {
     private final RowIcon myInactiveIcon;
@@ -348,7 +347,7 @@ public abstract class AbstractQuickFixManager {
 
       myActiveIcon = new RowIcon(2);
       myActiveIcon.setIcon(icon, 0);
-      myActiveIcon.setIcon(ARROW_ICON, 1);
+      myActiveIcon.setIcon(AllIcons.General.ArrowDown, 1);
 
       myInactiveIcon = new RowIcon(2);
       myInactiveIcon.setIcon(icon, 0);

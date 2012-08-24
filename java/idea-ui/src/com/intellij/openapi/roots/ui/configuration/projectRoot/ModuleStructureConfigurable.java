@@ -84,7 +84,6 @@ import java.util.List;
  * Date: 02-Jun-2006
  */
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
-  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = AllIcons.ObjectBrowser.CompactEmptyPackages;
   private static final Comparator<MyNode> NODE_COMPARATOR = new Comparator<MyNode>() {
     public int compare(final MyNode o1, final MyNode o2) {
       final NamedConfigurable configurable1 = o1.getConfigurable();
@@ -686,7 +685,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   private class MyGroupAction extends ToggleAction implements DumbAware {
 
     public MyGroupAction() {
-      super("", "", COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
+      super("", "", AllIcons.ObjectBrowser.CompactEmptyPackages);
     }
 
     public void update(final AnActionEvent e) {

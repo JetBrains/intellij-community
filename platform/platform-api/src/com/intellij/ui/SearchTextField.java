@@ -39,8 +39,6 @@ import java.util.List;
  * @author max
  */
 public class SearchTextField extends JPanel {
-  private static final Icon SEARCH_ICON = AllIcons.Actions.Search;
-  private static final Icon CLEAR_ICON = AllIcons.Actions.CleanLight;
 
   private int myHistorySize = 5;
   private final MyModel myModel;
@@ -119,7 +117,7 @@ public class SearchTextField extends JPanel {
       }
     }
     else {
-      myToggleHistoryLabel = new JLabel(SEARCH_ICON);
+      myToggleHistoryLabel = new JLabel(AllIcons.Actions.Search);
       myToggleHistoryLabel.setOpaque(true);
       myToggleHistoryLabel.addMouseListener(new MouseAdapter() {
         public void mousePressed(MouseEvent e) {
@@ -130,7 +128,7 @@ public class SearchTextField extends JPanel {
         add(myToggleHistoryLabel, BorderLayout.WEST);
       }
 
-      myClearFieldLabel = new JLabel(CLEAR_ICON);
+      myClearFieldLabel = new JLabel(AllIcons.Actions.CleanLight);
       myClearFieldLabel.setOpaque(true);
       add(myClearFieldLabel, BorderLayout.EAST);
       myClearFieldLabel.addMouseListener(new MouseAdapter() {

@@ -15,10 +15,10 @@
  */
 package com.intellij.packaging.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.packaging.impl.elements.ExtractedDirectoryElementType;
 import com.intellij.packaging.impl.elements.ExtractedDirectoryPackagingElement;
 import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.packaging.ui.PackagingElementWeights;
@@ -45,7 +45,7 @@ public class ExtractedDirectoryPresentation extends PackagingElementPresentation
   }
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
-    presentationData.setIcons(ExtractedDirectoryElementType.EXTRACTED_FOLDER_ICON);
+    presentationData.setIcons(AllIcons.Nodes.ExtractedFolder);
     final String parentPath = PathUtil.getParentPath(myJarPath);
     if (myFile == null || !myFile.isDirectory()) {
       mainAttributes = SimpleTextAttributes.ERROR_ATTRIBUTES;

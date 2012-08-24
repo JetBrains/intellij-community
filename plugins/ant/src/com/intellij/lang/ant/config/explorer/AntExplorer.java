@@ -97,10 +97,6 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       return canExpand();
     }
   };
-  private static final Icon ICON_RUN = AllIcons.Actions.Execute;
-  private static final Icon ICON_REMOVE = IconUtil.getRemoveIcon();
-  private static final Icon ICON_ADD = IconUtil.getAddIcon();
-  private static final Icon ICON_FILTER = AllIcons.Ant.Filter;
 
   public AntExplorer(final Project project) {
     super(true, true);
@@ -517,7 +513,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class AddAction extends AnAction {
     public AddAction() {
-      super(AntBundle.message("add.ant.file.action.name"), AntBundle.message("add.ant.file.action.description"), ICON_ADD);
+      super(AntBundle.message("add.ant.file.action.name"), AntBundle.message("add.ant.file.action.description"), IconUtil.getAddIcon());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -527,7 +523,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class RemoveAction extends AnAction {
     public RemoveAction() {
-      super(AntBundle.message("remove.ant.file.action.name"), AntBundle.message("remove.ant.file.action.description"), ICON_REMOVE);
+      super(AntBundle.message("remove.ant.file.action.name"), AntBundle.message("remove.ant.file.action.description"),
+            IconUtil.getRemoveIcon());
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -541,7 +538,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class RunAction extends AnAction {
     public RunAction() {
-      super(AntBundle.message("run.ant.file.or.target.action.name"), AntBundle.message("run.ant.file.or.target.action.description"), ICON_RUN);
+      super(AntBundle.message("run.ant.file.or.target.action.name"), AntBundle.message("run.ant.file.or.target.action.description"),
+            AllIcons.Actions.Execute);
     }
 
     public void actionPerformed(AnActionEvent e) {
@@ -576,7 +574,8 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   private final class ShowAllTargetsAction extends ToggleAction {
     public ShowAllTargetsAction() {
-      super(AntBundle.message("filter.ant.targets.action.name"), AntBundle.message("filter.ant.targets.action.description"), ICON_FILTER);
+      super(AntBundle.message("filter.ant.targets.action.name"), AntBundle.message("filter.ant.targets.action.description"),
+            AllIcons.Ant.Filter);
     }
 
     public boolean isSelected(AnActionEvent event) {

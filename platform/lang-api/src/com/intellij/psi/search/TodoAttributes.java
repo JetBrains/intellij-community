@@ -31,9 +31,6 @@ import javax.swing.*;
  * @author Vladimir Kondratyev
  */
 public class TodoAttributes implements JDOMExternalizable, Cloneable {
-  public static final Icon DEFAULT_ICON = AllIcons.General.TodoDefault;
-  public static final Icon QUESTION_ICON = AllIcons.General.TodoQuestion;
-  public static final Icon IMPORTANT_ICON = AllIcons.General.TodoImportant;
 
   private Icon myIcon;
   private TextAttributes myTextAttributes = new TextAttributes();
@@ -75,7 +72,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
 
   public static TodoAttributes createDefault() {
     final TextAttributes textAttributes = getDefaultColorSchemeTextAttributes().clone();
-    return new TodoAttributes(DEFAULT_ICON, textAttributes);
+    return new TodoAttributes(AllIcons.General.TodoDefault, textAttributes);
   }
 
   private static TextAttributes getDefaultColorSchemeTextAttributes() {
@@ -86,13 +83,13 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
     String icon = element.getAttributeValue(ATTRIBUTE_ICON,ICON_DEFAULT);
 
     if (ICON_DEFAULT.equals(icon)){
-      myIcon = DEFAULT_ICON;
+      myIcon = AllIcons.General.TodoDefault;
     }
     else if (ICON_QUESTION.equals(icon)){
-      myIcon = QUESTION_ICON;
+      myIcon = AllIcons.General.TodoQuestion;
     }
     else if (ICON_IMPORTANT.equals(icon)){
-      myIcon = IMPORTANT_ICON;
+      myIcon = AllIcons.General.TodoImportant;
     }
     else{
       throw new InvalidDataException(icon);
@@ -113,13 +110,13 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
 
   public void writeExternal(Element element) throws WriteExternalException {
     String icon;
-    if (myIcon == DEFAULT_ICON){
+    if (myIcon == AllIcons.General.TodoDefault){
       icon = ICON_DEFAULT;
     }
-    else if (myIcon == QUESTION_ICON){
+    else if (myIcon == AllIcons.General.TodoQuestion){
       icon = ICON_QUESTION;
     }
-    else if (myIcon == IMPORTANT_ICON){
+    else if (myIcon == AllIcons.General.TodoImportant){
       icon = ICON_IMPORTANT;
     }
     else{

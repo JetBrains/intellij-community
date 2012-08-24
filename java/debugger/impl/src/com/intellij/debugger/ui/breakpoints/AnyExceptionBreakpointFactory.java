@@ -16,10 +16,10 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.ui.breakpoints.actions.BreakpointPanelAction;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,11 +35,11 @@ public class AnyExceptionBreakpointFactory extends BreakpointFactory{
   }
 
   public Icon getIcon() {
-    return DebuggerIcons.ENABLED_EXCEPTION_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_exception_breakpoint;
   }
 
   public Icon getDisabledIcon() {
-    return DebuggerIcons.DISABLED_EXCEPTION_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_disabled_exception_breakpoint;
   }
 
   @Override

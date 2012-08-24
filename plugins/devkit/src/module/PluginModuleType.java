@@ -48,8 +48,6 @@ import java.util.List;
 import java.util.Set;
 
 public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
-  private static final Icon PLUGIN_MODULE_ICON = AllIcons.Modules.Types.PluginModule;
-  private static final Icon PLUGIN_MODULE_NODE_ICON = AllIcons.Nodes.Plugin;
   private static final Icon ADD_PLUGIN_MODULE_ICON = IconLoader.getIcon("/add_plugin_modulewizard.png");
   @NonNls private static final String ID = "PLUGIN_MODULE";
 
@@ -94,11 +92,11 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public Icon getBigIcon() {
-    return PLUGIN_MODULE_ICON;
+    return AllIcons.Modules.Types.PluginModule;
   }
 
   public Icon getNodeIcon(boolean isOpened) {
-    return PLUGIN_MODULE_NODE_ICON;
+    return AllIcons.Nodes.Plugin;
   }
 
   @Nullable

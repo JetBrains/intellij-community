@@ -22,8 +22,8 @@
  */
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.AntIcons;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
@@ -209,7 +209,7 @@ public class TargetChooserDialog extends DialogWrapper {
           final String antTargetName = antTarget.getName();
           append(antTargetName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           boolean isMeta = antTarget instanceof MetaTarget;
-          setIcon(isMeta ? AntIcons.ANT_META_TARGET_ICON : AntIcons.ANT_TARGET_ICON);
+          setIcon(isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target);
         }
       }
     }

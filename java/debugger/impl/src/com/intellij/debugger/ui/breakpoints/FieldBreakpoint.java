@@ -66,18 +66,6 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   private boolean myIsStatic;
   private String myFieldName;
 
-  public static Icon ICON = AllIcons.Debugger.Db_field_breakpoint;
-  public static Icon MUTED_ICON = AllIcons.Debugger.Db_muted_field_breakpoint;
-  public static Icon DISABLED_ICON = AllIcons.Debugger.Db_disabled_field_breakpoint;
-  public static Icon DISABLED_DEP_ICON = AllIcons.Debugger.Db_dep_field_breakpoint;
-  public static Icon MUTED_DISABLED_ICON = AllIcons.Debugger.Db_muted_disabled_field_breakpoint;
-  public static Icon MUTED_DISABLED_DEP_ICON = AllIcons.Debugger.Db_muted_dep_field_breakpoint;
-  private static final Icon ourInvalidIcon = AllIcons.Debugger.Db_invalid_field_breakpoint;
-  private static final Icon ourMutedInvalidIcon = AllIcons.Debugger.Db_muted_invalid_field_breakpoint;
-  private static final Icon ourVerifiedIcon = AllIcons.Debugger.Db_verified_field_breakpoint;
-  private static final Icon ourMutedVerifiedIcon = AllIcons.Debugger.Db_muted_verified_field_breakpoint;
-  private static final Icon ourVerifiedWarningIcon = AllIcons.Debugger.Db_field_warning_breakpoint;
-  private static final Icon ourMutedVerifiedWarningIcon = AllIcons.Debugger.Db_muted_field_warning_breakpoint;
   @NonNls public static final Key<FieldBreakpoint> CATEGORY = BreakpointCategory.lookup("field_breakpoints");
 
   protected FieldBreakpoint(Project project) {
@@ -102,31 +90,31 @@ public class FieldBreakpoint extends BreakpointWithHighlighter {
   protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
     if (isMuted) {
-      return master == null? MUTED_DISABLED_ICON : MUTED_DISABLED_DEP_ICON;
+      return master == null? AllIcons.Debugger.Db_muted_disabled_field_breakpoint : AllIcons.Debugger.Db_muted_dep_field_breakpoint;
     }
     else {
-      return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+      return master == null? AllIcons.Debugger.Db_disabled_field_breakpoint : AllIcons.Debugger.Db_dep_field_breakpoint;
     }
   }
 
   @Override
   protected Icon getSetIcon(boolean isMuted) {
-    return isMuted? MUTED_ICON : ICON;
+    return isMuted? AllIcons.Debugger.Db_muted_field_breakpoint : AllIcons.Debugger.Db_field_breakpoint;
   }
 
   @Override
   protected Icon getInvalidIcon(boolean isMuted) {
-    return isMuted? ourMutedInvalidIcon : ourInvalidIcon;
+    return isMuted? AllIcons.Debugger.Db_muted_invalid_field_breakpoint : AllIcons.Debugger.Db_invalid_field_breakpoint;
   }
 
   @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return isMuted? ourMutedVerifiedIcon : ourVerifiedIcon;
+    return isMuted? AllIcons.Debugger.Db_muted_verified_field_breakpoint : AllIcons.Debugger.Db_verified_field_breakpoint;
   }
 
   @Override
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return isMuted? ourMutedVerifiedWarningIcon : ourVerifiedWarningIcon;
+    return isMuted? AllIcons.Debugger.Db_muted_field_warning_breakpoint : AllIcons.Debugger.Db_field_warning_breakpoint;
   }
 
   @Override

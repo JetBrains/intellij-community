@@ -51,10 +51,6 @@ public class ActionsTreeUtil {
   public static final String MAIN_TOOLBAR = KeyMapBundle.message("main.toolbar.title");
   public static final String EDITOR_POPUP = KeyMapBundle.message("editor.popup.menu.title");
 
-  private static final Icon MAIN_MENU_ICON = AllIcons.Nodes.KeymapMainMenu;
-  private static final Icon EDITOR_ICON = AllIcons.Nodes.KeymapEditor;
-  private static final Icon EDITOR_OPEN_ICON = AllIcons.Nodes.KeymapEditorOpen;
-  private static final Icon OTHER_ICON = AllIcons.Nodes.KeymapOther;
   public static final String EDITOR_TAB_POPUP = KeyMapBundle.message("editor.tab.popup.menu.title");
   public static final String FAVORITES_POPUP = KeyMapBundle.message("favorites.popup.title");
   public static final String PROJECT_VIEW_POPUP = KeyMapBundle.message("project.view.popup.menu.title");
@@ -134,7 +130,7 @@ public class ActionsTreeUtil {
   }
 
   private static Group createMainMenuGroup(Condition<AnAction> filtered) {
-    Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, MAIN_MENU_ICON, MAIN_MENU_ICON);
+    Group group = new Group(MAIN_MENU_TITLE, IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)ActionManager.getInstance().getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
     return group;
@@ -259,7 +255,8 @@ public class ActionsTreeUtil {
     addEditorActions(filtered, editorGroup, ids);
 
     Collections.sort(ids);
-    Group group = new Group(KeyMapBundle.message("editor.actions.group.title"), IdeActions.GROUP_EDITOR, EDITOR_ICON, EDITOR_OPEN_ICON);
+    Group group = new Group(KeyMapBundle.message("editor.actions.group.title"), IdeActions.GROUP_EDITOR, AllIcons.Nodes.KeymapEditor,
+                            AllIcons.Nodes.KeymapEditorOpen);
     for (String id : ids) {
       group.addActionId(id);
     }
@@ -377,7 +374,7 @@ public class ActionsTreeUtil {
       }
     });
 
-    Group group = new Group(KeyMapBundle.message("other.group.title"), OTHER_ICON, OTHER_ICON);
+    Group group = new Group(KeyMapBundle.message("other.group.title"), AllIcons.Nodes.KeymapOther, AllIcons.Nodes.KeymapOther);
     for (String id : result) {
       if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) group.addActionId(id);
     }

@@ -35,7 +35,6 @@ import javax.swing.*;
 
 public class RemoteConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
-  private static final Icon ICON = AllIcons.RunConfigurations.Remote;
 
   /**reflection*/
   public RemoteConfigurationType() {
@@ -56,7 +55,7 @@ public class RemoteConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.RunConfigurations.Remote;
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

@@ -229,17 +229,17 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class HorizontalLinesHighlighter extends AbstractComponentHighlighter {
-    private final Icon myLeft = AllIcons.Ide.Dnd.Left;
-    private final Icon myRight = AllIcons.Ide.Dnd.Right;
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
-      final Rectangle rectangle = new Rectangle(aRectangle.x - myLeft.getIconWidth(), aRectangle.y - myLeft.getIconHeight(), aRectangle.width + myLeft.getIconWidth() + myRight.getIconWidth(), aRectangle.height + myLeft.getIconHeight());
+      final Rectangle rectangle = new Rectangle(aRectangle.x - AllIcons.Ide.Dnd.Left.getIconWidth(), aRectangle.y - AllIcons.Ide.Dnd.Left
+        .getIconHeight(), aRectangle.width + AllIcons.Ide.Dnd.Left.getIconWidth() + AllIcons.Ide.Dnd.Right.getIconWidth(), aRectangle.height + AllIcons.Ide.Dnd.Left
+        .getIconHeight());
       setBounds(rectangle);
     }
 
     protected void paintComponent(Graphics g) {
-      myLeft.paintIcon(this, g, 0, (getHeight() / 2));
-      myRight.paintIcon(this, g, getWidth() - myRight.getIconWidth(), (getHeight() / 2));
+      AllIcons.Ide.Dnd.Left.paintIcon(this, g, 0, (getHeight() / 2));
+      AllIcons.Ide.Dnd.Right.paintIcon(this, g, getWidth() - AllIcons.Ide.Dnd.Right.getIconWidth(), (getHeight() / 2));
     }
 
     public int getMask() {
@@ -248,17 +248,18 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
   }
 
   private static class VerticalLinesHighlighter extends AbstractComponentHighlighter {
-    private final Icon myTop = AllIcons.Ide.Dnd.Top;
-    private final Icon myBottom = AllIcons.Ide.Dnd.Bottom;
+    private static final Icon TOP = AllIcons.Ide.Dnd.Top;
+    private static final Icon BOTTOM = AllIcons.Ide.Dnd.Bottom;
 
     protected void _show(JLayeredPane aPane, Rectangle aRectangle, DnDEvent aEvent) {
-      final Rectangle rectangle = new Rectangle(aRectangle.x, aRectangle.y - myTop.getIconHeight(), aRectangle.width, aRectangle.height + myTop.getIconHeight() + myBottom.getIconHeight());
+      final Rectangle rectangle = new Rectangle(aRectangle.x, aRectangle.y - TOP.getIconHeight(), aRectangle.width, aRectangle.height + TOP.getIconHeight() + BOTTOM
+        .getIconHeight());
       setBounds(rectangle);
     }
 
     protected void paintComponent(Graphics g) {
-      myTop.paintIcon(this, g, (getWidth() - myTop.getIconWidth()) / 2, 0);
-      myBottom.paintIcon(this, g, (getWidth() - myBottom.getIconWidth()) / 2, getHeight() - myBottom.getIconHeight());
+      TOP.paintIcon(this, g, (getWidth() - TOP.getIconWidth()) / 2, 0);
+      BOTTOM.paintIcon(this, g, (getWidth() - BOTTOM.getIconWidth()) / 2, getHeight() - BOTTOM.getIconHeight());
     }
 
     public int getMask() {

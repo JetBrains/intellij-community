@@ -27,7 +27,6 @@ import javax.swing.*;
 public class JavaFileType extends LanguageFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "java";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".java";
-  private static final Icon ICON = AllIcons.FileTypes.Java;
   public static final JavaFileType INSTANCE = new JavaFileType();
 
   private JavaFileType() {
@@ -54,7 +53,7 @@ public class JavaFileType extends LanguageFileType {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Java;
   }
 
   @Override

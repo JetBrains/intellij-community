@@ -15,6 +15,7 @@
  */
 package com.intellij.packaging.impl.elements;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.Artifact;
@@ -23,7 +24,6 @@ import com.intellij.packaging.artifacts.ArtifactPointerManager;
 import com.intellij.packaging.elements.ComplexPackagingElementType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +43,7 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
 
   @Override
   public Icon getCreateElementIcon() {
-    return PlainArtifactType.ARTIFACT_ICON;
+    return AllIcons.Nodes.Artifact;
   }
 
   @Override

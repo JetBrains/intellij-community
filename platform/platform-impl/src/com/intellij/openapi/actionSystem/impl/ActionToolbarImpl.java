@@ -101,9 +101,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
   private Rectangle myAutoPopupRec;
 
-  private static final Icon myAutoPopupIcon = AllIcons.Ide.Link;
-  private static final Icon mySecondaryGroupIcon = AllIcons.General.SecondaryGroup;
-
   private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
   private boolean myMinimalMode;
   private boolean myForceUseMacEnhancements;
@@ -154,7 +151,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
-    mySecondaryActions.getTemplatePresentation().setIcon(mySecondaryGroupIcon);
+    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
     mySecondaryActions.setPopup(true);
 
     updateActions(updateActionsNow, false, false);
@@ -224,12 +221,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
       if (myAutoPopupRec != null) {
         if (myOrientation == SwingConstants.HORIZONTAL) {
-          final int dy = myAutoPopupRec.height / 2 - myAutoPopupIcon.getIconHeight() / 2;
-          myAutoPopupIcon.paintIcon(this, g, (int)myAutoPopupRec.getMaxX() - myAutoPopupIcon.getIconWidth() - 1, myAutoPopupRec.y + dy);
+          final int dy = myAutoPopupRec.height / 2 - AllIcons.Ide.Link.getIconHeight() / 2;
+          AllIcons.Ide.Link.paintIcon(this, g, (int)myAutoPopupRec.getMaxX() - AllIcons.Ide.Link.getIconWidth() - 1, myAutoPopupRec.y + dy);
         }
         else {
-          final int dx = myAutoPopupRec.width / 2 - myAutoPopupIcon.getIconWidth() / 2;
-          myAutoPopupIcon.paintIcon(this, g, myAutoPopupRec.x + dx, (int)myAutoPopupRec.getMaxY() - myAutoPopupIcon.getIconWidth() - 1);
+          final int dx = myAutoPopupRec.width / 2 - AllIcons.Ide.Link.getIconWidth() / 2;
+          AllIcons.Ide.Link.paintIcon(this, g, myAutoPopupRec.x + dx, (int)myAutoPopupRec.getMaxY() - AllIcons.Ide.Link.getIconWidth() - 1);
         }
       }
     }
@@ -418,7 +415,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       myAutoPopupRec = null;
     }
                
-    int autoButtonSize = myAutoPopupIcon.getIconWidth();
+    int autoButtonSize = AllIcons.Ide.Link.getIconWidth();
     boolean full = false;
 
     final Insets insets = getInsets();
@@ -687,10 +684,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
 
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY && myReservePlaceAutoPopupIcon) {
       if (myOrientation == SwingConstants.HORIZONTAL) {
-        dimension.width += myAutoPopupIcon.getIconWidth();
+        dimension.width += AllIcons.Ide.Link.getIconWidth();
       }
       else {
-        dimension.height += myAutoPopupIcon.getIconHeight();
+        dimension.height += AllIcons.Ide.Link.getIconHeight();
       }
     }
 
@@ -702,7 +699,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
   public Dimension getMinimumSize() {
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
       final Insets i = getInsets();
-      return new Dimension(myAutoPopupIcon.getIconWidth() + i.left + i.right, myMinimumButtonSize.height + i.top + i.bottom);
+      return new Dimension(AllIcons.Ide.Link.getIconWidth() + i.left + i.right, myMinimumButtonSize.height + i.top + i.bottom);
     }
     else {
       return super.getMinimumSize();

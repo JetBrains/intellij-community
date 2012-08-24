@@ -36,7 +36,6 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
   private static final Key<Object> KEY = Key.create("TestDataHighlighterKey");
   private static final Object VALUE = new Object();
 
-  private static final Icon ICON = AllIcons.RunConfigurations.Junit;
   private static final GutterIconRenderer ICON_RENDERER = new MyGutterIconRenderer();
 
   private static final TextAttributes CARET_ATTRIBUTES = new TextAttributes(Color.BLUE, null, null, null, Font.BOLD);
@@ -84,7 +83,7 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
     @NotNull
     @Override
     public Icon getIcon() {
-      return ICON;
+      return AllIcons.RunConfigurations.Junit;
     }
 
     @Override

@@ -40,7 +40,6 @@ import java.util.Collections;
 import java.util.List;
 
 public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
-  public static final Icon KILL_PROCESS_ICON = AllIcons.Debugger.KillProcess;
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
@@ -132,7 +131,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         }
         else if (processHandler instanceof KillableProcess && ((KillableProcess)processHandler).canKillProcess()) {
           enable = true;
-          icon = KILL_PROCESS_ICON;
+          icon = AllIcons.Debugger.KillProcess;
           description = "Kill process";
         }
       }

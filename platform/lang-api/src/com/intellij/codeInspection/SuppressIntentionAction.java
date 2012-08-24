@@ -27,9 +27,8 @@ import com.intellij.openapi.util.Iconable;
 import javax.swing.*;
 
 public abstract class SuppressIntentionAction extends PsiElementBaseIntentionAction implements Iconable {
-  private static final Icon ICON = AllIcons.General.InspectionsOff;
 
   public Icon getIcon(int flags) {
-    return ICON;
+    return AllIcons.General.InspectionsOff;
   }
 }

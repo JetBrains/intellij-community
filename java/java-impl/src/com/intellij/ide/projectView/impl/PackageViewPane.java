@@ -60,7 +60,6 @@ import java.util.*;
 
 public final class PackageViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "PackagesPane";
-  public static final Icon ICON = AllIcons.General.PackagesTab;
   private MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
 
   public PackageViewPane(Project project) {
@@ -72,7 +71,7 @@ public final class PackageViewPane extends AbstractProjectViewPSIPane {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.General.PackagesTab;
   }
 
   @NotNull

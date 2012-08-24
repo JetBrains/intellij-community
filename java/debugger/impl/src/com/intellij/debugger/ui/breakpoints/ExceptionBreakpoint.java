@@ -29,12 +29,18 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
 import com.sun.jdi.ObjectReference;
@@ -108,9 +114,9 @@ public class ExceptionBreakpoint extends Breakpoint {
   public Icon getIcon() {
     if (!ENABLED) {
       final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-      return master == null? DebuggerIcons.DISABLED_EXCEPTION_BREAKPOINT_ICON : DebuggerIcons.DISABLED_DEPENDENT_EXCEPTION_BREAKPOINT_ICON;
+      return master == null? AllIcons.Debugger.Db_disabled_exception_breakpoint : AllIcons.Debugger.Db_dep_exception_breakpoint;
     }
-    return DebuggerIcons.ENABLED_EXCEPTION_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_exception_breakpoint;
   }
 
   public void reload() {

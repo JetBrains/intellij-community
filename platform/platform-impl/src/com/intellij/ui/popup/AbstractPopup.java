@@ -64,7 +64,6 @@ import java.util.Set;
 public class AbstractPopup implements JBPopup {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.AbstractPopup");
 
-  private static final Icon   ourMacCorner        = AllIcons.General.MacCorner;
   private static final Object SUPPRESS_MAC_CORNER = new Object();
   @NonNls public static final  String SHOW_HINTS          = "ShowHints";
 
@@ -976,7 +975,7 @@ public class AbstractPopup implements JBPopup {
         SwingUtilities.convertPointToScreen(point, e.getComponent());
 
         final Dimension dimension = myContent.getSize();
-        dimension.height += myResizable && isToDrawMacCorner() ? ourMacCorner.getIconHeight() : 4;
+        dimension.height += myResizable && isToDrawMacCorner() ? AllIcons.General.MacCorner.getIconHeight() : 4;
         dimension.width += 4;
         Point locationOnScreen = myContent.getLocationOnScreen();
         final Rectangle bounds = new Rectangle(new Point(locationOnScreen.x - 2, locationOnScreen.y - 2), dimension);
@@ -1297,9 +1296,9 @@ public class AbstractPopup implements JBPopup {
       super.paint(g);
 
       if (myResizable && myDrawMacCorner) {
-        ourMacCorner.paintIcon(this, g,
-                               getX() + getWidth() - ourMacCorner.getIconWidth(),
-                               getY() + getHeight() - ourMacCorner.getIconHeight());
+        AllIcons.General.MacCorner.paintIcon(this, g,
+                                             getX() + getWidth() - AllIcons.General.MacCorner.getIconWidth(),
+                                             getY() + getHeight() - AllIcons.General.MacCorner.getIconHeight());
       }
     }
 

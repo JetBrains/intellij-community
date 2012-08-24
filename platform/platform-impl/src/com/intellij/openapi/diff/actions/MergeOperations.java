@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diff.DiffBundle;
@@ -22,15 +23,14 @@ import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.fragments.FragmentList;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
-import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -97,7 +97,7 @@ public class MergeOperations {
 
   private static Operation replaceOperation(TextRange range, TextRange otherRange, Document document, Document otherDocument) {
     return new Operation(DiffBundle.message("merge.editor.replace.operation.name"),
-                         GutterActionRenderer.REPLACE_ARROW,
+                         AllIcons.Diff.Arrow,
                          otherDocument,
                          replaceModification(range, document, otherRange, otherDocument));
   }
@@ -127,7 +127,7 @@ public class MergeOperations {
 
   private static Operation insertOperation(TextRange range, int offset, Document document, Document otherDocument) {
     return new Operation(DiffBundle.message("merge.editor.insert.operation.name"),
-                         GutterActionRenderer.REPLACE_ARROW,
+                         AllIcons.Diff.Arrow,
                          otherDocument,
                          insertModification(range, document, offset, otherDocument));
   }
@@ -152,7 +152,7 @@ public class MergeOperations {
 
   private static Operation removeOperation(TextRange range, Document document) {
     return new Operation(DiffBundle.message("merge.editor.remove.operation.name"),
-                         GutterActionRenderer.REMOVE_CROSS,
+                         AllIcons.Diff.Remove,
                          document,
                          removeModification(range, document));
   }

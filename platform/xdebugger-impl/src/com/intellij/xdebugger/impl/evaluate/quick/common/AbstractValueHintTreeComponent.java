@@ -32,9 +32,6 @@ import java.util.ArrayList;
  * @author nik
  */
 public abstract class AbstractValueHintTreeComponent<H> {
-  private static final Icon ICON_FWD = AllIcons.Actions.Forward;
-  private static final Icon ICON_BACK = AllIcons.Actions.Back;
-  private static final Icon ICON_UNMARK_WEBROOT = AllIcons.Modules.UnmarkWebroot;
   private static final int HISTORY_SIZE = 11;
   private final ArrayList<H> myHistory = new ArrayList<H>();
   private int myCurrentIndex = -1;
@@ -58,7 +55,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
   }
 
   private AnAction createGoForwardAction(){
-    return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, ICON_FWD){
+    return new AnAction(CodeInsightBundle.message("quick.definition.forward"), null, AllIcons.Actions.Forward){
       public void actionPerformed(AnActionEvent e) {
         if (myHistory.size() > 1 && myCurrentIndex < myHistory.size() - 1){
           myCurrentIndex ++;
@@ -79,7 +76,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
   }
 
   private AnAction createGoBackAction(){
-    return new AnAction(CodeInsightBundle.message("quick.definition.back"), null, ICON_BACK){
+    return new AnAction(CodeInsightBundle.message("quick.definition.back"), null, AllIcons.Actions.Back){
       public void actionPerformed(AnActionEvent e) {
         if (myHistory.size() > 1 && myCurrentIndex > 0) {
           myCurrentIndex--;
@@ -124,7 +121,7 @@ public abstract class AbstractValueHintTreeComponent<H> {
 
   private AnAction createSetRoot() {
     final String title = XDebuggerBundle.message("xdebugger.popup.value.tree.set.root.action.tooltip");
-    return new AnAction(title, title, ICON_UNMARK_WEBROOT) {
+    return new AnAction(title, title, AllIcons.Modules.UnmarkWebroot) {
       public void actionPerformed(AnActionEvent e) {
         final TreePath path = myTree.getSelectionPath();
         if (path == null) return;

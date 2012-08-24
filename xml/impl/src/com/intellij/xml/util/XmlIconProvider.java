@@ -32,8 +32,6 @@ import javax.swing.*;
  * @author peter
  */
 public class XmlIconProvider extends IconProvider implements DumbAware {
-  private static final Icon ourXsdIcon = AllIcons.FileTypes.XsdFile;
-  private static final Icon ourWsdlIcon = AllIcons.FileTypes.WsdlFile;
   @NonNls private static final String XSD_FILE_EXTENSION = "xsd";
   @NonNls private static final String WSDL_FILE_EXTENSION = "wsdl";
 
@@ -45,10 +43,10 @@ public class XmlIconProvider extends IconProvider implements DumbAware {
         final String extension = vf.getExtension();
         
         if (XSD_FILE_EXTENSION.equals(extension)) {
-          return ElementBase.createLayeredIcon(element, ourXsdIcon, ElementBase.transformFlags(element, _flags));
+          return ElementBase.createLayeredIcon(element, AllIcons.FileTypes.XsdFile, ElementBase.transformFlags(element, _flags));
         }
         if (WSDL_FILE_EXTENSION.equals(extension)) {
-          return ElementBase.createLayeredIcon(element, ourWsdlIcon, ElementBase.transformFlags(element, _flags));
+          return ElementBase.createLayeredIcon(element, AllIcons.FileTypes.WsdlFile, ElementBase.transformFlags(element, _flags));
         }
       }
     }

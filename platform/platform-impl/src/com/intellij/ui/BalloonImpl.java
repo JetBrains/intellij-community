@@ -207,7 +207,6 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   private final boolean myHideOnKey;
   private boolean myHideOnAction;
   private final boolean myEnableCloseButton;
-  private final Icon myCloseButton = AllIcons.General.BalloonClose;
 
   public BalloonImpl(JComponent content,
                      Color borderColor,
@@ -768,7 +767,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   }
 
   public Icon getCloseButton() {
-    return myCloseButton;
+    return AllIcons.General.BalloonClose;
   }
 
   public void setBounds(Rectangle bounds) {
@@ -1393,8 +1392,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
         Rectangle lpBounds = SwingUtilities.convertRectangle(getParent(), bounds, myLayeredPane);
         lpBounds = myPosition.getPointlessContentRec(lpBounds, myBalloon.getPointerLength(myPosition));
 
-        int iconWidth = myBalloon.myCloseButton.getIconWidth();
-        int iconHeight = myBalloon.myCloseButton.getIconHeight();
+        int iconWidth = AllIcons.General.BalloonClose.getIconWidth();
+        int iconHeight = AllIcons.General.BalloonClose.getIconHeight();
         Rectangle r = new Rectangle(lpBounds.x + lpBounds.width - iconWidth + (int)(iconWidth * 0.3), lpBounds.y - (int)(iconHeight * 0.3), iconWidth, iconHeight);
 
         r.y += getShadowBorderSize();

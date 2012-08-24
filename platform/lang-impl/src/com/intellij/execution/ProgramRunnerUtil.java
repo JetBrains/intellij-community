@@ -42,7 +42,6 @@ import javax.swing.*;
  */
 public class ProgramRunnerUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.ProgramRunnerUtil");
-  private static final Icon INVALID_CONFIGURATION = AllIcons.RunConfigurations.InvalidConfigurationLayer;
 
   private ProgramRunnerUtil() {
   }
@@ -130,7 +129,7 @@ public class ProgramRunnerUtil {
 
     final Icon configurationIcon = isTemporary ? IconLoader.getTransparentIcon(icon, 0.3f) : icon;
     if (invalid) {
-      return LayeredIcon.create(configurationIcon, INVALID_CONFIGURATION);
+      return LayeredIcon.create(configurationIcon, AllIcons.RunConfigurations.InvalidConfigurationLayer);
     }
 
     return configurationIcon;

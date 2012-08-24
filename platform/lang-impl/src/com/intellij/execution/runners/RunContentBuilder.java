@@ -52,14 +52,13 @@ import java.util.Map;
  * @author dyoma
  */
 public class RunContentBuilder implements LogConsoleManager, Disposable  {
-  private static final Icon DEFAULT_RERUN_ICON = AllIcons.Actions.RefreshUsages;
   @NonNls private static final String JAVA_RUNNER = "JavaRunner";
   
   private final ProgramRunner myRunner;
   private final Project myProject;
   private final CompositeDisposable myDisposeables = new CompositeDisposable();
   private final ArrayList<AnAction> myRunnerActions = new ArrayList<AnAction>();
-  private final Icon myRerunIcon = DEFAULT_RERUN_ICON;
+  private final Icon myRerunIcon = AllIcons.Actions.RefreshUsages;
   private final boolean myReuseProhibited = false;
   private ExecutionResult myExecutionResult;
 

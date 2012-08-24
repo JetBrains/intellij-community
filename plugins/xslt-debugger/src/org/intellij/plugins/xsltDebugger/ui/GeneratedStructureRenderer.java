@@ -16,11 +16,11 @@
 
 package org.intellij.plugins.xsltDebugger.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.intellij.plugins.xsltDebugger.rt.engine.OutputEventQueue;
 
 import javax.swing.*;
@@ -84,7 +84,7 @@ class GeneratedStructureRenderer extends ColoredTreeCellRenderer {
           append(" " + event.getValue(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
           break;
         case OutputEventQueue.TRACE_POINT:
-          setIcon(DebuggerIcons.ENABLED_BREAKPOINT_ICON);
+          setIcon(AllIcons.Debugger.Db_set_breakpoint);
           append("Tracepoint at line " + event.getLineNumber(), SimpleTextAttributes.GRAY_ATTRIBUTES);
           if (event.getValue() != null) {
             append(" " + event.getValue(), SimpleTextAttributes.REGULAR_ATTRIBUTES);

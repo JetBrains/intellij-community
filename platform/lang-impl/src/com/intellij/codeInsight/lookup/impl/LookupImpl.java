@@ -90,9 +90,6 @@ import java.util.List;
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
 
-  private static final Icon relevanceSortIcon = AllIcons.Ide.LookupRelevance;
-  private static final Icon lexiSortIcon = AllIcons.Ide.LookupAlphanumeric;
-
   private final LookupOffsets myOffsets;
   private final Project myProject;
   private final Editor myEditor;
@@ -201,7 +198,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     myAdComponent = new Advertiser();
     JComponent adComponent = myAdComponent.getAdComponent();
-    adComponent.setBorder(new EmptyBorder(0, 1, 1, 2 + relevanceSortIcon.getIconWidth()));
+    adComponent.setBorder(new EmptyBorder(0, 1, 1, 2 + AllIcons.Ide.LookupRelevance.getIconWidth()));
     myLayeredPane.mainPanel.add(adComponent, BorderLayout.SOUTH);
     getComponent().setBorder(new BegPopupMenuBorder());
 
@@ -258,7 +255,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
   private void updateSorting() {
     final boolean lexi = UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY;
-    mySortingLabel.setIcon(lexi ? lexiSortIcon : relevanceSortIcon);
+    mySortingLabel.setIcon(lexi ? AllIcons.Ide.LookupAlphanumeric : AllIcons.Ide.LookupRelevance);
     mySortingLabel.setToolTipText(lexi ? "Click to sort variants by relevance" : "Click to sort variants alphabetically");
 
     resort(false);
@@ -1367,7 +1364,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
 
     private void layoutStatusIcons() {
       int adHeight = myAdComponent.getAdComponent().getPreferredSize().height;
-      Dimension buttonSize = adHeight > 0 || !mySortingLabel.isVisible() ? new Dimension(0, 0) : new Dimension(relevanceSortIcon.getIconWidth(), relevanceSortIcon.getIconHeight());
+      Dimension buttonSize = adHeight > 0 || !mySortingLabel.isVisible() ? new Dimension(0, 0) : new Dimension(
+        AllIcons.Ide.LookupRelevance.getIconWidth(), AllIcons.Ide.LookupRelevance.getIconHeight());
       myScrollBarIncreaseButton.setPreferredSize(buttonSize);
       myScrollBarIncreaseButton.setMinimumSize(buttonSize);
       myScrollBarIncreaseButton.setMaximumSize(buttonSize);

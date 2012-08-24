@@ -28,8 +28,6 @@ import javax.swing.*;
  * @author Rustam Vishnyakov
  */
 public class DocumentationOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  
-  private static final Icon ICON = AllIcons.Nodes.JavaDocFolder;
 
   @Override
   @Nullable
@@ -39,7 +37,7 @@ public class DocumentationOrderRootTypeUIFactory implements OrderRootTypeUIFacto
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.JavaDocFolder;
   }
 
   @Override

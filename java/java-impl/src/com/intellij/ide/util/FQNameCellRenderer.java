@@ -29,7 +29,6 @@ import java.awt.*;
 public class FQNameCellRenderer extends SimpleColoredComponent implements ListCellRenderer{
   private final Font FONT;
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FQNameCellRenderer");
-  private static final Icon ourStaticThingIcon = AllIcons.Nodes.Static;
 
   public FQNameCellRenderer() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -64,7 +63,7 @@ public class FQNameCellRenderer extends SimpleColoredComponent implements ListCe
       LOG.assertTrue(value instanceof String);
       String qName = (String)value;
       append(qName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      setIcon(ourStaticThingIcon);
+      setIcon(AllIcons.Nodes.Static);
     }
 
     setFont(FONT);

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.scopeView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -35,7 +36,7 @@ public class EditScopesAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.EditScopesAction");
 
   public EditScopesAction() {
-    getTemplatePresentation().setIcon(ScopeViewPane.ICON);
+    getTemplatePresentation().setIcon(AllIcons.Ide.LocalScope);
   }
 
   public void actionPerformed(AnActionEvent e) {

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.todo.configurable;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
@@ -24,7 +25,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -142,7 +142,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
 
         // Column "Icon"
         JComboBox todoTypeCombo =
-          new JComboBox(new Icon[]{TodoAttributes.DEFAULT_ICON, TodoAttributes.QUESTION_ICON, TodoAttributes.IMPORTANT_ICON});
+          new JComboBox(new Icon[]{AllIcons.General.TodoDefault, AllIcons.General.TodoQuestion, AllIcons.General.TodoImportant});
         todoTypeCombo.setRenderer(new TodoTypeListCellRenderer());
         TableColumn typeColumn = myPatternsTable.getColumnModel().getColumn(0);
         DefaultCellEditor todoTypeEditor = new DefaultCellEditor(todoTypeCombo);

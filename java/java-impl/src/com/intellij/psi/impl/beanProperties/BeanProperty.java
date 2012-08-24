@@ -34,8 +34,6 @@ import javax.swing.*;
 @Presentation(icon = "AllIcons.Nodes.Property")
 public class BeanProperty {
 
-  public static final Icon ICON = AllIcons.Nodes.Property;
-
   private final PsiMethod myMethod;
 
   protected BeanProperty(@NotNull PsiMethod method) {
@@ -100,7 +98,7 @@ public class BeanProperty {
 
   @Nullable
   public Icon getIcon(int flags) {
-    return ICON;
+    return AllIcons.Nodes.Property;
   }
 
   @Nullable

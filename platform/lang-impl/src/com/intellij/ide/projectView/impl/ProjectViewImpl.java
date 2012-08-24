@@ -185,7 +185,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final FileEditorManager myFileEditorManager;
   private final MyPanel myDataProvider;
   private final SplitterProportionsData splitterProportions = new SplitterProportionsDataImpl();
-  private static final Icon BULLET_ICON = AllIcons.General.Bullet;
   private final MessageBusConnection myConnection;
   private final Map<String, Element> myUninitializedPaneState = new HashMap<String, Element>();
   private final Map<String, SelectInTarget> mySelectInTargets = new HashMap<String, SelectInTarget>();
@@ -422,7 +421,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       content.putUserData(SUB_ID_KEY, subId);
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
       content.setIcon(newPane.getIcon());
-      content.setPopupIcon(subId != null ? BULLET_ICON : newPane.getIcon());
+      content.setPopupIcon(subId != null ? AllIcons.General.Bullet : newPane.getIcon());
       content.setPreferredFocusedComponent(new Computable<JComponent>() {
         public JComponent compute() {
           final AbstractProjectViewPane current = getCurrentProjectViewPane();

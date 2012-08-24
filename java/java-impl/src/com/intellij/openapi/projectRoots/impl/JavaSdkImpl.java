@@ -46,9 +46,6 @@ public class JavaSdkImpl extends JavaSdk {
   // do not use javaw.exe for Windows because of issues with encoding
   @NonNls private static final String VM_EXE_NAME = "java";
   @NonNls private final Pattern myVersionStringPattern = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
-  public static final Icon ICON = AllIcons.Nodes.PpJdkClosed;
-  private static final Icon JDK_ICON_EXPANDED = AllIcons.Nodes.PpJdkOpen;
-  private static final Icon ADD_ICON = AllIcons.General.AddJdk;
   @NonNls private static final String JAVA_VERSION_PREFIX = "java version ";
   @NonNls private static final String OPENJDK_VERSION_PREFIX = "openjdk version ";
   private static final Map<JavaSdkVersion, String[]> VERSION_STRINGS = new EnumMap<JavaSdkVersion, String[]>(JavaSdkVersion.class);
@@ -76,7 +73,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.PpJdkClosed;
   }
 
   @NotNull
@@ -87,12 +84,12 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public Icon getIconForExpandedTreeNode() {
-    return JDK_ICON_EXPANDED;
+    return AllIcons.Nodes.PpJdkOpen;
   }
 
   @Override
   public Icon getIconForAddAction() {
-    return ADD_ICON;
+    return AllIcons.General.AddJdk;
   }
 
   @Nullable

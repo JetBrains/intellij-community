@@ -30,7 +30,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.HashMap;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -40,13 +39,10 @@ import java.util.Map;
 class AntKeymapExtension implements KeymapExtension {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.ant.config.impl.AntProjectKeymap");
 
-  private static final Icon ANT_ICON = AllIcons.Nodes.KeymapAnt;
-  private static final Icon ANT_OPEN_ICON = AllIcons.Nodes.KeymapAntOpen;
-
   public KeymapGroup createGroup(final Condition<AnAction> filtered, Project project) {
     final Map<AntBuildFile, KeymapGroup> buildFileToGroup = new HashMap<AntBuildFile, KeymapGroup>();
     final KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(KeyMapBundle.message("ant.targets.group.title"),
-                                                                            ANT_ICON, ANT_OPEN_ICON);
+                                                                            AllIcons.Nodes.KeymapAnt, AllIcons.Nodes.KeymapAntOpen);
 
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     final String[] ids = actionManager.getActionIds(project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX);

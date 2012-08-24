@@ -28,7 +28,6 @@ import javax.swing.*;
 public class ProjectFileType implements InternalFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "ipr";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".ipr";
-  private static final Icon ICON = AllIcons.Nodes.IdeaProject;
 
   @NotNull
   public String getName() {
@@ -46,7 +45,7 @@ public class ProjectFileType implements InternalFileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.IdeaProject;
   }
 
   public boolean isBinary() {

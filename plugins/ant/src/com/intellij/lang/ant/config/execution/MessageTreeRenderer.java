@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.config.execution;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.lang.ant.AntIcons;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.MultilineTreeCellRenderer;
 import com.intellij.ui.SideBorder;
@@ -25,11 +24,6 @@ import com.intellij.util.PlatformIcons;
 import javax.swing.*;
 
 final class MessageTreeRenderer extends MultilineTreeCellRenderer {
-
-  private static final Icon myBuildIcon = AllIcons.Ant.Build;
-  private static final Icon myMessageIcon = AllIcons.Ant.Message;
-  private static final Icon myWarningIcon = AllIcons.Compiler.Warning;
-  private static final Icon myErrorIcon = AllIcons.Compiler.Error;
 
   private MessageTreeRenderer() {
   }
@@ -59,24 +53,24 @@ final class MessageTreeRenderer extends MultilineTreeCellRenderer {
       MessageNode node = (MessageNode)value;
       AntBuildMessageView.MessageType type = node.getType();
       if (type == AntBuildMessageView.MessageType.BUILD) {
-        icon = myBuildIcon;
+        icon = AllIcons.Ant.Build;
       }
       else if (type == AntBuildMessageView.MessageType.TARGET) {
-        icon = AntIcons.ANT_TARGET_ICON;
+        icon = AllIcons.Ant.Target;
       }
       else if (type == AntBuildMessageView.MessageType.TASK) {
         icon = PlatformIcons.TASK_ICON;
       }
       else if (type == AntBuildMessageView.MessageType.MESSAGE) {
         if (node.getPriority() == AntBuildMessageView.PRIORITY_WARN) {
-          icon = myWarningIcon;
+          icon = AllIcons.Compiler.Warning;
         }
         else {
-          icon = myMessageIcon;
+          icon = AllIcons.Ant.Message;
         }
       }
       else if (type == AntBuildMessageView.MessageType.ERROR) {
-        icon = myErrorIcon;
+        icon = AllIcons.Compiler.Error;
       }
     }
     setIcon(icon);

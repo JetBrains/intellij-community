@@ -28,7 +28,6 @@ import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.ui.tree.ThreadDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 
@@ -44,11 +43,6 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
 
   private boolean            myIsAtBreakpoint;
   private SuspendContextImpl mySuspendContext;
-
-  private static final Icon myRunningThreadIcon = AllIcons.Debugger.ThreadRunning;
-  private static final Icon myCurrentThreadIcon = AllIcons.Debugger.ThreadCurrent;
-  private static final Icon myThreadAtBreakpointIcon = AllIcons.Debugger.ThreadAtBreakpoint;
-  private static final Icon myFrozenThreadIcon = AllIcons.Debugger.ThreadFrozen;
 
   public ThreadDescriptorImpl(ThreadReferenceProxyImpl thread) {
     myThread = thread;
@@ -157,17 +151,17 @@ public class ThreadDescriptorImpl extends NodeDescriptorImpl implements ThreadDe
 
   public Icon getIcon() {
     if(isCurrent()) {
-      return myCurrentThreadIcon;
+      return AllIcons.Debugger.ThreadCurrent;
     }
     if(isFrozen()) {
-      return myFrozenThreadIcon;
+      return AllIcons.Debugger.ThreadFrozen;
     }
     if(isAtBreakpoint()) {
-      return myThreadAtBreakpointIcon;
+      return AllIcons.Debugger.ThreadAtBreakpoint;
     }
     if(isSuspended()) {
-      return DebuggerIcons.SUSPENDED_THREAD_ICON;
+      return AllIcons.Debugger.ThreadSuspended;
     }
-    return myRunningThreadIcon;
+    return AllIcons.Debugger.ThreadRunning;
   }
 }

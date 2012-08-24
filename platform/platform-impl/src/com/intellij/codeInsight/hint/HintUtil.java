@@ -41,10 +41,6 @@ public class HintUtil {
   public static final Color QUESTION_COLOR = new Color(181, 208, 251);
   public static final Color ERROR_COLOR = new Color(255, 220, 220);
 
-  private static final Icon INFORMATION_ICON = null;
-  private static final Icon QUESTION_ICON = AllIcons.Actions.Help;
-  private static final Icon ERROR_ICON = null;
-
   public static final Color QUESTION_UNDERSCORE_COLOR = Color.black;
 
   private HintUtil() {
@@ -63,7 +59,7 @@ public class HintUtil {
 
     final HintLabel label = new HintLabel();
     label.setText(text, hintHint);
-    label.setIcon(INFORMATION_ICON);
+    label.setIcon(null);
 
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());
@@ -109,7 +105,7 @@ public class HintUtil {
   }
 
   public static JComponent createInformationLabel(SimpleColoredText text) {
-    return createInformationLabel(text, INFORMATION_ICON);
+    return createInformationLabel(text, null);
   }
 
   public static JComponent createQuestionLabel(String text) {
@@ -117,7 +113,7 @@ public class HintUtil {
 
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
-    label.setIcon(QUESTION_ICON);
+    label.setIcon(AllIcons.Actions.Help);
 
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());
@@ -148,7 +144,7 @@ public class HintUtil {
     HintHint hintHint = new HintHint().setTextBg(ERROR_COLOR).setTextFg(Color.black).setFont(getBoldFont()).setAwtTooltip(true);
     HintLabel label = new HintLabel();
     label.setText(text, hintHint);
-    label.setIcon(ERROR_ICON);
+    label.setIcon(null);
 
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder()

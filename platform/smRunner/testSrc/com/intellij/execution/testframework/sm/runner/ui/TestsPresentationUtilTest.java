@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nls;
@@ -147,7 +148,7 @@ public class TestsPresentationUtilTest extends BaseSMTRunnerTestCase {
     mySimpleTest.setStarted();
     TestsPresentationUtil.formatTestProxy(mySimpleTest, pausedRenderer);
 
-    assertEquals(TestsProgressAnimator.PAUSED_ICON, pausedRenderer.getIcon());
+    assertEquals(AllIcons.RunConfigurations.TestPaused, pausedRenderer.getIcon());
     assertEquals(1, myFragContainer.getFragments().size());
     assertEquals(FAKE_TEST_NAME, myFragContainer.getTextAt(0));
     assertEquals(SimpleTextAttributes.REGULAR_ATTRIBUTES, myFragContainer.getAttribsAt(0));

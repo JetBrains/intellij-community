@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider;
 import com.intellij.codeInsight.daemon.impl.MarkerType;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -84,7 +85,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
           }
           if (superSignature != null) {
             boolean overrides = method.hasModifierProperty(PsiModifier.ABSTRACT) == superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
-            final Icon icon = overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON;
+            final Icon icon = overrides ? AllIcons.Gutter.OverridingMethod : AllIcons.Gutter.ImplementingMethod;
             final MarkerType type = GroovyMarkerTypes.OVERRIDING_PROPERTY_TYPE;
             return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(), type.getNavigationHandler(),
                                                   GutterIconRenderer.Alignment.LEFT);
@@ -94,7 +95,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
       else if (parent instanceof GrMethod &&  element == ((GrMethod)parent).getNameIdentifierGroovy() &&
                ((GrMethod)parent).getReflectedMethods().length > 0 &&
                hasSuperMethods((GrMethod)element.getParent())) {
-        final Icon icon = OVERRIDING_METHOD_ICON;
+        final Icon icon = AllIcons.Gutter.OverridingMethod;
         final MarkerType type = GroovyMarkerTypes.OVERRIDING_METHOD;
         return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.UPDATE_ALL, type.getTooltip(),
                                               type.getNavigationHandler(), GutterIconRenderer.Alignment.LEFT);
@@ -227,7 +228,7 @@ public class GroovyLineMarkerProvider extends JavaLineMarkerProvider {
     }
 
     for (PsiElement element : overridden) {
-      final Icon icon = OVERRIDEN_METHOD_MARKER_RENDERER;
+      final Icon icon = AllIcons.Gutter.OverridenMethod;
 
       element = PsiImplUtil.handleMirror(element);
 

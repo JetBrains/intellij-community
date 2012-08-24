@@ -29,7 +29,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.*;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.command.undo.UndoUtil;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -83,7 +86,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManager {
-  @NotNull public static final Icon ICON = AllIcons.Modules.Annotation;
   private static final Logger LOG = Logger.getInstance("#" + ExternalAnnotationsManagerImpl.class.getName());
 
   @NotNull private volatile ThreeState myHasAnyAnnotationsRoots = ThreeState.UNSURE;
@@ -243,7 +245,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
 
         @Override
         public Icon getIconFor(final VirtualFile aValue) {
-          return ICON;
+          return AllIcons.Modules.Annotation;
         }
       }).showInBestPositionFor(DataManager.getInstance().getDataContext());
     }

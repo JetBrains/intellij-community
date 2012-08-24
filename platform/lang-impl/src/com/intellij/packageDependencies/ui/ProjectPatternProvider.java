@@ -46,8 +46,6 @@ public class ProjectPatternProvider extends PatternDialectProvider {
 
   @NonNls public static final String FILE = "file";
 
-  private static final Icon COMPACT_EMPTY_MIDDLE_PACKAGES_ICON = AllIcons.ObjectBrowser.CompactEmptyPackages;
-  private static final Icon ICON = AllIcons.General.ProjectTab;
   private static final Logger LOG = Logger.getInstance("#" + ProjectPatternProvider.class.getName());
 
 
@@ -117,7 +115,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.General.ProjectTab;
   }
 
   private static final class CompactEmptyMiddlePackagesAction extends ToggleAction {
@@ -125,7 +123,7 @@ public class ProjectPatternProvider extends PatternDialectProvider {
 
     CompactEmptyMiddlePackagesAction(Runnable update) {
       super(IdeBundle.message("action.compact.empty.middle.packages"),
-            IdeBundle.message("action.compact.empty.middle.packages"), COMPACT_EMPTY_MIDDLE_PACKAGES_ICON);
+            IdeBundle.message("action.compact.empty.middle.packages"), AllIcons.ObjectBrowser.CompactEmptyPackages);
       myUpdate = update;
     }
 

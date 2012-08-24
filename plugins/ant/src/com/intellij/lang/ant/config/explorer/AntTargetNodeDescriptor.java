@@ -16,8 +16,8 @@
 package com.intellij.lang.ant.config.explorer;
 
 import com.intellij.execution.RunManagerEx;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.lang.ant.AntIcons;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTask;
 import com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider;
@@ -66,7 +66,7 @@ final class AntTargetNodeDescriptor extends AntNodeDescriptor {
     final CompositeAppearance oldText = myHighlightedText;
     final boolean isMeta = myTarget instanceof MetaTarget;
 
-    myOpenIcon = myClosedIcon = isMeta ? AntIcons.ANT_META_TARGET_ICON : AntIcons.ANT_TARGET_ICON;
+    myOpenIcon = myClosedIcon = isMeta ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target;
 
     myHighlightedText = new CompositeAppearance();
 

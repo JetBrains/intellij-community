@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.options.colors.pages;
 
-import com.intellij.lang.properties.PropertiesFileType;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.PropertiesHighlighter;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -47,7 +47,7 @@ public class PropertiesColorsPage implements ColorSettingsPage {
   }
 
   public Icon getIcon() {
-    return PropertiesFileType.FILE_ICON;
+    return AllIcons.FileTypes.Properties;
   }
 
   @NotNull

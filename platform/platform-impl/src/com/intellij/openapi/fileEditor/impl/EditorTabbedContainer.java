@@ -377,10 +377,6 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     ShadowAction myShadow;
     private final TabInfo myTabInfo;
-    private final Icon myIcon = AllIcons.Actions.Close;
-    private final Icon myNewIcon = AllIcons.Actions.CloseNew;
-    private final Icon myHoveredIcon = AllIcons.Actions.CloseHovered;
-    private final Icon myNewHoveredIcon = AllIcons.Actions.CloseNewHovered;
 
     public CloseTab(JComponent c, TabInfo info) {
       myTabInfo = info;
@@ -389,8 +385,8 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
 
     @Override
     public void update(final AnActionEvent e) {
-      e.getPresentation().setIcon(myTabs.isEditorTabs() ? myNewIcon : myIcon);
-      e.getPresentation().setHoveredIcon(myTabs.isEditorTabs()? myNewHoveredIcon : myHoveredIcon);
+      e.getPresentation().setIcon(myTabs.isEditorTabs() ? AllIcons.Actions.CloseNew : AllIcons.Actions.Close);
+      e.getPresentation().setHoveredIcon(myTabs.isEditorTabs()? AllIcons.Actions.CloseNewHovered : AllIcons.Actions.CloseHovered);
       e.getPresentation().setVisible(UISettings.getInstance().SHOW_CLOSE_BUTTON);
       e.getPresentation().setText("Close. Alt-click to close others.");
     }

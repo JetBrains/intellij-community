@@ -51,7 +51,6 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.Processor;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
@@ -65,13 +64,6 @@ import java.util.List;
 
 public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
-
-  // icons
-  public static Icon ICON = DebuggerIcons.ENABLED_BREAKPOINT_ICON;
-  public static final Icon MUTED_ICON = DebuggerIcons.MUTED_BREAKPOINT_ICON;
-  public static final Icon DISABLED_ICON = DebuggerIcons.DISABLED_BREAKPOINT_ICON;
-  public static final Icon MUTED_DISABLED_ICON = DebuggerIcons.MUTED_DISABLED_BREAKPOINT_ICON;
-  private static final Icon ourMutedVerifiedWarningsIcon = AllIcons.Debugger.Db_muted_verified_warning_breakpoint;
 
   private String myMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
@@ -87,27 +79,27 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
     if (isMuted) {
-      return master == null? MUTED_DISABLED_ICON : DebuggerIcons.MUTED_DISABLED_DEPENDENT_BREAKPOINT_ICON;
+      return master == null? AllIcons.Debugger.Db_muted_disabled_breakpoint : AllIcons.Debugger.Db_muted_dep_line_breakpoint;
     }
     else {
-      return master == null? DISABLED_ICON : DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
+      return master == null? AllIcons.Debugger.Db_disabled_breakpoint : AllIcons.Debugger.Db_dep_line_breakpoint;
     }
   }
 
   protected Icon getSetIcon(boolean isMuted) {
-    return isMuted? MUTED_ICON : ICON;
+    return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
   }
 
   protected Icon getInvalidIcon(boolean isMuted) {
-    return isMuted? DebuggerIcons.MUTED_INVALID_BREAKPOINT_ICON : DebuggerIcons.INVALID_BREAKPOINT_ICON;
+    return isMuted? AllIcons.Debugger.Db_muted_invalid_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint;
   }
 
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return isMuted? DebuggerIcons.MUTED_VERIFIED_BREAKPOINT_ICON : DebuggerIcons.VERIFIED_BREAKPOINT_ICON;
+    return isMuted? AllIcons.Debugger.Db_muted_verified_breakpoint : AllIcons.Debugger.Db_verified_breakpoint;
   }
 
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return isMuted? ourMutedVerifiedWarningsIcon : DebuggerIcons.VERIFIED_WARNING_BREAKPOINT_ICON;
+    return isMuted? AllIcons.Debugger.Db_muted_verified_warning_breakpoint : AllIcons.Debugger.Db_verified_warning_breakpoint;
   }
 
   public Key<LineBreakpoint> getCategory() {

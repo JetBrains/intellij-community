@@ -37,7 +37,6 @@ import javax.swing.*;
 
 public class ApplicationConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
-  private static final Icon ICON = AllIcons.RunConfigurations.Application;
 
 
   /**reflection*/
@@ -63,7 +62,7 @@ public class ApplicationConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.RunConfigurations.Application;
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

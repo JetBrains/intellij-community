@@ -23,6 +23,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -57,9 +58,6 @@ public class WildcardMethodBreakpoint extends Breakpoint {
   private String myClassPattern;
   private String myMethodName;
 
-  public static Icon ICON = MethodBreakpoint.ICON;
-  public static Icon DISABLED_ICON = MethodBreakpoint.DISABLED_ICON;
-  public static Icon DISABLED_DEP_ICON = MethodBreakpoint.DISABLED_DEP_ICON;
   public static final String JDOM_LABEL = "wildcard_breakpoint";
 
   public WildcardMethodBreakpoint(Project project) {
@@ -112,9 +110,9 @@ public class WildcardMethodBreakpoint extends Breakpoint {
   public Icon getIcon() {
     if (!ENABLED) {
       final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-      return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+      return master == null? AllIcons.Debugger.Db_disabled_method_breakpoint : AllIcons.Debugger.Db_dep_method_breakpoint;
     }
-    return ICON;
+    return AllIcons.Debugger.Db_method_breakpoint;
   }
 
   public void reload() {

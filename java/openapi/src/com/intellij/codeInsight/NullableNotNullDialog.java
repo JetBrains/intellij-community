@@ -27,7 +27,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.EmptyIcon;
 
 import javax.swing.*;
@@ -44,8 +43,6 @@ import java.util.Set;
  * Date: 1/25/11
  */
 public class NullableNotNullDialog extends DialogWrapper {
-  private static final Icon SELECT_ICON = PlatformIcons.CHECK_ICON;
-  private static final Icon SELECTED_ICON = AllIcons.Diff.CurrentLine;
 
   private final Project myProject;
   private AnnotationsPanel myNullablePanel;
@@ -103,7 +100,7 @@ public class NullableNotNullDialog extends DialogWrapper {
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
           if (value.equals(myDefaultAnnotation)) {
-            setIcon(SELECTED_ICON);
+            setIcon(AllIcons.Diff.CurrentLine);
           } else {
             setIcon(EmptyIcon.ICON_16);
           }
@@ -114,7 +111,7 @@ public class NullableNotNullDialog extends DialogWrapper {
       });
 
       final AnActionButton selectButton =
-        new AnActionButton("Select annotation used for code generation", SELECT_ICON) {
+        new AnActionButton("Select annotation used for code generation", AllIcons.Actions.Checked) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             final String selectedValue = (String)myList.getSelectedValue();

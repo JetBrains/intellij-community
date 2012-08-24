@@ -16,12 +16,12 @@
 
 package com.intellij.xdebugger.frame;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -69,7 +69,7 @@ public abstract class XStackFrame extends XValueContainer {
       //FileColorManager.getInstance()
       component.append(position.getFile().getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       component.append(":" + (position.getLine()+1), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-      component.setIcon(DebuggerIcons.STACK_FRAME_ICON);
+      component.setIcon(AllIcons.Debugger.StackFrame);
     }
     else {
       component.append(XDebuggerBundle.message("invalid.frame"), SimpleTextAttributes.ERROR_ATTRIBUTES);

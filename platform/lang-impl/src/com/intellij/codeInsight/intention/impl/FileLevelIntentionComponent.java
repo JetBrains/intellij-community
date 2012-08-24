@@ -33,7 +33,6 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.LightColors;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -42,9 +41,6 @@ import java.util.List;
  * @author max
  */
 public class FileLevelIntentionComponent extends EditorNotificationPanel {
-  private static final Icon ourIntentionIcon = AllIcons.Actions.IntentionBulb;
-  private static final Icon ourQuickFixIcon = AllIcons.Actions.QuickfixBulb;
-
   private final Project myProject;
 
   public FileLevelIntentionComponent(final String description,
@@ -73,7 +69,7 @@ public class FileLevelIntentionComponent extends EditorNotificationPanel {
     }
 
     myLabel.setText(description);
-    myLabel.setIcon(SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? ourQuickFixIcon : ourIntentionIcon);
+    myLabel.setIcon(SeverityRegistrar.getInstance(project).compare(severity, HighlightSeverity.ERROR) >= 0 ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb);
     setBackground(getColor(severity));
 
     new ClickListener() {

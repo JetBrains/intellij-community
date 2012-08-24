@@ -30,7 +30,6 @@ import java.nio.charset.Charset;
  * @author max
  */
 public class PropertiesFileType extends LanguageFileType {
-  public static final Icon FILE_ICON = AllIcons.FileTypes.Properties;
   public static final LanguageFileType INSTANCE = new PropertiesFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "properties";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
@@ -55,7 +54,7 @@ public class PropertiesFileType extends LanguageFileType {
   }
 
   public Icon getIcon() {
-    return FILE_ICON;
+    return AllIcons.FileTypes.Properties;
   }
 
   public String getCharset(@NotNull VirtualFile file, final byte[] content) {

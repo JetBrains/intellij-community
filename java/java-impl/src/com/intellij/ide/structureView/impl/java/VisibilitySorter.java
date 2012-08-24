@@ -29,7 +29,6 @@ public class VisibilitySorter implements Sorter{
 
   public static final Sorter INSTANCE = new VisibilitySorter();
 
-  private static final Icon ICON = AllIcons.ObjectBrowser.VisibilitySort;
   private static final ActionPresentation PRESENTATION = new ActionPresentation() {
     public String getText() {
       return IdeBundle.message("action.structureview.sort.by.visibility");
@@ -40,7 +39,7 @@ public class VisibilitySorter implements Sorter{
     }
 
     public Icon getIcon() {
-      return ICON;
+      return AllIcons.ObjectBrowser.VisibilitySort;
     }
   };
   @NonNls public static final String ID = "VISIBILITY_SORTER";

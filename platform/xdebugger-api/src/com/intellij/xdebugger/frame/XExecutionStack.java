@@ -15,9 +15,9 @@
  */
 package com.intellij.xdebugger.frame;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.xdebugger.Obsolescent;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +39,7 @@ public abstract class XExecutionStack {
    * @param displayName presentable name of the thread to be shown in the combobox in 'Frames' tab
    */
   protected XExecutionStack(final String displayName) {
-    this(displayName, DebuggerIcons.SUSPENDED_THREAD_ICON);
+    this(displayName, AllIcons.Debugger.ThreadSuspended);
   }
 
   /**

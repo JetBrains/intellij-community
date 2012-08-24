@@ -40,7 +40,6 @@ import javax.swing.tree.DefaultTreeModel;
 
 public class ProjectViewPane extends AbstractProjectViewPSIPane {
   @NonNls public static final String ID = "ProjectPane";
-  private static final Icon ICON = AllIcons.General.ProjectTab;
 
   public ProjectViewPane(Project project) {
     super(project);
@@ -56,7 +55,7 @@ public class ProjectViewPane extends AbstractProjectViewPSIPane {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.General.ProjectTab;
   }
 
 

@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,7 @@ public class SMPoolOfTestIcons implements PoolOfTestIcons {
   public static final Icon IGNORED_E_ICON = addErrorMarkTo(IGNORED_ICON);
 
   // Test Progress
-  public static final Icon PAUSED_E_ICON = addErrorMarkTo(TestsProgressAnimator.PAUSED_ICON);
+  public static final Icon PAUSED_E_ICON = addErrorMarkTo(AllIcons.RunConfigurations.TestPaused);
   public static final Icon[] FRAMES_E = new Icon[TestsProgressAnimator.FRAMES.length];
   static {
     for (int i = 0, length = FRAMES_E.length; i < length; i++){

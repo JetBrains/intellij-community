@@ -16,13 +16,13 @@
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.compiler.ant.Generator;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.packaging.elements.*;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
-import com.intellij.packaging.ui.PackagingElementPresentation;
-import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.elements.*;
+import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.packaging.ui.PackagingElementPresentation;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +46,7 @@ public class ArtifactRootElementImpl extends ArtifactRootElement<Object> {
       @Override
       public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                          SimpleTextAttributes commentAttributes) {
-        presentationData.setIcons(PlainArtifactType.ARTIFACT_ICON);
+        presentationData.setIcons(AllIcons.Nodes.Artifact);
         presentationData.addText(getPresentableName(), mainAttributes);
       }
 

@@ -38,15 +38,13 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 
 public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
-  private static final Icon myLockedIcon = AllIcons.Ide.Readonly;
-  private static final Icon myUnlockedIcon = AllIcons.Ide.Readwrite;
 
   private StatusBar myStatusBar;
 
   @NotNull
   public Icon getIcon() {
     final Editor editor = getEditor();
-    return editor == null || editor.getDocument().isWritable() ? myUnlockedIcon : myLockedIcon;
+    return editor == null || editor.getDocument().isWritable() ? AllIcons.Ide.Readwrite : AllIcons.Ide.Readonly;
   }
 
   @NotNull

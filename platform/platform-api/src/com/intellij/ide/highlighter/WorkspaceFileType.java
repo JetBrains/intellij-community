@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class WorkspaceFileType implements InternalFileType {
-  private static final Icon ICON = AllIcons.Nodes.IdeaWorkspace;
   @NonNls public static final String DEFAULT_EXTENSION = "iws";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "." + DEFAULT_EXTENSION;
 
@@ -46,7 +45,7 @@ public class WorkspaceFileType implements InternalFileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.IdeaWorkspace;
   }
 
   public boolean isBinary() {

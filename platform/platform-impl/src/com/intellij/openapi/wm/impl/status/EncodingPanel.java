@@ -73,7 +73,8 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         if (actionEnabled && getText() != null) {
           final Rectangle r = getBounds();
           final Insets insets = getInsets();
-          ARROWS_ICON.paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
+          AllIcons.Ide.Statusbar_arrows.paintIcon(this, g, r.width - insets.right - AllIcons.Ide.Statusbar_arrows.getIconWidth() - 2,
+                                                  r.height / 2 - AllIcons.Ide.Statusbar_arrows.getIconHeight() / 2);
         }
       }
     };
@@ -118,7 +119,6 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
     return "windows-1251";
   }
 
-  private static final Icon ARROWS_ICON = AllIcons.Ide.Statusbar_arrows;
   @Override
   public void install(@NotNull StatusBar statusBar) {
     super.install(statusBar);

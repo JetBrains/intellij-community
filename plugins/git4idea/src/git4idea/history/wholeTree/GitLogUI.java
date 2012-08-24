@@ -58,7 +58,6 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.PlatformFacade;
@@ -1981,7 +1980,7 @@ public class GitLogUI implements Disposable {
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          e.getPresentation().setIcon(GraphGutter.PresentationStyle.multicolour.equals(myGraphGutter.getStyle()) ? VcsUtil.ourDot : VcsUtil.ourNotDot);
+          e.getPresentation().setIcon(GraphGutter.PresentationStyle.multicolour.equals(myGraphGutter.getStyle()) ? AllIcons.General.Mdot : AllIcons.General.Mdot_empty);
         }
       };
       myCalmAction = new DumbAwareAction("Two Colors") {
@@ -1992,7 +1991,8 @@ public class GitLogUI implements Disposable {
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          e.getPresentation().setIcon(GraphGutter.PresentationStyle.multicolour.equals(myGraphGutter.getStyle()) ? VcsUtil.ourNotDot : VcsUtil.ourDot);
+          e.getPresentation().setIcon(GraphGutter.PresentationStyle.multicolour.equals(myGraphGutter.getStyle()) ? AllIcons.General.Mdot_empty
+                                                                                                                 : AllIcons.General.Mdot);
         }
       };
 
@@ -2008,7 +2008,7 @@ public class GitLogUI implements Disposable {
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          e.getPresentation().setIcon(mySettings.isTopoOrder() ? VcsUtil.ourNotDot : VcsUtil.ourDot);
+          e.getPresentation().setIcon(mySettings.isTopoOrder() ? AllIcons.General.Mdot_empty : AllIcons.General.Mdot);
         }
       };
       myTopoOrder = new DumbAwareAction("Topo Order") {
@@ -2022,7 +2022,7 @@ public class GitLogUI implements Disposable {
         @Override
         public void update(AnActionEvent e) {
           super.update(e);
-          e.getPresentation().setIcon(mySettings.isTopoOrder() ? VcsUtil.ourDot : VcsUtil.ourNotDot);
+          e.getPresentation().setIcon(mySettings.isTopoOrder() ? AllIcons.General.Mdot : AllIcons.General.Mdot_empty);
         }
       };
 

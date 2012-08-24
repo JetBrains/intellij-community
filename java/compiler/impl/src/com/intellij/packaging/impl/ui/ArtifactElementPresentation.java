@@ -15,10 +15,10 @@
  */
 package com.intellij.packaging.impl.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementWeights;
 import com.intellij.packaging.ui.TreeNodePresentation;
@@ -57,7 +57,7 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     final Artifact artifact = findArtifact();
-    presentationData.setIcons(artifact != null ? artifact.getArtifactType().getIcon() : PlainArtifactType.ARTIFACT_ICON);
+    presentationData.setIcons(artifact != null ? artifact.getArtifactType().getIcon() : AllIcons.Nodes.Artifact);
     presentationData.addText(getPresentableName(), artifact != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 

@@ -17,7 +17,6 @@ package org.jetbrains.android.run;
 
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.icons.AllIcons;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -26,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
@@ -42,7 +42,6 @@ import java.awt.event.ActionListener;
  * @author yole
  */
 public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase> extends SettingsEditor<T> implements PanelWithAnchor {
-  private static final Icon INFO_MESSAGE_ICON = AllIcons.Compiler.Warning;
 
   private JPanel myPanel;
   private JComboBox myModulesComboBox;
@@ -100,8 +99,8 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     myAvdCombo = myAvdComboComponent.getComponent();
 
     myMinSdkInfoMessageLabel.setBorder(IdeBorderFactory.createEmptyBorder(10, 0, 0, 0));
-    myMinSdkInfoMessageLabel.setIcon(INFO_MESSAGE_ICON);
-    myMinSdkInfoMessageLabel.setDisabledIcon(INFO_MESSAGE_ICON);
+    myMinSdkInfoMessageLabel.setIcon(AllIcons.Compiler.Warning);
+    myMinSdkInfoMessageLabel.setDisabledIcon(AllIcons.Compiler.Warning);
 
     Disposer.register(this, myAvdCombo);
 

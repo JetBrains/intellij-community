@@ -42,7 +42,6 @@ import java.awt.*;
  * User: Sergey.Vasiliev
  */
 public class DomElementsErrorPanel extends JPanel implements CommittablePanel, Highlightable {
-  private static final Icon ERRORS_FOUND_ICON = AllIcons.General.ErrorsInProgress;
 
   private static final int ALARM_PERIOD = 241;
 
@@ -140,7 +139,7 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
   }
 
   private static Dimension getDimension() {
-    return new Dimension(ERRORS_FOUND_ICON.getIconWidth() + 2, ERRORS_FOUND_ICON.getIconHeight() + 2);
+    return new Dimension(AllIcons.General.ErrorsInProgress.getIconWidth() + 2, AllIcons.General.ErrorsInProgress.getIconHeight() + 2);
   }
 
   private class DomElementsTrafficLightRenderer extends TrafficLightRenderer {

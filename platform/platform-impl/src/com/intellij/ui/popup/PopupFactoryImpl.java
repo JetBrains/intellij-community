@@ -79,8 +79,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
-  private static final Icon QUICK_LIST_ICON = AllIcons.Actions.QuickList;
-
   private final Map<Disposable, List<Balloon>> myStorage = new WeakHashMap<Disposable, List<Balloon>>();
 
   public ListPopup createConfirmation(String title, final Runnable onYes, int defaultOptionIndex) {
@@ -843,7 +841,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         Icon icon = presentation.getIcon();
         if (icon == null) {
           @NonNls final String actionId = ActionManager.getInstance().getId(action);
-          icon = actionId != null && actionId.startsWith("QuickList.") ? QUICK_LIST_ICON : myEmptyIcon;
+          icon = actionId != null && actionId.startsWith("QuickList.") ? AllIcons.Actions.QuickList : myEmptyIcon;
         }
         else {
           icon = new IconWrapper(icon);

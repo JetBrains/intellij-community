@@ -25,10 +25,6 @@ import javax.swing.*;
 import java.util.Set;
 
 public class LibraryNode extends PackageDependenciesNode {
-  private static final Icon LIB_ICON_OPEN = AllIcons.Nodes.PpLibOpen;
-  private static final Icon LIB_ICON_CLOSED = AllIcons.Nodes.PpLibClosed;
-  private static final Icon JDK_ICON_OPEN = AllIcons.Nodes.PpJdkOpen;
-  private static final Icon JDK_ICON_CLOSED = AllIcons.Nodes.PpJdkClosed;
 
   private final OrderEntry myLibraryOrJdk;
 
@@ -73,10 +69,10 @@ public class LibraryNode extends PackageDependenciesNode {
   }
 
   public Icon getOpenIcon() {
-    return myLibraryOrJdk instanceof JdkOrderEntry ? JDK_ICON_OPEN : LIB_ICON_OPEN;
+    return myLibraryOrJdk instanceof JdkOrderEntry ? AllIcons.Nodes.PpJdkOpen : AllIcons.Nodes.PpLibOpen;
   }
 
   public Icon getClosedIcon() {
-    return myLibraryOrJdk instanceof JdkOrderEntry ? JDK_ICON_CLOSED : LIB_ICON_CLOSED;
+    return myLibraryOrJdk instanceof JdkOrderEntry ? AllIcons.Nodes.PpJdkClosed : AllIcons.Nodes.PpLibClosed;
   }
 }

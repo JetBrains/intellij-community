@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.customization;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -314,7 +315,7 @@ public void removeIconCustomization(String actionId) {
           icon = image != null ? IconLoader.getIcon(image) : null;
         }
         else {
-          icon = CustomizableActionsPanel.FULLISH_ICON;
+          icon = AllIcons.Toolbar.Unknown;
         }
         if (anAction.getTemplatePresentation() != null) {
           anAction.getTemplatePresentation().setIcon(icon);

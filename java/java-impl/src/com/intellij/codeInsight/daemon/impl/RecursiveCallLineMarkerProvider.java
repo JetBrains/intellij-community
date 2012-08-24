@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.FunctionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -38,7 +37,6 @@ import java.util.Set;
  * @author Danila Ponomarenko
  */
 public class RecursiveCallLineMarkerProvider implements LineMarkerProvider, DumbAware {
-  private static final Icon RECURSIVE_METHOD_ICON = AllIcons.Gutter.RecursiveMethod;
 
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
@@ -81,7 +79,7 @@ public class RecursiveCallLineMarkerProvider implements LineMarkerProvider, Dumb
     private RecursiveMethodCallMarkerInfo(@NotNull PsiMethodCallExpression methodCall) {
       super(methodCall,
             methodCall.getTextRange(),
-            RECURSIVE_METHOD_ICON,
+            AllIcons.Gutter.RecursiveMethod,
             Pass.UPDATE_OVERRIDEN_MARKERS,
             FunctionUtil.<PsiMethodCallExpression, String>constant("Recursive call"),
             null,

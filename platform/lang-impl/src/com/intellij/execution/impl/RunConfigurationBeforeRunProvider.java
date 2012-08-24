@@ -56,7 +56,6 @@ import java.util.List;
  */
 public class RunConfigurationBeforeRunProvider
 extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask> {
-  private static final Icon ICON = AllIcons.Actions.Execute;
 
   public static final Key<RunConfigurableBeforeRunTask> ID = Key.create("RunConfigurationTask");
 
@@ -75,7 +74,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Actions.Execute;
   }
 
   @Override

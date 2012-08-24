@@ -32,7 +32,6 @@ public class SpeedSearchPane extends JDialog {
   private final JPanel myPanel = new JPanel();
 
   private Dimension myLastLabelSize = new Dimension();
-  private static final Icon ICON_PROMPT = AllIcons.Icons.Ide.SpeedSearchPrompt;
 
   public SpeedSearchPane(WizardPopup popup) throws HeadlessException {
     myPopup = popup;
@@ -47,7 +46,7 @@ public class SpeedSearchPane extends JDialog {
     myPanel.add(myLabel, BorderLayout.CENTER);
 
     myPanel.setBackground(SPEEDSEARCH_BACKGROUND);
-    myLabel.setIcon(ICON_PROMPT);
+    myLabel.setIcon(AllIcons.Icons.Ide.SpeedSearchPrompt);
 
     myPanel.setBorder(BorderFactory.createLineBorder(SPEEDSEARCH_FOREGROUND));
     myLabel.setBorder(BorderFactory.createEmptyBorder(1, 4, 1, 4));

@@ -32,7 +32,6 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class QuickListPanel {
-  private static final Icon QUICK_LIST_ICON = AllIcons.Actions.QuickList;
   private JPanel myPanel;
   private JBList myActionsList;
   private JTextField myDisplayName;
@@ -169,7 +168,7 @@ public class QuickListPanel {
           }
         }
         if (actionId.startsWith(QuickList.QUICK_LIST_PREFIX)) {
-          icon = QUICK_LIST_ICON;
+          icon = AllIcons.Actions.QuickList;
         }
         setIcon(ActionsTree.getEvenIcon(icon));
       }

@@ -27,7 +27,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import javax.swing.*;
 
 public class ToolBeforeRunTaskProvider extends BeforeRunTaskProvider<ToolBeforeRunTask> {
-  private static final Icon ICON = AllIcons.General.ExternalToolsSmall;
   static final Key<ToolBeforeRunTask> ID = Key.create("ToolBeforeRunTask");
   private static final Logger LOG = Logger.getInstance("#" + ToolBeforeRunTaskProvider.class.getName());
 
@@ -60,7 +59,7 @@ public class ToolBeforeRunTaskProvider extends BeforeRunTaskProvider<ToolBeforeR
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.General.ExternalToolsSmall;
   }
 
   @Override

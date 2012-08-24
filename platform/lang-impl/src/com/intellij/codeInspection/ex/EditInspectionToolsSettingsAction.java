@@ -43,7 +43,6 @@ import javax.swing.*;
  */
 public class EditInspectionToolsSettingsAction implements IntentionAction, Iconable, HighPriorityAction {
   private final String myShortName;
-  private static final Icon ICON = AllIcons.General.IdeOptions;
 
   public EditInspectionToolsSettingsAction(@NotNull LocalInspectionTool tool) {
     myShortName = tool.getShortName();
@@ -114,6 +113,6 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
   }
 
   public Icon getIcon(int flags) {
-    return ICON;
+    return AllIcons.General.IdeOptions;
   }
 }

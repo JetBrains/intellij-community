@@ -76,7 +76,6 @@ import java.util.List;
 
 public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, ProjectComponent {
   public static final int UNVERSIONED_MAX_SIZE = 50;
-  public static final Icon detailsIcon = AllIcons.Vcs.Volute;
   private boolean SHOW_FLATTEN_MODE = true;
   private boolean SHOW_IGNORED_MODE = false;
 
@@ -584,7 +583,7 @@ public class ChangesViewManager implements ChangesViewI, JDOMExternalizable, Pro
 
   private class ToggleDetailsAction extends ToggleAction implements DumbAware {
     private ToggleDetailsAction() {
-      super("Change Details", "Change Details", detailsIcon);
+      super("Change Details", "Change Details", AllIcons.Vcs.Volute);
     }
 
     @Override

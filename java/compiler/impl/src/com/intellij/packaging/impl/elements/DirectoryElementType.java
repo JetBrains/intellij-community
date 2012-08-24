@@ -33,7 +33,6 @@ import javax.swing.*;
 * @author nik
 */
 class DirectoryElementType extends CompositePackagingElementType<DirectoryPackagingElement> {
-  private static final Icon ICON = AllIcons.Actions.NewFolder;
 
   DirectoryElementType() {
     super("directory", CompilerBundle.message("element.type.name.directory"));
@@ -41,7 +40,7 @@ class DirectoryElementType extends CompositePackagingElementType<DirectoryPackag
 
   @Override
   public Icon getCreateElementIcon() {
-    return ICON;
+    return AllIcons.Actions.NewFolder;
   }
 
   @NotNull

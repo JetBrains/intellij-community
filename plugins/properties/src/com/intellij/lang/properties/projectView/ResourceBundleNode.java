@@ -19,21 +19,22 @@
  */
 package com.intellij.lang.properties.projectView;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.ResourceBundle;
-import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
@@ -74,8 +75,8 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   }
 
   public void update(PresentationData presentation) {
-    presentation.setOpenIcon(ResourceBundle.ICON_OPEN);
-    presentation.setClosedIcon(ResourceBundle.ICON_CLOSED);
+    presentation.setOpenIcon(AllIcons.Nodes.ResourceBundleOpen);
+    presentation.setClosedIcon(AllIcons.Nodes.ResourceBundleClosed);
     presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", getValue().getBaseName()));
   }
 

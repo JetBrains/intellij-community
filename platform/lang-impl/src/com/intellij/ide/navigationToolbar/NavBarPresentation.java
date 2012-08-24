@@ -55,7 +55,6 @@ import java.awt.*;
  */
 public class NavBarPresentation {
   private static final SimpleTextAttributes WOLFED = new SimpleTextAttributes(null, null, Color.red, SimpleTextAttributes.STYLE_WAVED);
-  private static final Icon PROJECT_ICON = AllIcons.Nodes.Project;
 
   private final Project myProject;
 
@@ -66,7 +65,7 @@ public class NavBarPresentation {
   @Nullable
   public static Icon getIcon(final Object object, final boolean open) {
     if (!NavBarModel.isValid(object)) return null;
-    if (object instanceof Project) return PROJECT_ICON;
+    if (object instanceof Project) return AllIcons.Nodes.Project;
     if (object instanceof Module) return ModuleType.get(((Module)object)).getNodeIcon(false);
     try {
       if (object instanceof PsiElement) {

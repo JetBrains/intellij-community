@@ -25,22 +25,18 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 /**
  * @author spleaner
  */
 public class PinToolwindowTabAction extends ToggleAction implements DumbAware {
   public static final String ACTION_NAME = "PinToolwindowTab";
 
-  private static final Icon ICON = AllIcons.General.Pin_tab;
-
   public static AnAction getPinAction() {
     return ActionManager.getInstance().getAction(ACTION_NAME);
   }
 
   public PinToolwindowTabAction() {
-    super("Pin Tab", "Pin tool window tab", ICON);
+    super("Pin Tab", "Pin tool window tab", AllIcons.General.Pin_tab);
   }
 
   @Nullable
@@ -74,7 +70,7 @@ public class PinToolwindowTabAction extends ToggleAction implements DumbAware {
 
     if (enabled) {
       presentation.setIcon(
-        TabbedPaneContentUI.POPUP_PLACE.equals(event.getPlace()) || ToolWindowContentUi.POPUP_PLACE.equals(event.getPlace()) ? null : ICON);
+        TabbedPaneContentUI.POPUP_PLACE.equals(event.getPlace()) || ToolWindowContentUi.POPUP_PLACE.equals(event.getPlace()) ? null : AllIcons.General.Pin_tab);
     }
 
     presentation.setEnabled(enabled);

@@ -43,26 +43,20 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.intellij.icons.AllIcons.Debugger.ThreadStates.*;
+
 /**
  * @author Jeka
  * @author Konstantin Bulenkov
  */
 public class ThreadDumpPanel extends JPanel {
-  private static final Icon DAEMON = AllIcons.Debugger.ThreadStates.Daemon_sign;
-  private static final Icon PAUSE_ICON = AllIcons.Debugger.ThreadStates.Paused;
-  private static final Icon PAUSE_ICON_DAEMON = new LayeredIcon(PAUSE_ICON, DAEMON);
-  private static final Icon LOCKED_ICON = AllIcons.Debugger.ThreadStates.Locked;
-  private static final Icon LOCKED_ICON_DAEMON = new LayeredIcon(LOCKED_ICON, DAEMON);
-  private static final Icon RUNNING_ICON = AllIcons.Debugger.ThreadStates.Running;
-  private static final Icon RUNNING_ICON_DAEMON = new LayeredIcon(RUNNING_ICON, DAEMON);
-  private static final Icon SOCKET_ICON = AllIcons.Debugger.ThreadStates.Socket;
-  private static final Icon SOCKET_ICON_DAEMON = new LayeredIcon(SOCKET_ICON, DAEMON);
-  private static final Icon IDLE_ICON = AllIcons.Debugger.ThreadStates.Idle;
-  private static final Icon IDLE_ICON_DAEMON = new LayeredIcon(IDLE_ICON, DAEMON);
-  private static final Icon EDT_BUSY_ICON = AllIcons.Debugger.ThreadStates.EdtBusy;
-  private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(EDT_BUSY_ICON, DAEMON);
-  private static final Icon IO_ICON = AllIcons.Debugger.ThreadStates.IO;
-  private static final Icon IO_ICON_DAEMON = new LayeredIcon(IO_ICON, DAEMON);
+  private static final Icon PAUSE_ICON_DAEMON = new LayeredIcon(Paused, Daemon_sign);
+  private static final Icon LOCKED_ICON_DAEMON = new LayeredIcon(Locked, Daemon_sign);
+  private static final Icon RUNNING_ICON_DAEMON = new LayeredIcon(Running, Daemon_sign);
+  private static final Icon SOCKET_ICON_DAEMON = new LayeredIcon(Socket, Daemon_sign);
+  private static final Icon IDLE_ICON_DAEMON = new LayeredIcon(Idle, Daemon_sign);
+  private static final Icon EDT_BUSY_ICON_DAEMON = new LayeredIcon(EdtBusy, Daemon_sign);
+  private static final Icon IO_ICON_DAEMON = new LayeredIcon(IO, Daemon_sign);
   private final JBList myThreadList;
 
   public ThreadDumpPanel(Project project, final ConsoleView consoleView, final DefaultActionGroup toolbarActions, final List<ThreadState> threadDump) {
@@ -105,24 +99,24 @@ public class ThreadDumpPanel extends JPanel {
   private static Icon getThreadStateIcon(final ThreadState threadState) {
     final boolean daemon = threadState.isDaemon();
     if (threadState.isSleeping()) {
-      return daemon ? PAUSE_ICON_DAEMON : PAUSE_ICON;
+      return daemon ? PAUSE_ICON_DAEMON : Paused;
     }
     if (threadState.isWaiting()) {
-      return daemon ? LOCKED_ICON_DAEMON : LOCKED_ICON;
+      return daemon ? LOCKED_ICON_DAEMON : Locked;
     }
     if (threadState.getOperation() == ThreadOperation.Socket) {
-      return daemon ? SOCKET_ICON_DAEMON : SOCKET_ICON;
+      return daemon ? SOCKET_ICON_DAEMON : Socket;
     }
     if (threadState.getOperation() == ThreadOperation.IO) {
-      return daemon ? IO_ICON_DAEMON : IO_ICON;
+      return daemon ? IO_ICON_DAEMON : IO;
     }
     if (threadState.isEDT()) {
       if ("idle".equals(threadState.getThreadStateDetail())) {
-        return daemon ? IDLE_ICON_DAEMON : IDLE_ICON;
+        return daemon ? IDLE_ICON_DAEMON : Idle;
       }
-      return daemon ? EDT_BUSY_ICON_DAEMON : EDT_BUSY_ICON;
+      return daemon ? EDT_BUSY_ICON_DAEMON : EdtBusy;
     }
-    return daemon ? RUNNING_ICON_DAEMON : RUNNING_ICON;
+    return daemon ? RUNNING_ICON_DAEMON : Running;
   }
 
   private static enum StateCode {RUN, RUN_IO, RUN_SOCKET, PAUSED, LOCKED, EDT, IDLE}
@@ -207,8 +201,6 @@ public class ThreadDumpPanel extends JPanel {
       }
     };
     private Comparator<ThreadState> COMPARATOR = BY_TYPE;
-    private final Icon typeIcon = AllIcons.ObjectBrowser.SortByType;
-    private final Icon nameIcon = AllIcons.Icons.Inspector.SortByName;
     private static final String TYPE_LABEL = "Sort threads by type";
     private static final String NAME_LABEL = "Sort threads by name";
     public SortThreadsAction() {
@@ -239,7 +231,7 @@ public class ThreadDumpPanel extends JPanel {
 
     @Override
     public void update(AnActionEvent e) {
-      e.getPresentation().setIcon(COMPARATOR == BY_TYPE ? typeIcon : nameIcon);
+      e.getPresentation().setIcon(COMPARATOR == BY_TYPE ? AllIcons.ObjectBrowser.SortByType : AllIcons.Icons.Inspector.SortByName);
       e.getPresentation().setText(COMPARATOR == BY_TYPE ? TYPE_LABEL : NAME_LABEL);
     }
   }

@@ -35,7 +35,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.FileColorManager;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,8 +56,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private ObjectReference myThisObject;
   private Color myBackgroundColor;
 
-  private static final Icon myObsoleteFrameIcon = AllIcons.Debugger.Db_obsolete;
-  private Icon myIcon = DebuggerIcons.STACK_FRAME_ICON;
+  private Icon myIcon = AllIcons.Debugger.StackFrame;
 
   public StackFrameDescriptorImpl(StackFrameProxyImpl frame, final MethodsTracker tracker) {
     myFrame = frame;
@@ -245,12 +243,12 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
   private Icon calcIcon() {
     try {
       if(myFrame.isObsolete()) {
-        return myObsoleteFrameIcon;
+        return AllIcons.Debugger.Db_obsolete;
       }
     }
     catch (EvaluateException e) {
     }
-    return DebuggerIcons.STACK_FRAME_ICON;
+    return AllIcons.Debugger.StackFrame;
   }
 
   public Icon getIcon() {

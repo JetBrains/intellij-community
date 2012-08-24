@@ -55,8 +55,6 @@ public class PathEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.ui.PathEditor");
 
   public static final Color INVALID_COLOR = new Color(210, 0, 0);
-  private static final Icon ICON_INVALID = AllIcons.Nodes.PpInvalid;
-  private static final Icon ICON_EMPTY = AllIcons.Nodes.EmptyNode;
 
   protected JPanel myPanel;
   private JBList myList;
@@ -346,7 +344,7 @@ public class PathEditor {
     if (projectRoot instanceof VirtualFile) {
       final VirtualFile file = (VirtualFile)projectRoot;
       if (!file.isValid()) {
-        return ICON_INVALID;
+        return AllIcons.Nodes.PpInvalid;
       }
       else if (isHttpRoot(file)) {
         return PlatformIcons.WEB_ICON;
@@ -355,7 +353,7 @@ public class PathEditor {
         return isJarFile(file) ? PlatformIcons.JAR_ICON : PlatformIcons.FILE_ICON;
       }
     }
-    return ICON_EMPTY;
+    return AllIcons.Nodes.EmptyNode;
   }
 
   private static boolean isHttpRoot(VirtualFile virtualFileOrProjectRoot) {

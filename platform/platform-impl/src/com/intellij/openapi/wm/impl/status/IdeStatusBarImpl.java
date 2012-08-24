@@ -609,7 +609,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   }
 
   private static final class MultipleTextValuesPresentationWrapper extends TextPanel implements StatusBarWrapper {
-    private static final Icon ARROWS_ICON = AllIcons.Ide.Statusbar_arrows;
     private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
@@ -651,15 +650,17 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
       if (getText() != null) {
         final Rectangle r = getBounds();
         final Insets insets = getInsets();
-        ARROWS_ICON
-          .paintIcon(this, g, r.width - insets.right - ARROWS_ICON.getIconWidth() - 2, r.height / 2 - ARROWS_ICON.getIconHeight() / 2);
+        Icon icon = AllIcons.Ide.Statusbar_arrows;
+        icon.paintIcon(this, g,
+                       r.width - insets.right - icon.getIconWidth() - 2,
+                       r.height / 2 - icon.getIconHeight() / 2);
       }
     }
 
     @Override
     public Dimension getPreferredSize() {
       final Dimension preferredSize = super.getPreferredSize();
-      return new Dimension(preferredSize.width + ARROWS_ICON.getIconWidth() + 4, preferredSize.height);
+      return new Dimension(preferredSize.width + AllIcons.Ide.Statusbar_arrows.getIconWidth() + 4, preferredSize.height);
     }
   }
 
@@ -783,8 +784,6 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   private static class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusBarWidget, Disposable,
                                                                    UISettingsListener, PropertyChangeListener {
 
-    private static final Icon HIDDEN = AllIcons.General.TbShown;
-    private static final Icon SHOWN = AllIcons.General.TbHidden;
     private StatusBar myStatusBar;
 
     private ToolWindowsWidget() {
@@ -826,7 +825,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
           changes = true;
         }
 
-        Icon icon = UISettings.getInstance().HIDE_TOOL_STRIPES ? HIDDEN : SHOWN;
+        Icon icon = UISettings.getInstance().HIDE_TOOL_STRIPES ? AllIcons.General.TbShown : AllIcons.General.TbHidden;
         if (icon != getIcon()) {
           setIcon(icon);
           changes = true;

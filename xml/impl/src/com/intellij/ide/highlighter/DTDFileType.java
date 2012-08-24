@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class DTDFileType extends LanguageFileType {
-  private static final Icon ICON = AllIcons.FileTypes.Dtd;
   public static final DTDFileType INSTANCE = new DTDFileType();
 
   public DTDFileType() {
@@ -47,6 +46,6 @@ public class DTDFileType extends LanguageFileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Dtd;
   }
 }

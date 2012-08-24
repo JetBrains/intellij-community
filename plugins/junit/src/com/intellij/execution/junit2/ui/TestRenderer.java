@@ -21,6 +21,7 @@ import com.intellij.execution.junit2.info.TestInfo;
 import com.intellij.execution.junit2.ui.model.SpecialNode;
 import com.intellij.execution.testframework.PoolOfTestIcons;
 import com.intellij.execution.testframework.TestsUIUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.rt.execution.junit.states.PoolOfTestStates;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -35,7 +36,7 @@ class TestRenderer {
   public static Icon getIconFor(final TestProxy testProxy, final boolean isPaused) {
     final int magnitude = testProxy.getState().getMagnitude();
     if (magnitude == PoolOfTestStates.RUNNING_INDEX)
-      return isPaused ? Animator.PAUSED_ICON : Animator.getCurrentFrame();
+      return isPaused ? AllIcons.RunConfigurations.TestPaused : Animator.getCurrentFrame();
     else
       return ourIcons.get(new Integer(magnitude));
   }

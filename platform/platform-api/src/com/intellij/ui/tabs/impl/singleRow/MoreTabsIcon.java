@@ -18,14 +18,12 @@ package com.intellij.ui.tabs.impl.singleRow;
 import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 
 /**
  * @author pegov
  */
 public abstract class MoreTabsIcon {
-  final Icon myIcon = AllIcons.General.MoreTabs;
   private boolean myPainted;
 
   public void paintIcon(final Component c, final Graphics g) {
@@ -37,16 +35,16 @@ public abstract class MoreTabsIcon {
     int iconX = getIconX(moreRect);
 
     if (myPainted) {
-      myIcon.paintIcon(c, g, iconX, iconY);
+      AllIcons.General.MoreTabs.paintIcon(c, g, iconX, iconY);
     }
   }
   
   protected int getIconX(final Rectangle iconRec) {
-    return iconRec.x + iconRec.width / 2 - (myIcon.getIconWidth()) / 2;
+    return iconRec.x + iconRec.width / 2 - (AllIcons.General.MoreTabs.getIconWidth()) / 2;
   }
 
   protected int getIconY(final Rectangle iconRec) {
-    return iconRec.y + iconRec.height / 2 - myIcon.getIconHeight() / 2;
+    return iconRec.y + iconRec.height / 2 - AllIcons.General.MoreTabs.getIconHeight() / 2;
   }
 
   @Nullable

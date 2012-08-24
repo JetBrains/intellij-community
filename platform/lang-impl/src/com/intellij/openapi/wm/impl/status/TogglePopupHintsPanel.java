@@ -41,17 +41,13 @@ import java.awt.*;
 import java.awt.event.MouseEvent;
 
 public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, StatusBarWidget.IconPresentation {
-  private static final Icon INSPECTIONS_ICON = AllIcons.Ide.HectorOn;
-  private static final Icon INSPECTIONS_OFF_ICON = AllIcons.Ide.HectorOff;
-  private static final Icon SYNTAX_ONLY_ICON = AllIcons.Ide.HectorSyntax;
-  private static final Icon EMPTY_ICON = AllIcons.Ide.HectorNo;
 
   private Icon myCurrentIcon;
   private String myToolTipText;
 
   public TogglePopupHintsPanel(@NotNull final Project project) {
     super(project);
-    myCurrentIcon = EMPTY_ICON;
+    myCurrentIcon = AllIcons.Ide.HectorNo;
     myConnection.subscribe(PowerSaveMode.TOPIC, new PowerSaveMode.Listener() {
       @Override
       public void powerSaveStateChanged() {
@@ -111,7 +107,7 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
   }
 
   public void clear() {
-    myCurrentIcon = EMPTY_ICON;
+    myCurrentIcon = AllIcons.Ide.HectorNo;
     myToolTipText = null;
     myStatusBar.updateWidget(ID());
   }
@@ -123,27 +119,27 @@ public class TogglePopupHintsPanel extends EditorBasedWidget implements StatusBa
   private void updateStatus(PsiFile file) {
     if (isStateChangeable(file)) {
       if (PowerSaveMode.isEnabled()) {
-        myCurrentIcon = EMPTY_ICON;
+        myCurrentIcon = AllIcons.Ide.HectorNo;
         myToolTipText = "Code analysis is disabled in power save mode. ";
       }
       else if (HighlightLevelUtil.shouldInspect(file)) {
-        myCurrentIcon = INSPECTIONS_ICON;
+        myCurrentIcon = AllIcons.Ide.HectorOn;
         myToolTipText = "Current inspection profile: " +
                         InspectionProjectProfileManager.getInstance(file.getProject()).getInspectionProfile().getName() +
                         ". ";
       }
       else if (HighlightLevelUtil.shouldHighlight(file)) {
-        myCurrentIcon = SYNTAX_ONLY_ICON;
+        myCurrentIcon = AllIcons.Ide.HectorSyntax;
         myToolTipText = "Highlighting level is: Syntax. ";
       }
       else {
-        myCurrentIcon = INSPECTIONS_OFF_ICON;
+        myCurrentIcon = AllIcons.Ide.HectorOff;
         myToolTipText = "Inspections are off. ";
       }
       myToolTipText += UIBundle.message("popup.hints.panel.click.to.configure.highlighting.tooltip.text");
     }
     else {
-      myCurrentIcon = EMPTY_ICON;
+      myCurrentIcon = AllIcons.Ide.HectorNo;
       myToolTipText = null;
     }
 

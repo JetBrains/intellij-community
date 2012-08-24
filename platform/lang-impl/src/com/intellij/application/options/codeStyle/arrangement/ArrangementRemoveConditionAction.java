@@ -19,20 +19,15 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
-import javax.swing.*;
-
 /**
  * @author Denis Zhdanov
  * @since 8/23/12 11:41 AM
  */
 public class ArrangementRemoveConditionAction extends AnAction {
 
-  private static final Icon ICON       = AllIcons.Actions.CloseNew;
-  private static final Icon HOVER_ICON = AllIcons.Actions.CloseNewHovered;
-
   public ArrangementRemoveConditionAction() {
-    getTemplatePresentation().setIcon(ICON);
-    getTemplatePresentation().setHoveredIcon(HOVER_ICON);
+    getTemplatePresentation().setIcon(AllIcons.Actions.CloseNew);
+    getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseNewHovered);
   }
 
   @Override

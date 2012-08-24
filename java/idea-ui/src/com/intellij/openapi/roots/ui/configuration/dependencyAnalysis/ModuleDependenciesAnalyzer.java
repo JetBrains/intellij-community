@@ -433,10 +433,6 @@ public class ModuleDependenciesAnalyzer {
    */
   public static class UrlExplanation extends Explanation {
     /**
-     * Missing file ICON
-     */
-    public static final Icon MISSING_ICON = AllIcons.Compiler.Error;
-    /**
      * The URL in the path
      */
     private final String myUrl;
@@ -465,7 +461,7 @@ public class ModuleDependenciesAnalyzer {
     @Nullable
     public Icon getIcon() {
       VirtualFile file = getLocalFile();
-      return file == null ? MISSING_ICON : VirtualFilePresentation.getIcon(file);
+      return file == null ? AllIcons.Compiler.Error : VirtualFilePresentation.getIcon(file);
     }
 
     /**

@@ -16,6 +16,7 @@
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IconLikeCustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
@@ -210,7 +211,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
             notificationText = INTERNAL_ERROR_NOTICE;
           }
           final JLabel label = new JLabel(notificationText);
-          label.setIcon(IdeFatalErrorsIcon.UNREAD_ERROR_ICON);
+          label.setIcon(AllIcons.Ide.FatalError);
           new NotificationPopup(IdeMessagePanel.this, label, LightColors.RED, false, new ActionListener() {
             public void actionPerformed(ActionEvent e) {
               _openFatals(null);

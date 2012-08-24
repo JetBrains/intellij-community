@@ -32,18 +32,12 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
-  private static final Icon myThreadGroupIcon = AllIcons.Debugger.ThreadGroup;
-  private static final Icon myCurrentThreadGroupIcon = AllIcons.Debugger.ThreadGroupCurrent;
-  private static final Icon myStaticFieldIcon = PlatformIcons.FIELD_ICON;
-
-  private static final Icon myStaticIcon = AllIcons.Nodes.Static;
 
   private static final SimpleTextAttributes DEFAULT_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, null);
   private static final SimpleTextAttributes SPECIAL_NODE_ATTRIBUTES = new SimpleTextAttributes(Font.PLAIN, Color.lightGray);
@@ -65,7 +59,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
   public static Icon getDescriptorIcon(NodeDescriptorImpl descriptor) {
     Icon nodeIcon = null;
     if (descriptor instanceof ThreadGroupDescriptorImpl) {
-      nodeIcon = (((ThreadGroupDescriptorImpl)descriptor).isCurrent() ? myCurrentThreadGroupIcon : myThreadGroupIcon);
+      nodeIcon = (((ThreadGroupDescriptorImpl)descriptor).isCurrent() ? AllIcons.Debugger.ThreadGroupCurrent : AllIcons.Debugger.ThreadGroup);
     }
     else if (descriptor instanceof ThreadDescriptorImpl) {
       ThreadDescriptorImpl threadDescriptor = (ThreadDescriptorImpl)descriptor;
@@ -78,20 +72,20 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
     else if (descriptor instanceof ValueDescriptorImpl) {
       final ValueDescriptorImpl valueDescriptor = (ValueDescriptorImpl)descriptor;
       if (valueDescriptor instanceof FieldDescriptorImpl && ((FieldDescriptorImpl)valueDescriptor).isStatic()) {
-        nodeIcon = myStaticFieldIcon;
+        nodeIcon = PlatformIcons.FIELD_ICON;
       }
       else if (valueDescriptor.isArray()) {
-        nodeIcon = DebuggerIcons.ARRAY_VALUE_ICON;
+        nodeIcon = AllIcons.Debugger.Db_array;
       }
       else if (valueDescriptor.isPrimitive()) {
-        nodeIcon = DebuggerIcons.PRIMITIVE_VALUE_ICON;
+        nodeIcon = AllIcons.Debugger.Db_primitive;
       }
       else {
         if (valueDescriptor instanceof WatchItemDescriptor) {
-          nodeIcon = DebuggerIcons.WATCHED_VALUE_ICON;
+          nodeIcon = AllIcons.Debugger.Watch;
         }
         else {
-          nodeIcon = DebuggerIcons.VALUE_ICON;
+          nodeIcon = AllIcons.Debugger.Value;
         }
       }
       final Icon valueIcon = valueDescriptor.getValueIcon();
@@ -115,7 +109,7 @@ public class DebuggerTreeRenderer extends ColoredTreeCellRenderer {
       }
     }
     else if (descriptor instanceof StaticDescriptorImpl) {
-      nodeIcon = myStaticIcon;
+      nodeIcon = AllIcons.Nodes.Static;
     }
 
     return nodeIcon;

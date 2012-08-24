@@ -16,7 +16,6 @@
 
 package com.intellij.tools;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -27,7 +26,6 @@ import javax.swing.*;
 import java.io.IOException;
 
 public class ToolConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private static final Icon ourIcon = AllIcons.General.ExternalTools;
   private ToolsPanel myPanel;
 
   public String getDisplayName() {

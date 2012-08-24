@@ -41,9 +41,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
-
-  private static final Icon textIcon = AllIcons.FileTypes.Text;
-
   private JList myList;
   private List<Data> myAllContents;
 
@@ -271,7 +268,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
         UIUtil.changeBackGround(this, background);
       }
-      setIcon(textIcon);
+      setIcon(AllIcons.FileTypes.Text);
       if (index <= 9) {
         append(String.valueOf((index + 1) % 10) + "  ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }

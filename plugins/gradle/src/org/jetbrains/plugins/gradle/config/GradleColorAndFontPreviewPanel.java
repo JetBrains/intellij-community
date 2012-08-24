@@ -4,6 +4,7 @@ import com.intellij.application.options.colors.ColorAndFontOptions;
 import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.application.options.colors.PreviewPanel;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -18,7 +19,6 @@ import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
-import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 
@@ -68,17 +68,17 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     );
 
     String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
-    DefaultMutableTreeNode module = createNode(moduleName, GradleIcons.MODULE_ICON, GradleTextAttributes.NO_CHANGE);
+    DefaultMutableTreeNode module = createNode(moduleName, AllIcons.Nodes.ModuleOpen, GradleTextAttributes.NO_CHANGE);
 
     String gradleLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.gradle.name");
     DefaultMutableTreeNode gradleLibrary = createNode(
-      gradleLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.GRADLE_LOCAL_CHANGE
+      gradleLibraryName, AllIcons.Nodes.PpLib, GradleTextAttributes.GRADLE_LOCAL_CHANGE
     );
 
     String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name");
                                                       //ApplicationNamesInfo.getInstance().getProductName());
     DefaultMutableTreeNode intellijLibrary = createNode(
-      intellijLibraryName, GradleIcons.LIB_ICON, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
+      intellijLibraryName, AllIcons.Nodes.PpLib, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
     );
     
     //String syncLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");

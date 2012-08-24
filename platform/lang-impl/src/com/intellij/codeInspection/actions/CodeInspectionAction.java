@@ -24,7 +24,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionManagerEx;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
@@ -35,6 +35,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.IDEInspectionToolsConfigurable;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,7 +97,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
         if (value instanceof Profile) {
           final Profile profile = (Profile)value;
           setText(profile.getName());
-          setIcon(profile.isLocal() ? Profile.LOCAL_PROFILE : Profile.PROJECT_PROFILE);
+          setIcon(profile.isLocal() ? AllIcons.General.ApplicationSettings : AllIcons.General.ProjectSettings);
         }
       }
     });

@@ -35,7 +35,6 @@ import javax.swing.*;
  */
 public class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfiguration> {
   public static final FacetTypeId<InvalidFacet> TYPE_ID = new FacetTypeId<InvalidFacet>("invalid");
-  public static final Icon ICON = AllIcons.FileTypes.Unknown;
 
   public static InvalidFacetType getInstance() {
     return ServiceManager.getService(InvalidFacetType.class);
@@ -75,6 +74,6 @@ public class InvalidFacetType extends FacetType<InvalidFacet, InvalidFacetConfig
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Unknown;
   }
 }

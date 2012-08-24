@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
@@ -103,10 +104,10 @@ public class MemberSelectionTable extends AbstractMemberSelectionTable<PsiMember
     Icon overrideIcon = MemberSelectionTable.EMPTY_OVERRIDE_ICON;
     if (member instanceof PsiMethod) {
       if (Boolean.TRUE.equals(memberInfo.getOverrides())) {
-        overrideIcon = MemberSelectionTable.OVERRIDING_METHOD_ICON;
+        overrideIcon = AllIcons.General.OverridingMethod;
       }
       else if (Boolean.FALSE.equals(memberInfo.getOverrides())) {
-        overrideIcon = MemberSelectionTable.IMPLEMENTING_METHOD_ICON;
+        overrideIcon = AllIcons.General.ImplementingMethod;
       }
       else {
         overrideIcon = MemberSelectionTable.EMPTY_OVERRIDE_ICON;

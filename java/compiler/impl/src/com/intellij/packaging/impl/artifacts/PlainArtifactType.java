@@ -30,7 +30,6 @@ import javax.swing.*;
  * @author nik
  */
 public class PlainArtifactType extends ArtifactType {
-  public static final Icon ARTIFACT_ICON = AllIcons.Nodes.Artifact;
   @NonNls public static final String ID = "plain";
 
   public static PlainArtifactType getInstance() {
@@ -44,7 +43,7 @@ public class PlainArtifactType extends ArtifactType {
   @NotNull
   @Override
   public Icon getIcon() {
-    return ARTIFACT_ICON;
+    return AllIcons.Nodes.Artifact;
   }
 
   @Override

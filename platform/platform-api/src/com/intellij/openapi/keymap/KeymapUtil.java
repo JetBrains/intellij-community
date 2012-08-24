@@ -38,9 +38,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 
 public class KeymapUtil {
-  
-  private static final Icon ourKeyboardShortcutIcon = AllIcons.General.KeyboardShortcut;
-  private static final Icon ourMouseShortcutIcon = AllIcons.General.MouseShortcut;
+
   @NonNls private static final String APPLE_LAF_AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
   @NonNls private static final String GET_KEY_MODIFIERS_TEXT_METHOD = "getKeyModifiersText";
   @NonNls private static final String CANCEL_KEY_TEXT = "Cancel";
@@ -93,10 +91,10 @@ public class KeymapUtil {
 
   public static Icon getShortcutIcon(Shortcut shortcut) {
     if (shortcut instanceof KeyboardShortcut) {
-      return ourKeyboardShortcutIcon;
+      return AllIcons.General.KeyboardShortcut;
     }
     else if (shortcut instanceof MouseShortcut) {
-      return ourMouseShortcutIcon;
+      return AllIcons.General.MouseShortcut;
     }
     else {
       throw new IllegalArgumentException("unknown shortcut class: " + shortcut);

@@ -5,15 +5,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 
-import javax.swing.*;
-
 
 public class ToggleMultiline extends ToggleAction {
   private EditorSearchComponent myEditorSearchComponent;
-  private static final Icon ICON = AllIcons.Actions.ShowViewer;
 
   public ToggleMultiline(EditorSearchComponent editorSearchComponent) {
-    super("Multiline", "Toggle Multiline Mode", ICON);
+    super("Multiline", "Toggle Multiline Mode", AllIcons.Actions.ShowViewer);
     myEditorSearchComponent = editorSearchComponent;
   }
 

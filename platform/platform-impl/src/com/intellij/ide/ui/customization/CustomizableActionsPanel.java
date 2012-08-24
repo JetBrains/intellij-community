@@ -72,10 +72,6 @@ import java.util.List;
 public class CustomizableActionsPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.customization.CustomizableActionsPanel");
 
-  private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-
-  private static final Icon QUICK_LIST_ICON = AllIcons.Actions.QuickList;
-
   private JButton myEditIconButton;
   private JButton myRemoveActionButton;
   private JButton myAddActionButton;
@@ -93,7 +89,6 @@ public class CustomizableActionsPanel {
 
   private JButton myRestoreAllDefaultButton;
   private JButton myRestoreDefaultButton;
-  public static final Icon FULLISH_ICON = AllIcons.Toolbar.Unknown;
 
   public CustomizableActionsPanel() {
 
@@ -337,9 +332,9 @@ public class CustomizableActionsPanel {
                                                        Messages.getInformationIcon());
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         mySelectedSchema.addIconCustomization(actionId, null);
-        anAction.getTemplatePresentation().setIcon(FULLISH_ICON);
+        anAction.getTemplatePresentation().setIcon(AllIcons.Toolbar.Unknown);
         anAction.setDefaultIcon(false);
-        node.setUserObject(Pair.create(actionId, FULLISH_ICON));
+        node.setUserObject(Pair.create(actionId, AllIcons.Toolbar.Unknown));
         myActionsTree.repaint();
         setCustomizationSchemaForCurrentProjects();
       }
@@ -494,7 +489,7 @@ public class CustomizableActionsPanel {
         }
         else if (userObject instanceof QuickList) {
           setText(((QuickList)userObject).getDisplayName());
-          icon = QUICK_LIST_ICON;
+          icon = AllIcons.Actions.QuickList;
         }
         else {
           throw new IllegalArgumentException("unknown userObject: " + userObject);
@@ -547,7 +542,7 @@ public class CustomizableActionsPanel {
         }
         Icon icon = new File(path).exists() ? IconLoader.getIcon(image) : null;
         if (icon != null) {
-          if (icon.getIconWidth() >  EMPTY_ICON.getIconWidth() || icon.getIconHeight() > EMPTY_ICON.getIconHeight()) {
+          if (icon.getIconWidth() >  EmptyIcon.ICON_18.getIconWidth() || icon.getIconHeight() > EmptyIcon.ICON_18.getIconHeight()) {
             Messages.showErrorDialog(component, IdeBundle.message("custom.icon.validation.message"), IdeBundle.message("title.choose.action.icon"));
             return false;
           }

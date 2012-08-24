@@ -15,10 +15,10 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.xdebugger.ui.DebuggerIcons;
+import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -41,13 +41,13 @@ public class WatchMessageNode extends MessageTreeNode implements WatchNode {
   }
 
   public static WatchMessageNode createMessageNode(XDebuggerTree tree, XDebuggerTreeNode parent, String expression) {
-    final WatchMessageNode node = new WatchMessageNode(tree, parent, expression, DebuggerIcons.WATCHED_VALUE_ICON);
+    final WatchMessageNode node = new WatchMessageNode(tree, parent, expression, AllIcons.Debugger.Watch);
     node.myText.append(expression, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     return node;
   }
 
   public static WatchMessageNode createEvaluatingNode(XDebuggerTree tree, XDebuggerTreeNode parent, String expression) {
-    final WatchMessageNode node = new WatchMessageNode(tree, parent, expression, DebuggerIcons.WATCHED_VALUE_ICON);
+    final WatchMessageNode node = new WatchMessageNode(tree, parent, expression, AllIcons.Debugger.Watch);
     node.myText.append(expression + " = ...", XDebuggerUIConstants.EVALUATING_EXPRESSION_HIGHLIGHT_ATTRIBUTES);
     return node;
   }

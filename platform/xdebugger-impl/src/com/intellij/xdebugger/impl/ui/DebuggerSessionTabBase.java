@@ -72,8 +72,6 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
   protected ExecutionConsole myConsole;
   protected RunContentDescriptor myRunContentDescriptor;
 
-  private final Icon DEFAULT_TAB_COMPONENT_ICON = AllIcons.FileTypes.Text;
-
   public DebuggerSessionTabBase(Project project, @NotNull String runnerId, @NotNull final String sessionName) {
     myProject = project;
     myManager = new LogFilesManager(project, this, this);
@@ -159,7 +157,7 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
   }
 
   public void addLogConsole(String name, String path, long skippedContent) {
-    addLogConsole(name, path, skippedContent, DEFAULT_TAB_COMPONENT_ICON);
+    addLogConsole(name, path, skippedContent, AllIcons.FileTypes.Text);
   }
 
   protected void attachNotificationTo(final Content content) {
@@ -206,7 +204,7 @@ public abstract class DebuggerSessionTabBase implements DebuggerLogConsoleManage
   }
 
   private void addLogComponent(AdditionalTabComponent component, String id) {
-    addLogComponent(component, id, DEFAULT_TAB_COMPONENT_ICON);
+    addLogComponent(component, id, AllIcons.FileTypes.Text);
   }
 
   private Content addLogComponent(AdditionalTabComponent tabComponent, Icon icon) {

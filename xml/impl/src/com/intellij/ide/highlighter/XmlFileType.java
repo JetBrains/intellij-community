@@ -27,7 +27,6 @@ public class XmlFileType extends XmlLikeFileType implements DomSupportEnabled {
   public static final XmlFileType INSTANCE = new XmlFileType();
   @NonNls public static final String DEFAULT_EXTENSION = "xml";
   @NonNls public static final String DOT_DEFAULT_EXTENSION = "."+DEFAULT_EXTENSION;
-  private static final Icon ICON = AllIcons.FileTypes.Xml;
 
   private XmlFileType() {
     super(XMLLanguage.INSTANCE);
@@ -49,6 +48,6 @@ public class XmlFileType extends XmlLikeFileType implements DomSupportEnabled {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Xml;
   }
 }

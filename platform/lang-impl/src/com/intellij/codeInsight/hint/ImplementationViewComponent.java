@@ -18,7 +18,6 @@ package com.intellij.codeInsight.hint;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
@@ -43,6 +42,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.usageView.UsageInfo;
@@ -69,7 +69,6 @@ import java.util.Set;
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
-  private static final Icon FIND_ICON = AllIcons.Actions.Find;
 
   private PsiElement[] myElements;
   private int myIndex;
@@ -583,7 +582,7 @@ public class ImplementationViewComponent extends JPanel {
     private static final String ACTION_NAME = "Show in usage view";
 
     public ShowFindUsagesAction() {
-      super(ACTION_NAME, ACTION_NAME, FIND_ICON);
+      super(ACTION_NAME, ACTION_NAME, AllIcons.Actions.Find);
     }
 
     @Override

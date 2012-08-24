@@ -18,6 +18,7 @@ package com.intellij.designer.designSurface;
 import com.intellij.designer.inspection.AbstractQuickFixManager;
 import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,7 +56,7 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Co
     List<RadComponent> selection = myDesigner.getSurfaceArea().getSelection();
     if (selection.size() == 1) {
       Rectangle bounds = selection.get(0).getBounds(myComponent);
-      bounds.x -= ICON.getIconWidth() - 5;
+      bounds.x -= AllIcons.Actions.IntentionBulb.getIconWidth() - 5;
       return bounds;
     }
 

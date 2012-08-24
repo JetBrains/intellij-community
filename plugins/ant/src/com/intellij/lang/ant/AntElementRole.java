@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 
@@ -24,7 +25,7 @@ import javax.swing.*;
  * @author dyoma
  */
 public enum AntElementRole implements PlatformIcons {
-  TARGET_ROLE(AntBundle.message("ant.role.ant.target"), AntIcons.ANT_TARGET_ICON),
+  TARGET_ROLE(AntBundle.message("ant.role.ant.target"), AllIcons.Ant.Target),
   PROPERTY_ROLE(AntBundle.message("ant.role.ant.property"), PROPERTY_ICON),
   TASK_ROLE(AntBundle.message("ant.role.ant.task"), TASK_ICON),
   USER_TASK_ROLE(AntBundle.message("ant.element.role.user.task"), TASK_ICON),

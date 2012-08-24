@@ -16,9 +16,6 @@ import java.util.concurrent.TimeUnit;
  * @author ksafonov
  */
 public class IdeFatalErrorsIcon extends JLabel {
-  public static final Icon UNREAD_ERROR_ICON = AllIcons.Ide.FatalError;
-  private static final Icon READ_ERROR_ICON = AllIcons.Ide.FatalError_read;
-  private static final Icon NO_ERRORS_ICON = AllIcons.Ide.EmptyFatalError;
 
   public enum State {UnreadErrors, ReadErrors, NoErrors}
 
@@ -43,7 +40,7 @@ public class IdeFatalErrorsIcon extends JLabel {
       }
     }.installOn(this);
 
-    myIcon = new LayeredIcon(UNREAD_ERROR_ICON, READ_ERROR_ICON, NO_ERRORS_ICON) {
+    myIcon = new LayeredIcon(AllIcons.Ide.FatalError, AllIcons.Ide.FatalError_read, AllIcons.Ide.EmptyFatalError) {
       @Override
       public synchronized void paintIcon(Component c, Graphics g, int x, int y) {
         super.paintIcon(c, g, x, y);

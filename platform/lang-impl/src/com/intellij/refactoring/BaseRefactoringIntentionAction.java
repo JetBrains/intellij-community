@@ -12,10 +12,9 @@ import javax.swing.*;
  * Date: 11/11/11
  */
 public abstract class BaseRefactoringIntentionAction extends PsiElementBaseIntentionAction implements Iconable, HighPriorityAction {
-  public static final Icon REFACTORING_BULB = AllIcons.Actions.RefactoringBulb;
 
   @Override
   public Icon getIcon(int flags) {
-    return REFACTORING_BULB;
+    return AllIcons.Actions.RefactoringBulb;
   }
 }

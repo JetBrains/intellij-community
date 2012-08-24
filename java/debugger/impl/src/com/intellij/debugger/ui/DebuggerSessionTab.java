@@ -72,9 +72,6 @@ import java.util.List;
 public class DebuggerSessionTab extends DebuggerSessionTabBase implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.DebuggerSessionTab");
 
-  private static final Icon WATCH_RETURN_VALUES_ICON = AllIcons.Debugger.WatchLastReturnValue;
-  private static final Icon AUTO_VARS_ICONS = AllIcons.Debugger.AutoVariablesMode;
-
   private final VariablesPanel myVariablesPanel;
   private final MainWatchPanel myWatchPanel;
 
@@ -530,7 +527,7 @@ public class DebuggerSessionTab extends DebuggerSessionTabBase implements Dispos
     private static final String myDefaultModeText = "All-Variables Mode";
 
     public AutoVarsSwitchAction() {
-      super("", "", AUTO_VARS_ICONS);
+      super("", "", AllIcons.Debugger.AutoVariablesMode);
       myAutoModeEnabled = DebuggerSettings.getInstance().AUTO_VARIABLES_MODE;
     }
 

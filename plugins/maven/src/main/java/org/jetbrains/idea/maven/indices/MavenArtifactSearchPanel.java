@@ -332,7 +332,6 @@ public class MavenArtifactSearchPanel extends JPanel {
   }
 
   private static class MyClassCellRenderer extends MyArtifactCellRenderer {
-    public static final Icon CLASS_ICON = AllIcons.Nodes.Class;
 
     private MyClassCellRenderer(Tree tree) {
       super(tree);
@@ -343,7 +342,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       MavenClassSearchResult classResult = (MavenClassSearchResult)searchResult;
       MavenArtifactInfo info = searchResult.versions.get(0);
 
-      myLeftComponent.setIcon(CLASS_ICON);
+      myLeftComponent.setIcon(AllIcons.Nodes.Class);
       myLeftComponent.append(classResult.className, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       myLeftComponent.append(" (" + classResult.packageName + ")", getGrayAttributes(selected));
 

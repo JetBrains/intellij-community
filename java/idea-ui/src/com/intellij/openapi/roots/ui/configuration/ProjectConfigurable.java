@@ -61,8 +61,6 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
 
   private final Project myProject;
 
-  private static final Icon PROJECT_ICON = AllIcons.Nodes.Project;
-
   private LanguageLevelCombo myLanguageLevelCombo;
   private ProjectJdkConfigurable myProjectJdkConfigurable;
 
@@ -246,7 +244,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   public Icon getIcon(boolean open) {
-    return PROJECT_ICON;
+    return AllIcons.Nodes.Project;
   }
 
   @Nullable

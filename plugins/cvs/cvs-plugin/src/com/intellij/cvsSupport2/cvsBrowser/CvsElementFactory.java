@@ -18,27 +18,20 @@ package com.intellij.cvsSupport2.cvsBrowser;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.PlatformIcons;
-
-import javax.swing.*;
 
 public abstract class CvsElementFactory {
-  private final static Icon TREE_OPEN = PlatformIcons.DIRECTORY_OPEN_ICON;
-  private final static Icon TREE_CLOSE = PlatformIcons.DIRECTORY_CLOSED_ICON;
-  private final static Icon MODULE_OPEN = AllIcons.Nodes.ModuleOpen;
-  private final static Icon MODULE_CLOSE = AllIcons.Nodes.ModuleClosed;
 
   public abstract CvsElement createElement(String name, CvsEnvironment env, Project project);
 
   public static final CvsElementFactory FOLDER_ELEMENT_FACTORY = new CvsElementFactory(){
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
-      return new CvsElement(name, TREE_CLOSE,  TREE_OPEN);
+      return new CvsElement(name, AllIcons.Nodes.TreeClosed, AllIcons.Nodes.TreeOpen);
     }
   };
 
   public static final CvsElementFactory MODULE_ELEMENT_FACTORY = new CvsElementFactory(){
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
-      return new CvsModule(name, MODULE_CLOSE,  MODULE_OPEN);
+      return new CvsModule(name, AllIcons.Nodes.ModuleClosed, AllIcons.Nodes.ModuleOpen);
     }
   };
 

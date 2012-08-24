@@ -25,15 +25,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 
-import javax.swing.*;
 import java.util.Collections;
 
 public final class RunAction extends AnAction {
   private final AntBuildMessageView myAntBuildMessageView;
-  public static final Icon RERUN_ICON = AllIcons.Actions.RefreshUsages;
 
   public RunAction(AntBuildMessageView antBuildMessageView) {
-    super(AntBundle.message("rerun.ant.action.name"), null, RERUN_ICON);
+    super(AntBundle.message("rerun.ant.action.name"), null, AllIcons.Actions.RefreshUsages);
     myAntBuildMessageView = antBuildMessageView;
   }
 

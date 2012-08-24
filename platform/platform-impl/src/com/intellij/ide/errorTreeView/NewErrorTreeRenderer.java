@@ -32,11 +32,6 @@ import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 
 public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
-  private final static Icon ourFileIcon = AllIcons.FileTypes.Java;
-  private final static Icon ourErrorIcon = AllIcons.Compiler.Error;
-  private final static Icon ourWarningIcon = AllIcons.Compiler.Warning;
-  private final static Icon ourInfoIcon = AllIcons.Compiler.Information;
-
   private final MyWrapperRenderer myWrapperRenderer;
   private final CallingBackColoredTreeCellRenderer myColoredTreeCellRenderer;
   private final MyNotSelectedColoredTreeCellRenderer myRightCellRenderer;
@@ -174,18 +169,18 @@ public class NewErrorTreeRenderer extends MultilineTreeCellRenderer {
     if (element instanceof GroupingElement) {
       final GroupingElement groupingElement = (GroupingElement)element;
 
-      icon = groupingElement.getFile() != null ? groupingElement.getFile().getFileType().getIcon() : ourFileIcon;
+      icon = groupingElement.getFile() != null ? groupingElement.getFile().getFileType().getIcon() : AllIcons.FileTypes.Java;
     }
     else if (element instanceof SimpleMessageElement || element instanceof NavigatableMessageElement) {
       ErrorTreeElementKind kind = element.getKind();
       if (ErrorTreeElementKind.ERROR.equals(kind)) {
-        icon = ourErrorIcon;
+        icon = AllIcons.Compiler.Error;
       }
       else if (ErrorTreeElementKind.WARNING.equals(kind) || ErrorTreeElementKind.NOTE.equals(kind)) {
-        icon = ourWarningIcon;
+        icon = AllIcons.Compiler.Warning;
       }
       else if (ErrorTreeElementKind.INFO.equals(kind)) {
-        icon = ourInfoIcon;
+        icon = AllIcons.Compiler.Information;
       }
     }
 

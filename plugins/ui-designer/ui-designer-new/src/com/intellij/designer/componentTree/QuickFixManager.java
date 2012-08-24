@@ -20,6 +20,7 @@ import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.inspection.AbstractQuickFixManager;
 import com.intellij.designer.model.ErrorInfo;
 import com.intellij.designer.model.RadComponent;
+import com.intellij.icons.AllIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -63,7 +64,7 @@ public final class QuickFixManager extends AbstractQuickFixManager implements Co
     ComponentTree component = (ComponentTree)myComponent;
     Rectangle bounds = component.getPathBounds(component.getSelectionPath());
     if (bounds != null) {
-      bounds.x += ICON.getIconWidth();
+      bounds.x += AllIcons.Actions.IntentionBulb.getIconWidth();
     }
     return bounds;
   }

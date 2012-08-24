@@ -28,10 +28,6 @@ import javax.swing.*;
 public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleType<T> {
   @NonNls public static final String WEB_MODULE = "WEB_MODULE";
 
-  private static final Icon MODULE_ICON = AllIcons.Modules.Types.WebModule;
-  private static final Icon MODULE_NODE_ICON_OPEN = AllIcons.Nodes.ModuleOpen;
-  private static final Icon MODULE_NODE_ICON_CLOSED = AllIcons.Nodes.ModuleClosed;
-
   public WebModuleTypeBase() {
     super(WEB_MODULE);
   }
@@ -45,10 +41,10 @@ public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleT
   }
 
   public Icon getBigIcon() {
-    return MODULE_ICON;
+    return AllIcons.Modules.Types.WebModule;
   }
 
   public Icon getNodeIcon(final boolean isOpened) {
-    return isOpened ? MODULE_NODE_ICON_OPEN : MODULE_NODE_ICON_CLOSED;
+    return isOpened ? AllIcons.Nodes.ModuleOpen : AllIcons.Nodes.ModuleClosed;
   }
 }

@@ -625,10 +625,6 @@ public String getAccessorsVisibility() {
     }
   }
 
-  private static final Icon OVERRIDING_METHOD_ICON = AllIcons.General.OverridingMethod;
-  private static final Icon IMPLEMENTING_METHOD_ICON = AllIcons.General.ImplementingMethod;
-  private static final Icon EMPTY_OVERRIDE_ICON = EmptyIcon.ICON_16;
-
   private class MyTableRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, final Object value,
                                                    boolean isSelected, boolean hasFocus, final int row,
@@ -652,7 +648,7 @@ public String getAccessorsVisibility() {
         case SETTER_COLUMN:
           {
             Icon methodIcon = IconUtil.getEmptyIcon(true);
-            Icon overrideIcon = EMPTY_OVERRIDE_ICON;
+            Icon overrideIcon = EmptyIcon.ICON_16;
 
             PsiMethod prototype = modelColumn == GETTER_COLUMN ? myGetterPrototypes[row] : mySetterPrototypes[row];
             if (prototype != null) {
@@ -667,9 +663,9 @@ public String getAccessorsVisibility() {
               PsiMethod[] superMethods = prototype.findSuperMethods(myClass);
               if (superMethods.length > 0) {
                 if (!superMethods[0].hasModifierProperty(PsiModifier.ABSTRACT)) {
-                  overrideIcon = OVERRIDING_METHOD_ICON;
+                  overrideIcon = AllIcons.General.OverridingMethod;
                 } else {
-                  overrideIcon = IMPLEMENTING_METHOD_ICON;
+                  overrideIcon = AllIcons.General.ImplementingMethod;
                 }
               }
             } else {

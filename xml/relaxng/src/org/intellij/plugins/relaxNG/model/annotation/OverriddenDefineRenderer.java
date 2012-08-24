@@ -36,7 +36,6 @@ import java.util.Collection;
 import java.util.List;
 
 class OverriddenDefineRenderer extends GutterIconRenderer {
-  private static final Icon ICON = AllIcons.Gutter.OverridenMethod;
 
   private final Define myDefine;
 
@@ -46,7 +45,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer {
 
   @NotNull
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Gutter.OverridenMethod;
   }
 
   @Nullable

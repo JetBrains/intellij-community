@@ -29,7 +29,6 @@ import javax.swing.*;
  * @author nik
  */
 public class InvalidArtifactType extends ArtifactType {
-  public static final Icon ICON = AllIcons.FileTypes.Unknown;
 
   public static InvalidArtifactType getInstance() {
     return ServiceManager.getService(InvalidArtifactType.class);
@@ -42,7 +41,7 @@ public class InvalidArtifactType extends ArtifactType {
   @NotNull
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Unknown;
   }
 
   @Override

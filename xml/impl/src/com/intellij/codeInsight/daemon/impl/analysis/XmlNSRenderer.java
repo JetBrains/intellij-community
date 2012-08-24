@@ -30,8 +30,6 @@ import java.awt.*;
 public class XmlNSRenderer extends ColoredListCellRenderer {
 
   public static final XmlNSRenderer INSTANCE = new XmlNSRenderer();
-  
-  private static final Icon ICON = AllIcons.Nodes.Static;
 
   public XmlNSRenderer() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -44,7 +42,7 @@ public class XmlNSRenderer extends ColoredListCellRenderer {
                                        final boolean selected,
                                        final boolean hasFocus) {
     append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    setIcon(ICON);
+    setIcon(AllIcons.Nodes.Static);
     setPaintFocusBorder(false);
   }
 }

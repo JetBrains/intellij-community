@@ -20,6 +20,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -61,7 +62,7 @@ public class ProfilesComboBox extends JComboBox {
         if (value instanceof Profile) {
           final Profile profile = (Profile)value;
           setText(profile.getName());
-          setIcon(profile.isLocal() ? Profile.LOCAL_PROFILE : Profile.PROJECT_PROFILE);
+          setIcon(profile.isLocal() ? AllIcons.General.ApplicationSettings : AllIcons.General.ProjectSettings);
         }
         else if (value instanceof String) {
           setText((String)value);

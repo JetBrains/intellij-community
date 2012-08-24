@@ -40,7 +40,6 @@ import java.io.IOException;
 public class DisableInspectionToolAction implements IntentionAction, Iconable {
   private final String myToolId;
   public static final String NAME = InspectionsBundle.message("disable.inspection.action.name");
-  private static final Icon ICON = AllIcons.Actions.Cancel;
 
   public DisableInspectionToolAction(LocalInspectionTool tool) {
     myToolId = tool.getShortName();
@@ -83,6 +82,6 @@ public class DisableInspectionToolAction implements IntentionAction, Iconable {
   }
 
   public Icon getIcon(int flags) {
-    return ICON;
+    return AllIcons.Actions.Cancel;
   }
 }

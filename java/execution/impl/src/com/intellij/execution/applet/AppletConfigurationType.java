@@ -31,7 +31,6 @@ import javax.swing.*;
 
 public class AppletConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
-  private static final Icon ICON = AllIcons.RunConfigurations.Applet;
 
   /**reflection*/
   AppletConfigurationType() {
@@ -56,7 +55,7 @@ public class AppletConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.RunConfigurations.Applet;
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

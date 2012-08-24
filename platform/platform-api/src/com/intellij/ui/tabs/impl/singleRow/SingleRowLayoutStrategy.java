@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.tabs.impl.singleRow;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.ui.tabs.impl.ShapeTransform;
 import com.intellij.ui.tabs.impl.TabLabel;
@@ -106,7 +107,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     public int getMoreRectAxisSize() {
-      return myLayout.myMoreIcon.myIcon.getIconWidth() + 2 + 6;
+      return AllIcons.General.MoreTabs.getIconWidth() + 2 + 6;
     }
 
     public int getToFitLength(final SingleRowPassInfo data) {
@@ -262,7 +263,7 @@ public abstract class SingleRowLayoutStrategy {
     }
 
     int getMoreRectAxisSize() {
-      return myLayout.myMoreIcon.myIcon.getIconHeight() + 4;
+      return AllIcons.General.MoreTabs.getIconHeight() + 4;
     }
 
     @Override

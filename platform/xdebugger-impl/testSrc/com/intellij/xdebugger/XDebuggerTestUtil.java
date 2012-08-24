@@ -16,6 +16,7 @@
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -32,7 +33,6 @@ import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import junit.framework.Assert;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +63,7 @@ public class XDebuggerTestUtil {
     XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointImpl breakpoint = (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line);
     Assert.assertNotNull(breakpoint);
-    Assert.assertEquals(validity ? DebuggerIcons.VERIFIED_BREAKPOINT_ICON : DebuggerIcons.INVALID_BREAKPOINT_ICON, breakpoint.getIcon());
+    Assert.assertEquals(validity ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
     Assert.assertEquals(errorMessage, breakpoint.getErrorMessage());
   }
 

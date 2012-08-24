@@ -19,9 +19,9 @@
  */
 package com.intellij.lang.properties.editor;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.navigation.ItemPresentation;
@@ -77,7 +77,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
       }
 
       public Icon getIcon(boolean open) {
-        return PropertiesFileType.FILE_ICON;
+        return AllIcons.FileTypes.Properties;
       }
     };
   }

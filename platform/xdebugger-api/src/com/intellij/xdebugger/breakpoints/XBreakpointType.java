@@ -16,15 +16,13 @@
 
 package com.intellij.xdebugger.breakpoints;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -94,17 +92,17 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
 
   @NotNull 
   public Icon getEnabledIcon() {
-    return DebuggerIcons.ENABLED_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_set_breakpoint;
   }
 
   @NotNull
   public Icon getDisabledIcon() {
-    return DebuggerIcons.DISABLED_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_disabled_breakpoint;
   }
 
   @NotNull
   public Icon getDisabledDependentIcon() {
-    return DebuggerIcons.DISABLED_DEPENDENT_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_dep_line_breakpoint;
   }
 
   public abstract String getDisplayText(B breakpoint);

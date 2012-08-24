@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 
 public class XHtmlFileType extends HtmlFileType {
-  private static final Icon ICON = AllIcons.FileTypes.Xhtml;
   public static final XHtmlFileType INSTANCE = new XHtmlFileType();
 
   private XHtmlFileType() {
@@ -46,6 +45,6 @@ public class XHtmlFileType extends HtmlFileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Xhtml;
   }
 }

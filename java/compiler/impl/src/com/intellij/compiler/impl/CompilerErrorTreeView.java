@@ -50,8 +50,6 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   public CompilerErrorTreeView(Project project, Runnable rerunAction) {
     super(project, HelpID.COMPILER, true, true, rerunAction);
@@ -81,10 +79,9 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
   }
 
   private static class CompilerPropertiesAction extends AnAction {
-    private static final Icon ICON_OPTIONS = AllIcons.General.IdeOptions;
 
     public CompilerPropertiesAction() {
-      super(CompilerBundle.message("action.compiler.properties.text"), null, ICON_OPTIONS);
+      super(CompilerBundle.message("action.compiler.properties.text"), null, AllIcons.General.IdeOptions);
     }
 
     public void actionPerformed(AnActionEvent e) {

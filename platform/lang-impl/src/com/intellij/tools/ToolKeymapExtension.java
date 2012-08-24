@@ -27,18 +27,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.HashMap;
 
-import javax.swing.*;
 import java.util.Arrays;
 
 public class ToolKeymapExtension implements KeymapExtension {
-  private static final Icon TOOLS_ICON = AllIcons.Nodes.KeymapTools;
-  private static final Icon TOOLS_OPEN_ICON = AllIcons.Nodes.KeymapToolsOpen;
 
   public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(Tool.ACTION_ID_PREFIX);
     Arrays.sort(ids);
-    Group group = new Group(KeyMapBundle.message("actions.tree.external.tools.group"), TOOLS_ICON, TOOLS_OPEN_ICON);
+    Group group = new Group(KeyMapBundle.message("actions.tree.external.tools.group"), AllIcons.Nodes.KeymapTools,
+                            AllIcons.Nodes.KeymapToolsOpen);
 
     ToolManager toolManager = ToolManager.getInstance();
 

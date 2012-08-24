@@ -55,13 +55,6 @@ import java.util.List;
 import java.util.Set;
 
 public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
-  protected static final Icon OVERRIDING_METHOD_ICON = AllIcons.Gutter.OverridingMethod;
-  protected static final Icon IMPLEMENTING_METHOD_ICON = AllIcons.Gutter.ImplementingMethod;
-
-  protected static final Icon OVERRIDEN_METHOD_MARKER_RENDERER = AllIcons.Gutter.OverridenMethod;
-  protected static final Icon IMPLEMENTED_METHOD_MARKER_RENDERER = AllIcons.Gutter.ImplementedMethod;
-  private static final Icon IMPLEMENTED_INTERFACE_MARKER_RENDERER = IMPLEMENTED_METHOD_MARKER_RENDERER;
-  private static final Icon SUBCLASSED_CLASS_MARKER_RENDERER = OVERRIDEN_METHOD_MARKER_RENDERER;
 
   protected final DaemonCodeAnalyzerSettings myDaemonSettings;
   protected final EditorColorsManager myColorsManager;
@@ -88,7 +81,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
         boolean overrides =
           method.hasModifierProperty(PsiModifier.ABSTRACT) == superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
 
-        final Icon icon = overrides ? OVERRIDING_METHOD_ICON : IMPLEMENTING_METHOD_ICON;
+        final Icon icon = overrides ? AllIcons.Gutter.OverridingMethod : AllIcons.Gutter.ImplementingMethod;
         final MarkerType type = MarkerType.OVERRIDING_METHOD;
         return new ArrowUpLineMarkerInfo(element, icon, type);
       }
@@ -187,7 +180,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
 
     PsiClass inheritor = ClassInheritorsSearch.search(aClass, false).findFirst();
     if (inheritor != null) {
-      final Icon icon = aClass.isInterface() ? IMPLEMENTED_INTERFACE_MARKER_RENDERER : SUBCLASSED_CLASS_MARKER_RENDERER;
+      final Icon icon = aClass.isInterface() ? AllIcons.Gutter.ImplementedMethod : AllIcons.Gutter.OverridenMethod;
       PsiElement range = aClass.getNameIdentifier();
       if (range == null) range = aClass;
       MarkerType type = MarkerType.SUBCLASSED_CLASS;
@@ -230,7 +223,7 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
       ProgressManager.checkCanceled();
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
 
-      final Icon icon = overrides ? OVERRIDEN_METHOD_MARKER_RENDERER : IMPLEMENTED_METHOD_MARKER_RENDERER;
+      final Icon icon = overrides ? AllIcons.Gutter.OverridenMethod : AllIcons.Gutter.ImplementedMethod;
       PsiElement range;
       if (method.isPhysical()) {
         range = method.getNameIdentifier();

@@ -17,6 +17,7 @@ package com.intellij.lang.properties.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.diagnostic.Logger;
@@ -68,7 +69,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
       }
 
       if (hasBundle) {
-        presentation.setTypeText(resourceBundle.getBaseName(), PropertiesFileType.FILE_ICON);
+        presentation.setTypeText(resourceBundle.getBaseName(), AllIcons.FileTypes.Properties);
       }
 
       if (presentation instanceof RealLookupElementPresentation && value != null) {

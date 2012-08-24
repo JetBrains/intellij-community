@@ -61,11 +61,6 @@ public abstract class ContentRootPanel extends JPanel {
   private static final Color CONTENT_COLOR = Color.WHITE;
   private static final Color UNSELECTED_TEXT_COLOR = new Color(0x333333);
 
-  private static final Icon DELETE_ROOT_ICON = AllIcons.Modules.DeleteContentRoot;
-  private static final Icon DELETE_ROOT_ROLLOVER_ICON = AllIcons.Modules.DeleteContentRootRollover;
-  private static final Icon DELETE_FOLDER_ICON = AllIcons.Modules.DeleteContentFolder;
-  private static final Icon DELETE_FOLDER_ROLLOVER_ICON = AllIcons.Modules.DeleteContentFolderRollover;
-
   protected final ActionCallback myCallback;
   private JComponent myHeader;
   private JComponent myBottom;
@@ -154,7 +149,8 @@ public abstract class ContentRootPanel extends JPanel {
     if (getContentEntry().getFile() == null) {
       headerLabel.setForeground(Color.RED);
     }
-    final IconActionComponent deleteIconComponent = new IconActionComponent(DELETE_ROOT_ICON, DELETE_ROOT_ROLLOVER_ICON,
+    final IconActionComponent deleteIconComponent = new IconActionComponent(AllIcons.Modules.DeleteContentRoot,
+                                                                            AllIcons.Modules.DeleteContentRootRollover,
                                                                             ProjectBundle.message("module.paths.remove.content.tooltip"), new Runnable() {
       public void run() {
         myCallback.deleteContentEntry();
@@ -261,7 +257,7 @@ public abstract class ContentRootPanel extends JPanel {
     else {
       tooltipText = ProjectBundle.message("module.paths.remove.tooltip");
     }
-    return new IconActionComponent(DELETE_FOLDER_ICON, DELETE_FOLDER_ROLLOVER_ICON, tooltipText, new Runnable() {
+    return new IconActionComponent(AllIcons.Modules.DeleteContentFolder, AllIcons.Modules.DeleteContentFolderRollover, tooltipText, new Runnable() {
       public void run() {
         myCallback.deleteContentFolder(getContentEntry(), folder);
       }

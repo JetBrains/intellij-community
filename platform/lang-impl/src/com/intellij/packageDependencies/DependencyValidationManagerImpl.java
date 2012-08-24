@@ -58,8 +58,6 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   @NonNls private static final String VALUE = "value";
 
 
-  private static final Icon SHARED_SCOPES = AllIcons.Ide.SharedScope;
-
   private final Map<String, PackageSet> myUnnamedScopes = new HashMap<String, PackageSet>();
 
   public DependencyValidationManagerImpl(final Project project) {
@@ -177,7 +175,7 @@ public class DependencyValidationManagerImpl extends DependencyValidationManager
   }
 
   public Icon getIcon() {
-    return SHARED_SCOPES;
+    return AllIcons.Ide.SharedScope;
   }
 
   @Override

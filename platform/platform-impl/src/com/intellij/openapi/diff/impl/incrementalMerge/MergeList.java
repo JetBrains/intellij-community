@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.incrementalMerge;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -28,7 +29,6 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.diff.impl.processing.DiffPolicy;
 import com.intellij.openapi.diff.impl.util.ContextLogger;
-import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -207,12 +207,12 @@ public class MergeList implements UserDataHolder {
     for (int i = 0; i < changeList.getCount(); i++) {
       final Change change = changeList.getChange(i);
       if (!change.canHasActions(originalSide)) continue;
-      AnAction applyAction = new AnAction(DiffBundle.message("merge.dialog.apply.change.action.name"), null, GutterActionRenderer.REPLACE_ARROW) {
+      AnAction applyAction = new AnAction(DiffBundle.message("merge.dialog.apply.change.action.name"), null, AllIcons.Diff.Arrow) {
         public void actionPerformed(AnActionEvent e) {
           apply(change);
         }
       };
-      AnAction ignoreAction = new AnAction(DiffBundle.message("merge.dialog.ignore.change.action.name"), null, GutterActionRenderer.REMOVE_CROSS) {
+      AnAction ignoreAction = new AnAction(DiffBundle.message("merge.dialog.ignore.change.action.name"), null, AllIcons.Diff.Remove) {
         public void actionPerformed(AnActionEvent e) {
           change.removeFromList();
         }

@@ -40,8 +40,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public abstract class ComboBoxAction extends AnAction implements CustomComponentAction {
-  private static final Icon ARROW_ICON = AllIcons.General.ComboArrow;
-  private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(ARROW_ICON);
+  private static final Icon DISABLED_ARROW_ICON = IconLoader.getDisabledIcon(AllIcons.General.ComboArrow);
 
   private boolean mySmallVariant = true;
   private DataContext myDataContext;
@@ -313,7 +312,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Insets getInsets() {
       final Insets insets = super.getInsets();
-      return new Insets(insets.top, insets.left, insets.bottom, insets.right + ARROW_ICON.getIconWidth());
+      return new Insets(insets.top, insets.left, insets.bottom, insets.right + AllIcons.General.ComboArrow.getIconWidth());
     }
 
     @Override
@@ -324,10 +323,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         result.top += 2;
         result.left += 8;
         result.bottom += 2;
-        result.right += 4 + ARROW_ICON.getIconWidth();
+        result.right += 4 + AllIcons.General.ComboArrow.getIconWidth();
       }
       else {
-        result.right += ARROW_ICON.getIconWidth();
+        result.right += AllIcons.General.ComboArrow.getIconWidth();
       }
 
       return result;
@@ -341,7 +340,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     @Override
     public Dimension getPreferredSize() {
       final boolean isEmpty = getIcon() == null && StringUtil.isEmpty(getText());
-      int width = isEmpty ? 10 + ARROW_ICON.getIconWidth() : super.getPreferredSize().width;
+      int width = isEmpty ? 10 + AllIcons.General.ComboArrow.getIconWidth() : super.getPreferredSize().width;
       if (isSmallVariant()) width += 4;
       return new Dimension(width, isSmallVariant() ? 19 : UIUtil.isUnderNimbusLookAndFeel() ? 24 : 21);
     }
@@ -400,7 +399,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
         super.paintComponent(g);
       }
       final Insets insets = super.getInsets();
-      final Icon icon = isEnabled() ? ARROW_ICON : DISABLED_ARROW_ICON;
+      final Icon icon = isEnabled() ? AllIcons.General.ComboArrow : DISABLED_ARROW_ICON;
       final int x;
       if (isEmpty) {
         x = (size.width - icon.getIconWidth()) / 2;

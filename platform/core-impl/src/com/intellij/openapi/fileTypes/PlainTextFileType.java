@@ -22,7 +22,6 @@ import javax.swing.*;
 
 public class PlainTextFileType extends LanguageFileType {
   public static final PlainTextFileType INSTANCE = new PlainTextFileType();
-  private static final Icon ICON = AllIcons.FileTypes.Text;
 
   private PlainTextFileType() {
     super(PlainTextLanguage.INSTANCE);
@@ -48,6 +47,6 @@ public class PlainTextFileType extends LanguageFileType {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Text;
   }
 }

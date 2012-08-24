@@ -52,8 +52,6 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
-  private static final Icon ICON = AllIcons.Actions.Compile;
-
   private final Project myProject;
 
   public CompileStepBeforeRun(@NotNull final Project project) {
@@ -76,12 +74,12 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Actions.Compile;
   }
 
   @Override
   public Icon getTaskIcon(MakeBeforeRunTask task) {
-    return ICON;
+    return AllIcons.Actions.Compile;
   }
 
   public MakeBeforeRunTask createTask(RunConfiguration runConfiguration) {

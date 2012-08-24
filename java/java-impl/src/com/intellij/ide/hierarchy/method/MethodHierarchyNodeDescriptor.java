@@ -36,9 +36,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
-  private static final Icon METHOD_DEFINED_ICON = AllIcons.Hierarchy.MethodDefined;
-  private static final Icon METHOD_NOT_DEFINED_ICON = AllIcons.Hierarchy.MethodNotDefined;
-  private static final Icon SHOULD_DEFINE_METHOD_ICON = AllIcons.Hierarchy.ShouldDefineMethod;
 
   private Icon myRawIcon;
   private Icon myStateIcon;
@@ -115,7 +112,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       if (myIsBase) {
         final LayeredIcon icon = new LayeredIcon(2);
         icon.setIcon(myOpenIcon, 0);
-        icon.setIcon(BASE_POINTER_ICON, 1, -BASE_POINTER_ICON.getIconWidth() / 2, 0);
+        icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
         myOpenIcon = icon;
       }
 
@@ -152,11 +149,11 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return null;
       }
-      return METHOD_DEFINED_ICON;
+      return AllIcons.Hierarchy.MethodDefined;
     }
 
     if (myTreeStructure.isSuperClassForBaseClass(psiClass)) {
-      return METHOD_NOT_DEFINED_ICON;
+      return AllIcons.Hierarchy.MethodNotDefined;
     }
 
     final boolean isAbstractClass = psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
@@ -167,10 +164,10 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     final boolean hasBaseImplementation = baseClassMethod != null && !baseClassMethod.hasModifierProperty(PsiModifier.ABSTRACT);
 
     if (hasBaseImplementation || isAbstractClass) {
-      return METHOD_NOT_DEFINED_ICON;
+      return AllIcons.Hierarchy.MethodNotDefined;
     }
     else {
-      return SHOULD_DEFINE_METHOD_ICON;
+      return AllIcons.Hierarchy.ShouldDefineMethod;
     }
   }
 }

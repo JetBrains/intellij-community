@@ -24,8 +24,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
-import com.intellij.designer.inspection.AbstractQuickFixManager;
 import com.intellij.designer.model.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -79,7 +79,7 @@ public final class ErrorAnalyzer {
               RadComponent.addError(componentInfo.first, errorInfo);
 
               Icon icon =
-                errorInfo.getLevel() == HighlightDisplayLevel.ERROR ? AbstractQuickFixManager.ICON_ERROR : AbstractQuickFixManager.ICON;
+                errorInfo.getLevel() == HighlightDisplayLevel.ERROR ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
 
               List<QuickFix> designerFixes = errorInfo.getQuickFixes();
 

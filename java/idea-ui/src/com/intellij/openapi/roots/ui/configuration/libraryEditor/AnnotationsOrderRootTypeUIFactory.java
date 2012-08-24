@@ -31,11 +31,10 @@ import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import javax.swing.*;
 
 public class AnnotationsOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  private static final Icon ICON = AllIcons.Modules.Annotation;
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Modules.Annotation;
   }
 
   @Override

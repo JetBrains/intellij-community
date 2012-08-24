@@ -32,9 +32,6 @@ import java.awt.*;
 import java.io.File;
 
 public class PsiElementModuleRenderer extends DefaultListCellRenderer{
-  private static final Icon TEST_ICON = AllIcons.Nodes.TestSourceFolder;
-  private static final Icon LIB_ICON = AllIcons.Nodes.PpLibClosed;
-
   private String myText;
 
   public Component getListCellRendererComponent(
@@ -103,7 +100,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     }
     myText = module.getName();
     if (inTestSource) {
-      setIcon(TEST_ICON);
+      setIcon(AllIcons.Nodes.TestSourceFolder);
     }
     else {
       setIcon(ModuleType.get(module).getNodeIcon(false));
@@ -111,7 +108,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
   }
 
   private void showLibraryLocation(ProjectFileIndex fileIndex, VirtualFile vFile) {
-    setIcon(LIB_ICON);
+    setIcon(AllIcons.Nodes.PpLibClosed);
     for (OrderEntry order : fileIndex.getOrderEntriesForFile(vFile)) {
       if (order instanceof LibraryOrderEntry || order instanceof JdkOrderEntry) {
         myText = getPresentableName(order, vFile);

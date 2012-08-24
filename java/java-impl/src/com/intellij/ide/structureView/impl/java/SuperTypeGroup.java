@@ -35,9 +35,6 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   private final SmartPsiElementPointer mySuperClassPointer;
   private final OwnershipType myOverrides;
   private final Collection<TreeElement> myChildren = new ArrayList<TreeElement>();
-  private static final Icon OVERRIDING_ICON = AllIcons.General.OverridingMethod;
-  private static final Icon IMPLEMENTING_ICON = AllIcons.General.ImplementingMethod;
-  private static final Icon INHERITED_ICON = AllIcons.General.InheritedMethod;
 
   public static enum OwnershipType {
     IMPLEMENTS,
@@ -66,11 +63,11 @@ public class SuperTypeGroup implements Group, ItemPresentation, AccessLevelProvi
   public Icon getIcon(boolean open) {
     switch (myOverrides) {
       case IMPLEMENTS:
-        return IMPLEMENTING_ICON;
+        return AllIcons.General.ImplementingMethod;
       case INHERITS:
-        return INHERITED_ICON;
+        return AllIcons.General.InheritedMethod;
       case OVERRIDES:
-        return OVERRIDING_ICON;
+        return AllIcons.General.OverridingMethod;
     }
 
     return null; // Can't be

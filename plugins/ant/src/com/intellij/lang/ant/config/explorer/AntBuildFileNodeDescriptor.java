@@ -28,10 +28,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-
 final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
-  private static final Icon ICON = AllIcons.Ant.Build;
 
   private final AntBuildFileBase myBuildFile;
   private CompositeAppearance myAppearance;
@@ -57,7 +54,7 @@ final class AntBuildFileNodeDescriptor extends AntNodeDescriptor {
     if (buildModel != null) {
       AntTargetNodeDescriptor.addShortcutText(buildModel.getDefaultTargetActionId(), myAppearance);
     }
-    myOpenIcon = myClosedIcon = ICON;
+    myOpenIcon = myClosedIcon = AllIcons.Ant.Build;
     myName = myBuildFile.getPresentableName();
     return !Comparing.equal(myAppearance, oldAppearence);
   }

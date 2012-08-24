@@ -33,10 +33,6 @@ import javax.swing.*;
 public class DefaultRunExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.RUN;
 
-  private static final Icon ICON = AllIcons.Actions.Execute;
-  private static final Icon TOOLWINDOW_ICON = AllIcons.Toolwindows.ToolWindowRun;
-  private static final Icon DISABLED_ICON = AllIcons.Process.DisabledRun;
-
   @NotNull
   public String getStartActionText() {
     return ExecutionBundle.message("default.runner.start.action.text");
@@ -47,16 +43,16 @@ public class DefaultRunExecutor extends Executor {
   }
 
   public Icon getToolWindowIcon() {
-    return TOOLWINDOW_ICON;
+    return AllIcons.Toolwindows.ToolWindowRun;
   }
 
   @NotNull
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Actions.Execute;
   }
 
   public Icon getDisabledIcon() {
-    return DISABLED_ICON;
+    return AllIcons.Process.DisabledRun;
   }
 
   public String getDescription() {

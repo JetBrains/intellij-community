@@ -34,7 +34,6 @@ import javax.swing.*;
  * @author dyoma
  */
 public class RestartAction extends AnAction implements DumbAware, AnAction.TransparentUpdate {
-  private static final Icon STOP_AND_START_ICON = AllIcons.Actions.Restart;
 
   private ProcessHandler myProcessHandler;
   private final ProgramRunner myRunner;
@@ -108,7 +107,7 @@ public class RestartAction extends AnAction implements DumbAware, AnAction.Trans
     boolean isStarting = ExecutorRegistry.getInstance().isStarting(myEnvironment.getProject(), myExecutor.getId(), myRunner.getRunnerId());
 
     presentation.setText(ExecutionBundle.message("rerun.configuration.action.name", name));
-    presentation.setIcon(isRunning ? STOP_AND_START_ICON : myIcon);
+    presentation.setIcon(isRunning ? AllIcons.Actions.Restart : myIcon);
     presentation.setEnabled(!isStarting && !isTerminating);
   }
 

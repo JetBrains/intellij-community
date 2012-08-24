@@ -51,7 +51,6 @@ import java.beans.PropertyChangeListener;
  */
 public class RemoteFilePanel implements PropertyChangeListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.http.RemoteFilePanel");
-  private static final Icon ERROR_ICON = AllIcons.RunConfigurations.ConfigurationWarning;
   @NonNls private static final String ERROR_CARD = "error";
   @NonNls private static final String DOWNLOADING_CARD = "downloading";
   @NonNls private static final String EDITOR_CARD = "editor";
@@ -76,7 +75,7 @@ public class RemoteFilePanel implements PropertyChangeListener {
   public RemoteFilePanel(final Project project, final HttpVirtualFile virtualFile) {
     myProject = project;
     myVirtualFile = virtualFile;
-    myErrorLabel.setIcon(ERROR_ICON);
+    myErrorLabel.setIcon(AllIcons.RunConfigurations.ConfigurationWarning);
     myUrlTextField.setText(virtualFile.getUrl());
     myProgressUpdatesQueue = new MergingUpdateQueue("downloading progress updates", 300, false, myMainPanel);
     initToolbar(project);

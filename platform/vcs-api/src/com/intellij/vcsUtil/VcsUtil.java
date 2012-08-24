@@ -15,7 +15,6 @@
  */
 package com.intellij.vcsUtil;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -52,8 +51,6 @@ import java.util.*;
 
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class VcsUtil {
-  public static final Icon ourDot = AllIcons.General.Mdot;
-  public static final Icon ourNotDot = AllIcons.General.Mdot_empty;
   protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
   private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
 

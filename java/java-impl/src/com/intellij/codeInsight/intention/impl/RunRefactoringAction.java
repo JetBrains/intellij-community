@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -67,6 +68,6 @@ public class RunRefactoringAction extends BaseRefactoringIntentionAction {
 
   @Override
   public Icon getIcon(@IconFlags int flags) {
-    return REFACTORING_BULB;
+    return AllIcons.Actions.RefactoringBulb;
   }
 }

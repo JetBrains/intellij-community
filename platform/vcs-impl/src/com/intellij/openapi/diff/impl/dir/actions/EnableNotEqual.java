@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -25,7 +26,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
  */
 public class EnableNotEqual extends DirDiffAction {
   protected EnableNotEqual(DirDiffTableModel model) {
-    super(model, "Show difference", NOT_EQUAL);
+    super(model, "Show difference", AllIcons.Vcs.Not_equal);
   }
 
   @Override

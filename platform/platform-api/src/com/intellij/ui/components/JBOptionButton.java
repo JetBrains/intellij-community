@@ -36,7 +36,6 @@ import java.util.Set;
 public class JBOptionButton extends JButton implements MouseMotionListener {
 
 
-  private static final Icon myDownIcon = AllIcons.General.ArrowDown;
   private static final Insets myDownIconInsets = new Insets(0, 6, 0, 4);
 
   private Rectangle myMoreRec;
@@ -58,7 +57,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   public JBOptionButton(Action action, Action[] options) {
     super(action);
     myOptions = options;
-    myMoreRec = new Rectangle(0, 0, myDownIcon.getIconWidth(), myDownIcon.getIconHeight());
+    myMoreRec = new Rectangle(0, 0, AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
 
     myUnderPopup = fillMenu(true);
     myAbovePopup = fillMenu(false);
@@ -347,7 +346,7 @@ public class JBOptionButton extends JButton implements MouseMotionListener {
   @Override
   protected void paintChildren(Graphics g) {
     super.paintChildren(g);
-    myDownIcon.paintIcon(this, g, myMoreRec.x, myMoreRec.y);
+    AllIcons.General.ArrowDown.paintIcon(this, g, myMoreRec.x, myMoreRec.y);
 
     int y1 = myMoreRec.y - 2;
     int y2 = myMoreRec.y + myMoreRec.height + 2;

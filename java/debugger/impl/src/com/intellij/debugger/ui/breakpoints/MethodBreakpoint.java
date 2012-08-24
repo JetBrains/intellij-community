@@ -69,18 +69,6 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   @Nullable private JVMName mySignature;
   private boolean myIsStatic;
 
-  @NotNull public static Icon ICON = AllIcons.Debugger.Db_method_breakpoint;
-  @NotNull public static Icon MUTED_ICON = AllIcons.Debugger.Db_muted_method_breakpoint;
-  @NotNull public static Icon DISABLED_ICON = AllIcons.Debugger.Db_disabled_method_breakpoint;
-  @NotNull public static Icon DISABLED_DEP_ICON = AllIcons.Debugger.Db_dep_method_breakpoint;
-  @NotNull public static Icon MUTED_DISABLED_ICON = AllIcons.Debugger.Db_muted_disabled_method_breakpoint;
-  @NotNull public static Icon MUTED_DISABLED_DEP_ICON = AllIcons.Debugger.Db_muted_dep_method_breakpoint;
-  private static final Icon ourInvalidIcon = AllIcons.Debugger.Db_invalid_method_breakpoint;
-  private static final Icon ourMutedInvalidIcon = AllIcons.Debugger.Db_muted_invalid_method_breakpoint;
-  private static final Icon ourVerifiedIcon = AllIcons.Debugger.Db_verified_method_breakpoint;
-  private static final Icon ourMutedVerifiedIcon = AllIcons.Debugger.Db_muted_verified_method_breakpoint;
-  private static final Icon ourVerifiedWarningIcon = AllIcons.Debugger.Db_method_warning_breakpoint;
-  private static final Icon ourMutedVerifiedWarningIcon = AllIcons.Debugger.Db_muted_method_warning_breakpoint;
   public static final @NonNls Key<MethodBreakpoint> CATEGORY = BreakpointCategory.lookup("method_breakpoints");
 
   protected MethodBreakpoint(@NotNull Project project) {
@@ -230,31 +218,31 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
     if (isMuted) {
-      return master == null? MUTED_DISABLED_ICON : MUTED_DISABLED_DEP_ICON;
+      return master == null? AllIcons.Debugger.Db_muted_disabled_method_breakpoint : AllIcons.Debugger.Db_muted_dep_method_breakpoint;
     }
     else {
-      return master == null? DISABLED_ICON : DISABLED_DEP_ICON;
+      return master == null? AllIcons.Debugger.Db_disabled_method_breakpoint : AllIcons.Debugger.Db_dep_method_breakpoint;
     }
   }
 
   @NotNull
   protected Icon getSetIcon(boolean isMuted) {
-    return isMuted? MUTED_ICON : ICON;
+    return isMuted? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint;
   }
 
   @NotNull
   protected Icon getInvalidIcon(boolean isMuted) {
-    return isMuted? ourMutedInvalidIcon : ourInvalidIcon;
+    return isMuted? AllIcons.Debugger.Db_muted_invalid_method_breakpoint : AllIcons.Debugger.Db_invalid_method_breakpoint;
   }
 
   @NotNull
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return isMuted? ourMutedVerifiedIcon : ourVerifiedIcon;
+    return isMuted? AllIcons.Debugger.Db_muted_verified_method_breakpoint : AllIcons.Debugger.Db_verified_method_breakpoint;
   }
 
   @NotNull
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return isMuted? ourMutedVerifiedWarningIcon : ourVerifiedWarningIcon;
+    return isMuted? AllIcons.Debugger.Db_muted_method_warning_breakpoint : AllIcons.Debugger.Db_method_warning_breakpoint;
   }
 
   public String getDisplayName() {

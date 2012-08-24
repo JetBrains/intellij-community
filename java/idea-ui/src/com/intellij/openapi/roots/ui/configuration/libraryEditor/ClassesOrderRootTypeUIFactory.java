@@ -31,7 +31,6 @@ import com.intellij.openapi.roots.ui.OrderRootTypeUIFactory;
 import javax.swing.*;
 
 public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  private static final Icon ICON = AllIcons.Nodes.CompiledClassesFolder;
 
   public SdkPathEditor createPathEditor(Sdk sdk) {
     return new SdkPathEditor(ProjectBundle.message("sdk.configure.classpath.tab"), OrderRootType.CLASSES, new FileChooserDescriptor(true, true, true, false, true, true));
@@ -39,7 +38,7 @@ public class ClassesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.CompiledClassesFolder;
   }
 
   @Override

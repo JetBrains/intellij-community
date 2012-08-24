@@ -27,7 +27,7 @@ import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
-import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
@@ -52,6 +52,7 @@ import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.SystemProperties;
@@ -281,7 +282,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
         final String profileName = value.getName();
         setText(profileName);
         final SingleInspectionProfilePanel panel = getProfilePanel(value);
-        setIcon(panel != null && panel.isProfileShared() ? Profile.PROJECT_PROFILE : Profile.LOCAL_PROFILE);
+        setIcon(panel != null && panel.isProfileShared() ? AllIcons.General.ProjectSettings : AllIcons.General.ApplicationSettings);
       }
     });
     myProfiles.addActionListener(new ActionListener() {

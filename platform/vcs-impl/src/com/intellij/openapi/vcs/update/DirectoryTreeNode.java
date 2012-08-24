@@ -29,8 +29,6 @@ import java.util.Collection;
  * author: lesya
  */
 public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
-  private static final Icon OPEN_ICON = AllIcons.Nodes.FolderOpen;
-  private static final Icon COLLAPSED_ICON = AllIcons.Nodes.Folder;
 
   public DirectoryTreeNode(String path, Project project, String parentPath) {
     super(path, SimpleTextAttributes.ERROR_ATTRIBUTES, project, parentPath);
@@ -49,7 +47,7 @@ public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
   }
 
   public Icon getIcon(boolean expanded) {
-    return expanded ? OPEN_ICON : COLLAPSED_ICON;
+    return expanded ? AllIcons.Nodes.FolderOpen : AllIcons.Nodes.Folder;
   }
 
   public Collection<VirtualFile> getVirtualFiles() {

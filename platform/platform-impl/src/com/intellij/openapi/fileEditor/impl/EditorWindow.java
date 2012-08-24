@@ -71,7 +71,6 @@ public class EditorWindow {
   private static final Icon GAP_ICON = new EmptyIcon(MODIFIED_ICON.getIconWidth(), MODIFIED_ICON.getIconHeight());
 
   private boolean myIsDisposed = false;
-  private static final Icon PIN_ICON = AllIcons.Nodes.TabPin;
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
   private Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>(UISettings.getInstance().EDITOR_TAB_LIMIT) {
     @Override
@@ -866,7 +865,7 @@ public class EditorWindow {
     final EditorComposite composite = findFileComposite(file);
     if (composite != null && composite.isPinned()) {
       count++;
-      pinIcon = PIN_ICON;
+      pinIcon = AllIcons.Nodes.TabPin;
     }
     else {
       pinIcon = null;

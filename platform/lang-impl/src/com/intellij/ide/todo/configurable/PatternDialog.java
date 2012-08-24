@@ -19,18 +19,19 @@ package com.intellij.ide.todo.configurable;
 import com.intellij.application.options.colors.ColorAndFontDescription;
 import com.intellij.application.options.colors.ColorAndFontDescriptionPanel;
 import com.intellij.application.options.colors.TextAttributesDescription;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoPattern;
-import com.intellij.ide.IdeBundle;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author Vladimir Kondratyev
@@ -51,7 +52,7 @@ class PatternDialog extends DialogWrapper{
     final TodoAttributes attrs = pattern.getAttributes();
     myPattern=pattern;
     myIconComboBox=new JComboBox(
-      new Icon[]{TodoAttributes.DEFAULT_ICON,TodoAttributes.QUESTION_ICON,TodoAttributes.IMPORTANT_ICON}
+      new Icon[]{AllIcons.General.TodoDefault, AllIcons.General.TodoQuestion, AllIcons.General.TodoImportant}
     );
     myIconComboBox.setSelectedItem(attrs.getIcon());
     myIconComboBox.setRenderer(new TodoTypeListCellRenderer());

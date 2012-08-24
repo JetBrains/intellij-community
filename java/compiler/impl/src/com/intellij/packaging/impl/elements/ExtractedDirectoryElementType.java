@@ -36,7 +36,6 @@ import java.util.List;
 * @author nik
 */
 public class ExtractedDirectoryElementType extends PackagingElementType<ExtractedDirectoryPackagingElement> {
-  public static final Icon EXTRACTED_FOLDER_ICON = AllIcons.Nodes.ExtractedFolder;
 
   ExtractedDirectoryElementType() {
     super("extracted-dir", "Extracted Directory");
@@ -44,7 +43,7 @@ public class ExtractedDirectoryElementType extends PackagingElementType<Extracte
 
   @Override
   public Icon getCreateElementIcon() {
-    return EXTRACTED_FOLDER_ICON;
+    return AllIcons.Nodes.ExtractedFolder;
   }
 
   @Override

@@ -45,7 +45,6 @@ import java.util.Set;
 public class PackagePatternProvider extends PatternDialectProvider {
   @NonNls public static final String PACKAGES = "package";
   private static final Logger LOG = Logger.getInstance("#" + PackagePatternProvider.class.getName());
-   public static final Icon ICON = AllIcons.General.PackagesTab;
 
   @Nullable
   private static GeneralGroupNode getGroupParent(PackageDependenciesNode node) {
@@ -117,7 +116,7 @@ public class PackagePatternProvider extends PatternDialectProvider {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.General.PackagesTab;
   }
 
   public TreeModel createTreeModel(final Project project, final Marker marker) {

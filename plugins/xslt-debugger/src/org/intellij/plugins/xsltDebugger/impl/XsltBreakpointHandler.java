@@ -1,5 +1,6 @@
 package org.intellij.plugins.xsltDebugger.impl;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -18,7 +19,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.intellij.plugins.xsltDebugger.VMPausedException;
 import org.intellij.plugins.xsltDebugger.XsltBreakpointType;
 import org.intellij.plugins.xsltDebugger.rt.engine.Breakpoint;
@@ -49,7 +49,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
     final int lineNumber = getActualLineNumber(breakpoint, project);
     if (lineNumber == -1) {
       final XDebugSession session = myXsltDebugProcess.getSession();
-      session.updateBreakpointPresentation(breakpoint, DebuggerIcons.INVALID_BREAKPOINT_ICON,
+      session.updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint,
                                            "Unsupported breakpoint position");
       return;
     }
@@ -66,7 +66,7 @@ public class XsltBreakpointHandler extends XBreakpointHandler<XLineBreakpoint<XB
     } catch (VMPausedException e) {
       final XDebugSession session = myXsltDebugProcess.getSession();
       session.reportMessage("Target VM is not responding. Breakpoint can not be set", MessageType.ERROR);
-      session.updateBreakpointPresentation(breakpoint, DebuggerIcons.INVALID_BREAKPOINT_ICON,
+      session.updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint,
                                            "Target VM is not responding. Breakpoint can not be set");
     }
   }

@@ -35,7 +35,6 @@ import java.util.List;
 * @author nik
 */
 public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopyPackagingElement> {
-  public static final Icon COPY_OF_FOLDER_ICON = AllIcons.Nodes.CopyOfFolder;
 
   DirectoryCopyElementType() {
     super("dir-copy", "Directory Content");
@@ -43,7 +42,7 @@ public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopy
 
   @Override
   public Icon getCreateElementIcon() {
-    return COPY_OF_FOLDER_ICON;
+    return AllIcons.Nodes.CopyOfFolder;
   }
 
   @Override

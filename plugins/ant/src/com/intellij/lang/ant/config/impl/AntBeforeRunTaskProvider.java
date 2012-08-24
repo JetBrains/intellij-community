@@ -19,8 +19,8 @@ import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.AntIcons;
 import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.lang.ant.config.AntConfiguration;
@@ -55,13 +55,13 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
 
   @Override
   public Icon getIcon() {
-    return AntIcons.ANT_TARGET_ICON;
+    return AllIcons.Ant.Target;
   }
 
   @Override
   public Icon getTaskIcon(AntBeforeRunTask task) {
     AntBuildTarget antTarget = findTargetToExecute(task);
-    return antTarget instanceof MetaTarget ? AntIcons.ANT_META_TARGET_ICON : AntIcons.ANT_TARGET_ICON;
+    return antTarget instanceof MetaTarget ? AllIcons.Ant.MetaTarget : AllIcons.Ant.Target;
   }
 
   @Override

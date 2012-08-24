@@ -29,7 +29,6 @@ public class UnknownConfigurationType implements ConfigurationType {
 
   public static final UnknownConfigurationType INSTANCE = new UnknownConfigurationType();
 
-  private static final Icon ICON = AllIcons.RunConfigurations.Unknown;
   public static final String NAME = "Unknown";
 
   public String getDisplayName() {
@@ -41,7 +40,7 @@ public class UnknownConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.RunConfigurations.Unknown;
   }
 
   @NotNull

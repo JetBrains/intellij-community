@@ -41,7 +41,6 @@ import java.util.List;
  * @author spleaner
  */
 public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRenderer, TableCellEditor, JBPopupListener {
-  private static final Icon ARROW_ICON = AllIcons.General.ArrowDown;
 
   private final T[] myValues;
   private WeakReference<ListPopup> myPopupRef;
@@ -69,7 +68,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   }
 
   private static Dimension addIconSize(final Dimension d) {
-    return new Dimension(d.width + ARROW_ICON.getIconWidth() + 2, Math.max(d.height, ARROW_ICON.getIconHeight()));
+    return new Dimension(d.width + AllIcons.General.ArrowDown.getIconWidth() + 2, Math.max(d.height, AllIcons.General.ArrowDown
+      .getIconHeight()));
   }
 
   protected String getTextFor(@NotNull T value) {
@@ -93,9 +93,9 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     if (!StringUtil.isEmpty(getText())) {
       final Rectangle r = getBounds();
       final Insets i = getInsets();
-      final int x = r.width - i.right - ARROW_ICON.getIconWidth();
-      final int y = i.top + (r.height - i.top - i.bottom - ARROW_ICON.getIconHeight()) / 2;
-      ARROW_ICON.paintIcon(this, g, x, y);
+      final int x = r.width - i.right - AllIcons.General.ArrowDown.getIconWidth();
+      final int y = i.top + (r.height - i.top - i.bottom - AllIcons.General.ArrowDown.getIconHeight()) / 2;
+      AllIcons.General.ArrowDown.paintIcon(this, g, x, y);
     }
   }
 

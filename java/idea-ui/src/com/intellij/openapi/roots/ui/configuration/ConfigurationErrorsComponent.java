@@ -56,12 +56,6 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
   private static final boolean ONE_LINE = true;
   private static final boolean MULTI_LINE = false;
 
-  private static final Icon EXPAND = AllIcons.Actions.Expandall;
-  private static final Icon COLLAPSE = AllIcons.Actions.Collapseall;
-  private static final Icon FIX = AllIcons.Actions.QuickfixBulb;
-  private static final Icon IGNORE = AllIcons.Actions.Cancel;
-  private static final Icon NAVIGATE = AllIcons.General.AutoscrollToSource;
-
   @NonNls private static final String FIX_ACTION_NAME = "FIX";
   @NonNls private static final String NAVIGATE_ACTION_NAME = "NAVIGATE";
 
@@ -288,7 +282,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       final JPanel result = new JPanel();
       result.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0));
       result.setLayout(new BorderLayout());
-      result.add(new ToolbarAlikeButton(COLLAPSE) {
+      result.add(new ToolbarAlikeButton(AllIcons.Actions.Collapseall) {
         {
           setToolTipText("Collapse");
         }
@@ -412,14 +406,14 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       myFixGroup.setOpaque(false);
       myFixGroup.setLayout(new BoxLayout(myFixGroup, BoxLayout.Y_AXIS));
 
-      myFixGroup.add(new ToolbarAlikeButton(FIX, FIX_ACTION_NAME) {});
+      myFixGroup.add(new ToolbarAlikeButton(AllIcons.Actions.QuickfixBulb, FIX_ACTION_NAME) {});
       myFixGroup.add(Box.createHorizontalStrut(3));
       buttons.add(myFixGroup);
 
-      buttons.add(new ToolbarAlikeButton(NAVIGATE, NAVIGATE_ACTION_NAME) {});
+      buttons.add(new ToolbarAlikeButton(AllIcons.General.AutoscrollToSource, NAVIGATE_ACTION_NAME) {});
       buttons.add(Box.createHorizontalStrut(3));
 
-      buttons.add(new ToolbarAlikeButton(IGNORE, "IGNORE") {});
+      buttons.add(new ToolbarAlikeButton(AllIcons.Actions.Cancel, "IGNORE") {});
 
       myFakeTextPane = new JTextPane();
       myText.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -599,7 +593,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
       buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
 
       if (configurationError.canBeFixed()) {
-        buttonsPanel.add(new ToolbarAlikeButton(FIX) {
+        buttonsPanel.add(new ToolbarAlikeButton(AllIcons.Actions.QuickfixBulb) {
           {
             setToolTipText("Fix error");
           }
@@ -622,7 +616,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
         buttonsPanel.add(Box.createHorizontalStrut(3));
       }
 
-      buttonsPanel.add(new ToolbarAlikeButton(NAVIGATE) {
+      buttonsPanel.add(new ToolbarAlikeButton(AllIcons.General.AutoscrollToSource) {
         {
           setToolTipText("Navigate to error");
         }
@@ -638,7 +632,7 @@ public class ConfigurationErrorsComponent extends JPanel implements Disposable, 
 
       buttonsPanel.add(Box.createHorizontalStrut(3));
 
-      buttonsPanel.add(new ToolbarAlikeButton(IGNORE) {
+      buttonsPanel.add(new ToolbarAlikeButton(AllIcons.Actions.Cancel) {
         {
           setToolTipText("Ignore error");
         }

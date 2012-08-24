@@ -32,8 +32,6 @@ import java.util.List;
 public class NativeFileType implements INativeFileType {
   public static final NativeFileType INSTANCE = new NativeFileType();
 
-  private static final Icon ICON = AllIcons.FileTypes.Custom;
-
   private NativeFileType() { }
 
   @NotNull
@@ -52,7 +50,7 @@ public class NativeFileType implements INativeFileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Custom;
   }
 
   public boolean isBinary() {

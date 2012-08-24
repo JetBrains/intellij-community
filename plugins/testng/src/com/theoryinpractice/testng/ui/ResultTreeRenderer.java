@@ -16,6 +16,7 @@
 package com.theoryinpractice.testng.ui;
 
 import com.intellij.execution.testframework.PoolOfTestIcons;
+import com.intellij.icons.AllIcons;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.theoryinpractice.testng.model.TestNGConsoleProperties;
@@ -64,7 +65,7 @@ public class ResultTreeRenderer extends ColoredTreeCellRenderer
                 }
 
                 if (consoleProperties.isPaused()) {
-                    setIcon(Animator.PAUSED_ICON);
+                    setIcon(AllIcons.RunConfigurations.TestPaused);
                 }
             } else {
                 if (proxy.getResultMessage() != null) {

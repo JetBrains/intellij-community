@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.junit;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.psi.*;
@@ -35,7 +36,7 @@ public class JUnit3Framework extends JavaTestFramework {
   @NotNull
   @Override
   public Icon getIcon() {
-    return JUnitConfigurationType.ICON;
+    return AllIcons.RunConfigurations.Junit;
   }
 
   protected String getMarkerClassFQName() {

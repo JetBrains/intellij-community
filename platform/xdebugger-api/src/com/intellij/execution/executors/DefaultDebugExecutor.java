@@ -31,9 +31,6 @@ import javax.swing.*;
  */
 public class DefaultDebugExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.DEBUG;
-  private static final Icon TOOL_WINDOW_ICON = AllIcons.Toolwindows.ToolWindowDebugger;
-  private static final Icon ICON = AllIcons.Actions.StartDebugger;
-  private static final Icon DISABLED_ICON = AllIcons.Process.DisabledDebug;
   private final String myStartActionText = XDebuggerBundle.message("debugger.runner.start.action.text");
   private final String myDescription = XDebuggerBundle.message("string.debugger.runner.description");
 
@@ -42,16 +39,16 @@ public class DefaultDebugExecutor extends Executor {
   }
 
   public Icon getToolWindowIcon() {
-    return TOOL_WINDOW_ICON;
+    return AllIcons.Toolwindows.ToolWindowDebugger;
   }
 
   @NotNull
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Actions.StartDebugger;
   }
 
   public Icon getDisabledIcon() {
-    return DISABLED_ICON;
+    return AllIcons.Process.DisabledDebug;
   }
 
   @NotNull

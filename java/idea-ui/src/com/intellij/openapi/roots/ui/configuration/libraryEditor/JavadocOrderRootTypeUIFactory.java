@@ -41,7 +41,6 @@ import com.intellij.util.IconUtil;
 import javax.swing.*;
 
 public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  private static final Icon ICON = AllIcons.Nodes.JavaDocFolder;
 
   public SdkPathEditor createPathEditor(Sdk sdk) {
     return new JavadocPathsEditor(sdk);
@@ -49,7 +48,7 @@ public class JavadocOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.JavaDocFolder;
   }
 
   @Override

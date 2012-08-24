@@ -30,8 +30,6 @@ import java.awt.*;
 import java.io.File;
 
 class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
-  private static final Icon INVALID_ITEM_ICON = AllIcons.Nodes.PpInvalid;
-  private static final Icon JAR_DIRECTORY_ICON = AllIcons.Nodes.JarDirectory;
   private final ItemElement myElement;
 
     public ItemElementDescriptor(NodeDescriptor parentDescriptor, ItemElement element) {
@@ -70,7 +68,7 @@ class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
         else {
           if (presentableFile.isDirectory()) {
             if (isJarDirectory) {
-              icon = JAR_DIRECTORY_ICON;
+              icon = AllIcons.Nodes.JarDirectory;
             }
             else {
               icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
@@ -82,11 +80,11 @@ class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
         }
       }
       else {
-        icon = INVALID_ITEM_ICON;
+        icon = AllIcons.Nodes.PpInvalid;
       }
     }
     else {
-      icon = INVALID_ITEM_ICON;
+      icon = AllIcons.Nodes.PpInvalid;
     }
     return icon;
   }

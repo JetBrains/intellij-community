@@ -30,8 +30,6 @@ import java.util.Map;
  *         Date: Dec 11, 2004
  */
 public class UnknownSdkType extends SdkType{
-  public static final Icon ICON = AllIcons.Nodes.UnknownJdkClosed;
-  private static final Icon JDK_ICON_EXPANDED = AllIcons.Nodes.UnknownJdkOpen;
   private static final Map<String, UnknownSdkType> ourTypeNameToInstanceMap = new HashMap<String, UnknownSdkType>();
 
   /**
@@ -90,10 +88,10 @@ public class UnknownSdkType extends SdkType{
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.UnknownJdkClosed;
   }
 
   public Icon getIconForExpandedTreeNode() {
-    return JDK_ICON_EXPANDED;
+    return AllIcons.Nodes.UnknownJdkOpen;
   }
 }

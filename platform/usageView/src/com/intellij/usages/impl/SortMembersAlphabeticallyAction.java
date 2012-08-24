@@ -19,16 +19,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.UsageViewSettings;
 
-import javax.swing.*;
-
 /**
 * @author cdr
 */
 class SortMembersAlphabeticallyAction extends RuleAction {
-  private static final Icon ICON = AllIcons.ObjectBrowser.Sorted;
 
   SortMembersAlphabeticallyAction(UsageViewImpl usageView) {
-    super(usageView, UsageViewBundle.message("sort.alphabetically.action.text"), ICON);
+    super(usageView, UsageViewBundle.message("sort.alphabetically.action.text"), AllIcons.ObjectBrowser.Sorted);
   }
 
   @Override

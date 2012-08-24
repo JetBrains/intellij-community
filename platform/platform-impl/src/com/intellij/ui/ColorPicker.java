@@ -53,8 +53,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * @author Konstantin Bulenkov
  */
 public class ColorPicker extends JPanel implements ColorListener, DocumentListener {
-  public static final Icon PICK = AllIcons.Ide.Pipette;
-  public static final Icon PICK_ROLLOVER = AllIcons.Ide.Pipette_rollover;
   private static final String COLOR_CHOOSER_COLORS_KEY = "ColorChooser.RecentColors";
   private static final String HSB_PROPERTY = "color.picker.is.hsb";
 
@@ -312,9 +310,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       final JButton pipette = new JButton();
       pipette.setUI(new BasicButtonUI());
       pipette.setRolloverEnabled(true);
-      pipette.setIcon(PICK);
+      pipette.setIcon(AllIcons.Ide.Pipette);
       pipette.setBorder(IdeBorderFactory.createEmptyBorder(0));
-      pipette.setRolloverIcon(PICK_ROLLOVER);
+      pipette.setRolloverIcon(AllIcons.Ide.Pipette_rollover);
       pipette.setFocusable(false);
       pipette.addActionListener(new ActionListener() {
         @Override
@@ -1114,7 +1112,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
         //
         //graphics.drawLine(16, 2, 16, 12);
         //graphics.drawLine(16, 20, 16, 30);
-        PICK.paintIcon(null, graphics, 14, 0);
+        AllIcons.Ide.Pipette.paintIcon(null, graphics, 14, 0);
 
         graphics.dispose();
 

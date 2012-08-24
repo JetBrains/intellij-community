@@ -34,7 +34,6 @@ import java.nio.charset.Charset;
 
 public class HtmlFileType extends XmlLikeFileType {
   @NonNls public static final String DOT_DEFAULT_EXTENSION = ".html";
-  private static final Icon ICON = AllIcons.FileTypes.Html;
 
   public final static HtmlFileType INSTANCE = new HtmlFileType();
 
@@ -62,7 +61,7 @@ public class HtmlFileType extends XmlLikeFileType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Html;
   }
 
   public String getCharset(@NotNull final VirtualFile file, final byte[] content) {

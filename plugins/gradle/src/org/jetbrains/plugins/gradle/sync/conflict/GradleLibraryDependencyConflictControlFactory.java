@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.sync.conflict;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -15,7 +16,6 @@ import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitor;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChangeVisitorAdapter;
 import org.jetbrains.plugins.gradle.diff.library.GradleMismatchedLibraryPathChange;
 import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
-import org.jetbrains.plugins.gradle.ui.GradleIcons;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -101,7 +101,7 @@ public class GradleLibraryDependencyConflictControlFactory {
 
   private static JComponent getPathConflictControl(@NotNull Library library, @NotNull GradleMismatchedLibraryPathChange pathChange) {
     GradleProjectStructureNode<GradleSyntheticId> root = new GradleProjectStructureNode<GradleSyntheticId>(
-      GradleUtil.buildSyntheticDescriptor(GradleUtil.getLibraryName(library), GradleIcons.LIB_ICON)
+      GradleUtil.buildSyntheticDescriptor(GradleUtil.getLibraryName(library), AllIcons.Nodes.PpLib)
     );
     for (String path : pathChange.getGradleValue()) {
       final GradleProjectStructureNode<GradleSyntheticId> node = buildPathNode(path);
@@ -127,7 +127,7 @@ public class GradleLibraryDependencyConflictControlFactory {
     final int i = path.lastIndexOf('/');
     final String name = i < 0 || i >= path.length() - 1 ? path : path.substring(i + 1);
     final GradleProjectStructureNode<GradleSyntheticId> result
-      = new GradleProjectStructureNode<GradleSyntheticId>(GradleUtil.buildSyntheticDescriptor(name, GradleIcons.JAR_ICON));
+      = new GradleProjectStructureNode<GradleSyntheticId>(GradleUtil.buildSyntheticDescriptor(name, AllIcons.Nodes.PpJar));
     result.getDescriptor().setToolTip(path);
     return result;
   }

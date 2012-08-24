@@ -41,10 +41,6 @@ import java.util.List;
  */
 public abstract class ChooseByNameFilter<T> {
   /**
-   * an icon to use
-   */
-  private static final Icon FILTER_ICON = AllIcons.Icons.Inspector.UseFilter;
-  /**
    * a parent popup
    */
   private final ChooseByNamePopup myParentPopup;
@@ -83,7 +79,7 @@ public abstract class ChooseByNameFilter<T> {
                             @NotNull Project project) {
     myParentPopup = popup;
     DefaultActionGroup actionGroup = new DefaultActionGroup("go.to.file.filter", false);
-    ToggleAction action = new ToggleAction("Filter", "Filter files by type", FILTER_ICON) {
+    ToggleAction action = new ToggleAction("Filter", "Filter files by type", AllIcons.Icons.Inspector.UseFilter) {
       public boolean isSelected(final AnActionEvent e) {
         return myPopup != null;
       }

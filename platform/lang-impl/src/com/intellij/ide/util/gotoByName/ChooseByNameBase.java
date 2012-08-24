@@ -53,7 +53,10 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.*;
+import com.intellij.ui.ClickListener;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.ListScrollingUtil;
+import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.PopupOwner;
 import com.intellij.ui.popup.PopupPositionManager;
@@ -1563,11 +1566,10 @@ public abstract class ChooseByNameBase {
   }
 
   private static final String ACTION_NAME = "Show All in View";
-  private static final Icon FIND_ICON = AllIcons.Actions.Find;
 
   private abstract class ShowFindUsagesAction extends AnAction {
     public ShowFindUsagesAction() {
-      super(ACTION_NAME, ACTION_NAME, FIND_ICON);
+      super(ACTION_NAME, ACTION_NAME, AllIcons.Actions.Find);
     }
 
     @Override

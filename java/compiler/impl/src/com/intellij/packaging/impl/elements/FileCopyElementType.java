@@ -34,7 +34,6 @@ import java.util.List;
 * @author nik
 */
 public class FileCopyElementType extends PackagingElementType<FileCopyPackagingElement> {
-  public static final Icon ICON = AllIcons.FileTypes.Text;
 
   FileCopyElementType() {
     super("file-copy", "File");
@@ -42,7 +41,7 @@ public class FileCopyElementType extends PackagingElementType<FileCopyPackagingE
 
   @Override
   public Icon getCreateElementIcon() {
-    return ICON;
+    return AllIcons.FileTypes.Text;
   }
 
   @Override

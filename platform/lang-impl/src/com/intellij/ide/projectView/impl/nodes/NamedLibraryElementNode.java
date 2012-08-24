@@ -40,10 +40,6 @@ import java.util.Collection;
 import java.util.List;
 
 public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement> implements NavigatableWithText {
-  private static final Icon GENERIC_JDK_ICON = AllIcons.General.Jdk;
-  private static final Icon LIB_ICON_OPEN = AllIcons.Nodes.PpLibOpen;
-  private static final Icon LIB_ICON_CLOSED = AllIcons.Nodes.PpLibClosed;
-
   public NamedLibraryElementNode(Project project, NamedLibraryElement value, ViewSettings viewSettings) {
     super(project, value, viewSettings);
   }
@@ -62,7 +58,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   private static Icon getJdkIcon(JdkOrderEntry entry, boolean isExpanded) {
     final Sdk sdk = entry.getJdk();
     if (sdk == null) {
-      return GENERIC_JDK_ICON;
+      return AllIcons.General.Jdk;
     }
     final SdkType sdkType = (SdkType) sdk.getSdkType();
     return isExpanded ? sdkType.getIconForExpandedTreeNode() : sdkType.getIcon();
@@ -96,8 +92,8 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
   public void update(PresentationData presentation) {
     presentation.setPresentableText(getValue().getName());
     final OrderEntry orderEntry = getValue().getOrderEntry();
-    presentation.setOpenIcon(orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry, true) : LIB_ICON_OPEN);
-    presentation.setClosedIcon(orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry, false) : LIB_ICON_CLOSED);
+    presentation.setOpenIcon(orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry, true) : AllIcons.Nodes.PpLibOpen);
+    presentation.setClosedIcon(orderEntry instanceof JdkOrderEntry ? getJdkIcon((JdkOrderEntry)orderEntry, false) : AllIcons.Nodes.PpLibClosed);
     if (orderEntry instanceof JdkOrderEntry) {
       final JdkOrderEntry jdkOrderEntry = (JdkOrderEntry)orderEntry;
       final Sdk projectJdk = jdkOrderEntry.getJdk();

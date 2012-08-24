@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CommonProgramParametersPanel extends JPanel implements PanelWithAnchor {
-  private static final Icon ICON = AllIcons.RunConfigurations.Variables;
 
   private LabeledComponent<RawCommandLineEditor> myProgramParametersComponent;
   private LabeledComponent<JPanel> myWorkingDirectoryComponent;
@@ -92,7 +91,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     panel.add(myWorkingDirectoryField, BorderLayout.CENTER);
 
     final FixedSizeButton button = new FixedSizeButton(myWorkingDirectoryField);
-    button.setIcon(ICON);
+    button.setIcon(AllIcons.RunConfigurations.Variables);
     button.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final List<String> macros = new ArrayList<String>(PathMacros.getInstance().getUserMacroNames());

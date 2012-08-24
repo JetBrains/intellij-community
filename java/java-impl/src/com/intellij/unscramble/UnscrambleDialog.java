@@ -19,7 +19,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.extensions.Extensions;
@@ -39,6 +38,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -71,9 +71,6 @@ public class UnscrambleDialog extends DialogWrapper {
       return state.isDeadlocked();
     }
   };
-  private static final Icon THREAD_DUMP_ICON = AllIcons.Debugger.ThreadStates.Threaddump;
-  private static final Icon DEADLOCK_ICON = AllIcons.Debugger.KillProcess;
-  private static final Icon EXCEPTION_ICON = AllIcons.Debugger.ThreadStates.Exception;
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -394,18 +391,18 @@ public class UnscrambleDialog extends DialogWrapper {
     String message = IdeBundle.message("unscramble.unscrambled.stacktrace.tab");
     if (!threadDump.isEmpty()) {
       message = IdeBundle.message("unscramble.unscrambled.threaddump.tab");
-      icon = THREAD_DUMP_ICON;
+      icon = AllIcons.Debugger.ThreadStates.Threaddump;
     }
     else {
       String name = getExceptionName(unscrambledTrace);
       if (name != null) {
         message = name;
-        icon = EXCEPTION_ICON;
+        icon = AllIcons.Debugger.ThreadStates.Exception;
       }
     }
     if (ContainerUtil.find(threadDump, DEADLOCK_CONDITION) != null) {
       message = IdeBundle.message("unscramble.unscrambled.deadlock.tab");
-      icon = DEADLOCK_ICON;
+      icon = AllIcons.Debugger.KillProcess;
     }
     return AnalyzeStacktraceUtil.addConsole(project, threadDump.size() > 1 ? new AnalyzeStacktraceUtil.ConsoleFactory() {
       public JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions) {

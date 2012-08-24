@@ -43,8 +43,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class AntUIUtil {
-  private static final Icon ANT_INSTALLATION_ICON = AllIcons.Ant.AntInstallation;
-  private static final Icon GENERIC_JDK_ICON = AllIcons.General.Jdk;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.impl.configuration.AntUIUtil");
 
@@ -97,7 +95,7 @@ public class AntUIUtil {
   }
 
   public static void customizeAnt(AbstractProperty.AbstractPropertyContainer antProperties, SimpleColoredComponent component) {
-    component.setIcon(ANT_INSTALLATION_ICON);
+    component.setIcon(AllIcons.Ant.AntInstallation);
     String name = AntInstallation.NAME.get(antProperties);
     component.append(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     String versionString = AntInstallation.VERSION.get(antProperties);
@@ -178,7 +176,7 @@ public class AntUIUtil {
       Sdk jdk = GlobalAntConfiguration.findJdk(jdkName);
       if (jdk == null) {
         if (myProjectJdkName.length() > 0) {
-          setIcon(GENERIC_JDK_ICON);
+          setIcon(AllIcons.General.Jdk);
           append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName), selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }
         else {

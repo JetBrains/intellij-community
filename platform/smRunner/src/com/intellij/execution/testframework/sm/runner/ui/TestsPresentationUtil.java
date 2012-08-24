@@ -22,9 +22,10 @@ import com.intellij.execution.testframework.sm.SMTestsRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
 import com.intellij.execution.testframework.ui.TestsProgressAnimator;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -259,7 +260,7 @@ public class TestsPresentationUtil {
         return hasErrors ? PASSED_E_ICON : PASSED_ICON;
       case RUNNING_INDEX:
         if (consoleProperties.isPaused()) {
-          return hasErrors ? PAUSED_E_ICON : TestsProgressAnimator.PAUSED_ICON;
+          return hasErrors ? PAUSED_E_ICON : AllIcons.RunConfigurations.TestPaused;
         }
         else {
           final int frameIndex = TestsProgressAnimator.getCurrentFrameIndex();

@@ -199,11 +199,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   private static class SaveTemporaryAction extends AnAction {
-    private static final Icon ICON = AllIcons.RunConfigurations.SaveTempConfig;
 
     public SaveTemporaryAction() {
       Presentation presentation = getTemplatePresentation();
-      presentation.setIcon(ICON);
+      presentation.setIcon(AllIcons.RunConfigurations.SaveTempConfig);
     }
 
     public void actionPerformed(final AnActionEvent e) {

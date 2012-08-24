@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.dir.actions;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -25,7 +26,7 @@ import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
  */
 public class EnableLeft extends DirDiffAction {
   protected EnableLeft(DirDiffTableModel model) {
-    super(model, "Show new files on left side", MOVE_RIGHT);
+    super(model, "Show new files on left side", AllIcons.Vcs.Arrow_right);
   }
 
   @Override

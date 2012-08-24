@@ -15,17 +15,18 @@
  */
 package com.intellij.psi.impl.beanProperties;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +96,7 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   @Override
   @Nullable
   public Icon getIcon(boolean flags) {
-    return BeanProperty.ICON;
+    return AllIcons.Nodes.Property;
   }
 
   @Override

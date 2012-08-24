@@ -15,20 +15,15 @@
  */
 package com.intellij.profile;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.util.JDOMExternalizable;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * User: anna
  * Date: 20-Nov-2005
  */
 public interface Profile extends JDOMExternalizable, Comparable, Scheme {
-  Icon LOCAL_PROFILE = AllIcons.General.ApplicationSettings;
-  Icon PROJECT_PROFILE = AllIcons.General.ProjectSettings;
 
   void copyFrom(@NotNull Profile profile);
 

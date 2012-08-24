@@ -33,7 +33,6 @@ import javax.swing.*;
     )}
 )
 public class NamedScopeManager extends NamedScopesHolder {
-  private static final Icon LOCAL_SCOPES = AllIcons.Ide.LocalScope;
 
   public NamedScopeManager(final Project project) {
     super(project);
@@ -48,6 +47,6 @@ public class NamedScopeManager extends NamedScopesHolder {
   }
 
   public Icon getIcon() {
-    return LOCAL_SCOPES;
+    return AllIcons.Ide.LocalScope;
   }
 }

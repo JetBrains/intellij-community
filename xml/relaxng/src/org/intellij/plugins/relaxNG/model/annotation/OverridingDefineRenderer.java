@@ -37,7 +37,6 @@ import java.util.Collection;
 import java.util.Set;
 
 class OverridingDefineRenderer extends GutterIconRenderer {
-  private static final Icon ICON = AllIcons.Gutter.OverridingMethod;
 
   private final Set<Define> mySet;
   private final String myMessage;
@@ -49,7 +48,7 @@ class OverridingDefineRenderer extends GutterIconRenderer {
 
   @NotNull
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Gutter.OverridingMethod;
   }
 
   public boolean isNavigateAction() {

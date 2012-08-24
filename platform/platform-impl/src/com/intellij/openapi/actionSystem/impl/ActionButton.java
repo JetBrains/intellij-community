@@ -53,8 +53,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   private boolean myRollover;
   private static boolean ourGlobalMouseDown = false;
 
-  private static final Icon myDropdownIcon = AllIcons.General.Dropdown;
-
   private boolean myNoIconsInPopup = false;
   private Insets myInsets;
 
@@ -266,7 +264,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         y++;
       }
 
-      myDropdownIcon.paintIcon(this, g, x, y);
+      AllIcons.General.Dropdown.paintIcon(this, g, x, y);
     }
   }
 

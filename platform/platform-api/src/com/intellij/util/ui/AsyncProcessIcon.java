@@ -29,11 +29,10 @@ public class AsyncProcessIcon extends AnimatedIcon {
   public static final int CYCLE_LENGTH = 800;
 
   private static final Icon[] SMALL_ICONS = findIcons("/process/step_", "/process/step_mask.png");
-  private static final Icon SMALL_PASSIVE_ICON = AllIcons.Process.Step_passive;
   private boolean myUseMask;
 
   public AsyncProcessIcon(@NonNls String name) {
-    this(name, SMALL_ICONS, SMALL_PASSIVE_ICON);
+    this(name, SMALL_ICONS, AllIcons.Process.Step_passive);
   }
 
   private AsyncProcessIcon(@NonNls String name, Icon[] icons, Icon passive) {
@@ -105,10 +104,9 @@ public class AsyncProcessIcon extends AnimatedIcon {
       AllIcons.Process.Big.Step_11,
       AllIcons.Process.Big.Step_12
     };
-    private static final Icon BIG_PASSIVE_ICON = AllIcons.Process.Big.Step_passive;
 
     public Big(@NonNls final String name) {
-      super(name, BIG_ICONS, BIG_PASSIVE_ICON);
+      super(name, BIG_ICONS, AllIcons.Process.Big.Step_passive);
     }
   }
 

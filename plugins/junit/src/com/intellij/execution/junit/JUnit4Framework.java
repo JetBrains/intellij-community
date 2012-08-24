@@ -18,6 +18,7 @@ package com.intellij.execution.junit;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
@@ -43,7 +44,7 @@ public class JUnit4Framework extends JavaTestFramework {
   @NotNull
   @Override
   public Icon getIcon() {
-    return JUnitConfigurationType.ICON;
+    return AllIcons.RunConfigurations.Junit;
   }
 
   protected String getMarkerClassFQName() {

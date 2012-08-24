@@ -19,6 +19,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.ui.breakpoints.actions.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
@@ -37,11 +38,11 @@ public class MethodBreakpointFactory extends BreakpointFactory{
   }
 
   public Icon getIcon() {
-    return MethodBreakpoint.ICON;
+    return AllIcons.Debugger.Db_method_breakpoint;
   }
 
   public Icon getDisabledIcon() {
-    return MethodBreakpoint.DISABLED_ICON;
+    return AllIcons.Debugger.Db_disabled_method_breakpoint;
   }
 
   @Override

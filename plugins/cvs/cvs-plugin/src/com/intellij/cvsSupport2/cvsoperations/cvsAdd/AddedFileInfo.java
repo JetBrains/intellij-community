@@ -46,8 +46,6 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
   private final MyComparator myComparator = new MyComparator();
   @NotNull private final Project myProject;
   private final MyObservable myExcludedObservable = new MyObservable();
-  private static final Icon OPEN_ICON = AllIcons.Nodes.FolderOpen;
-  private static final Icon COLLAPSED_ICON = AllIcons.Nodes.Folder;
 
   public AddedFileInfo(VirtualFile addedFile, @NotNull Project project, CvsConfiguration config) {
     myAddedFile = addedFile;
@@ -117,7 +115,7 @@ public class AddedFileInfo extends DefaultMutableTreeNode {
 
   public Icon getIcon(boolean expanded) {
     if (myAddedFile.isDirectory()) {
-      return expanded ? OPEN_ICON : COLLAPSED_ICON;
+      return expanded ? AllIcons.Nodes.FolderOpen : AllIcons.Nodes.Folder;
     }
     else {
       return IconUtil.getIcon(myAddedFile, 0, myProject);

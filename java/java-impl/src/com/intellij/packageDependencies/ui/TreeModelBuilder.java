@@ -39,7 +39,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,9 +79,6 @@ public class TreeModelBuilder {
   private GeneralGroupNode myTestRoot = null;
   private GeneralGroupNode myLibsRoot = null;
 
-  private static final Icon LIB_ICON_OPEN = AllIcons.Nodes.PpLibOpen;
-  private static final Icon LIB_ICON_CLOSED = AllIcons.Nodes.PpLibClosed;
-  private static final Icon TEST_ICON = AllIcons.Nodes.TestSourceFolder;
   public static final String PRODUCTION_NAME = AnalysisScopeBundle.message("package.dependencies.production.node.text");
   public static final String TEST_NAME = AnalysisScopeBundle.message("package.dependencies.test.node.text");
   public static final String LIBRARY_NAME = AnalysisScopeBundle.message("package.dependencies.library.node.text");
@@ -107,8 +103,8 @@ public class TreeModelBuilder {
 
     if (myGroupByScopeType) {
       mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, PlatformIcons.PACKAGE_OPEN_ICON, PlatformIcons.PACKAGE_ICON, project);
-      myTestRoot = new GeneralGroupNode(TEST_NAME, TEST_ICON, TEST_ICON, project);
-      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, LIB_ICON_OPEN, LIB_ICON_CLOSED, project);
+      myTestRoot = new GeneralGroupNode(TEST_NAME, AllIcons.Nodes.TestSourceFolder, AllIcons.Nodes.TestSourceFolder, project);
+      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, AllIcons.Nodes.PpLibOpen, AllIcons.Nodes.PpLibClosed, project);
       myRoot.add(mySourceRoot);
       myRoot.add(myTestRoot);
       myRoot.add(myLibsRoot);
@@ -422,7 +418,8 @@ public class TreeModelBuilder {
     if (!myShowIndividualLibs) {
       if (myGroupByScopeType) return getRootNode(ScopeType.LIB);
       if (myAllLibsNode == null) {
-        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"), LIB_ICON_OPEN, LIB_ICON_CLOSED,
+        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"), AllIcons.Nodes.PpLibOpen,
+                                             AllIcons.Nodes.PpLibClosed,
                                              myProject);
         getRootNode(ScopeType.LIB).add(myAllLibsNode);
       }

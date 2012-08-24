@@ -53,8 +53,6 @@ import java.util.*;
 import java.util.List;
 
 public class ChooseRunConfigurationPopup {
-  private static final Icon EDIT_ICON = AllIcons.Actions.EditSource;
-  private static final Icon SAVE_ICON = AllIcons.RunConfigurations.SaveTempConfig;
 
   private final Project myProject;
   @NotNull private final String myAddKey;
@@ -510,7 +508,7 @@ public class ChooseRunConfigurationPopup {
       final ItemWrapper edit = new ItemWrapper(null) {
         @Override
         public Icon getIcon() {
-          return EDIT_ICON;
+          return AllIcons.Actions.EditSource;
         }
 
         @Override
@@ -789,7 +787,7 @@ public class ChooseRunConfigurationPopup {
         }
       }
 
-      result.add(new ActionWrapper("Edit...", EDIT_ICON, true) {
+      result.add(new ActionWrapper("Edit...", AllIcons.Actions.EditSource, true) {
         @Override
         public void perform() {
           final RunManagerEx manager = RunManagerEx.getInstanceEx(project);
@@ -799,7 +797,7 @@ public class ChooseRunConfigurationPopup {
       });
 
       if (RunManager.getInstance(project).isTemporary(settings.getConfiguration()) || dynamic) {
-        result.add(new ActionWrapper("Save configuration", SAVE_ICON) {
+        result.add(new ActionWrapper("Save configuration", AllIcons.RunConfigurations.SaveTempConfig) {
           @Override
           public void perform() {
             final RunManagerEx manager = RunManagerEx.getInstanceEx(project);

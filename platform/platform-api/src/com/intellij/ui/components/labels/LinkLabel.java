@@ -55,10 +55,9 @@ public class LinkLabel extends JLabel {
   private boolean myClickIsBeingProcessed;
   private boolean myPaintDefaultIcon;
   protected static final int DEFAULT_ICON_GAP = 2;
-  private static final Icon LINK = AllIcons.Ide.Link;
 
   public LinkLabel() {
-    this("", LINK);
+    this("", AllIcons.Ide.Link);
   }
 
   public LinkLabel(String text, @Nullable Icon icon) {
@@ -165,9 +164,9 @@ public class LinkLabel extends JLabel {
 
       if (myPaintDefaultIcon) {
         int endX = myIconWidth + getFontMetrics(getFont()).stringWidth(getText());
-        int endY = getHeight() / 2 - LINK.getIconHeight() / 2 + 1;
+        int endY = getHeight() / 2 - AllIcons.Ide.Link.getIconHeight() / 2 + 1;
 
-        LINK.paintIcon(this, g, endX + shiftX + DEFAULT_ICON_GAP, endY);
+        AllIcons.Ide.Link.paintIcon(this, g, endX + shiftX + DEFAULT_ICON_GAP, endY);
       }
     }
   }
@@ -178,7 +177,7 @@ public class LinkLabel extends JLabel {
 
   public Dimension getPreferredSize() {
     final Dimension size = super.getPreferredSize();
-    size.width += myPaintDefaultIcon ? LINK.getIconWidth() + DEFAULT_ICON_GAP : 0;
+    size.width += myPaintDefaultIcon ? AllIcons.Ide.Link.getIconWidth() + DEFAULT_ICON_GAP : 0;
     return size;
   }
 
@@ -215,7 +214,7 @@ public class LinkLabel extends JLabel {
       int y = getHeight() / 2 - fm.getHeight() / 2;
       int width = fm.stringWidth(getText());
       if (myPaintDefaultIcon) {
-        width += LINK.getIconWidth() + DEFAULT_ICON_GAP;
+        width += AllIcons.Ide.Link.getIconWidth() + DEFAULT_ICON_GAP;
       }
 
       if (getHorizontalAlignment() == LEFT) {

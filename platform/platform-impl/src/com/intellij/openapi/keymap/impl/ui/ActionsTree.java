@@ -37,8 +37,8 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +51,6 @@ import java.util.Enumeration;
 
 public class ActionsTree {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
-  private static final Icon QUICK_LIST_ICON = AllIcons.Actions.QuickList;
   private static final Icon OPEN_ICON = new DefaultTreeCellRenderer().getOpenIcon();
   private static final Icon CLOSE_ICON = new DefaultTreeCellRenderer().getClosedIcon();
 
@@ -481,7 +480,7 @@ public class ActionsTree {
         }
         else if (userObject instanceof QuickList) {
           QuickList list = (QuickList)userObject;
-          icon = QUICK_LIST_ICON;
+          icon = AllIcons.Actions.QuickList;
           text = list.getDisplayName();
 
           changed = originalKeymap != null && isActionChanged(list.getActionId(), originalKeymap, myKeymap);

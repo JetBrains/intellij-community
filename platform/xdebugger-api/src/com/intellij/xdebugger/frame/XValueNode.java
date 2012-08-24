@@ -39,7 +39,7 @@ public interface XValueNode extends Obsolescent {
 
   /**
    * Setup presentation of the value
-   * @param icon icon representing value type (see {@link com.intellij.xdebugger.ui.DebuggerIcons})
+   * @param icon icon representing value type (see {@link com.intellij.icons.AllIcons.Debugger})
    * @param type optional type of the value, it is shown in gray color and surrounded by braces
    * @param value string representation of value. It is also used in 'Copy Value' action
    * @param hasChildren {@code false} if the node is a leaf

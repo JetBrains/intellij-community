@@ -26,7 +26,6 @@ import com.intellij.util.ui.MutableErrorTreeView;
 import javax.swing.*;
 
 public class HotfixGroupElement extends GroupingElement {
-  private final static Icon ourIcon = AllIcons.Compiler.Error;
 
   private final Consumer<HotfixGate> myHotfix;
   private final String myFixDescription;
@@ -50,7 +49,7 @@ public class HotfixGroupElement extends GroupingElement {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        renderer.setIcon(ourIcon);
+        renderer.setIcon(AllIcons.Compiler.Error);
 
         final String[] text = getText();
         final String errorText = ((text != null) && (text.length > 0)) ? text[0] : "";

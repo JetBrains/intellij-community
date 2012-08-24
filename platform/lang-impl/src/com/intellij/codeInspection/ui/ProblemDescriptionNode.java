@@ -38,9 +38,6 @@ import javax.swing.*;
  * @author max
  */
 public class ProblemDescriptionNode extends InspectionTreeNode {
-  private static final Icon INFO = AllIcons.Compiler.Information;
-  private static final Icon ERROR = AllIcons.Compiler.Error;
-  private static final Icon WARNING = AllIcons.Compiler.Warning;
   protected RefEntity myElement;
   private final CommonProblemDescriptor myDescriptor;
   protected final DescriptorProviderInspection myTool;
@@ -73,10 +70,10 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   public Icon getIcon(boolean expanded) {
     if (myDescriptor instanceof ProblemDescriptorImpl) {
       ProblemHighlightType problemHighlightType = ((ProblemDescriptorImpl)myDescriptor).getHighlightType();
-      if (problemHighlightType == ProblemHighlightType.ERROR) return ERROR;
-      if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return WARNING;
+      if (problemHighlightType == ProblemHighlightType.ERROR) return AllIcons.Compiler.Error;
+      if (problemHighlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) return AllIcons.Compiler.Warning;
     }
-    return INFO;
+    return AllIcons.Compiler.Information;
   }
 
   public int getProblemCount() {

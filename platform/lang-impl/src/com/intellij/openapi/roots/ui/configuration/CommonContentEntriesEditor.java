@@ -64,9 +64,7 @@ import java.util.Map;
 public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor");
   public static final String NAME = ProjectBundle.message("module.paths.title");
-  public static final Icon ICON = AllIcons.Modules.Sources;
   private static final Color BACKGROUND_COLOR = UIUtil.getListBackground();
-  private static final Icon ADD_CONTENT_ENTRY_ICON = AllIcons.Modules.AddContentEntry;
 
   protected ContentEntryTreeEditor myRootTreeEditor;
   private MyContentEntryEditorListener myContentEntryEditorListener;
@@ -369,7 +367,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     public AddContentEntryAction() {
       super(ProjectBundle.message("module.paths.add.content.action"),
-            ProjectBundle.message("module.paths.add.content.action.description"), ADD_CONTENT_ENTRY_ICON);
+            ProjectBundle.message("module.paths.add.content.action.description"), AllIcons.Modules.AddContentEntry);
       myDescriptor = new FileChooserDescriptor(false, true, true, false, true, true) {
         public void validateSelectedFiles(VirtualFile[] files) throws Exception {
           validateContentEntriesCandidates(files);

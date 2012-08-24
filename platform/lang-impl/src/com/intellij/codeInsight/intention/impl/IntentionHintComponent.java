@@ -79,14 +79,7 @@ import java.util.List;
 public class IntentionHintComponent extends JPanel implements Disposable, ScrollAwareHint {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.IntentionHintComponent.ListPopupRunnable");
 
-  static final Icon ourIntentionIcon = AllIcons.Actions.RealIntentionBulb;
-  static final Icon ourBulbIcon = AllIcons.Actions.IntentionBulb;
-  static final Icon ourQuickFixIcon = AllIcons.Actions.QuickfixBulb;
-  static final Icon ourRefactoringBulbIcon = AllIcons.Actions.RefactoringBulb;
-  static final Icon ourIntentionOffIcon = AllIcons.Actions.RealIntentionOffBulb;
-  static final Icon ourQuickFixOffIcon = AllIcons.Actions.QuickfixOffBulb;
-  static final Icon ourArrowIcon = AllIcons.General.ArrowDown;
-  static final Icon ourInactiveArrowIcon = new EmptyIcon(ourArrowIcon.getIconWidth(), ourArrowIcon.getIconHeight());
+  static final Icon ourInactiveArrowIcon = new EmptyIcon(AllIcons.General.ArrowDown.getIconWidth(), AllIcons.General.ArrowDown.getIconHeight());
   
   private static final int NORMAL_BORDER_SIZE = 6;
   private static final int SMALL_BORDER_SIZE = 4;
@@ -264,17 +257,18 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
         }
       }
 
-      realPoint = new Point(- (ourIntentionIcon.getIconWidth() / 2) - 4, - (ourIntentionIcon.getIconHeight() / 2));
+      realPoint = new Point(- (AllIcons.Actions.RealIntentionBulb.getIconWidth() / 2) - 4, - (AllIcons.Actions.RealIntentionBulb
+                                                                                                .getIconHeight() / 2));
     } else {
       // try to place bulb on the same line
       final int borderHeight = NORMAL_BORDER_SIZE;
 
-      int yShift = -(NORMAL_BORDER_SIZE + ourIntentionIcon.getIconHeight());
+      int yShift = -(NORMAL_BORDER_SIZE + AllIcons.Actions.RealIntentionBulb.getIconHeight());
       if (canPlaceBulbOnTheSameLine(editor)) {
-        yShift = -(borderHeight + ((ourIntentionIcon.getIconHeight() - editor.getLineHeight())/2) + 3);
+        yShift = -(borderHeight + ((AllIcons.Actions.RealIntentionBulb.getIconHeight() - editor.getLineHeight())/2) + 3);
       }
 
-      final int xShift = ourIntentionIcon.getIconWidth();
+      final int xShift = AllIcons.Actions.RealIntentionBulb.getIconWidth();
 
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
       realPoint = new Point(Math.max(0,visibleArea.x - xShift), position.y + yShift);
@@ -293,7 +287,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     final int firstNonSpaceColumnOnTheLine = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, line);
     if (firstNonSpaceColumnOnTheLine == -1) return false;
     final Point point = editor.visualPositionToXY(new VisualPosition(line, firstNonSpaceColumnOnTheLine));
-    return point.x > (ourIntentionIcon.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2);
+    return point.x > (AllIcons.Actions.RealIntentionBulb.getIconWidth() + (editor.isOneLineMode() ? SMALL_BORDER_SIZE : NORMAL_BORDER_SIZE) * 2);
   }
                                                                  
   private IntentionHintComponent(@NotNull Project project,
@@ -326,11 +320,11 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
       }
     }
 
-    Icon smartTagIcon = showRefactoringsBulb ? ourRefactoringBulbIcon : showFix ? ourQuickFixIcon : ourBulbIcon;
+    Icon smartTagIcon = showRefactoringsBulb ? AllIcons.Actions.RefactoringBulb : showFix ? AllIcons.Actions.QuickfixBulb : AllIcons.Actions.IntentionBulb;
 
     myHighlightedIcon = new RowIcon(2);
     myHighlightedIcon.setIcon(smartTagIcon, 0);
-    myHighlightedIcon.setIcon(ourArrowIcon, 1);
+    myHighlightedIcon.setIcon(AllIcons.General.ArrowDown, 1);
 
     myInactiveIcon = new RowIcon(2);
     myInactiveIcon.setIcon(smartTagIcon, 0);

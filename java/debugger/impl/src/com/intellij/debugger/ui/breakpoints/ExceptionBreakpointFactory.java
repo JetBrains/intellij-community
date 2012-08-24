@@ -20,6 +20,7 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.ui.breakpoints.actions.*;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
@@ -29,11 +30,9 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jdom.Element;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 
 /**
  * @author Eugene Zhuravlev
@@ -45,11 +44,11 @@ public class ExceptionBreakpointFactory extends BreakpointFactory {
   }
 
   public Icon getIcon() {
-    return DebuggerIcons.ENABLED_EXCEPTION_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_exception_breakpoint;
   }
 
   public Icon getDisabledIcon() {
-    return DebuggerIcons.DISABLED_EXCEPTION_BREAKPOINT_ICON;
+    return AllIcons.Debugger.Db_disabled_exception_breakpoint;
   }
 
   @Override

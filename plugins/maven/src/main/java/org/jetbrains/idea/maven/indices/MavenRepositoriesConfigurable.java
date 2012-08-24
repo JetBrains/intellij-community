@@ -69,7 +69,6 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
   private JButton myEditButton;
 
   private AnimatedIcon myUpdatingIcon;
-  private final Icon myWaitingIcon = AllIcons.Process.Step_passive;
   private Timer myRepaintTimer;
   private ActionListener myTimerListener;
   private final Project myProject;
@@ -371,9 +370,9 @@ public class MavenRepositoriesConfigurable extends BaseConfigurable implements S
           myUpdatingIcon.paint(g);
           break;
         case WAITING:
-          int x = (size.width - myWaitingIcon.getIconWidth()) / 2;
-          int y = (size.height - myWaitingIcon.getIconHeight()) / 2;
-          myWaitingIcon.paintIcon(this, g, x, y);
+          int x = (size.width - AllIcons.Process.Step_passive.getIconWidth()) / 2;
+          int y = (size.height - AllIcons.Process.Step_passive.getIconHeight()) / 2;
+          AllIcons.Process.Step_passive.paintIcon(this, g, x, y);
           break;
       }
     }

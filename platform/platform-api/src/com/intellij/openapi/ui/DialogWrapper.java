@@ -242,8 +242,6 @@ public abstract class DialogWrapper {
   private int myValidationDelay = 300;
   private boolean myDisposed = false;
   private boolean myValidationStarted = false;
-  private static final Icon ERROR_POINT = AllIcons.Ide.ErrorPoint;
-  private static final Icon ERROR_SIGN = AllIcons.Ide.ErrorSign;
   private final ErrorPainter myErrorPainter = new ErrorPainter();
   private JComponent myErrorPane;
   private boolean myErrorPainterInstalled = false;
@@ -1850,11 +1848,11 @@ public abstract class DialogWrapper {
         switch (getErrorPaintingType()) {
           case DOT:
             p = SwingUtilities.convertPoint(comp, 2,  h/2 , component);
-            ERROR_POINT.paintIcon(component, g, p.x, p.y);
+            AllIcons.Ide.ErrorPoint.paintIcon(component, g, p.x, p.y);
             break;
           case SIGN:
             p = SwingUtilities.convertPoint(comp, w,  0, component);
-            ERROR_SIGN.paintIcon(component, g, p.x - 8, p.y - 8);
+            AllIcons.Ide.ErrorSign.paintIcon(component, g, p.x - 8, p.y - 8);
             break;
           case LINE:
             p = SwingUtilities.convertPoint(comp, 0,  h, component);

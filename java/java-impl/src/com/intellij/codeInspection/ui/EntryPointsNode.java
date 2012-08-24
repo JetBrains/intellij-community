@@ -25,13 +25,12 @@ import javax.swing.*;
  * @author max
  */
 public class EntryPointsNode extends InspectionNode {
-  private static final Icon ENTRY_POINTS = AllIcons.Nodes.EntryPoints;
   public EntryPointsNode(UnusedDeclarationInspection tool) {
     super(new DummyEntryPointsTool(tool));
     getTool().updateContent();
   }
 
   public Icon getIcon(boolean expanded) {
-    return ENTRY_POINTS;
+    return AllIcons.Nodes.EntryPoints;
   }
 }

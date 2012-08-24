@@ -24,7 +24,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import javax.swing.*;
 
 public class FixedHotfixGroupElement extends GroupingElement {
-  private final static Icon ourIcon = AllIcons.Compiler.Information;
   private final CustomizeColoredTreeCellRenderer myCustomizeColoredTreeCellRenderer;
 
   public FixedHotfixGroupElement(String name, Object data, VirtualFile file) {
@@ -38,7 +37,7 @@ public class FixedHotfixGroupElement extends GroupingElement {
                                         boolean leaf,
                                         int row,
                                         boolean hasFocus) {
-        renderer.setIcon(ourIcon);
+        renderer.setIcon(AllIcons.Compiler.Information);
         renderer.append("Fixed: ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         final String[] text = getText();
         final String checkedText = ((text != null) && (text.length > 0)) ? text[0] : "";

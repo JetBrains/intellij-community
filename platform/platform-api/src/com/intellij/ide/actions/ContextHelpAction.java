@@ -24,10 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
 public class ContextHelpAction extends AnAction implements DumbAware {
-  private static final Icon myIcon= AllIcons.Actions.Help;
   private final String myHelpID;
 
   public ContextHelpAction() {
@@ -63,7 +60,7 @@ public class ContextHelpAction extends AnAction implements DumbAware {
       presentation.setEnabled(getHelpId(dataContext) != null);
     }
     else {
-      presentation.setIcon(myIcon);
+      presentation.setIcon(AllIcons.Actions.Help);
       presentation.setText(CommonBundle.getHelpButtonText());
     }
   }

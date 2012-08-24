@@ -80,7 +80,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   /**
    * Call this method to setup custom icon and/or error message (it will be shown in tooltip) for breakpoint
    * @param breakpoint breakpoint
-   * @param icon icon (<code>null</code> if default icon should be used). You can use icons from {@link com.intellij.xdebugger.ui.DebuggerIcons}
+   * @param icon icon (<code>null</code> if default icon should be used). You can use icons from {@link com.intellij.icons.AllIcons.Debugger}
    * @param errorMessage an error message if breakpoint isn't successfully registered
    */
   void updateBreakpointPresentation(@NotNull XLineBreakpoint<?> breakpoint, @Nullable Icon icon, @Nullable String errorMessage);

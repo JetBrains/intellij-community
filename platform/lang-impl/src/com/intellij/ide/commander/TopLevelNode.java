@@ -21,7 +21,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -30,12 +29,11 @@ import java.util.Collections;
  *         Date: Jun 23, 2005
  */
 public class TopLevelNode extends AbstractTreeNode {
-  private static final Icon ourUpLevelIcon = AllIcons.Nodes.UpLevel;
 
   public TopLevelNode(Project project, Object value) {
     super(project, value);
     myName = "[ .. ]";
-    myOpenIcon = myClosedIcon = ourUpLevelIcon;
+    myOpenIcon = myClosedIcon = AllIcons.Nodes.UpLevel;
   }
 
   @NotNull

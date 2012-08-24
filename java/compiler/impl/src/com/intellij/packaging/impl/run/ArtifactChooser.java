@@ -15,10 +15,10 @@
  */
 package com.intellij.packaging.impl.run;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactPointer;
-import com.intellij.packaging.impl.artifacts.PlainArtifactType;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,7 +37,7 @@ public class ArtifactChooser extends ElementsChooser<ArtifactPointer> {
   };
   private static final ElementProperties INVALID_ARTIFACT_PROPERTIES = new ElementProperties() {
     public Icon getIcon() {
-      return PlainArtifactType.ARTIFACT_ICON;
+      return AllIcons.Nodes.Artifact;
     }
 
     public Color getColor() {

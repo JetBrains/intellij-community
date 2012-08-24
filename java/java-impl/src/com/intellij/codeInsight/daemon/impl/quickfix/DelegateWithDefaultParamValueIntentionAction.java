@@ -47,7 +47,6 @@ import java.util.HashSet;
  * User: anna
  */
 public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBaseIntentionAction implements Iconable, LowPriorityAction {
-   public static final Icon REFACTORING_BULB = AllIcons.Actions.RefactoringBulb;
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     final PsiParameter parameter = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
@@ -67,7 +66,7 @@ public class DelegateWithDefaultParamValueIntentionAction extends PsiElementBase
 
   @Override
   public Icon getIcon(int flags) {
-    return REFACTORING_BULB;
+    return AllIcons.Actions.RefactoringBulb;
   }
 
   private static PsiMethod generateMethodPrototype(PsiMethod method, PsiParameter... params) {

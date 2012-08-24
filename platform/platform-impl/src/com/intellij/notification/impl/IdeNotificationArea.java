@@ -46,10 +46,6 @@ import java.util.List;
  * @author spleaner
  */
 public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget, IconLikeCustomStatusBarWidget {
-  private static final Icon EMPTY_ICON = AllIcons.Ide.Notifications;
-  private static final Icon ERROR_ICON = AllIcons.Ide.Error_notifications;
-  private static final Icon WARNING_ICON = AllIcons.Ide.Warning_notifications;
-  private static final Icon INFO_ICON = AllIcons.Ide.Info_notifications;
   public static final String WIDGET_ID = "Notifications";
 
   private StatusBar myStatusBar;
@@ -112,7 +108,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
     boolean stripesVisible = !UISettings.getInstance().HIDE_TOOL_STRIPES;
     ArrayList<Notification> notifications = logModel.getNotifications();
     LayeredIcon icon = new LayeredIcon(2);
-    Icon statusIcon = getPendingNotificationsIcon(EMPTY_ICON, getMaximumType(notifications));
+    Icon statusIcon = getPendingNotificationsIcon(AllIcons.Ide.Notifications, getMaximumType(notifications));
     icon.setIcon(statusIcon, 0);
     final int count = notifications.size();
     if (count > 0) {
@@ -137,9 +133,9 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   private static Icon getPendingNotificationsIcon(Icon defIcon, final NotificationType maximumType) {
     if (maximumType != null) {
       switch (maximumType) {
-        case WARNING: return WARNING_ICON;
-        case ERROR: return ERROR_ICON;
-        case INFORMATION: return INFO_ICON;
+        case WARNING: return AllIcons.Ide.Warning_notifications;
+        case ERROR: return AllIcons.Ide.Error_notifications;
+        case INFORMATION: return AllIcons.Ide.Info_notifications;
       }
     }
     return defIcon;
@@ -222,7 +218,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
     @Override
     public int getIconHeight() {
-      return EMPTY_ICON.getIconHeight();
+      return AllIcons.Ide.Notifications.getIconHeight();
     }
   }
 }

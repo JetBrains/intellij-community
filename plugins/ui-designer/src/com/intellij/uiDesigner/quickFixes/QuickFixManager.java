@@ -63,7 +63,6 @@ public abstract class QuickFixManager <T extends JComponent>{
    * My currently visible hint. May be null if there is no visible hint
    */
   private LightweightHint myHint;
-  private final Icon myIcon = AllIcons.Actions.IntentionBulb;
   private Rectangle myLastHintBounds;
 
   public QuickFixManager(@Nullable final GuiEditor editor, @NotNull final T component, @NotNull final JViewport viewPort) {
@@ -160,10 +159,10 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
 
     // 4. Show light bulb to fix this error
-    final LightBulbComponentImpl lightBulbComponent = new LightBulbComponentImpl(this, myIcon);
+    final LightBulbComponentImpl lightBulbComponent = new LightBulbComponentImpl(this, AllIcons.Actions.IntentionBulb);
     myHint = new LightweightHint(lightBulbComponent);
     myLastHintBounds = bounds;
-    myHint.show(myComponent, bounds.x - myIcon.getIconWidth() - 4, bounds.y, myComponent, new HintHint(myComponent, bounds.getLocation()));
+    myHint.show(myComponent, bounds.x - AllIcons.Actions.IntentionBulb.getIconWidth() - 4, bounds.y, myComponent, new HintHint(myComponent, bounds.getLocation()));
   }
 
   private void updateIntentionHintPosition(final JViewport viewPort) {
@@ -171,7 +170,9 @@ public abstract class QuickFixManager <T extends JComponent>{
       Rectangle rc = getErrorBounds();
       if (rc != null) {
         myLastHintBounds = rc;
-        Rectangle hintRect = new Rectangle(rc.x - myIcon.getIconWidth() - 4, rc.y, myIcon.getIconWidth() + 4, myIcon.getIconHeight() + 4);
+        Rectangle hintRect = new Rectangle(rc.x - AllIcons.Actions.IntentionBulb.getIconWidth() - 4, rc.y, AllIcons.Actions.IntentionBulb
+                                                                                                             .getIconWidth() + 4, AllIcons.Actions.IntentionBulb
+                                                                                                                                    .getIconHeight() + 4);
         LOG.debug("hintRect=" + hintRect);
         if (getHintClipRect(viewPort).contains(hintRect)) {
           myHint.pack();

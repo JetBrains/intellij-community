@@ -60,7 +60,6 @@ public class PluginConfigurationType implements ConfigurationType {
       }
     };
   }
-  private static final Icon ICON = AllIcons.Nodes.Plugin;
 
   public String getDisplayName() {
     return DevKitBundle.message("run.configuration.title");
@@ -71,7 +70,7 @@ public class PluginConfigurationType implements ConfigurationType {
   }
 
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.Plugin;
   }
 
   public ConfigurationFactory[] getConfigurationFactories() {

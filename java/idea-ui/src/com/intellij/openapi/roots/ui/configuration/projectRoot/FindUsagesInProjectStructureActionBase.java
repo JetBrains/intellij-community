@@ -43,12 +43,11 @@ import java.util.Comparator;
  * @author nik
  */
 public abstract class FindUsagesInProjectStructureActionBase extends AnAction implements DumbAware {
-  private static final Icon FIND_ICON = AllIcons.Actions.Find;
   private final JComponent myParentComponent;
   private final Project myProject;
 
   public FindUsagesInProjectStructureActionBase(JComponent parentComponent, Project project) {
-    super(ProjectBundle.message("find.usages.action.text"), ProjectBundle.message("find.usages.action.text"), FIND_ICON);
+    super(ProjectBundle.message("find.usages.action.text"), ProjectBundle.message("find.usages.action.text"), AllIcons.Actions.Find);
     registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_USAGES).getShortcutSet(), parentComponent);
     myParentComponent = parentComponent;
     myProject = project;

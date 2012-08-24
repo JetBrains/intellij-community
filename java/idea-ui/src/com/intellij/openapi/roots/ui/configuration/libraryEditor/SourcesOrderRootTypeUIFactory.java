@@ -34,7 +34,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
-  private static final Icon ICON = AllIcons.Nodes.SourceFolder;
 
   public SdkPathEditor createPathEditor(Sdk sdk) {
     return new SdkPathEditor(ProjectBundle.message("sdk.configure.sourcepath.tab"), OrderRootType.SOURCES, new FileChooserDescriptor(true, true, true, false, true, true)) {
@@ -47,7 +46,7 @@ public class SourcesOrderRootTypeUIFactory implements OrderRootTypeUIFactory {
 
   @Override
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.Nodes.SourceFolder;
   }
 
   @Override

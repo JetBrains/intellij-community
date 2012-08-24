@@ -15,7 +15,6 @@
  */
 package com.intellij.ide.errorTreeView;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -348,7 +347,6 @@ public class ErrorViewStructure extends AbstractTreeStructure {
   }
 
   private static class MyNavigatableWithDataElement extends NavigatableMessageElement {
-    private final static Icon ourFileIcon = AllIcons.FileTypes.Unknown;
     private final VirtualFile myVf;
     private final CustomizeColoredTreeCellRenderer myCustomizeColoredTreeCellRenderer;
 

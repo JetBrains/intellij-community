@@ -121,21 +121,18 @@ public class IncomingChangesIndicator {
   private static class IndicatorComponent implements StatusBarWidget, StatusBarWidget.IconPresentation {
     private StatusBar myStatusBar;
 
-    private static final Icon CHANGES_AVAILABLE_ICON = AllIcons.Ide.IncomingChangesOn;
-    private static final Icon CHANGES_NOT_AVAILABLE_ICON = AllIcons.Ide.IncomingChangesOff;
-
-    private Icon myCurrentIcon = CHANGES_NOT_AVAILABLE_ICON;
+    private Icon myCurrentIcon = AllIcons.Ide.IncomingChangesOff;
     private String myToolTipText;
 
     private IndicatorComponent() {
     }
 
     void clear() {
-      update(CHANGES_NOT_AVAILABLE_ICON, "No incoming changelists available");
+      update(AllIcons.Ide.IncomingChangesOff, "No incoming changelists available");
     }
 
     void setChangesAvailable(@NotNull final String toolTipText) {
-      update(CHANGES_AVAILABLE_ICON, toolTipText);
+      update(AllIcons.Ide.IncomingChangesOn, toolTipText);
     }
 
     private void update(@NotNull final Icon icon, @Nullable final String toolTipText) {

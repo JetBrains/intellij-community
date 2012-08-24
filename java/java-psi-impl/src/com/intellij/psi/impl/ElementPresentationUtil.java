@@ -34,12 +34,6 @@ import gnu.trove.TIntObjectHashMap;
 import javax.swing.*;
 
 public class ElementPresentationUtil implements PlatformIcons {
-  private static final Icon STATIC_MARK_ICON = AllIcons.Nodes.StaticMark;
-  private static final Icon FINAL_MARK_ICON = AllIcons.Nodes.FinalMark;
-  public static final Icon JUNIT_TEST_MARK = AllIcons.Nodes.JunitTestMark;
-  private static final Icon RUNNABLE_MARK = AllIcons.Nodes.RunnableMark;
-
-
   private ElementPresentationUtil() {
   }
 
@@ -68,8 +62,6 @@ public class ElementPresentationUtil implements PlatformIcons {
   public static RowIcon createLayeredIcon(Icon baseIcon, PsiModifierListOwner element, boolean isLocked) {
     return ElementBase.createLayeredIcon(element, baseIcon, getFlags(element, isLocked));
   }
-
-  private static final Icon ABSTRACT_EXCEPTION_CLASS_ICON = AllIcons.Nodes.AbstractException;
 
   private static final int CLASS_KIND_INTERFACE     = 10;
   private static final int CLASS_KIND_ANNOTATION    = 20;
@@ -168,7 +160,7 @@ public class ElementPresentationUtil implements PlatformIcons {
     BASE_ICON.put(CLASS_KIND_ENUM, ENUM_ICON);
     BASE_ICON.put(CLASS_KIND_ENUM | FLAGS_ABSTRACT, ENUM_ICON);
     BASE_ICON.put(CLASS_KIND_EXCEPTION, EXCEPTION_CLASS_ICON);
-    BASE_ICON.put(CLASS_KIND_EXCEPTION | FLAGS_ABSTRACT, ABSTRACT_EXCEPTION_CLASS_ICON);
+    BASE_ICON.put(CLASS_KIND_EXCEPTION | FLAGS_ABSTRACT, AllIcons.Nodes.AbstractException);
     BASE_ICON.put(CLASS_KIND_INTERFACE, INTERFACE_ICON);
     BASE_ICON.put(CLASS_KIND_INTERFACE | FLAGS_ABSTRACT, INTERFACE_ICON);
     BASE_ICON.put(CLASS_KIND_JUNIT_TEST, CLASS_ICON);
@@ -231,10 +223,10 @@ public class ElementPresentationUtil implements PlatformIcons {
 
 
   static {
-    ElementBase.registerIconLayer(FLAGS_STATIC, STATIC_MARK_ICON);
-    ElementBase.registerIconLayer(FLAGS_FINAL, FINAL_MARK_ICON);
-    ElementBase.registerIconLayer(FLAGS_JUNIT_TEST, JUNIT_TEST_MARK);
-    ElementBase.registerIconLayer(FLAGS_RUNNABLE, RUNNABLE_MARK);
+    ElementBase.registerIconLayer(FLAGS_STATIC, AllIcons.Nodes.StaticMark);
+    ElementBase.registerIconLayer(FLAGS_FINAL, AllIcons.Nodes.FinalMark);
+    ElementBase.registerIconLayer(FLAGS_JUNIT_TEST, AllIcons.Nodes.JunitTestMark);
+    ElementBase.registerIconLayer(FLAGS_RUNNABLE, AllIcons.Nodes.RunnableMark);
   }
 
   public static Icon addVisibilityIcon(final PsiModifierListOwner element, final int flags, final RowIcon baseIcon) {

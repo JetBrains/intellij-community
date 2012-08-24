@@ -28,7 +28,6 @@ import javax.swing.*;
 import java.util.List;
 
 public class ElementLocationUtil {
-  public static final Icon LIB_ICON_CLOSED = AllIcons.Nodes.PpLibClosed;//TODO: Move to a more proper place
 
   private ElementLocationUtil() {
   }
@@ -66,7 +65,7 @@ public class ElementLocationUtil {
 
         if (entry != null) {
           label.setText(entry.getPresentableName());
-          label.setIcon(LIB_ICON_CLOSED);
+          label.setIcon(AllIcons.Nodes.PpLibClosed);
         }
       }
     }
