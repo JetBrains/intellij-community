@@ -33,7 +33,7 @@ import java.util.List;
 public enum Gravity {
   left, right, center, top, bottom;
 
-  public static Icon ICON = IconLoader.getIcon("/com/intellij/android/designer/icons/gravity.png");
+  public static Icon ICON = IconLoader.getIcon("/icons/gravity.png");
 
   public static final int NONE = 0;
   public static final int TOP = 1 << 0;
