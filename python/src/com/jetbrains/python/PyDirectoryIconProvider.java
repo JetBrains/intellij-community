@@ -3,7 +3,6 @@ package com.jetbrains.python;
 import com.intellij.ide.IconProvider;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -24,7 +23,7 @@ public class PyDirectoryIconProvider extends IconProvider {
         final VirtualFile vFile = directory.getVirtualFile();
         final VirtualFile root = ProjectRootManager.getInstance(directory.getProject()).getFileIndex().getSourceRootForFile(vFile);
         if (!Comparing.equal(root, vFile)) {
-          return (flags & Iconable.ICON_FLAG_OPEN) != 0 ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON;
+          return PlatformIcons.PACKAGE_ICON;
         }
       }
     }

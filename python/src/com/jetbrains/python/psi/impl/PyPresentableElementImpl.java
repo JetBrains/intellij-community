@@ -35,7 +35,7 @@ public abstract class PyPresentableElementImpl<T extends StubElement> extends Py
       }
 
       public Icon getIcon(final boolean open) {
-        return PyPresentableElementImpl.this.getIcon(open ? ICON_FLAG_OPEN : ICON_FLAG_CLOSED);
+        return PyPresentableElementImpl.this.getIcon(0);
       }
     };
   }

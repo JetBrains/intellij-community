@@ -2,7 +2,6 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -54,7 +53,7 @@ public class PyDunderAllReference extends PsiReferenceBase<PyStringLiteralExpres
         if (element instanceof PsiNamedElement && !(element instanceof LightNamedElement)) {
           final String name = ((PsiNamedElement)element).getName();
           if (name != null && PyUtil.getInitialUnderscores(name) == 0 && (dunderAll == null || !dunderAll.contains(name))) {
-            result.add(LookupElementBuilder.create((PsiNamedElement) element).withIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED)));
+            result.add(LookupElementBuilder.create((PsiNamedElement) element).withIcon(element.getIcon(0)));
           }
         }
         else if (element instanceof PyImportElement) {
