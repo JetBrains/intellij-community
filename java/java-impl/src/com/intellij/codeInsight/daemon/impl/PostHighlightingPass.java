@@ -641,8 +641,9 @@ public class PostHighlightingPass extends TextEditorHighlightingPass {
     }
     FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     FindUsagesHandler handler = new JavaFindUsagesHandler(member, new JavaFindUsagesHandlerFactory(project));
-    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions();
+    FindUsagesOptions findUsagesOptions = handler.getFindUsagesOptions().clone();
     findUsagesOptions.searchScope = useScope;
+    findUsagesOptions.isSearchForTextOccurrences = true;
     return !findUsagesManager.isUsed(member, findUsagesOptions);
   }
 
