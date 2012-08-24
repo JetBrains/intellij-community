@@ -579,7 +579,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       myElements = speedSearch.getAllElements();
 
       if (startIndex < 0 || startIndex > myElements.length) {
-        throw new IndexOutOfBoundsException("Index: " + startIndex);
+        throw new IndexOutOfBoundsException("Index: " + startIndex + " in: " + SpeedSearchBase.this.getClass());
       }
     }
 
