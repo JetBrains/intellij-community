@@ -34,6 +34,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -132,7 +133,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     final PluginId[] dependentPluginIds = pluginDescriptor.getDependentPluginIds();
     final PluginId[] optionalDependentPluginIds = pluginDescriptor.getOptionalDependentPluginIds();
     for (PluginId id : dependentPluginIds) {
-      if (Arrays.binarySearch(optionalDependentPluginIds, id) > -1) continue;
+      if (ArrayUtil.find(optionalDependentPluginIds, id) > -1) continue;
       final boolean disabled = ((InstalledPluginsTableModel)pluginsModel).isDisabled(id);
       final boolean enabled = ((InstalledPluginsTableModel)pluginsModel).isEnabled(id);
       if (!enabled && !disabled && !PluginManager.isModuleDependency(id)) {
