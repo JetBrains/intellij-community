@@ -31,6 +31,7 @@ import com.intellij.openapi.project.DumbModeAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
@@ -42,6 +43,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
@@ -57,6 +59,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -157,6 +160,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
     final ProgressIndicator progressIndicator = progressIndicatorFactory != null ? progressIndicatorFactory.create() : null;
 
+    final AtomicBoolean findUsagesStartedShown = new AtomicBoolean();
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -164,7 +168,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
           ProgressManager.getInstance().runProcess(new Runnable() {
             @Override
             public void run() {
-              runnable.searchUsages();
+              runnable.searchUsages(findUsagesStartedShown);
             }
           }, progressIndicator);
         }
@@ -172,7 +176,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
           //ignore
         }
         finally {
-          runnable.endSearchForUsages();
+          runnable.endSearchForUsages(findUsagesStartedShown);
         }
       }
     });
@@ -297,12 +301,23 @@ public class UsageViewManagerImpl extends UsageViewManager {
     @Override
     public void run() {
       //long start = System.currentTimeMillis();
-      searchUsages();
-      endSearchForUsages();
+      AtomicBoolean findUsagesStartedShown = new AtomicBoolean();
+      searchUsages(findUsagesStartedShown);
+      endSearchForUsages(findUsagesStartedShown);
       //System.out.println("Usage search took " + (System.currentTimeMillis() - start));
     }
 
-    private void searchUsages() {
+    private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
+      Alarm findUsagesStartedBalloon = new Alarm();
+      findUsagesStartedBalloon.addRequest(new Runnable() {
+        @Override
+        public void run() {
+          ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
+                                                                   "Find Usages in progress...",
+                                                                   AllIcons.Actions.Find, null);
+          findStartedBalloonShown.set(true);
+        }
+      }, 300, ModalityState.NON_MODAL);
       UsageSearcher usageSearcher = mySearcherFactory.create();
       final AtomicInteger tooManyUsages = new AtomicInteger();
       // 0: ok, 1:warning dialog shown; 2:user closed dialog
@@ -349,6 +364,18 @@ public class UsageViewManagerImpl extends UsageViewManager {
           }
         }, myProject.getDisposed());
       }
+      Disposer.dispose(findUsagesStartedBalloon);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (findStartedBalloonShown.get()) {
+            Balloon balloon = ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND);
+            if (balloon != null) {
+              balloon.hide();
+            }
+          }
+        }
+      }, myProject.getDisposed());
     }
 
     public void setCurrentSearchCancelled(boolean cancelled) {
@@ -359,7 +386,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       return mySearchHasBeenCancelled;
     }
 
-    private void endSearchForUsages() {
+    private void endSearchForUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
       assert !ApplicationManager.getApplication().isDispatchThread() : Thread.currentThread();
       int usageCount = myUsageCountWithoutDefinition.get();
       if (usageCount == 0 && myProcessPresentation.isShowNotFoundMessage()) {
@@ -372,10 +399,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                              myPresentation.getScopeText());
 
               if (notFoundActions == null || notFoundActions.isEmpty()) {
-                //noinspection SSBasedInspection
                 ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO,
                                                                          XmlStringUtil.escapeString(message),
                                                                          AllIcons.Actions.Find, null);
+                findStartedBalloonShown.set(false);
               }
               else {
                 List<String> titles = new ArrayList<String>(notFoundActions.size() + 1);
@@ -398,17 +425,16 @@ public class UsageViewManagerImpl extends UsageViewManager {
           }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
       else if (usageCount == 1 && !myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-        SwingUtilities.invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (myProject.isDisposed()) return;
             Usage usage = myFirstUsage.get();
             if (usage.canNavigate()) {
               usage.navigate(true);
               flashUsageScriptaculously(usage);
             }
           }
-        });
+        }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
       else {
         final UsageViewImpl usageView = myUsageViewRef.get();
@@ -425,9 +451,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
     private class MyUsageViewImpl extends UsageViewImpl {
       public MyUsageViewImpl() {
-        super(myProject, SearchForUsagesRunnable.this.myPresentation,
-              SearchForUsagesRunnable.this.mySearchFor,
-              SearchForUsagesRunnable.this.mySearcherFactory);
+        super(myProject, SearchForUsagesRunnable.this.myPresentation, mySearchFor, mySearcherFactory);
       }
 
       @Override
