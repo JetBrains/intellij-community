@@ -26,7 +26,6 @@ import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,8 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author yole
  */
 public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
-  private static final Icon OVERRIDING_METHOD_ICON = AllIcons.Gutter.OverridingMethod;
-  private static final Icon OVERRIDDEN_ICON = AllIcons.Gutter.OverridenMethod;
 
   private static class TooltipProvider implements Function<PsiElement, String> {
     private final String myText;
@@ -173,7 +170,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
         superClass = ((PyFunction)superMethod).getContainingClass();
       }
       // TODO: show "implementing" instead of "overriding" icon for Python implementations of Java interface methods
-      return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(), OVERRIDING_METHOD_ICON, Pass.UPDATE_ALL,
+      return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(), AllIcons.Gutter.OverridingMethod, Pass.UPDATE_ALL,
                                             superClass == null ? null : new TooltipProvider("Overrides method in " + superClass.getName()),
                                             ourSuperMethodNavigator);
     }
@@ -192,7 +189,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       final PyTargetExpression ancestorAttr = ancestor.findClassAttribute(name, false);
       if (ancestorAttr != null) {
         return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(),
-                                              OVERRIDING_METHOD_ICON, Pass.UPDATE_ALL,
+                                              AllIcons.Gutter.OverridingMethod, Pass.UPDATE_ALL,
                                               new TooltipProvider("Overrides attribute in " + ancestor.getName()),
                                               ourSuperAttributeNavigator);
       }
@@ -215,7 +212,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   private static void collectInheritingClasses(final PyClass element, final Collection<LineMarkerInfo> result) {
     if (PyClassInheritorsSearch.search(element, false).findFirst() != null) {
-      result.add(new LineMarkerInfo<PyClass>(element, element.getTextOffset(), OVERRIDDEN_ICON, Pass.UPDATE_OVERRIDEN_MARKERS,
+      result.add(new LineMarkerInfo<PyClass>(element, element.getTextOffset(), AllIcons.Gutter.OverridenMethod, Pass.UPDATE_OVERRIDEN_MARKERS,
                                              ourSubclassTooltipProvider, ourSubclassNavigator));
     }
   }
@@ -247,7 +244,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       if (candidates.isEmpty()) break;
     }
     for(PyFunction func: overridden) {
-      result.add(new LineMarkerInfo<PyFunction>(func, func.getTextOffset(), OVERRIDDEN_ICON, Pass.UPDATE_OVERRIDEN_MARKERS,
+      result.add(new LineMarkerInfo<PyFunction>(func, func.getTextOffset(), AllIcons.Gutter.OverridenMethod, Pass.UPDATE_OVERRIDEN_MARKERS,
                                                 ourOverridingMethodTooltipProvider,
                                                 ourOverridingMethodNavigator));
     }

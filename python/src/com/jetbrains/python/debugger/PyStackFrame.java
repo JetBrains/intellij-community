@@ -1,5 +1,6 @@
 package com.jetbrains.python.debugger;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -14,7 +15,6 @@ import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -51,7 +51,7 @@ public class PyStackFrame extends XStackFrame {
 
   @Override
   public void customizePresentation(SimpleColoredComponent component) {
-    component.setIcon(DebuggerIcons.STACK_FRAME_ICON);
+    component.setIcon(AllIcons.Debugger.StackFrame);
 
     if (myPosition == null) {
       component.append("<frame not available>", SimpleTextAttributes.GRAY_ATTRIBUTES);
