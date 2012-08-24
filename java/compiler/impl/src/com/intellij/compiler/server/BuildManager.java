@@ -39,16 +39,14 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerAdapter;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
@@ -74,7 +72,6 @@ import org.jboss.netty.handler.codec.protobuf.ProtobufDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufEncoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import org.jboss.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -556,11 +553,6 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
-    final List<GlobalLibrary> globals = new ArrayList<GlobalLibrary>();
-
-    fillSdks(globals);
-    fillGlobalLibraries(globals);
-
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.Builder cmdBuilder =
       CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.newBuilder();
 
@@ -576,28 +568,6 @@ public class BuildManager implements ApplicationComponent{
       }
     }
 
-    if (!globals.isEmpty()) {
-      for (GlobalLibrary lib : globals) {
-        final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.Builder libBuilder =
-          CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.newBuilder();
-        libBuilder.setName(lib.getName()).addAllPath(lib.getPaths());
-        if (lib instanceof SdkLibrary) {
-          final SdkLibrary sdk = (SdkLibrary)lib;
-          libBuilder.setHomePath(sdk.getHomePath());
-          libBuilder.setTypeName(sdk.getTypeName());
-          final String additional = sdk.getAdditionalDataXml();
-          if (additional != null) {
-            libBuilder.setAdditionalDataXml(additional);
-          }
-          final String version = sdk.getVersion();
-          if (version != null) {
-            libBuilder.setVersion(version);
-          }
-        }
-        cmdBuilder.addGlobalLibrary(libBuilder.build());
-      }
-    }
-
     final String defaultCharset = EncodingManager.getInstance().getDefaultCharsetName();
     if (!StringUtil.isEmpty(defaultCharset)) {
       cmdBuilder.setGlobalEncoding(defaultCharset);
@@ -606,66 +576,6 @@ public class BuildManager implements ApplicationComponent{
     final String ignoredFilesList = FileTypeManager.getInstance().getIgnoredFilesList();
     cmdBuilder.setIgnoredFilesPatterns(ignoredFilesList);
     return cmdBuilder.build();
-  }
-
-  private static void fillSdks(List<GlobalLibrary> globals) {
-    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      final String name = sdk.getName();
-      final String homePath = sdk.getHomePath();
-      if (homePath == null) {
-        continue;
-      }
-      final SdkAdditionalData data = sdk.getSdkAdditionalData();
-      final String additionalDataXml;
-      final SdkType sdkType = (SdkType) sdk.getSdkType();
-      if (data == null) {
-        additionalDataXml = null;
-      }
-      else {
-        final Element element = new Element("additional");
-        sdkType.saveAdditionalData(data, element);
-        additionalDataXml = JDOMUtil.writeElement(element, "\n");
-      }
-      final List<String> paths = convertToLocalPaths(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
-      String versionString = sdk.getVersionString();
-      if (versionString != null && sdkType instanceof JavaSdk) {
-        final JavaSdkVersion version = ((JavaSdk)sdkType).getVersion(versionString);
-        if (version != null) {
-          versionString = version.getDescription();
-        }
-      }
-      globals.add(new SdkLibrary(name, sdkType.getName(), versionString, homePath, paths, additionalDataXml));
-    }
-  }
-
-  private static void fillGlobalLibraries(List<GlobalLibrary> globals) {
-    final LibraryTablesRegistrar tableRegistrar = LibraryTablesRegistrar.getInstance();
-    List<LibraryTable> tables = new ArrayList<LibraryTable>();
-    tables.add(tableRegistrar.getLibraryTable());
-
-    tables.addAll(tableRegistrar.getCustomLibraryTables());
-    for (LibraryTable libraryTable : tables) {
-      final Iterator<Library> iterator = libraryTable.getLibraryIterator();
-      while (iterator.hasNext()) {
-        Library library = iterator.next();
-        final String name = library.getName();
-
-        if (name != null) {
-          final List<String> paths = convertToLocalPaths(library.getFiles(OrderRootType.CLASSES));
-          globals.add(new GlobalLibrary(name, paths));
-        }
-      }
-    }
-  }
-
-  private static List<String> convertToLocalPaths(VirtualFile[] files) {
-    final List<String> paths = new ArrayList<String>();
-    for (VirtualFile file : files) {
-      if (file.isValid()) {
-        paths.add(StringUtil.trimEnd(FileUtil.toSystemIndependentName(file.getPath()), JarFileSystem.JAR_SEPARATOR));
-      }
-    }
-    return paths;
   }
 
   private Process launchBuildProcess(Project project, final int port, final UUID sessionId) throws ExecutionException {

@@ -42,18 +42,7 @@ message Message {
     }
 
     message GlobalSettings {
-
-      message GlobalLibrary {
-        required string name = 1;
-        optional string homePath = 2;
-        optional string type_name = 3;
-        optional string additional_data_xml = 4;
-        repeated string path = 5;
-        optional string version = 6;
-      }
-
       repeated KeyValuePair path_variable = 1;
-      repeated GlobalLibrary global_library = 2;
       optional string global_encoding = 3;
       optional string ignored_files_patterns = 4;
       required string global_options_path = 5;

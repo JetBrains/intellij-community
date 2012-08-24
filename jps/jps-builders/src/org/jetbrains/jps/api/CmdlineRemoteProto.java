@@ -1956,12 +1956,6 @@ public final class CmdlineRemoteProto {
         org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair getPathVariable(int index);
         int getPathVariableCount();
         
-        // repeated .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings.GlobalLibrary global_library = 2;
-        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary> 
-            getGlobalLibraryList();
-        org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary getGlobalLibrary(int index);
-        int getGlobalLibraryCount();
-        
         // optional string global_encoding = 3;
         boolean hasGlobalEncoding();
         String getGlobalEncoding();
@@ -1992,821 +1986,6 @@ public final class CmdlineRemoteProto {
           return defaultInstance;
         }
         
-        public interface GlobalLibraryOrBuilder
-            extends com.google.protobuf.MessageLiteOrBuilder {
-          
-          // required string name = 1;
-          boolean hasName();
-          String getName();
-          
-          // optional string homePath = 2;
-          boolean hasHomePath();
-          String getHomePath();
-          
-          // optional string type_name = 3;
-          boolean hasTypeName();
-          String getTypeName();
-          
-          // optional string additional_data_xml = 4;
-          boolean hasAdditionalDataXml();
-          String getAdditionalDataXml();
-          
-          // repeated string path = 5;
-          java.util.List<String> getPathList();
-          int getPathCount();
-          String getPath(int index);
-          
-          // optional string version = 6;
-          boolean hasVersion();
-          String getVersion();
-        }
-        public static final class GlobalLibrary extends
-            com.google.protobuf.GeneratedMessageLite
-            implements GlobalLibraryOrBuilder {
-          // Use GlobalLibrary.newBuilder() to construct.
-          private GlobalLibrary(Builder builder) {
-            super(builder);
-          }
-          private GlobalLibrary(boolean noInit) {}
-          
-          private static final GlobalLibrary defaultInstance;
-          public static GlobalLibrary getDefaultInstance() {
-            return defaultInstance;
-          }
-          
-          public GlobalLibrary getDefaultInstanceForType() {
-            return defaultInstance;
-          }
-          
-          private int bitField0_;
-          // required string name = 1;
-          public static final int NAME_FIELD_NUMBER = 1;
-          private java.lang.Object name_;
-          public boolean hasName() {
-            return ((bitField0_ & 0x00000001) == 0x00000001);
-          }
-          public String getName() {
-            java.lang.Object ref = name_;
-            if (ref instanceof String) {
-              return (String) ref;
-            } else {
-              com.google.protobuf.ByteString bs = 
-                  (com.google.protobuf.ByteString) ref;
-              String s = bs.toStringUtf8();
-              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-                name_ = s;
-              }
-              return s;
-            }
-          }
-          private com.google.protobuf.ByteString getNameBytes() {
-            java.lang.Object ref = name_;
-            if (ref instanceof String) {
-              com.google.protobuf.ByteString b = 
-                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-              name_ = b;
-              return b;
-            } else {
-              return (com.google.protobuf.ByteString) ref;
-            }
-          }
-          
-          // optional string homePath = 2;
-          public static final int HOMEPATH_FIELD_NUMBER = 2;
-          private java.lang.Object homePath_;
-          public boolean hasHomePath() {
-            return ((bitField0_ & 0x00000002) == 0x00000002);
-          }
-          public String getHomePath() {
-            java.lang.Object ref = homePath_;
-            if (ref instanceof String) {
-              return (String) ref;
-            } else {
-              com.google.protobuf.ByteString bs = 
-                  (com.google.protobuf.ByteString) ref;
-              String s = bs.toStringUtf8();
-              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-                homePath_ = s;
-              }
-              return s;
-            }
-          }
-          private com.google.protobuf.ByteString getHomePathBytes() {
-            java.lang.Object ref = homePath_;
-            if (ref instanceof String) {
-              com.google.protobuf.ByteString b = 
-                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-              homePath_ = b;
-              return b;
-            } else {
-              return (com.google.protobuf.ByteString) ref;
-            }
-          }
-          
-          // optional string type_name = 3;
-          public static final int TYPE_NAME_FIELD_NUMBER = 3;
-          private java.lang.Object typeName_;
-          public boolean hasTypeName() {
-            return ((bitField0_ & 0x00000004) == 0x00000004);
-          }
-          public String getTypeName() {
-            java.lang.Object ref = typeName_;
-            if (ref instanceof String) {
-              return (String) ref;
-            } else {
-              com.google.protobuf.ByteString bs = 
-                  (com.google.protobuf.ByteString) ref;
-              String s = bs.toStringUtf8();
-              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-                typeName_ = s;
-              }
-              return s;
-            }
-          }
-          private com.google.protobuf.ByteString getTypeNameBytes() {
-            java.lang.Object ref = typeName_;
-            if (ref instanceof String) {
-              com.google.protobuf.ByteString b = 
-                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-              typeName_ = b;
-              return b;
-            } else {
-              return (com.google.protobuf.ByteString) ref;
-            }
-          }
-          
-          // optional string additional_data_xml = 4;
-          public static final int ADDITIONAL_DATA_XML_FIELD_NUMBER = 4;
-          private java.lang.Object additionalDataXml_;
-          public boolean hasAdditionalDataXml() {
-            return ((bitField0_ & 0x00000008) == 0x00000008);
-          }
-          public String getAdditionalDataXml() {
-            java.lang.Object ref = additionalDataXml_;
-            if (ref instanceof String) {
-              return (String) ref;
-            } else {
-              com.google.protobuf.ByteString bs = 
-                  (com.google.protobuf.ByteString) ref;
-              String s = bs.toStringUtf8();
-              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-                additionalDataXml_ = s;
-              }
-              return s;
-            }
-          }
-          private com.google.protobuf.ByteString getAdditionalDataXmlBytes() {
-            java.lang.Object ref = additionalDataXml_;
-            if (ref instanceof String) {
-              com.google.protobuf.ByteString b = 
-                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-              additionalDataXml_ = b;
-              return b;
-            } else {
-              return (com.google.protobuf.ByteString) ref;
-            }
-          }
-          
-          // repeated string path = 5;
-          public static final int PATH_FIELD_NUMBER = 5;
-          private com.google.protobuf.LazyStringList path_;
-          public java.util.List<String>
-              getPathList() {
-            return path_;
-          }
-          public int getPathCount() {
-            return path_.size();
-          }
-          public String getPath(int index) {
-            return path_.get(index);
-          }
-          
-          // optional string version = 6;
-          public static final int VERSION_FIELD_NUMBER = 6;
-          private java.lang.Object version_;
-          public boolean hasVersion() {
-            return ((bitField0_ & 0x00000010) == 0x00000010);
-          }
-          public String getVersion() {
-            java.lang.Object ref = version_;
-            if (ref instanceof String) {
-              return (String) ref;
-            } else {
-              com.google.protobuf.ByteString bs = 
-                  (com.google.protobuf.ByteString) ref;
-              String s = bs.toStringUtf8();
-              if (com.google.protobuf.Internal.isValidUtf8(bs)) {
-                version_ = s;
-              }
-              return s;
-            }
-          }
-          private com.google.protobuf.ByteString getVersionBytes() {
-            java.lang.Object ref = version_;
-            if (ref instanceof String) {
-              com.google.protobuf.ByteString b = 
-                  com.google.protobuf.ByteString.copyFromUtf8((String) ref);
-              version_ = b;
-              return b;
-            } else {
-              return (com.google.protobuf.ByteString) ref;
-            }
-          }
-          
-          private void initFields() {
-            name_ = "";
-            homePath_ = "";
-            typeName_ = "";
-            additionalDataXml_ = "";
-            path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-            version_ = "";
-          }
-          private byte memoizedIsInitialized = -1;
-          public final boolean isInitialized() {
-            byte isInitialized = memoizedIsInitialized;
-            if (isInitialized != -1) return isInitialized == 1;
-            
-            if (!hasName()) {
-              memoizedIsInitialized = 0;
-              return false;
-            }
-            memoizedIsInitialized = 1;
-            return true;
-          }
-          
-          public void writeTo(com.google.protobuf.CodedOutputStream output)
-                              throws java.io.IOException {
-            getSerializedSize();
-            if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              output.writeBytes(1, getNameBytes());
-            }
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
-              output.writeBytes(2, getHomePathBytes());
-            }
-            if (((bitField0_ & 0x00000004) == 0x00000004)) {
-              output.writeBytes(3, getTypeNameBytes());
-            }
-            if (((bitField0_ & 0x00000008) == 0x00000008)) {
-              output.writeBytes(4, getAdditionalDataXmlBytes());
-            }
-            for (int i = 0; i < path_.size(); i++) {
-              output.writeBytes(5, path_.getByteString(i));
-            }
-            if (((bitField0_ & 0x00000010) == 0x00000010)) {
-              output.writeBytes(6, getVersionBytes());
-            }
-          }
-          
-          private int memoizedSerializedSize = -1;
-          public int getSerializedSize() {
-            int size = memoizedSerializedSize;
-            if (size != -1) return size;
-          
-            size = 0;
-            if (((bitField0_ & 0x00000001) == 0x00000001)) {
-              size += com.google.protobuf.CodedOutputStream
-                .computeBytesSize(1, getNameBytes());
-            }
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
-              size += com.google.protobuf.CodedOutputStream
-                .computeBytesSize(2, getHomePathBytes());
-            }
-            if (((bitField0_ & 0x00000004) == 0x00000004)) {
-              size += com.google.protobuf.CodedOutputStream
-                .computeBytesSize(3, getTypeNameBytes());
-            }
-            if (((bitField0_ & 0x00000008) == 0x00000008)) {
-              size += com.google.protobuf.CodedOutputStream
-                .computeBytesSize(4, getAdditionalDataXmlBytes());
-            }
-            {
-              int dataSize = 0;
-              for (int i = 0; i < path_.size(); i++) {
-                dataSize += com.google.protobuf.CodedOutputStream
-                  .computeBytesSizeNoTag(path_.getByteString(i));
-              }
-              size += dataSize;
-              size += 1 * getPathList().size();
-            }
-            if (((bitField0_ & 0x00000010) == 0x00000010)) {
-              size += com.google.protobuf.CodedOutputStream
-                .computeBytesSize(6, getVersionBytes());
-            }
-            memoizedSerializedSize = size;
-            return size;
-          }
-          
-          private static final long serialVersionUID = 0L;
-          @java.lang.Override
-          protected java.lang.Object writeReplace()
-              throws java.io.ObjectStreamException {
-            return super.writeReplace();
-          }
-          
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseFrom(
-              com.google.protobuf.ByteString data)
-              throws com.google.protobuf.InvalidProtocolBufferException {
-            return newBuilder().mergeFrom(data).buildParsed();
-          }
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseFrom(
-              com.google.protobuf.ByteString data,
-              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.protobuf.InvalidProtocolBufferException {
-            return newBuilder().mergeFrom(data, extensionRegistry)
-                     .buildParsed();
-          }
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseFrom(byte[] data)
-              throws com.google.protobuf.InvalidProtocolBufferException {
-            return newBuilder().mergeFrom(data).buildParsed();
-          }
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseFrom(
-              byte[] data,
-              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws com.google.protobuf.InvalidProtocolBufferException {
-            return newBuilder().mergeFrom(data, extensionRegistry)
-                     .buildParsed();
-          }
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseFrom(java.io.InputStream input)
-              throws java.io.IOException {
-            return newBuilder().mergeFrom(input).buildParsed();
-          }
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseFrom(
-              java.io.InputStream input,
-              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws java.io.IOException {
-            return newBuilder().mergeFrom(input, extensionRegistry)
-                     .buildParsed();
-          }
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseDelimitedFrom(java.io.InputStream input)
-              throws java.io.IOException {
-            Builder builder = newBuilder();
-            if (builder.mergeDelimitedFrom(input)) {
-              return builder.buildParsed();
-            } else {
-              return null;
-            }
-          }
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseDelimitedFrom(
-              java.io.InputStream input,
-              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws java.io.IOException {
-            Builder builder = newBuilder();
-            if (builder.mergeDelimitedFrom(input, extensionRegistry)) {
-              return builder.buildParsed();
-            } else {
-              return null;
-            }
-          }
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseFrom(
-              com.google.protobuf.CodedInputStream input)
-              throws java.io.IOException {
-            return newBuilder().mergeFrom(input).buildParsed();
-          }
-          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary parseFrom(
-              com.google.protobuf.CodedInputStream input,
-              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-              throws java.io.IOException {
-            return newBuilder().mergeFrom(input, extensionRegistry)
-                     .buildParsed();
-          }
-          
-          public static Builder newBuilder() { return Builder.create(); }
-          public Builder newBuilderForType() { return newBuilder(); }
-          public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary prototype) {
-            return newBuilder().mergeFrom(prototype);
-          }
-          public Builder toBuilder() { return newBuilder(this); }
-          
-          public static final class Builder extends
-              com.google.protobuf.GeneratedMessageLite.Builder<
-                org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary, Builder>
-              implements org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibraryOrBuilder {
-            // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.newBuilder()
-            private Builder() {
-              maybeForceBuilderInitialization();
-            }
-            
-            private void maybeForceBuilderInitialization() {
-            }
-            private static Builder create() {
-              return new Builder();
-            }
-            
-            public Builder clear() {
-              super.clear();
-              name_ = "";
-              bitField0_ = (bitField0_ & ~0x00000001);
-              homePath_ = "";
-              bitField0_ = (bitField0_ & ~0x00000002);
-              typeName_ = "";
-              bitField0_ = (bitField0_ & ~0x00000004);
-              additionalDataXml_ = "";
-              bitField0_ = (bitField0_ & ~0x00000008);
-              path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-              bitField0_ = (bitField0_ & ~0x00000010);
-              version_ = "";
-              bitField0_ = (bitField0_ & ~0x00000020);
-              return this;
-            }
-            
-            public Builder clone() {
-              return create().mergeFrom(buildPartial());
-            }
-            
-            public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary getDefaultInstanceForType() {
-              return org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.getDefaultInstance();
-            }
-            
-            public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary build() {
-              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary result = buildPartial();
-              if (!result.isInitialized()) {
-                throw newUninitializedMessageException(result);
-              }
-              return result;
-            }
-            
-            private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary buildParsed()
-                throws com.google.protobuf.InvalidProtocolBufferException {
-              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary result = buildPartial();
-              if (!result.isInitialized()) {
-                throw newUninitializedMessageException(
-                  result).asInvalidProtocolBufferException();
-              }
-              return result;
-            }
-            
-            public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary buildPartial() {
-              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary result = new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary(this);
-              int from_bitField0_ = bitField0_;
-              int to_bitField0_ = 0;
-              if (((from_bitField0_ & 0x00000001) == 0x00000001)) {
-                to_bitField0_ |= 0x00000001;
-              }
-              result.name_ = name_;
-              if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
-                to_bitField0_ |= 0x00000002;
-              }
-              result.homePath_ = homePath_;
-              if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
-                to_bitField0_ |= 0x00000004;
-              }
-              result.typeName_ = typeName_;
-              if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
-                to_bitField0_ |= 0x00000008;
-              }
-              result.additionalDataXml_ = additionalDataXml_;
-              if (((bitField0_ & 0x00000010) == 0x00000010)) {
-                path_ = new com.google.protobuf.UnmodifiableLazyStringList(
-                    path_);
-                bitField0_ = (bitField0_ & ~0x00000010);
-              }
-              result.path_ = path_;
-              if (((from_bitField0_ & 0x00000020) == 0x00000020)) {
-                to_bitField0_ |= 0x00000010;
-              }
-              result.version_ = version_;
-              result.bitField0_ = to_bitField0_;
-              return result;
-            }
-            
-            public Builder mergeFrom(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary other) {
-              if (other == org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.getDefaultInstance()) return this;
-              if (other.hasName()) {
-                setName(other.getName());
-              }
-              if (other.hasHomePath()) {
-                setHomePath(other.getHomePath());
-              }
-              if (other.hasTypeName()) {
-                setTypeName(other.getTypeName());
-              }
-              if (other.hasAdditionalDataXml()) {
-                setAdditionalDataXml(other.getAdditionalDataXml());
-              }
-              if (!other.path_.isEmpty()) {
-                if (path_.isEmpty()) {
-                  path_ = other.path_;
-                  bitField0_ = (bitField0_ & ~0x00000010);
-                } else {
-                  ensurePathIsMutable();
-                  path_.addAll(other.path_);
-                }
-                
-              }
-              if (other.hasVersion()) {
-                setVersion(other.getVersion());
-              }
-              return this;
-            }
-            
-            public final boolean isInitialized() {
-              if (!hasName()) {
-                
-                return false;
-              }
-              return true;
-            }
-            
-            public Builder mergeFrom(
-                com.google.protobuf.CodedInputStream input,
-                com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-                throws java.io.IOException {
-              while (true) {
-                int tag = input.readTag();
-                switch (tag) {
-                  case 0:
-                    
-                    return this;
-                  default: {
-                    if (!parseUnknownField(input, extensionRegistry, tag)) {
-                      
-                      return this;
-                    }
-                    break;
-                  }
-                  case 10: {
-                    bitField0_ |= 0x00000001;
-                    name_ = input.readBytes();
-                    break;
-                  }
-                  case 18: {
-                    bitField0_ |= 0x00000002;
-                    homePath_ = input.readBytes();
-                    break;
-                  }
-                  case 26: {
-                    bitField0_ |= 0x00000004;
-                    typeName_ = input.readBytes();
-                    break;
-                  }
-                  case 34: {
-                    bitField0_ |= 0x00000008;
-                    additionalDataXml_ = input.readBytes();
-                    break;
-                  }
-                  case 42: {
-                    ensurePathIsMutable();
-                    path_.add(input.readBytes());
-                    break;
-                  }
-                  case 50: {
-                    bitField0_ |= 0x00000020;
-                    version_ = input.readBytes();
-                    break;
-                  }
-                }
-              }
-            }
-            
-            private int bitField0_;
-            
-            // required string name = 1;
-            private java.lang.Object name_ = "";
-            public boolean hasName() {
-              return ((bitField0_ & 0x00000001) == 0x00000001);
-            }
-            public String getName() {
-              java.lang.Object ref = name_;
-              if (!(ref instanceof String)) {
-                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-                name_ = s;
-                return s;
-              } else {
-                return (String) ref;
-              }
-            }
-            public Builder setName(String value) {
-              if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000001;
-              name_ = value;
-              
-              return this;
-            }
-            public Builder clearName() {
-              bitField0_ = (bitField0_ & ~0x00000001);
-              name_ = getDefaultInstance().getName();
-              
-              return this;
-            }
-            void setName(com.google.protobuf.ByteString value) {
-              bitField0_ |= 0x00000001;
-              name_ = value;
-              
-            }
-            
-            // optional string homePath = 2;
-            private java.lang.Object homePath_ = "";
-            public boolean hasHomePath() {
-              return ((bitField0_ & 0x00000002) == 0x00000002);
-            }
-            public String getHomePath() {
-              java.lang.Object ref = homePath_;
-              if (!(ref instanceof String)) {
-                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-                homePath_ = s;
-                return s;
-              } else {
-                return (String) ref;
-              }
-            }
-            public Builder setHomePath(String value) {
-              if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000002;
-              homePath_ = value;
-              
-              return this;
-            }
-            public Builder clearHomePath() {
-              bitField0_ = (bitField0_ & ~0x00000002);
-              homePath_ = getDefaultInstance().getHomePath();
-              
-              return this;
-            }
-            void setHomePath(com.google.protobuf.ByteString value) {
-              bitField0_ |= 0x00000002;
-              homePath_ = value;
-              
-            }
-            
-            // optional string type_name = 3;
-            private java.lang.Object typeName_ = "";
-            public boolean hasTypeName() {
-              return ((bitField0_ & 0x00000004) == 0x00000004);
-            }
-            public String getTypeName() {
-              java.lang.Object ref = typeName_;
-              if (!(ref instanceof String)) {
-                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-                typeName_ = s;
-                return s;
-              } else {
-                return (String) ref;
-              }
-            }
-            public Builder setTypeName(String value) {
-              if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000004;
-              typeName_ = value;
-              
-              return this;
-            }
-            public Builder clearTypeName() {
-              bitField0_ = (bitField0_ & ~0x00000004);
-              typeName_ = getDefaultInstance().getTypeName();
-              
-              return this;
-            }
-            void setTypeName(com.google.protobuf.ByteString value) {
-              bitField0_ |= 0x00000004;
-              typeName_ = value;
-              
-            }
-            
-            // optional string additional_data_xml = 4;
-            private java.lang.Object additionalDataXml_ = "";
-            public boolean hasAdditionalDataXml() {
-              return ((bitField0_ & 0x00000008) == 0x00000008);
-            }
-            public String getAdditionalDataXml() {
-              java.lang.Object ref = additionalDataXml_;
-              if (!(ref instanceof String)) {
-                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-                additionalDataXml_ = s;
-                return s;
-              } else {
-                return (String) ref;
-              }
-            }
-            public Builder setAdditionalDataXml(String value) {
-              if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000008;
-              additionalDataXml_ = value;
-              
-              return this;
-            }
-            public Builder clearAdditionalDataXml() {
-              bitField0_ = (bitField0_ & ~0x00000008);
-              additionalDataXml_ = getDefaultInstance().getAdditionalDataXml();
-              
-              return this;
-            }
-            void setAdditionalDataXml(com.google.protobuf.ByteString value) {
-              bitField0_ |= 0x00000008;
-              additionalDataXml_ = value;
-              
-            }
-            
-            // repeated string path = 5;
-            private com.google.protobuf.LazyStringList path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-            private void ensurePathIsMutable() {
-              if (!((bitField0_ & 0x00000010) == 0x00000010)) {
-                path_ = new com.google.protobuf.LazyStringArrayList(path_);
-                bitField0_ |= 0x00000010;
-               }
-            }
-            public java.util.List<String>
-                getPathList() {
-              return java.util.Collections.unmodifiableList(path_);
-            }
-            public int getPathCount() {
-              return path_.size();
-            }
-            public String getPath(int index) {
-              return path_.get(index);
-            }
-            public Builder setPath(
-                int index, String value) {
-              if (value == null) {
-    throw new NullPointerException();
-  }
-  ensurePathIsMutable();
-              path_.set(index, value);
-              
-              return this;
-            }
-            public Builder addPath(String value) {
-              if (value == null) {
-    throw new NullPointerException();
-  }
-  ensurePathIsMutable();
-              path_.add(value);
-              
-              return this;
-            }
-            public Builder addAllPath(
-                java.lang.Iterable<String> values) {
-              ensurePathIsMutable();
-              super.addAll(values, path_);
-              
-              return this;
-            }
-            public Builder clearPath() {
-              path_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-              bitField0_ = (bitField0_ & ~0x00000010);
-              
-              return this;
-            }
-            void addPath(com.google.protobuf.ByteString value) {
-              ensurePathIsMutable();
-              path_.add(value);
-              
-            }
-            
-            // optional string version = 6;
-            private java.lang.Object version_ = "";
-            public boolean hasVersion() {
-              return ((bitField0_ & 0x00000020) == 0x00000020);
-            }
-            public String getVersion() {
-              java.lang.Object ref = version_;
-              if (!(ref instanceof String)) {
-                String s = ((com.google.protobuf.ByteString) ref).toStringUtf8();
-                version_ = s;
-                return s;
-              } else {
-                return (String) ref;
-              }
-            }
-            public Builder setVersion(String value) {
-              if (value == null) {
-    throw new NullPointerException();
-  }
-  bitField0_ |= 0x00000020;
-              version_ = value;
-              
-              return this;
-            }
-            public Builder clearVersion() {
-              bitField0_ = (bitField0_ & ~0x00000020);
-              version_ = getDefaultInstance().getVersion();
-              
-              return this;
-            }
-            void setVersion(com.google.protobuf.ByteString value) {
-              bitField0_ |= 0x00000020;
-              version_ = value;
-              
-            }
-            
-            // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings.GlobalLibrary)
-          }
-          
-          static {
-            defaultInstance = new GlobalLibrary(true);
-            defaultInstance.initFields();
-          }
-          
-          // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings.GlobalLibrary)
-        }
-        
         private int bitField0_;
         // repeated .org.jetbrains.jpsservice.Message.KeyValuePair path_variable = 1;
         public static final int PATH_VARIABLE_FIELD_NUMBER = 1;
@@ -2827,27 +2006,6 @@ public final class CmdlineRemoteProto {
         public org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePairOrBuilder getPathVariableOrBuilder(
             int index) {
           return pathVariable_.get(index);
-        }
-        
-        // repeated .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings.GlobalLibrary global_library = 2;
-        public static final int GLOBAL_LIBRARY_FIELD_NUMBER = 2;
-        private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary> globalLibrary_;
-        public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary> getGlobalLibraryList() {
-          return globalLibrary_;
-        }
-        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibraryOrBuilder> 
-            getGlobalLibraryOrBuilderList() {
-          return globalLibrary_;
-        }
-        public int getGlobalLibraryCount() {
-          return globalLibrary_.size();
-        }
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary getGlobalLibrary(int index) {
-          return globalLibrary_.get(index);
-        }
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibraryOrBuilder getGlobalLibraryOrBuilder(
-            int index) {
-          return globalLibrary_.get(index);
         }
         
         // optional string global_encoding = 3;
@@ -2948,7 +2106,6 @@ public final class CmdlineRemoteProto {
         
         private void initFields() {
           pathVariable_ = java.util.Collections.emptyList();
-          globalLibrary_ = java.util.Collections.emptyList();
           globalEncoding_ = "";
           ignoredFilesPatterns_ = "";
           globalOptionsPath_ = "";
@@ -2968,12 +2125,6 @@ public final class CmdlineRemoteProto {
               return false;
             }
           }
-          for (int i = 0; i < getGlobalLibraryCount(); i++) {
-            if (!getGlobalLibrary(i).isInitialized()) {
-              memoizedIsInitialized = 0;
-              return false;
-            }
-          }
           memoizedIsInitialized = 1;
           return true;
         }
@@ -2983,9 +2134,6 @@ public final class CmdlineRemoteProto {
           getSerializedSize();
           for (int i = 0; i < pathVariable_.size(); i++) {
             output.writeMessage(1, pathVariable_.get(i));
-          }
-          for (int i = 0; i < globalLibrary_.size(); i++) {
-            output.writeMessage(2, globalLibrary_.get(i));
           }
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
             output.writeBytes(3, getGlobalEncodingBytes());
@@ -3007,10 +2155,6 @@ public final class CmdlineRemoteProto {
           for (int i = 0; i < pathVariable_.size(); i++) {
             size += com.google.protobuf.CodedOutputStream
               .computeMessageSize(1, pathVariable_.get(i));
-          }
-          for (int i = 0; i < globalLibrary_.size(); i++) {
-            size += com.google.protobuf.CodedOutputStream
-              .computeMessageSize(2, globalLibrary_.get(i));
           }
           if (((bitField0_ & 0x00000001) == 0x00000001)) {
             size += com.google.protobuf.CodedOutputStream
@@ -3128,14 +2272,12 @@ public final class CmdlineRemoteProto {
             super.clear();
             pathVariable_ = java.util.Collections.emptyList();
             bitField0_ = (bitField0_ & ~0x00000001);
-            globalLibrary_ = java.util.Collections.emptyList();
-            bitField0_ = (bitField0_ & ~0x00000002);
             globalEncoding_ = "";
-            bitField0_ = (bitField0_ & ~0x00000004);
+            bitField0_ = (bitField0_ & ~0x00000002);
             ignoredFilesPatterns_ = "";
-            bitField0_ = (bitField0_ & ~0x00000008);
+            bitField0_ = (bitField0_ & ~0x00000004);
             globalOptionsPath_ = "";
-            bitField0_ = (bitField0_ & ~0x00000010);
+            bitField0_ = (bitField0_ & ~0x00000008);
             return this;
           }
           
@@ -3174,20 +2316,15 @@ public final class CmdlineRemoteProto {
               bitField0_ = (bitField0_ & ~0x00000001);
             }
             result.pathVariable_ = pathVariable_;
-            if (((bitField0_ & 0x00000002) == 0x00000002)) {
-              globalLibrary_ = java.util.Collections.unmodifiableList(globalLibrary_);
-              bitField0_ = (bitField0_ & ~0x00000002);
-            }
-            result.globalLibrary_ = globalLibrary_;
-            if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
+            if (((from_bitField0_ & 0x00000002) == 0x00000002)) {
               to_bitField0_ |= 0x00000001;
             }
             result.globalEncoding_ = globalEncoding_;
-            if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+            if (((from_bitField0_ & 0x00000004) == 0x00000004)) {
               to_bitField0_ |= 0x00000002;
             }
             result.ignoredFilesPatterns_ = ignoredFilesPatterns_;
-            if (((from_bitField0_ & 0x00000010) == 0x00000010)) {
+            if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
               to_bitField0_ |= 0x00000004;
             }
             result.globalOptionsPath_ = globalOptionsPath_;
@@ -3204,16 +2341,6 @@ public final class CmdlineRemoteProto {
               } else {
                 ensurePathVariableIsMutable();
                 pathVariable_.addAll(other.pathVariable_);
-              }
-              
-            }
-            if (!other.globalLibrary_.isEmpty()) {
-              if (globalLibrary_.isEmpty()) {
-                globalLibrary_ = other.globalLibrary_;
-                bitField0_ = (bitField0_ & ~0x00000002);
-              } else {
-                ensureGlobalLibraryIsMutable();
-                globalLibrary_.addAll(other.globalLibrary_);
               }
               
             }
@@ -3236,12 +2363,6 @@ public final class CmdlineRemoteProto {
             }
             for (int i = 0; i < getPathVariableCount(); i++) {
               if (!getPathVariable(i).isInitialized()) {
-                
-                return false;
-              }
-            }
-            for (int i = 0; i < getGlobalLibraryCount(); i++) {
-              if (!getGlobalLibrary(i).isInitialized()) {
                 
                 return false;
               }
@@ -3272,24 +2393,18 @@ public final class CmdlineRemoteProto {
                   addPathVariable(subBuilder.buildPartial());
                   break;
                 }
-                case 18: {
-                  org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.Builder subBuilder = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.newBuilder();
-                  input.readMessage(subBuilder, extensionRegistry);
-                  addGlobalLibrary(subBuilder.buildPartial());
-                  break;
-                }
                 case 26: {
-                  bitField0_ |= 0x00000004;
+                  bitField0_ |= 0x00000002;
                   globalEncoding_ = input.readBytes();
                   break;
                 }
                 case 34: {
-                  bitField0_ |= 0x00000008;
+                  bitField0_ |= 0x00000004;
                   ignoredFilesPatterns_ = input.readBytes();
                   break;
                 }
                 case 42: {
-                  bitField0_ |= 0x00000010;
+                  bitField0_ |= 0x00000008;
                   globalOptionsPath_ = input.readBytes();
                   break;
                 }
@@ -3388,99 +2503,10 @@ public final class CmdlineRemoteProto {
             return this;
           }
           
-          // repeated .org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings.GlobalLibrary global_library = 2;
-          private java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary> globalLibrary_ =
-            java.util.Collections.emptyList();
-          private void ensureGlobalLibraryIsMutable() {
-            if (!((bitField0_ & 0x00000002) == 0x00000002)) {
-              globalLibrary_ = new java.util.ArrayList<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary>(globalLibrary_);
-              bitField0_ |= 0x00000002;
-             }
-          }
-          
-          public java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary> getGlobalLibraryList() {
-            return java.util.Collections.unmodifiableList(globalLibrary_);
-          }
-          public int getGlobalLibraryCount() {
-            return globalLibrary_.size();
-          }
-          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary getGlobalLibrary(int index) {
-            return globalLibrary_.get(index);
-          }
-          public Builder setGlobalLibrary(
-              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary value) {
-            if (value == null) {
-              throw new NullPointerException();
-            }
-            ensureGlobalLibraryIsMutable();
-            globalLibrary_.set(index, value);
-            
-            return this;
-          }
-          public Builder setGlobalLibrary(
-              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.Builder builderForValue) {
-            ensureGlobalLibraryIsMutable();
-            globalLibrary_.set(index, builderForValue.build());
-            
-            return this;
-          }
-          public Builder addGlobalLibrary(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary value) {
-            if (value == null) {
-              throw new NullPointerException();
-            }
-            ensureGlobalLibraryIsMutable();
-            globalLibrary_.add(value);
-            
-            return this;
-          }
-          public Builder addGlobalLibrary(
-              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary value) {
-            if (value == null) {
-              throw new NullPointerException();
-            }
-            ensureGlobalLibraryIsMutable();
-            globalLibrary_.add(index, value);
-            
-            return this;
-          }
-          public Builder addGlobalLibrary(
-              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.Builder builderForValue) {
-            ensureGlobalLibraryIsMutable();
-            globalLibrary_.add(builderForValue.build());
-            
-            return this;
-          }
-          public Builder addGlobalLibrary(
-              int index, org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary.Builder builderForValue) {
-            ensureGlobalLibraryIsMutable();
-            globalLibrary_.add(index, builderForValue.build());
-            
-            return this;
-          }
-          public Builder addAllGlobalLibrary(
-              java.lang.Iterable<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.GlobalLibrary> values) {
-            ensureGlobalLibraryIsMutable();
-            super.addAll(values, globalLibrary_);
-            
-            return this;
-          }
-          public Builder clearGlobalLibrary() {
-            globalLibrary_ = java.util.Collections.emptyList();
-            bitField0_ = (bitField0_ & ~0x00000002);
-            
-            return this;
-          }
-          public Builder removeGlobalLibrary(int index) {
-            ensureGlobalLibraryIsMutable();
-            globalLibrary_.remove(index);
-            
-            return this;
-          }
-          
           // optional string global_encoding = 3;
           private java.lang.Object globalEncoding_ = "";
           public boolean hasGlobalEncoding() {
-            return ((bitField0_ & 0x00000004) == 0x00000004);
+            return ((bitField0_ & 0x00000002) == 0x00000002);
           }
           public String getGlobalEncoding() {
             java.lang.Object ref = globalEncoding_;
@@ -3496,19 +2522,19 @@ public final class CmdlineRemoteProto {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000004;
+  bitField0_ |= 0x00000002;
             globalEncoding_ = value;
             
             return this;
           }
           public Builder clearGlobalEncoding() {
-            bitField0_ = (bitField0_ & ~0x00000004);
+            bitField0_ = (bitField0_ & ~0x00000002);
             globalEncoding_ = getDefaultInstance().getGlobalEncoding();
             
             return this;
           }
           void setGlobalEncoding(com.google.protobuf.ByteString value) {
-            bitField0_ |= 0x00000004;
+            bitField0_ |= 0x00000002;
             globalEncoding_ = value;
             
           }
@@ -3516,7 +2542,7 @@ public final class CmdlineRemoteProto {
           // optional string ignored_files_patterns = 4;
           private java.lang.Object ignoredFilesPatterns_ = "";
           public boolean hasIgnoredFilesPatterns() {
-            return ((bitField0_ & 0x00000008) == 0x00000008);
+            return ((bitField0_ & 0x00000004) == 0x00000004);
           }
           public String getIgnoredFilesPatterns() {
             java.lang.Object ref = ignoredFilesPatterns_;
@@ -3532,19 +2558,19 @@ public final class CmdlineRemoteProto {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000008;
+  bitField0_ |= 0x00000004;
             ignoredFilesPatterns_ = value;
             
             return this;
           }
           public Builder clearIgnoredFilesPatterns() {
-            bitField0_ = (bitField0_ & ~0x00000008);
+            bitField0_ = (bitField0_ & ~0x00000004);
             ignoredFilesPatterns_ = getDefaultInstance().getIgnoredFilesPatterns();
             
             return this;
           }
           void setIgnoredFilesPatterns(com.google.protobuf.ByteString value) {
-            bitField0_ |= 0x00000008;
+            bitField0_ |= 0x00000004;
             ignoredFilesPatterns_ = value;
             
           }
@@ -3552,7 +2578,7 @@ public final class CmdlineRemoteProto {
           // required string global_options_path = 5;
           private java.lang.Object globalOptionsPath_ = "";
           public boolean hasGlobalOptionsPath() {
-            return ((bitField0_ & 0x00000010) == 0x00000010);
+            return ((bitField0_ & 0x00000008) == 0x00000008);
           }
           public String getGlobalOptionsPath() {
             java.lang.Object ref = globalOptionsPath_;
@@ -3568,19 +2594,19 @@ public final class CmdlineRemoteProto {
             if (value == null) {
     throw new NullPointerException();
   }
-  bitField0_ |= 0x00000010;
+  bitField0_ |= 0x00000008;
             globalOptionsPath_ = value;
             
             return this;
           }
           public Builder clearGlobalOptionsPath() {
-            bitField0_ = (bitField0_ & ~0x00000010);
+            bitField0_ = (bitField0_ & ~0x00000008);
             globalOptionsPath_ = getDefaultInstance().getGlobalOptionsPath();
             
             return this;
           }
           void setGlobalOptionsPath(com.google.protobuf.ByteString value) {
-            bitField0_ |= 0x00000010;
+            bitField0_ |= 0x00000008;
             globalOptionsPath_ = value;
             
           }
