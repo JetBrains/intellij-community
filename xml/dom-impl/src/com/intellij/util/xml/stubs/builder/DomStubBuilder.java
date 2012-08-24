@@ -16,6 +16,7 @@
 package com.intellij.util.xml.stubs.builder;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -36,7 +37,8 @@ import java.io.ByteArrayInputStream;
  */
 public class DomStubBuilder implements BinaryFileStubBuilder {
 
-  public static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
+  public final static Key<Boolean> BUILDING_DOM_STUBS = Key.create("building dom stubs...");
+  private final static Logger LOG = Logger.getInstance(DomStubBuilder.class);
 
   @Override
   public boolean acceptsFile(VirtualFile file) {
@@ -56,7 +58,11 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
       DomFileElement<? extends DomElement> fileElement = manager.getFileElement(xmlFile);
       if (fileElement == null || !fileElement.getFileDescription().hasStubs()) return null;
 
-      FileStub fileStub = new FileStub(NanoXmlUtil.parseHeader(new ByteArrayInputStream(content)));
+      XmlFileHeader header = NanoXmlUtil.parseHeader(new ByteArrayInputStream(content));
+      if (header.getRootTagLocalName() == null) {
+        LOG.error("null root tag for " + fileElement + " for " + file);
+      }
+      FileStub fileStub = new FileStub(header);
       DomStubBuilderVisitor visitor = new DomStubBuilderVisitor(fileStub);
       visitor.visitDomElement(fileElement.getRootElement());
       return fileStub;
