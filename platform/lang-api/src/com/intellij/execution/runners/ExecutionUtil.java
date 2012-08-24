@@ -23,12 +23,14 @@ import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,7 +97,8 @@ public class ExecutionUtil {
       @Override
       public void run() {
         ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, MessageType.ERROR, fullMessage, null, finalListener);
-        ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, null).notify(project);
+        NotificationListener notificationListener = ObjectUtils.tryCast(finalListener, NotificationListener.class);
+        ourNotificationGroup.createNotification(title, finalDescription, NotificationType.ERROR, notificationListener).notify(project);
       }
     });
   }
