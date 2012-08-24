@@ -133,14 +133,14 @@ public class ArrangementRuleEditor extends JPanel {
     if (myModel == null) {
       return;
     }
-    ArrangementAtomNodeComponent component = getNodeComponentAt(e.getLocationOnScreen());
-    if (component == null) {
+    ArrangementAtomNodeComponent clickedComponent = getNodeComponentAt(e.getLocationOnScreen());
+    if (clickedComponent == null) {
       return;
     }
-    ArrangementAtomMatchCondition chosenCondition = component.getMatchCondition();
+    ArrangementAtomMatchCondition chosenCondition = clickedComponent.getMatchCondition();
     boolean remove = myModel.hasCondition(chosenCondition.getValue());
-    component.setSelected(!remove);
-    repaintComponent(component);
+    clickedComponent.setSelected(!remove);
+    repaintComponent(clickedComponent);
     if (remove) {
       myModel.removeAndCondition(chosenCondition);
       return;
@@ -155,6 +155,11 @@ public class ArrangementRuleEditor extends JPanel {
         if (myModel.hasCondition(key)) {
           ArrangementAtomNodeComponent componentToDeselect = myComponents.get(key);
           myModel.replaceCondition(componentToDeselect.getMatchCondition(), chosenCondition);
+          for (ArrangementAtomNodeComponent componentToCheck : myComponents.values()) {
+            if (!ArrangementConfigUtil.isEnabled(componentToCheck.getMatchCondition().getValue(), myFilter, myModel.getMatchCondition())) {
+              myModel.removeAndCondition(componentToCheck.getMatchCondition());
+            }
+          }
           
           // There is a possible case that some conditions become unavailable, e.g. changing type from 'field' to 'method'
           // makes 'volatile' condition inappropriate.

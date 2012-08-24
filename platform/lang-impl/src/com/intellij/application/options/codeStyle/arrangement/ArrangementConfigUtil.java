@@ -89,13 +89,13 @@ public class ArrangementConfigUtil {
 
   public static boolean isEnabled(@NotNull Object conditionId,
                                   @NotNull ArrangementStandardSettingsAware filter,
-                                  @Nullable ArrangementMatchCondition settings)
+                                  @Nullable ArrangementMatchCondition condition)
   {
     if (conditionId instanceof ArrangementEntryType) {
-      return filter.isEnabled((ArrangementEntryType)conditionId, settings);
+      return filter.isEnabled((ArrangementEntryType)conditionId, condition);
     }
     else if (conditionId instanceof ArrangementModifier) {
-      return filter.isEnabled((ArrangementModifier)conditionId, settings);
+      return filter.isEnabled((ArrangementModifier)conditionId, condition);
     }
     else {
       return false;
@@ -567,9 +567,9 @@ public class ArrangementConfigUtil {
   @NotNull
   public static TIntIntHashMap remove(@NotNull final ArrangementTreeNode from,
                                       @NotNull final ArrangementTreeNode to,
-                                      @NotNull DefaultTreeModel model,
+                                      @NotNull DefaultTreeModel treeModel,
                                       boolean rootVisible)
   {
-    return doReplace(from, to, null, model, rootVisible);
+    return doReplace(from, to, null, treeModel, rootVisible);
   }
 }
