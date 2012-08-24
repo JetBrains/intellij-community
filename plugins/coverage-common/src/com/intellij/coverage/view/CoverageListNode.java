@@ -8,7 +8,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -63,7 +62,7 @@ public class CoverageListNode extends AbstractTreeNode {
           } else {
             presentation.setPresentableText(((PsiNamedElement)value).getName());
           }
-          presentation.setIcons(((PsiElement)value).getIcon(Iconable.ICON_FLAG_CLOSED));
+          presentation.setIcon(((PsiElement)value).getIcon(0));
         }
       });
     }
