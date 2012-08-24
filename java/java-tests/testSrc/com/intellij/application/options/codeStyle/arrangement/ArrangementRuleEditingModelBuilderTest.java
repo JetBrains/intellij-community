@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import org.junit.Test;
 
 import static com.intellij.psi.codeStyle.arrangement.ArrangementUtil.and;
@@ -31,21 +30,19 @@ public class ArrangementRuleEditingModelBuilderTest extends AbstractArrangementR
 
   @Test
   public void mapToTheSameLayer() {
-    ArrangementMatchCondition matchCondition = and(atom(PUBLIC), atom(STATIC));
-    myBuilder.build(matchCondition, myTree, myRoot, myGrouper, myRowMappings);
+    configure(and(atom(PUBLIC), atom(STATIC)));
     checkRows(1);
     ArrangementRuleEditingModel model = myRowMappings.get(1);
     assertTrue(model.hasCondition(PUBLIC));
     assertTrue(model.hasCondition(STATIC));
     assertFalse(model.hasCondition(PRIVATE));
     assertEquals(1, myRoot.getChildCount());
-    assertEquals(matchCondition, myRoot.getFirstChild().getBackingCondition());
+    assertEquals(and(atom(PUBLIC), atom(STATIC)), myRoot.getFirstChild().getBackingCondition());
   }
 
   @Test
   public void splitIntoTwoLayers() {
-    ArrangementMatchCondition matchCondition = and(atom(FIELD), atom(PUBLIC), atom(STATIC));
-    myBuilder.build(matchCondition, myTree, myRoot, myGrouper, myRowMappings);
+    configure(and(atom(FIELD), atom(PUBLIC), atom(STATIC)));
     
     checkRows(2);
 
@@ -60,8 +57,8 @@ public class ArrangementRuleEditingModelBuilderTest extends AbstractArrangementR
 
   @Test
   public void addToExistingLayer() {
-    myBuilder.build(and(atom(PUBLIC), atom(STATIC), atom(FIELD)), myTree, myRoot, myGrouper, myRowMappings);
-    myBuilder.build(and(atom(PRIVATE), atom(FIELD)), myTree, myRoot, myGrouper, myRowMappings);
+    configure(and(atom(PUBLIC), atom(STATIC), atom(FIELD)));
+    configure(and(atom(PRIVATE), atom(FIELD)));
     
     checkRows(2, 3);
 

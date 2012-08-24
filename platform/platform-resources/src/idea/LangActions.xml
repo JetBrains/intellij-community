@@ -811,6 +811,10 @@
     <group id="Arrangement.RuleEditor.Context.Menu">
       <!--TODO den implement-->
     </group>
+
+    <group id="Arrangement.RuleEditor.ToolWIndow">
+      <action id="Arrangement.Rule.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
+    </group>
     
   </actions>
 </component>

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui.tree;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ComparatorUtil;
 import com.intellij.util.ui.UIUtil;
@@ -36,26 +37,34 @@ import java.awt.event.MouseListener;
 * @author Konstantin Bulenkov
 */
 public class WideSelectionTreeUI extends BasicTreeUI {
+
   @NonNls public static final String SOURCE_LIST_CLIENT_PROPERTY = "mac.ui.source.list";
   @NonNls public static final String STRIPED_CLIENT_PROPERTY = "mac.ui.striped";
 
   private static final Border LIST_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListBackgroundPainter");
   private static final Border LIST_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListSelectionBackgroundPainter");
   private static final Border LIST_FOCUSED_SELECTION_BACKGROUND_PAINTER = UIManager.getBorder("List.sourceListFocusedSelectionBackgroundPainter");
-
+  
+  @NotNull private final Condition<Integer> myWideSelectionCondition;
   private boolean myWideSelection;
-  private boolean myAlwaysPaintRowBackground;
   private boolean myOldRepaintAllRowValue;
   private boolean invertLineColor;
 
-
+  @SuppressWarnings("unchecked")
   public WideSelectionTreeUI() {
-    this(true, true);
+    this(true, Condition.TRUE);
   }
 
-  public WideSelectionTreeUI(final boolean wideSelection, boolean alwaysPaintRowBackground) {
+  /**
+   * Creates new <code>WideSelectionTreeUI</code> object.
+   * 
+   * @param wideSelection           flag that determines if wide selection should be used
+   * @param wideSelectionCondition  strategy that determine if wide selection should be used for a target row (it's zero-based index
+   *                                is given to the condition as an argument)
+   */
+  public WideSelectionTreeUI(final boolean wideSelection, @NotNull Condition<Integer> wideSelectionCondition) {
     myWideSelection = wideSelection;
-    myAlwaysPaintRowBackground = alwaysPaintRowBackground;
+    myWideSelectionCondition = wideSelectionCondition;
   }
 
   private final MouseListener mySelectionListener = new MouseAdapter() {
@@ -232,7 +241,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
   @Override
   protected void paintVerticalLine(Graphics g, JComponent c, int x, int top, int bottom) {
     if (tree.hasFocus() && UIUtil.isUnderAlloyIDEALookAndFeel()) {
-      int y0 = top, y1 = top;
+      int y0, y1 = top;
       while (y1 < bottom) {
         y0 = y1;
         final int row = tree.getRowForPath(tree.getClosestPathForLocation(x, y0 + 1));
@@ -297,7 +306,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
             LIST_SELECTION_BACKGROUND_PAINTER.paintBorder(tree, rowGraphics, xOffset, bounds.y, containerWidth, bounds.height);
           }
         }
-        else if (myAlwaysPaintRowBackground) {
+        else if (myWideSelectionCondition.value(row)) {
           rowGraphics.setColor(background);
           rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height);
         }
@@ -309,7 +318,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
             bg = background;
           }
 
-          if (myAlwaysPaintRowBackground || selected) {
+          if (myWideSelectionCondition.value(row) || selected) {
             rowGraphics.setColor(bg);
             rowGraphics.fillRect(xOffset, bounds.y, containerWidth, bounds.height - 1);
           }
@@ -330,7 +339,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (myAlwaysPaintRowBackground && myWideSelection && !UIUtil.isUnderAquaBasedLookAndFeel()) {
+    if (myWideSelection && !UIUtil.isUnderAquaBasedLookAndFeel()) {
       paintSelectedRows(g, ((JTree)c));
     }
     if (myWideSelection) {
@@ -357,7 +366,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     final int lastVisibleRow = tr.getClosestRowForLocation(rect.x, rect.y + rect.height);
 
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
-      if (tr.getSelectionModel().isRowSelected(row)) {
+      if (tr.getSelectionModel().isRowSelected(row) && myWideSelectionCondition.value(row)) {
           final Rectangle bounds = tr.getRowBounds(row);
           Color color = UIUtil.getTreeSelectionBackground(tr.hasFocus());
           if (color != null) {

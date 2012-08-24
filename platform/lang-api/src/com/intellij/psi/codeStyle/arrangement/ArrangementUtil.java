@@ -137,7 +137,7 @@ public class ArrangementUtil {
     for (ArrangementMatchCondition node : nodes) {
       node.invite(visitor);
     }
-    return result;
+    return result.getOperands().size() == 1 ? result.getOperands().iterator().next() : result;
   }
   
   // TODO den remove

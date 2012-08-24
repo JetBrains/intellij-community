@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.JavaRearranger;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
@@ -22,6 +23,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.ui.treeStructure.Tree;
+import gnu.trove.TIntIntHashMap;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -55,7 +57,8 @@ public abstract class AbstractArrangementRuleEditingModelTest {
   }
 
   protected void configure(@NotNull ArrangementMatchCondition matchCondition) {
-    myBuilder.build(matchCondition, myTree, myRoot, myGrouper, myRowMappings);
+    Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myBuilder.build(matchCondition, myTree, myRoot, null, myGrouper);
+    myRowMappings.put(pair.first.getRow(), pair.first);
   }
 
   protected static ArrangementAtomMatchCondition atom(@NotNull Object condition) {

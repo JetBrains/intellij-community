@@ -135,6 +135,7 @@ public class ArrangementConfigUtil {
     return result;
   }
 
+  @SuppressWarnings("ConstantConditions")
   @NotNull
   public static ArrangementTreeNode getLastBefore(@NotNull ArrangementTreeNode start, @NotNull ArrangementTreeNode stop)
     throws IllegalArgumentException
@@ -223,7 +224,7 @@ public class ArrangementConfigUtil {
    * @param replacement  root of the node sub-hierarchy which should replace the one identified by the given 'start' and 'end' nodes
    * @param treeModel    model which should hold ui nodes
    * @param rootVisible  determines if the root should be count during rows calculations
-   * @return             collection of row changes at the form {@code 'old row -> new row'}
+   * @return             collection of row changes at the form {@code 'old row -> new row'} (all rows are zero-based)
    */
   public static TIntIntHashMap replace(@NotNull ArrangementTreeNode from,
                                        @NotNull ArrangementTreeNode to,
@@ -244,18 +245,6 @@ public class ArrangementConfigUtil {
                                           @NotNull DefaultTreeModel treeModel,
                                           boolean rootVisible)
   {
-    markRows(from, rootVisible);
-    if (from == to) {
-      ArrangementTreeNode parent = from.getParent();
-      assert parent != null;
-      int index = parent.getIndex(from);
-      treeModel.removeNodeFromParent(from);
-      if (replacement != null) {
-        insert(parent, index, replacement, treeModel);
-      }
-      return collectRowChangesAndUnmark(parent, rootVisible);
-    }
-
     // The algorithm looks as follows:
     //   1. Cut sub-hierarchy which belongs to the given 'from' root and is located below the 'to -> from' path;
     //   2. Remove 'to -> from' sub-hierarchy' by going bottom-up and stopping as soon as a current node has a child over than one
@@ -311,12 +300,49 @@ public class ArrangementConfigUtil {
     //
     // Note: we need to have a notion of 'equal nodes' for node re-usage. It's provided by comparing node user objects.
 
+    markRows(from, rootVisible);
     final ArrangementTreeNode root = from.getParent();
     assert root != null;
 
-    //region Cut bottom sub-hierarchy
+    @Nullable ArrangementTreeNode cutHierarchy = cutSubHierarchy(root, treeModel, to);
+
+    int childCountBefore = root.getChildCount();
+    
+    for (ArrangementTreeNode current = to; current != root;) {
+      ArrangementTreeNode parent = current.getParent();
+      treeModel.removeNodeFromParent(current);
+      current = parent;
+      if (parent == null || parent.getChildCount() > 0) {
+        break;
+      }
+    }
+
+    int insertionIndex = root.getChildCount() < childCountBefore ? childCountBefore - 1 : childCountBefore;
+    if (replacement != null) {
+      insert(root, insertionIndex, replacement, treeModel);
+    }
+    if (cutHierarchy != null) {
+      insert(root, root.getChildCount(), cutHierarchy, treeModel);
+    }
+    
+    return collectRowChangesAndUnmark(root, rootVisible);
+  }
+
+  /**
+   * Removes all nodes which lay below the path identified by the given 'top' and 'bottom' nodes from the tree structure and returns them.
+   * 
+   * @param topMost     top most node marker, i.e. all cut nodes descend from this node
+   * @param treeModel   tree model which manages the nodes
+   * @param bottomMost  bottom most node after which all other nodes should be cut
+   * @return            removed nodes below the target path if any; <code>null</code> otherwise
+   */
+  @Nullable
+  public static ArrangementTreeNode cutSubHierarchy(@NotNull ArrangementTreeNode topMost,
+                                                    @NotNull DefaultTreeModel treeModel,
+                                                    @NotNull ArrangementTreeNode bottomMost)
+  {
     ArrangementTreeNode cutHierarchy = null;
-    for (ArrangementTreeNode current = to; current != root; current = current.getParent()) {
+    for (ArrangementTreeNode current = bottomMost; current != null && current != topMost; current = current.getParent()) {
       ArrangementTreeNode parent = current.getParent();
       assert parent != null;
       int i = parent.getIndex(current);
@@ -338,43 +364,7 @@ public class ArrangementConfigUtil {
       }
       cutHierarchy = parentCopy;
     }
-    //endregion
-
-    int childCountBefore = root.getChildCount();
-    
-    //region Remove target sub-hierarchy
-    for (ArrangementTreeNode current = to; current != root;) {
-      ArrangementTreeNode parent = current.getParent();
-      treeModel.removeNodeFromParent(current);
-      current = parent;
-      if (parent == null || parent.getChildCount() > 0) {
-        break;
-      }
-    }
-    //endregion
-
-    //region Insert nodes.
-    int insertionIndex = root.getChildCount() < childCountBefore ? childCountBefore - 1 : childCountBefore;
-    if (replacement != null) {
-      insert(root, insertionIndex, replacement, treeModel);
-    }
-    if (cutHierarchy != null) {
-      List<ArrangementTreeNode> toInsert = new ArrayList<ArrangementTreeNode>();
-      if (hasEqualSetting(root, cutHierarchy)) {
-        for (int i = 0; i < cutHierarchy.getChildCount(); i++) {
-          toInsert.add(cutHierarchy.getChildAt(i));
-        }
-      }
-      else {
-        toInsert.add(cutHierarchy);
-      }
-      for (ArrangementTreeNode node : toInsert) {
-        insert(root, root.getChildCount(), node, treeModel);
-      }
-    }
-    //endregion
-    
-    return collectRowChangesAndUnmark(root, rootVisible);
+    return cutHierarchy;
   }
 
   /**
@@ -383,7 +373,7 @@ public class ArrangementConfigUtil {
    * @param node         reference to the target hierarchy
    * @param rootVisible  determines if the root should be count during rows calculations
    */
-  private static void markRows(@NotNull ArrangementTreeNode node, boolean rootVisible) {
+  public static void markRows(@NotNull ArrangementTreeNode node, boolean rootVisible) {
     ArrangementTreeNode root = getRoot(node);
     int row = rootVisible ? 0 : -1;
     Stack<ArrangementTreeNode> nodes = new Stack<ArrangementTreeNode>();
@@ -413,10 +403,10 @@ public class ArrangementConfigUtil {
    * Collects all row changes and returns them. All row information is dropped from the nodes during the current method processing.
    * 
    * @param node  reference to the target nodes hierarchy
-   * @return      collection of row changes at the form {@code 'old row -> new row'}
+   * @return      collection of row changes at the form {@code 'old row -> new row'} (all rows are zero-based)
    */
   @NotNull
-  private static TIntIntHashMap collectRowChangesAndUnmark(@NotNull ArrangementTreeNode node, boolean rootVisible) {
+  public static TIntIntHashMap collectRowChangesAndUnmark(@NotNull ArrangementTreeNode node, boolean rootVisible) {
     @NotNull TIntIntHashMap changes = new TIntIntHashMap();
     ArrangementTreeNode root = getRoot(node);
     int row = rootVisible ? 0 : -1;
@@ -467,7 +457,7 @@ public class ArrangementConfigUtil {
     buffer.setLength(buffer.length() - separator.length());
     throw new RuntimeException("Invalid ArrangementTreeNode detected: " + buffer.toString());
   }
-  
+
   /**
    * Inserts given child to the given parent re-using existing nodes under the parent sub-hierarchy if possible.
    * <p/>
@@ -493,14 +483,36 @@ public class ArrangementConfigUtil {
    *  |         |       |_5           |                     |                     |           |_6       |
    * </pre>
    * <p/>
-   * 
+   *
    * @param parent     parent node to insert into
    * @param index      insertion index to use for the given parent node
    * @param child      node to insert to the given parent node at the given insertion index
    * @param treeModel  model which should hold UI nodes
    * @return           <code>true</code> if given child node has been merged to the existing node; <code>false</code> otherwise
    */
-  public static boolean insert(@NotNull final ArrangementTreeNode parent,
+  public static void insert(@NotNull final ArrangementTreeNode parent,
+                            final int index,
+                            @NotNull final ArrangementTreeNode child,
+                            @NotNull DefaultTreeModel treeModel)
+  {
+    ArrangementTreeNode root = getRoot(parent);
+    List<ArrangementTreeNode> toInsert = new ArrayList<ArrangementTreeNode>();
+    if (hasEqualSetting(root, child)) {
+      for (int i = 0; i < child.getChildCount(); i++) {
+        toInsert.add(child.getChildAt(i));
+      }
+    }
+    else {
+      toInsert.add(child);
+    }
+    int i = index;
+    for (ArrangementTreeNode node : toInsert) {
+      doInsert(parent, i++, node, treeModel);
+    }
+  }
+  
+  
+  private static boolean doInsert(@NotNull final ArrangementTreeNode parent,
                                final int index,
                                @NotNull final ArrangementTreeNode child,
                                @NotNull DefaultTreeModel treeModel)
@@ -562,7 +574,7 @@ public class ArrangementConfigUtil {
    * @param to           indicates end of the node sub-hierarchy (bottom-most node) to be replaced (inclusive)
    * @param treeModel    model which should hold ui nodes
    * @param rootVisible  determines if the root should be count during rows calculations
-   * @return             collection of row changes at the form {@code 'old row -> new row'}
+   * @return             collection of row changes at the form {@code 'old row -> new row'} (all rows are zero-based)
    */
   @NotNull
   public static TIntIntHashMap remove(@NotNull final ArrangementTreeNode from,

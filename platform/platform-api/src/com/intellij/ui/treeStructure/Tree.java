@@ -19,6 +19,7 @@ import com.intellij.Patches;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Queryable;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.*;
@@ -97,7 +98,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     TreeUI actualUI = ui;
     if (!isCustomUI()) {
       if (!(ui instanceof WideSelectionTreeUI) && isWideSelection() && !UIUtil.isUnderGTKLookAndFeel()) {
-        actualUI = new WideSelectionTreeUI(isWideSelection(), isAlwaysPaintRowBackground());
+        actualUI = new WideSelectionTreeUI(isWideSelection(), getWideSelectionBackgroundCondition());
       }
     }
     super.setUI(actualUI);
@@ -140,8 +141,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     return true;
   }
 
-  protected boolean isAlwaysPaintRowBackground() {
-    return !SystemInfo.isMac;
+  /**
+   * @return    a strategy which determines if a wide selection should be drawn for a target row (it's number is
+   *            {@link Condition#value(Object) given} as an argument to the strategy)
+   */
+  @SuppressWarnings("unchecked")
+  @NotNull
+  protected Condition<Integer> getWideSelectionBackgroundCondition() {
+    return SystemInfo.isMac ? Condition.FALSE : Condition.TRUE;
   }
   
   public boolean isFileColorsEnabled() {

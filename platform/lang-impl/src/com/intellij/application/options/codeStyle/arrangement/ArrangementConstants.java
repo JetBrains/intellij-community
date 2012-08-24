@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.openapi.actionSystem.DataKey;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -24,10 +25,15 @@ import org.jetbrains.annotations.NonNls;
 public class ArrangementConstants {
 
   @NonNls public static final String ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU = "Arrangement.RuleEditor.Context.Menu";
-  @NonNls public static final String RULE_EDITOR_PLACE                     = "Arrangement.RuleEditor.Place";
-  @NonNls public static final String RULE_TREE_PLACE                       = "Arrangement.RuleTree.Place";
+  @NonNls public static final String ACTION_GROUP_RULE_EDITOR_TOOL_WINDOW  = "Arrangement.RuleEditor.ToolWIndow";
+
+  @NonNls public static final String RULE_EDITOR_PLACE             = "Arrangement.RuleEditor.Place";
+  @NonNls public static final String RULE_EDITOR_TOOL_WINDOW_PLACE = "Arrangement.RuleEditor.ToolWindow.Place";
+  @NonNls public static final String RULE_TREE_PLACE               = "Arrangement.RuleTree.Place";
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
+
+  public static final DataKey<Runnable> NEW_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.New");
 
   private ArrangementConstants() {
   }

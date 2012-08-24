@@ -29,6 +29,7 @@ import static org.junit.Assert.assertEquals
  * @author Denis Zhdanov
  * @since 8/17/12 1:12 PM
  */
+@SuppressWarnings(["GroovyAssignabilityCheck", "GroovyVariableNotAssigned"])
 class ArrangementConfigUtilTest {
 
   @Test
@@ -410,6 +411,53 @@ to =      '4'()}
     def rowMappings = doRemove(from, to)
     assertNodesEqual(expected, initial)
     checkRowMappings([ 6 : 3 ], rowMappings)
+  }
+  
+  @Test
+  void removeSingleNodeWithMerge() {
+    def node;
+    def initial = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()}
+node =  '3'()
+        '1' {
+          '4'()}
+      }
+    
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()
+          '4'()}
+      }
+    
+    def rowMappings = doRemove(node, node)
+    assertNodesEqual(expected, initial)
+    checkRowMappings([ 5 : 3 ], rowMappings)
+  }
+  
+  @Test
+  void removeWithSingleNodeBelowMerge() {
+    def node;
+    def initial = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()}
+node =  '3'()
+        '1'()
+      }
+    
+    def expected = new TreeNodeBuilder().
+      '0' {
+        '1' {
+          '2'()}
+        '1'()
+      }
+    
+    def rowMappings = doRemove(node, node)
+    assertNodesEqual(expected, initial)
+    checkRowMappings([ 4 : 3 ], rowMappings)
   }
   
   private static def doReplace(from, to, replacement) {

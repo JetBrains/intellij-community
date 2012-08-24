@@ -16,14 +16,18 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import gnu.trove.*;
 import org.jetbrains.annotations.NotNull;
@@ -47,13 +51,17 @@ import java.util.List;
  */
 public class ArrangementRuleTree {
 
-  @NotNull private static final JLabel EMPTY_RENDERER = new JLabel("");
-  private static final          Logger LOG            = Logger.getInstance("#" + ArrangementRuleTree.class.getName());
+  @NotNull private static final JLabel EMPTY_RENDERER         = new JLabel("");
+  @NotNull private static final JLabel NEW_CONDITION_RENDERER = new JLabel("<html><b>&lt;empty condition&gt;</b>");
+  @NotNull private static final Logger LOG                    = Logger.getInstance("#" + ArrangementRuleTree.class.getName());
 
   @NotNull private final List<ArrangementRuleSelectionListener> myListeners           = new ArrayList<ArrangementRuleSelectionListener>();
   @NotNull private final TreeSelectionModel                     mySelectionModel      = new MySelectionModel();
   @NotNull private final MyModelChangeListener                  myModelChangeListener = new MyModelChangeListener();
   @NotNull private final MyModelNodesRefresher                  myModelNodesRefresher = new MyModelNodesRefresher();
+  @NotNull private final ArrangementRuleEditingModelBuilder     myModelBuilder        = new ArrangementRuleEditingModelBuilder();
+  @NotNull private final Alarm                                  myAlarm               = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
+  @NotNull private final RemoveInactiveNewModelRequest          myRequest             = new RemoveInactiveNewModelRequest();
 
   @NotNull private final TIntObjectHashMap<ArrangementNodeComponent>        myRenderers =
     new TIntObjectHashMap<ArrangementNodeComponent>();
@@ -64,11 +72,13 @@ public class ArrangementRuleTree {
   @NotNull private final DefaultTreeModel                myTreeModel;
   @NotNull private final Tree                            myTree;
   @NotNull private final ArrangementNodeComponentFactory myFactory;
+  @NotNull private final ArrangementSettingsGrouper      myGrouper;
 
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
   public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
+    myGrouper = grouper;
     myFactory = new ArrangementNodeComponentFactory(displayManager, new Consumer<ArrangementAtomMatchCondition>() {
       @Override
       public void consume(@NotNull ArrangementAtomMatchCondition setting) {
@@ -78,6 +88,7 @@ public class ArrangementRuleTree {
     myRoot = new ArrangementTreeNode(null);
     myTreeModel = new DefaultTreeModel(myRoot);
     myTree = new Tree(myTreeModel) {
+      
       @Override
       protected void setExpandedState(TreePath path, boolean state) {
         // Don't allow node collapse
@@ -86,16 +97,34 @@ public class ArrangementRuleTree {
         }
       }
 
+      @NotNull
       @Override
-      protected boolean isAlwaysPaintRowBackground() {
-        return false;
+      protected Condition<Integer> getWideSelectionBackgroundCondition() {
+        return new Condition<Integer>() {
+          @Override
+          public boolean value(Integer row) {
+            TreePath path = getPathForRow(row);
+            if (path == null) {
+              return false;
+            }
+            return isEmptyCondition(((ArrangementTreeNode)path.getLastPathComponent()).getBackingCondition());
+          }
+        };
       }
 
       @Override
       protected void processMouseEvent(MouseEvent e) {
         // JTree selects a node on mouse click at the same row (even outside the node bounds). We don't want to support
         // such selection because selected nodes are highlighted at the rule tree, so, it produces a 'blink' effect.
-        mySkipSelectionChange = e.getClickCount() > 0 && getNodeComponentAt(e.getLocationOnScreen()) == null;
+        if (e.getClickCount() > 0 && getNodeComponentAt(e.getLocationOnScreen()) == null) {
+          TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
+          if (path == null) {
+            mySkipSelectionChange = true;
+          }
+          if (path == null || !isEmptyCondition(((ArrangementTreeNode)path.getLastPathComponent()).getBackingCondition())) {
+            mySkipSelectionChange = true;
+          }
+        }
         try {
           super.processMouseEvent(e);
           if (mySkipSelectionChange) {
@@ -106,7 +135,7 @@ public class ArrangementRuleTree {
           mySkipSelectionChange = false;
         }
       }
-    };
+      };
     myTree.setSelectionModel(mySelectionModel);
     myTree.setRootVisible(false);
     mySelectionModel.addTreeSelectionListener(new TreeSelectionListener() {
@@ -166,7 +195,7 @@ public class ArrangementRuleTree {
     rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    map(myRoot, rules, grouper);
+    map(rules);
 
     expandAll(myTree, new TreePath(myRoot));
     myTree.setShowsRootHandles(false);
@@ -264,7 +293,7 @@ public class ArrangementRuleTree {
   }
 
   /**
-   * Updates renderer's {@link ArrangementNodeComponent#setSelected(boolean) 'selected'} state on tree ndoe selection change.
+   * Updates renderer {@link ArrangementNodeComponent#setSelected(boolean) 'selected'} state on tree node selection change.
    * 
    * @param path      changed selection path
    * @param selected  <code>true</code> if given path is selected now; <code>false</code> if given path was selected anymore
@@ -305,21 +334,12 @@ public class ArrangementRuleTree {
     tree.expandPath(parent);
   }
 
-  private void map(@NotNull ArrangementTreeNode root,
-                   @NotNull List<ArrangementMatchCondition> matchConditions,
-                   @NotNull ArrangementSettingsGrouper grouper)
-  {
-    ArrangementRuleEditingModelBuilder builder = new ArrangementRuleEditingModelBuilder();
+  private void map(@NotNull List<ArrangementMatchCondition> matchConditions) {
     for (ArrangementMatchCondition matchCondition : matchConditions) {
-      builder.build(matchCondition, myTree, root, grouper, myModels);
+      Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(matchCondition, myTree, myRoot, null, myGrouper);
+      myModels.put(pair.first.getRow(), pair.first);
+      pair.first.addListener(myModelChangeListener);
     }
-    myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
-      @Override
-      public boolean execute(ArrangementRuleEditingModelImpl model) {
-        model.addListener(myModelChangeListener); 
-        return true;
-      }
-    });
   }
 
   public void addEditingListener(@NotNull ArrangementRuleSelectionListener listener) {
@@ -330,7 +350,7 @@ public class ArrangementRuleTree {
    * @return    matcher model for the selected tree row(s) if any; null otherwise
    */
   @Nullable
-  public ArrangementRuleEditingModel getActiveModel() {
+  public ArrangementRuleEditingModelImpl getActiveModel() {
     TreePath[] paths = mySelectionModel.getSelectionPaths();
     if (paths == null) {
       return null;
@@ -340,14 +360,17 @@ public class ArrangementRuleTree {
     // for more than one rule. No model is registered for them then and we want just to skip them.
     for (int i = paths.length - 1; i >= 0; i--) {
       int row = myTree.getRowForPath(paths[i]);
-      ArrangementRuleEditingModel model = myModels.get(row);
+      ArrangementRuleEditingModelImpl model = myModels.get(row);
       if (model != null) {
         return model;
       }
     }
     return null;
   }
-  
+
+  /**
+   * @return    UI component encapsulated by the current object. Subsequent calls to this method return the same reference all the time
+   */
   @NotNull
   public Tree getTreeComponent() {
     return myTree;
@@ -387,7 +410,13 @@ public class ArrangementRuleTree {
       component.handleMouseClick(e);
       return;
     }
-    // Clear selection
+
+    TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
+    if (path != null && isEmptyCondition(((ArrangementTreeNode)path.getLastPathComponent()).getBackingCondition())) {
+      return;
+    }
+
+    // Clear selection if it was a click at the empty space
     doClearSelection();
   }
   
@@ -530,6 +559,31 @@ public class ArrangementRuleTree {
       }
     });
   }
+
+  /**
+   * Asks current model to create a new rule below the currently selected (or at the last position if no one is selected at the moment).
+   * 
+   * @return    model for the newly created row
+   */
+  @NotNull
+  public ArrangementRuleEditingModel newModel() {
+    ArrangementRuleEditingModelImpl activeModel = getActiveModel();
+    final ArrangementTreeNode anchor = activeModel == null ? null : activeModel.getBottomMost();
+    doClearSelection();
+    Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myModelBuilder.build(
+      new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND), myTree, myRoot, anchor, myGrouper
+    );
+    processRowChanges(pair.second);
+    myModels.put(pair.first.getRow(), pair.first);
+    pair.first.addListener(myModelChangeListener);
+    mySelectionModel.setSelectionPath(myTree.getPathForRow(pair.first.getRow()));
+    return pair.first;
+  }
+
+  private static boolean isEmptyCondition(@Nullable ArrangementMatchCondition condition) {
+    return condition instanceof ArrangementCompositeMatchCondition
+           && ((ArrangementCompositeMatchCondition)condition).getOperands().isEmpty();
+  }
   
   private class MyCellRenderer implements TreeCellRenderer {
     @Override
@@ -545,7 +599,10 @@ public class ArrangementRuleTree {
       if (node == null) {
         return EMPTY_RENDERER;
       }
-
+      else if (isEmptyCondition(node)) {
+        return NEW_CONDITION_RENDERER;
+      }
+      
       if (row < 0) {
         return myFactory.getComponent(node).getUiComponent();
       }
@@ -568,6 +625,8 @@ public class ArrangementRuleTree {
         return;
       }
       
+      myAlarm.cancelAllRequests();
+      myAlarm.addRequest(myRequest, 300);
       clearSelection();
       ArrangementTreeNode component = (ArrangementTreeNode)path.getLastPathComponent();
       
@@ -623,6 +682,29 @@ public class ArrangementRuleTree {
     @Override
     public boolean execute(ArrangementRuleEditingModelImpl model) {
       model.refreshTreeNodes(); 
+      return true;
+    }
+  }
+  
+  private class RemoveInactiveNewModelRequest implements Runnable, TObjectProcedure<ArrangementRuleEditingModelImpl> {
+    
+    @Override
+    public void run() {
+      myAlarm.cancelAllRequests();
+      ArrangementRuleEditingModelImpl model = getActiveModel();
+      if (model != null && isEmptyCondition(model.getMatchCondition())) {
+        return;
+      }
+      myModels.forEachValue(this);
+    }
+
+    @Override
+    public boolean execute(@NotNull ArrangementRuleEditingModelImpl model) {
+      if (isEmptyCondition(model.getMatchCondition())) {
+        model.destroy();
+        // TODO den restore selection (e.g. from bottom)
+        return false;
+      }
       return true;
     }
   }

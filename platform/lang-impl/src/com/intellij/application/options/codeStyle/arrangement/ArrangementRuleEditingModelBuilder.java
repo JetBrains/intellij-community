@@ -21,13 +21,13 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
-import gnu.trove.TIntObjectHashMap;
+import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 
 /**
  * Holds glue logic between arrangement settings and their representation -
@@ -58,45 +58,41 @@ public class ArrangementRuleEditingModelBuilder {
    * </ol>
    * </pre>
    *
-   * @param matchCondition     target settings to process
-   * @param tree        UI tree which shows arrangement matcher rules
-   * @param root        UI tree settings root to use (may be not the same as the tree root)
-   * @param grouper     strategy that knows how to
-   *                    {@link ArrangementStandardSettingsRepresentationAware#getDisplayValue(ArrangementModifier) group} setting
-   *                    nodes for UI representation
-   * @param rowMappings container to hold built {@link ArrangementRuleEditingModel editing models} (UI tree row numbers are used as keys)
+   * @param matchCondition target settings to process
+   * @param tree           UI tree which shows arrangement matcher rules
+   * @param root           UI tree settings root to use (may be not the same as the tree root)
+   * @param anchor         node after which should be previous sibling for the root node of the inserted condition;
+   *                       <code>null</code> as an indication that new condition nodes should be inserted as the last 'root' child
+   * @param grouper        strategy that knows how to
+   *                       {@link ArrangementStandardSettingsRepresentationAware#getDisplayValue(ArrangementModifier) group} setting
+   *                       nodes for UI representation
+   * @return               collection of row changes at the form {@code 'old row -> new row'} (all rows are zero-based)
    */
   @SuppressWarnings("MethodMayBeStatic")
-  public void build(@NotNull ArrangementMatchCondition matchCondition,
-                    @NotNull JTree tree,
-                    @NotNull ArrangementTreeNode root,
-                    @NotNull ArrangementSettingsGrouper grouper,
-                    @NotNull TIntObjectHashMap<ArrangementRuleEditingModelImpl> rowMappings)
+  public Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> build(
+    @NotNull ArrangementMatchCondition matchCondition,
+    @NotNull JTree tree,
+    @NotNull ArrangementTreeNode root,
+    @Nullable ArrangementTreeNode anchor,
+    @NotNull ArrangementSettingsGrouper grouper)
   {
-    int initialInsertRow = 0;
-    
-    // Count rows before the settings root.
-    for (TreeNode n = root.getParent(); n != null; n = n.getParent()) {
-      for (int i = n.getChildCount() - 1; i >= 0; i--) {
-        TreeNode child = n.getChildAt(i);
-        if (child != root) {
-          initialInsertRow += calculateRowsCount(child);
-        }
-      }
-      initialInsertRow++;
-    }
-    
-    // Count root width.
-    initialInsertRow += calculateRowsCount(root);
-    if (!tree.isRootVisible()) {
-      initialInsertRow--;
-    }
-
     HierarchicalArrangementConditionNode grouped = grouper.group(matchCondition);
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();
-    Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(root, grouped, treeModel);
-    ArrangementTreeNode topMostNode = ArrangementConfigUtil.getLastBefore(pair.first, root);
-    int row = initialInsertRow + pair.second - 1;
+    Pair<ArrangementTreeNode, Integer> pair = ArrangementConfigUtil.map(null, grouped, null);
+    ArrangementTreeNode topMostNode = ArrangementConfigUtil.getRoot(pair.first);
+    ArrangementConfigUtil.markRows(root, tree.isRootVisible());
+    ArrangementTreeNode bottomHierarchy = null;
+    if (anchor != null) {
+      bottomHierarchy = ArrangementConfigUtil.cutSubHierarchy(root, treeModel, anchor);
+    }
+    ArrangementConfigUtil.insert(root, root.getChildCount(), topMostNode, treeModel);
+    if (bottomHierarchy != null) {
+      ArrangementConfigUtil.insert(root, root.getChildCount(), bottomHierarchy, treeModel);
+    }
+    
+    TIntIntHashMap rowChanges = ArrangementConfigUtil.collectRowChangesAndUnmark(root, tree.isRootVisible());
+    topMostNode = ArrangementConfigUtil.getLastBefore(pair.first, root);
+    int row = ArrangementConfigUtil.getRow(pair.first, tree.isRootVisible());
     ArrangementRuleEditingModelImpl model = new ArrangementRuleEditingModelImpl(
       treeModel,
       matchCondition,
@@ -106,14 +102,6 @@ public class ArrangementRuleEditingModelBuilder {
       row,
       tree.isRootVisible()
     );
-    rowMappings.put(row, model);
-  }
-
-  private static int calculateRowsCount(@NotNull TreeNode node) {
-    int result = 1;
-    for (int i = node.getChildCount() - 1; i >= 0; i--) {
-      result += calculateRowsCount(node.getChildAt(i));
-    }
-    return result;
+    return Pair.create(model, rowChanges);
   }
 }
