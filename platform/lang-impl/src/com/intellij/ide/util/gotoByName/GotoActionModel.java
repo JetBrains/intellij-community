@@ -272,12 +272,13 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
     if (Comparing.strEqual(id, SETTINGS_KEY)) {
       final Set<String> words = myIndex.getProcessedWords(pattern);
       Set<OptionDescription> optionDescriptions = null;
+      final String actionManagerName = myActionManager.getComponentName();
       for (String word : words) {
         final Set<OptionDescription> descriptions = ((SearchableOptionsRegistrarImpl)myIndex).getAcceptableDescriptions(word);
         if (descriptions != null) {
           for (Iterator<OptionDescription> iterator = descriptions.iterator(); iterator.hasNext(); ) {
             OptionDescription description = iterator.next();
-            if (description.getConfigurableId().equals("preferences.keymap")) {
+            if (actionManagerName.equals(description.getPath())) {
               iterator.remove();
             }
           }

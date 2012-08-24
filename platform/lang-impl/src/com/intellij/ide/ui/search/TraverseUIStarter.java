@@ -22,7 +22,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
 import com.intellij.ide.plugins.AvailablePluginsManagerMain;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
-import com.intellij.internal.ImageDuplicateResultsDialog;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
@@ -143,10 +142,19 @@ public class TraverseUIStarter implements ApplicationStarter {
     }
   }
 
-  private static void collectOptions(SearchableOptionsRegistrar optionsRegistrar, TreeSet<OptionDescription> options, String text) {
+  private static void collectOptions(SearchableOptionsRegistrar optionsRegistrar,
+                                     TreeSet<OptionDescription> options,
+                                     String text) {
+    collectOptions(optionsRegistrar, options, text, null);
+  }
+
+  private static void collectOptions(SearchableOptionsRegistrar optionsRegistrar,
+                                     TreeSet<OptionDescription> options,
+                                     String text, 
+                                     String path) {
     final Set<String> strings = optionsRegistrar.getProcessedWordsWithoutStemming(text);
     for (String word : strings) {
-      options.add(new OptionDescription(word, text, null));
+      options.add(new OptionDescription(word, text, path));
     }
   }
 
@@ -173,6 +181,7 @@ public class TraverseUIStarter implements ApplicationStarter {
 
   private static void processKeymap(final Element configurableElement){
     final ActionManager actionManager = ActionManager.getInstance();
+    final String componentName = actionManager.getComponentName();
     final SearchableOptionsRegistrar searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance();
     final Set<String> ids = ((ActionManagerImpl)actionManager).getActionIds();
     final TreeSet<OptionDescription> options = new TreeSet<OptionDescription>();
@@ -180,11 +189,11 @@ public class TraverseUIStarter implements ApplicationStarter {
       final AnAction anAction = actionManager.getAction(id);
       final String text = anAction.getTemplatePresentation().getText();
       if (text != null) {
-        collectOptions(searchableOptionsRegistrar, options, text);
+        collectOptions(searchableOptionsRegistrar, options, text, componentName);
       }
       final String description = anAction.getTemplatePresentation().getDescription();
       if (description != null) {
-        collectOptions(searchableOptionsRegistrar, options, description);
+        collectOptions(searchableOptionsRegistrar, options, description, componentName);
       }
     }
     writeOptions(configurableElement, options);
