@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.codeStyle.arrangement;
 
+import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
@@ -32,14 +33,14 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Control for managing {@link ArrangementEntryMatcher matching rule conditions}.
+ * Control for managing {@link ArrangementEntryMatcher matching rule conditions} for a single {@link ArrangementRule}.
  * <p/>
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/14/12 9:54 AM
  */
-public class ArrangementMatchConditionEditor extends JPanel {
+public class ArrangementRuleEditor extends JPanel {
 
   @NotNull private final List<JComponent>                          myColoredComponents = new ArrayList<JComponent>();
   @NotNull private final Map<Object, ArrangementAtomNodeComponent> myComponents        =
@@ -48,9 +49,7 @@ public class ArrangementMatchConditionEditor extends JPanel {
   @NotNull private final ArrangementStandardSettingsAware myFilter;
   @Nullable private      ArrangementRuleEditingModel      myModel;
 
-  public ArrangementMatchConditionEditor(@NotNull ArrangementStandardSettingsAware filter,
-                                         @NotNull ArrangementNodeDisplayManager displayManager)
-  {
+  public ArrangementRuleEditor(@NotNull ArrangementStandardSettingsAware filter, @NotNull ArrangementNodeDisplayManager displayManager) {
     myFilter = filter;
     init(displayManager);
     addMouseListener(new MouseAdapter() {
@@ -85,7 +84,7 @@ public class ArrangementMatchConditionEditor extends JPanel {
       valuesPanel.add(component.getUiComponent());
     }
 
-    int top = ArrangementAtomNodeComponent.PADDING;
+    int top = ArrangementAtomNodeComponent.VERTICAL_PADDING;
     add(new JLabel(manager.getDisplayLabel(key) + ":"), new GridBag().anchor(GridBagConstraints.NORTHWEST).insets(top, 0, 0, 0));
     add(valuesPanel, new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally().coverLine());
     myColoredComponents.add(valuesPanel);

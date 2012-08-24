@@ -64,7 +64,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     );
 
     final JXTaskPane editorPane = new JXTaskPane(ApplicationBundle.message("arrangement.title.editor"));
-    final ArrangementMatchConditionEditor ruleEditor = new ArrangementMatchConditionEditor(filter, displayManager);
+    final ArrangementRuleEditor ruleEditor = new ArrangementRuleEditor(filter, displayManager);
     ruleEditor.applyBackground(component.getBackground());
     editorPane.getContentPane().setBackground(component.getBackground());
     editorPane.add(ruleEditor);

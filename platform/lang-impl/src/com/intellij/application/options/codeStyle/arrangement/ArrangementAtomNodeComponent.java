@@ -39,7 +39,8 @@ import java.awt.event.MouseEvent;
  */
 public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
-  public static final int PADDING = 2;
+  public static final int VERTICAL_PADDING = 2;
+  public static final int HORIZONTAL_PADDING = 8;
 
   @NotNull private final JPanel myRenderer = new JPanel(new GridBagLayout()) {
     @Override
@@ -69,7 +70,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
 
     @Override
     public Dimension getPreferredSize() {
-      return mySize == null ? super.getPreferredSize() : mySize;
+      return myLabelSize == null ? super.getPreferredSize() : myLabelSize;
     }
   };
 
@@ -77,7 +78,7 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
   @Nullable private final ActionButton                            myCloseButton;
   @Nullable private final Consumer<ArrangementAtomMatchCondition> myCloseCallback;
 
-  @Nullable private Dimension mySize;
+  @Nullable private Dimension myLabelSize;
   @Nullable private Rectangle myScreenBounds;
 
   private boolean myEnabled = true;
@@ -93,9 +94,8 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
     myCloseCallback = closeCallback;
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setText(manager.getDisplayValue(condition));
+    myLabelSize = new Dimension(manager.getMaxWidth(condition.getType()), myLabel.getPreferredSize().height);
     
-    int width = manager.getMaxWidth(condition.getType());
-    int height = myLabel.getPreferredSize().height;
     final ArrangementRemoveConditionAction action;
     if (closeCallback == null) {
       myCloseButton = null;
@@ -112,16 +112,17 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
           return myCloseButtonHovered ? action.getTemplatePresentation().getHoveredIcon() : action.getTemplatePresentation().getIcon();
         }
       };
-      Dimension preferredButtonSize = myCloseButton.getPreferredSize();
-      width += preferredButtonSize.width;
-      height = Math.max(height, preferredButtonSize.height);
     }
-    
-    mySize = new Dimension(width, height);
     
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.CENTER).insets(0, 0, 0, 0);
 
-    JPanel labelPanel = new JPanel(new GridBagLayout()) {
+    JPanel labelPanel = new JPanel(new GridBagLayout());
+    labelPanel.add(myLabel, constraints);
+    labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(VERTICAL_PADDING, HORIZONTAL_PADDING, VERTICAL_PADDING, HORIZONTAL_PADDING));
+    labelPanel.setOpaque(false);
+
+    final int arcSize = myLabel.getFont().getSize();
+    JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
       @Override
       public void paint(Graphics g) {
         Rectangle buttonBounds = getCloseButtonScreenLocation();
@@ -129,22 +130,6 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
           Point mouseScreenLocation = MouseInfo.getPointerInfo().getLocation();
           myCloseButtonHovered = buttonBounds.contains(mouseScreenLocation);
         }
-        super.paint(g);
-      }
-    };
-    myLabel.setBackground(Color.red);
-    labelPanel.add(myLabel, constraints);
-    if (myCloseButton != null) {
-      labelPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.EAST).insets(0, 0, 0, 0));
-    }
-    
-    labelPanel.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
-    labelPanel.setOpaque(false);
-
-    final int arcSize = myLabel.getFont().getSize();
-    JPanel roundBorderPanel = new JPanel(new GridBagLayout()) {
-      @Override
-      public void paint(Graphics g) {
         Color color = mySelected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTabbedPaneBackground();
         Rectangle bounds = getBounds();
         g.setColor(color);
@@ -152,11 +137,14 @@ public class ArrangementAtomNodeComponent implements ArrangementNodeComponent {
         super.paint(g);
       }
     };
-    roundBorderPanel.add(labelPanel);
+    roundBorderPanel.add(labelPanel, new GridBag().fillCellHorizontally());
+    if (myCloseButton != null) {
+      roundBorderPanel.add(myCloseButton, new GridBag().anchor(GridBagConstraints.CENTER).insets(VERTICAL_PADDING, 0, 0, 0));
+    }
     roundBorderPanel.setBorder(IdeBorderFactory.createRoundedBorder(arcSize));
     roundBorderPanel.setOpaque(false);
     
-    myRenderer.setBorder(IdeBorderFactory.createEmptyBorder(PADDING));
+    myRenderer.setBorder(IdeBorderFactory.createEmptyBorder(VERTICAL_PADDING));
     myRenderer.add(roundBorderPanel, constraints);
     myRenderer.setOpaque(false);
   }
