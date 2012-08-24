@@ -124,10 +124,6 @@ public abstract class SdkType implements SdkTypeId {
     return "preferences.jdks";
   }
 
-  public Icon getIconForExpandedTreeNode() {
-    return getIcon();
-  }
-
   public Icon getIconForAddAction() {
     return IconUtil.getAddIcon();
   }

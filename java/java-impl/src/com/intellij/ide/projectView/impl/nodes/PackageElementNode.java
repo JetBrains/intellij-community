@@ -133,8 +133,7 @@ public class PackageElementNode extends ProjectViewNode<PackageElement> {
     String name = PackageUtil.getNodeName(getSettings(), aPackage,parentPackage, qName, showFQName(aPackage));
     presentation.setPresentableText(name);
 
-    presentation.setOpenIcon(PlatformIcons.PACKAGE_OPEN_ICON);
-    presentation.setClosedIcon(PlatformIcons.PACKAGE_ICON);
+    presentation.setIcon(PlatformIcons.PACKAGE_ICON);
 
     for(ProjectViewNodeDecorator decorator: Extensions.getExtensions(ProjectViewNodeDecorator.EP_NAME, myProject)) {
       decorator.decorate(this, presentation);

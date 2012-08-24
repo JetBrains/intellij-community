@@ -47,11 +47,6 @@ public final class TreeNodeDescriptor extends NodeDescriptor {
   }
 
   public void setIcon(Icon icon) {
-    setIcon(icon, icon);
-  }
-
-  public void setIcon(Icon open, Icon closed) {
-    myOpenIcon = open;
-    myClosedIcon = closed;
+    myIcon = icon;
   }
 }

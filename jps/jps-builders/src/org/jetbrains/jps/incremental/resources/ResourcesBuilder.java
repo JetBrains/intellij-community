@@ -1,6 +1,7 @@
 package org.jetbrains.jps.incremental.resources;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.jps.JpsPathUtil;
@@ -12,6 +13,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.incremental.storage.SourceToOutputMapping;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,7 +49,19 @@ public class ResourcesBuilder extends ModuleLevelBuilder {
     assert patterns != null;
     try {
       final Ref<Boolean> doneSomething = new Ref<Boolean>(false);
-      FSOperations.processFilesToRecompile(context, chunk, new FileProcessor() {
+
+      final Condition<JpsModule> moduleFilter = new Condition<JpsModule>() {
+        public boolean value(final JpsModule module) {
+          for (ResourceBuilderExtension extension : JpsServiceManager.getInstance().getExtensions(ResourceBuilderExtension.class)) {
+            if (extension.skipStandardResourceCompiler(module)) {
+              return false;
+            }
+          }
+          return true;
+        }
+      };
+
+      FSOperations.processFilesToRecompile(context, chunk, moduleFilter, new FileProcessor() {
         public boolean apply(final JpsModule module, final File file, final String sourceRoot) throws IOException {
           if (patterns.isResourceFile(file, sourceRoot)) {
             try {

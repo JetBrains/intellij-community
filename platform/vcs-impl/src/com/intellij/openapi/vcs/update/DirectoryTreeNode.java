@@ -47,7 +47,7 @@ public class DirectoryTreeNode extends FileOrDirectoryTreeNode{
   }
 
   public Icon getIcon(boolean expanded) {
-    return expanded ? AllIcons.Nodes.FolderOpen : AllIcons.Nodes.Folder;
+    return AllIcons.Nodes.Folder;
   }
 
   public Collection<VirtualFile> getVirtualFiles() {

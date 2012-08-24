@@ -40,8 +40,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   protected final CopyOnWriteArrayList<PresentableNodeDescriptor.ColoredFragment> myColoredText = ContainerUtil.createEmptyCOWList();
 
-  private Icon myClosedIcon;
-  private Icon myOpenIcon;
+  private Icon myIcon;
 
   private String myLocationString;
   private String myPresentableText;
@@ -64,16 +63,14 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @param locationString  the location of the object (for example, the package of a class). The location
    *                        string is used by some renderers and usually displayed as grayed text next to
    *                        the item name.
-   * @param openIcon        the icon shown for the node when it is expanded in the tree.
    * @param closedIcon      the icon shown for the node when it is collapsed in a tree, or when it is displayed
-   *                        in a non-tree view.
+ *                        in a non-tree view.
    * @param attributesKey   the attributes for rendering the item text.
    */
-  public PresentationData(String presentableText, String locationString, Icon openIcon, Icon closedIcon,
+  public PresentationData(String presentableText, String locationString, Icon closedIcon,
                           @Nullable TextAttributesKey attributesKey) {
-    myClosedIcon = closedIcon;
+    myIcon = closedIcon;
     myLocationString = locationString;
-    myOpenIcon = openIcon;
     myPresentableText = presentableText;
     myAttributesKey = attributesKey;
   }
@@ -85,9 +82,8 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   }
 
   public Icon getIcon(boolean open) {
-    return open ? myOpenIcon : myClosedIcon;
+    return myIcon;
   }
-
 
   @Nullable
   public Color getForcedTextForeground() {
@@ -106,16 +102,8 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     return myPresentableText;
   }
 
-  /**
-   * Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
-   * in a non-tree view.
-   *
-   * @param closedIcon the closed icon for the node.
-   * @see #setIcons(javax.swing.Icon)
-   */
-
-  public void setClosedIcon(Icon closedIcon) {
-    myClosedIcon = closedIcon;
+  public void setIcon(Icon icon) {
+    myIcon = icon;
   }
 
   /**
@@ -130,17 +118,6 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   }
 
   /**
-   * Sets the icon shown for the node when it is expanded in the tree.
-   *
-   * @param openIcon the open icon for the node.
-   * @see #setIcons(javax.swing.Icon)
-   */
-
-  public void setOpenIcon(Icon openIcon) {
-    myOpenIcon = openIcon;
-  }
-
-  /**
    * Sets the name of the object to be presented in most renderers across the program.
    *
    * @param presentableText the name of the object.
@@ -150,6 +127,31 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   }
 
   /**
+   * @deprecated Different icons for open/closed no longer supported. Use setIcon instead
+   * Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
+   * in a non-tree view.
+   *
+   * @param closedIcon the closed icon for the node.
+   * @see #setIcons(javax.swing.Icon)
+   */
+  public void setClosedIcon(Icon closedIcon) {
+    setIcon(closedIcon);
+  }
+
+
+  /**
+   * @deprecated Different icons for open/closed no longer supported. This function is no op.
+   * Sets the icon shown for the node when it is expanded in the tree.
+   *
+   * @param openIcon the open icon for the node.
+   * @see #setIcons(javax.swing.Icon)
+   */
+  @Deprecated
+  public void setOpenIcon(Icon openIcon) {
+  }
+
+  /**
+   * @deprecated Different icons for open/closed no longer supported. Use setIcon instead.
    * Sets both the open and closed icons of the node to the specified icon.
    *
    * @param icon the icon for the node.
@@ -158,8 +160,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    */
 
   public void setIcons(Icon icon) {
-    setClosedIcon(icon);
-    setOpenIcon(icon);
+    setIcon(icon);
   }
 
   /**
@@ -168,8 +169,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @param presentation the instance to copy the parameters from.
    */
   public void updateFrom(ItemPresentation presentation) {
-    setClosedIcon(presentation.getIcon(false));
-    setOpenIcon(presentation.getIcon(true));
+    setIcon(presentation.getIcon(false));
     setPresentableText(presentation.getPresentableText());
     setLocationString(presentation.getLocationString());
     if (presentation instanceof ColoredItemPresentation) {
@@ -234,8 +234,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   }
 
   public void clear() {
-    myOpenIcon = null;
-    myClosedIcon = null;
+    myIcon = null;
     clearText();
     myAttributesKey = null;
     myFont = null;
@@ -249,7 +248,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   @NotNull
   public Object[] getEqualityObjects() {
-    return new Object[]{myOpenIcon, myClosedIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
+    return new Object[]{myIcon, myColoredText, myAttributesKey, myFont, myForcedTextForeground, myPresentableText,
       myLocationString, mySeparatorAbove};
   }
 
@@ -268,13 +267,12 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
       return;
     }
     myAttributesKey = from.myAttributesKey;
-    myClosedIcon = from.myClosedIcon;
+    myIcon = from.myIcon;
     clearText();
     myColoredText.addAll(from.myColoredText);
     myFont = from.myFont;
     myForcedTextForeground = from.myForcedTextForeground;
     myLocationString = from.myLocationString;
-    myOpenIcon = from.myOpenIcon;
     myPresentableText = from.myPresentableText;
     myTooltip = from.myTooltip;
     mySeparatorAbove = from.mySeparatorAbove;
@@ -288,7 +286,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
 
   public void applyFrom(PresentationData from) {
     myAttributesKey = getValue(myAttributesKey, from.myAttributesKey);
-    myClosedIcon = getValue(myClosedIcon, from.myClosedIcon);
+    myIcon = getValue(myIcon, from.myIcon);
 
     if (myColoredText.size() == 0) {
       myColoredText.addAll(from.myColoredText);
@@ -297,7 +295,6 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myFont = getValue(myFont, from.myFont);
     myForcedTextForeground = getValue(myForcedTextForeground, from.myForcedTextForeground);
     myLocationString = getValue(myLocationString, from.myLocationString);
-    myOpenIcon = getValue(myOpenIcon, from.myOpenIcon);
     myPresentableText = getValue(myPresentableText, from.myPresentableText);
     myTooltip = getValue(myTooltip, from.myTooltip);
     mySeparatorAbove = mySeparatorAbove || from.mySeparatorAbove;

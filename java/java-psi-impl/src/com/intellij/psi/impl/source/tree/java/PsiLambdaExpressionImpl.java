@@ -133,4 +133,13 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   public String toString() {
     return "PsiLambdaExpression:" + getText();
   }
+
+  @Override
+  public boolean hasFormalParameterTypes() {
+    final PsiParameter[] parameters = getParameterList().getParameters();
+    for (PsiParameter parameter : parameters) {
+      if (parameter.getTypeElement() == null) return false;
+    }
+    return parameters.length > 0;
+  }
 }

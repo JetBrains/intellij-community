@@ -22,7 +22,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Enumeration;
+import java.util.Vector;
 
 public class CvsElement extends DefaultMutableTreeNode implements Comparable<CvsElement>{
 
@@ -32,19 +35,13 @@ public class CvsElement extends DefaultMutableTreeNode implements Comparable<Cvs
   protected String myPath;
   protected final String myName;
   private final Icon myIcon;
-  private final Icon myExpandedIcon;
   private boolean myCanBeCheckedOut = true;
   private ChildrenLoader<CvsElement> myChildrenLoader;
   private boolean myLoading;
 
-  public CvsElement(String name, Icon icon, Icon expandedIcon) {
+  public CvsElement(String name, Icon icon) {
     myName = name;
     myIcon = icon;
-    myExpandedIcon = expandedIcon;
-  }
-
-  public CvsElement(String name, Icon icon) {
-    this(name, icon, icon);
   }
 
   public void setChildrenLoader(ChildrenLoader<CvsElement> childrenLoader) {
@@ -125,8 +122,8 @@ public class CvsElement extends DefaultMutableTreeNode implements Comparable<Cvs
     return myName;
   }
 
-  public Icon getIcon(boolean expanded) {
-    return expanded ? myExpandedIcon : myIcon;
+  public Icon getIcon() {
+    return myIcon;
   }
 
   public String getElementPath() {

@@ -485,12 +485,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       if (value instanceof PackageDependenciesNode) {
         PackageDependenciesNode node = (PackageDependenciesNode)value;
         try {
-          if (expanded) {
-            setIcon(node.getOpenIcon());
-          }
-          else {
-            setIcon(node.getClosedIcon());
-          }
+          setIcon(node.getIcon());
         }
         catch (IndexNotReadyException ignore) {
         }

@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.groovy.mvc.projectView;
 
-import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiDirectory;
@@ -50,7 +50,7 @@ public class TopLevelDirectoryNode extends AbstractFolderNode {
   @Override
   protected void updateImpl(PresentationData data) {
     data.setPresentableText(myTitle);
-    data.setIcons(myIcon);
+    data.setIcon(myIcon);
   }
 
 }

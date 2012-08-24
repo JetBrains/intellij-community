@@ -26,6 +26,8 @@ import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author nik
  */
@@ -57,7 +59,8 @@ public class ArtifactElementPresentation extends TreeNodePresentation {
 
   public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes, SimpleTextAttributes commentAttributes) {
     final Artifact artifact = findArtifact();
-    presentationData.setIcons(artifact != null ? artifact.getArtifactType().getIcon() : AllIcons.Nodes.Artifact);
+    Icon icon = artifact != null ? artifact.getArtifactType().getIcon() : AllIcons.Nodes.Artifact;
+    presentationData.setIcon(icon);
     presentationData.addText(getPresentableName(), artifact != null ? mainAttributes : SimpleTextAttributes.ERROR_ATTRIBUTES);
   }
 

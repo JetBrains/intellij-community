@@ -27,7 +27,7 @@ public class DomainClassNode extends ClassNode {
   @Override
   protected void updateImpl(final PresentationData data) {
     super.updateImpl(data);
-    data.setIcons(MvcIcons.DOMAIN_CLASS);
+    data.setIcon(MvcIcons.DOMAIN_CLASS);
   }
 
   @Override

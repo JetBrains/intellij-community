@@ -30,7 +30,7 @@ public class GradleProjectStructureNodeDescriptor<T extends GradleEntityId> exte
   public GradleProjectStructureNodeDescriptor(@NotNull T id, @NotNull String text, @Nullable Icon icon) {
     super(null, null);
     myId = id;
-    myOpenIcon = myClosedIcon = icon;
+    myIcon = icon;
     myName = text;
   }
 
@@ -38,8 +38,7 @@ public class GradleProjectStructureNodeDescriptor<T extends GradleEntityId> exte
   protected void update(@NotNull PresentationData presentation) {
     presentation.setAttributesKey(myAttributes);
     presentation.setPresentableText(myName);
-    presentation.setOpenIcon(myOpenIcon);
-    presentation.setClosedIcon(myClosedIcon);
+    presentation.setIcon(myIcon);
   }
 
   @NotNull

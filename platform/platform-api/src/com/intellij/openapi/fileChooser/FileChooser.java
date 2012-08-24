@@ -30,6 +30,10 @@ import java.util.List;
 public class FileChooser {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileChooser.FileChooser");
 
+  public interface FileChooserConsumer extends Consumer<List<VirtualFile>> {
+    void cancelled();
+  }
+
   private FileChooser() { }
 
   /**

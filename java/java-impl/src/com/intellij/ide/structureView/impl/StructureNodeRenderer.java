@@ -59,8 +59,7 @@ public class StructureNodeRenderer extends ColoredTreeCellRenderer {
       }
     }
 
-    Icon icon = expanded ? descriptor.getOpenIcon() : descriptor.getClosedIcon();
-    result.setIcon(icon);
+    result.setIcon(descriptor.getIcon());
     return result;
   }
 

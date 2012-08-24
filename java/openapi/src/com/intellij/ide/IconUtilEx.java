@@ -33,7 +33,7 @@ public class IconUtilEx {
       return ((PsiElement)object).getIcon(flags);
     }
     if (object instanceof Module) {
-      return ModuleType.get((Module)object).getNodeIcon((flags & Iconable.ICON_FLAG_OPEN) != 0);
+      return ModuleType.get((Module)object).getNodeIcon(false);
     }
     if (object instanceof VirtualFile) {
       VirtualFile file = (VirtualFile)object;

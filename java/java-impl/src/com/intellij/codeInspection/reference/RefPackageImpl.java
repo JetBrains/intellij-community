@@ -73,6 +73,6 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   }
 
   public Icon getIcon(final boolean expanded) {
-    return expanded ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON;
+    return PlatformIcons.PACKAGE_ICON;
   }
 }

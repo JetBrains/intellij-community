@@ -387,8 +387,7 @@ class AssociationsEditor {
       public MyNodeDescriptor(NodeDescriptor<PsiFileNode> nodeDescriptor) {
         super(nodeDescriptor.getProject(), null);
         myName = nodeDescriptor.toString();
-        myOpenIcon = nodeDescriptor.getOpenIcon();
-        myClosedIcon = LayeredIcon.create(nodeDescriptor.getClosedIcon(), LINK_OVERLAY);
+        myIcon = LayeredIcon.create(nodeDescriptor.getIcon(), LINK_OVERLAY);
         myColor = nodeDescriptor.getColor();
         myNode = nodeDescriptor.getElement();
       }

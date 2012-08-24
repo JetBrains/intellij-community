@@ -38,7 +38,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     return isProjectDirectory(file) || isProjectFile(file);
   }
 
-  public Icon getOpenIcon(final VirtualFile file) {
+  public Icon getIcon(final VirtualFile file) {
     if (isProjectDirectory(file)) {
       return dressIcon(file, ourProjectIcon);
     }
@@ -46,18 +46,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     if (icon != null) {
       return dressIcon(file, icon);
     }
-    return super.getOpenIcon(file);
-  }
-
-  public Icon getClosedIcon(final VirtualFile file) {
-    if (isProjectDirectory(file)) {
-      return dressIcon(file, ourProjectIcon);
-    }
-    final Icon icon = getImporterIcon(file);
-    if (icon != null) {
-      return dressIcon(file, icon);
-    }
-    return super.getClosedIcon(file);
+    return super.getIcon(file);
   }
 
   @Nullable

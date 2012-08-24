@@ -1,6 +1,6 @@
 package com.intellij.util.xml.stubs.model;
 
-import com.intellij.psi.stubs.Stubbed;
+import com.intellij.util.xml.Stubbed;
 import com.intellij.util.xml.DomElement;
 
 import java.util.List;

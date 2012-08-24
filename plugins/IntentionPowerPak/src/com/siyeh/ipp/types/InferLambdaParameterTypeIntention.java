@@ -15,13 +15,10 @@
  */
 package com.siyeh.ipp.types;
 
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -66,7 +63,7 @@ public class InferLambdaParameterTypeIntention extends Intention {
     if (parameters.length != lambdaParameters.length) return null;
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      final PsiType psiType = resolveResult.getSubstitutor().substitute(parameter.getType());
+      final PsiType psiType = GenericsUtil.eliminateWildcards(resolveResult.getSubstitutor().substitute(parameter.getType()));
       if (psiType != null) {
         buf.append(psiType.getPresentableText()).append(" ").append(lambdaParameters[i].getName());
       }

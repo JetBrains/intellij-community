@@ -155,7 +155,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
       super(project, parentDescriptor, element);
       final PresentationData templatePresentation = getTemplatePresentation();
       Icon icon = LibraryPresentationManager.getInstance().getNamedLibraryIcon(element, context);
-      templatePresentation.setIcons(icon);
+      templatePresentation.setIcon(icon);
       templatePresentation.addText(libraryName, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }

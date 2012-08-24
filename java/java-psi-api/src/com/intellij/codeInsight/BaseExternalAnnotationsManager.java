@@ -56,7 +56,8 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Nullable
-  protected static String getFQN(String packageName, @Nullable VirtualFile virtualFile) {
+  protected static String getFQN(@NotNull String packageName, @NotNull PsiFile psiFile) {
+    VirtualFile virtualFile = psiFile.getVirtualFile();
     if (virtualFile == null) return null;
     return StringUtil.getQualifiedName(packageName, virtualFile.getNameWithoutExtension());
   }
@@ -102,6 +103,13 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   }
 
   @Override
+  public boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN) {
+    // note that this method doesn't cache it's result
+    Map<String, PsiAnnotation> map = doCollect(listOwner, true);
+    return map.containsKey(annotationFQN);
+  }
+
+  @Override
   @Nullable
   public PsiAnnotation[] findExternalAnnotations(@NotNull final PsiModifierListOwner listOwner) {
     final Map<String, PsiAnnotation> result = collectExternalAnnotations(listOwner);
@@ -115,7 +123,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     Map<String, PsiAnnotation> map = cache.get(listOwner);
     if (map == null) {
-      map = doCollect(listOwner);
+      map = doCollect(listOwner, false);
       cache.put(listOwner, map);
     }
     return map;
@@ -176,7 +184,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
   }
 
-  private Map<String, PsiAnnotation> doCollect(@NotNull PsiModifierListOwner listOwner) {
+  private Map<String, PsiAnnotation> doCollect(@NotNull PsiModifierListOwner listOwner, boolean onlyWritable) {
     final List<PsiFile> files = findExternalAnnotationsFiles(listOwner);
     if (files == null) {
       return Collections.emptyMap();
@@ -187,8 +195,13 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
     for (PsiFile file : files) {
       if (!file.isValid()) continue;
+      if (onlyWritable && !file.isWritable()) continue;
+
       MultiMap<String, AnnotationData> fileData = getDataFromFile(file);
       for (AnnotationData annotationData : ContainerUtil.concat(fileData.get(externalName), fileData.get(oldExternalName))) {
+        // don't add annotation, if there already is one with this FQ name
+        if (result.containsKey(annotationData.annotationClassFqName)) continue;
+
         try {
           result.put(annotationData.annotationClassFqName,
                      JavaPsiFacade.getInstance(myPsiManager.getProject()).getElementFactory().createAnnotationFromText(
@@ -215,7 +228,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     final PsiJavaFile javaFile = (PsiJavaFile)containingFile;
     final String packageName = javaFile.getPackageName();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
-    String fqn = getFQN(packageName, virtualFile);
+    String fqn = getFQN(packageName, containingFile);
     if (fqn == null) return null;
     final List<PsiFile> files = myExternalAnnotations.get(fqn);
     if (files == NULL) return null;
@@ -254,6 +267,22 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     }
     if (!possibleAnnotationsXmls.isEmpty()) {
       possibleAnnotationsXmls.trimToSize();
+
+      // sorting by writability: writable go first
+      Collections.sort(possibleAnnotationsXmls, new Comparator<PsiFile>() {
+        @Override
+        public int compare(PsiFile f1, PsiFile f2) {
+          boolean w1 = f1.isWritable();
+          boolean w2 = f2.isWritable();
+          if (w1 == w2) {
+            return 0;
+          }
+          else {
+            return w1 ? -1 : 1;
+          }
+        }
+      });
+
       myExternalAnnotations.put(fqn, possibleAnnotationsXmls);
       return possibleAnnotationsXmls;
     }

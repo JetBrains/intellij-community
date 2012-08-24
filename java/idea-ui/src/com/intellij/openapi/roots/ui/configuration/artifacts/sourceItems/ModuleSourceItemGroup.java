@@ -123,8 +123,7 @@ public class ModuleSourceItemGroup extends PackagingSourceItem {
     @Override
     public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                        SimpleTextAttributes commentAttributes) {
-      presentationData.setClosedIcon(ModuleType.get(myModule).getNodeIcon(false));
-      presentationData.setOpenIcon(ModuleType.get(myModule).getNodeIcon(true));
+      presentationData.setIcon(ModuleType.get(myModule).getNodeIcon(false));
       presentationData.addText(myModule.getName(), mainAttributes);
     }
 

@@ -91,7 +91,7 @@ public class XsltTreeStructureProvider implements TreeStructureProvider {
       if (psiFiles.length > 0) {
         icon = LayeredIcon.create(icon, LINK_OVERLAY);
       }
-      presentationData.setIcons(icon);
+      presentationData.setIcon(icon);
     }
 
     public boolean expandOnDoubleClick() {

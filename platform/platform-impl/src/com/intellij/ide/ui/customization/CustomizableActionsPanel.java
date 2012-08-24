@@ -461,9 +461,9 @@ public class CustomizableActionsPanel {
           Group group = (Group)userObject;
           String name = group.getName();
           setText(name != null ? name : group.getId());
-          icon = expanded ? group.getOpenIcon() : group.getIcon();
+          icon = group.getIcon();
           if (icon == null) {
-            icon = expanded ? getOpenIcon() : getClosedIcon();
+            icon = getClosedIcon();
           }
         }
         else if (userObject instanceof String) {

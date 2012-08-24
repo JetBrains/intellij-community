@@ -44,7 +44,7 @@ public class AddedFileCellRenderer extends FileLabel implements TreeCellRenderer
       setShowIcon(false);
       final File file = new File(treeNode.getPresentableText());
       setFile(file);
-      setIcon(treeNode.getIcon(expanded));
+      setIcon(treeNode.getIcon());
       int prefWidth = getIconWidth() + getFontMetrics(getFont()).stringWidth(getFilePath(file)) + 30;
       setPreferredSize(new Dimension(prefWidth, getPreferredSize().height));
     }

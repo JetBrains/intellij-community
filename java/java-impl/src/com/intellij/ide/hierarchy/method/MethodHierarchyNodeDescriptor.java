@@ -107,23 +107,23 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
       myRawIcon = newRawIcon;
       myStateIcon = newStateIcon;
 
-      myOpenIcon = myRawIcon;
+      Icon newIcon = myRawIcon;
 
       if (myIsBase) {
         final LayeredIcon icon = new LayeredIcon(2);
-        icon.setIcon(myOpenIcon, 0);
+        icon.setIcon(newIcon, 0);
         icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
-        myOpenIcon = icon;
+        newIcon = icon;
       }
 
       if (myStateIcon != null) {
         final RowIcon icon = new RowIcon(2);
         icon.setIcon(myStateIcon, 0);
-        icon.setIcon(myOpenIcon, 1);
-        myOpenIcon = icon;
+        icon.setIcon(newIcon, 1);
+        newIcon = icon;
       }
 
-      myClosedIcon = myOpenIcon;
+      myIcon = newIcon;
     }
 
     final CompositeAppearance oldText = myHighlightedText;

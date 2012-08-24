@@ -28,20 +28,17 @@ import javax.swing.*;
 public class FileNodeDescriptor extends NodeDescriptor {
 
   private FileElement myFileElement;
-  private final Icon myOriginalOpenIcon;
-  private final Icon myOriginalClosedIcon;
+  private final Icon myOriginalIcon;
   private final String myComment;
 
   public FileNodeDescriptor(Project project,
                             @NotNull FileElement element,
                             NodeDescriptor parentDescriptor,
-                            Icon openIcon,
                             Icon closedIcon,
                             String name,
                             String comment) {
     super(project, parentDescriptor);
-    myOriginalOpenIcon = openIcon;
-    myOriginalClosedIcon = closedIcon;
+    myOriginalIcon = closedIcon;
     myComment = comment;
     myFileElement = element;
     myName = name;
@@ -61,11 +58,9 @@ public class FileNodeDescriptor extends NodeDescriptor {
 
     if (file == null) return true;
 
-    myOpenIcon = myOriginalOpenIcon;
-    myClosedIcon = myOriginalClosedIcon;
+    myIcon = myOriginalIcon;
     if (myFileElement.isHidden()) {
-      myOpenIcon = IconLoader.getTransparentIcon(myOpenIcon);
-      myClosedIcon = IconLoader.getTransparentIcon(myClosedIcon);
+      myIcon = IconLoader.getTransparentIcon(myIcon);
     }
     myColor = myFileElement.isHidden() ? SimpleTextAttributes.DARK_TEXT.getFgColor() : null;
     return changed;

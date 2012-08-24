@@ -59,12 +59,8 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
     ProjectSettingsService.getInstance(myModule.getProject()).openModuleSettings(myModule);
   }
 
-  public Icon getOpenIcon() {
-    return myModule == null || myModule.isDisposed() ? super.getOpenIcon() : ModuleType.get(myModule).getNodeIcon(true);
-  }
-
-  public Icon getClosedIcon() {
-    return myModule == null || myModule.isDisposed() ? super.getClosedIcon() : ModuleType.get(myModule).getNodeIcon(false);
+  public Icon getIcon() {
+    return myModule == null || myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getNodeIcon(false);
   }
 
   public String toString() {

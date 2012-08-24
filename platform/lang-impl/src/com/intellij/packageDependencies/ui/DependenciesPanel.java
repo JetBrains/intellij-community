@@ -465,12 +465,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   ){
       PackageDependenciesNode node = (PackageDependenciesNode)value;
       if (node.isValid()) {
-        if (expanded) {
-          setIcon(node.getOpenIcon());
-        }
-        else {
-          setIcon(node.getClosedIcon());
-        }
+        setIcon(node.getIcon());
       } else {
         append(UsageViewBundle.message("node.invalid") + " ", SimpleTextAttributes.ERROR_ATTRIBUTES);
       }

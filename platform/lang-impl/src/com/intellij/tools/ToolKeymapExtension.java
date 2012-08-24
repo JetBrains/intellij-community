@@ -35,8 +35,7 @@ public class ToolKeymapExtension implements KeymapExtension {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(Tool.ACTION_ID_PREFIX);
     Arrays.sort(ids);
-    Group group = new Group(KeyMapBundle.message("actions.tree.external.tools.group"), AllIcons.Nodes.KeymapTools,
-                            AllIcons.Nodes.KeymapToolsOpen);
+    Group group = new Group(KeyMapBundle.message("actions.tree.external.tools.group"), AllIcons.Nodes.KeymapTools);
 
     ToolManager toolManager = ToolManager.getInstance();
 

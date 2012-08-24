@@ -102,9 +102,9 @@ public class TreeModelBuilder {
     createMaps(ScopeType.TEST);
 
     if (myGroupByScopeType) {
-      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, PlatformIcons.PACKAGE_OPEN_ICON, PlatformIcons.PACKAGE_ICON, project);
-      myTestRoot = new GeneralGroupNode(TEST_NAME, AllIcons.Nodes.TestSourceFolder, AllIcons.Nodes.TestSourceFolder, project);
-      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, AllIcons.Nodes.PpLibOpen, AllIcons.Nodes.PpLibClosed, project);
+      mySourceRoot = new GeneralGroupNode(PRODUCTION_NAME, PlatformIcons.PACKAGE_ICON, project);
+      myTestRoot = new GeneralGroupNode(TEST_NAME, AllIcons.Nodes.TestSourceFolder, project);
+      myLibsRoot = new GeneralGroupNode(LIBRARY_NAME, AllIcons.Nodes.PpLibClosed, project);
       myRoot.add(mySourceRoot);
       myRoot.add(myTestRoot);
       myRoot.add(myLibsRoot);
@@ -418,7 +418,7 @@ public class TreeModelBuilder {
     if (!myShowIndividualLibs) {
       if (myGroupByScopeType) return getRootNode(ScopeType.LIB);
       if (myAllLibsNode == null) {
-        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"), AllIcons.Nodes.PpLibOpen,
+        myAllLibsNode = new GeneralGroupNode(AnalysisScopeBundle.message("dependencies.libraries.node.text"),
                                              AllIcons.Nodes.PpLibClosed,
                                              myProject);
         getRootNode(ScopeType.LIB).add(myAllLibsNode);

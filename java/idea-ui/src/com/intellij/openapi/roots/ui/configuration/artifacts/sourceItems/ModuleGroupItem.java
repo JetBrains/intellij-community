@@ -80,8 +80,7 @@ public class ModuleGroupItem extends PackagingSourceItem {
     @Override
     public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                        SimpleTextAttributes commentAttributes) {
-      presentationData.setClosedIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
-      presentationData.setOpenIcon(PlatformIcons.OPENED_MODULE_GROUP_ICON);
+      presentationData.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
       presentationData.addText(myGroupName, mainAttributes);
     }
 

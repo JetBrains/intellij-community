@@ -80,7 +80,7 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode impleme
       renderer.setIcon(addIcon);
     } else {
       if (filePath.isDirectory() || !isLeaf()) {
-        renderer.setIcon(expanded ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON);
+        renderer.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
       }
       else {
         renderer.setIcon(filePath.getFileType().getIcon());

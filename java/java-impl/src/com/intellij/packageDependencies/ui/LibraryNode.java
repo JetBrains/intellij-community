@@ -68,11 +68,7 @@ public class LibraryNode extends PackageDependenciesNode {
     return myLibraryOrJdk.hashCode();
   }
 
-  public Icon getOpenIcon() {
-    return myLibraryOrJdk instanceof JdkOrderEntry ? AllIcons.Nodes.PpJdkOpen : AllIcons.Nodes.PpLibOpen;
-  }
-
-  public Icon getClosedIcon() {
+  public Icon getIcon() {
     return myLibraryOrJdk instanceof JdkOrderEntry ? AllIcons.Nodes.PpJdkClosed : AllIcons.Nodes.PpLibClosed;
   }
 }

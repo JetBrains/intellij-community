@@ -15,7 +15,7 @@
  */
 package com.intellij.util.xml.stubs.builder;
 
-import com.intellij.psi.stubs.Stubbed;
+import com.intellij.util.xml.Stubbed;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;

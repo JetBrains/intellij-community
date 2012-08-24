@@ -67,7 +67,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   @Override
   public Icon getNodeIcon(boolean isOpened) {
-    return isOpened ? getJavaModuleNodeIconOpen() : getJavaModuleNodeIconClosed();
+    return getJavaModuleNodeIconClosed();
   }
 
   @Override
@@ -93,10 +93,6 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
 
   private static Icon getJavaModuleIcon() {
     return AllIcons.Modules.Types.JavaModule;
-  }
-
-  private static Icon getJavaModuleNodeIconOpen() {
-    return AllIcons.Nodes.ModuleOpen;
   }
 
   private static Icon getJavaModuleNodeIconClosed() {

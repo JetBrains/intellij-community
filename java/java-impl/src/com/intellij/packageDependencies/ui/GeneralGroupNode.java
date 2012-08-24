@@ -23,14 +23,12 @@ import java.util.Set;
 
 public class GeneralGroupNode extends PackageDependenciesNode {
   private final String myName;
-  private final Icon myOpenIcon;
-  private final Icon myClosedIcon;
+  private final Icon myIcon;
 
-  public GeneralGroupNode(String name, Icon openIcon, Icon closedIcon, Project project) {
+  public GeneralGroupNode(String name, Icon icon, Project project) {
     super(project);
     myName = name;
-    myOpenIcon = openIcon;
-    myClosedIcon = closedIcon;
+    myIcon = icon;
   }
 
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
@@ -62,11 +60,7 @@ public class GeneralGroupNode extends PackageDependenciesNode {
     return myName.hashCode();
   }
 
-  public Icon getOpenIcon() {
-    return myOpenIcon;
-  }
-
-  public Icon getClosedIcon() {
-    return myClosedIcon;
+  public Icon getIcon() {
+    return myIcon;
   }
 }

@@ -494,7 +494,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public ProjectsGroupNode(MavenSimpleNode parent) {
       super(parent);
-      setIcons(MavenIcons.CLOSED_MODULES_ICON, MavenIcons.OPEN_MODULES_ICON);
+      setUniformIcon(MavenIcons.CLOSED_MODULES_ICON);
     }
 
     @Override
@@ -555,7 +555,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public ProfilesNode(MavenSimpleNode parent) {
       super(parent);
-      setIcons(MavenIcons.CLOSED_PROFILES_ICON, MavenIcons.OPEN_PROFILES_ICON);
+      setUniformIcon(MavenIcons.CLOSED_PROFILES_ICON);
     }
 
     protected List<? extends MavenSimpleNode> doGetChildren() {
@@ -791,7 +791,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class ModulesNode extends ProjectsGroupNode {
     public ModulesNode(ProjectNode parent) {
       super(parent);
-      setIcons(MavenIcons.CLOSED_MODULES_ICON, MavenIcons.OPEN_MODULES_ICON);
+      setUniformIcon(MavenIcons.CLOSED_MODULES_ICON);
     }
 
     @Override
@@ -886,7 +886,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       for (String goal : PHASES) {
         myGoalNodes.add(new StandardGoalNode(this, goal));
       }
-      setIcons(MavenIcons.CLOSED_PHASES_ICON, MavenIcons.OPEN_PHASES_ICON);
+      setUniformIcon(MavenIcons.CLOSED_PHASES_ICON);
     }
 
     @Override
@@ -916,7 +916,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     public PluginsNode(ProjectNode parent) {
       super(parent);
-      setIcons(MavenIcons.CLOSED_PLUGINS_ICON, MavenIcons.OPEN_PLUGINS_ICON);
+      setUniformIcon(MavenIcons.CLOSED_PLUGINS_ICON);
     }
 
     @Override
@@ -1069,7 +1069,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
   public class DependenciesNode extends BaseDependenciesNode {
     public DependenciesNode(ProjectNode parent, MavenProject mavenProject) {
       super(parent, mavenProject);
-      setIcons(MavenIcons.CLOSED_DEPENDENCIES_ICON, MavenIcons.OPEN_DEPENDENCIES_ICON);
+      setUniformIcon(MavenIcons.CLOSED_DEPENDENCIES_ICON);
     }
 
     @Override

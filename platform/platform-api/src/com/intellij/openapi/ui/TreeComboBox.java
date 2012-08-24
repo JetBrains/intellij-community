@@ -99,10 +99,10 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
 
     private static Icon getValueIcon(final Object value, final int index) {
       if (value instanceof CustomPresentation) {
-        return ((CustomPresentation)value).getIcon(index, Iconable.ICON_FLAG_OPEN);
+        return ((CustomPresentation)value).getIcon(index, 0);
       }
       if (value instanceof Iconable) {
-        return ((Iconable)value).getIcon(Iconable.ICON_FLAG_OPEN);
+        return ((Iconable)value).getIcon(0);
       }
 
       return null;

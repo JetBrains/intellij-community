@@ -162,7 +162,7 @@ public final class TodoItemNode extends BaseToDoNode<SmartTodoItemPointer> imple
     //
 
     presentation.setPresentableText(newName);
-    presentation.setIcons(newIcon);
+    presentation.setIcon(newIcon);
   }
 
   public String getTestPresentation() {

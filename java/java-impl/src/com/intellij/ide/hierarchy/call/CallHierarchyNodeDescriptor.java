@@ -90,7 +90,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
 
   public final boolean update(){
     final CompositeAppearance oldText = myHighlightedText;
-    final Icon oldOpenIcon = myOpenIcon;
+    final Icon oldIcon = myIcon;
 
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (isMarkReadOnly()) {
@@ -109,14 +109,13 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
       return true;
     }
 
-    myOpenIcon = enclosingElement.getIcon(flags);
+    myIcon = enclosingElement.getIcon(flags);
     if (changes && myIsBase) {
       final LayeredIcon icon = new LayeredIcon(2);
-      icon.setIcon(myOpenIcon, 0);
+      icon.setIcon(myIcon, 0);
       icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
-      myOpenIcon = icon;
+      myIcon = icon;
     }
-    myClosedIcon = myOpenIcon;
 
     myHighlightedText = new CompositeAppearance();
     TextAttributes mainTextAttributes = null;
@@ -169,7 +168,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
 
     if (
       !Comparing.equal(myHighlightedText, oldText) ||
-      !Comparing.equal(myOpenIcon, oldOpenIcon)
+      !Comparing.equal(myIcon, oldIcon)
     ){
       changes = true;
     }

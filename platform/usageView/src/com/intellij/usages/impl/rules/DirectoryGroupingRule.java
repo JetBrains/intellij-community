@@ -84,7 +84,7 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
 
     @Override
     public Icon getIcon(boolean isOpen) {
-      return isOpen ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
+      return PlatformIcons.DIRECTORY_CLOSED_ICON;
     }
 
     @Override

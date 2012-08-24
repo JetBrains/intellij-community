@@ -48,6 +48,8 @@ public abstract class ExternalAnnotationsManager {
   @Nullable
   public abstract PsiAnnotation findExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
+  public abstract boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
+
   @Nullable
   public abstract PsiAnnotation[] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
 
@@ -57,6 +59,9 @@ public abstract class ExternalAnnotationsManager {
                                           PsiNameValuePair[] value);
 
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
+
+  public abstract boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN,
+                                                 @NotNull PsiNameValuePair[] value);
 
   public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 

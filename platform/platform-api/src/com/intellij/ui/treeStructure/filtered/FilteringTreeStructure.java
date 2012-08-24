@@ -216,7 +216,7 @@ public class FilteringTreeStructure extends AbstractTreeStructure {
       } else if (myDelegate != null) {
         NodeDescriptor descriptor = myBaseStructure.createDescriptor(myDelegate, getParentDescriptor());
         descriptor.update();
-        setIcons(descriptor.getClosedIcon(), descriptor.getOpenIcon());
+        setUniformIcon(descriptor.getIcon());
         setPlainText(myDelegate.toString());
       }
     }

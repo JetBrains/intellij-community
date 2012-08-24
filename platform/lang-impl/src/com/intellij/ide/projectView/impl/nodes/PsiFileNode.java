@@ -68,7 +68,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
   protected void updateImpl(PresentationData data) {
     final PsiFile value = getValue();
     data.setPresentableText(value.getName());
-    data.setIcons(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));
+    data.setIcon(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));
   }
 
   public VirtualFile getVirtualFile() {

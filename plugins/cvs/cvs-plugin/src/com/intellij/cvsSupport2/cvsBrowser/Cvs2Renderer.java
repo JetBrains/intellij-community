@@ -37,7 +37,7 @@ public class Cvs2Renderer extends ColoredTreeCellRenderer {
         append(" (Loading...)", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,
                                                          UIUtil.getInactiveTextColor()));
       }
-      setIcon(element.getIcon(expanded));
+      setIcon(element.getIcon());
     } else if (value instanceof LoadingNode) {
       setIcon(((LoadingNode)value).getIcon());
       append(value.toString(), new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN,

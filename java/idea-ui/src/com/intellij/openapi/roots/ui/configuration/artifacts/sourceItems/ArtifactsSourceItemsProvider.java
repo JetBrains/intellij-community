@@ -84,7 +84,7 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
       @Override
       public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                          SimpleTextAttributes commentAttributes) {
-        presentationData.setIcons(AllIcons.Nodes.Artifact);
+        presentationData.setIcon(AllIcons.Nodes.Artifact);
         presentationData.addText("Artifacts", mainAttributes);
       }
 

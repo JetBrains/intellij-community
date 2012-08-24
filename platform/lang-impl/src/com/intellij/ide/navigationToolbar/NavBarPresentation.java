@@ -33,7 +33,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -71,8 +70,7 @@ public class NavBarPresentation {
       if (object instanceof PsiElement) {
         Icon icon = ApplicationManager.getApplication().runReadAction(new Computable<Icon>() {
           public Icon compute() {
-            return ((PsiElement)object).isValid() ? ((PsiElement)object)
-              .getIcon(open ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED) : null;
+            return ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(0) : null;
           }
         });
         

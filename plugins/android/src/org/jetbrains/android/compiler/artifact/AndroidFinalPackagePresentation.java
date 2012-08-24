@@ -29,7 +29,7 @@ class AndroidFinalPackagePresentation extends SourceItemPresentation {
   public void render(@NotNull PresentationData presentationData,
                      SimpleTextAttributes mainAttributes,
                      SimpleTextAttributes commentAttributes) {
-    presentationData.setIcons(AndroidFacet.getFacetType().getIcon());
+    presentationData.setIcon(AndroidFacet.getFacetType().getIcon());
     presentationData.addText(getPresentableName(), mainAttributes);
   }
 

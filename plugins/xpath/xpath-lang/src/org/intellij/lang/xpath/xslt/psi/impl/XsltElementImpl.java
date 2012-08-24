@@ -80,7 +80,7 @@ abstract class XsltElementImpl extends LightElement implements Iconable, PsiElem
 
     @Nullable
     public Icon getIcon(boolean open) {
-        return getIcon(open ? Iconable.ICON_FLAG_OPEN : Iconable.ICON_FLAG_CLOSED);
+        return getIcon(0);
     }
 
     @Nullable

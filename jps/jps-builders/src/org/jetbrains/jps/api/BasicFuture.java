@@ -74,7 +74,9 @@ public class BasicFuture<T> implements Future<T> {
   }
 
   public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-    waitFor(timeout, unit);
+    if (!waitFor(timeout, unit)) {
+      throw new TimeoutException();
+    }
     return null;
   }
 }

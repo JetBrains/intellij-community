@@ -58,7 +58,7 @@ final class TodoCompositeRenderer implements TreeCellRenderer{
             highlightedRegion.textAttributes
         );
       }
-      myColorTreeCellRenderer.setIcon(descriptor.getOpenIcon());
+      myColorTreeCellRenderer.setIcon(descriptor.getIcon());
       return myColorTreeCellRenderer;
     }else{
       return myNodeRenderer.getTreeCellRendererComponent(tree,null,selected,expanded,leaf,row,hasFocus);

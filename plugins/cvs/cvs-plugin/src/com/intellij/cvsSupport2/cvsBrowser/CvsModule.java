@@ -22,8 +22,8 @@ import javax.swing.*;
  */
 public class CvsModule extends CvsElement{
 
-  public CvsModule(String name, Icon icon, Icon expandedIcon) {
-    super(name, icon, expandedIcon);
+  public CvsModule(String name, Icon icon) {
+    super(name, icon);
   }
 
   public String createPathForChild(String name) {

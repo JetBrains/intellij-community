@@ -40,8 +40,8 @@ import java.util.*;
 public class MavenKeymapExtension implements KeymapExtension {
   public KeymapGroup createGroup(Condition<AnAction> condition, Project project) {
     KeymapGroup result = KeymapGroupFactory.getInstance().createGroup(TasksBundle.message("maven.tasks.action.group.name"),
-                                                                      MavenIcons.OPEN_PHASES_ICON,
-                                                                      MavenIcons.CLOSED_PHASES_ICON);
+                                                                      MavenIcons.CLOSED_PHASES_ICON
+    );
     if (project == null) return result;
 
     Comparator<MavenProject> projectComparator = new Comparator<MavenProject>() {
@@ -84,8 +84,8 @@ public class MavenKeymapExtension implements KeymapExtension {
       Set<Pair<String, String>> goalsToActionIds = each.getValue();
       if (goalsToActionIds.isEmpty()) continue;
       KeymapGroup group = KeymapGroupFactory.getInstance().createGroup(mavenProject.getDisplayName(),
-                                                                       MavenIcons.OPEN_MODULES_ICON,
-                                                                       MavenIcons.CLOSED_MODULES_ICON);
+                                                                       MavenIcons.CLOSED_PHASES_ICON
+      );
       result.addGroup(group);
       for (Pair<String, String> eachGoalToActionId : goalsToActionIds) {
         group.addActionId(eachGoalToActionId.getSecond());

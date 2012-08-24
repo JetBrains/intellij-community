@@ -35,6 +35,6 @@ public class UpdateTreeCellRenderer extends ColoredTreeCellRenderer{
       append("Error: ", SimpleTextAttributes.ERROR_ATTRIBUTES);
       append(errorText, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    setIcon(treeNode.getIcon(expanded));
+    setIcon(treeNode.getIcon(false));
   }
 }

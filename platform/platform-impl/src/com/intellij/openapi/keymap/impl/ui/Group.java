@@ -34,7 +34,6 @@ public class Group implements KeymapGroup {
   private final String myName;
   private String myId;
   private final Icon myIcon;
-  private final Icon myOpenIcon;
   /**
    * Group or action id (String) or Separator or QuickList
    */
@@ -42,17 +41,15 @@ public class Group implements KeymapGroup {
 
   private final Set<String> myIds = new HashSet<String>();
 
-  public Group(String name, String id, Icon icon, Icon openIcon) {
+  public Group(String name, String id, Icon icon) {
     myName = name;
     myId = id;
     myIcon = icon;
-    myOpenIcon = openIcon;
     myChildren = new ArrayList<Object>();
   }
 
-  public Group(final String name, final Icon openIcon, final Icon icon) {
+  public Group(final String name, final Icon icon) {
     myChildren = new ArrayList<Object>();
-    myOpenIcon = openIcon;
     myIcon = icon;
     myName = name;
   }
@@ -63,10 +60,6 @@ public class Group implements KeymapGroup {
 
   public Icon getIcon() {
     return myIcon;
-  }
-
-  public Icon getOpenIcon() {
-    return myOpenIcon;
   }
 
   public String getId() {

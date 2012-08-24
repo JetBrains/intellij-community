@@ -61,8 +61,7 @@ public class UsageProjectTreeNode extends ProjectViewNodeWithChildrenList<UsageI
 
   @Override
   protected void update(PresentationData presentation) {
-    presentation.setOpenIcon(myUsagePresentation.getIcon());
-    presentation.setClosedIcon(myUsagePresentation.getIcon());
+    presentation.setIcon(myUsagePresentation.getIcon());
     presentation.setTooltip(myUsagePresentation.getTooltipText());
     final TextChunk[] text = myUsagePresentation.getText();
     updatePresentationWithTextChunks(presentation, text);

@@ -63,7 +63,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
     
     if (value instanceof NodeDescriptor) {
       final NodeDescriptor descriptor = (NodeDescriptor)value;
-      setIcon(descriptor.getClosedIcon());
+      setIcon(descriptor.getIcon());
       final Color elementColor = descriptor.getColor();
       
       if (elementColor != null) {

@@ -168,7 +168,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
             isValid = false;
           }
           attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-          icon = expanded ? PlatformIcons.DIRECTORY_OPEN_ICON : PlatformIcons.DIRECTORY_CLOSED_ICON;
+          icon = PlatformIcons.DIRECTORY_CLOSED_ICON;
         }
         final ColoredTreeCellRenderer textRenderer = getTextRenderer();
         textRenderer.setIcon(icon);

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.mac;
 
+import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
@@ -109,6 +110,13 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
                 FileChooserUtil.setLastOpenedFile(impl.myProject, files.get(files.size() - 1));
                 impl.myCallback.consume(files);
               }
+            }
+          });
+        } else if (impl.myCallback instanceof FileChooser.FileChooserConsumer) {
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+              ((FileChooser.FileChooserConsumer)impl.myCallback).cancelled();
             }
           });
         }

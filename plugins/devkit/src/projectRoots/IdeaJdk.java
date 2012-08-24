@@ -82,10 +82,6 @@ public class IdeaJdk extends SdkType implements JavaSdkType {
     return "reference.project.structure.sdk.idea";
   }
 
-  public Icon getIconForExpandedTreeNode() {
-    return SDK_OPEN;
-  }
-
   public Icon getIconForAddAction() {
     return ADD_SDK;
   }

@@ -29,7 +29,7 @@ public class KeymapGroupFactoryImpl extends KeymapGroupFactory {
     return new Group(name, null, null);
   }
 
-  public KeymapGroup createGroup(final String name, final Icon closedIcon, final Icon openIcon) {
-    return new Group(name, openIcon, closedIcon);
+  public KeymapGroup createGroup(final String name, final Icon closedIcon) {
+    return new Group(name, closedIcon);
   }
 }

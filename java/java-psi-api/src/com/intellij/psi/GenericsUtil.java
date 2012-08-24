@@ -21,7 +21,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -336,5 +337,43 @@ public class GenericsUtil {
       }
     }
     return PsiSubstitutor.EMPTY.putAll(psiClass, result.toArray(new PsiType[result.size()]));
+  }
+
+  public static PsiType eliminateWildcards(PsiType type) {
+    return eliminateWildcardsInner(type, true);
+  }
+
+  static PsiType eliminateWildcardsInner(PsiType type, final boolean eliminateInTypeArguments) {
+    if (eliminateInTypeArguments && type instanceof PsiClassType) {
+      PsiClassType classType = ((PsiClassType)type);
+      JavaResolveResult resolveResult = classType.resolveGenerics();
+      PsiClass aClass = (PsiClass)resolveResult.getElement();
+      if (aClass != null) {
+        PsiManager manager = aClass.getManager();
+        PsiTypeParameter[] typeParams = aClass.getTypeParameters();
+        Map<PsiTypeParameter, PsiType> map = new HashMap<PsiTypeParameter, PsiType>();
+        for (PsiTypeParameter typeParam : typeParams) {
+          PsiType substituted = resolveResult.getSubstitutor().substitute(typeParam);
+          if (substituted instanceof PsiWildcardType) {
+            substituted = ((PsiWildcardType)substituted).getBound();
+            if (substituted == null) substituted = PsiType.getJavaLangObject(manager, aClass.getResolveScope());
+          }
+          map.put(typeParam, substituted);
+        }
+
+        PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
+        PsiSubstitutor substitutor = factory.createSubstitutor(map);
+        type = factory.createType(aClass, substitutor);
+      }
+    }
+    else if (type instanceof PsiArrayType) {
+      return eliminateWildcardsInner(((PsiArrayType)type).getComponentType(), false).createArrayType();
+    }
+    else if (type instanceof PsiWildcardType) {
+      final PsiType bound = ((PsiWildcardType)type).getBound();
+      return bound != null ? bound 
+                           : ((PsiWildcardType)type).getExtendsBound();//object
+    }
+    return type;
   }
 }

@@ -32,9 +32,10 @@ public interface PlatformIcons {
   Icon PROTECTED_ICON = AllIcons.Nodes.C_protected;
   Icon PACKAGE_LOCAL_ICON = AllIcons.Nodes.C_plocal;
   Icon PACKAGE_ICON = AllIcons.Nodes.PackageClosed;
-  Icon PACKAGE_OPEN_ICON = AllIcons.Nodes.PackageOpen;
+
   Icon DIRECTORY_CLOSED_ICON = AllIcons.Nodes.TreeClosed;
-  Icon DIRECTORY_OPEN_ICON = AllIcons.Nodes.TreeOpen;
+  @Deprecated Icon DIRECTORY_OPEN_ICON = DIRECTORY_CLOSED_ICON;
+
   @NonNls String CLASS_ICON_PATH = "/nodes/class.png";
   Icon CLASS_ICON = AllIcons.Nodes.Class;
   Icon EXCEPTION_CLASS_ICON = AllIcons.Nodes.ExceptionClass;
@@ -95,8 +96,9 @@ public interface PlatformIcons {
   Icon TASK_ICON = AllIcons.Ant.Task;
   Icon CLASS_INITIALIZER = AllIcons.Nodes.ClassInitializer;
 
-  Icon OPENED_MODULE_GROUP_ICON = AllIcons.Nodes.ModuleGroupOpen;
   Icon CLOSED_MODULE_GROUP_ICON = AllIcons.Nodes.ModuleGroupClosed;
+  @Deprecated Icon OPENED_MODULE_GROUP_ICON = CLOSED_MODULE_GROUP_ICON;
+
   Icon FOLDER_ICON = AllIcons.Nodes.Folder;
   Icon SOURCE_FOLDERS_ICON = AllIcons.Nodes.SourceFolder;
   Icon TEST_SOURCE_FOLDER = AllIcons.Nodes.TestSourceFolder;
@@ -105,8 +107,8 @@ public interface PlatformIcons {
   Icon MODULES_SOURCE_FOLDERS_ICON = AllIcons.Modules.SourceRootClosed;
   Icon MODULES_TEST_SOURCE_FOLDER = AllIcons.Modules.TestRootClosed;
 
-  Icon CONTENT_ROOT_ICON_OPEN = AllIcons.Nodes.ModuleOpen;
   Icon CONTENT_ROOT_ICON_CLOSED = AllIcons.Nodes.ModuleClosed;
+  @Deprecated Icon CONTENT_ROOT_ICON_OPEN = CONTENT_ROOT_ICON_CLOSED;
 
   Icon UP_DOWN_ARROWS = AllIcons.Ide.UpDown;
 

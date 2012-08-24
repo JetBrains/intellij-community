@@ -86,7 +86,6 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
 
   protected void update(PresentationData presentation) {
     Object newElement = updateElement();
-    boolean changed = false;
     if (getElement() != newElement) {
       presentation.setChanged(true);
     }
@@ -94,8 +93,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
 
     Color oldColor = myColor;
     String oldName = myName;
-    Icon oldOpenIcon = myOpenIcon;
-    Icon oldClosedIcon = myClosedIcon;
+    Icon oldIcon = myIcon;
     List<ColoredFragment> oldFragments = new ArrayList<ColoredFragment>(presentation.getColoredText());
 
     myColor = UIUtil.getTreeTextForeground();
@@ -106,13 +104,11 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     myName = getName();
     presentation.setPresentableText(myName);
 
-    presentation.setChanged(changed ||
-                            !Comparing.equal(new Object[]{myOpenIcon, myClosedIcon, myName, oldFragments, myColor},
-                                             new Object[]{oldOpenIcon, oldClosedIcon, oldName, oldFragments, oldColor}));
+    presentation.setChanged(!Comparing.equal(new Object[]{myIcon, myName, oldFragments, myColor},
+                                             new Object[]{oldIcon, oldName, oldFragments, oldColor}));
 
     presentation.setForcedTextForeground(myColor);
-    presentation.setOpenIcon(myOpenIcon);
-    presentation.setClosedIcon(myClosedIcon);
+    presentation.setIcon(myIcon);
   }
 
   protected void updateFileStatus() {
@@ -245,16 +241,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public void setUniformIcon(Icon aIcon) {
-    setIcons(aIcon, aIcon);
-  }
-
-  /**
-   * @deprecated use {@link #getTemplatePresentation()} to set constant presentation right in node's constructor
-   * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
-   */
-  public final void setIcons(Icon aClosed, Icon aOpen) {
-    myOpenIcon = aOpen;
-    myClosedIcon = aClosed;
+    myIcon = aIcon;
   }
 
   /**

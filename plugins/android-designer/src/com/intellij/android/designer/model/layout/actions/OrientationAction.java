@@ -33,9 +33,9 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class OrientationAction extends AnAction {
-  private static final Icon myHorizontalIcon = IconLoader.getIcon("/com/intellij/android/designer/icons/LinearLayout.png");
-  private static final Icon myVerticalIcon = IconLoader.getIcon("/com/intellij/android/designer/icons/LinearLayout2.png");
-  private static final Icon myHorizontalOverrideIcon = IconLoader.getIcon("/com/intellij/android/designer/icons/LinearLayout3.png");
+  private static final Icon myHorizontalIcon = IconLoader.getIcon("/icons/LinearLayout.png");
+  private static final Icon myVerticalIcon = IconLoader.getIcon("/icons/LinearLayout2.png");
+  private static final Icon myHorizontalOverrideIcon = IconLoader.getIcon("/icons/LinearLayout3.png");
 
   private final DesignerEditorPanel myDesigner;
   private final List<RadComponent> myComponents;

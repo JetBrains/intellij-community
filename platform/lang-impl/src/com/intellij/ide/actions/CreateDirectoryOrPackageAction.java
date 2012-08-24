@@ -101,7 +101,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
     else {
       presentation.setText(IdeBundle.message("action.directory"));
-      presentation.setIcon(PlatformIcons.DIRECTORY_OPEN_ICON);
+      presentation.setIcon(PlatformIcons.DIRECTORY_CLOSED_ICON);
     }
   }
 

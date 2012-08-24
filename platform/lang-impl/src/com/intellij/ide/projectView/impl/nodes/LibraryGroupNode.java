@@ -122,7 +122,7 @@ public class LibraryGroupNode extends ProjectViewNode<LibraryGroupElement> {
 
   public void update(PresentationData presentation) {
     presentation.setPresentableText(IdeBundle.message("node.projectview.libraries"));
-    presentation.setIcons(PlatformIcons.LIBRARY_ICON);
+    presentation.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
   public boolean canNavigate() {

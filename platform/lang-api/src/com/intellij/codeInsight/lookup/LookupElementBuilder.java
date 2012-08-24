@@ -18,7 +18,6 @@ package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.util.ObjectUtils;
 import gnu.trove.THashSet;
@@ -69,7 +68,7 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   public static LookupElementBuilder createWithIcon(@NotNull PsiNamedElement element) {
-    return create(element).withIcon(element.getIcon(Iconable.ICON_FLAG_CLOSED));
+    return create(element).withIcon(element.getIcon(0));
   }
 
   public static LookupElementBuilder create(@NotNull Object lookupObject, @NotNull String lookupString) {

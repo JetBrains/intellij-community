@@ -280,8 +280,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     @Override
     protected void update(PresentationData presentation) {
       //todo[nik] this is workaround for bug in getTemplatePresentation().setIcons()
-      presentation.setOpenIcon(getTemplatePresentation().getIcon(true));
-      presentation.setClosedIcon(getTemplatePresentation().getIcon(false));
+      presentation.setIcon(getTemplatePresentation().getIcon(false));
     }
   }
 
@@ -294,7 +293,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private static class ProjectDescriptor extends LibrariesTreeNodeBase<Project> {
     protected ProjectDescriptor(final Project project, final Project element) {
       super(project, null, element);
-      getTemplatePresentation().setIcons(PlatformIcons.PROJECT_ICON);
+      getTemplatePresentation().setIcon(PlatformIcons.PROJECT_ICON);
       getTemplatePresentation().addText(notEmpty(getElement().getName()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
@@ -303,8 +302,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     protected ModuleDescriptor(final Project project, final NodeDescriptor parentDescriptor, final Module element) {
       super(project, parentDescriptor, element);
       final PresentationData templatePresentation = getTemplatePresentation();
-      templatePresentation.setClosedIcon(ModuleType.get(element).getNodeIcon(false));
-      templatePresentation.setOpenIcon(ModuleType.get(element).getNodeIcon(true));
+      templatePresentation.setIcon(ModuleType.get(element).getNodeIcon(false));
       templatePresentation.addText(notEmpty(element.getName()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
@@ -321,7 +319,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       final SimpleColoredComponent coloredComponent = new SimpleColoredComponent();
       appearance.customize(coloredComponent);
       final PresentationData templatePresentation = getTemplatePresentation();
-      templatePresentation.setIcons(coloredComponent.getIcon());
+      templatePresentation.setIcon(coloredComponent.getIcon());
       templatePresentation.addText(notEmpty(appearance.getText()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
@@ -338,7 +336,7 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
       super(project, parentDescriptor, table);
       myWeight = weight;
       myAutoExpand = autoExpand;
-      getTemplatePresentation().setIcons(PlatformIcons.LIBRARY_ICON);
+      getTemplatePresentation().setIcon(PlatformIcons.LIBRARY_ICON);
       final String nodeText = table.getPresentation().getDisplayName(true);
       getTemplatePresentation().addText(notEmpty(nodeText), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }

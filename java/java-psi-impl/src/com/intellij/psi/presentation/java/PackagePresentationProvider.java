@@ -45,7 +45,7 @@ public class PackagePresentationProvider implements ItemPresentationProvider<Psi
 
       @Override
       public Icon getIcon(boolean open) {
-        return open ? PlatformIcons.PACKAGE_OPEN_ICON : PlatformIcons.PACKAGE_ICON;
+        return PlatformIcons.PACKAGE_ICON;
       }
     };
   }

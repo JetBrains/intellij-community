@@ -47,9 +47,8 @@ public interface ItemPresentation {
   /**
    * Returns the icon representing the object.
    *
-   * @param open only meaningful when used in a tree renderers. false is passed when icon for other renderers is required.
-   * @return the icon instance, or null if no icon should be shown.
+   * @param unused Used to mean if open/close icons for tree renderer. No longer in use. The parameter is only there for API compatibility reason.
    */
   @Nullable
-  Icon getIcon(boolean open);
+  Icon getIcon(boolean unused);
 }

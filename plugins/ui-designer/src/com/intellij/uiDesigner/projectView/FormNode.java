@@ -72,7 +72,7 @@ public class FormNode extends ProjectViewNode<Form>{
       setValue(null);
     } else {
       presentation.setPresentableText(getValue().getName());
-      presentation.setIcons(StdFileTypes.GUI_DESIGNER_FORM.getIcon());
+      presentation.setIcon(StdFileTypes.GUI_DESIGNER_FORM.getIcon());
     }
   }
 

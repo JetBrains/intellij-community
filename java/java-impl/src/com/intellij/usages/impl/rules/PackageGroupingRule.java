@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,8 +52,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
 
   private class PackageGroup implements UsageGroup, TypeSafeDataProvider {
     private final PsiPackage myPackage;
-    private Icon myOpenIcon;
-    private Icon myClosedIcon;
+    private Icon myIcon;
 
     private PackageGroup(PsiPackage aPackage) {
       myPackage = aPackage;
@@ -63,13 +61,12 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
 
     public void update() {
       if (isValid()) {
-        myOpenIcon = myPackage.getIcon(Iconable.ICON_FLAG_OPEN);
-        myClosedIcon = myPackage.getIcon(Iconable.ICON_FLAG_CLOSED);
+        myIcon = myPackage.getIcon(0);
       }
     }
 
     public Icon getIcon(boolean isOpen) {
-      return isOpen? myOpenIcon: myClosedIcon;
+      return myIcon;
     }
 
     @NotNull

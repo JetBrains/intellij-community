@@ -109,7 +109,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
                        SimpleTextAttributes commentAttributes) {
       final String name = myLibrary.getName();
       if (name != null) {
-        presentationData.setIcons(PlatformIcons.LIBRARY_ICON);
+        presentationData.setIcon(PlatformIcons.LIBRARY_ICON);
         presentationData.addText(name, mainAttributes);
         presentationData.addText(LibraryElementPresentation.getLibraryTableComment(myLibrary), commentAttributes);
       }
@@ -122,7 +122,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
         final VirtualFile[] files = myLibrary.getFiles(OrderRootType.CLASSES);
         if (files.length > 0) {
           final VirtualFile file = files[0];
-          presentationData.setIcons(VirtualFilePresentation.getIcon(file));
+          presentationData.setIcon(VirtualFilePresentation.getIcon(file));
           presentationData.addText(file.getName(), mainAttributes);
         }
         else {
