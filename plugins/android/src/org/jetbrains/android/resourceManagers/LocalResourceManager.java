@@ -37,6 +37,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.android.AndroidFileTemplateProvider;
 import org.jetbrains.android.AndroidValueResourcesIndex;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
+import org.jetbrains.android.dom.attrs.AttributeDefinitionsImpl;
 import org.jetbrains.android.dom.resources.Attr;
 import org.jetbrains.android.dom.resources.DeclareStyleable;
 import org.jetbrains.android.dom.resources.ResourceElement;
@@ -181,7 +182,7 @@ public class LocalResourceManager extends ResourceManager {
               xmlResFiles.add((XmlFile)file);
             }
           }
-          myAttrDefs = new AttributeDefinitions(xmlResFiles.toArray(new XmlFile[xmlResFiles.size()]));
+          myAttrDefs = new AttributeDefinitionsImpl(xmlResFiles.toArray(new XmlFile[xmlResFiles.size()]));
         }
       });
     }

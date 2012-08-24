@@ -17,7 +17,7 @@ import com.intellij.psi.XmlRecursiveElementVisitor;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
-import org.jetbrains.android.dom.attrs.AttributeDefinitions;
+import org.jetbrains.android.dom.attrs.AttributeDefinitionsImpl;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.resourceManagers.SystemResourceManager;
 import org.jetbrains.android.uipreview.RenderServiceFactory;
@@ -37,7 +37,7 @@ public class AndroidTargetData {
   private final AndroidSdkData mySdkData;
   private final IAndroidTarget myTarget;
 
-  private volatile AttributeDefinitions myAttrDefs;
+  private volatile AttributeDefinitionsImpl myAttrDefs;
   private volatile RenderServiceFactory myRenderServiceFactory;
   private volatile Set<String> myThemes;
   private volatile boolean myThemesLoaded;
@@ -48,7 +48,7 @@ public class AndroidTargetData {
   }
 
   @Nullable
-  public AttributeDefinitions getAttrDefs(@NotNull final Project project) {
+  public AttributeDefinitionsImpl getAttrDefs(@NotNull final Project project) {
     if (myAttrDefs == null) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
@@ -57,7 +57,7 @@ public class AndroidTargetData {
           final String attrsManifestPath = myTarget.getPath(IAndroidTarget.MANIFEST_ATTRIBUTES);
           final XmlFile[] files = findXmlFiles(project, attrsPath, attrsManifestPath);
           if (files != null) {
-            myAttrDefs = new AttributeDefinitions(files);
+            myAttrDefs = new AttributeDefinitionsImpl(files);
           }
         }
       });
@@ -68,7 +68,7 @@ public class AndroidTargetData {
   @Nullable
   public RenderServiceFactory getRenderServiceFactory(@NotNull Project project) throws RenderingException, IOException {
     if (myRenderServiceFactory == null) {
-      final AttributeDefinitions attrDefs = getAttrDefs(project);
+      final AttributeDefinitionsImpl attrDefs = getAttrDefs(project);
       if (attrDefs == null) {
         return null;
       }

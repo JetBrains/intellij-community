@@ -180,9 +180,7 @@ public class PropertyParser {
                          "paddingLeft", "left",
                          "paddingTop", "top",
                          "paddingRight", "right",
-                         "paddingBottom", "bottom",
-                         "paddingStart", "start",
-                         "paddingEnd", "end");
+                         "paddingBottom", "bottom");
           if (model != null) {
             paddingProperty.decorate(model);
           }

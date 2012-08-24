@@ -663,6 +663,14 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testPrivateAttributesCompletion() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testPrivateAttributesHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
   public void testAttrReferences1() throws Throwable {
     copyFileToProject("attrReferences_attrs.xml", "res/values/attrReferences_attrs.xml");
     doTestHighlighting();

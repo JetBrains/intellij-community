@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.resourceManagers;
 
+import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkConstants;
 import com.intellij.openapi.application.ApplicationManager;
@@ -117,6 +118,21 @@ public class SystemResourceManager extends ResourceManager {
   @Nullable
   public synchronized AttributeDefinitions getAttributeDefinitions() {
     final AndroidTargetData targetData = myPlatform.getSdkData().getTargetData(myPlatform.getTarget());
-    return targetData != null ? targetData.getAttrDefs(myModule.getProject()) : null;
+    if (targetData == null) {
+      return null;
+    }
+    final AttributeDefinitions attrDefs = targetData.getAttrDefs(myModule.getProject());
+    return attrDefs != null ? new MyAttributeDefinitions(attrDefs) : null;
+  }
+
+  private class MyAttributeDefinitions extends FilteredAttributeDefinitions {
+    protected MyAttributeDefinitions(@NotNull AttributeDefinitions wrappee) {
+      super(wrappee);
+    }
+
+    @Override
+    protected boolean isAttributeAcceptable(@NotNull String name) {
+      return isResourcePublic(ResourceType.ATTR.getName(), name);
+    }
   }
 }
