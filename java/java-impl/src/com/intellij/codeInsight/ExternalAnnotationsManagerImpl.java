@@ -380,7 +380,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
               @Override
               public void run() {
                 try {
-                  annotationTagProcessor.process(tag);
+                  annotationTagProcessor.process(annotationTag);
                   commitChanges(file);
                 }
                 catch (IncorrectOperationException e) {
