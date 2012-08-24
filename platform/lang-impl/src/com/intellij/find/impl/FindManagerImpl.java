@@ -60,6 +60,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.UsageViewManager;
+import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
@@ -181,31 +182,32 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   @Override
   public void showFindDialog(@NotNull final FindModel model, @NotNull final Runnable okHandler) {
-    if(myFindDialog==null || Disposer.isDisposed(myFindDialog.getDisposable())){
-      myFindDialog = new FindDialog(myProject, model, new Runnable(){
-        @Override
-        public void run() {
-          String stringToFind = model.getStringToFind();
-          if (stringToFind.length() == 0){
-            return;
-          }
-          FindSettings.getInstance().addStringToFind(stringToFind);
-          if (!model.isMultipleFiles()){
-            setFindWasPerformed();
-          }
-          if (model.isReplaceState()){
-            FindSettings.getInstance().addStringToReplace(model.getStringToReplace());
-          }
-          if (model.isMultipleFiles() && !model.isProjectScope()){
-            FindSettings.getInstance().addDirectory(model.getDirectoryName());
-
-            if (model.getDirectoryName()!=null) {
-              myFindInProjectModel.setWithSubdirectories(model.isWithSubdirectories());
-            }
-          }
-          okHandler.run();
+    final Consumer<FindModel> handler = new Consumer<FindModel>(){
+      @Override
+      public void consume(FindModel findModel) {
+        String stringToFind = findModel.getStringToFind();
+        if (stringToFind.length() == 0) {
+          return;
         }
-      }) {
+        FindSettings.getInstance().addStringToFind(stringToFind);
+        if (!findModel.isMultipleFiles()) {
+          setFindWasPerformed();
+        }
+        if (findModel.isReplaceState()) {
+          FindSettings.getInstance().addStringToReplace(findModel.getStringToReplace());
+        }
+        if (findModel.isMultipleFiles() && !findModel.isProjectScope()) {
+          FindSettings.getInstance().addDirectory(findModel.getDirectoryName());
+
+          if (findModel.getDirectoryName() != null) {
+            myFindInProjectModel.setWithSubdirectories(findModel.isWithSubdirectories());
+          }
+        }
+        okHandler.run();
+      }
+    };
+    if(myFindDialog==null || Disposer.isDisposed(myFindDialog.getDisposable())){
+      myFindDialog = new FindDialog(myProject, model, handler) {
         @Override
         protected void dispose() {
           super.dispose();
@@ -213,6 +215,10 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         }
       };
       myFindDialog.setModal(false);
+    } else if (myFindDialog.getModel().isReplaceState() != model.isReplaceState()) {
+      myFindDialog.setModel(model);
+      myFindDialog.setOkHandler(handler);
+      return;
     }
     myFindDialog.show();
   }

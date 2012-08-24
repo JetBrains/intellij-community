@@ -93,8 +93,8 @@ public class FindDialog extends DialogWrapper {
   private ComboBox myDirectoryComboBox;
   private StateRestoringCheckBox myCbWithSubdirectories;
   private JCheckBox myCbToOpenInNewTab;
-  private final FindModel myModel;
-  private final Runnable myOkHandler;
+  private FindModel myModel;
+  private Consumer<FindModel> myOkHandler;
   private FixedSizeButton mySelectDirectoryButton;
   private StateRestoringCheckBox myUseFileFilter;
   private ComboBox myFileFilter;
@@ -105,14 +105,24 @@ public class FindDialog extends DialogWrapper {
   private Action myFindAllAction;
   private JRadioButton myRbCustomScope;
   private ScopeChooserCombo myScopeCombo;
+  protected JLabel myReplacePrompt;
 
-  public FindDialog(Project project, FindModel model, Runnable myOkHandler){
+  public FindDialog(Project project, FindModel model, Consumer<FindModel> myOkHandler){
     super(project, true);
     myProject = project;
     myModel = model;
 
     this.myOkHandler = myOkHandler;
 
+    updateTitle();
+    setOKButtonText(FindBundle.message("find.button"));
+    init();
+    initByModel();
+    updateReplaceVisibility();
+    //myLivePreviewController = new LivePreviewController(this, new LivePreview(myProject), getContentPane());
+  }
+
+  private void updateTitle() {
     if (myModel.isReplaceState()){
       if (myModel.isMultipleFiles()){
         setTitle(FindBundle.message("find.replace.in.project.dialog.title"));
@@ -130,10 +140,6 @@ public class FindDialog extends DialogWrapper {
         setTitle(FindBundle.message("find.text.dialog.title"));
       }
     }
-    setOKButtonText(FindBundle.message("find.button"));
-    init();
-    initByModel();
-    //myLivePreviewController = new LivePreviewController(this, new LivePreview(myProject), getContentPane());
   }
 
   @Override
@@ -186,36 +192,39 @@ public class FindDialog extends DialogWrapper {
     revealWhitespaces(myInputComboBox);
     initCombobox(myInputComboBox);
 
-    if (myModel.isReplaceState()){
-      myReplaceComboBox = new ComboBox(300);
-      revealWhitespaces(myReplaceComboBox);
-      
-      initCombobox(myReplaceComboBox);
-      final Component editorComponent = myReplaceComboBox.getEditor().getEditorComponent();
-      editorComponent.addFocusListener(
-        new FocusAdapter() {
-          @Override
-          public void focusGained(FocusEvent e) {
-            myReplaceComboBox.getEditor().selectAll();
-            editorComponent.removeFocusListener(this);
-          }
+    myReplaceComboBox = new ComboBox(300);
+    revealWhitespaces(myReplaceComboBox);
+
+    initCombobox(myReplaceComboBox);
+    final Component editorComponent = myReplaceComboBox.getEditor().getEditorComponent();
+    editorComponent.addFocusListener(
+      new FocusAdapter() {
+        @Override
+        public void focusGained(FocusEvent e) {
+          myReplaceComboBox.getEditor().selectAll();
+          editorComponent.removeFocusListener(this);
         }
-      );
-    }
+      }
+    );
 
 
     panel.add(myInputComboBox, new GridBagConstraints(1,0,1,1,1,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,UIUtil.DEFAULT_VGAP,0), 0,0));
     prompt.setLabelFor(myInputComboBox.getEditor().getEditorComponent());
 
-    if (myModel.isReplaceState()){
-      final JLabel replacePrompt = new JLabel(FindBundle.message("find.replace.with.label"));
-      panel.add(replacePrompt, new GridBagConstraints(0,1,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,UIUtil.DEFAULT_VGAP,UIUtil.DEFAULT_HGAP), 0,0));
+    myReplacePrompt = new JLabel(FindBundle.message("find.replace.with.label"));
+    panel.add(myReplacePrompt, new GridBagConstraints(0,1,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,UIUtil.DEFAULT_VGAP,UIUtil.DEFAULT_HGAP), 0,0));
 
-      panel.add(myReplaceComboBox, new GridBagConstraints(1,1,1,1,1,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,UIUtil.DEFAULT_VGAP,0), 0,0));
-      replacePrompt.setLabelFor(myReplaceComboBox.getEditor().getEditorComponent());
-    }
-
+    panel.add(myReplaceComboBox, new GridBagConstraints(1, 1, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
+                                                        new Insets(0, 0, UIUtil.DEFAULT_VGAP, 0), 0, 0));
+    myReplacePrompt.setLabelFor(myReplaceComboBox.getEditor().getEditorComponent());
     return panel;
+  }
+
+  private void updateReplaceVisibility() {
+    myReplacePrompt.setVisible(myModel.isReplaceState());
+    myReplaceComboBox.setVisible(myModel.isReplaceState());
+    myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+    myCbPreserveCase.setVisible(myModel.isReplaceState());
   }
 
   private void revealWhitespaces(ComboBox comboBox) {
@@ -285,6 +294,16 @@ public class FindDialog extends DialogWrapper {
       return validateModel;
     }
     return null;
+  }
+
+  public void setOkHandler(Consumer<FindModel> okHandler) {
+    myOkHandler = okHandler;
+  }
+
+  public void setModel(FindModel model) {
+    myModel = model;
+    updateReplaceVisibility();
+    updateTitle();
   }
 
   private static int getCaretPosition(JComboBox comboBox) {
@@ -369,10 +388,9 @@ public class FindDialog extends DialogWrapper {
       gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
       optionsPanel.add(createFilterPanel(),gbConstraints);
 
-      if (!myModel.isReplaceState()) {
-        myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"));
-        optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
-      }
+      myCbToSkipResultsWhenOneUsage = createCheckbox(FindSettings.getInstance().isSkipResultsWithOneUsage(), FindBundle.message("find.options.skip.results.tab.with.one.usage.checkbox"));
+      optionsPanel.add(myCbToSkipResultsWhenOneUsage, gbConstraints);
+      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
     }
 
     if (myModel.isOpenInNewTabVisible()){
@@ -445,7 +463,7 @@ public class FindDialog extends DialogWrapper {
       updateFindSettings();
 
       super.doOKAction();
-      myOkHandler.run();
+      myOkHandler.consume(myModel);
     } else {
       String message = validationInfo.message;
       if (message != null) {
@@ -581,10 +599,9 @@ public class FindDialog extends DialogWrapper {
 
     myCbCaseSensitive = createCheckbox(FindBundle.message("find.options.case.sensitive"));
     findOptionsPanel.add(myCbCaseSensitive);
-    if (myModel.isReplaceState()) {
-      myCbPreserveCase = createCheckbox(FindBundle.message("find.options.replace.preserve.case"));
-      findOptionsPanel.add(myCbPreserveCase);
-    }
+    myCbPreserveCase = createCheckbox(FindBundle.message("find.options.replace.preserve.case"));
+    findOptionsPanel.add(myCbPreserveCase);
+    myCbPreserveCase.setVisible(myModel.isReplaceState());
     myCbWholeWordsOnly = createCheckbox(FindBundle.message("find.options.whole.words.only"));
 
     findOptionsPanel.add(myCbWholeWordsOnly);
@@ -633,10 +650,8 @@ public class FindDialog extends DialogWrapper {
       }
     });
 
-    if (myModel.isReplaceState()) {
-      myCbCaseSensitive.addActionListener(actionListener);
-      myCbPreserveCase.addActionListener(actionListener);
-    }
+    myCbCaseSensitive.addActionListener(actionListener);
+    myCbPreserveCase.addActionListener(actionListener);
 
 //    if(isReplaceState) {
 //      myCbPromptOnReplace = new JCheckBox("Prompt on replace", true);
