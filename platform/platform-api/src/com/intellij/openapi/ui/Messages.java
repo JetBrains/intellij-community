@@ -130,7 +130,19 @@ public class Messages {
   }
 
   public static boolean canShowMacSheetPanel() {
-    return SystemInfo.isMac && !isApplicationInUnitTestOrHeadless() && Registry.is("ide.mac.message.dialogs.as.sheets");
+    return SystemInfo.isMac
+           && !isApplicationInUnitTestOrHeadless()
+           && Registry.is("ide.mac.message.dialogs.as.sheets")
+           && !isMultipleModalDialogs();
+  }
+
+  private static boolean isMultipleModalDialogs() {
+    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (c != null) {
+      final DialogWrapper wrapper = DialogWrapper.findInstance(c);
+      return wrapper != null && wrapper.getPeer().getCurrentModalEntities().length > 1;
+    }
+    return false;
   }
 
   public static int showDialog(Project project, String message, String title, String moreInfo, String[] options, int defaultOptionIndex, int focusedOptionIndex, Icon icon) {
