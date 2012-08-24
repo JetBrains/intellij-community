@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     final boolean hasVCS = !changeListManager.getAffectedFiles().isEmpty();
     if (hasVCS){
-      useUncommitedFiles = myAnalysisOptions.SCOPE_TYPE == AnalysisScope.UNCOMMITED_FILES;
+      useUncommitedFiles = myAnalysisOptions.SCOPE_TYPE == AnalysisScope.UNCOMMITTED_FILES;
       myUncommitedFilesButton.setSelected(myRememberScope && useUncommitedFiles);
     }
     myUncommitedFilesButton.setVisible(hasVCS);
@@ -300,7 +300,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
           }
         }
         scope = new AnalysisScope(project, new HashSet<VirtualFile>(files));
-        uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITED_FILES;
+        uiOptions.SCOPE_TYPE = AnalysisScope.UNCOMMITTED_FILES;
       }
       else {
         scope = defaultScope;

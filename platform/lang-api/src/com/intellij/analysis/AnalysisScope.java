@@ -45,6 +45,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ import java.util.*;
 public class AnalysisScope {
   private static final Logger LOG = Logger.getInstance("#com.intellij.analysis.AnalysisScope");
 
-  public static final DataKey<AnalysisScope> KEY = DataKey.create("analysisScope"); 
+  public static final DataKey<AnalysisScope> KEY = DataKey.create("analysisScope");
 
   public static final int PROJECT = 1;
   public static final int DIRECTORY = 2;
@@ -65,11 +66,15 @@ public class AnalysisScope {
   public static final int MODULE = 4;
   public static final int INVALID = 6;
   public static final int MODULES = 7;
-
   public static final int CUSTOM = 8;
   public static final int VIRTUAL_FILES = 9;
+  public static final int UNCOMMITTED_FILES = 10;
 
-  public static int UNCOMMITED_FILES = 10;
+  /** @deprecated use {@linkplain #UNCOMMITTED_FILES} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration") public static final int UNCOMMITED_FILES = UNCOMMITTED_FILES;
+
+  @MagicConstant(flags = {PROJECT, DIRECTORY, FILE, MODULE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
+  public @interface Type { }
 
   private final Project myProject;
   protected List<Module> myModules;
@@ -77,7 +82,7 @@ public class AnalysisScope {
   protected PsiElement myElement;
   private SearchScope myScope;
   private boolean mySearchInLibraries = false;
-  protected int myType;
+  @Type protected int myType;
 
   protected HashSet<VirtualFile> myFilesSet;
 
@@ -504,7 +509,8 @@ public class AnalysisScope {
 
   @Nullable
   private String getRelativePath() {
-    final String relativePath = ProjectUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(), myElement.getProject());
+    final String relativePath = ProjectUtil.calcRelativeToProjectPath(((PsiFileSystemItem)myElement).getVirtualFile(),
+                                                                      myElement.getProject());
     if (relativePath.length() > 100) {
       return null;
     }
