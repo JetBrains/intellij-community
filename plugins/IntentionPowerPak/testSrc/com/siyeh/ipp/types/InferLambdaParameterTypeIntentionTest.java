@@ -27,6 +27,10 @@ public class InferLambdaParameterTypeIntentionTest extends IPPTestCase {
     doTest("Expand lambda to (String o1, String o2) -> {...}");
   }
 
+  public void testSimpleWildcard() {
+    doTest("Expand lambda to (Integer o) -> {...}");
+  }
+
   public void testAlreadyExist() throws Exception {
     assertIntentionNotAvailable("Expand lambda to (String o) -> {...}");
   }

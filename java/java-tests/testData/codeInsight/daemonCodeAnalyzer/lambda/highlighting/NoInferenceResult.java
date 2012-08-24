@@ -7,7 +7,7 @@ class NoInferenceResult {
     <T> void m1(T t) { }
 
     void test() {
-        m(<error descr="Cyclic inference">(String s1) ->  (String s2) ->  s1 + s2</error>);
+        m(<error descr="Incompatible return type <lambda expression> in lambda expression">(String s1) ->  (String s2) ->  s1 + s2</error>);
 
         m((String s1) -> s1.length());
         m((String s1) -> s1);

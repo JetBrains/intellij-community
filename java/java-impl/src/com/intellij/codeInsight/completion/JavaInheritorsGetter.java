@@ -124,7 +124,7 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
       return null;
     }
 
-    PsiType psiType = JavaCompletionUtil.eliminateWildcards(type);
+    PsiType psiType = GenericsUtil.eliminateWildcards(type);
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(parameters.getOriginalPosition()) &&
         PsiUtil.getLanguageLevel(parameters.getOriginalFile()).isAtLeast(LanguageLevel.JDK_1_7)) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());

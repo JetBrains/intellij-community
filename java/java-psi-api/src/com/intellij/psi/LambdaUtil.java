@@ -143,7 +143,7 @@ public class LambdaUtil {
         }
 
         if (!lambdaFormalType
-          .equals(resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType)))) {
+          .isAssignableFrom(GenericsUtil.eliminateWildcards(resolveResult.getSubstitutor().substitute(methodSignature.getSubstitutor().substitute(methodParameterType))))) {
           return false;
         }
       }

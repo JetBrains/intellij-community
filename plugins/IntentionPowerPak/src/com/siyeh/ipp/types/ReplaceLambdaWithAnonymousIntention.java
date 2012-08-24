@@ -49,8 +49,9 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
   protected void processIntention(Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
     LOG.assertTrue(lambdaExpression != null);
-    final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
+    PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
     LOG.assertTrue(functionalInterfaceType != null);
+    functionalInterfaceType = GenericsUtil.eliminateWildcards(functionalInterfaceType);
     final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
     LOG.assertTrue(method != null);
 
