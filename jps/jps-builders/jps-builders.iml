@@ -31,15 +31,6 @@
     <orderEntry type="module" module-name="java-runtime" scope="RUNTIME" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="module-library" scope="TEST">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/junit-addons-1.4.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" scope="RUNTIME" name="Eclipse" level="project" />
     <orderEntry type="module" module-name="jps-model-api" />
