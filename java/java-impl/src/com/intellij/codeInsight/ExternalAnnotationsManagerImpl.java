@@ -348,13 +348,14 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
       if (files == null) {
         return false;
       }
+      boolean processedAnything = false;
       for (final XmlFile file : files) {
         if (!file.isValid()) {
           continue;
         }
         if (ReadonlyStatusHandler.getInstance(myPsiManager.getProject())
           .ensureFilesWritable(file.getVirtualFile()).hasReadonlyFiles()) {
-          return false;
+          continue;
         }
         final XmlDocument document = file.getDocument();
         if (document == null) {
@@ -387,12 +388,11 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
                 }
               }
             }, ExternalAnnotationsManagerImpl.class.getName(), null);
-            return true;
+            processedAnything = true;
           }
-          return false;
         }
       }
-      return false;
+      return processedAnything;
     }
     finally {
       dropCache();
