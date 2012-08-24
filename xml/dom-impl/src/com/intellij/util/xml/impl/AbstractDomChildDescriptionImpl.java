@@ -24,7 +24,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.stubs.Stubbed;
+import com.intellij.util.xml.Stubbed;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
