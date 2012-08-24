@@ -247,7 +247,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           if (notFunctionalMessage != null) {
             myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression, notFunctionalMessage));
           } else {
-            if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType)) {
+            if (!LambdaUtil.isLambdaFullyInferred(expression, functionalInterfaceType) && !expression.hasFormalParameterTypes()) {
               myHolder.add(HighlightInfo.createHighlightInfo(HighlightInfoType.ERROR, expression,
                                                              "Cyclic inference")); //todo[ann] append not inferred type params info
             }
