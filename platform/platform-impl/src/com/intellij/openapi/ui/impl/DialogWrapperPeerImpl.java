@@ -143,6 +143,11 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     return isHeadlessEnv();
   }
 
+  @Override
+  public Object[] getCurrentModalEntities() {
+    return LaterInvocator.getCurrentModalEntities();
+  }
+
   public static boolean isHeadlessEnv() {
     Application app = ApplicationManager.getApplication();
     if (app == null) return GraphicsEnvironment.isHeadless();
