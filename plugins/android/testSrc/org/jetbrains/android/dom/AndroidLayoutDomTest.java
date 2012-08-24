@@ -707,6 +707,10 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestAttrReferenceCompletion("android:textAppear\n");
   }
 
+  public void testNamespaceCompletion() throws Throwable {
+    doTestNamespaceCompletion(true, true);
+  }
+
   private void doTestAttrReferenceCompletion(String textToType) throws IOException {
     copyFileToProject("attrReferences_attrs.xml", "res/values/attrReferences_attrs.xml");
     VirtualFile file = copyFileToProject(getTestName(true) + ".xml");

@@ -3,7 +3,6 @@ package org.jetbrains.android.dom;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.android.AndroidTestCase;
 import org.jetbrains.android.inspections.AndroidDomInspection;
 import org.jetbrains.android.inspections.AndroidElementNotAllowedInspection;
@@ -48,12 +47,21 @@ abstract class AndroidDomTest extends AndroidTestCase {
     myFixture.checkResultByFile(testFolder + '/' + getTestName(false) + "_after.java");
   }
 
-  protected static String[] withNamespace(String... arr) {
-    List<String> list = new ArrayList<String>();
-    for (String s : arr) {
-      list.add("android:" + s);
+  protected void doTestNamespaceCompletion(boolean systemNamespace, boolean customNamespace) throws IOException {
+    final VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    final List<String> variants = myFixture.getLookupElementStrings();
+    assertNotNull(variants);
+    final List<String> expectedVariants = new ArrayList<String>();
+
+    if (systemNamespace) {
+      expectedVariants.add("http://schemas.android.com/apk/res/android");
     }
-    return ArrayUtil.toStringArray(list);
+    if (customNamespace) {
+      expectedVariants.add("http://schemas.android.com/apk/res/p1.p2");
+    }
+    assertEquals(expectedVariants, variants);
   }
 
   protected void doTestCompletionVariants(String fileName, String... variants) throws Throwable {

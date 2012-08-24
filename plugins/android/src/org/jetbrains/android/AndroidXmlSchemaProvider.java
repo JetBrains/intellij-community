@@ -89,11 +89,17 @@ public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
 
   @Override
   public boolean isAvailable(@NotNull final XmlFile file) {
+    final PsiFile f = file.getOriginalFile();
+    if (!(f instanceof XmlFile)) {
+      return false;
+    }
+    final XmlFile originalFile = (XmlFile)f;
+
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        if (isXmlResourceFile(file) ||
-            ManifestDomFileDescription.isManifestFile(file)) {
-          return AndroidFacet.getInstance(file) != null;
+        if (isXmlResourceFile(originalFile) ||
+            ManifestDomFileDescription.isManifestFile(originalFile)) {
+          return AndroidFacet.getInstance(originalFile) != null;
         }
         return false;
       }

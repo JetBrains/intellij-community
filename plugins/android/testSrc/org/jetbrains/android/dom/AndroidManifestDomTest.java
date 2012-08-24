@@ -213,4 +213,12 @@ public class AndroidManifestDomTest extends AndroidDomTest {
     // do not complete prefix in manifest because there is not many attributes
     doTestAndroidPrefixCompletion(null);
   }
+
+  public void testNamespaceCompletion() throws Throwable {
+    doTestNamespaceCompletion(true, true);
+  }
+
+  public void testNamespaceCompletion1() throws Throwable {
+    doTestNamespaceCompletion(true, false);
+  }
 }
