@@ -2,13 +2,13 @@ package org.jetbrains.android.dom.converters;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.xml.XmlAttributeValue;
@@ -77,11 +77,15 @@ public class OnClickConverter extends Converter<String> implements CustomReferen
       if (methodName == null) {
         return ResolveResult.EMPTY_ARRAY;
       }
+      final Module module = ModuleUtilCore.findModuleForPsiElement(myElement);
 
+      if (module == null) {
+        return ResolveResult.EMPTY_ARRAY;
+      }
       final Project project = myElement.getProject();
       final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
 
-      final PsiMethod[] methods = cache.getMethodsByName(methodName, GlobalSearchScope.projectScope(project));
+      final PsiMethod[] methods = cache.getMethodsByName(methodName, module.getModuleWithDependenciesScope());
       if (methods.length == 0) {
         return ResolveResult.EMPTY_ARRAY;
       }
@@ -129,9 +133,13 @@ public class OnClickConverter extends Converter<String> implements CustomReferen
     @Override
     public Object[] getVariants() {
       final Project project = myElement.getProject();
-      final GlobalSearchScope scope = ProjectScope.getAllScope(project);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(myElement);
 
-      final PsiClass activityClass = JavaPsiFacade.getInstance(project).findClass(AndroidUtils.ACTIVITY_BASE_CLASS_NAME, scope);
+      if (module == null) {
+        return ResolveResult.EMPTY_ARRAY;
+      }
+      final PsiClass activityClass = JavaPsiFacade.getInstance(project)
+        .findClass(AndroidUtils.ACTIVITY_BASE_CLASS_NAME, module.getModuleWithDependenciesAndLibrariesScope(false));
       if (activityClass == null) {
         return EMPTY_ARRAY;
       }
@@ -139,7 +147,7 @@ public class OnClickConverter extends Converter<String> implements CustomReferen
       final List<Object> result = new ArrayList<Object>();
       final Set<String> methodNames = new HashSet<String>();
 
-      ClassInheritorsSearch.search(activityClass, scope, true).forEach(new Processor<PsiClass>() {
+      ClassInheritorsSearch.search(activityClass, module.getModuleWithDependenciesScope(), true).forEach(new Processor<PsiClass>() {
         public boolean process(PsiClass c) {
           for (PsiMethod method : c.getMethods()) {
             if (checkSignature(method) && methodNames.add(method.getName())) {
