@@ -751,7 +751,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
    * @see FileTypeIndentOptionsProvider
    * @see LanguageCodeStyleSettingsProvider
    */
-  public IndentOptions getIndentOptions(FileType fileType) {
+  public IndentOptions getIndentOptions(@Nullable FileType fileType) {
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
 
@@ -767,7 +767,7 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   }
   
   @Nullable
-  private IndentOptions getLanguageIndentOptions(FileType fileType) {
+  private IndentOptions getLanguageIndentOptions(@Nullable FileType fileType) {
     if (fileType == null || !(fileType instanceof LanguageFileType)) return null;
     Language lang = ((LanguageFileType)fileType).getLanguage();
     CommonCodeStyleSettings langSettings = getCommonSettings(lang);
