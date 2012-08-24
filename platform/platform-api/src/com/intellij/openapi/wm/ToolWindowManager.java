@@ -130,7 +130,10 @@ public abstract class ToolWindowManager {
 
   public abstract void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody);
 
-  public abstract void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String htmlBody, @Nullable final Icon icon,
+  public abstract void notifyByBalloon(@NotNull final String toolWindowId,
+                                       @NotNull final MessageType type,
+                                       @NotNull final String htmlBody,
+                                       @Nullable final Icon icon,
                                        @Nullable HyperlinkListener listener);
 
   @Nullable

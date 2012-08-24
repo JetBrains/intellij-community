@@ -631,7 +631,7 @@ public class Mock {
     }
 
     @Override
-    public void notifyByBalloon(@NotNull final String toolWindowId, final MessageType type, @NotNull final String text, @Nullable final Icon icon,
+    public void notifyByBalloon(@NotNull final String toolWindowId, @NotNull final MessageType type, @NotNull final String text, @Nullable final Icon icon,
                                 @Nullable final HyperlinkListener listener) {
     }
 
