@@ -60,6 +60,9 @@ public abstract class ExternalAnnotationsManager {
 
   public abstract boolean deannotate(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
+  public abstract boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN,
+                                                 @NotNull PsiNameValuePair[] value);
+
   public abstract AnnotationPlace chooseAnnotationsPlace(@NotNull PsiElement element);
 
   @Nullable

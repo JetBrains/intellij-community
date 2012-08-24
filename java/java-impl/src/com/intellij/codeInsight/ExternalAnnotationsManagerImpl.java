@@ -327,6 +327,20 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     });
   }
 
+  @Override
+  public boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
+                                        @NotNull final String annotationFQN,
+                                        @NotNull final PsiNameValuePair[] value) {
+    return processExistingExternalAnnotations(listOwner, annotationFQN, new Processor<XmlTag>() {
+      @Override
+      public boolean process(XmlTag annotationTag) {
+        annotationTag.replace(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
+          createAnnotationTag(annotationFQN, value)));
+        return true;
+      }
+    });
+  }
+
   private boolean processExistingExternalAnnotations(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN,
                                                      @NotNull final Processor<XmlTag> annotationTagProcessor) {
     try {
