@@ -232,6 +232,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
         int ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message);
         if (ret != 0 && usageView != null) {
           usageView.setCurrentSearchCancelled(true);
+          if (indicator != null) indicator.cancel();
         }
         waitWhileUserClick.countDown();
       }
