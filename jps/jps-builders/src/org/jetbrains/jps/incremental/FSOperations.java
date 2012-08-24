@@ -1,5 +1,6 @@
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,10 +13,7 @@ import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.module.JpsDependencyElement;
-import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.module.JpsModuleDependency;
-import org.jetbrains.jps.model.module.JpsModuleSourceDependency;
+import org.jetbrains.jps.model.module.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -125,9 +123,32 @@ public class FSOperations {
   }
 
   public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor processor) throws IOException {
+    //noinspection unchecked
+    processFilesToRecompile(context, chunk, Condition.TRUE, processor);
+  }
+
+  public static void processFilesToRecompile(final CompileContext context,
+                                             final ModuleChunk chunk,
+                                             final JpsModuleType moduleType,
+                                             final FileProcessor processor) throws IOException {
+    final Condition<JpsModule> moduleFilter = new Condition<JpsModule>() {
+      public boolean value(final JpsModule module) {
+        return module.getModuleType() == moduleType;
+      }
+    };
+
+    processFilesToRecompile(context, chunk, moduleFilter, processor);
+  }
+
+  public static void processFilesToRecompile(final CompileContext context,
+                                             final ModuleChunk chunk,
+                                             final Condition<JpsModule> moduleFilter,
+                                             final FileProcessor processor) throws IOException {
     final BuildFSState fsState = context.getProjectDescriptor().fsState;
     for (JpsModule module : chunk.getModules()) {
-      fsState.processFilesToRecompile(context, module, processor);
+      if (moduleFilter.value(module)) {
+        fsState.processFilesToRecompile(context, module, processor);
+      }
     }
   }
 
