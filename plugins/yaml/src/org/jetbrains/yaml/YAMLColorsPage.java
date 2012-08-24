@@ -1,5 +1,6 @@
 package org.jetbrains.yaml;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
@@ -59,7 +60,7 @@ public class YAMLColorsPage implements ColorSettingsPage {
 
   @NotNull
   public Icon getIcon() {
-    return YAMLFileType.YAML_ICON;
+    return AllIcons.Nodes.DataTables;
   }
 
   @NotNull

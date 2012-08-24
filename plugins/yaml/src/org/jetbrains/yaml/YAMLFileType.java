@@ -13,7 +13,6 @@ public class YAMLFileType extends LanguageFileType {
   @NonNls public static final String DEFAULT_EXTENSION = "yml";
   @NonNls private static final String NAME = "YAML";
   @NonNls private static final String DESCRIPTION = YAMLBundle.message("filetype.description.yaml");
-  public static final Icon YAML_ICON = AllIcons.Nodes.DataTables;
 
   private YAMLFileType() {
     super(YAMLLanguage.INSTANCE);
@@ -36,7 +35,7 @@ public class YAMLFileType extends LanguageFileType {
 
   @Nullable
   public Icon getIcon() {
-    return YAML_ICON;
+    return AllIcons.Nodes.DataTables;
   }
 }
 
