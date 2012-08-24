@@ -270,6 +270,19 @@ public class AndroidRenameTest extends AndroidTestCase {
     myFixture.checkResultByFile("res/layout/layout7.xml", BASE_PATH + "layout_id_after.xml", true);
   }
 
+  public void testJavaReferenceToId1() throws Throwable {
+    createManifest();
+    VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "RefR7.java", "src/p1/p2/RefR7.java");
+    myFixture.copyFileToProject("R.java", R_JAVA_PATH);
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.copyFileToProject(BASE_PATH + "layout7.xml", "res/layout/l1.xml");
+    myFixture.copyFileToProject(BASE_PATH + "layout7.xml", "res/layout/l2.xml");
+    checkAndRename("anchor1");
+    myFixture.checkResultByFile(BASE_PATH + "RefR7_after.java", true);
+    myFixture.checkResultByFile("res/layout/l1.xml", BASE_PATH + "layout_id_after.xml", true);
+    myFixture.checkResultByFile("res/layout/l2.xml", BASE_PATH + "layout_id_after.xml", true);
+  }
+
   public void testStyleable() throws Throwable {
     createManifest();
     VirtualFile file = myFixture.copyFileToProject(BASE_PATH + "RefR8.java", "src/p1/p2/RefR8.java");

@@ -165,7 +165,8 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     List<PsiElement> resources = AndroidResourceUtil.findResourcesByField(field);
     PsiElement res = resources.get(0);
     String resName = res instanceof XmlAttributeValue ? ((XmlAttributeValue)res).getValue() : ((PsiFile)res).getName();
-    String newResName = getResourceName(field.getProject(), newName, resName);
+    final String newResName = getResourceName(field.getProject(), newName, resName);
+
     for (PsiElement resource : resources) {
       if (resource instanceof PsiFile) {
         PsiFile file = (PsiFile)resource;
@@ -174,10 +175,10 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
       }
       else if (resource instanceof XmlAttributeValue) {
         XmlAttributeValue value = (XmlAttributeValue)resource;
-        if (AndroidResourceUtil.isIdDeclaration(value)) {
-          newResName = AndroidResourceUtil.NEW_ID_PREFIX + newResName;
-        }
-        allRenames.put(new ValueResourceElementWrapper(value), newResName);
+        final String s = AndroidResourceUtil.isIdDeclaration(value)
+                         ? AndroidResourceUtil.NEW_ID_PREFIX + newResName
+                         : newResName;
+        allRenames.put(new ValueResourceElementWrapper(value), s);
       }
     }
   }
