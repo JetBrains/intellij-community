@@ -73,7 +73,7 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public Icon getIcon() {
-    return AllIcons.Nodes.PpJdkClosed;
+    return AllIcons.Nodes.PpJdk;
   }
 
   @NotNull

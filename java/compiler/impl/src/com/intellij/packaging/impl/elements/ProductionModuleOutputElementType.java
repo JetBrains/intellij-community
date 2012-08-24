@@ -46,7 +46,7 @@ public class ProductionModuleOutputElementType extends ModuleOutputElementTypeBa
 
   @Override
   public Icon getCreateElementIcon() {
-    return AllIcons.Nodes.ModuleClosed;
+    return AllIcons.Nodes.Module;
   }
 
   @Override

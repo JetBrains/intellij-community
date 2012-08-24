@@ -65,7 +65,7 @@ public class ElementLocationUtil {
 
         if (entry != null) {
           label.setText(entry.getPresentableName());
-          label.setIcon(AllIcons.Nodes.PpLibClosed);
+          label.setIcon(AllIcons.Nodes.PpLibFolder);
         }
       }
     }

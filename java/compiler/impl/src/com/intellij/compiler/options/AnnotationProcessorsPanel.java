@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -369,7 +368,7 @@ public class AnnotationProcessorsPanel extends JPanel {
       }
       else if (value instanceof MyModuleNode) {
         final Module module = (Module)((MyModuleNode)value).getUserObject();
-        setIcon(AllIcons.Nodes.ModuleClosed);
+        setIcon(AllIcons.Nodes.Module);
         append(module.getName());
       }
     }

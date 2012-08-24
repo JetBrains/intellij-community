@@ -88,6 +88,6 @@ public class UnknownSdkType extends SdkType{
   }
 
   public Icon getIcon() {
-    return AllIcons.Nodes.UnknownJdkClosed;
+    return AllIcons.Nodes.UnknownJdk;
   }
 }

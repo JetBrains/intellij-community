@@ -87,7 +87,7 @@ public class NavBarPresentation {
       final SdkTypeId sdkType = ((JdkOrderEntry)object).getJdk().getSdkType();
       return ((SdkType) sdkType).getIcon();
     }
-    if (object instanceof LibraryOrderEntry) return AllIcons.Nodes.PpLibClosed;
+    if (object instanceof LibraryOrderEntry) return AllIcons.Nodes.PpLibFolder;
     if (object instanceof ModuleOrderEntry) return ModuleType.get(((ModuleOrderEntry)object).getModule()).getNodeIcon(false);
     return null;
   }

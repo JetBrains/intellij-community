@@ -561,7 +561,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   
   private final class ShowModuleGroupsAction extends ToggleAction {
     ShowModuleGroupsAction() {
-      super("Show module groups", "Show module groups", AllIcons.Nodes.ModuleGroupClosed);
+      super("Show module groups", "Show module groups", AllIcons.Nodes.ModuleGroup);
     }
 
     public boolean isSelected(AnActionEvent event) {

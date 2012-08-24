@@ -650,7 +650,7 @@ public class AllIcons {
     public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); // 11x11
     public static final Icon DeleteContentRootRollover = IconLoader.getIcon("/modules/deleteContentRootRollover.png"); // 11x11
     public static final Icon Edit = IconLoader.getIcon("/modules/edit.png"); // 16x16
-    public static final Icon ExcludeRootClosed = IconLoader.getIcon("/modules/excludeRootClosed.png"); // 16x16
+    public static final Icon ExcludeRoot = IconLoader.getIcon("/modules/excludeRoot.png"); // 16x16
     public static final Icon ExcludeRootOpened = IconLoader.getIcon("/modules/excludeRootOpened.png"); // 16x16
     public static final Icon Library = IconLoader.getIcon("/modules/library.png"); // 16x16
     public static final Icon Merge = IconLoader.getIcon("/modules/merge.png"); // 16x16
@@ -658,15 +658,15 @@ public class AllIcons {
     public static final Icon Output = IconLoader.getIcon("/modules/output.png"); // 16x16
     public static final Icon SetPackagePrefix = IconLoader.getIcon("/modules/setPackagePrefix.png"); // 9x9
     public static final Icon SetPackagePrefixRollover = IconLoader.getIcon("/modules/setPackagePrefixRollover.png"); // 9x9
-    public static final Icon SourceClosed = IconLoader.getIcon("/modules/sourceClosed.png"); // 16x16
+    public static final Icon SourceFolder = IconLoader.getIcon("/modules/sourceFolder.png"); // 16x16
     public static final Icon SourceOpened = IconLoader.getIcon("/modules/sourceOpened.png"); // 16x16
-    public static final Icon SourceRootClosed = IconLoader.getIcon("/modules/sourceRootClosed.png"); // 16x16
+    public static final Icon SourceRoot = IconLoader.getIcon("/modules/sourceRoot.png"); // 16x16
     public static final Icon SourceRootOpened = IconLoader.getIcon("/modules/sourceRootOpened.png"); // 16x16
     public static final Icon Sources = IconLoader.getIcon("/modules/sources.png"); // 16x16
     public static final Icon Split = IconLoader.getIcon("/modules/split.png"); // 16x16
-    public static final Icon TestRootClosed = IconLoader.getIcon("/modules/testRootClosed.png"); // 16x16
+    public static final Icon TestRoot = IconLoader.getIcon("/modules/testRoot.png"); // 16x16
     public static final Icon TestRootOpened = IconLoader.getIcon("/modules/testRootOpened.png"); // 16x16
-    public static final Icon TestSourceClosed = IconLoader.getIcon("/modules/testSourceClosed.png"); // 16x16
+    public static final Icon TestSourceFolder = IconLoader.getIcon("/modules/testSourceFolder.png"); // 16x16
     public static final Icon TestSourceOpened = IconLoader.getIcon("/modules/testSourceOpened.png"); // 16x16
     
     public static class Types {
@@ -767,15 +767,15 @@ public class AllIcons {
     public static final Icon KeymapToolsOpen = IconLoader.getIcon("/nodes/keymapToolsOpen.png"); // 16x16
     public static final Icon Locked = IconLoader.getIcon("/nodes/locked.png"); // 16x16
     public static final Icon Method = IconLoader.getIcon("/nodes/method.png"); // 16x16
-    public static final Icon ModuleClosed = IconLoader.getIcon("/nodes/ModuleClosed.png"); // 16x16
-    public static final Icon ModuleGroupClosed = IconLoader.getIcon("/nodes/moduleGroupClosed.png"); // 16x16
+    public static final Icon Module = IconLoader.getIcon("/nodes/Module.png"); // 16x16
+    public static final Icon ModuleGroup = IconLoader.getIcon("/nodes/moduleGroup.png"); // 16x16
     public static final Icon ModuleGroupOpen = IconLoader.getIcon("/nodes/moduleGroupOpen.png"); // 16x16
     public static final Icon ModuleOpen = IconLoader.getIcon("/nodes/ModuleOpen.png"); // 16x16
     public static final Icon NewException = IconLoader.getIcon("/nodes/newException.png"); // 14x14
     public static final Icon NewFolder = IconLoader.getIcon("/nodes/newFolder.png"); // 16x16
     public static final Icon NewParameter = IconLoader.getIcon("/nodes/newParameter.png"); // 14x14
     public static final Icon NodePlaceholder = IconLoader.getIcon("/nodes/nodePlaceholder.png"); // 16x16
-    public static final Icon PackageClosed = IconLoader.getIcon("/nodes/packageClosed.png"); // 16x16
+    public static final Icon Package = IconLoader.getIcon("/nodes/package.png"); // 16x16
     public static final Icon PackageOpen = IconLoader.getIcon("/nodes/packageOpen.png"); // 16x16
     public static final Icon Padlock = IconLoader.getIcon("/nodes/padlock.png"); // 16x16
     public static final Icon Parameter = IconLoader.getIcon("/nodes/parameter.png"); // 16x16
@@ -787,10 +787,10 @@ public class AllIcons {
     public static final Icon PpFile = IconLoader.getIcon("/nodes/ppFile.png"); // 16x16
     public static final Icon PpInvalid = IconLoader.getIcon("/nodes/ppInvalid.png"); // 16x16
     public static final Icon PpJar = IconLoader.getIcon("/nodes/ppJar.png"); // 16x16
-    public static final Icon PpJdkClosed = IconLoader.getIcon("/nodes/ppJdkClosed.png"); // 16x16
+    public static final Icon PpJdk = IconLoader.getIcon("/nodes/ppJdk.png"); // 16x16
     public static final Icon PpJdkOpen = IconLoader.getIcon("/nodes/ppJdkOpen.png"); // 16x16
     public static final Icon PpLib = IconLoader.getIcon("/nodes/ppLib.png"); // 16x16
-    public static final Icon PpLibClosed = IconLoader.getIcon("/nodes/ppLibClosed.png"); // 16x16
+    public static final Icon PpLibFolder = IconLoader.getIcon("/nodes/ppLibFolder.png"); // 16x16
     public static final Icon PpLibOpen = IconLoader.getIcon("/nodes/ppLibOpen.png"); // 16x16
     public static final Icon PpWeb = IconLoader.getIcon("/nodes/ppWeb.png"); // 16x16
     public static final Icon Project = IconLoader.getIcon("/nodes/project.png"); // 16x16
@@ -802,7 +802,7 @@ public class AllIcons {
     public static final Icon PropertyWrite = IconLoader.getIcon("/nodes/propertyWrite.png"); // 16x16
     public static final Icon PropertyWriteStatic = IconLoader.getIcon("/nodes/propertyWriteStatic.png"); // 16x16
     public static final Icon Read_access = IconLoader.getIcon("/nodes/read-access.png"); // 13x9
-    public static final Icon ResourceBundleClosed = IconLoader.getIcon("/nodes/resourceBundleClosed.png"); // 16x16
+    public static final Icon ResourceBundle = IconLoader.getIcon("/nodes/resourceBundle.png"); // 16x16
     public static final Icon ResourceBundleOpen = IconLoader.getIcon("/nodes/resourceBundleOpen.png"); // 16x16
     public static final Icon RunnableMark = IconLoader.getIcon("/nodes/runnableMark.png"); // 16x16
     public static final Icon Rw_access = IconLoader.getIcon("/nodes/rw-access.png"); // 13x9
@@ -820,13 +820,13 @@ public class AllIcons {
     public static final Icon TreeClosed = IconLoader.getIcon("/nodes/TreeClosed.png"); // 16x16
     public static final Icon TreeOpen = IconLoader.getIcon("/nodes/TreeOpen.png"); // 16x16
     public static final Icon Undeploy = IconLoader.getIcon("/nodes/undeploy.png"); // 16x16
-    public static final Icon UnknownJdkClosed = IconLoader.getIcon("/nodes/unknownJdkClosed.png"); // 16x16
+    public static final Icon UnknownJdk = IconLoader.getIcon("/nodes/unknownJdk.png"); // 16x16
     public static final Icon UnknownJdkOpen = IconLoader.getIcon("/nodes/unknownJdkOpen.png"); // 16x16
     public static final Icon UpFolder = IconLoader.getIcon("/nodes/upFolder.png"); // 16x16
     public static final Icon UpLevel = IconLoader.getIcon("/nodes/upLevel.png"); // 16x16
     public static final Icon Variable = IconLoader.getIcon("/nodes/variable.png"); // 16x16
     public static final Icon WarningIntroduction = IconLoader.getIcon("/nodes/warningIntroduction.png"); // 16x16
-    public static final Icon WebFolderClosed = IconLoader.getIcon("/nodes/webFolderClosed.png"); // 16x16
+    public static final Icon WebFolder = IconLoader.getIcon("/nodes/webFolder.png"); // 16x16
     public static final Icon WebFolderOpen = IconLoader.getIcon("/nodes/webFolderOpen.png"); // 16x16
     public static final Icon Weblistener = IconLoader.getIcon("/nodes/weblistener.png"); // 16x16
     public static final Icon Write_access = IconLoader.getIcon("/nodes/write-access.png"); // 13x9

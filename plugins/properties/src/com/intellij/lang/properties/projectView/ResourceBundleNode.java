@@ -75,7 +75,7 @@ public class ResourceBundleNode extends ProjectViewNode<ResourceBundle>{
   }
 
   public void update(PresentationData presentation) {
-    presentation.setIcon(AllIcons.Nodes.ResourceBundleClosed);
+    presentation.setIcon(AllIcons.Nodes.ResourceBundle);
     presentation.setPresentableText(PropertiesBundle.message("project.view.resource.bundle.tree.node.text", getValue().getBaseName()));
   }
 

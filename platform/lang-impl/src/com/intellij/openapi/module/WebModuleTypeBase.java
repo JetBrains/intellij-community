@@ -45,6 +45,6 @@ public abstract class WebModuleTypeBase<T extends ModuleBuilder> extends ModuleT
   }
 
   public Icon getNodeIcon(final boolean isOpened) {
-    return AllIcons.Nodes.ModuleClosed;
+    return AllIcons.Nodes.Module;
   }
 }

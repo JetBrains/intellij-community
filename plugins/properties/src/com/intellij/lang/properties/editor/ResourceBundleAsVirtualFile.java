@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-@Presentation(icon = "AllIcons.Nodes.ResourceBundleClosed")
+@Presentation(icon = "AllIcons.Nodes.ResourceBundle")
 public class ResourceBundleAsVirtualFile extends VirtualFile {
   private final ResourceBundle myResourceBundle;
 

@@ -96,7 +96,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   }
 
   private static Icon getJavaModuleNodeIconClosed() {
-    return AllIcons.Nodes.ModuleClosed;
+    return AllIcons.Nodes.Module;
   }
 
   private static class WizardIconHolder {

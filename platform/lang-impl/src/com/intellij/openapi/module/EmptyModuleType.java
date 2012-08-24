@@ -56,6 +56,6 @@ public class EmptyModuleType extends ModuleType<EmptyModuleBuilder> {
   }
 
   public Icon getNodeIcon(boolean isOpened) {
-    return AllIcons.Nodes.ModuleClosed;
+    return AllIcons.Nodes.Module;
   }
 }

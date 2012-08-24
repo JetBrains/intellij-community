@@ -26,13 +26,13 @@ import javax.swing.*;
  * @author 2003
  */
 public class IconSet {
-  public static final Icon SOURCE_ROOT_FOLDER = AllIcons.Modules.SourceRootClosed;
-  public static final Icon SOURCE_FOLDER = AllIcons.Modules.SourceClosed;
+  public static final Icon SOURCE_ROOT_FOLDER = AllIcons.Modules.SourceRoot;
+  public static final Icon SOURCE_FOLDER = AllIcons.Modules.SourceFolder;
 
-  public static final Icon TEST_ROOT_FOLDER = AllIcons.Modules.TestRootClosed;
-  public static final Icon TEST_SOURCE_FOLDER = AllIcons.Modules.TestSourceClosed;
+  public static final Icon TEST_ROOT_FOLDER = AllIcons.Modules.TestRoot;
+  public static final Icon TEST_SOURCE_FOLDER = AllIcons.Modules.TestSourceFolder;
 
-  public static final Icon EXCLUDE_FOLDER = AllIcons.Modules.ExcludeRootClosed;
+  public static final Icon EXCLUDE_FOLDER = AllIcons.Modules.ExcludeRoot;
 
   public static Icon getSourceRootIcon(boolean isTestSource) {
     return isTestSource ? TEST_ROOT_FOLDER : SOURCE_ROOT_FOLDER;

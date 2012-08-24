@@ -31,7 +31,7 @@ public abstract class CvsElementFactory {
 
   public static final CvsElementFactory MODULE_ELEMENT_FACTORY = new CvsElementFactory(){
     public CvsElement createElement(String name, CvsEnvironment env, Project project) {
-      return new CvsModule(name, AllIcons.Nodes.ModuleClosed);
+      return new CvsModule(name, AllIcons.Nodes.Module);
     }
   };
 
