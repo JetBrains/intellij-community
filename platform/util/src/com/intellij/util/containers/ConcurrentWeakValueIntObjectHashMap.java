@@ -17,6 +17,7 @@
 package com.intellij.util.containers;
 
 
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
@@ -41,7 +42,11 @@ public class ConcurrentWeakValueIntObjectHashMap<V> extends ConcurrentRefValueIn
     @Override
     public boolean equals(Object obj) {
       V v = get();
-      return obj instanceof MyRef && ((MyRef)obj).hash == hash && v != null && v.equals(((MyRef)obj).get());
+      if (!(obj instanceof MyRef)) {
+        return false;
+      }
+      MyRef other = (MyRef)obj;
+      return other.hash == hash && key == other.getKey() && Comparing.equal(v, other.get());
     }
 
     @Override

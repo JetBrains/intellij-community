@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
   private final StripedLockIntObjectConcurrentHashMap<IntReference<V>> myMap = new StripedLockIntObjectConcurrentHashMap<IntReference<V>>();
@@ -34,14 +35,15 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
     V get();
   }
 
-  void processQueue() {
-    while(true){
-      IntReference ref = (IntReference)myQueue.poll();
+  private void processQueue() {
+    while (true) {
+      @SuppressWarnings("unchecked")
+      IntReference<V> ref = (IntReference)myQueue.poll();
       if (ref == null) {
         return;
       }
       int key = ref.getKey();
-      myMap.remove(key);
+      myMap.remove(key, ref);
     }
   }
 
@@ -49,9 +51,19 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
   @Override
   public V cacheOrGet(int key, @NotNull V value) {
     processQueue();
-    IntReference<V> ref = myMap.putIfAbsent(key, createReference(key, value, myQueue));
-    V v = ref == null ? null : ref.get();
-    return v == null ? value : v;
+    IntReference<V> newRef = createReference(key, value, myQueue);
+    while (true) {
+      IntReference<V> ref = myMap.putIfAbsent(key, newRef);
+      if (ref == null) return value; // there were no previous value
+      V old = ref.get();
+      if (old != null) return old;
+
+      // old value has been gced; need to overwrite
+      boolean replaced = myMap.replace(key, ref, newRef);
+      if (replaced) {
+        return value;
+      }
+    }
   }
 
   @Override
@@ -113,6 +125,7 @@ abstract class ConcurrentRefValueIntObjectHashMap<V> implements ConcurrentIntObj
 
           @Override
           public StripedLockIntObjectConcurrentHashMap.IntEntry<V> next() {
+            if (!hasNext()) throw new NoSuchElementException();
             StripedLockIntObjectConcurrentHashMap.IntEntry<V> result = next;
             next = nextAliveEntry();
             return result;
