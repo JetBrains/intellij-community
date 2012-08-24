@@ -35,10 +35,6 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     super.setUp();
     CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
     myFixture.copyFileToProject(SdkConstants.FN_ANDROID_MANIFEST_XML, SdkConstants.FN_ANDROID_MANIFEST_XML);
-
-    // copy mock fragment, because it is not included to old android.jar
-    // todo: create normal mock Android sdk
-    copyFileToProject("Fragment.java", "src/android/app/Fragment.java");
   }
 
   @Override
@@ -379,7 +375,7 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
   }
 
   public void testTextViewRootTag_IDEA_62889() throws Throwable {
-    toTestCompletion("textViewRootTag.xml", "textViewRootTag_after.xml");
+    doTestCompletionVariants("textViewRootTag.xml", "TextView", "TextureView");
   }
 
   public void testRequestFocus() throws Throwable {

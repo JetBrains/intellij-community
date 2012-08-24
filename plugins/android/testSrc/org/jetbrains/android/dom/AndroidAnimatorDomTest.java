@@ -47,10 +47,9 @@ public class AndroidAnimatorDomTest extends AndroidDomTest {
     toTestCompletion("tn.xml", "tn_after.xml");
   }
 
-  // todo: provide normal mock android jar and add public interpolator into it
-  /*public void testHighlighting() throws Throwable {
+  public void testHighlighting() throws Throwable {
     doTestHighlighting("hl.xml");
-  }*/
+  }
 
   public void testHighlighting1() throws Throwable {
     copyFileToProject("myInterpolator.xml", "res/interpolator/myInterpolator.xml");
