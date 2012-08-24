@@ -25,6 +25,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -248,7 +250,16 @@ public class GeneralCommandLine implements UserDataHolder {
       environment.clear();
     }
     if (myEnvParams != null) {
-      environment.putAll(myEnvParams);
+      if (SystemInfo.isWindows) {
+        THashMap<String, String> envVars = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+        envVars.putAll(environment);
+        envVars.putAll(myEnvParams);
+        environment.clear();
+        environment.putAll(envVars);
+      }
+      else {
+        environment.putAll(myEnvParams);
+      }
     }
   }
 
