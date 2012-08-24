@@ -5,7 +5,6 @@ import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
@@ -266,7 +265,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
       @Nullable
       @Override
       public Icon getIcon(boolean open) {
-        Icon normal_icon = myElement.getIcon(Iconable.ICON_FLAG_OPEN);
+        Icon normal_icon = myElement.getIcon(0);
         if (myIcon != null) normal_icon = myIcon; // override normal
         if (myVisibility == Visibility.NORMAL) {
           return normal_icon;
