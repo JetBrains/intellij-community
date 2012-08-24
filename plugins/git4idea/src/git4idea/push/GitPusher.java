@@ -502,8 +502,11 @@ public final class GitPusher {
   }
 
   private void saveUpdateSettings(@NotNull UpdateSettings updateSettings) {
-    myPushSettings.setUpdateAllRoots(updateSettings.shouldUpdateAllRoots());
-    myPushSettings.setUpdateMethod(updateSettings.getUpdateMethod());
+    UpdateMethod updateMethod = updateSettings.getUpdateMethod();
+    if (updateMethod != null) { // null if user has pressed cancel
+      myPushSettings.setUpdateAllRoots(updateSettings.shouldUpdateAllRoots());
+      myPushSettings.setUpdateMethod(updateMethod);
+    }
   }
 
   @NotNull
