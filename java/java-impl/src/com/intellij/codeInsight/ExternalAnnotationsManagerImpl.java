@@ -68,10 +68,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ThreeState;
+import com.intellij.util.*;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
 import org.jetbrains.annotations.NonNls;
@@ -318,6 +315,23 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
 
   @Override
   public boolean deannotate(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN) {
+    return processExistingExternalAnnotations(listOwner, annotationFQN, new Processor<XmlTag>() {
+      @Override
+      public boolean process(XmlTag annotationTag) {
+        annotationTag.delete();
+        PsiElement parent = annotationTag.getParent();
+        if (parent instanceof XmlTag) {
+          if (((XmlTag)parent).getSubTags().length == 0) {
+            annotationTag.delete();
+          }
+        }
+        return true;
+      }
+    });
+  }
+
+  private boolean processExistingExternalAnnotations(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN,
+                                                     @NotNull final Processor<XmlTag> annotationTagProcessor) {
     try {
       final List<XmlFile> files = findExternalAnnotationsXmlFiles(listOwner);
       if (files == null) {
@@ -354,10 +368,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
               @Override
               public void run() {
                 try {
-                  annotationTag.delete();
-                  if (tag.getSubTags().length == 0) {
-                    tag.delete();
-                  }
+                  annotationTagProcessor.process(tag);
                   commitChanges(file);
                 }
                 catch (IncorrectOperationException e) {
