@@ -20,6 +20,7 @@
     <lang.formatter language="Python" implementationClass="com.jetbrains.python.formatter.PythonFormattingModelBuilder"/>
     <lang.whiteSpaceFormattingStrategy language="Python"
                                        implementationClass="com.jetbrains.python.formatter.PyWhiteSpaceFormattingStrategy"/>
+    <lang.lineWrapStrategy language="Python" implementationClass="com.jetbrains.python.formatter.PyLineWrapPositionStrategy"/>
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
     <lang.surroundDescriptor language="Python"
                              implementationClass="com.jetbrains.python.refactoring.surround.PyStatementSurroundDescriptor"/>
@@ -34,6 +35,7 @@
     <backspaceHandlerDelegate implementation="com.jetbrains.python.editor.PythonBackspaceHandler"/>
     <quoteHandler fileType="Python" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PythonEnterHandler"/>
+    <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterAtIndentHandler" order="first"/>
     <enterHandlerDelegate implementation="com.jetbrains.python.editor.PyEnterBetweenBracketsHandler"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
@@ -101,6 +103,7 @@
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.DjangoTemplateLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType"/>
+    <xdebugger.settings implementation="com.jetbrains.python.debugger.PyDebuggerSettings"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
 
@@ -296,8 +299,9 @@
     <localInspection language="Python" shortName="PyMandatoryEncodingInspection" displayName="No encoding specified for file" groupKey="INSP.GROUP.python" enabledByDefault="false"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyMandatoryEncodingInspection"/>
     <localInspection language="Python" shortName="PyPackageRequirementsInspection" bundle="com.jetbrains.python.PyBundle" key="INSP.NAME.requirements" groupKey="INSP.GROUP.python" enabledByDefault="true"  level="WARNING" implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
 
-    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.PythonTemplateContextType"/>
-    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.CollectionElementNameMacro"/>
+    <liveTemplateContext implementation="com.jetbrains.python.codeInsight.liveTemplates.PythonTemplateContextType"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.CollectionElementNameMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.python.codeInsight.liveTemplates.PyClassNameMacro"/>
 
     <codeInsight.overrideMethod language="Python" implementationClass="com.jetbrains.python.codeInsight.override.PyOverrideMethodsHandler"/>
     <lang.refactoringSupport language="Python" implementationClass="com.jetbrains.python.refactoring.PyRefactoringProvider"/>
@@ -330,7 +334,7 @@
                         serviceImplementation="com.jetbrains.python.codeInsight.PyCodeInsightSettings"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
-    <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.PyDefaultLiveTemplatesProvider"/>
+    <defaultLiveTemplatesProvider implementation="com.jetbrains.python.codeInsight.liveTemplates.PyDefaultLiveTemplatesProvider"/>
 
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.python.codeInsight.completion.PyClassNameCompletionContributor"/>
@@ -447,10 +451,6 @@
     <configurationType implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationType"/>
     <configurationProducer implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationProducer"/>
 
-    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
-    <lang.substitutor language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
-    <lang.substitutor language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
-    <lang.substitutor language="JavaScript" implementationClass="com.jetbrains.django.lang.template.DjangoTemplateLanguageSubstitutor"/>
     <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoErrorFilter"/>
 
     <lang.parserDefinition language="DjangoTemplate"
@@ -669,7 +669,6 @@
     <lang.substitutor language="HTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
     <lang.substitutor language="XHTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
     <lang.substitutor language="XML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
-    <lang.substitutor language="JavaScript" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
 
     <colorSettingsPage implementation="com.jetbrains.mako.highlighting.MakoColorsPage"/>
     <lang.syntaxHighlighterFactory key="Mako"
@@ -713,7 +712,7 @@
                      implementationClass="com.jetbrains.mako.inspection.MakoArgumentListInspection"/>
 
     <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
-                    serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesService"/>
+                    serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesServiceImpl"/>
 
     <!-- Jinja2 -->
     <fileTypeFactory implementation="com.jetbrains.jinja2.Jinja2FileTypeFactory"/>

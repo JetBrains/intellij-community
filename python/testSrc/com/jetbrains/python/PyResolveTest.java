@@ -472,4 +472,8 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testClassRedefinedField() {
     assertResolvesTo(PyClass.class, "Foo");
   }
+
+  public void testKWArg() {
+    assertResolvesTo(PyClass.class, "timedelta");
+  }
 }

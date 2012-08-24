@@ -28,7 +28,15 @@ public abstract class PyRunConfigurationFactory {
     return ServiceManager.getService(PyRunConfigurationFactory.class);
   }
 
-  public abstract PythonRunConfigurationParams createPythonScriptRunConfiguration(Module module, String scriptName);
+  /**
+   * Creates a run configuration to run a specified Python script.
+   *
+   * @param module the module in the context of which the script is run.
+   * @param scriptName the path to the script file.
+   * @param singleton if true, the "Check no other instances are running" option will be set for the run configuration.
+   * @return the settings of the created run configuration.
+   */
+  public abstract PythonRunConfigurationParams createPythonScriptRunConfiguration(Module module, String scriptName, boolean singleton);
 
   public abstract RunnerAndConfigurationSettings createRunConfiguration(Module module, ConfigurationFactory factory);
 }

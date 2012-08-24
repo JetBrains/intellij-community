@@ -11,6 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import com.jetbrains.python.debugger.PyDebuggerConfigurable;
+import com.jetbrains.python.debugger.PyDebuggerSettings;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,7 +26,6 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private RawCommandLineEditor myScriptParametersTextField;
   private JPanel myCommonOptionsPlaceholder;
   private JBLabel myScriptParametersLabel;
-  private JCheckBox myAttachDebuggerToSubprocess;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
   private JComponent anchor;
 
@@ -86,11 +87,10 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   }
 
   public boolean isMultiprocessMode() {
-    return myAttachDebuggerToSubprocess.isSelected();
+    return PyDebuggerSettings.getInstance().getState().isAttachToSubprocess();
   }
 
   public void setMultiprocessMode(boolean multiprocess) {
-    myAttachDebuggerToSubprocess.setSelected(multiprocess);
   }
 
   @Override

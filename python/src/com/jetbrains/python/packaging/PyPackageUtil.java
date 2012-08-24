@@ -8,12 +8,15 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +89,14 @@ public class PyPackageUtil {
               final PyExpression value = kwarg.getValueExpression();
               if (value instanceof PyListLiteralExpression) {
                 return (PyListLiteralExpression)value;
+              }
+              if (value instanceof PyReferenceExpression) {
+                final PyResolveContext resolveContext = PyResolveContext.defaultContext();
+                final QualifiedResolveResult result = ((PyReferenceExpression)value).followAssignmentsChain(resolveContext);
+                final PsiElement element = result.getElement();
+                if (element instanceof PyListLiteralExpression) {
+                  return (PyListLiteralExpression)element;
+                }
               }
             }
           }

@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
+import com.jetbrains.python.debugger.PyDebuggerSettings;
 import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.remote.PyRemoteInterpreterException;
@@ -56,7 +57,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_SCRIPT = "Script";
   private final AbstractPythonRunConfiguration myConfig;
   private final List<Filter> myFilters;
-  private boolean myMultiprocessDebug = false;
+  private Boolean myMultiprocessDebug = null;
 
   public boolean isDebug() {
     return isDebug(getConfigurationSettings());
@@ -152,7 +153,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     final ProcessHandler processHandler;
     if (PySdkUtil.isRemote(sdk)) {
-       processHandler = startRemoteProcess(sdk, commandLine);
+      processHandler = startRemoteProcess(sdk, commandLine);
     }
     else {
       processHandler = doCreateProcess(commandLine);
@@ -415,7 +416,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   public boolean isMultiprocessDebug() {
-    return myMultiprocessDebug;
+    if (myMultiprocessDebug != null) {
+      return myMultiprocessDebug;
+    }
+    else {
+      return PyDebuggerSettings.getInstance().getState().isAttachToSubprocess();
+    }
   }
 
   public void setMultiprocessDebug(boolean multiprocessDebug) {

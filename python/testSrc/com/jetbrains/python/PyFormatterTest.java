@@ -4,6 +4,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -118,12 +119,12 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceInMethodDeclaration() {  // PY-4241
-    CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).SPACE_BEFORE_METHOD_PARENTHESES = true;
+    settings().SPACE_BEFORE_METHOD_PARENTHESES = true;
     doTest();
   }
 
   public void testOptionalAlignForMethodParameters() {  // PY-3995
-    CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS = false;
+    settings().ALIGN_MULTILINE_PARAMETERS = false;
     doTest();
   }
 
@@ -132,7 +133,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testAlignForMethodArguments() {  // PY-3995
-    CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
     doTest();
   }
 
@@ -149,6 +150,24 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpaceAroundDot() {  // PY-6908
+    doTest();
+  }
+
+  public void testSetLiteralInArgList() {  // PY-6672
+    settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest();
+  }
+
+  public void testLiterals() {  // PY-6751
+    doTest();
+  }
+
+  public void testTupleInArgList() {
+    settings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    doTest();
+  }
+
+  public void testAlignInBinaryExpressions() {
     doTest();
   }
 
@@ -189,5 +208,9 @@ public class PyFormatterTest extends PyTestCase {
       }
     });
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");
+  }
+
+  private CodeStyleSettings settings() {
+    return CodeStyleSettingsManager.getInstance().getSettings(myFixture.getProject());
   }
 }

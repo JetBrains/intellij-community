@@ -1,10 +1,10 @@
 package com.jetbrains.python.debugger;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.xdebugger.XNamedValue;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.ui.DebuggerIcons;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -164,13 +164,13 @@ public class PyDebugValue extends XNamedValue {
 
   private Icon getValueIcon() {
     if (!myContainer) {
-      return DebuggerIcons.PRIMITIVE_VALUE_ICON;
+      return AllIcons.Debugger.Db_primitive;
     }
     else if ("list".equals(myType) || "tuple".equals(myType)) {
-      return DebuggerIcons.ARRAY_VALUE_ICON;
+      return AllIcons.Debugger.Db_array;
     }
     else {
-      return DebuggerIcons.VALUE_ICON;
+      return AllIcons.Debugger.Value;
     }
   }
 }

@@ -108,7 +108,7 @@ public class ScopeImpl implements Scope {
   @NotNull
   @Override
   public List<NameDefiner> getNameDefiners() {
-    if (myNamedElements == null) {
+    if (myNameDefiners == null) {
       collectDeclarations();
     }
     return myNameDefiners;
@@ -179,7 +179,7 @@ public class ScopeImpl implements Scope {
 
       @Override
       public void visitPyElement(PyElement node) {
-        if (node instanceof PsiNamedElement) {
+        if (node instanceof PsiNamedElement && !(node instanceof PyKeywordArgument)) {
           namedElements.put(node.getName(), (PsiNamedElement)node);
         }
         // TODO: Cython-specific code

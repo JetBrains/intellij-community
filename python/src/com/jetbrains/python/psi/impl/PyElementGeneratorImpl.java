@@ -239,6 +239,12 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return createFromText(LanguageLevel.getDefault(), PyNamedParameter.class, "def f(" + name + "): pass", PATH_PARAMETER);
   }
 
+  @Override
+  public PyKeywordArgument createKeywordArgument(LanguageLevel languageLevel, String keyword, String value) {
+    PyCallExpression callExpression = (PyCallExpression) createExpressionFromText(languageLevel, "foo(" + keyword + "=" + value + ")");
+    return (PyKeywordArgument) callExpression.getArguments()[0];
+  }
+
   @NotNull
   public <T> T createFromText(LanguageLevel langLevel, Class<T> aClass, final String text, final int[] path) {
     PsiElement ret = createDummyFile(langLevel, text);

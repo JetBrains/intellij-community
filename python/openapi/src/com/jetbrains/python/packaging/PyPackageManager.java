@@ -14,4 +14,5 @@ public abstract class PyPackageManager {
   public abstract boolean hasPip();
   public abstract void install(String requirementString) throws PyExternalProcessException;
   public abstract void showInstallationError(Project project, String title, String description);
+  public abstract void refresh();
 }

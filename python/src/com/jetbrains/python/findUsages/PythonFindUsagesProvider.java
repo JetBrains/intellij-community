@@ -47,6 +47,9 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
       }
       return "variable";
     }
+    if (element instanceof PyKeywordArgument) {
+      return "keyword argument";
+    }
     return "";
   }
 

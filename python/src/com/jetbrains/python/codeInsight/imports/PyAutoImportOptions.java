@@ -22,6 +22,7 @@ public class PyAutoImportOptions implements AutoImportOptionsProvider {
   public void reset() {
     final PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
     myRbFromImport.setSelected(settings.PREFER_FROM_IMPORT);
+    myRbImport.setSelected(!settings.PREFER_FROM_IMPORT);
     myShowImportPopupCheckBox.setSelected(settings.SHOW_IMPORT_POPUP);
   }
 

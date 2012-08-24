@@ -3,19 +3,28 @@ package com.jetbrains.python.codeInsight.controlflow;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.Function;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 public class ReadWriteInstruction extends InstructionImpl {
-  final Function<TypeEvalContext, PyType> EXPR_TYPE = new Function<TypeEvalContext, PyType>() {
+  final InstructionTypeCallback EXPR_TYPE = new InstructionTypeCallback() {
+    @Nullable
     @Override
-    public PyType fun(TypeEvalContext context) {
-      return myElement instanceof PyExpression ? context.getType((PyExpression)myElement) : null;
+    public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+      if (myElement instanceof PyTargetExpressionImpl) {
+        return ((PyTargetExpressionImpl) myElement).getTypeWithAnchor(context, anchor);
+      }
+      if (myElement instanceof PyExpression) {
+        return context.getType((PyExpression)myElement);
+      }
+      else {
+        return null;
+      }
     }
   };
 
@@ -50,7 +59,7 @@ public class ReadWriteInstruction extends InstructionImpl {
 
   private final String myName;
   private final ACCESS myAccess;
-  private final Function<TypeEvalContext, PyType> myGetType;
+  private final InstructionTypeCallback myGetType;
 
   private ReadWriteInstruction(final ControlFlowBuilder builder,
                                final PsiElement element,
@@ -63,7 +72,7 @@ public class ReadWriteInstruction extends InstructionImpl {
                                final PsiElement element,
                                final String name,
                                final ACCESS access,
-                               @Nullable final Function<TypeEvalContext, PyType> getType) {
+                               @Nullable final InstructionTypeCallback getType) {
     super(builder, element);
     myName = name;
     myAccess = access;
@@ -100,13 +109,13 @@ public class ReadWriteInstruction extends InstructionImpl {
   public static ReadWriteInstruction assertType(final ControlFlowBuilder builder,
                                                 final PsiElement element,
                                                 final String name,
-                                                final Function<TypeEvalContext, PyType> getType) {
+                                                final InstructionTypeCallback getType) {
     return new ReadWriteInstruction(builder, element, name, ACCESS.ASSERTTYPE, getType);
   }
 
   @Nullable
-  public PyType getType(TypeEvalContext context) {
-    return myGetType.fun(context);
+  public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
+    return myGetType.getType(context, anchor);
   }
 
   @NonNls
