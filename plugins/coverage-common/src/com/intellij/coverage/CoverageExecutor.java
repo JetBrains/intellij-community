@@ -10,10 +10,6 @@ import javax.swing.*;
 
 public class CoverageExecutor extends Executor {
 
-  private static final Icon TOOLWINDOW_ICON = AllIcons.General.RunWithCoverage;
-  private static final Icon DISABLED_ICON = AllIcons.General.RunWithCoverage;
-  private static final Icon ICON = DISABLED_ICON;
-
   public static final String EXECUTOR_ID = "Coverage";
 
   @NotNull
@@ -37,12 +33,12 @@ public class CoverageExecutor extends Executor {
   }
 
   public Icon getToolWindowIcon() {
-    return TOOLWINDOW_ICON;
+    return AllIcons.General.RunWithCoverage;
   }
 
   @NotNull
   public Icon getIcon() {
-    return ICON;
+    return AllIcons.General.RunWithCoverage;
   }
 
   public Icon getDisabledIcon() {

@@ -17,7 +17,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +31,6 @@ import java.util.Map;
 public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance("#" + CoverageViewManager.class.getName());
   public static final String TOOLWINDOW_ID = "Coverage";
-  private static final Icon TOOLWINDOW_ICON = AllIcons.Toolwindows.ToolWindowCoverage;
   private Project myProject;
   private final CoverageDataManager myDataManager;
   private ContentManager myContentManager;
@@ -45,7 +43,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     myDataManager = dataManager;
 
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject);
-    toolWindow.setIcon(TOOLWINDOW_ICON);
+    toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCoverage);
     toolWindow.setSplitMode(true, null);
     myContentManager = toolWindow.getContentManager();
     new ContentManagerWatcher(toolWindow, myContentManager);

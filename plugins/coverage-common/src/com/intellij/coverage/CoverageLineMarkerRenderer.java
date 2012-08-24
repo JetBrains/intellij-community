@@ -372,13 +372,12 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer {
     }
   }
 
-  private static final Icon ICON = AllIcons.General.EditColors;
   private class EditCoverageColorsAction extends AnAction {
     private final Editor myEditor;
     private final int myLineNumber;
 
     private EditCoverageColorsAction(Editor editor, int lineNumber) {
-      super("Edit coverage colors", "Edit coverage colors", ICON);
+      super("Edit coverage colors", "Edit coverage colors", AllIcons.General.EditColors);
       myEditor = editor;
       myLineNumber = lineNumber;
     }

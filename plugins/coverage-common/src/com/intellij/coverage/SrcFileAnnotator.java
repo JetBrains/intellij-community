@@ -53,7 +53,6 @@ import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 
 /**
@@ -69,7 +68,6 @@ public class SrcFileAnnotator implements Disposable {
   private final Editor myEditor;
   private final Document myDocument;
   private final Project myProject;
-  private static final Icon ourIcon = AllIcons.General.ExclMark;
 
   private SoftReference<TIntIntHashMap> myNewToOldLines;
   private SoftReference<TIntIntHashMap> myOldToNewLines;
@@ -515,7 +513,7 @@ public class SrcFileAnnotator implements Disposable {
           if (isCurrentEditor(editor)) {
             EditorNotificationPanel panel = new EditorNotificationPanel() {
               {
-                myLabel.setIcon(ourIcon);
+                myLabel.setIcon(AllIcons.General.ExclMark);
                 myLabel.setText(message);
               }
             };
