@@ -665,15 +665,8 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   }
 
   @Override
+  @Nullable
   public IElementType getTokenType() {
-    final IElementType elementType = doGetTokenType();
-    if (elementType instanceof TokenWrapper) {
-      return ((TokenWrapper)elementType).getDelegate();
-    }
-    return elementType;
-  }
-
-  private IElementType doGetTokenType() {
     if (eof()) return null;
 
     if (myRemapper != null) {
@@ -769,7 +762,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   @Nullable
   public String getTokenText() {
     if (eof()) return null;
-    final IElementType type = doGetTokenType();
+    final IElementType type = getTokenType();
     if (type instanceof TokenWrapper) {
       return ((TokenWrapper)type).getValue();
     }
