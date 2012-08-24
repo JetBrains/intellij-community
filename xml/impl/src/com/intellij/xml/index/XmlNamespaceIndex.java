@@ -32,10 +32,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -45,6 +42,14 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
 
   @Nullable
   public static String getNamespace(@NotNull VirtualFile file, final Project project) {
+    if (DumbService.isDumb(project)) {
+      try {
+        return XsdNamespaceBuilder.computeNamespace(file.getInputStream());
+      }
+      catch (IOException e) {
+        return null;
+      }
+    }
     final List<XsdNamespaceBuilder> list = FileBasedIndex.getInstance().getValues(NAME, file.getUrl(), createFilter(project));
     return list.size() == 0 ? null : list.get(0).getNamespace();
   }
