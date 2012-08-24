@@ -1544,6 +1544,15 @@ public abstract class DialogWrapper {
     return isOK();
   }
 
+  public static boolean isMultipleModalDialogs() {
+    final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+    if (c != null) {
+      final DialogWrapper wrapper = findInstance(c);
+      return wrapper != null && wrapper.getPeer().getCurrentModalEntities().length > 1;
+    }
+    return false;
+  }
+
   /**
    * Base class for dialog wrapper actions that need to ensure that only
    * one action for the dialog is running.
