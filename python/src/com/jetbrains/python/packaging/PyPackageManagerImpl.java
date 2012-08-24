@@ -22,12 +22,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -267,25 +265,16 @@ public class PyPackageManagerImpl extends PyPackageManager {
         application.runWriteAction(new Runnable() {
           @Override
           public void run() {
-            syncFiles(mySdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+            final VirtualFile[] files = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+            for (VirtualFile file : files) {
+              file.refresh(true, true);
+            }
           }
         });
         PythonSdkType.getInstance().setupSdkPaths(mySdk);
         clearCaches();
       }
     });
-  }
-
-  private void syncFiles(VirtualFile[] files) {
-    // Similar to LocalFileSystemImpl.syncFiles(), VirtualFile.refresh() doesn't run update index tasks immediately, so we get stale virtual
-    // files when we want to bind a stub to an AST. Another option is to use VirtualFileManager.refreshWithoutFileWatcher(), but it takes
-    // more time to refresh the whole local file system
-    for (VirtualFile root : files) {
-      if (root instanceof NewVirtualFile && root.getFileSystem() instanceof LocalFileSystem) {
-        ((NewVirtualFile)root).markDirtyRecursively();
-      }
-    }
-    LocalFileSystem.getInstance().refreshFiles(Arrays.asList(files), false, true, null);
   }
 
   private void installManagement(String name) throws PyExternalProcessException {
