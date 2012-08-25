@@ -29,11 +29,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.libraries.LibraryUtil;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.SmartList;
@@ -222,6 +221,8 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
   }
 
   private static class ClassFilesCollector {
+    private static final Key<String> FULL_NAME = Key.create("gae.enhancer.visitor.full.name");
+
     private CompileContextEx myContext;
     private List<ClassFileItem> myItems;
     private AppEngineFacet myFacet;
@@ -240,34 +241,43 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
       myLocalFileSystem = LocalFileSystem.getInstance();
     }
 
-    public void collectItems(@NotNull VirtualFile file, String fullName) throws CacheCorruptedException {
-      if (file.isDirectory()) {
-        final VirtualFile[] files = file.getChildren();
-        for (VirtualFile child : files) {
-          collectItems(child, StringUtil.getQualifiedName(fullName, child.getName()));
-        }
-        return;
-      }
+    public void collectItems(@NotNull VirtualFile file, final String fullName) throws CacheCorruptedException {
+      VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+        { set(FULL_NAME, fullName); }
 
-      if (StdFileTypes.CLASS.equals(file.getFileType())) {
-        final VirtualFile sourceFile = myContext.getSourceFileByOutputFile(file);
-        if (sourceFile != null && myFacet.shouldRunEnhancerFor(sourceFile)) {
-          String className = StringUtil.trimEnd(fullName, ".class");
-          int classId = mySymbolTable.getId(className);
-          List<VirtualFile> dependencies = new SmartList<VirtualFile>();
-          while (classId != Cache.UNKNOWN) {
-            final String path = myCache.getPath(classId);
-            if (!StringUtil.isEmpty(path)) {
-              final VirtualFile classFile = myLocalFileSystem.findFileByPath(FileUtil.toSystemIndependentName(path));
-              if (classFile != null) {
-                dependencies.add(classFile);
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          try {
+            final String fullName = get(FULL_NAME);
+            if (file.isDirectory()) {
+              set(FULL_NAME, StringUtil.getQualifiedName(fullName, file.getName()));
+            }
+            else if (StdFileTypes.CLASS.equals(file.getFileType())) {
+              final VirtualFile sourceFile = myContext.getSourceFileByOutputFile(file);
+              if (sourceFile != null && myFacet.shouldRunEnhancerFor(sourceFile)) {
+                String className = StringUtil.trimEnd(fullName, ".class");
+                int classId = mySymbolTable.getId(className);
+                List<VirtualFile> dependencies = new SmartList<VirtualFile>();
+                while (classId != Cache.UNKNOWN) {
+                  final String path = myCache.getPath(classId);
+                  if (!StringUtil.isEmpty(path)) {
+                    final VirtualFile classFile = myLocalFileSystem.findFileByPath(FileUtil.toSystemIndependentName(path));
+                    if (classFile != null) {
+                      dependencies.add(classFile);
+                    }
+                  }
+                  classId = myCache.getSuperQualifiedName(classId);
+                }
+                myItems.add(new ClassFileItem(file, sourceFile, dependencies));
               }
             }
-            classId = myCache.getSuperQualifiedName(classId);
+            return true;
           }
-          myItems.add(new ClassFileItem(file, sourceFile, dependencies));
+          catch (CacheCorruptedException e) {
+            throw new VisitorException(e);
+          }
         }
-      }
+      }, CacheCorruptedException.class);
     }
   }
 }
