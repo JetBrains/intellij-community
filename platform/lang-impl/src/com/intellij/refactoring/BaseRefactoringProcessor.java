@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -210,7 +209,7 @@ public abstract class BaseRefactoringProcessor {
     if (!isPreview) {
       isPreview = !ensureElementsWritable(usages, descriptor) || UsageViewUtil.hasReadOnlyUsages(usages);
       if (isPreview) {
-        setStatusBarInfo(RefactoringBundle.message("readonly.occurences.found"));
+        StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("readonly.occurences.found"));
       }
     }
     if (isPreview) {
@@ -218,13 +217,6 @@ public abstract class BaseRefactoringProcessor {
     }
     else {
       execute(usages);
-    }
-  }
-
-  private void setStatusBarInfo(final String message) {
-    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
-    if (statusBar != null) {
-      statusBar.setInfo(message);
     }
   }
 
@@ -468,11 +460,11 @@ public abstract class BaseRefactoringProcessor {
 
     int count = writableUsageInfos.length;
     if (count > 0) {
-      setStatusBarInfo(RefactoringBundle.message("statusBar.refactoring.result", count));
+      StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.refactoring.result", count));
     }
     else {
       if (!isPreviewUsages(writableUsageInfos)) {
-        setStatusBarInfo(RefactoringBundle.message("statusBar.noUsages"));
+        StatusBarUtil.setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.noUsages"));
       }
     }
   }

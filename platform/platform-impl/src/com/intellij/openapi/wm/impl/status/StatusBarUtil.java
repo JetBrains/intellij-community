@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Kirill Likhodedov
  */
 public class StatusBarUtil {
-
-  private StatusBarUtil() {
-  }
+  private StatusBarUtil() { }
 
   /**
    * Finds the current file editor.
@@ -58,4 +58,10 @@ public class StatusBarUtil {
     return null;
   }
 
+  public static void setStatusBarInfo(@NotNull Project project, @NotNull @Nls String message) {
+    final StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+    if (statusBar != null) {
+      statusBar.setInfo(message);
+    }
+  }
 }
