@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.libraries.LibraryUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -196,15 +195,16 @@ public class TreeModelBuilder {
   }
 
   private void processFilesRecursively(@NotNull VirtualFile file) {
-    final Ref<PackageDependenciesNode> parent = Ref.create();
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      private PackageDependenciesNode parent = null;
+
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         if (file.isDirectory()) {
-          parent.set(null);
+          parent = null;
         }
         else {
-          parent.set(buildFileNode(file, parent.get()));
+          parent = buildFileNode(file, parent);
         }
         return true;
       }
@@ -212,7 +212,7 @@ public class TreeModelBuilder {
       @Override
       public void afterChildrenVisited(@NotNull VirtualFile file) {
         if (file.isDirectory()) {
-          parent.set(null);
+          parent = null;
         }
       }
     });
