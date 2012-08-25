@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,9 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -39,6 +40,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.openapi.vfs.VirtualFileVisitor.ONE_LEVEL_DEEP;
+import static com.intellij.openapi.vfs.VirtualFileVisitor.SKIP_ROOT;
 
 /**
  * Basic abstract action handler for all Git actions to extend.
@@ -69,8 +73,7 @@ public abstract class BasicAction extends DumbAwareAction {
     final List<VcsException> exceptions = new ArrayList<VcsException>();
     final boolean background = perform(project, vcs, exceptions, affectedFiles);
     if (!background) {
-      vcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
-
+      GitVcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
         public void run(@NotNull ProgressIndicator indicator) {
           VcsFileUtil.refreshFiles(project, Arrays.asList(affectedFiles));
           UIUtil.invokeLaterIfNeeded(new Runnable() {
@@ -112,8 +115,7 @@ public abstract class BasicAction extends DumbAwareAction {
                                  final VirtualFile[] affectedFiles,
                                  final List<VcsException> exceptions,
                                  final Consumer<ProgressIndicator> action) {
-    vcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
-      
+    GitVcs.runInBackground(new Task.Backgroundable(project, getActionName()) {
       public void run(@NotNull ProgressIndicator indicator) {
         action.consume(indicator);
         VcsFileUtil.refreshFiles(project, Arrays.asList(affectedFiles));
@@ -149,7 +151,7 @@ public abstract class BasicAction extends DumbAwareAction {
       }
 
     }
-    return VfsUtil.toVirtualFileArray(affectedFiles);
+    return VfsUtilCore.toVirtualFileArray(affectedFiles);
   }
 
   /**
@@ -162,16 +164,16 @@ public abstract class BasicAction extends DumbAwareAction {
    * @param file    the file whose children should be added to the result list
    *                (recursively)
    */
-  private void addChildren(@NotNull Project project, @NotNull List<VirtualFile> files, @NotNull VirtualFile file) {
-    VirtualFile[] children = file.getChildren();
-    for (VirtualFile child : children) {
-      if (!child.isDirectory() && appliesTo(project, child)) {
-        files.add(child);
+  private void addChildren(@NotNull final Project project, @NotNull final List<VirtualFile> files, @NotNull VirtualFile file) {
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor(SKIP_ROOT, (isRecursive() ? null : ONE_LEVEL_DEEP)) {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!file.isDirectory() && appliesTo(project, file)) {
+          files.add(file);
+        }
+        return true;
       }
-      else if (child.isDirectory() && isRecursive()) {
-        addChildren(project, files, child);
-      }
-    }
+    });
   }
 
   /**
