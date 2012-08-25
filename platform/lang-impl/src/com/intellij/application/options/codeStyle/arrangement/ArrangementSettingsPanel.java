@@ -74,7 +74,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myContent.add(toolbarControl, new GridBag().weightx(1).fillCellHorizontally().coverLine());
     
     final ArrangementRuleTree ruleTree = new ArrangementRuleTree(grouper, displayManager);
-    Tree treeComponent = ruleTree.getTreeComponent();
+    final Tree treeComponent = ruleTree.getTreeComponent();
     actionToolbar.setTargetComponent(treeComponent);
     myContent.add(new JBScrollPane(treeComponent), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
     CustomizationUtil.installPopupHandler(
@@ -118,6 +118,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     final Runnable newRuleFunction = new Runnable() {
       @Override
       public void run() {
+        treeComponent.requestFocus();
         ArrangementRuleEditingModel model = ruleTree.newModel();
         ruleEditor.updateState(model);
         resetEditor.set(Boolean.FALSE);

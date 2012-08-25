@@ -29,7 +29,7 @@ public class AddArrangementRuleAction extends AnAction {
   
   public AddArrangementRuleAction() {
     getTemplatePresentation().setIcon(AllIcons.General.Add);
-    getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.condition.add.text"));
+    getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.add.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.add.description"));
   }
 

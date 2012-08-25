@@ -52,7 +52,7 @@ import java.util.List;
 public class ArrangementRuleTree {
 
   @NotNull private static final JLabel EMPTY_RENDERER         = new JLabel("");
-  @NotNull private static final JLabel NEW_CONDITION_RENDERER = new JLabel("<html><b>&lt;empty condition&gt;</b>");
+  @NotNull private static final JLabel NEW_CONDITION_RENDERER = new JLabel("<html><b>&lt;empty rule&gt;</b>");
   @NotNull private static final Logger LOG                    = Logger.getInstance("#" + ArrangementRuleTree.class.getName());
 
   @NotNull private final List<ArrangementRuleSelectionListener> myListeners           = new ArrayList<ArrangementRuleSelectionListener>();
