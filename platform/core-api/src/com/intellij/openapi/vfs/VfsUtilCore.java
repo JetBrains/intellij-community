@@ -32,6 +32,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VirtualFileVisitor.Result;
+import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
+
 public class VfsUtilCore {
   /**
    * Checks whether the <code>ancestor {@link com.intellij.openapi.vfs.VirtualFile}</code> is parent of <code>file
@@ -175,7 +178,7 @@ public class VfsUtilCore {
   public static boolean iterateChildrenRecursively(@NotNull final VirtualFile root,
                                                    @Nullable final VirtualFileFilter filter,
                                                    @NotNull final ContentIterator iterator) {
-    final VirtualFileVisitor.Result result = visitChildrenRecursively(root, new VirtualFileVisitor() {
+    final Result result = visitChildrenRecursively(root, new VirtualFileVisitor() {
       @NotNull
       @Override
       public Result visitFileEx(@NotNull VirtualFile file) {
@@ -188,12 +191,12 @@ public class VfsUtilCore {
   }
 
   @SuppressWarnings("UnsafeVfsRecursion")
-  public static VirtualFileVisitor.Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor) {
+  public static Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor) throws VisitorException {
     visitor.pushFrame();
     try {
       final boolean visited = visitor.allowVisitFile(file);
       if (visited) {
-        VirtualFileVisitor.Result result = visitor.visitFileEx(file);
+        Result result = visitor.visitFileEx(file);
         if (result.skipChildren) return result;
       }
 
@@ -215,7 +218,7 @@ public class VfsUtilCore {
 
       if (childrenIterable != null) {
         for (VirtualFile child : childrenIterable) {
-          VirtualFileVisitor.Result result = visitChildrenRecursively(child, visitor);
+          Result result = visitChildrenRecursively(child, visitor);
           if (result.skipToParent != null && result.skipToParent != child) return result;
         }
       }
@@ -228,6 +231,23 @@ public class VfsUtilCore {
     }
     finally {
       visitor.popFrame();
+    }
+  }
+
+  public static <E extends Exception> Result visitChildrenRecursively(@NotNull VirtualFile file,
+                                                                      @NotNull VirtualFileVisitor visitor,
+                                                                      @NotNull Class<E>... classes) throws E {
+    try {
+      return visitChildrenRecursively(file, visitor);
+    }
+    catch (VisitorException e) {
+      final Throwable cause = e.getCause();
+      for (Class<E> eClass : classes) {
+        if (eClass.isInstance(cause)) {
+          throw eClass.cast(cause);
+        }
+      }
+      throw e;
     }
   }
 

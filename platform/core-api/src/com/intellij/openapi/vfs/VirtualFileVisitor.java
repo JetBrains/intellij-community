@@ -73,6 +73,13 @@ public abstract class VirtualFileVisitor {
   }
 
 
+  protected static class VisitorException extends RuntimeException {
+    public VisitorException(Throwable cause) {
+      super(cause);
+    }
+  }
+
+
   private boolean myFollowSymLinks = true;
   private boolean mySkipRoot = false;
   private int myDepthLimit = -1;
@@ -150,7 +157,7 @@ public abstract class VirtualFileVisitor {
     frame.put(parameter, value);
   }
 
-  @Nullable
+  @SuppressWarnings("ConstantConditions")
   public final <T> T get(@NotNull Key<T> parameter) {
     if (myParameters == null || myParameters.isEmpty()) {
       return null;
