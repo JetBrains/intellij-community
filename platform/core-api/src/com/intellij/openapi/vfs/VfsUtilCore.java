@@ -236,16 +236,14 @@ public class VfsUtilCore {
 
   public static <E extends Exception> Result visitChildrenRecursively(@NotNull VirtualFile file,
                                                                       @NotNull VirtualFileVisitor visitor,
-                                                                      @NotNull Class<E>... classes) throws E {
+                                                                      @NotNull Class<E> eClass) throws E {
     try {
       return visitChildrenRecursively(file, visitor);
     }
     catch (VisitorException e) {
       final Throwable cause = e.getCause();
-      for (Class<E> eClass : classes) {
-        if (eClass.isInstance(cause)) {
-          throw eClass.cast(cause);
-        }
+      if (eClass.isInstance(cause)) {
+        throw eClass.cast(cause);
       }
       throw e;
     }
