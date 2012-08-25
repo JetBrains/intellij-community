@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCon
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -50,10 +49,12 @@ import java.util.List;
  * @since 8/10/12 2:10 PM
  */
 public class ArrangementRuleTree {
-
+  
   @NotNull private static final JLabel EMPTY_RENDERER         = new JLabel("");
   @NotNull private static final JLabel NEW_CONDITION_RENDERER = new JLabel("<html><b>&lt;empty rule&gt;</b>");
   @NotNull private static final Logger LOG                    = Logger.getInstance("#" + ArrangementRuleTree.class.getName());
+  
+  private static final int EMPTY_RULE_REMOVE_DELAY_MILLIS = 300;
 
   @NotNull private final List<ArrangementRuleSelectionListener> myListeners           = new ArrayList<ArrangementRuleSelectionListener>();
   @NotNull private final TreeSelectionModel                     mySelectionModel      = new MySelectionModel();
@@ -116,11 +117,8 @@ public class ArrangementRuleTree {
       protected void processMouseEvent(MouseEvent e) {
         // JTree selects a node on mouse click at the same row (even outside the node bounds). We don't want to support
         // such selection because selected nodes are highlighted at the rule tree, so, it produces a 'blink' effect.
-        if (e.getClickCount() > 0 && getNodeComponentAt(e.getLocationOnScreen()) == null) {
+        if (e.getClickCount() > 0 && getNodeComponentAt(e.getX(), e.getY()) == null) {
           TreePath path = myTree.getPathForLocation(e.getX(), e.getY());
-          if (path == null) {
-            mySkipSelectionChange = true;
-          }
           if (path == null || !isEmptyCondition(((ArrangementTreeNode)path.getLastPathComponent()).getBackingCondition())) {
             mySkipSelectionChange = true;
           }
@@ -305,8 +303,9 @@ public class ArrangementRuleTree {
     
     for (TreePath p = path; p != null; p = p.getParentPath()) {
       int row = myTree.getRowForPath(p);
-      if (row < 0) {
-        row = ((ArrangementTreeNode)p.getLastPathComponent()).getRow();
+      ArrangementTreeNode node = (ArrangementTreeNode)p.getLastPathComponent();
+      if (row < 0 && node != null) {
+        row = node.getRow();
       }
       if (row < 0) {
         return;
@@ -314,6 +313,7 @@ public class ArrangementRuleTree {
       ArrangementNodeComponent component = myRenderers.get(row);
       if (component != null) {
         component.setSelected(selected);
+        myTreeModel.nodeChanged(node);
         repaintComponent(component);
       }
     }
@@ -394,7 +394,7 @@ public class ArrangementRuleTree {
   }
 
   private void onMouseMoved(@NotNull MouseEvent e) {
-    ArrangementNodeComponent component = getNodeComponentAt(e.getLocationOnScreen());
+    ArrangementNodeComponent component = getNodeComponentAt(e.getX(), e.getY());
     if (component == null) {
       return;
     }
@@ -405,7 +405,7 @@ public class ArrangementRuleTree {
   }
   
   private void onMouseClicked(@NotNull MouseEvent e) {
-    ArrangementNodeComponent component = getNodeComponentAt(e.getLocationOnScreen());
+    ArrangementNodeComponent component = getNodeComponentAt(e.getX(), e.getY());
     if (component != null) {
       component.handleMouseClick(e);
       return;
@@ -421,34 +421,9 @@ public class ArrangementRuleTree {
   }
   
   @Nullable
-  private ArrangementNodeComponent getNodeComponentAt(Point screenLocation) {
-    int low = 0;
-    int high = myTree.getRowCount() - 1;
-
-    while (low <= high) {
-      int mid = (low + high) >>> 1;
-      ArrangementNodeComponent midVal = myRenderers.get(mid);
-      if (midVal == null) {
-        return null;
-      }
-      Rectangle bounds = midVal.getScreenBounds();
-      if (bounds == null) {
-        return null;
-      }
-      if (bounds.contains(screenLocation)) {
-        return midVal.getNodeComponentAt(RelativePoint.fromScreen(screenLocation));
-      }
-      else if (bounds.y > screenLocation.y) {
-        high = mid - 1;
-      }
-      else if (bounds.y + bounds.height <= screenLocation.y) {
-        low = mid + 1;
-      }
-      else {
-        return null;
-      }
-    }
-    return null;
+  private ArrangementNodeComponent getNodeComponentAt(int x, int y) {
+    int row = myTree.getRowForLocation(x, y);
+    return myRenderers.get(row);
   }
 
   private void repaintComponent(@NotNull ArrangementNodeComponent component) {
@@ -606,7 +581,9 @@ public class ArrangementRuleTree {
       if (row < 0) {
         return myFactory.getComponent(node).getUiComponent();
       }
-      return getNodeComponentAt(row, node).getUiComponent();
+      ArrangementNodeComponent component = getNodeComponentAt(row, node);
+      component.setSelected(selected);
+      return component.getUiComponent();
     }
   }
   
@@ -626,7 +603,7 @@ public class ArrangementRuleTree {
       }
       
       myAlarm.cancelAllRequests();
-      myAlarm.addRequest(myRequest, 300);
+      myAlarm.addRequest(myRequest, EMPTY_RULE_REMOVE_DELAY_MILLIS);
       clearSelection();
       ArrangementTreeNode component = (ArrangementTreeNode)path.getLastPathComponent();
       
@@ -686,26 +663,33 @@ public class ArrangementRuleTree {
     }
   }
   
-  private class RemoveInactiveNewModelRequest implements Runnable, TObjectProcedure<ArrangementRuleEditingModelImpl> {
+  private class RemoveInactiveNewModelRequest implements Runnable {
     
+    @SuppressWarnings("ConstantConditions")
     @Override
     public void run() {
       myAlarm.cancelAllRequests();
-      ArrangementRuleEditingModelImpl model = getActiveModel();
-      if (model != null && isEmptyCondition(model.getMatchCondition())) {
+      Object[] values = myModels.getValues();
+      ArrangementRuleEditingModelImpl activeModel = getActiveModel();
+      boolean emptyRuleRemoved = false;
+      for (Object value : values) {
+        ArrangementRuleEditingModelImpl model = (ArrangementRuleEditingModelImpl)value;
+        if (model != null && model != activeModel && isEmptyCondition(model.getMatchCondition())) {
+          model.destroy();
+          emptyRuleRemoved = true;
+        }
+      }
+
+      if (!emptyRuleRemoved || activeModel == null || getActiveModel() != null /* Selection was above the destroyed model */) {
         return;
       }
-      myModels.forEachValue(this);
-    }
 
-    @Override
-    public boolean execute(@NotNull ArrangementRuleEditingModelImpl model) {
-      if (isEmptyCondition(model.getMatchCondition())) {
-        model.destroy();
-        // TODO den restore selection (e.g. from bottom)
-        return false;
+      for (Object value : myModels.getValues()) {
+        ArrangementRuleEditingModelImpl model = (ArrangementRuleEditingModelImpl)value;
+        if (activeModel.getMatchCondition().equals(model.getMatchCondition())) {
+          mySelectionModel.setSelectionPath(new TreePath(activeModel.getBottomMost().getPath()));
+        }
       }
-      return true;
     }
   }
 }
