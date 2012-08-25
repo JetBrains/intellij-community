@@ -123,7 +123,7 @@ public class ChangesDiffCalculator implements Disposable {
     }
 
     @Override
-    public void highlightText(Fragment fragment, boolean drawBorder, GutterIconRenderer gutterIconRenderer) {
+    public void highlightText(Fragment fragment, GutterIconRenderer gutterIconRenderer) {
     }
 
 
@@ -143,7 +143,7 @@ public class ChangesDiffCalculator implements Disposable {
     }
 
     @Override
-    public void highlightText(Fragment fragment, boolean drawBorder, GutterIconRenderer gutterIconRenderer) {
+    public void highlightText(Fragment fragment, GutterIconRenderer gutterIconRenderer) {
       TextRange currentRange = fragment.getRange(FragmentSide.SIDE2);
       if (INTERESTED_DIFF_TYPES.contains(fragment.getType())) {
         ranges.add(currentRange);

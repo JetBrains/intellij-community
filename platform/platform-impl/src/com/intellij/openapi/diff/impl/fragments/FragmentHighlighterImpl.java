@@ -40,19 +40,19 @@ public class FragmentHighlighterImpl implements FragmentHighlighter {
   }
 
   public void highlightInline(final InlineFragment fragment) {
-    highlightFragmentImpl(fragment, true);
+    highlightFragmentImpl(fragment);
   }
 
-  protected void highlightFragmentImpl(final Fragment fragment, final boolean drawBorder) {
-    myAppender1.highlightText(fragment, drawBorder, null);
-    myAppender2.highlightText(fragment, drawBorder, null);
+  protected void highlightFragmentImpl(final Fragment fragment) {
+    myAppender1.highlightText(fragment, null);
+    myAppender2.highlightText(fragment, null);
   }
 
   public void highlightLine(final LineFragment fragment) {
     addModifyActions(fragment, myAppender1, myAppender2);
     final Iterator<Fragment> iterator = fragment.getChildrenIterator();
     if (iterator == null) {
-      highlightFragmentImpl(fragment, false);
+      highlightFragmentImpl(fragment);
     }
     else {
       for (; iterator.hasNext();) {

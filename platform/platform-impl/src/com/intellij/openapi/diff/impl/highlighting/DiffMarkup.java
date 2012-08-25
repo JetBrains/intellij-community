@@ -64,16 +64,15 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     return editor == null ? null : editor.getMarkupModel();
   }
 
-  public void highlightText(Fragment fragment, boolean drawBorder, GutterIconRenderer gutterIconRenderer) {
+  public void highlightText(Fragment fragment, GutterIconRenderer gutterIconRenderer) {
     final TextDiffTypeEnum diffTypeEnum = fragment.getType();
     if (diffTypeEnum == null) return;
     TextDiffType type = TextDiffType.create(diffTypeEnum);
     if (type == null) return;
     TextRange range = fragment.getRange(getSide());
     TextAttributes attributes = type.getTextAttributes(getEditor());
-    if (!drawBorder && range.getLength() == 0) return;
     RangeHighlighter rangeMarker;
-    if (drawBorder && range.getLength() == 0) {
+    if (range.getLength() == 0) {
       TextAttributes textAttributes = new TextAttributes(null, null, attributes.getBackgroundColor(), EffectType.BOXED, Font.PLAIN);
       rangeMarker = getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getStartOffset(), LAYER, textAttributes, HighlighterTargetArea.EXACT_RANGE);
     }
