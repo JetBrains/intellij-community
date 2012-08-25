@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 
@@ -84,13 +87,17 @@ public class SvnExcludingIgnoredOperation {
   }
 
   private void executeDown(final VirtualFile file) throws SVNException {
-    if (! operation(file)) {
-      return;
-    }
-
-    for (VirtualFile child : file.getChildren()) {
-      executeDown(child);
-    }
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        try {
+          return operation(file);
+        }
+        catch (SVNException e) {
+          throw new VisitorException(e);
+        }
+      }
+    }, SVNException.class);
   }
 
   public void execute(final VirtualFile file) throws SVNException {
