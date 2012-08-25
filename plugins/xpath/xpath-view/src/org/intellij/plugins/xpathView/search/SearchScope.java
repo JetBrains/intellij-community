@@ -27,7 +27,9 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -246,20 +248,16 @@ public class SearchScope implements JDOMExternalizable {
         return LocalFileSystem.getInstance().findFileByPath(dirName.replace('\\', '/'));
     }
 
-    private static void iterateRecursively(VirtualFile virtualFile, Processor<VirtualFile> processor, boolean recursive) {
-        final VirtualFile[] children = virtualFile.getChildren();
-        for (VirtualFile file : children) {
-            if (file.isDirectory()) {
-                if (recursive) {
-                    iterateRecursively(file, processor, recursive);
+    private static void iterateRecursively(VirtualFile virtualFile, final Processor<VirtualFile> processor, boolean recursive) {
+        VfsUtilCore.visitChildrenRecursively(virtualFile, new VirtualFileVisitor(recursive ? null : VirtualFileVisitor.ONE_LEVEL_DEEP) {
+            @Override
+            public boolean visitFile(@NotNull VirtualFile file) {
+                if (!file.isDirectory()) {
+                    processor.process(file);
                 }
-            } else {
-                processor.process(file);
+                return true;
             }
-        }
-        if (!virtualFile.isDirectory()) {
-            processor.process(virtualFile);
-        }
+        });
     }
 
     private static class MyFileIterator implements ContentIterator {
