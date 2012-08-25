@@ -3,11 +3,14 @@ package com.jetbrains.python.packaging;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -154,17 +157,21 @@ public class PyPackageUtil {
     return result.get();
   }
 
-  private static void collectPackageNames(@NotNull Project project, @NotNull VirtualFile root, @NotNull String prefix,
-                                          @NotNull List<String> results) {
-    for (VirtualFile child : root.getChildren()) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isIgnored(child)) {
-        continue;
+  private static void collectPackageNames(@NotNull final Project project,
+                                          @NotNull VirtualFile root,
+                                          @NotNull final String prefix,
+                                          @NotNull final List<String> results) {
+    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!fileIndex.isIgnored(file) && file.findChild(PyNames.INIT_DOT_PY) != null) {
+          final String name = prefix + file.getName();
+          results.add(name);
+          collectPackageNames(project, file, name + ".", results);
+        }
+        return true;
       }
-      if (child.findChild(PyNames.INIT_DOT_PY) != null) {
-        final String name = prefix + child.getName();
-        results.add(name);
-        collectPackageNames(project, child, name + ".", results);
-      }
-    }
+    });
   }
 }

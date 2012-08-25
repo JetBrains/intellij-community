@@ -11,7 +11,9 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.FileContentUtil;
@@ -172,19 +174,26 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     }
   }
 
-  private void markRecursively(Project project, VirtualFile file, LanguageLevel languageLevel, boolean suppressSizeLimit) {
-    if (FileTypeManager.getInstance().isFileIgnored(file)) {
-      return;
-    }
-    if (file.isDirectory()) {
-      PushedFilePropertiesUpdater.findAndUpdateValue(project, file, this, languageLevel);
-    }
-    if (suppressSizeLimit) {
-      SingleRootFileViewProvider.doNotCheckFileSizeLimit(file);
-    }
-    for (VirtualFile child : file.getChildren()) {
-      markRecursively(project, child, languageLevel, suppressSizeLimit);
-    }
+  private void markRecursively(final Project project,
+                               @NotNull VirtualFile file,
+                               final LanguageLevel languageLevel,
+                               final boolean suppressSizeLimit) {
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (fileTypeManager.isFileIgnored(file)) {
+          return false;
+        }
+        if (file.isDirectory()) {
+          PushedFilePropertiesUpdater.findAndUpdateValue(project, file, PythonLanguageLevelPusher.this, languageLevel);
+        }
+        if (suppressSizeLimit) {
+          SingleRootFileViewProvider.doNotCheckFileSizeLimit(file);
+        }
+        return true;
+      }
+    });
   }
 
   public static void setForcedLanguageLevel(final Project project, @Nullable LanguageLevel languageLevel) {
