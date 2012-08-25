@@ -56,4 +56,6 @@ public interface FileStatus {
   Color getColor();
 
   ColorKey getColorKey();
+
+  String getId();
 }

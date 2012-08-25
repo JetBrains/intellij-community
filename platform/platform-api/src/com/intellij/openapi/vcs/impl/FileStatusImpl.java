@@ -50,4 +50,8 @@ public class FileStatusImpl implements FileStatus {
   public ColorKey getColorKey() {
     return myColorKey;
   }
+
+  public String getId() {
+    return myStatus;
+  }
 }

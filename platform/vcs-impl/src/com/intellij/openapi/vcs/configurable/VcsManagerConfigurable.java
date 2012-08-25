@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsConfigurableProvider;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
@@ -121,6 +122,14 @@ public class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstra
 
     result.add(myGeneralPanel);
     result.add(new VcsBackgroundOperationsConfigurationPanel(myProject));
+
+    for (VcsConfigurableProvider provider : VcsConfigurableProvider.EP_NAME.getExtensions()) {
+      final Configurable configurable = provider.getConfigurable(myProject);
+      if (configurable != null) {
+        result.add(configurable);
+      }
+    }
+
     if (!myProject.isDefault()) {
       result.add(new IgnoredSettingsPanel(myProject));
     }

@@ -76,6 +76,10 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     @Override public ColorKey getColorKey() {
       throw new AssertionError("Should not be called");
     }
+
+    @Override public String getId() {
+      throw new AssertionError("Should not be called");
+    }
   }
 
   public FileStatusManagerImpl(Project project, StartupManager startupManager) {

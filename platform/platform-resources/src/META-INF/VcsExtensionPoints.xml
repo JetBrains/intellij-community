@@ -30,6 +30,9 @@
   <extensionPoint name="vcsSelectionProvider"
                   interface="com.intellij.vcsUtil.VcsSelectionProvider"/>
 
+  <extensionPoint name="vcsConfigurableProvider"
+                  interface="com.intellij.openapi.vcs.VcsConfigurableProvider"/>
+
   <!--<extensionPoint name="writingAccessProvider"-->
                   <!--interface="com.intellij.openapi.vfs.WritingAccessProvider"-->
                   <!--area="IDEA_PROJECT"/>-->
