@@ -17,7 +17,6 @@ package git4idea.test;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -102,23 +101,30 @@ public class GitTestRunEnv {
     if (ourGitExecutable != null) {
       return ourGitExecutable;
     }
+
     String exec = System.getenv(GIT_EXECUTABLE_ENV);
-    if (exec != null && new File(exec).exists()) {
+    if (exec != null && new File(exec).canExecute()) {
       log("Using Git from IDEA_TEST_GIT_EXECUTABLE: " + exec);
       return exec;
     }
     exec = System.getenv(TEAMCITY_GIT_EXECUTABLE_ENV);
-    if (exec != null && new File(exec).exists()) {
+    if (exec != null && new File(exec).canExecute()) {
       log("Using Git from TEAMCITY_GIT_PATH: " + exec);
       return exec;
     }
-    if (SystemInfo.isUnix) {
-      exec = ExecUtil.execAndReadLine("which", "git");
-      if (exec != null && new File(exec).exists()) {
-        log("Using Git from PATH: " + exec);
-        return exec;
+
+    String path = System.getenv(SystemInfo.isWindows ? "Path" : "PATH");
+    if (path != null) {
+      String name = SystemInfo.isWindows ? "git.exe" : "git";
+      for (String dir : path.split(File.pathSeparator)) {
+        File file = new File(dir, name);
+        if (file.canExecute()) {
+          log("Using Git from PATH: " + exec);
+          return file.getPath();
+        }
       }
     }
+
     throw new IllegalStateException("Git executable not found. " +
                                     "Please define IDEA_TEST_GIT_EXECUTABLE environment variable pointing to the Git executable.");
   }
