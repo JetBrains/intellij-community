@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,10 +33,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -209,7 +206,7 @@ public class MavenProjectsManagerWatcher {
 
       String path = getNormalizedPath(settingsFile);
       if (path != null) {
-        String url = VfsUtil.pathToUrl(path);
+        String url = VfsUtilCore.pathToUrl(path);
         mySettingsFilesPointers.add(
           VirtualFilePointerManager.getInstance().create(url, myChangedDocumentsQueue, new VirtualFilePointerListener() {
             @Override
@@ -402,6 +399,7 @@ public class MavenProjectsManagerWatcher {
       }
     }
 
+    @Nullable
     private VirtualFile getPomFileProfilesFile(VirtualFile f) {
       if (!f.getName().equals(MavenConstants.PROFILES_XML)) return null;
       return f.getParent().findChild(MavenConstants.POM_XML);
@@ -432,7 +430,7 @@ public class MavenProjectsManagerWatcher {
       // Do not use before() method to initialize the lists
       // since the listener can be attached during the update
       // and before method can be skipped.
-      // The better way to fix if, of course, is to do simething with
+      // The better way to fix if, of course, is to do something with
       // subscription - add listener not during postStartupActivity
       // but on project initialization to avoid this situation.
       if (areFileSetsInitialised()) return;
@@ -483,16 +481,19 @@ public class MavenProjectsManagerWatcher {
     }
 
     private void deleteRecursively(VirtualFile f) {
-      if (isRelevant(f.getPath())) deleteFile(f);
-      if (f.isDirectory()) {
-        // prevent reading directories content if not already cached.
-        Iterable<VirtualFile> children = f instanceof NewVirtualFile
-                                         ? ((NewVirtualFile)f).iterInDbChildren()
-                                         : Arrays.asList(f.getChildren());
-        for (VirtualFile each : children) {
-          deleteRecursively(each);
+      VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile f) {
+          if (isRelevant(f.getPath())) deleteFile(f);
+          return true;
         }
-      }
+
+        @Nullable
+        @Override
+        public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile f) {
+          return f.isDirectory() && f instanceof NewVirtualFile ? ((NewVirtualFile)f).iterInDbChildren() : null;
+        }
+      });
     }
 
     @Override

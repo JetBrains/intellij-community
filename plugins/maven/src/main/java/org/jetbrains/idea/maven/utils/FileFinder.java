@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,38 +16,51 @@
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenConstants;
 
 import java.util.List;
 
 public class FileFinder {
   public static List<VirtualFile> findPomFiles(VirtualFile[] roots,
-                                               boolean lookForNested,
-                                               MavenProgressIndicator indicator,
-                                               List<VirtualFile> result) throws MavenProcessCanceledException {
+                                               final boolean lookForNested,
+                                               final MavenProgressIndicator indicator,
+                                               final List<VirtualFile> result) throws MavenProcessCanceledException {
     for (VirtualFile f : roots) {
-      indicator.checkCanceled();
+      VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile f) {
+          try {
+            indicator.checkCanceled();
+            indicator.setText2(f.getPath());
 
-      try {
-        indicator.setText2(f.getPath());
-
-        if (f.isDirectory()) {
-          if (lookForNested) {
-            f.refresh(false, false);
-            findPomFiles(f.getChildren(), lookForNested, indicator, result);
+            if (f.isDirectory()) {
+              if (lookForNested) {
+                f.refresh(false, false);
+              }
+              else {
+                return false;
+              }
+            }
+            else {
+              if (f.getName().equalsIgnoreCase(MavenConstants.POM_XML)) {
+                result.add(f);
+              }
+            }
           }
-        }
-        else {
-          if (f.getName().equalsIgnoreCase(MavenConstants.POM_XML)) {
-            result.add(f);
+          catch (InvalidVirtualFileAccessException e) {
+            // we are accessing VFS without read action here so such exception may occasionally occur
+            MavenLog.LOG.info(e);
           }
+          catch (MavenProcessCanceledException e) {
+            throw new VisitorException(e);
+          }
+          return true;
         }
-      }
-      catch (InvalidVirtualFileAccessException e) {
-        // we are accessing VFS without read action here so such exception may occasionally occur
-        MavenLog.LOG.info(e);
-      }
+      }, MavenProcessCanceledException.class);
     }
 
     return result;

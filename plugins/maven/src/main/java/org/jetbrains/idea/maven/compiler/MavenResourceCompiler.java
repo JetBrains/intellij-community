@@ -31,10 +31,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.CollectionFactory;
 import gnu.trove.THashMap;
@@ -295,65 +292,55 @@ public class MavenResourceCompiler implements ClassPostProcessingCompiler {
     return result;
   }
 
-  private static void collectProcessingItems(Module module,
-                                             VirtualFile sourceRoot,
+  private static void collectProcessingItems(final Module module,
+                                             final VirtualFile sourceRoot,
                                              VirtualFile currentDir,
-                                             String outputDir,
-                                             List<Pattern> includes,
-                                             List<Pattern> excludes,
-                                             boolean isSourceRootFiltered,
-                                             Properties properties,
-                                             long propertiesHashCode,
-                                             Set<String> nonFilteredExtensions,
-                                             String escapeString,
-                                             List<MyProcessingItem> result,
-                                             ProgressIndicator indicator) {
-    indicator.checkCanceled();
+                                             final String outputDir,
+                                             final List<Pattern> includes,
+                                             final List<Pattern> excludes,
+                                             final boolean isSourceRootFiltered,
+                                             final Properties properties,
+                                             final long propertiesHashCode,
+                                             final Set<String> nonFilteredExtensions,
+                                             final String escapeString,
+                                             final List<MyProcessingItem> result,
+                                             final ProgressIndicator indicator) {
+    VfsUtilCore.visitChildrenRecursively(currentDir, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        indicator.checkCanceled();
 
-    for (VirtualFile eachSourceFile : currentDir.getChildren()) {
-      if (eachSourceFile.isDirectory()) {
-        collectProcessingItems(module,
-                               sourceRoot,
-                               eachSourceFile,
-                               outputDir,
-                               includes,
-                               excludes,
-                               isSourceRootFiltered,
-                               properties,
-                               propertiesHashCode,
-                               nonFilteredExtensions,
-                               escapeString,
-                               result,
-                               indicator);
-      }
-      else {
-        String relPath = VfsUtilCore.getRelativePath(eachSourceFile, sourceRoot, '/');
-        if (relPath == null) {
-          MavenLog.LOG.error("Cannot calculate relate path for file: " + eachSourceFile + " in root: " + sourceRoot);
-          continue;
+        if (!file.isDirectory()) {
+          String relPath = VfsUtilCore.getRelativePath(file, sourceRoot, '/');
+          if (relPath == null) {
+            MavenLog.LOG.error("Cannot calculate relate path for file: " + file + " in root: " + sourceRoot);
+            return true;
+          }
+
+          ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
+          if (fileIndex.isIgnored(file)) return true;
+          if (!MavenUtil.isIncluded(relPath, includes, excludes)) return true;
+
+          String outputPath = outputDir + "/" + relPath;
+          long outputFileTimestamp = -1;
+          File outputFile = new File(outputPath);
+          if (outputFile.exists()) {
+            outputFileTimestamp = outputFile.lastModified();
+          }
+          boolean isFiltered = isSourceRootFiltered && !nonFilteredExtensions.contains(file.getExtension());
+          result.add(new MyProcessingItem(module,
+                                          file,
+                                          outputPath,
+                                          outputFileTimestamp,
+                                          isFiltered,
+                                          properties,
+                                          propertiesHashCode,
+                                          escapeString));
         }
 
-        ProjectFileIndex fileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
-        if (fileIndex.isIgnored(eachSourceFile)) continue;
-        if (!MavenUtil.isIncluded(relPath, includes, excludes)) continue;
-
-        String outputPath = outputDir + "/" + relPath;
-        long outputFileTimestamp = -1;
-        File outputFile = new File(outputPath);
-        if (outputFile.exists()) {
-          outputFileTimestamp = outputFile.lastModified();
-        }
-        boolean isFiltered = isSourceRootFiltered && !nonFilteredExtensions.contains(eachSourceFile.getExtension());
-        result.add(new MyProcessingItem(module,
-                                        eachSourceFile,
-                                        outputPath,
-                                        outputFileTimestamp,
-                                        isFiltered,
-                                        properties,
-                                        propertiesHashCode,
-                                        escapeString));
+        return true;
       }
-    }
+    });
   }
 
   private void collectItemsToDelete(Module module, List<MyProcessingItem> processingItems, List<String> result) {
