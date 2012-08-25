@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.diff.actions.MergeActionGroup;
 import com.intellij.openapi.diff.actions.MergeOperations;
+import com.intellij.openapi.diff.impl.DiffLineMarkerRenderer;
 import com.intellij.openapi.diff.impl.EditorSource;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
@@ -83,6 +84,9 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     if (gutterIconRenderer != null) {
       rangeMarker.setGutterIconRenderer(gutterIconRenderer);
     }
+
+    rangeMarker.setLineMarkerRenderer(new DiffLineMarkerRenderer(type));
+
     Color stripeBarColor = attributes.getErrorStripeColor();
     if (stripeBarColor != null) {
       rangeMarker.setErrorStripeMarkColor(stripeBarColor);
@@ -95,7 +99,6 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     RangeHighlighter marker = createLineMarker(type, line);
     if (marker == null) return;
     saveHighlighter(marker);
-    marker.setLineMarkerRenderer(LineRenderer.bottom());
   }
 
   void setSeparatorMarker(int line, Consumer<Integer> consumer) {
