@@ -25,8 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * Environment to run Git.
@@ -125,18 +123,6 @@ public class GitTestRunEnv {
           return file.getPath();
         }
       }
-    }
-
-    log("** env:");
-    final Map<String, String> env = System.getenv();
-    for (Map.Entry<String, String> entry : env.entrySet()) {
-      log(entry.getKey() + " = " + entry.getValue());
-    }
-    log("\n");
-    log("\n** props:");
-    Properties properties = System.getProperties();
-    for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-      log(entry.getKey() + " = " + entry.getValue());
     }
 
     throw new IllegalStateException("Git executable not found. " +
