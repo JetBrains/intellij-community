@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,7 +111,7 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   @Nullable
   public RepositoryLocation getLocationFor(final FilePath root) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-    final String url = SvnUtil.getExactLocation(myVcs, root.getIOFile(), progress);
+    final String url = SvnUtil.getExactLocation(myVcs, root.getIOFile());
     return url == null ? null : new SvnRepositoryLocation(url);
   }
 

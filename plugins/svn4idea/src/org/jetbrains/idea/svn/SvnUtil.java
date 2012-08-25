@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,20 +22,21 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.NotNullFunction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.dialogs.LockDialog;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.admin.SVNEntry;
@@ -47,9 +48,6 @@ import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 
 import java.io.File;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.util.*;
 
 public class SvnUtil {
@@ -58,41 +56,8 @@ public class SvnUtil {
   @NonNls public static final String WC_DB_FILE_NAME = "wc.db";
   @NonNls public static final String DIR_PROPS_FILE_NAME = "dir-props";
   @NonNls public static final String PATH_TO_LOCK_FILE = SVN_ADMIN_DIR_NAME + "/lock";
-  @NonNls public static final String LOCK_FILE_NAME = "lock";
 
-  private SvnUtil() {
-  }
-
-  public static void crawlWCRoots(final Project project, VirtualFile path, NotNullFunction<VirtualFile, Collection<VirtualFile>> callback) {
-    if (path == null) {
-      return;
-    }
-    final boolean isDirectory = path.isDirectory();
-    final VirtualFile parentVFile = (!isDirectory) || (!path.exists()) ? path.getParent() : path;
-    if (parentVFile == null) {
-      return;
-    }
-    final File parent = new File(parentVFile.getPath());
-
-    if (isSvnVersioned(project, parent)) {
-      checkCanceled();
-      final Collection<VirtualFile> pending = callback.fun(path);
-      checkCanceled();
-      for (VirtualFile virtualFile : pending) {
-        crawlWCRoots(project, virtualFile, callback);
-      }
-    } else if (isDirectory) {
-      checkCanceled();
-      VirtualFile[] children = path.getChildren();
-      for (int i = 0; children != null && i < children.length; i++) {
-        checkCanceled();
-        VirtualFile child = children[i];
-        if (child.isDirectory()) {
-          crawlWCRoots(project, child, callback);
-        }
-      }
-    }
-  }
+  private SvnUtil() { }
 
   public static boolean isSvnVersioned(final Project project, File parent) {
     try {
@@ -139,18 +104,14 @@ public class SvnUtil {
     return result;
   }
 
-  private static void checkCanceled() {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-    checkCanceled(indicator);
-  }
-
   private static void checkCanceled(final ProgressIndicator progress) {
     if (progress != null && progress.isCanceled()) {
       throw new ProcessCanceledException();
     }
   }
 
-  public static String getExactLocation(final SvnVcs vcs, File path, ProgressIndicator progress) {
+  @Nullable
+  public static String getExactLocation(final SvnVcs vcs, File path) {
     try {
       SVNWCClient wcClient = vcs.createWCClient();
       SVNInfo info = wcClient.doInfo(path, SVNRevision.UNDEFINED);
@@ -158,16 +119,8 @@ public class SvnUtil {
         return info.getURL().toString();
       }
     }
-    catch (SVNException e) {
-      //
-    }
+    catch (SVNException ignored) { }
     return null;
-  }
-
-  public static String[] getLocationsForModule(final SvnVcs vcs, File path, ProgressIndicator progress) {
-    LocationsCrawler crawler = new LocationsCrawler(vcs);
-    crawlWCRoots(vcs.getProject(), path, crawler, progress);
-    return crawler.getLocations();
   }
 
   public static Map<String, File> getLocationInfoForModule(final SvnVcs vcs, File path, ProgressIndicator progress) {
@@ -176,12 +129,12 @@ public class SvnUtil {
     return crawler.getLocationInfos();
   }
 
-  public static void doLockFiles(Project project, final SvnVcs activeVcs, final File[] ioFiles) throws VcsException {
+  public static void doLockFiles(Project project, final SvnVcs activeVcs, @NotNull final File[] ioFiles) throws VcsException {
     final String lockMessage;
     final boolean force;
     // TODO[yole]: check for shift pressed
     if (activeVcs.getCheckoutOptions().getValue()) {
-      LockDialog dialog = new LockDialog(project, true, ioFiles != null && ioFiles.length > 1);
+      LockDialog dialog = new LockDialog(project, true, ioFiles.length > 1);
       dialog.show();
       if (!dialog.isOK()) {
         return;
@@ -226,11 +179,10 @@ public class SvnUtil {
             if (progress != null) {
               progress.checkCanceled();
             }
-            File file = ioFile;
             if (progress != null) {
-              progress.setText2(SvnBundle.message("progress.text2.processing.file", file.getName()));
+              progress.setText2(SvnBundle.message("progress.text2.processing.file", ioFile.getName()));
             }
-            wcClient.doLock(new File[]{file}, force, lockMessage);
+            wcClient.doLock(new File[]{ioFile}, force, lockMessage);
           }
         }
         catch (SVNException e) {
@@ -250,7 +202,7 @@ public class SvnUtil {
       AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("message.title.lock.failures"));
     }
 
-    WindowManager.getInstance().getStatusBar(project).setInfo(SvnBundle.message("message.text.files.locked", count[0]));
+    StatusBarUtil.setStatusBarInfo(project, SvnBundle.message("message.text.files.locked", count[0]));
     if (exception[0] != null) {
       throw new VcsException(exception[0]);
     }
@@ -290,11 +242,10 @@ public class SvnUtil {
             if (progress != null) {
               progress.checkCanceled();
             }
-            File file = ioFile;
             if (progress != null) {
-              progress.setText2(SvnBundle.message("progress.text2.processing.file", file.getName()));
+              progress.setText2(SvnBundle.message("progress.text2.processing.file", ioFile.getName()));
             }
-            wcClient.doUnlock(new File[]{file}, force);
+            wcClient.doUnlock(new File[]{ioFile}, force);
           }
         }
         catch (SVNException e) {
@@ -314,7 +265,7 @@ public class SvnUtil {
       AbstractVcsHelper.getInstance(project).showErrors(exceptions, SvnBundle.message("message.title.unlock.failures"));
     }
 
-    WindowManager.getInstance().getStatusBar(project).setInfo(SvnBundle.message("message.text.files.unlocked", count[0]));
+    StatusBarUtil.setStatusBarInfo(project, SvnBundle.message("message.text.files.unlocked", count[0]));
     if (exception[0] != null) {
       throw new VcsException(exception[0]);
     }
@@ -342,11 +293,6 @@ public class SvnUtil {
     public LocationsCrawler(SvnVcs vcs) {
       myVcs = vcs;
       myLocations = new HashMap<String, File>();
-    }
-
-    public String[] getLocations() {
-      final Set<String> set = myLocations.keySet();
-      return ArrayUtil.toStringArray(set);
     }
 
     public Map<String, File> getLocationInfos() {
@@ -468,7 +414,7 @@ public class SvnUtil {
   }
 
   public static VirtualFile getVirtualFile(final String filePath) {
-    @NonNls final String path = VfsUtil.pathToUrl(filePath.replace(File.separatorChar, '/'));
+    @NonNls final String path = VfsUtilCore.pathToUrl(filePath.replace(File.separatorChar, '/'));
     return ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
       @Nullable
       public VirtualFile compute() {
@@ -504,43 +450,12 @@ public class SvnUtil {
   }
 
   @Nullable
-  public static VirtualFile correctRoot(final Project project, final String path) {
-    if (path.length() == 0) {
-      // project root
-      return project.getBaseDir();
-    }
-    return LocalFileSystem.getInstance().findFileByPath(path);
-  }
-
-  @Nullable
   public static VirtualFile correctRoot(final Project project, final VirtualFile file) {
     if (file.getPath().length() == 0) {
       // project root
       return project.getBaseDir();
     }
     return file;
-  }
-
-  public static boolean isOneDotFiveAvailable(final Project project, final RepositoryLocation location) {
-    final SvnVcs vcs = SvnVcs.getInstance(project);
-    final List<WCInfo> infos = vcs.getAllWcInfos();
-
-    for (WCInfo info : infos) {
-      if (! info.getFormat().supportsMergeInfo()) {
-        continue;
-      }
-
-      final String url = info.getUrl().toString();
-      if ((location != null) && (! location.toPresentableString().startsWith(url)) &&
-          (! url.startsWith(location.toPresentableString()))) {
-        continue;
-      }
-      if (! checkRepositoryVersion15(vcs, url)) {
-        continue;
-      }
-      return true;
-    }
-    return false;
   }
 
   public static boolean checkRepositoryVersion15(final SvnVcs vcs, final String url) {
@@ -559,6 +474,7 @@ public class SvnUtil {
     }
   }
 
+  @Nullable
   public static SVNStatus getStatus(final SvnVcs vcs, final File file) {
     final SVNStatusClient statusClient = vcs.createStatusClient();
     try {
@@ -593,24 +509,8 @@ public class SvnUtil {
     return isAdminDirectory(file.getParent(), file.getName());
   }
 
-  public static boolean isAdminDirectory(File parent, final String name) {
-    if (name.equals(SVN_ADMIN_DIR_NAME)) {
-      return true;
-    }
-    if (parent != null) {
-      if (parent.getName().equals(SVN_ADMIN_DIR_NAME)) {
-        return true;
-      }
-      parent = parent.getParentFile();
-      if (parent != null && parent.getName().equals(SVN_ADMIN_DIR_NAME)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   public static boolean isAdminDirectory(VirtualFile parent, String name) {
-    // never allow to delete admin directories by themselves (this can happen during LVCS undo,
+    // never allow to delete admin directories by themselves (this can happen during VCS undo,
     // which deletes created directories from bottom to top)
     if (name.equals(SVN_ADMIN_DIR_NAME)) {
       return true;
@@ -647,7 +547,7 @@ public class SvnUtil {
     return null;
   }
 
-  public static boolean doesRepositorySupportMergeinfo(final SvnVcs vcs, final SVNURL url) {
+  public static boolean doesRepositorySupportMergeInfo(final SvnVcs vcs, final SVNURL url) {
     SVNRepository repository = null;
     try {
       repository = vcs.createRepository(url);
@@ -682,15 +582,6 @@ public class SvnUtil {
     }
   }
 
-  public static byte[] decode(final Charset charset, final byte[] buffer) {
-    if (charset != null && ! CharsetToolkit.UTF8_CHARSET.equals(charset)) {
-      final CharBuffer decoded = charset.decode(ByteBuffer.wrap(buffer));
-      final ByteBuffer byteBuffer = CharsetToolkit.UTF8_CHARSET.encode(decoded);
-      return ArrayUtil.realloc(byteBuffer.array(), byteBuffer.remaining());
-    }
-    return buffer;
-  }
-  
   @Nullable
   public static File getWcCopyRootIf17(final File file, @Nullable final File upperBound) {
     File current = file;
@@ -699,7 +590,7 @@ public class SvnUtil {
         final SvnWcGeneration svnWcGeneration = SvnOperationFactory.detectWcGeneration(current, false);
         if (SvnWcGeneration.V17.equals(svnWcGeneration)) return current;
         if (SvnWcGeneration.V16.equals(svnWcGeneration)) return null;
-        if (upperBound != null && upperBound.equals(current)) return null;
+        if (upperBound != null && FileUtil.filesEqual(upperBound, current)) return null;
         current = current.getParentFile();
       }
       catch (SVNException e) {

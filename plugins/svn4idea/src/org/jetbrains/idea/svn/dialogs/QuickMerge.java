@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ public class QuickMerge {
       try {
         final List<TaskDescriptor> tasks = new LinkedList<TaskDescriptor>();
         final boolean supportsMergeinfo = myWcInfo.getFormat().supportsMergeInfo() &&
-                                          SvnUtil.doesRepositorySupportMergeinfo(myVcs, SVNURL.parseURIEncoded(mySourceUrl));
+                                          SvnUtil.doesRepositorySupportMergeInfo(myVcs, SVNURL.parseURIEncoded(mySourceUrl));
         if (! supportsMergeinfo) {
           insertMergeAll(tasks);
         } else {
