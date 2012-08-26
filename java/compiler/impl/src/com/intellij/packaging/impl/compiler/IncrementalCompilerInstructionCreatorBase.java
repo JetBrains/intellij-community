@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@ package com.intellij.packaging.impl.compiler;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.packaging.elements.IncrementalCompilerInstructionCreator;
 import com.intellij.packaging.elements.PackagingFileFilter;
 import org.jetbrains.annotations.NotNull;
@@ -44,34 +47,42 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
   public void addDirectoryCopyInstructions(@NotNull VirtualFile directory, @Nullable PackagingFileFilter filter) {
     ProjectFileIndex index = ProjectRootManager.getInstance(myContext.getCompileContext().getProject()).getFileIndex();
     final boolean copyExcluded = index.isIgnored(directory);
-    collectInstructionsRecursively(directory, filter, index, FileTypeManager.getInstance(), copyExcluded);
+    collectInstructionsRecursively(directory, this, filter, index, FileTypeManager.getInstance(), copyExcluded);
   }
 
-  private void collectInstructionsRecursively(VirtualFile directory,
-                                              PackagingFileFilter filter,
-                                              ProjectFileIndex index,
-                                              final FileTypeManager fileTypeManager,
-                                              boolean copyExcluded) {
-    final VirtualFile[] children = directory.getChildren();
-    if (children != null) {
-      for (VirtualFile child : children) {
+  private static final Key<IncrementalCompilerInstructionCreatorBase> INSTRUCTION_CREATOR = Key.create("pkg.compiler.instruction.creator");
+
+  private static void collectInstructionsRecursively(VirtualFile directory,
+                                                     final IncrementalCompilerInstructionCreatorBase creator,
+                                                     final PackagingFileFilter filter,
+                                                     final ProjectFileIndex index,
+                                                     final FileTypeManager fileTypeManager,
+                                                     final boolean copyExcluded) {
+    VfsUtilCore.visitChildrenRecursively(directory, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT) {
+      { set(INSTRUCTION_CREATOR, creator); }
+
+      @Override
+      public boolean visitFile(@NotNull VirtualFile child) {
         if (copyExcluded) {
-          if (fileTypeManager.isFileIgnored(child)) continue;
+          if (fileTypeManager.isFileIgnored(child)) return false;
         }
         else {
-          if (index.isIgnored(child)) continue;
+          if (index.isIgnored(child)) return false;
         }
 
-        if ((filter == null || filter.accept(child, myContext.getCompileContext()))) {
+        final IncrementalCompilerInstructionCreatorBase creator = get(INSTRUCTION_CREATOR);
+        if (filter == null || filter.accept(child, creator.myContext.getCompileContext())) {
           if (!child.isDirectory()) {
-            addFileCopyInstruction(child, child.getName());
+            creator.addFileCopyInstruction(child, child.getName());
           }
           else {
-            subFolder(child.getName()).collectInstructionsRecursively(child, filter, index, fileTypeManager, copyExcluded);
+            set(INSTRUCTION_CREATOR, creator.subFolder(child.getName()));
           }
         }
+
+        return true;
       }
-    }
+    });
   }
 
   @Override

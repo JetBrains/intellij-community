@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class ChunkBuild extends CompositeGenerator{
     add(new ModuleChunkClasspath(chunk, genOptions, false, true), 1);
     add(new ModuleChunkClasspath(chunk, genOptions, true, true), 1);
 
-    final ModuleChunkSourcepath moduleSources = new ModuleChunkSourcepath(project, chunk, genOptions);
+    final ModuleChunkSourcePath moduleSources = new ModuleChunkSourcePath(project, chunk, genOptions);
     add(moduleSources, 1);
     add(new CompileModuleChunkTarget(project, chunk, moduleSources.getSourceRoots(), moduleSources.getTestSourceRoots(), chunkBaseDir, genOptions), 1);
     add(new CleanModule(chunk), 1);

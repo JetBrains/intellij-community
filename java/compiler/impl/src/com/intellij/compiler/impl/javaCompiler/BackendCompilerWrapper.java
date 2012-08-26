@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,12 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-/*
- * @author: Eugene Zhuravlev
- * Date: Jan 24, 2003
- * Time: 4:25:47 PM
  */
 package com.intellij.compiler.impl.javaCompiler;
 
@@ -54,6 +48,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -76,6 +71,10 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
+/**
+ * @author Eugene Zhuravlev
+ * @since Jan 24, 2003
+ */
 public class BackendCompilerWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.BackendCompilerWrapper");
 
@@ -645,18 +644,15 @@ public class BackendCompilerWrapper {
     }
     else {
       // seems to be a root for generated sources
-      new Object() {
-        void iterateContent(VirtualFile from) {
-          for (VirtualFile child : from.getChildren()) {
-            if (child.isDirectory()) {
-              iterateContent(child);
-            }
-            else {
-              contentIterator.processFile(child);
-            }
+      VfsUtilCore.visitChildrenRecursively(from, new VirtualFileVisitor() {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
+          if (!file.isDirectory()) {
+            contentIterator.processFile(file);
           }
+          return true;
         }
-      }.iterateContent(from);
+      });
     }
     final CacheCorruptedException exc = exRef.get();
     if (exc != null) {

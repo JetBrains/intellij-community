@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 3, 2008
+ * @since Jun 3, 2008
  *
  * A source file is scheduled for recompilation if
  * 1. its timestamp has changed
@@ -78,22 +78,22 @@ import java.util.concurrent.atomic.AtomicInteger;
  * 1. corresponding source file has been scheduled for recompilation (see above)
  * 2. corresponding source file has been deleted
  */
-
 public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.TranslatingCompilerFilesMonitor");
-  public static boolean ourDebugMode = false;
+  private static final boolean ourDebugMode = false;
+
   private static final FileAttribute ourSourceFileAttribute = new FileAttribute("_make_source_file_info_", 3);
   private static final FileAttribute ourOutputFileAttribute = new FileAttribute("_make_output_file_info_", 3);
   private static final Key<Map<String, VirtualFile>> SOURCE_FILES_CACHE = Key.create("_source_url_to_vfile_cache_");
 
   private final Object myDataLock = new Object();
 
-  private final TIntHashSet mySuspendedProjects = new TIntHashSet(); // projectId for allprojects that should not be monitored
+  private final TIntHashSet mySuspendedProjects = new TIntHashSet(); // projectId for all projects that should not be monitored
 
   private final TIntObjectHashMap<TIntHashSet> mySourcesToRecompile = new TIntObjectHashMap<TIntHashSet>(); // ProjectId->set of source file paths
   private PersistentHashMap<Integer, TIntObjectHashMap<Pair<Integer, Integer>>> myOutputRootsStorage; // ProjectId->map[moduleId->Pair(outputDirId, testOutputDirId)]
   
-  // Map: projectId -> Map{output path -> [sourceUrl; classname]}
+  // Map: projectId -> Map{output path -> [sourceUrl; className]}
   private final SLRUCache<Integer, Outputs> myOutputsToDelete = new SLRUCache<Integer, Outputs>(3, 3) {
     @Override
     public Outputs getIfCached(Integer key) {
@@ -1031,24 +1031,26 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     void execute(VirtualFile file);
   }
 
-  private static void processRecursively(VirtualFile file, boolean dbOnly, final FileProcessor processor) {
-    if (file.getFileSystem() instanceof LocalFileSystem) {
-      if (file.isDirectory()) {
-        if (dbOnly) {
-          for (VirtualFile child : ((NewVirtualFile)file).iterInDbChildren()) {
-            processRecursively(child, true, processor);
-          }
-        }
-        else {
-          for (VirtualFile child : file.getChildren()) {
-            processRecursively(child, false, processor);
-          }
-        }
-      }
-      else {
-        processor.execute(file);
-      }
+  private static void processRecursively(VirtualFile file, final boolean dbOnly, final FileProcessor processor) {
+    if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+      return;
     }
+
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!file.isDirectory()) {
+          processor.execute(file);
+        }
+        return true;
+      }
+
+      @Nullable
+      @Override
+      public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
+        return file.isDirectory() && dbOnly ? ((NewVirtualFile)file).iterInDbChildren() : null;
+      }
+    });
   }
 
   // made public for tests
@@ -1090,30 +1092,27 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
       }
       else {
         final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-        new Object() {
-          void processFile(VirtualFile file) {
+        VfsUtilCore.visitChildrenRecursively(srcRoot, new VirtualFileVisitor() {
+          @Override
+          public boolean visitFile(@NotNull VirtualFile file) {
             if (fileTypeManager.isFileIgnored(file)) {
-              return;
+              return false;
             }
             final int fileId = getFileId(file);
             if (fileId > 0 /*file is valid*/) {
               if (file.isDirectory()) {
                 projRef.get();
-                for (VirtualFile child : file.getChildren()) {
-                  processFile(child);
-                }
               }
-              else {
-                if (!isMarkedForRecompilation(projectId, fileId)) {
-                  final SourceFileInfo srcInfo = loadSourceInfo(file);
-                  if (srcInfo != null) {
-                    addSourceForRecompilation(projectId, file, srcInfo);
-                  }
+              else if (!isMarkedForRecompilation(projectId, fileId)) {
+                final SourceFileInfo srcInfo = loadSourceInfo(file);
+                if (srcInfo != null) {
+                  addSourceForRecompilation(projectId, file, srcInfo);
                 }
               }
             }
+            return true;
           }
-        }.processFile(srcRoot);
+        });
       }
     }
   }
@@ -1168,24 +1167,25 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
     return oldOutputRoot != null && oldOutputRoot.intValue() > 0 && !Comparing.equal(oldOutputRoot, currentOutputRoot);
   }
 
-  private void processOldOutputRoot(int projectId, VirtualFile outputRoot) {
+  private void processOldOutputRoot(final int projectId, VirtualFile outputRoot) {
     // recursively mark all corresponding sources for recompilation
-    if (outputRoot.isDirectory()) {
-      for (VirtualFile child : outputRoot.getChildren()) {
-        processOldOutputRoot(projectId, child);
-      }
-    }
-    else {
-      // todo: possible optimization - process only those outputs that are not marked for deletion yet
-      final OutputFileInfo outputInfo = loadOutputInfo(outputRoot);
-      if (outputInfo != null) {
-        final String srcPath = outputInfo.getSourceFilePath();
-        final VirtualFile srcFile = srcPath != null? LocalFileSystem.getInstance().findFileByPath(srcPath) : null;
-        if (srcFile != null) {
-          loadInfoAndAddSourceForRecompilation(projectId, srcFile);
+    VfsUtilCore.visitChildrenRecursively(outputRoot, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (!file.isDirectory()) {
+          // todo: possible optimization - process only those outputs that are not marked for deletion yet
+          final OutputFileInfo outputInfo = loadOutputInfo(file);
+          if (outputInfo != null) {
+            final String srcPath = outputInfo.getSourceFilePath();
+            final VirtualFile srcFile = srcPath != null? LocalFileSystem.getInstance().findFileByPath(srcPath) : null;
+            if (srcFile != null) {
+              loadInfoAndAddSourceForRecompilation(projectId, srcFile);
+            }
+          }
         }
+        return true;
       }
-    }
+    });
   }
 
   public void scanSourcesForCompilableFiles(final Project project) {
@@ -1409,18 +1409,31 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
           final Set<String> toMark;
           if (eventFile.isDirectory()) {
             toMark = new HashSet<String>();
-            new Object() {
-              void process(VirtualFile file, String filePath) {
-                if (file.isDirectory()) {
-                  for (VirtualFile child : file.getChildren()) {
-                    process(child, filePath + "/" + child.getName());
+            VfsUtilCore.visitChildrenRecursively(eventFile, new VirtualFileVisitor() {
+              private StringBuilder filePath = new StringBuilder(root);
+
+              @Override
+              public boolean visitFile(@NotNull VirtualFile child) {
+                if (child.isDirectory()) {
+                  if (child != eventFile) {
+                    filePath.append("/").append(child.getName());
                   }
                 }
                 else {
-                  toMark.add(filePath);
+                  String childPath = filePath.toString();
+                  if (child != eventFile) childPath += "/" + child.getName();
+                  toMark.add(childPath);
+                }
+                return true;
+              }
+
+              @Override
+              public void afterChildrenVisited(@NotNull VirtualFile file) {
+                if (file.isDirectory() && file != eventFile) {
+                  filePath.delete(filePath.length() - file.getName().length() - 1, filePath.length());
                 }
               }
-            }.process(eventFile, root);
+            });
           }
           else {
             toMark = Collections.singleton(root);

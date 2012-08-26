@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -947,7 +947,7 @@ public class CompileDriver {
             outputsToRefresh.add(generated.getSecond());
           }
 
-          RefreshQueue.getInstance().refresh(false, true, null, VfsUtil.toVirtualFileArray(outputsToRefresh));
+          RefreshQueue.getInstance().refresh(false, true, null, VfsUtilCore.toVirtualFileArray(outputsToRefresh));
           if (progressIndicator.isCanceled()) {
             return ExitStatus.CANCELLED;
           }
@@ -1126,19 +1126,21 @@ public class CompileDriver {
   }
 
   private static void walkChildren(VirtualFile from, final CompileContext context) {
-    final VirtualFile[] files = from.getChildren();
-    if (files != null && files.length > 0) {
-      context.getProgressIndicator().checkCanceled();
-      context.getProgressIndicator().setText2(from.getPresentableUrl());
-      for (VirtualFile file : files) {
-        walkChildren(file, context);
+    VfsUtilCore.visitChildrenRecursively(from, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (file.isDirectory()) {
+          context.getProgressIndicator().checkCanceled();
+          context.getProgressIndicator().setText2(file.getPresentableUrl());
+        }
+        return true;
       }
-    }
+    });
   }
 
   private static void createClasspathIndex(final VirtualFile file) {
     try {
-      BufferedWriter writer = new BufferedWriter(new FileWriter(new File(VfsUtil.virtualToIoFile(file), "classpath.index")));
+      BufferedWriter writer = new BufferedWriter(new FileWriter(new File(VfsUtilCore.virtualToIoFile(file), "classpath.index")));
       try {
         writeIndex(writer, file, file);
       }
@@ -1152,12 +1154,19 @@ public class CompileDriver {
   }
 
   private static void writeIndex(final BufferedWriter writer, final VirtualFile root, final VirtualFile file) throws IOException {
-    writer.write(VfsUtilCore.getRelativePath(file, root, '/'));
-    writer.write('\n');
-
-    for (VirtualFile child : file.getChildren()) {
-      writeIndex(writer, root, child);
-    }
+    VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        try {
+          writer.write(VfsUtilCore.getRelativePath(file, root, '/'));
+          writer.write('\n');
+          return true;
+        }
+        catch (IOException e) {
+          throw new VisitorException(e);
+        }
+      }
+    }, IOException.class);
   }
 
   private static void dropDependencyCache(final CompileContextEx context) {
@@ -1382,7 +1391,7 @@ public class CompileDriver {
             filesToRecompile.addAll(allDependent);
           }
           if (filesToRecompile.size() > 0) {
-            sink.add(null, Collections.<TranslatingCompiler.OutputItem>emptyList(), VfsUtil.toVirtualFileArray(filesToRecompile));
+            sink.add(null, Collections.<TranslatingCompiler.OutputItem>emptyList(), VfsUtilCore.toVirtualFileArray(filesToRecompile));
           }
           if (errorCount == 0) {
             // perform update only if there were no errors, so it is guaranteed that the file was processd by all neccesary compilers
@@ -1398,7 +1407,7 @@ public class CompileDriver {
             final Collection<VirtualFile> deps = CacheUtils.findDependentFiles(context, Collections.<VirtualFile>emptySet(), null);
             if (deps.size() > 0) {
               TranslatingCompilerFilesMonitor.getInstance().update(context, null, Collections.<TranslatingCompiler.OutputItem>emptyList(),
-                                                                   VfsUtil.toVirtualFileArray(deps));
+                                                                   VfsUtilCore.toVirtualFileArray(deps));
             }
           }
           catch (IOException ignored) {
@@ -1957,7 +1966,7 @@ public class CompileDriver {
       }
 
       if ((wereFilesDeleted[0] || !toCompile.isEmpty()) && context.getMessageCount(CompilerMessageCategory.ERROR) == 0) {
-        compiler.compile(context, moduleChunk, VfsUtil.toVirtualFileArray(toCompile), sink);
+        compiler.compile(context, moduleChunk, VfsUtilCore.toVirtualFileArray(toCompile), sink);
       }
     }
     finally {

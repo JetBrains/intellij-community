@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author: Eugene Zhuravlev
- * Date: Jan 20, 2003
- * Time: 5:34:19 PM
- */
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.ExportableUserDataHolderBase;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+/**
+ * @author Eugene Zhuravlev
+ * @since Jan 20, 2003
+ */
 public class FileSetCompileScope extends ExportableUserDataHolderBase implements CompileScope {
   private final Set<VirtualFile> myRootFiles = new HashSet<VirtualFile>();
   private final Set<String> myDirectoryUrls = new HashSet<String>();
@@ -66,7 +64,6 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
   @NotNull
   public VirtualFile[] getFiles(final FileType fileType, boolean inSourceOnly) {
     final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    final FileTypeManager typeManager = FileTypeManager.getInstance();
     for (Iterator<VirtualFile> it = myRootFiles.iterator(); it.hasNext();) {
       VirtualFile file = it.next();
       if (!file.isValid()) {
@@ -82,7 +79,7 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
         }
       }
     }
-    return VfsUtil.toVirtualFileArray(files);
+    return VfsUtilCore.toVirtualFileArray(files);
   }
 
   public boolean belongs(String url) {
@@ -117,20 +114,15 @@ public class FileSetCompileScope extends ExportableUserDataHolderBase implements
     myUrls = null;
   }
 
-  private static void addRecursively(final Collection<VirtualFile> container, final VirtualFile fromDirectory, FileType fileType) {
-    VirtualFile[] children = fromDirectory.getChildren();
-    if (children.length > 0) {
-      final FileTypeManager typeManager = FileTypeManager.getInstance();
-      for (VirtualFile child : children) {
-        if (child.isDirectory()) {
-          addRecursively(container, child, fileType);
+  private static void addRecursively(final Collection<VirtualFile> container, VirtualFile fromDirectory, final FileType fileType) {
+    VfsUtilCore.visitChildrenRecursively(fromDirectory, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT) {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile child) {
+        if (!child.isDirectory() && (fileType == null || fileType.equals(child.getFileType()))) {
+          container.add(child);
         }
-        else {
-          if (fileType == null || fileType.equals(child.getFileType())) {
-            container.add(child);
-          }
-        }
+        return true;
       }
-    }
+    });
   }
 }

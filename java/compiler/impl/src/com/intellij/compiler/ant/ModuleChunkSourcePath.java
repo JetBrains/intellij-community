@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,24 +22,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 22, 2004
+ * @since Nov 22, 2004
  */
-public class ModuleChunkSourcepath extends CompositeGenerator{
+public class ModuleChunkSourcePath extends CompositeGenerator{
   private final VirtualFile[] mySourceRoots;
   private final VirtualFile[] myTestSourceRoots;
 
-  public ModuleChunkSourcepath(final Project project, ModuleChunk chunk, final GenerationOptions genOptions) {
-    final Path sourcepath = new Path(BuildProperties.getSourcepathProperty(chunk.getName()));
-    final Path testSourcepath = new Path(BuildProperties.getTestSourcepathProperty(chunk.getName()));
+  public ModuleChunkSourcePath(final Project project, ModuleChunk chunk, final GenerationOptions genOptions) {
+    final Path sourcePath = new Path(BuildProperties.getSourcepathProperty(chunk.getName()));
+    final Path testSourcePath = new Path(BuildProperties.getTestSourcepathProperty(chunk.getName()));
     final PatternSet excludedFromCompilation = new PatternSet(BuildProperties.getExcludedFromCompilationProperty(chunk.getName()));
     final String moduleChunkBasedirProperty = BuildProperties.getModuleChunkBasedirProperty(chunk);
     final Module[] modules = chunk.getModules();
@@ -95,10 +96,10 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
           }
         }
         if (sourcesDirSet.getGeneratorCount() > 0) {
-          sourcepath.add(sourcesDirSet);
+          sourcePath.add(sourcesDirSet);
         }
         if (testSourcesDirSet.getGeneratorCount() > 0) {
-          testSourcepath.add(testSourcesDirSet);
+          testSourcePath.add(testSourcesDirSet);
         }
       }
 
@@ -108,17 +109,17 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
       }
     }
 
-    mySourceRoots = VfsUtil.toVirtualFileArray(sourceRootFiles);
-    myTestSourceRoots = VfsUtil.toVirtualFileArray(testSourceRootFiles);
+    mySourceRoots = VfsUtilCore.toVirtualFileArray(sourceRootFiles);
+    myTestSourceRoots = VfsUtilCore.toVirtualFileArray(testSourceRootFiles);
 
     if (excludedFromCompilation.getGeneratorCount() > 0) {
       add(excludedFromCompilation, 1);
     }
-    if (sourcepath.getGeneratorCount() > 0) {
-      add(sourcepath, 1);
+    if (sourcePath.getGeneratorCount() > 0) {
+      add(sourcePath, 1);
     }
-    if (testSourcepath.getGeneratorCount() != 0) {
-      add(testSourcepath, 1);
+    if (testSourcePath.getGeneratorCount() != 0) {
+      add(testSourcePath, 1);
     }
   }
 
@@ -141,32 +142,41 @@ public class ModuleChunkSourcepath extends CompositeGenerator{
     return contentRoot;
   }
 
-  private void addExcludePatterns(Module module, final VirtualFile root, VirtualFile dir, CompositeGenerator generator, final boolean parentIncluded) {
-    if (FileTypeManager.getInstance().isFileIgnored(dir)) {
-      // ignored files are handled by global 'ignored' patternset
-      return;
-    }
-    final boolean isIncluded = ModuleRootManager.getInstance(module).getFileIndex().isInContent(dir);
-    if (isIncluded != parentIncluded) {
-      final String relativePath = VfsUtilCore.getRelativePath(dir, root, '/');
-      if (isIncluded) {
-        generator.add(new Include(relativePath + "/**"));
-      }
-      else {
-        if (!isExcludedByDefault(dir.getName())) {
-          generator.add(new Exclude(relativePath + "/**"));
+  private static void addExcludePatterns(Module module,
+                                         final VirtualFile root,
+                                         VirtualFile dir,
+                                         final CompositeGenerator generator,
+                                         final boolean parentIncluded) {
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+
+    VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile dir) {
+        if (!dir.isDirectory() || fileTypeManager.isFileIgnored(dir)) {
+          // ignored files are handled by global 'ignored' pattern set
+          return false;
         }
+
+        final boolean isIncluded = moduleRootManager.getFileIndex().isInContent(dir);
+        if (isIncluded != parentIncluded) {
+          final String relativePath = VfsUtilCore.getRelativePath(dir, root, '/');
+          if (isIncluded) {
+            generator.add(new Include(relativePath + "/**"));
+          }
+          else {
+            if (!isExcludedByDefault(dir.getName())) {
+              generator.add(new Exclude(relativePath + "/**"));
+            }
+          }
+        }
+
+        return true;
       }
-    }
-    final VirtualFile[] children = dir.getChildren();
-    for (VirtualFile child : children) {
-      if (child.isDirectory()) {
-        addExcludePatterns(module, root, child, generator, isIncluded);
-      }
-    }
+    });
   }
 
-  private boolean isExcludedByDefault(String name) {
+  private static boolean isExcludedByDefault(String name) {
     //noinspection HardCodedStringLiteral
     return "CVS".equals(name) || "SCCS".equals(name) || ".DS_Store".equals(name);
   }
