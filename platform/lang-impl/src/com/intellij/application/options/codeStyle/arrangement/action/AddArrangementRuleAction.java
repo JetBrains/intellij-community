@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -28,7 +27,6 @@ import com.intellij.openapi.application.ApplicationBundle;
 public class AddArrangementRuleAction extends AnAction {
   
   public AddArrangementRuleAction() {
-    getTemplatePresentation().setIcon(AllIcons.General.Add);
     getTemplatePresentation().setText(ApplicationBundle.message("arrangement.action.rule.add.text"));
     getTemplatePresentation().setDescription(ApplicationBundle.message("arrangement.action.rule.add.description"));
   }

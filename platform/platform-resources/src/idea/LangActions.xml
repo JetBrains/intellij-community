@@ -807,13 +807,17 @@
       <action id="DumpLookupElementWeights" internal="true" class="com.intellij.internal.DumpLookupElementWeights" text="Dump lookup element weights"/>
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
+
+    <action id="Arrangement.Rule.Add"
+            class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"
+            icon="AllIcons.General.Add"/>
     
     <group id="Arrangement.RuleEditor.Context.Menu">
-      <!--TODO den implement-->
+      <reference ref="Arrangement.Rule.Add"/>
     </group>
-
+    
     <group id="Arrangement.RuleEditor.ToolWIndow">
-      <action id="Arrangement.Rule.Add" class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"/>
+      <reference ref="Arrangement.Rule.Add"/>
     </group>
     
   </actions>
