@@ -397,6 +397,9 @@
   <action id="EditorDuplicate">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
+  <action id="CompareTwoFiles">
+    <keyboard-shortcut first-keystroke="control D"/>
+  </action>
   <action id="CompareDirs">
     <keyboard-shortcut first-keystroke="control D"/>
   </action>
