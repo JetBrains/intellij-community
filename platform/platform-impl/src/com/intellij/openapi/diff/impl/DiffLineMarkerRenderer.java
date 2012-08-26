@@ -26,13 +26,22 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 /**
- * Expands the change highlighters to the editor's gutter.
+ * <p>Draws the diff change highlighters on the editor's gutter.</p>
+ * <p>Has ability to draw applied changes (used in the merge tool).</p>
  */
 public class DiffLineMarkerRenderer implements LineMarkerRenderer {
   private final TextDiffType myDiffType;
+  private final boolean myEnsureAtLeastOneLineHigh;
 
-  public DiffLineMarkerRenderer(@NotNull TextDiffType diffType) {
+  /**
+   * @param diffType                 the type of the difference.
+   * @param ensureAtLeastOneLineHigh if true, the height of the rectangle will be at least one line high,
+   *                                 if 0 is passed as a height of the Rectangle to {@link #paint(Editor, Graphics, Rectangle)}.
+   *                                 The height won't be modified if ensureAtLeastOneLineHigh is false, or if height is not 0.
+   */
+  public DiffLineMarkerRenderer(@NotNull TextDiffType diffType, boolean ensureAtLeastOneLineHigh) {
     myDiffType = diffType;
+    myEnsureAtLeastOneLineHigh = ensureAtLeastOneLineHigh;
   }
 
   @Override
@@ -48,6 +57,10 @@ public class DiffLineMarkerRenderer implements LineMarkerRenderer {
     int y = range.y;
     int width = gutter.getWidth();
     int height = range.height;
+
+    if (height == 0 && myEnsureAtLeastOneLineHigh) {
+      height = editor.getLineHeight();
+    }
 
     if (!myDiffType.isApplied()) {
       if (height > 2) {

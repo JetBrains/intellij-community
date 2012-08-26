@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.actions.MergeOperations;
 import com.intellij.openapi.diff.impl.DiffLineMarkerRenderer;
 import com.intellij.openapi.diff.impl.EditorSource;
 import com.intellij.openapi.diff.impl.fragments.Fragment;
+import com.intellij.openapi.diff.impl.fragments.InlineFragment;
 import com.intellij.openapi.diff.impl.util.GutterActionRenderer;
 import com.intellij.openapi.diff.impl.util.TextDiffType;
 import com.intellij.openapi.diff.impl.util.TextDiffTypeEnum;
@@ -68,8 +69,9 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
 
   public void highlightText(@NotNull Fragment fragment, @Nullable GutterIconRenderer gutterIconRenderer) {
     MarkupModel markupModel = getMarkupModel();
+    Editor editor = getEditor();
     TextDiffTypeEnum diffTypeEnum = fragment.getType();
-    if (diffTypeEnum == null || markupModel == null) {
+    if (diffTypeEnum == null || markupModel == null || editor == null) {
       return;
     }
     TextDiffType type = TextDiffType.create(diffTypeEnum);
@@ -82,18 +84,19 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
     RangeHighlighter rangeMarker;
     if (range.getLength() == 0) {
       TextAttributes textAttributes = new TextAttributes(null, null, attributes.getBackgroundColor(), EffectType.BOXED, Font.PLAIN);
-      rangeMarker = markupModel
-        .addRangeHighlighter(range.getStartOffset(), range.getStartOffset(), LAYER, textAttributes, HighlighterTargetArea.EXACT_RANGE);
+      rangeMarker = markupModel.addRangeHighlighter(range.getStartOffset(), range.getStartOffset(), LAYER,
+                                                    textAttributes, HighlighterTargetArea.EXACT_RANGE);
     }
     else {
       rangeMarker = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), LAYER,
-                                              attributes, HighlighterTargetArea.EXACT_RANGE);
+                                                    attributes, HighlighterTargetArea.EXACT_RANGE);
     }
     if (gutterIconRenderer != null) {
       rangeMarker.setGutterIconRenderer(gutterIconRenderer);
     }
 
-    rangeMarker.setLineMarkerRenderer(new DiffLineMarkerRenderer(type));
+    boolean ensureAtLeastOneLineHigh = shouldIncreaseHighlightingHeight(fragment, editor, range);
+    rangeMarker.setLineMarkerRenderer(new DiffLineMarkerRenderer(type, ensureAtLeastOneLineHigh));
 
     Color stripeBarColor = attributes.getErrorStripeColor();
     if (stripeBarColor != null) {
@@ -101,6 +104,13 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
       rangeMarker.setThinErrorStripeMark(true);
     }
     saveHighlighter(rangeMarker);
+  }
+
+  private static boolean shouldIncreaseHighlightingHeight(@NotNull Fragment fragment, @NotNull Editor editor, @NotNull TextRange range) {
+    int startY = editor.offsetToLogicalPosition(range.getStartOffset()).line;
+    int endY = editor.offsetToLogicalPosition(range.getEndOffset()).line;
+    boolean onTheSameLine = (startY == endY);
+    return onTheSameLine && fragment instanceof InlineFragment;
   }
 
   public void addLineMarker(int line, @Nullable TextAttributesKey type) {
