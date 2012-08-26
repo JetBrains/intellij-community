@@ -98,8 +98,7 @@ public class ExpectedExceptionNeverThrownTestNGInspection extends BaseJavaLocalI
   }
 
   private static class ExceptionsThrownVisitor extends JavaRecursiveElementVisitor {
-
-    private final Set<PsiClassType> m_exceptionsThrown = new HashSet(4);
+    private final Set<PsiClassType> m_exceptionsThrown = new HashSet<PsiClassType>(4);
 
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
