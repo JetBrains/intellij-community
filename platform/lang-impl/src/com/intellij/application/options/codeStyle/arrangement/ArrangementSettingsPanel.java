@@ -16,12 +16,11 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction;
+import com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -42,6 +41,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Generic GUI for showing standard arrangement settings.
@@ -112,7 +113,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
       @Override
       public void selectionRemoved() {
-        editorPane.setCollapsed(true); 
+        editorPane.setCollapsed(true);
       }
     });
     final Runnable newRuleFunction = new Runnable() {
@@ -152,7 +153,24 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         }
         return null;
       }
-    });    
+    });
+    setupKeyboardActions(actionManager, treeComponent);
+  }
+
+  private static void setupKeyboardActions(@NotNull ActionManager actionManager, @NotNull Tree treeComponent) {
+    List<AnAction> keyboardActions = new ArrayList<AnAction>();
+    
+    AnAction newRuleAction = new AddArrangementRuleAction();
+    newRuleAction.copyFrom(actionManager.getAction("Arrangement.Rule.Add"));
+    newRuleAction.registerCustomShortcutSet(CommonShortcuts.ENTER, treeComponent);
+    keyboardActions.add(newRuleAction);
+
+    AnAction removeRuleAction = new RemoveArrangementRuleAction();
+    removeRuleAction.copyFrom(actionManager.getAction("Arrangement.Rule.Remove"));
+    removeRuleAction.registerCustomShortcutSet(CommonShortcuts.DELETE, treeComponent);
+    keyboardActions.add(removeRuleAction);
+    
+    treeComponent.putClientProperty(AnAction.ourClientProperty, keyboardActions);
   }
 
   @Override
