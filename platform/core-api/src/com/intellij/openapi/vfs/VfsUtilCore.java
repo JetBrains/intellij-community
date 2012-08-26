@@ -191,6 +191,7 @@ public class VfsUtilCore {
   }
 
   @SuppressWarnings("UnsafeVfsRecursion")
+  @NotNull
   public static Result visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor) throws VisitorException {
     visitor.pushFrame();
     try {
