@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,7 @@ public class ArrangementRuleEditingModelBuilder {
    * <ol>
    *   <li>
    *     {@link HierarchicalArrangementConditionNode Groups} given {@link ArrangementMatchCondition settings} using
-   *     the given {@link ArrangementSettingsGrouper#group(ArrangementMatchCondition) strategy};
+   *     the given {@link ArrangementConditionsGrouper#group(ArrangementMatchCondition) strategy};
    *   </li>
    *   <li>
    *     Build {@link DefaultMutableTreeNode tree nodes} for the {@link HierarchicalArrangementConditionNode groiping-aware nodes}
@@ -74,7 +74,7 @@ public class ArrangementRuleEditingModelBuilder {
     @NotNull JTree tree,
     @NotNull ArrangementTreeNode root,
     @Nullable ArrangementTreeNode anchor,
-    @NotNull ArrangementSettingsGrouper grouper)
+    @NotNull ArrangementConditionsGrouper grouper)
   {
     HierarchicalArrangementConditionNode grouped = grouper.group(matchCondition);
     DefaultTreeModel treeModel = (DefaultTreeModel)tree.getModel();

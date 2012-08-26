@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ArrangementMatchCondition extends Cloneable {
 
-  void invite(@NotNull ArrangementSettingsNodeVisitor visitor);
+  void invite(@NotNull ArrangementMatchConditionVisitor visitor);
 
   @NotNull
   ArrangementMatchCondition clone();

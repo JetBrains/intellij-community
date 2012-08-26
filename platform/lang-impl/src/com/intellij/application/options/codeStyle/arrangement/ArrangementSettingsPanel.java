@@ -61,9 +61,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       representationManager = (ArrangementStandardSettingsRepresentationAware)filter;
     }
     final ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(filter, representationManager);
-    ArrangementSettingsGrouper grouper = DefaultArrangementSettingsGrouper.INSTANCE;
-    if (filter instanceof ArrangementSettingsGrouper) {
-      grouper = (ArrangementSettingsGrouper)filter;
+    ArrangementConditionsGrouper grouper = DefaultArrangementSettingsGrouper.INSTANCE;
+    if (filter instanceof ArrangementConditionsGrouper) {
+      grouper = (ArrangementConditionsGrouper)filter;
     }
 
     final ActionManager actionManager = ActionManager.getInstance();

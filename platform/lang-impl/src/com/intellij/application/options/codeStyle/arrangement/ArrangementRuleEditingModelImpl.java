@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.model.*;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.util.containers.hash.HashSet;
 import gnu.trove.TIntIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +42,9 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @NotNull private final Set<Listener> myListeners  = new HashSet<Listener>();
   @NotNull private final Set<Object>   myConditions = new HashSet<Object>();
 
-  @NotNull private final DefaultTreeModel           myTreeModel;
-  @NotNull private final ArrangementSettingsGrouper myGrouper;
-  private final          boolean                    myRootVisible;
+  @NotNull private final DefaultTreeModel             myTreeModel;
+  @NotNull private final ArrangementConditionsGrouper myGrouper;
+  private final          boolean                      myRootVisible;
 
   @NotNull private ArrangementTreeNode       myTopMost;
   @NotNull private ArrangementTreeNode       myBottomMost;
@@ -69,7 +69,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
                                          @NotNull ArrangementMatchCondition node,
                                          @NotNull ArrangementTreeNode topMost,
                                          @NotNull ArrangementTreeNode bottomMost,
-                                         @NotNull ArrangementSettingsGrouper grouper,
+                                         @NotNull ArrangementConditionsGrouper grouper,
                                          int row,
                                          boolean rootVisible)
   {
@@ -242,7 +242,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     return "model for " + myMatchCondition;
   }
 
-  private static class MyConditionsBuilder implements ArrangementSettingsNodeVisitor {
+  private static class MyConditionsBuilder implements ArrangementMatchConditionVisitor {
 
     @NotNull Set<Object> conditions;
 

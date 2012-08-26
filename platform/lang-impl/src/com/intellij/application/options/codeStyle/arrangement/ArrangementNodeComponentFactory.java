@@ -39,17 +39,17 @@ public class ArrangementNodeComponentFactory {
   @NotNull
   public ArrangementNodeComponent getComponent(@NotNull ArrangementMatchCondition node) {
     final Ref<ArrangementNodeComponent> ref = new Ref<ArrangementNodeComponent>();
-    node.invite(new ArrangementSettingsNodeVisitor() {
+    node.invite(new ArrangementMatchConditionVisitor() {
       @Override
-      public void visit(@NotNull ArrangementAtomMatchCondition setting) {
-        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, setting, myRemoveConditionCallback));
+      public void visit(@NotNull ArrangementAtomMatchCondition condition) {
+        ref.set(new ArrangementAtomNodeComponent(myDisplayManager, condition, myRemoveConditionCallback));
       }
 
       @Override
-      public void visit(@NotNull ArrangementCompositeMatchCondition setting) {
-        switch (setting.getOperator()) {
+      public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
+        switch (condition.getOperator()) {
           case AND:
-            ref.set(new ArrangementAndNodeComponent(setting, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
+            ref.set(new ArrangementAndNodeComponent(condition, ArrangementNodeComponentFactory.this, myDisplayManager)); break;
           case OR: // TODO den implement
         }
       }

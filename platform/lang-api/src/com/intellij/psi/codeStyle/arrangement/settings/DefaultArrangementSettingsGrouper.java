@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/15/12 4:23 PM
  */
-public class DefaultArrangementSettingsGrouper implements ArrangementSettingsGrouper {
+public class DefaultArrangementSettingsGrouper implements ArrangementConditionsGrouper {
 
   @NotNull public static final DefaultArrangementSettingsGrouper INSTANCE = new DefaultArrangementSettingsGrouper();
 

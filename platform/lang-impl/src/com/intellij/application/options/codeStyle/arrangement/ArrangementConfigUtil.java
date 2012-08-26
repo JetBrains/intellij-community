@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementConditionNode;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementMatcherSettings;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TIntIntHashMap;
@@ -50,19 +49,19 @@ public class ArrangementConfigUtil {
   }
 
   /**
-   * Allows to answer what new settings are available for a particular {@link ArrangementMatcherSettings arrangement matcher rules}.
+   * Allows to answer what new settings are available for a particular match condition.
    *
-   * @param filter    filter to use
-   * @param settings  object that encapsulates information about current arrangement matcher settings
-   * @return          map which contains information on what new new settings are available at the current situation
+   * @param filter     filter to use
+   * @param condition  object that encapsulates information about current arrangement matcher settings
+   * @return           map which contains information on what new new settings are available at the current situation
    */
   @NotNull
   public static Map<ArrangementSettingType, Collection<?>> buildAvailableOptions(@NotNull ArrangementStandardSettingsAware filter,
-                                                                                 @Nullable ArrangementMatchCondition settings)
+                                                                                 @Nullable ArrangementMatchCondition condition)
   {
     Map<ArrangementSettingType, Collection<?>> result = new EnumMap<ArrangementSettingType, Collection<?>>(ArrangementSettingType.class);
-    processData(filter, settings, result, ArrangementSettingType.TYPE, ArrangementEntryType.values());
-    processData(filter, settings, result, ArrangementSettingType.MODIFIER, ArrangementModifier.values());
+    processData(filter, condition, result, ArrangementSettingType.TYPE, ArrangementEntryType.values());
+    processData(filter, condition, result, ArrangementSettingType.MODIFIER, ArrangementModifier.values());
     return result;
   }
 

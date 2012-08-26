@@ -21,9 +21,9 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/8/12 1:20 PM
  */
-public interface ArrangementSettingsNodeVisitor {
+public interface ArrangementMatchConditionVisitor {
 
-  void visit(@NotNull ArrangementAtomMatchCondition setting);
+  void visit(@NotNull ArrangementAtomMatchCondition condition);
   
-  void visit(@NotNull ArrangementCompositeMatchCondition setting);
+  void visit(@NotNull ArrangementCompositeMatchCondition condition);
 }

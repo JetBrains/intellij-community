@@ -48,7 +48,7 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
   }
 
   @Override
-  public void invite(@NotNull ArrangementSettingsNodeVisitor visitor) {
+  public void invite(@NotNull ArrangementMatchConditionVisitor visitor) {
     visitor.visit(this);
   }
 

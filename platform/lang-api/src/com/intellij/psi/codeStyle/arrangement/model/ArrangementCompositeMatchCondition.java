@@ -54,7 +54,7 @@ public class ArrangementCompositeMatchCondition implements ArrangementMatchCondi
   }
 
   @Override
-  public void invite(@NotNull ArrangementSettingsNodeVisitor visitor) {
+  public void invite(@NotNull ArrangementMatchConditionVisitor visitor) {
     visitor.visit(this);
   }
 

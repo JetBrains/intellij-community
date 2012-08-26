@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.*;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +37,7 @@ import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*
  * @since 7/20/12 2:31 PM
  */
 public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, ArrangementStandardSettingsAware,
-                                       ArrangementSettingsGrouper
+                                       ArrangementConditionsGrouper
 {
 
   // Type
@@ -96,7 +96,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     }
 
     final Ref<Object> typeRef = new Ref<Object>();
-    current.invite(new ArrangementSettingsNodeVisitor() {
+    current.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition setting) {
         if (setting.getType() == ArrangementSettingType.TYPE) {
@@ -129,28 +129,28 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   @Override
   public HierarchicalArrangementConditionNode group(@NotNull ArrangementMatchCondition node) {
     final Ref<HierarchicalArrangementConditionNode> result = new Ref<HierarchicalArrangementConditionNode>();
-    node.invite(new ArrangementSettingsNodeVisitor() {
+    node.invite(new ArrangementMatchConditionVisitor() {
       @Override
-      public void visit(@NotNull ArrangementAtomMatchCondition setting) {
-        result.set(new HierarchicalArrangementConditionNode(setting));
+      public void visit(@NotNull ArrangementAtomMatchCondition condition) {
+        result.set(new HierarchicalArrangementConditionNode(condition));
       }
 
       @Override
-      public void visit(@NotNull ArrangementCompositeMatchCondition setting) {
+      public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
         ArrangementMatchCondition typeNode = null;
-        for (ArrangementMatchCondition n : setting.getOperands()) {
+        for (ArrangementMatchCondition n : condition.getOperands()) {
           if (n instanceof ArrangementAtomMatchCondition && ((ArrangementAtomMatchCondition)n).getType() == ArrangementSettingType.TYPE) {
             typeNode = n;
             break;
           }
         }
         if (typeNode == null) {
-          result.set(new HierarchicalArrangementConditionNode(setting));
+          result.set(new HierarchicalArrangementConditionNode(condition));
         }
         else {
           HierarchicalArrangementConditionNode parent = new HierarchicalArrangementConditionNode(typeNode);
-          ArrangementCompositeMatchCondition compositeWithoutType = new ArrangementCompositeMatchCondition(setting.getOperator());
-          for (ArrangementMatchCondition n : setting.getOperands()) {
+          ArrangementCompositeMatchCondition compositeWithoutType = new ArrangementCompositeMatchCondition(condition.getOperator());
+          for (ArrangementMatchCondition n : condition.getOperands()) {
             if (n != typeNode) {
               compositeWithoutType.addOperand(n);
             }

@@ -19,7 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingsNodeVisitor;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,15 +57,15 @@ public class ArrangementAndNodeComponent extends JPanel implements ArrangementNo
     setLayout(null);
     int x = 0;
     final Map<Object, ArrangementMatchCondition> operands = new HashMap<Object, ArrangementMatchCondition>();
-    ArrangementSettingsNodeVisitor visitor = new ArrangementSettingsNodeVisitor() {
+    ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override
-      public void visit(@NotNull ArrangementAtomMatchCondition node) {
-        operands.put(node.getValue(), node);
+      public void visit(@NotNull ArrangementAtomMatchCondition condition) {
+        operands.put(condition.getValue(), condition);
       }
 
       @Override
-      public void visit(@NotNull ArrangementCompositeMatchCondition node) {
-        operands.put(node, node);
+      public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
+        operands.put(condition, condition);
       }
     };
     for (ArrangementMatchCondition operand : setting.getOperands()) {

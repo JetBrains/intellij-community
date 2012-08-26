@@ -24,7 +24,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchConditio
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementSettingsGrouper;
+import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
@@ -49,11 +49,11 @@ import java.util.List;
  * @since 8/10/12 2:10 PM
  */
 public class ArrangementRuleTree {
-  
+
   @NotNull private static final JLabel EMPTY_RENDERER         = new JLabel("");
   @NotNull private static final JLabel NEW_CONDITION_RENDERER = new JLabel("<html><b>&lt;empty rule&gt;</b>");
   @NotNull private static final Logger LOG                    = Logger.getInstance("#" + ArrangementRuleTree.class.getName());
-  
+
   private static final int EMPTY_RULE_REMOVE_DELAY_MILLIS = 300;
 
   @NotNull private final List<ArrangementRuleSelectionListener> myListeners           = new ArrayList<ArrangementRuleSelectionListener>();
@@ -73,12 +73,12 @@ public class ArrangementRuleTree {
   @NotNull private final DefaultTreeModel                myTreeModel;
   @NotNull private final Tree                            myTree;
   @NotNull private final ArrangementNodeComponentFactory myFactory;
-  @NotNull private final ArrangementSettingsGrouper      myGrouper;
+  @NotNull private final ArrangementConditionsGrouper    myGrouper;
 
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
-  public ArrangementRuleTree(@NotNull ArrangementSettingsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
+  public ArrangementRuleTree(@NotNull ArrangementConditionsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
     myGrouper = grouper;
     myFactory = new ArrangementNodeComponentFactory(displayManager, new Consumer<ArrangementAtomMatchCondition>() {
       @Override

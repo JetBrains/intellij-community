@@ -20,19 +20,19 @@ import com.intellij.psi.codeStyle.arrangement.model.HierarchicalArrangementCondi
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Strategy which hints on how arrangement settings should be grouped at the UI.
+ * Strategy which hints on how arrangement match conditions should be grouped at the UI.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/15/12 4:21 PM
  */
-public interface ArrangementSettingsGrouper {
+public interface ArrangementConditionsGrouper {
 
   /**
-   * Allows to answer if and how should be grouped given settings.
+   * Allows to answer if and how should be grouped given match conditions.
    * <p/>
-   * Example: given settings node is a composite <code>'AND'</code> node with the following conditions:
+   * Example: given condition is a composite <code>'AND'</code> condition with the following operands:
    * <code>'type: field; modifier: public; modifier: static; modifier: final'</code>. We might want to show it like below:
    * <pre>
    *   field
@@ -42,9 +42,9 @@ public interface ArrangementSettingsGrouper {
    * That means that we'll return a {@link HierarchicalArrangementConditionNode} with condition <code>'type: field'</code> and
    * a single child node with composite <code>'AND'</code> condition <code>'modifier: public; modifier: static; modifier: final'</code>.
    *
-   * @param node  settings node which conditions should be grouped
-   * @return      grouping-aware node
+   * @param condition  settings node which conditions should be grouped
+   * @return           grouping-aware node
    */
   @NotNull
-  HierarchicalArrangementConditionNode group(@NotNull ArrangementMatchCondition node);
+  HierarchicalArrangementConditionNode group(@NotNull ArrangementMatchCondition condition);
 }

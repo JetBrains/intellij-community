@@ -116,7 +116,7 @@ public class ArrangementUtil {
   @NotNull
   public static ArrangementMatchCondition and(@NotNull ArrangementMatchCondition... nodes) {
     final ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND);
-    final ArrangementSettingsNodeVisitor visitor = new ArrangementSettingsNodeVisitor() {
+    final ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition node) {
         result.addOperand(node);
