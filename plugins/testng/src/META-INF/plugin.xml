@@ -34,7 +34,9 @@
       <localInspection language="JAVA" shortName="UndeclaredTests" displayName="Undeclared test" groupName="TestNG" enabledByDefault="false" level="WARNING"
                        implementationClass="com.theoryinpractice.testng.inspection.UndeclaredTestInspection"/>
       <localInspection language="JAVA" shortName="AssertEqualsBetweenInconvertibleTypesTestNG" displayName="'assertEquals()' between objects of inconvertible types"
-                       groupName="TestNG" enabledByDefault="false" level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.AssertEqualsBetweenInconvertibleTypesTestNGInspection"/>
+                       groupName="TestNG" enabledByDefault="true" level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.AssertEqualsBetweenInconvertibleTypesTestNGInspection"/>
+      <localInspection language="JAVA" shortName="ExpectedExceptionNeverThrownTestNG" displayName="Expected exception never thrown in test method body"
+                       groupName="TestNG" enabledByDefault="false" level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.ExpectedExceptionNeverThrownTestNGInspection"/>
 
       <intentionAction>
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
