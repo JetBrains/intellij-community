@@ -811,13 +811,18 @@
     <action id="Arrangement.Rule.Add"
             class="com.intellij.application.options.codeStyle.arrangement.action.AddArrangementRuleAction"
             icon="AllIcons.General.Add"/>
+    <action id="Arrangement.Rule.Remove"
+            class="com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction"
+            icon="AllIcons.General.Remove"/>
     
     <group id="Arrangement.RuleEditor.Context.Menu">
       <reference ref="Arrangement.Rule.Add"/>
+      <reference ref="Arrangement.Rule.Remove"/>
     </group>
     
     <group id="Arrangement.RuleEditor.ToolWIndow">
       <reference ref="Arrangement.Rule.Add"/>
+      <reference ref="Arrangement.Rule.Remove"/>
     </group>
     
   </actions>

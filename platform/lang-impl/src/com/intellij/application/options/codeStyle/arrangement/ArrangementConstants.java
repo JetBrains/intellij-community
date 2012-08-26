@@ -33,8 +33,9 @@ public class ArrangementConstants {
 
   public static final boolean LOG_RULE_MODIFICATION = Boolean.parseBoolean(System.getProperty("log.arrangement.rule.modification"));
 
-  public static final DataKey<Runnable> NEW_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.New");
-
+  public static final DataKey<Runnable> NEW_RULE_FUNCTION_KEY    = DataKey.create("Arrangement.Rule.Function.New");
+  public static final DataKey<Runnable> REMOVE_RULE_FUNCTION_KEY = DataKey.create("Arrangement.Rule.Function.Remove");
+  
   private ArrangementConstants() {
   }
 }

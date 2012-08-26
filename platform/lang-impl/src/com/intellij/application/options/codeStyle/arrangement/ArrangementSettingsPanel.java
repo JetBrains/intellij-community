@@ -130,12 +130,25 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         }
       }
     };
+    final Runnable removeRuleFunction = new Runnable() {
+      @Override
+      public void run() {
+        treeComponent.requestFocus();
+        ArrangementRuleEditingModelImpl model = ruleTree.getActiveModel();
+        if (model != null) {
+          model.destroy();
+        }
+      }
+    };
     treeComponent.putClientProperty(DataManager.CLIENT_PROPERTY_DATA_PROVIDER, new DataProvider() {
       @Nullable
       @Override
       public Object getData(@NonNls String dataId) {
         if (ArrangementConstants.NEW_RULE_FUNCTION_KEY.is(dataId)) {
           return newRuleFunction;
+        }
+        else if (ArrangementConstants.REMOVE_RULE_FUNCTION_KEY.is(dataId)) {
+          return removeRuleFunction;
         }
         return null;
       }

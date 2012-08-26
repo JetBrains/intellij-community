@@ -110,6 +110,11 @@ public class ArrangementTreeNode extends DefaultMutableTreeNode {
   }
 
   @Override
+  public ArrangementTreeNode getLastLeaf() {
+    return (ArrangementTreeNode)super.getLastLeaf();
+  }
+
+  @Override
   public String toString() {
     return myCondition == null ? "" : myCondition.toString() + (myRow >= 0 ? ": row=" + myRow : "");
   }

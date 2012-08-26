@@ -126,7 +126,7 @@ public class ArrangementRuleTree {
         try {
           super.processMouseEvent(e);
           if (mySkipSelectionChange) {
-            notifySelectionListeners(null);
+            notifySelectionListeners(getActiveModel());
           }
         }
         finally {
@@ -198,7 +198,7 @@ public class ArrangementRuleTree {
     expandAll(myTree, new TreePath(myRoot));
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
-    
+
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
       LOG.info("Arrangement tree is constructed. Models:");
       myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
@@ -631,7 +631,9 @@ public class ArrangementRuleTree {
   }
   
   private class MyModelChangeListener implements ArrangementRuleEditingModelImpl.Listener {
-
+    
+    private int mySelectedRowToRestore;
+    
     @Override
     public void onChanged(@NotNull ArrangementRuleEditingModelImpl model, @NotNull TIntIntHashMap rowChanges) {
       onModelChange(model, rowChanges); 
@@ -639,6 +641,7 @@ public class ArrangementRuleTree {
 
     @Override
     public void beforeModelDestroy(@NotNull ArrangementRuleEditingModelImpl model) {
+      mySelectedRowToRestore = model.getRow();
       for (ArrangementTreeNode node = model.getBottomMost(); node != null; node = node.getParent()) {
         int row = myTree.getRowForPath(new TreePath(node.getPath()));
         myRenderers.remove(row);
@@ -651,7 +654,19 @@ public class ArrangementRuleTree {
 
     @Override
     public void afterModelDestroy(@NotNull TIntIntHashMap rowChanges) {
-      processRowChanges(rowChanges); 
+      processRowChanges(rowChanges);
+      if (getActiveModel() != null) {
+        return;
+      }
+      TreePath path = myTree.getPathForRow(mySelectedRowToRestore);
+      if (path == null) {
+        ArrangementTreeNode lastLeaf = myRoot.getLastLeaf();
+        if (lastLeaf == null) {
+          return;
+        }
+        path = new TreePath(lastLeaf.getPath());
+      }
+      mySelectionModel.setSelectionPath(path);
     }
   }
   
