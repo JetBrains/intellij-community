@@ -23,20 +23,24 @@ package com.wrq.rearranger;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.wrq.rearranger.settings.RearrangerSettings;
 import com.wrq.rearranger.util.Constraints;
+import org.jetbrains.annotations.NotNull;
+import org.omg.CORBA.IntHolder;
 
 import javax.swing.*;
 import java.awt.*;
@@ -77,42 +81,26 @@ public final class ProjectTreeActionHandler
 
 // -------------------------- INNER CLASSES --------------------------
 
-  abstract class VirtualFileVisitor {
-    volatile boolean cancel = false;
-
-    final void accept(final VirtualFile f) {
-      if (f != null) {
-        visitVirtualFile(f);
-      }
-      final VirtualFile[] vfa = f.getChildren();
-      if (vfa != null) {
-        for (VirtualFile aVfa : vfa) {
-          if (!cancel) {
-            accept(aVfa);
-          }
-        }
-      }
-    }
-
-    abstract void visitVirtualFile(VirtualFile f);
-  }
-
   final class RearrangeIt
     implements Runnable
   {
     final DataContext dc;
     final Project     project;
-    final JProgressBar bar      = new JProgressBar(JProgressBar.HORIZONTAL);
+    final JProgressBar bar      = new JProgressBar(SwingConstants.HORIZONTAL);
     final JLabel       filename = new JLabel();
 
-    class BoolHolder {
+    final class BoolHolder {
       boolean value;
+    }
+
+    final class IntHolder {
+      public int n;
     }
 
     public RearrangeIt(final DataContext dc) {
       this.dc = dc;
       if (dc != null) {
-        this.project = (Project)dc.getData(DataConstants.PROJECT);
+        this.project = (Project)dc.getData(PlatformDataKeys.PROJECT.getName());
       }
       else {
         this.project = null;
@@ -120,34 +108,37 @@ public final class ProjectTreeActionHandler
     }
 
     public final void run() {
-      final VirtualFile virtualFile = (VirtualFile)dc.getData(DataConstants.VIRTUAL_FILE);
+      final VirtualFile virtualFile = (VirtualFile)dc.getData(PlatformDataKeys.VIRTUAL_FILE.getName());
+      if (virtualFile == null) {
+        LOG.debug("counted 0 files");
+        return;
+      }
+
       final List<VirtualFile> files = new ArrayList<VirtualFile>();
-      final IntHolder count = new IntHolder();
       final VirtualFileVisitor counter = new VirtualFileVisitor() {
-        void visitVirtualFile(final VirtualFile file) {
+        @Override
+        public boolean visitFile(@NotNull VirtualFile file) {
           if (!file.isDirectory()) {
-            count.n++;
-            LOG.debug("" + count.n + ": file " + file.getName());
+            LOG.debug((files.size() + 1) + ": file " + file.getName());
             files.add(file);
           }
+          return true;
         }
       };
-
-      final Application application = ApplicationManager.getApplication();
-      application.runReadAction(
+      ApplicationManager.getApplication().runReadAction(
         new Runnable() {
           public void run() {
-            counter.accept(virtualFile);
+            VfsUtilCore.visitChildrenRecursively(virtualFile, counter);
           }
         }
       );
 
-      LOG.debug("counted " + count.n + " files");
+      LOG.debug("counted " + files.size() + " files");
       final RearrangerActionHandler rah = new RearrangerActionHandler();
       final PsiDocumentManager dm = PsiDocumentManager.getInstance(project);
       final PsiManager pm = PsiManager.getInstance(project);
       final BoolHolder cancelled = new BoolHolder();
-      final JDialog dialog = getProgressFrame(cancelled, count.n);
+      final JDialog dialog = getProgressFrame(cancelled, files.size());
       dialog.setVisible(true);
       for (int currentCount = 0; currentCount < files.size(); currentCount++) {
         if (cancelled.value) {
@@ -185,12 +176,9 @@ public final class ProjectTreeActionHandler
                     settings.setAskBeforeRearranging(false);
                     rah.runWriteActionRearrangement(project, document, psiFile, settings);
                   }
-
-                  ;
                 }
               );
             }
-            ;
             if (!cancelled.value) {
               LOG.debug("SDT setting progress bar value to " + (k + 1));
               bar.setValue(k + 1);
@@ -204,10 +192,10 @@ public final class ProjectTreeActionHandler
           SwingUtilities.invokeAndWait(r);
         }
         catch (InterruptedException e) {
-          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+          LOG.error(e);
         }
         catch (InvocationTargetException e) {
-          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+          LOG.error(e);
         }
       }
       dialog.setVisible(false);
@@ -298,10 +286,6 @@ public final class ProjectTreeActionHandler
       dialog.pack();
       return dialog;
     }
-
-    final class IntHolder {
-      public int n;
-    }
   }
 
 // --------------------------- main() method ---------------------------
@@ -344,4 +328,3 @@ public final class ProjectTreeActionHandler
     System.exit(0);
   }
 }
-
