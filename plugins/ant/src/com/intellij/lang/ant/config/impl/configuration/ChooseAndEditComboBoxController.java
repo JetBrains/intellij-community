@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,7 +49,7 @@ public abstract class ChooseAndEditComboBoxController<Item, Ref> {
   public void resetList(Item selection) {
     Ref selectedItem = getSelectedString();
     myItems.clear();
-    myItems.putAll(ContainerUtil.assignKeys(getAllListItems(), myToString));
+    myItems.putAll(ContainerUtil.newMapFromValues(getAllListItems(), myToString));
     SortedComboBoxModel<Ref> model = getModel();
     model.setAll(myItems.keySet());
     if (selection != null) model.setSelectedItem(myToString.convert(selection));

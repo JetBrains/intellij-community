@@ -53,6 +53,7 @@ public class CodeStyleSpacesPanel extends OptionTreeWithPreviewPanel {
     initBooleanField("SPACE_AROUND_MULTIPLICATIVE_OPERATORS", ApplicationBundle.message("checkbox.spaces.multiplicative.operators"), SPACES_AROUND_OPERATORS);
     initBooleanField("SPACE_AROUND_SHIFT_OPERATORS", ApplicationBundle.message("checkbox.spaces.shift.operators"), SPACES_AROUND_OPERATORS);
     initBooleanField("SPACE_AROUND_UNARY_OPERATOR", ApplicationBundle.message("checkbox.spaces.around.unary.operator"), SPACES_AROUND_OPERATORS);
+    initBooleanField("SPACE_AROUND_LAMBDA_ARROW", ApplicationBundle.message("checkbox.spaces.around.lambda.arrow"), SPACES_AROUND_OPERATORS);
     initCustomOptions(SPACES_AROUND_OPERATORS);
 
     initBooleanField("SPACE_BEFORE_CLASS_LBRACE", ApplicationBundle.message("checkbox.spaces.class.left.brace"), SPACES_BEFORE_LEFT_BRACE);

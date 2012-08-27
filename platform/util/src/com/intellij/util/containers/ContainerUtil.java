@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked", "MethodOverridesStaticMethodOfSuperclass"})
+@SuppressWarnings({"UtilityClassWithoutPrivateConstructor", "unchecked", "MethodOverridesStaticMethodOfSuperclass","UnusedDeclaration"})
 public class ContainerUtil extends ContainerUtilRt {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
@@ -368,6 +368,27 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @NotNull
+  public static <K, V> Map<K, V> newMapFromKeys(@NotNull Iterator<K> keys, @NotNull Convertor<K, V> valueConvertor) {
+    Map<K, V> map = newHashMap();
+    while (keys.hasNext()) {
+      K key = keys.next();
+      map.put(key, valueConvertor.convert(key));
+    }
+    return map;
+  }
+
+  @NotNull
+  public static <K, V> Map<K, V> newMapFromValues(@NotNull Iterator<V> values, @NotNull Convertor<V, K> keyConvertor) {
+    Map<K, V> map = newHashMap();
+    while (values.hasNext()) {
+      V value = values.next();
+      map.put(keyConvertor.convert(value), value);
+    }
+    return map;
+  }
+
+  /** @deprecated use {@linkplain #newMapFromValues(java.util.Iterator, Convertor)} (to remove in IDEA 13) */
+  @NotNull
   public static <K, V> com.intellij.util.containers.HashMap<K, V> assignKeys(@NotNull Iterator<V> iterator, @NotNull Convertor<V, K> keyConvertor) {
     com.intellij.util.containers.HashMap<K, V> hashMap = new com.intellij.util.containers.HashMap<K, V>();
     while (iterator.hasNext()) {
@@ -377,6 +398,7 @@ public class ContainerUtil extends ContainerUtilRt {
     return hashMap;
   }
 
+  /** @deprecated use {@linkplain #newMapFromKeys(java.util.Iterator, Convertor)} (to remove in IDEA 13) */
   @NotNull
   public static <K, V> com.intellij.util.containers.HashMap<K, V> assignValues(@NotNull Iterator<K> iterator, @NotNull Convertor<K, V> valueConvertor) {
     com.intellij.util.containers.HashMap<K, V> hashMap = new com.intellij.util.containers.HashMap<K, V>();
@@ -647,6 +669,7 @@ public class ContainerUtil extends ContainerUtilRt {
             return result;
           }
 
+          @Nullable
           private T findNext() {
             while (impl.hasNext()) {
               T each = impl.next();

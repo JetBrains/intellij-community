@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -275,7 +275,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
 
   public void updateProperties() {
     final Map<String, AntBuildTarget> targetByName =
-      ContainerUtil.assignKeys(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
+      ContainerUtil.newMapFromValues(Arrays.asList(getModel().getTargets()).iterator(), new Convertor<AntBuildTarget, String>() {
         public String convert(AntBuildTarget target) {
           return target.getName();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,22 +27,26 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class MisorderedAssertEqualsParametersInspection
-  extends BaseInspection {
+public class MisorderedAssertEqualsParametersInspection extends BaseInspection {
+
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "MisorderedAssertEqualsArguments";
+  }
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "misordered.assert.equals.parameters.display.name");
+    return InspectionGadgetsBundle.message("misordered.assert.equals.parameters.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "misordered.assert.equals.parameters.problem.descriptor");
+    return InspectionGadgetsBundle.message("misordered.assert.equals.parameters.problem.descriptor");
   }
 
   @Override
@@ -54,21 +58,17 @@ public class MisorderedAssertEqualsParametersInspection
 
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "misordered.assert.equals.parameters.flip.quickfix");
+      return InspectionGadgetsBundle.message("misordered.assert.equals.parameters.flip.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement methodNameIdentifier = descriptor.getPsiElement();
       final PsiElement parent = methodNameIdentifier.getParent();
       assert parent != null;
-      final PsiMethodCallExpression callExpression =
-        (PsiMethodCallExpression)parent.getParent();
+      final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)parent.getParent();
       assert callExpression != null;
-      final PsiReferenceExpression methodExpression =
-        callExpression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = callExpression.getMethodExpression();
       final PsiMethod method = (PsiMethod)methodExpression.resolve();
       assert method != null;
       final PsiParameterList parameterList = method.getParameterList();
@@ -88,8 +88,7 @@ public class MisorderedAssertEqualsParametersInspection
         expectedPosition = 0;
         actualPosition = 1;
       }
-      final PsiExpressionList argumentList =
-        callExpression.getArgumentList();
+      final PsiExpressionList argumentList = callExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       final PsiExpression expectedArgument = arguments[expectedPosition];
       final PsiExpression actualArgument = arguments[actualPosition];
@@ -105,20 +104,23 @@ public class MisorderedAssertEqualsParametersInspection
     return new MisorderedAssertEqualsParametersVisitor();
   }
 
-  private static class MisorderedAssertEqualsParametersVisitor
-    extends BaseInspectionVisitor {
+  private static class MisorderedAssertEqualsParametersVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!isAssertEquals(expression)) {
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      @NonNls final String methodName = methodExpression.getReferenceName();
+      if (!"assertEquals".equals(methodName) && !"assertArrayEquals".equals(methodName)) {
         return;
       }
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      final PsiMethod method = (PsiMethod)methodExpression.resolve();
+      final PsiMethod method = expression.resolveMethod();
       if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (!InheritanceUtil.isInheritor(containingClass, "junit.framework.Assert") &&
+          !InheritanceUtil.isInheritor(containingClass, "org.junit.Assert")) {
         return;
       }
       final PsiParameterList parameterList = method.getParameterList();
@@ -128,8 +130,7 @@ public class MisorderedAssertEqualsParametersInspection
       final PsiManager psiManager = expression.getManager();
       final Project project = psiManager.getProject();
       final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-      final PsiType stringType =
-        PsiType.getJavaLangString(psiManager, scope);
+      final PsiType stringType = PsiType.getJavaLangString(psiManager, scope);
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiType parameterType1 = parameters[0].getType();
       final int expectedPosition;
@@ -165,38 +166,29 @@ public class MisorderedAssertEqualsParametersInspection
       if (expression instanceof PsiLiteralExpression) {
         return true;
       }
+      else if (expression instanceof PsiNewExpression) {
+        final PsiNewExpression newExpression = (PsiNewExpression)expression;
+        final PsiExpressionList argumentList = newExpression.getArgumentList();
+        if (argumentList == null) {
+          return true;
+        }
+        for (PsiExpression argument : argumentList.getExpressions()) {
+          if (!isLiteralOrConstant(argument)) {
+            return false;
+          }
+        }
+        return true;
+      }
       if (!(expression instanceof PsiReferenceExpression)) {
         return false;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)expression;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiElement target = referenceExpression.resolve();
       if (!(target instanceof PsiField)) {
         return false;
       }
       final PsiField field = (PsiField)target;
-      return field.hasModifierProperty(PsiModifier.STATIC) &&
-             field.hasModifierProperty(PsiModifier.FINAL);
-    }
-
-    private static boolean isAssertEquals(
-      PsiMethodCallExpression expression) {
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
-      @NonNls final String methodName =
-        methodExpression.getReferenceName();
-      if (!"assertEquals".equals(methodName)) {
-        return false;
-      }
-      final PsiMethod method = (PsiMethod)methodExpression.resolve();
-      if (method == null) {
-        return false;
-      }
-      final PsiClass targetClass = method.getContainingClass();
-      return InheritanceUtil.isInheritor(targetClass,
-                                         "junit.framework.Assert") ||
-             InheritanceUtil.isInheritor(targetClass,
-                                         "org.junit.Assert");
+      return field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.FINAL);
     }
   }
 }

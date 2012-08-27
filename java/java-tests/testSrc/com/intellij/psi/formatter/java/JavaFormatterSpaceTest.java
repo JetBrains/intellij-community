@@ -301,6 +301,18 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                  "try { } catch (E1|E2 e) { }");
   }
 
+  public void testSpacesInsideLambda() throws Exception {
+    getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    getSettings().SPACE_AROUND_LAMBDA_ARROW = true;
+
+    doMethodTest("()->{}",
+                 "() -> {}");
+
+    getSettings().SPACE_AROUND_LAMBDA_ARROW = false;
+    doMethodTest("() -> {}",
+                 "()->{}");
+  }
+
   public void testSpacesBeforeResourceList() throws Exception {
     getSettings().KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     getSettings().BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;

@@ -15,11 +15,14 @@
  */
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +41,20 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   @Override
   public PsiParameterList getParameterList() {
     return PsiTreeUtil.getRequiredChildOfType(this, PsiParameterList.class);
+  }
+
+  @Override
+  public int getChildRole(ASTNode child) {
+    final IElementType elType = child.getElementType();
+    if (elType == JavaTokenType.ARROW) {
+      return ChildRole.ARROW;
+    } else if (elType == JavaElementType.PARAMETER_LIST) {
+      return ChildRole.PARAMETER_LIST;
+    } else if (elType == JavaElementType.CODE_BLOCK) {
+      return ChildRole.LBRACE;
+    } else {
+      return ChildRole.EXPRESSION;
+    }
   }
 
   @Override

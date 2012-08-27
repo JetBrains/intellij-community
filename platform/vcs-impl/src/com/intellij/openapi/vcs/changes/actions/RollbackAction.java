@@ -66,27 +66,27 @@ public class RollbackAction extends AnAction implements DumbAware {
     boolean isEnabled = (leadSelection != null && leadSelection.length > 0) ||
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_LOCALLY_DELETED)) ||
                               Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING)) ||
-                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES));
-    if (! isEnabled) {
-      final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
-      if (files != null) {
-        final FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
-        for (VirtualFile file : files) {
-          final FileStatus status = fileStatusManager.getStatus(file);
-          if (FileStatus.UNKNOWN.equals(status) || FileStatus.IGNORED.equals(status) || FileStatus.NOT_CHANGED.equals(status)) {
-            continue;
-          }
-          isEnabled = true;
-          break;
-        }
-      }
-    }
+                              Boolean.TRUE.equals(e.getData(VcsDataKeys.HAVE_SELECTED_CHANGES)) ||
+                              hasReversibleFiles(e, project);
     e.getPresentation().setEnabled(isEnabled);
     String operationName = RollbackUtil.getRollbackOperationName(project);
     e.getPresentation().setText(operationName);
     if (isEnabled) {
       e.getPresentation().setDescription(operationName + " selected changes");
     }
+  }
+
+  private static boolean hasReversibleFiles(AnActionEvent e, Project project) {
+    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    if (files != null) {
+      ChangeListManager clManager = ChangeListManager.getInstance(project);
+      for (VirtualFile file : files) {
+        if (!clManager.getChangesIn(file).isEmpty()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public void actionPerformed(AnActionEvent e) {
