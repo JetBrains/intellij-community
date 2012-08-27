@@ -111,6 +111,14 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
     return virtualFile.getLength();
   }
 
+  @NotNull
+  public final VirtualFile getRoot() {
+    final String rootPath = SystemInfo.isWindows ? "" : "/";
+    final NewVirtualFile root = ManagingFS.getInstance().findRoot(rootPath, this);
+    assert root != null : SystemInfo.OS_NAME;
+    return root;
+  }
+
   public interface WatchRequest {
     @NotNull
     String getRootPath();
