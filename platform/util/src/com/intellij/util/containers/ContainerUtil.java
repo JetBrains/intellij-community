@@ -30,6 +30,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -216,8 +218,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   public static <K, V> Map<K, V> intersection(Map<K, V> map1, Map<K, V> map2) {
-    final Map<K, V> res = new HashMap<K, V>();
-    final HashSet<K> keys = new HashSet<K>();
+    final Map<K, V> res = newHashMap();
+    final Set<K> keys = newHashSet();
     keys.addAll(map1.keySet());
     keys.addAll(map2.keySet());
     for (K k : keys) {
@@ -231,8 +233,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   public static <K, V> Map<K,Pair<V,V>> diff(Map<K, V> map1, Map<K, V> map2) {
-    final Map<K, Pair<V,V>> res = new HashMap<K, Pair<V, V>>();
-    final HashSet<K> keys = new HashSet<K>();
+    final Map<K, Pair<V,V>> res = newHashMap();
+    final Set<K> keys = newHashSet();
     keys.addAll(map1.keySet());
     keys.addAll(map2.keySet());
     for (K k : keys) {
@@ -360,17 +362,27 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <T> Set<T> collectSet(@NotNull Iterator<T> iterator) {
     if (!iterator.hasNext()) return Collections.emptySet();
-    Set<T> hashSet = new HashSet<T>();
+    Set<T> hashSet = newHashSet();
     addAll(hashSet, iterator);
     return hashSet;
   }
 
   @NotNull
-  public static <K, V> HashMap<K, V> assignKeys(@NotNull Iterator<V> iterator, @NotNull Convertor<V, K> keyConvertor) {
-    HashMap<K, V> hashMap = new HashMap<K, V>();
+  public static <K, V> com.intellij.util.containers.HashMap<K, V> assignKeys(@NotNull Iterator<V> iterator, @NotNull Convertor<V, K> keyConvertor) {
+    com.intellij.util.containers.HashMap<K, V> hashMap = new com.intellij.util.containers.HashMap<K, V>();
     while (iterator.hasNext()) {
       V value = iterator.next();
       hashMap.put(keyConvertor.convert(value), value);
+    }
+    return hashMap;
+  }
+
+  @NotNull
+  public static <K, V> com.intellij.util.containers.HashMap<K, V> assignValues(@NotNull Iterator<K> iterator, @NotNull Convertor<K, V> valueConvertor) {
+    com.intellij.util.containers.HashMap<K, V> hashMap = new com.intellij.util.containers.HashMap<K, V>();
+    while (iterator.hasNext()) {
+      K key = iterator.next();
+      hashMap.put(key, valueConvertor.convert(key));
     }
     return hashMap;
   }
@@ -386,16 +398,6 @@ public class ContainerUtil extends ContainerUtilRt {
         hashMap.put(key, set = new LinkedHashSet<V>()); // ordered set!!
       }
       set.add(value);
-    }
-    return hashMap;
-  }
-
-  @NotNull
-  public static <K, V> HashMap<K, V> assignValues(@NotNull Iterator<K> iterator, @NotNull Convertor<K, V> valueConvertor) {
-    HashMap<K, V> hashMap = new HashMap<K, V>();
-    while (iterator.hasNext()) {
-      K key = iterator.next();
-      hashMap.put(key, valueConvertor.convert(key));
     }
     return hashMap;
   }
@@ -578,7 +580,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   public static <T> void removeDuplicates(@NotNull Collection<T> collection) {
-    Set<T> collected = new HashSet<T>();
+    Set<T> collected = newHashSet();
     for (Iterator<T> iterator = collection.iterator(); iterator.hasNext();) {
       T t = iterator.next();
       if (!collected.contains(t)) {
@@ -591,7 +593,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   public static Map<String, String> stringMap(@NotNull final String... keyValues) {
-    final Map<String, String> result = new HashMap<String, String>();
+    final Map<String, String> result = newHashMap();
     for (int i = 0; i < keyValues.length - 1; i+=2) {
       result.put(keyValues[i], keyValues[i+1]);
     }
@@ -872,7 +874,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> Collection<T> subtract(@NotNull Collection<T> from, @NotNull Collection<T> what) {
-    final HashSet<T> set = new HashSet<T>(from);
+    final Set<T> set = newHashSet();
     set.removeAll(what);
     return set;
   }
@@ -1097,7 +1099,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> Set<T> set(T ... items) {
-    return addAll(new HashSet<T>(), items);
+    return addAll(newHashSet(items));
   }
   
   public static <K, V> void putIfNotNull(final K key, @Nullable V value, @NotNull final Map<K, V> result) {
@@ -1461,7 +1463,7 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   public static <A,B> Map<B,A> reverseMap(Map<A,B> map) {
-    final Map<B,A> result = new HashMap<B, A>();
+    final Map<B,A> result = newHashMap();
     for (A a : map.keySet()) {
       result.put(map.get(a), a);
     }
