@@ -36,7 +36,6 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -58,8 +57,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.*;
 import java.util.regex.Pattern;
-
-import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
  * @author yole
@@ -245,18 +242,25 @@ public class PythonSdkType extends SdkType {
    */
   @Nullable
   public static File getVirtualEnvRoot(@NotNull final String binaryPath) {
-    // binaryPath should contain an 'activate' script, and root should have bin (with us) and include and lib.
-    try {
-      File parent = new File(binaryPath).getParentFile();
-      sure(parent != null);
-      File activate_script = new File(parent, "activate_this.py");
-      sure(activate_script.exists());
-      File activate_source = findExecutableFile(parent, "activate");
-      sure(activate_source != null);
-      return parent.getParentFile();
-    }
-    catch (IncorrectOperationException ignore) {
-      // did not succeed
+    final File bin = new File(binaryPath).getParentFile();
+    if (bin != null) {
+      final String rootPath = bin.getParent();
+      if (rootPath != null) {
+        final File root = new File(rootPath);
+        final File activateThis = new File(bin, "activate_this.py");
+        // binaryPath should contain an 'activate' script, and root should have bin (with us) and include and libp
+        if (activateThis.exists()) {
+          final File activate = findExecutableFile(bin, "activate");
+          if (activate != null) {
+            return root;
+          }
+        }
+        // Python 3.3 virtualenvs can be found as described in PEP 405
+        final String pyVenvCfg = "pyvenv.cfg";
+        if (new File(root, pyVenvCfg).exists() || new File(bin, pyVenvCfg).exists()) {
+          return root;
+        }
+      }
     }
     return null;
   }
