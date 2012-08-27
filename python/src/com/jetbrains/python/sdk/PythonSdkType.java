@@ -292,26 +292,30 @@ public class PythonSdkType extends SdkType {
    */
   public static void patchCommandLineForVirtualenv(GeneralCommandLine commandLine, String sdkHome, boolean passParentEnvs) {
     @NonNls final String PATH = "PATH";
-    String path_value;
-    File virtualenv_root = getVirtualEnvRoot(sdkHome);
-    if (virtualenv_root != null) {
+    File virtualEnvRoot = getVirtualEnvRoot(sdkHome);
+    if (virtualEnvRoot != null) {
       // prepend virtualenv bin if it's not already on PATH
-      String virtualenv_bin = new File(virtualenv_root, "bin").getPath();
+      File bin = new File(virtualEnvRoot, "bin");
+      if (!bin.exists()) {
+        bin = new File(virtualEnvRoot, "Scripts");   // on Windows
+      }
+      String virtualenvBin = bin.getPath();
 
-      if (passParentEnvs) {
+      Map<String, String> env = commandLine.getEnvParams();
+      String pathValue;
+      if (env != null && env.containsKey(PATH)) {
+        pathValue = PythonEnvUtil.appendToPathEnvVar(env.get(PATH), virtualenvBin);
+      }
+      else if (passParentEnvs) {
         // append to PATH
-        path_value = System.getenv(PATH);
-        path_value = PythonEnvUtil.appendToPathEnvVar(path_value, virtualenv_bin);
+        pathValue = PythonEnvUtil.appendToPathEnvVar(System.getenv(PATH), virtualenvBin);
       }
       else {
-        path_value = virtualenv_bin;
+        pathValue = virtualenvBin;
       }
-      Map<String, String> new_env = PythonEnvUtil.cloneEnv(commandLine.getEnvParams()); // we need a copy lest we change config's map.
-      String existing_path = new_env.get(PATH);
-      if (existing_path == null || !existing_path.contains(virtualenv_bin)) {
-        new_env.put(PATH, path_value);
-        commandLine.setEnvParams(new_env);
-      }
+      Map<String, String> newEnv = PythonEnvUtil.cloneEnv(env); // we need a copy lest we change config's map.
+      newEnv.put(PATH, pathValue);
+      commandLine.setEnvParams(newEnv);
     }
   }
 

@@ -27,6 +27,7 @@ public class PythonRunConfigurationTest extends PyCommandLineTestCase {
     PythonRunConfiguration configuration = createConfiguration(PythonConfigurationType.getInstance(),
                                                                PythonRunConfiguration.class);
     configuration.setScriptName(PY_SCRIPT);
+    configuration.setMultiprocessMode(true);
     final List<String> params = buildDebugCommandLine(configuration);
     final int index = verifyPyDevDParameters(params);
     assertEquals(PY_SCRIPT, params.get(index));

@@ -28,11 +28,12 @@ public abstract class PyCommandLineTestCase extends PyTestCase {
     params = Lists.newArrayList(params);
     int debugParam = params.remove("--DEBUG") ? 1 : 0;
     assertEquals(PythonHelpersLocator.getHelperPath("pydev/pydevd.py"), params.get(0));
-    assertEquals("--client", params.get(1));
-    assertEquals("--port", params.get(3));
-    assertEquals("" + PORT, params.get(4));
-    assertEquals("--file", params.get(5));
-    return 6 + debugParam;
+    assertEquals("--multiproc", params.get(1));
+    assertEquals("--client", params.get(2));
+    assertEquals("--port", params.get(4));
+    assertEquals("" + PORT, params.get(5));
+    assertEquals("--file", params.get(6));
+    return 7 + debugParam;
   }
 
   protected <T extends AbstractPythonRunConfiguration> T createConfiguration(final ConfigurationType configurationType, Class<T> cls) {

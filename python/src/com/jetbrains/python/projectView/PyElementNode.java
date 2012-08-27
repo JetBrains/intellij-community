@@ -5,7 +5,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Iconable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
@@ -50,8 +49,7 @@ public class PyElementNode extends BasePsiNode<PyElement> {
       presentableText.append(((PyFunction) value).getParameterList().getPresentableText(false));
     }
     data.setPresentableText(presentableText.toString());
-    data.setOpenIcon(value.getIcon(Iconable.ICON_FLAG_OPEN));
-    data.setClosedIcon(value.getIcon(Iconable.ICON_FLAG_CLOSED));
+    data.setIcon(value.getIcon(0));
   }
 
   @Override
