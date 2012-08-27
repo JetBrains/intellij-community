@@ -88,6 +88,8 @@
     <declarationRangeHandler key="com.jetbrains.python.psi.PyFunction"
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
 
+    <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
+
     <!-- Run/Debug -->
     <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
                         serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
