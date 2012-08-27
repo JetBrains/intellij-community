@@ -41,7 +41,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 {
 
   // Type
-  @NotNull private static final Set<ArrangementEntryType> SUPPORTED_TYPES = EnumSet.of(CLASS, FIELD, METHOD);
+  @NotNull private static final Set<ArrangementEntryType> SUPPORTED_TYPES = EnumSet.of(INTERFACE, CLASS, ENUM, FIELD, METHOD);
 
   // Modifier
   @NotNull private static final Set<ArrangementModifier> SUPPORTED_MODIFIERS = EnumSet.of(
@@ -60,6 +60,8 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     Set<ArrangementModifier> commonModifiers = concat(visibilityModifiers, STATIC, FINAL);
     
     MODIFIERS_BY_TYPE.put(NO_TYPE, commonModifiers);
+    MODIFIERS_BY_TYPE.put(ENUM, visibilityModifiers);
+    MODIFIERS_BY_TYPE.put(INTERFACE, visibilityModifiers);
     MODIFIERS_BY_TYPE.put(CLASS, concat(commonModifiers, ABSTRACT));
     MODIFIERS_BY_TYPE.put(METHOD, concat(commonModifiers, SYNCHRONIZED, ABSTRACT));
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
