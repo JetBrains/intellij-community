@@ -179,7 +179,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
   }
 
   private void setupRootAndAnnotateExternally(@NotNull final OrderEntry entry,
-                                              @NotNull Project project,
+                                              @NotNull final Project project,
                                               @NotNull final PsiModifierListOwner listOwner,
                                               @NotNull final String annotationFQName,
                                               @NotNull final PsiFile fromFile,
@@ -188,21 +188,21 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(ProjectBundle.message("external.annotations.root.chooser.title", entry.getPresentableName()));
     descriptor.setDescription(ProjectBundle.message("external.annotations.root.chooser.description"));
-    final VirtualFile file = FileChooser.chooseFile(descriptor, project, null);
-    if (file == null) {
+    final VirtualFile newRoot = FileChooser.chooseFile(descriptor, project, null);
+    if (newRoot == null) {
       return;
     }
     new WriteCommandAction(project) {
       @Override
       protected void run(final Result result) throws Throwable {
-        appendChosenAnnotationsRoot(entry, file);
-        final List<XmlFile> xmlFiles = findExternalAnnotationsXmlFiles(listOwner);
-        if (xmlFiles != null) { //file already exists under appeared content root
-          if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFiles.get(0))) return;
-          annotateExternally(listOwner, annotationFQName, xmlFiles.get(0), fromFile, value);
+        appendChosenAnnotationsRoot(entry, newRoot);
+        XmlFile xmlFileInRoot = findXmlFileInRoot(findExternalAnnotationsXmlFiles(listOwner), newRoot);
+        if (xmlFileInRoot != null) { //file already exists under appeared content root
+          if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFileInRoot)) return;
+          annotateExternally(listOwner, annotationFQName, xmlFileInRoot, fromFile, value);
         }
         else {
-          final XmlFile annotationsXml = createAnnotationsXml(file, packageName);
+          final XmlFile annotationsXml = createAnnotationsXml(newRoot, packageName);
           if (annotationsXml != null) {
             final List<PsiFile> createdFiles = new ArrayList<PsiFile>();
             createdFiles.add(annotationsXml);
@@ -215,6 +215,21 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
         }
       }
     }.execute();
+  }
+
+  @Nullable
+  private static XmlFile findXmlFileInRoot(@Nullable List<XmlFile> xmlFiles, @NotNull VirtualFile root) {
+    if (xmlFiles != null) {
+      for (XmlFile xmlFile : xmlFiles) {
+        VirtualFile vf = xmlFile.getVirtualFile();
+        if (vf != null) {
+          if (VfsUtilCore.isAncestor(root, vf, false)) {
+            return xmlFile;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private void chooseRootAndAnnotateExternally(@NotNull final PsiModifierListOwner listOwner,
