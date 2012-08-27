@@ -42,8 +42,8 @@ public class ArrangementUtil {
   //region Serialization
 
   @NotNull
-  public static List<ArrangementRule> readExternal(@NotNull Element element, @NotNull Language language) {
-    final List<ArrangementRule> result = new ArrayList<ArrangementRule>();
+  public static List<ArrangementRule<?>> readExternal(@NotNull Element element, @NotNull Language language) {
+    final List<ArrangementRule<?>> result = new ArrayList<ArrangementRule<?>>();
     ArrangementRuleSerializer serializer = getSerializer(language);
     for (Object child : element.getChildren()) {
       ArrangementRule rule = serializer.deserialize((Element)child);
@@ -54,7 +54,7 @@ public class ArrangementUtil {
     return result;
   }
 
-  public static void writeExternal(@NotNull Element element, @NotNull List<ArrangementRule> rules, @NotNull Language language) {
+  public static void writeExternal(@NotNull Element element, @NotNull List<ArrangementRule<?>> rules, @NotNull Language language) {
     if (rules.isEmpty()) {
       return;
     }

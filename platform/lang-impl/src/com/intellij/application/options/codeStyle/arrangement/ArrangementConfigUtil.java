@@ -56,8 +56,8 @@ public class ArrangementConfigUtil {
    * @return           map which contains information on what new new settings are available at the current situation
    */
   @NotNull
-  public static Map<ArrangementSettingType, Collection<?>> buildAvailableOptions(@NotNull ArrangementStandardSettingsAware filter,
-                                                                                 @Nullable ArrangementMatchCondition condition)
+  public static Map<ArrangementSettingType, Collection<?>> buildAvailableConditions(@NotNull ArrangementStandardSettingsAware filter,
+                                                                                    @Nullable ArrangementMatchCondition condition)
   {
     Map<ArrangementSettingType, Collection<?>> result = new EnumMap<ArrangementSettingType, Collection<?>>(ArrangementSettingType.class);
     processData(filter, condition, result, ArrangementSettingType.TYPE, ArrangementEntryType.values());

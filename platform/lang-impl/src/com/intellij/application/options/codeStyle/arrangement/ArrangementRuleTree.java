@@ -18,13 +18,11 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -42,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -79,7 +78,10 @@ public class ArrangementRuleTree {
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
-  public ArrangementRuleTree(@NotNull ArrangementConditionsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
+  public ArrangementRuleTree(@NotNull List<ArrangementRule<StdArrangementEntryMatcher>> rules,
+                             @NotNull ArrangementConditionsGrouper grouper,
+                             @NotNull ArrangementNodeDisplayManager displayManager)
+  {
     myGrouper = grouper;
     myFactory = new ArrangementNodeComponentFactory(displayManager, new Consumer<ArrangementAtomMatchCondition>() {
       @Override
@@ -179,21 +181,6 @@ public class ArrangementRuleTree {
       }
     });
     
-    List<ArrangementMatchCondition> rules = new ArrayList<ArrangementMatchCondition>();
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL)));
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
     map(rules);
 
     expandAll(myTree, new TreePath(myRoot));
@@ -205,7 +192,7 @@ public class ArrangementRuleTree {
       myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
         @Override
         public boolean execute(ArrangementRuleEditingModelImpl model) {
-          LOG.info(String.format("  row %d, model '%s'", model.getRow(), model.getMatchCondition())); 
+          LOG.info(String.format("  row %d, model '%s'", model.getRow(), model.getRule())); 
           return true;
         }
       });
@@ -335,9 +322,9 @@ public class ArrangementRuleTree {
     tree.expandPath(parent);
   }
 
-  private void map(@NotNull List<ArrangementMatchCondition> matchConditions) {
-    for (ArrangementMatchCondition matchCondition : matchConditions) {
-      Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(matchCondition, myTree, myRoot, null, myGrouper);
+  private void map(@NotNull List<ArrangementRule<StdArrangementEntryMatcher>> rules) {
+    for (ArrangementRule<StdArrangementEntryMatcher> rule : rules) {
+      Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(rule, myTree, myRoot, null, myGrouper);
       myModels.put(pair.first.getRow(), pair.first);
       pair.first.addListener(myModelChangeListener);
     }
@@ -377,6 +364,20 @@ public class ArrangementRuleTree {
     return myTree;
   }
 
+  /**
+   * @return    rules configured at the current tree at the moment
+   */
+  @NotNull
+  public List<ArrangementRule<StdArrangementEntryMatcher>> getRules() {
+    int[] rows = myModels.keys();
+    Arrays.sort(rows);
+    List<ArrangementRule<StdArrangementEntryMatcher>> result = new ArrayList<ArrangementRule<StdArrangementEntryMatcher>>();
+    for (int row : rows) {
+      result.add(myModels.get(row).getRule());
+    }
+    return result;
+  }
+  
   @NotNull
   private ArrangementNodeComponent getNodeComponentAt(int row, @NotNull ArrangementMatchCondition condition) {
     ArrangementNodeComponent result = myRenderers.get(row);
@@ -547,7 +548,7 @@ public class ArrangementRuleTree {
     final ArrangementTreeNode anchor = activeModel == null ? null : activeModel.getBottomMost();
     doClearSelection();
     Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myModelBuilder.build(
-      new ArrangementCompositeMatchCondition(ArrangementOperator.AND), myTree, myRoot, anchor, myGrouper
+      ArrangementRuleEditingModel.EMPTY_RULE, myTree, myRoot, anchor, myGrouper
     );
     processRowChanges(pair.second);
     myModels.put(pair.first.getRow(), pair.first);
@@ -690,7 +691,7 @@ public class ArrangementRuleTree {
       boolean emptyRuleRemoved = false;
       for (Object value : values) {
         ArrangementRuleEditingModelImpl model = (ArrangementRuleEditingModelImpl)value;
-        if (model != null && model != activeModel && isEmptyCondition(model.getMatchCondition())) {
+        if (model != null && model != activeModel && model.getRule() == ArrangementRuleEditingModel.EMPTY_RULE) {
           model.destroy();
           emptyRuleRemoved = true;
         }
@@ -702,7 +703,7 @@ public class ArrangementRuleTree {
 
       for (Object value : myModels.getValues()) {
         ArrangementRuleEditingModelImpl model = (ArrangementRuleEditingModelImpl)value;
-        if (activeModel.getMatchCondition().equals(model.getMatchCondition())) {
+        if (activeModel.getRule().equals(model.getRule())) {
           mySelectionModel.setSelectionPath(new TreePath(activeModel.getBottomMost().getPath()));
         }
       }

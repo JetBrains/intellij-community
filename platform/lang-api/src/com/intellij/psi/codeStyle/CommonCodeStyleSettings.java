@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -45,7 +46,7 @@ public class CommonCodeStyleSettings {
   
   @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangementRules";
   
-  private final List<ArrangementRule> myArrangementRules = new ArrayList<ArrangementRule>();
+  private final List<ArrangementRule<?>> myArrangementRules = new ArrayList<ArrangementRule<?>>();
   private final Language          myLanguage;
   private CodeStyleSettings myRootSettings;
   private IndentOptions     myIndentOptions;
@@ -122,11 +123,11 @@ public class CommonCodeStyleSettings {
   }
 
   @NotNull
-  public List<ArrangementRule> getArrangementRules() {
+  public List<ArrangementRule<?>> getArrangementRules() {
     return myArrangementRules;
   }
 
-  public void setArrangementRules(@NotNull List<ArrangementRule> rules) {
+  public <T extends ArrangementEntryMatcher> void setArrangementRules(@NotNull List<ArrangementRule<T>> rules) {
     myArrangementRules.clear();
     myArrangementRules.addAll(rules);
   }

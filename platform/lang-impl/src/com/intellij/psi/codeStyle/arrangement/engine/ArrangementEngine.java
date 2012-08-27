@@ -51,7 +51,7 @@ public class ArrangementEngine {
     }
 
     CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-    final List<ArrangementRule> arrangementRules = settings.getCommonSettings(file.getLanguage()).getArrangementRules();
+    final List<ArrangementRule<?>> arrangementRules = settings.getCommonSettings(file.getLanguage()).getArrangementRules();
     if (arrangementRules.isEmpty()) {
       return;
     }
@@ -89,7 +89,7 @@ public class ArrangementEngine {
   }
 
   private static void doArrange(@NotNull final Document document,
-                                @NotNull List<ArrangementRule> arrangementRules,
+                                @NotNull List<ArrangementRule<?>> arrangementRules,
                                 @NotNull Collection<? extends ArrangementEntry> entriesToProcess)
   {
     // The general idea is to process entries bottom-up where every processed group belongs to the same parent. We may not bother
@@ -174,7 +174,7 @@ public class ArrangementEngine {
     }
   }
 
-  private static void doArrange(@NotNull List<ArrangementRule> rules,
+  private static void doArrange(@NotNull List<ArrangementRule<?>> rules,
                                 @NotNull List<ArrangementEntry> entries,
                                 @NotNull Document document)
   {

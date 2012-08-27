@@ -63,7 +63,7 @@ public class ArrangementRuleEditor extends JPanel {
   private void init(@NotNull ArrangementNodeDisplayManager displayManager) {
     setLayout(new GridBagLayout());
 
-    Map<ArrangementSettingType, Collection<?>> supportedSettings = ArrangementConfigUtil.buildAvailableOptions(myFilter, null);
+    Map<ArrangementSettingType, Collection<?>> supportedSettings = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
     addRowIfPossible(ArrangementSettingType.TYPE, supportedSettings, displayManager);
     addRowIfPossible(ArrangementSettingType.MODIFIER, supportedSettings, displayManager);
   }
@@ -109,7 +109,7 @@ public class ArrangementRuleEditor extends JPanel {
       return;
     }
 
-    Map<ArrangementSettingType, Collection<?>> available = ArrangementConfigUtil.buildAvailableOptions(myFilter, model.getMatchCondition());
+    Map<ArrangementSettingType, Collection<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, model.getRule().getMatcher().getCondition());
     for (Collection<?> ids : available.values()) {
       for (Object id : ids) {
         ArrangementAtomNodeComponent component = myComponents.get(id);
@@ -157,7 +157,7 @@ public class ArrangementRuleEditor extends JPanel {
           myModel.replaceCondition(componentToDeselect.getMatchCondition(), chosenCondition);
           for (ArrangementAtomNodeComponent componentToCheck : myComponents.values()) {
             Object value = componentToCheck.getMatchCondition().getValue();
-            if (myModel.hasCondition(value) && !ArrangementConfigUtil.isEnabled(value, myFilter, myModel.getMatchCondition())) {
+            if (myModel.hasCondition(value) && !ArrangementConfigUtil.isEnabled(value, myFilter, myModel.getCondition())) {
               myModel.removeAndCondition(componentToCheck.getMatchCondition());
             }
           }

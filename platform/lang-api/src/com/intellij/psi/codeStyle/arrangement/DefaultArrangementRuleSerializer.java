@@ -76,7 +76,7 @@ public class DefaultArrangementRuleSerializer implements ArrangementRuleSerializ
     
     Element result = new Element(RULE_ELEMENT_NAME);
     result.addContent(new Element(MATCHER_ELEMENT_NAME).addContent(matcherElement));
-    result.addContent(new Element(SORT_TYPE_ELEMENT_NAME).setText(rule.getSorter().toString()));
+    result.addContent(new Element(SORT_TYPE_ELEMENT_NAME).setText(rule.getOrderType().toString()));
     return result;
   }
 }

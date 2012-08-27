@@ -17,7 +17,9 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.util.containers.hash.HashSet;
@@ -46,17 +48,17 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @NotNull private final ArrangementConditionsGrouper myGrouper;
   private final          boolean                      myRootVisible;
 
-  @NotNull private ArrangementTreeNode       myTopMost;
-  @NotNull private ArrangementTreeNode       myBottomMost;
-  @NotNull private ArrangementMatchCondition myMatchCondition;
-  private          int                       myRow;
+  @NotNull private ArrangementTreeNode                         myTopMost;
+  @NotNull private ArrangementTreeNode                         myBottomMost;
+  @NotNull private ArrangementRule<StdArrangementEntryMatcher> myRule;
+  private          int                                         myRow;
 
   /**
    * Creates new <code>ArrangementRuleEditingModelImpl</code> object.
    *
    * @param model        tree model which holds target ui nodes. Basically, we need to perform ui nodes modification via it in order
    *                     to generate corresponding events automatically
-   * @param node         backing settings node
+   * @param rule         backing arrangement rule
    * @param topMost      there is a possible case that a single settings node is shown in more than one visual line
    *                     ({@link HierarchicalArrangementConditionNode}). This argument is the top-most UI node used for the
    *                     settings node representation
@@ -66,7 +68,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
    * @param rootVisible  determines if the root should be count during rows calculations
    */
   public ArrangementRuleEditingModelImpl(@NotNull DefaultTreeModel model,
-                                         @NotNull ArrangementMatchCondition node,
+                                         @NotNull ArrangementRule<StdArrangementEntryMatcher> rule,
                                          @NotNull ArrangementTreeNode topMost,
                                          @NotNull ArrangementTreeNode bottomMost,
                                          @NotNull ArrangementConditionsGrouper grouper,
@@ -74,7 +76,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
                                          boolean rootVisible)
   {
     myTreeModel = model;
-    myMatchCondition = node;
+    myRule = rule;
     myTopMost = topMost;
     myBottomMost = bottomMost;
     myGrouper = grouper;
@@ -87,7 +89,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     myConditions.clear();
     CONDITIONS_BUILDER.conditions = myConditions;
     try {
-      myMatchCondition.invite(CONDITIONS_BUILDER);
+      getCondition().invite(CONDITIONS_BUILDER);
     }
     finally {
       CONDITIONS_BUILDER.conditions = null;
@@ -96,8 +98,14 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
 
   @NotNull
   @Override
-  public ArrangementMatchCondition getMatchCondition() {
-    return myMatchCondition;
+  public ArrangementMatchCondition getCondition() {
+    return myRule.getMatcher().getCondition();
+  }
+
+  @NotNull
+  @Override
+  public ArrangementRule<StdArrangementEntryMatcher> getRule() {
+    return myRule;
   }
 
   public int getRow() {
@@ -143,10 +151,10 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   public void addAndCondition(@NotNull ArrangementAtomMatchCondition condition) {
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
       LOG.info(String.format(
-        "Arrangement rule modification - adding a condition '%s'. Model: '%s', row: %d", condition, myMatchCondition, myRow
+        "Arrangement rule modification - adding a condition '%s'. Model: '%s', row: %d", condition, myRule, myRow
       ));
     }
-    ArrangementMatchCondition newCondition = ArrangementUtil.and(myMatchCondition.clone(), condition);
+    ArrangementMatchCondition newCondition = ArrangementUtil.and(getCondition().clone(), condition);
     applyNewCondition(newCondition);
   }
   
@@ -154,16 +162,17 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   public void removeAndCondition(@NotNull ArrangementMatchCondition condition) {
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
       LOG.info(String.format(
-        "Arrangement rule modification - removing a condition '%s'. Model: '%s', row: %d", condition, myMatchCondition, myRow
+        "Arrangement rule modification - removing a condition '%s'. Model: '%s', row: %d", condition, myRule, myRow
       ));
     }
-    if (myMatchCondition.equals(condition)) {
+    ArrangementMatchCondition matchCondition = getCondition();
+    if (matchCondition.equals(condition)) {
       destroy();
       return;
     }
     
-    assert myMatchCondition instanceof ArrangementCompositeMatchCondition;
-    ArrangementMatchCondition newCondition = myMatchCondition.clone();
+    assert matchCondition instanceof ArrangementCompositeMatchCondition;
+    ArrangementMatchCondition newCondition = matchCondition.clone();
     ArrangementCompositeMatchCondition composite = (ArrangementCompositeMatchCondition)newCondition;
     composite.getOperands().remove(condition);
     if (composite.getOperands().size() == 1) {
@@ -172,9 +181,9 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     applyNewCondition(newCondition);
   }
   
-  private void applyNewCondition(@NotNull ArrangementMatchCondition newNode) {
-    myMatchCondition = newNode;
-    HierarchicalArrangementConditionNode grouped = myGrouper.group(newNode);
+  private void applyNewCondition(@NotNull ArrangementMatchCondition newCondition) {
+    myRule = new ArrangementRule<StdArrangementEntryMatcher>(new StdArrangementEntryMatcher(newCondition));
+    HierarchicalArrangementConditionNode grouped = myGrouper.group(newCondition);
     Pair<ArrangementTreeNode, Integer> replacement = ArrangementConfigUtil.map(null, grouped, null);
     ArrangementTreeNode newBottom = replacement.first;
     ArrangementTreeNode newTop = ArrangementConfigUtil.getRoot(newBottom);
@@ -193,7 +202,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     }
 
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
-      LOG.info(String.format("Arrangement rule is modified: '%s', row: %d", myMatchCondition, myRow));
+      LOG.info(String.format("Arrangement rule is modified: '%s', row: %d", myRule, myRow));
     }
   }
 
@@ -201,16 +210,17 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   public void replaceCondition(@NotNull ArrangementAtomMatchCondition from, @NotNull ArrangementAtomMatchCondition to) {
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
       LOG.info(String.format(
-        "Arrangement rule modification - replacing condition '%s' by '%s'. Model: '%s', row: %d", from, to, myMatchCondition, myRow
+        "Arrangement rule modification - replacing condition '%s' by '%s'. Model: '%s', row: %d", from, to, myRule, myRow
       ));
     }
     ArrangementMatchCondition newCondition;
-    if (myMatchCondition.equals(from)) {
+    ArrangementMatchCondition matchCondition = getCondition();
+    if (matchCondition.equals(from)) {
       newCondition = to;
     }
     else {
-      assert myMatchCondition instanceof ArrangementCompositeMatchCondition;
-      ArrangementCompositeMatchCondition composite = (ArrangementCompositeMatchCondition)myMatchCondition;
+      assert matchCondition instanceof ArrangementCompositeMatchCondition;
+      ArrangementCompositeMatchCondition composite = (ArrangementCompositeMatchCondition)matchCondition;
       ArrangementCompositeMatchCondition newComposite = composite.clone();
       newComposite.getOperands().remove(from);
       newComposite.getOperands().add(to);
@@ -222,7 +232,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
   @Override
   public void destroy() {
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
-      LOG.info(String.format("Arrangement rule modification - destroy. Model: '%s', row: %d", myMatchCondition, myRow));
+      LOG.info(String.format("Arrangement rule modification - destroy. Model: '%s', row: %d", myRule, myRow));
     }
     for (Listener listener : myListeners) {
       listener.beforeModelDestroy(this);
@@ -239,7 +249,7 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
 
   @Override
   public String toString() {
-    return "model for " + myMatchCondition;
+    return "model for " + myRule;
   }
 
   private static class MyConditionsBuilder implements ArrangementMatchConditionVisitor {

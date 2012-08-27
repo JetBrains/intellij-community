@@ -20,12 +20,16 @@ import com.intellij.application.options.codeStyle.arrangement.action.AddArrangem
 import com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
+import com.intellij.psi.codeStyle.arrangement.Rearranger;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.settings.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -42,6 +46,7 @@ import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -54,16 +59,24 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @NotNull private final JPanel myContent = new JPanel(new GridBagLayout());
 
-  public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull final ArrangementStandardSettingsAware filter) {
+  @NotNull private final Language                         myLanguage;
+  @NotNull private final ArrangementStandardSettingsAware mySettingsAware;
+  @NotNull private final ArrangementRuleTree              myRuleTree;
+
+  public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     super(settings);
+    myLanguage = language;
+    Rearranger<?> rearranger = Rearranger.EXTENSION.forLanguage(language);
+    assert rearranger instanceof ArrangementStandardSettingsAware;
+    mySettingsAware = (ArrangementStandardSettingsAware)rearranger;
     ArrangementStandardSettingsRepresentationAware representationManager = DefaultArrangementSettingsRepresentationManager.INSTANCE;
-    if (filter instanceof ArrangementStandardSettingsRepresentationAware) {
-      representationManager = (ArrangementStandardSettingsRepresentationAware)filter;
+    if (mySettingsAware instanceof ArrangementStandardSettingsRepresentationAware) {
+      representationManager = (ArrangementStandardSettingsRepresentationAware)mySettingsAware;
     }
-    final ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(filter, representationManager);
+    final ArrangementNodeDisplayManager displayManager = new ArrangementNodeDisplayManager(mySettingsAware, representationManager);
     ArrangementConditionsGrouper grouper = DefaultArrangementSettingsGrouper.INSTANCE;
-    if (filter instanceof ArrangementConditionsGrouper) {
-      grouper = (ArrangementConditionsGrouper)filter;
+    if (mySettingsAware instanceof ArrangementConditionsGrouper) {
+      grouper = (ArrangementConditionsGrouper)mySettingsAware;
     }
 
     final ActionManager actionManager = ActionManager.getInstance();
@@ -73,9 +86,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     toolbarControl.add(actionToolbar.getComponent(), new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally());
     toolbarControl.setBorder(IdeBorderFactory.createBorder(SideBorder.LEFT | SideBorder.TOP | SideBorder.RIGHT));
     myContent.add(toolbarControl, new GridBag().weightx(1).fillCellHorizontally().coverLine());
-    
-    final ArrangementRuleTree ruleTree = new ArrangementRuleTree(grouper, displayManager);
-    final Tree treeComponent = ruleTree.getTreeComponent();
+
+    myRuleTree = new ArrangementRuleTree(getRules(settings), grouper, displayManager);
+    final Tree treeComponent = myRuleTree.getTreeComponent();
     actionToolbar.setTargetComponent(treeComponent);
     myContent.add(new JBScrollPane(treeComponent), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
     CustomizationUtil.installPopupHandler(
@@ -83,13 +96,22 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     );
 
     final JXTaskPane editorPane = new JXTaskPane(ApplicationBundle.message("arrangement.title.editor"));
-    final ArrangementRuleEditor ruleEditor = new ArrangementRuleEditor(filter, displayManager);
+    final ArrangementRuleEditor ruleEditor = new ArrangementRuleEditor(mySettingsAware, displayManager);
     ruleEditor.applyBackground(treeComponent.getBackground());
     editorPane.getContentPane().setBackground(treeComponent.getBackground());
     editorPane.add(ruleEditor);
     editorPane.setCollapsed(true);
-    final Ref<Boolean> resetEditor = new Ref<Boolean>(Boolean.TRUE);
     myContent.add(editorPane, new GridBag().weightx(1).fillCellHorizontally().coverLine());
+    final Ref<Boolean> resetEditor = new Ref<Boolean>(Boolean.TRUE);
+    linkTreeAndEditor(editorPane, ruleEditor, resetEditor);
+    setupRuleManagementActions(treeComponent, editorPane, ruleEditor, resetEditor);
+    setupKeyboardActions(actionManager, treeComponent);
+  }
+
+  private void linkTreeAndEditor(@NotNull final JXTaskPane editorPane,
+                                 @NotNull final ArrangementRuleEditor ruleEditor,
+                                 @NotNull final Ref<Boolean> resetEditor)
+  {
     editorPane.addPropertyChangeListener("collapsed", new PropertyChangeListener() {
       @Override
       public void propertyChange(PropertyChangeEvent evt) {
@@ -98,7 +120,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         }
       }
     });
-    ruleTree.addEditingListener(new ArrangementRuleSelectionListener() {
+    myRuleTree.addEditingListener(new ArrangementRuleSelectionListener() {
       @Override
       public void onSelected(@NotNull ArrangementRuleEditingModel model) {
         ruleEditor.updateState(model);
@@ -116,11 +138,18 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         editorPane.setCollapsed(true);
       }
     });
+  }
+
+  private void setupRuleManagementActions(@NotNull final Tree treeComponent,
+                                          @NotNull final JXTaskPane editorPane,
+                                          @NotNull final ArrangementRuleEditor ruleEditor,
+                                          @NotNull final Ref<Boolean> resetEditor)
+  {
     final Runnable newRuleFunction = new Runnable() {
       @Override
       public void run() {
         treeComponent.requestFocus();
-        ArrangementRuleEditingModel model = ruleTree.newModel();
+        ArrangementRuleEditingModel model = myRuleTree.newModel();
         ruleEditor.updateState(model);
         resetEditor.set(Boolean.FALSE);
         try {
@@ -135,7 +164,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       @Override
       public void run() {
         treeComponent.requestFocus();
-        ArrangementRuleEditingModelImpl model = ruleTree.getActiveModel();
+        ArrangementRuleEditingModelImpl model = myRuleTree.getActiveModel();
         if (model != null) {
           model.destroy();
         }
@@ -154,7 +183,29 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
         return null;
       }
     });
-    setupKeyboardActions(actionManager, treeComponent);
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  private List<ArrangementRule<StdArrangementEntryMatcher>> getRules(@NotNull CodeStyleSettings settings) {
+    List<ArrangementRule<StdArrangementEntryMatcher>> result = Collections.emptyList();
+    
+    List<ArrangementRule<?>> storedRules = settings.getCommonSettings(myLanguage).getArrangementRules();
+    if (storedRules.isEmpty()) {
+      List<ArrangementRule<StdArrangementEntryMatcher>> defaultRules = mySettingsAware.getDefaultRules();
+      if (defaultRules != null) {
+        result = defaultRules;
+      }
+    }
+    else {
+      // We use unchecked cast here in assumption that current rearranger is based on standard settings if it uses standard
+      // settings-based rule editor.
+      // Note: unchecked cast for the whole collection doesn't work here (compiler error).
+      for (ArrangementRule<?> rule : storedRules) {
+        result.add((ArrangementRule<StdArrangementEntryMatcher>)rule);
+      }
+    }
+    return result;
   }
 
   private static void setupKeyboardActions(@NotNull ActionManager actionManager, @NotNull Tree treeComponent) {
@@ -181,13 +232,12 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
-    // TODO den implement 
-    return false;
+    return getRules(settings).equals(myRuleTree.getRules());
   }
 
   @Override
   public void apply(CodeStyleSettings settings) {
-    // TODO den implement 
+    settings.getCommonSettings(myLanguage).setArrangementRules(myRuleTree.getRules()); 
   }
 
   @Override

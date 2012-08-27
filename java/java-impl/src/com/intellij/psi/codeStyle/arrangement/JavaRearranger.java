@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -168,5 +169,12 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       }
     }); 
     return result.get();
+  }
+
+  @Nullable
+  @Override
+  public List<ArrangementRule<StdArrangementEntryMatcher>> getDefaultRules() {
+    // TODO den implement 
+    return null;
   }
 }

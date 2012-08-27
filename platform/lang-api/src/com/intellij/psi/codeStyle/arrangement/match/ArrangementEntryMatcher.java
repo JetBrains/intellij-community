@@ -32,6 +32,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ArrangementEntryMatcher {
 
+  @NotNull
+  ArrangementEntryMatcher EMPTY = new ArrangementEntryMatcher() {
+    @Override
+    public boolean isMatched(@NotNull ArrangementEntry entry) {
+      return false;
+    }
+  };
+
   /**
    * Allows to check if given entry is matched by the current rule.
    * <p/>

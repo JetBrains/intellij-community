@@ -16,8 +16,6 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,32 +28,29 @@ import org.jetbrains.annotations.NotNull;
  * 
  * @author Denis Zhdanov
  * @since 7/17/12 11:07 AM
+ * @param <M>   {@link ArrangementEntryMatcher matcher} type
  */
-public class ArrangementRule {
+public class ArrangementRule<M extends ArrangementEntryMatcher> {
 
-  @NotNull private final ArrangementEntryMatcher   myMatcher;
+  @NotNull private final M                         myMatcher;
   @NotNull private final ArrangementEntryOrderType mySortType;
 
-  public ArrangementRule(@NotNull ArrangementMatchCondition condition) {
-    this(new StdArrangementEntryMatcher(condition));
-  }
-
-  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher) {
+  public ArrangementRule(@NotNull M matcher) {
     this(matcher, ArrangementEntryOrderType.KEEP);
   }
 
-  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher, @NotNull ArrangementEntryOrderType type) {
+  public ArrangementRule(@NotNull M matcher, @NotNull ArrangementEntryOrderType type) {
     myMatcher = matcher;
     mySortType = type;
   }
 
   @NotNull
-  public ArrangementEntryMatcher getMatcher() {
+  public M getMatcher() {
     return myMatcher;
   }
 
   @NotNull
-  public ArrangementEntryOrderType getSorter() {
+  public ArrangementEntryOrderType getOrderType() {
     return mySortType;
   }
 

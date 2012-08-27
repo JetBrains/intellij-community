@@ -54,7 +54,7 @@ class Test2 {
 public void test() {
 }
 }''',
-            [new ArrangementRule(atom(ArrangementEntryType.FIELD))]
+            [rule(atom(ArrangementEntryType.FIELD))]
     )
   }
 
@@ -98,7 +98,7 @@ class Test {
     return null;
   }
 }''',
-            [new ArrangementRule(atom(ArrangementEntryType.FIELD))]
+            [rule(atom(ArrangementEntryType.FIELD))]
     )
   }
   
@@ -136,7 +136,7 @@ class Test {
      });
    }
 }''',
-            [new ArrangementRule(atom(ArrangementEntryType.FIELD))]
+            [rule(atom(ArrangementEntryType.FIELD))]
     )
   }
   
@@ -174,7 +174,7 @@ class Test {
     });
   }
 }''',
-            [new ArrangementRule(atom(ArrangementEntryType.FIELD))]
+            [rule(atom(ArrangementEntryType.FIELD))]
     )
   }
 }

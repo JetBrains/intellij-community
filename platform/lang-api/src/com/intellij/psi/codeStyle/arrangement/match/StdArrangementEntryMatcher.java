@@ -103,7 +103,9 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
     public ArrangementEntryMatcher getMatcher() {
       ByTypeArrangementEntryMatcher byType = myTypes.isEmpty() ? null : new ByTypeArrangementEntryMatcher(myTypes);
       ByModifierArrangementEntryMatcher byModifiers = myModifiers.isEmpty() ? null : new ByModifierArrangementEntryMatcher(myModifiers);
-      assert byType != null || byModifiers != null || (myOperator != null && !myMatchers.isEmpty());
+      if (byType == null && byModifiers == null && (myOperator == null || myMatchers.isEmpty())) {
+        return ArrangementEntryMatcher.EMPTY;
+      }
       if (myMatchers.isEmpty() && (byType == null ^ byModifiers == null)) {
         return byModifiers == null ? byType : byModifiers;
       }

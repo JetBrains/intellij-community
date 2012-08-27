@@ -24,7 +24,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
@@ -47,6 +49,10 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   protected void tearDown() {
     CodeStyleSettingsManager.getInstance(myFixture.project).dropTemporarySettings()
     super.tearDown()
+  }
+
+  protected ArrangementRule<StdArrangementEntryMatcher> rule(@NotNull ArrangementMatchCondition condition) {
+    new ArrangementRule<StdArrangementEntryMatcher>(new StdArrangementEntryMatcher(condition))
   }
   
   @NotNull
