@@ -28,8 +28,11 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.diagnostic.LogUtil.debug;
 
 /**
  * @author max
@@ -48,7 +51,9 @@ public class RefreshWorker {
 
   public void scan() {
     final NewVirtualFile root = (NewVirtualFile)myRefreshQueue.peekFirst();
-    if (!root.isDirty()) return;
+    final boolean rootDirty = root.isDirty();
+    debug(LOG, "root=%s dirty=%b", root, rootDirty);
+    if (!rootDirty) return;
 
     NewVirtualFileSystem fs = root.getFileSystem();
     final FileAttributes rootAttributes = fs.getAttributes(root);
@@ -67,7 +72,9 @@ public class RefreshWorker {
 
     while (!myRefreshQueue.isEmpty()) {
       final VirtualFileSystemEntry file = (VirtualFileSystemEntry)myRefreshQueue.pullFirst();
-      if (!file.isDirty()) continue;
+      final boolean fileDirty = file.isDirty();
+      debug(LOG, "file=%s dirty=%b", file, fileDirty);
+      if (!fileDirty) continue;
 
       final FileAttributes attributes = Comparing.equal(file, root) ? rootAttributes : fs.getAttributes(file);
       if (attributes == null) {
@@ -89,12 +96,11 @@ public class RefreshWorker {
         if (fullSync) {
           final Set<String> currentNames = new HashSet<String>(Arrays.asList(persistence.list(file)));
           final Set<String> upToDateNames = new HashSet<String>(Arrays.asList(VfsUtil.filterNames(fs.list(file))));
-
           final Set<String> newNames = new HashSet<String>(upToDateNames);
           newNames.removeAll(currentNames);
-
           final Set<String> deletedNames = new HashSet<String>(currentNames);
           deletedNames.removeAll(upToDateNames);
+          debug(LOG, "current=%s +%s -%s", currentNames, newNames, deletedNames);
 
           for (String name : deletedNames) {
             scheduleDeletion(file.findChild(name));
@@ -124,7 +130,9 @@ public class RefreshWorker {
           }
         }
         else {
-          for (VirtualFile child : file.getCachedChildren()) {
+          final Collection<VirtualFile> cachedChildren = file.getCachedChildren();
+          debug(LOG, "cached=%s", cachedChildren);
+          for (VirtualFile child : cachedChildren) {
             final FileAttributes childAttributes = fs.getAttributes(child);
             if (childAttributes != null) {
               checkAndScheduleChildRefresh(file, child, childAttributes);
@@ -135,6 +143,7 @@ public class RefreshWorker {
           }
 
           final List<String> names = dir.getSuspiciousNames();
+          debug(LOG, "suspicious=%s", names);
           for (String name : names) {
             if (name.isEmpty()) continue;
 
@@ -220,23 +229,28 @@ public class RefreshWorker {
   }
 
   private void scheduleWritableAttributeChange(@NotNull VirtualFileSystemEntry file, boolean currentWritable, boolean upToDateWritable) {
+    debug(LOG, "update r/w file=%s", file);
     myEvents.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable, true));
   }
 
   private void scheduleUpdateContent(@NotNull VirtualFileSystemEntry file) {
+    debug(LOG, "update file=%s", file);
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
   }
 
   private void scheduleCreation(@NotNull VirtualFileSystemEntry parent, @NotNull String childName, final boolean isDirectory) {
+    debug(LOG, "create parent=%s name=%s dir=%b", parent, childName, isDirectory);
     myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, false));
   }
 
   private void scheduleReCreation(@NotNull VirtualFileSystemEntry parent, @NotNull String childName, final boolean isDirectory) {
+    debug(LOG, "re-create parent=%s name=%s dir=%b", parent, childName, isDirectory);
     myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true, true));
   }
 
-  private void scheduleDeletion(final VirtualFile file) {
+  private void scheduleDeletion(@Nullable final VirtualFile file) {
     if (file == null) return;
+    debug(LOG, "delete file=%s", file);
     myEvents.add(new VFileDeleteEvent(null, file, true));
   }
 
