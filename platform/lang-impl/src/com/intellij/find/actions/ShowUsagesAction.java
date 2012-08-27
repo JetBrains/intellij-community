@@ -860,6 +860,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
       window.setLocation(rectangle.getLocation());
     }
 
+    if (!data.isEmpty()) {
+      TableScrollingUtil.ensureSelectionExists(table);
+    }
     table.setSize(dimension);
     //table.setPreferredSize(dimension);
     //table.setMaximumSize(dimension);

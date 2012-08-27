@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.util.Pair;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,9 +63,26 @@ public class TableScrollingUtil {
     }
   }
 
+  public static void ensureSelectionExists(@NotNull JTable list) {
+    int size = list.getModel().getRowCount();
+    if (size == 0) {
+      list.clearSelection();
+      return;
+    }
+    int selectedIndex = list.getSelectedRow();
+    boolean reselect = false;
+    if (selectedIndex < 0 || selectedIndex >= size) { // fit index to [0, size-1] range
+      selectedIndex = 0;
+      reselect = true;
+    }
+    ensureIndexIsVisible(list, selectedIndex, 0);
+    if (reselect) {
+      list.getSelectionModel().setSelectionInterval(selectedIndex, selectedIndex);
+    }
+  }
+
   private static Rectangle getCellBounds(JTable table, int top, int bottom) {
-    Rectangle cellBounds = table.getCellRect(top, 0, true).union(table.getCellRect(bottom,0,true));
-    return cellBounds;
+    return table.getCellRect(top, 0, true).union(table.getCellRect(bottom,0,true));
   }
 
   private static int getVisibleRowCount(JTable list) {
