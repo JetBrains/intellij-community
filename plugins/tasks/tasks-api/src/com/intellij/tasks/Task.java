@@ -107,13 +107,13 @@ public abstract class Task {
 
   @Nullable
   public String getNumber() {
-    String[] split = getId().split("\\-");
-    return split.length > 1 ? split[1] : null;
+    int i = getId().lastIndexOf('-');
+    return i > 0 ? getId().substring(i + 1) : getId();
   }
 
   @Nullable
   public String getProject() {
-    String[] split = getId().split("\\-");
-    return split.length > 1 ? split[0] : null;
+    int i = getId().lastIndexOf('-');
+    return i > 0 ? getId().substring(0, i) : null;
   }
 }

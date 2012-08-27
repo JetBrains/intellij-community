@@ -89,6 +89,37 @@ public class TaskVcsTest extends TaskManagerTestCase {
     assertNotNull(associatedTask); // association should survive
   }
 
+  public void testProjectWithDash() throws Exception {
+    LocalTaskImpl task = new LocalTaskImpl("foo-bar-001", "summary") {
+      @Override
+      public TaskRepository getRepository() {
+        return myRepository;
+      }
+    };
+    assertEquals("foo-bar", task.getProject());
+    assertEquals("001", task.getNumber());
+    String name = myManager.getChangelistName(task);
+    assertEquals("foo-bar-001 summary", name);
+  }
+
+  public void testIds() throws Exception {
+    LocalTaskImpl task = new LocalTaskImpl("", "");
+    assertEquals("", task.getNumber());
+    assertEquals(null, task.getProject());
+
+    task = new LocalTaskImpl("-", "");
+    assertEquals("-", task.getNumber());
+    assertEquals(null, task.getProject());
+
+    task = new LocalTaskImpl("foo", "");
+    assertEquals("foo", task.getNumber());
+    assertEquals(null, task.getProject());
+
+    task = new LocalTaskImpl("112", "");
+    assertEquals("112", task.getNumber());
+    assertEquals(null, task.getProject());
+  }
+
   private void createChangelist(LocalTask localTask) throws InterruptedException {
     clearChangeLists();
     if (localTask.isActive()) {
