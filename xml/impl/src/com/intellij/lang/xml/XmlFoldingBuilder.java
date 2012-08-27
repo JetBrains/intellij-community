@@ -28,9 +28,9 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.impl.source.html.HtmlFileImpl;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +45,8 @@ import java.util.List;
 public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.xml.XmlFoldingBuilder");
   private static final TokenSet XML_ATTRIBUTE_SET = TokenSet.create(XmlElementType.XML_ATTRIBUTE);
-  private static final String[] XML_FOLDING_ATTRIBUTE_NAMES = new String[] {"style"};
   private static final int MIN_TEXT_RANGE_LENGTH = 3;
+  private static final String STYLE_ATTRIBUTE = "style";
 
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
@@ -233,10 +233,11 @@ public class XmlFoldingBuilder implements FoldingBuilder, DumbAware {
     final PsiElement psi = node.getPsi();
     final XmlFoldingSettings foldingSettings = XmlFoldingSettings.getInstance();
     return (psi instanceof XmlTag && foldingSettings.isCollapseXmlTags())
-           || (psi instanceof XmlAttribute && foldingSettings.isCollapseXmlAttributes());
+           || (psi instanceof XmlAttribute && foldingSettings.isCollapseHtmlStyleAttribute());
   }
 
   private static boolean isAttributeShouldBeFolded(XmlAttribute child) {
-    return ArrayUtil.contains(((XmlAttribute)child).getName(), XML_FOLDING_ATTRIBUTE_NAMES);
+    return child.getContainingFile() instanceof HtmlFileImpl &&
+      STYLE_ATTRIBUTE.equalsIgnoreCase(((XmlAttribute)child).getName());
   }
 }
