@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
 import org.jetbrains.android.sdk.AndroidSdkType;
@@ -226,7 +227,8 @@ public class AndroidRootUtil {
                                                       final Set<VirtualFile> outputDirs,
                                                       @Nullable final Set<VirtualFile> libraries,
                                                       final Set<Module> visited,
-                                                      final boolean exportedLibrariesOnly) {
+                                                      final boolean exportedLibrariesOnly,
+                                                      final boolean recursive) {
     if (!visited.add(module)) {
       return;
     }
@@ -288,7 +290,10 @@ public class AndroidRootUtil {
                 outputDirs.add(classDir);
               }
             }
-            fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited, !libraryProject || exportedLibrariesOnly);
+            if (recursive) {
+              fillExternalLibrariesAndModules(depModule, outputDirs, libraries, visited,
+                                              !libraryProject || exportedLibrariesOnly, recursive);
+            }
           }
         }
       }
@@ -299,7 +304,11 @@ public class AndroidRootUtil {
   public static List<VirtualFile> getExternalLibraries(Module module) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
     OrderedSet<VirtualFile> libs = new OrderedSet<VirtualFile>();
-    fillExternalLibrariesAndModules(module, files, libs, new HashSet<Module>(), false);
+    // In a module imported from Maven dependencies are transitive, so we don't need to traverse all dependency tree
+    // and compute all jars referred by library modules. Moreover it would be incorrect,
+    // because Maven has dependency resolving algorithm based on versioning
+    final boolean recursive = !AndroidMavenUtil.isMavenizedModule(module);
+    fillExternalLibrariesAndModules(module, files, libs, new HashSet<Module>(), false, recursive);
 
     addAnnotationsJar(module, libs);
     return libs;
@@ -336,7 +345,7 @@ public class AndroidRootUtil {
   public static Set<VirtualFile> getDependentModules(Module module,
                                                      VirtualFile moduleOutputDir) {
     Set<VirtualFile> files = new HashSet<VirtualFile>();
-    fillExternalLibrariesAndModules(module, files, null, new HashSet<Module>(), false);
+    fillExternalLibrariesAndModules(module, files, null, new HashSet<Module>(), false, true);
     files.remove(moduleOutputDir);
     return files;
   }
