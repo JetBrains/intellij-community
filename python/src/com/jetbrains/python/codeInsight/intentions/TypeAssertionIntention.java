@@ -54,6 +54,7 @@ public class TypeAssertionIntention implements IntentionAction {
     if (problemElement.getParent() instanceof PyCallExpression ||
         PsiTreeUtil.getParentOfType(problemElement, PyListCompExpression.class) != null ||
         PsiTreeUtil.getParentOfType(problemElement, PyLambdaExpression.class) != null ||
+        PsiTreeUtil.getParentOfType(problemElement, PyGeneratorExpression.class) != null ||
         (reference != null && reference.resolve() == null)) {
       return false;
     }
