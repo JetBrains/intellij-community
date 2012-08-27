@@ -45,9 +45,9 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
   }
 
   public void addDirectoryCopyInstructions(@NotNull VirtualFile directory, @Nullable PackagingFileFilter filter) {
-    ProjectFileIndex index = ProjectRootManager.getInstance(myContext.getCompileContext().getProject()).getFileIndex();
+    final ProjectFileIndex index = ProjectRootManager.getInstance(myContext.getCompileContext().getProject()).getFileIndex();
     final boolean copyExcluded = index.isIgnored(directory);
-    collectInstructionsRecursively(directory, this, filter, index, FileTypeManager.getInstance(), copyExcluded);
+    collectInstructionsRecursively(directory, this, filter, index, copyExcluded);
   }
 
   private static final Key<IncrementalCompilerInstructionCreatorBase> INSTRUCTION_CREATOR = Key.create("pkg.compiler.instruction.creator");
@@ -56,8 +56,8 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
                                                      final IncrementalCompilerInstructionCreatorBase creator,
                                                      final PackagingFileFilter filter,
                                                      final ProjectFileIndex index,
-                                                     final FileTypeManager fileTypeManager,
                                                      final boolean copyExcluded) {
+    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     VfsUtilCore.visitChildrenRecursively(directory, new VirtualFileVisitor(VirtualFileVisitor.SKIP_ROOT) {
       { set(INSTRUCTION_CREATOR, creator); }
 
@@ -71,13 +71,15 @@ public abstract class IncrementalCompilerInstructionCreatorBase implements Incre
         }
 
         final IncrementalCompilerInstructionCreatorBase creator = get(INSTRUCTION_CREATOR);
-        if (filter == null || filter.accept(child, creator.myContext.getCompileContext())) {
-          if (!child.isDirectory()) {
-            creator.addFileCopyInstruction(child, child.getName());
-          }
-          else {
-            set(INSTRUCTION_CREATOR, creator.subFolder(child.getName()));
-          }
+        if (filter != null && !filter.accept(child, creator.myContext.getCompileContext())) {
+          return false;
+        }
+
+        if (!child.isDirectory()) {
+          creator.addFileCopyInstruction(child, child.getName());
+        }
+        else {
+          set(INSTRUCTION_CREATOR, creator.subFolder(child.getName()));
         }
 
         return true;
