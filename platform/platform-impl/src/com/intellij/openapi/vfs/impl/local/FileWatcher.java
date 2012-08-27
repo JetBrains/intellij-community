@@ -322,6 +322,9 @@ public class FileWatcher {
   }
 
   @TestOnly
+  public static Logger getLog() { return LOG; }
+
+  @TestOnly
   public void startup(@Nullable final Runnable notifier) throws IOException {
     final Application app = ApplicationManager.getApplication();
     assert app != null && app.isUnitTestMode() : app;
@@ -331,7 +334,7 @@ public class FileWatcher {
     startupProcess(false);
     attemptCount = MAGIC_PROCESS_LAUNCH_ATTEMPT_COUNT;
     if (notifierProcess != null) {
-      new WatchForChangesThread().start();
+      (myThread = new WatchForChangesThread()).start();
     }
 
     myNotifier = notifier;
@@ -348,9 +351,15 @@ public class FileWatcher {
     if (process != null) {
       shutdownProcess();
       process.waitFor();
+      if (myThread != null && myThread.isAlive()) {
+        myThread.join(10000);
+        assert !myThread.isAlive() : myThread;
+      }
+      myThread = null;
     }
   }
 
+  private FileWatcher.WatchForChangesThread myThread = null;
   private volatile Runnable myNotifier = null;
 
   private void notifyOnEvent() {
@@ -477,6 +486,9 @@ public class FileWatcher {
         reset();
         shutdownProcess();
         LOG.info("Watcher terminated and attempt to restart has failed. Exiting watching thread.", e);
+      }
+      finally {
+        LOG.debug("Watcher thread finished");
       }
     }
   }
