@@ -156,7 +156,8 @@ public class ArrangementRuleEditor extends JPanel {
           ArrangementAtomNodeComponent componentToDeselect = myComponents.get(key);
           myModel.replaceCondition(componentToDeselect.getMatchCondition(), chosenCondition);
           for (ArrangementAtomNodeComponent componentToCheck : myComponents.values()) {
-            if (!ArrangementConfigUtil.isEnabled(componentToCheck.getMatchCondition().getValue(), myFilter, myModel.getMatchCondition())) {
+            Object value = componentToCheck.getMatchCondition().getValue();
+            if (myModel.hasCondition(value) && !ArrangementConfigUtil.isEnabled(value, myFilter, myModel.getMatchCondition())) {
               myModel.removeAndCondition(componentToCheck.getMatchCondition());
             }
           }

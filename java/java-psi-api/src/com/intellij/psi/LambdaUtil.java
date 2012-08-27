@@ -22,10 +22,7 @@ import com.intellij.psi.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: anna
@@ -259,9 +256,18 @@ public class LambdaUtil {
   }
 
   public static boolean dependsOnTypeParams(PsiType type, PsiLambdaExpression expr) {
+    return dependsOnTypeParams(type, expr, null);
+  }
+
+  public static boolean dependsOnTypeParams(PsiType type,
+                                            PsiLambdaExpression expr,
+                                            PsiTypeParameter param2Check) {
     final TypeParamsChecker visitor = new TypeParamsChecker(expr);
     if (!visitor.startedInference()) return false;
     final Boolean accept = type.accept(visitor);
+    if (param2Check != null) {
+      return visitor.used(param2Check);
+    }
     return accept != null && accept.booleanValue();
   }
 
@@ -393,12 +399,11 @@ public class LambdaUtil {
   }
 
   private static class TypeParamsChecker extends PsiTypeVisitor<Boolean> {
-    private final PsiLambdaExpression myExpression;
     private PsiMethod myMethod;
-    protected final PsiClass myClass;
+    private final PsiClass myClass;
+    private final Set<PsiTypeParameter> myUsedTypeParams = new HashSet<PsiTypeParameter>(); 
 
     public TypeParamsChecker(PsiLambdaExpression expression) {
-      myExpression = expression;
       myClass = PsiUtil.resolveGenericsClassInType(getFunctionalInterfaceType(expression, false)).getElement();
       PsiElement parent = expression.getParent();
       while (parent instanceof PsiParenthesizedExpression) {
@@ -418,21 +423,20 @@ public class LambdaUtil {
 
     @Override
     public Boolean visitClassType(PsiClassType classType) {
+      boolean used = false;
       for (PsiType paramType : classType.getParameters()) {
         final Boolean paramAccepted = paramType.accept(this);
-        if (paramAccepted != null && paramAccepted.booleanValue()) return true;
+        used |= paramAccepted != null && paramAccepted.booleanValue();
       }
       final PsiClass resolve = classType.resolve();
       if (resolve instanceof PsiTypeParameter) {
-        final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolve).getOwner();
-        if (owner == myMethod) {
-          return true;
-        }
-        else if (owner == myClass) {
+        final PsiTypeParameter typeParameter = (PsiTypeParameter)resolve;
+        if (check(typeParameter)) {
+          myUsedTypeParams.add(typeParameter);
           return true;
         }
       }
-      return false;
+      return used;
     }
 
     @Nullable
@@ -464,6 +468,21 @@ public class LambdaUtil {
     @Override
     public Boolean visitType(PsiType type) {
       return false;
+    }
+
+    private boolean check(PsiTypeParameter check) {
+      final PsiTypeParameterListOwner owner = check.getOwner();
+      if (owner == myMethod) {
+        return true;
+      }
+      else if (owner == myClass) {
+        return true;
+      }
+      return false;
+    }
+
+    public boolean used(PsiTypeParameter parameter) {
+      return myUsedTypeParams.contains(parameter);
     }
   }
 }

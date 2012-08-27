@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.sort;
+package com.intellij.psi.codeStyle.arrangement.order;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
@@ -28,10 +28,10 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 7/19/12 6:17 PM
  */
-public class ByNameArrangementEntrySorter implements ArrangementEntrySorter {
+public class ByNameArrangementEntryOrderer implements ArrangementEntryOrderer {
 
   @Override
-  public void sort(@NotNull List<? extends ArrangementEntry> entries) {
+  public void order(@NotNull List<? extends ArrangementEntry> entries) {
     TObjectIntHashMap<ArrangementEntry> weights = new TObjectIntHashMap<ArrangementEntry>();
     for (int i = 0; i < entries.size(); i++) {
       weights.put(entries.get(i), i);

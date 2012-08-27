@@ -37,13 +37,17 @@ public class DefaultArrangementSettingsRepresentationManager implements Arrangem
     Object[] ids = {
       
       // Types.
-      ArrangementEntryType.FIELD, ArrangementEntryType.METHOD, ArrangementEntryType.CLASS,
+      ArrangementEntryType.FIELD, ArrangementEntryType.METHOD, ArrangementEntryType.CLASS, ArrangementEntryType.INTERFACE,
+      ArrangementEntryType.ENUM,
       
       // Visibility.
       ArrangementModifier.PUBLIC, ArrangementModifier.PROTECTED, ArrangementModifier.PACKAGE_PRIVATE, ArrangementModifier.PRIVATE,
       
       // Other common modifiers.
       ArrangementModifier.STATIC, ArrangementModifier.FINAL,
+      
+      // Semi-common modifiers.
+      ArrangementModifier.ABSTRACT,
       
       // Method-specific modifiers.
       ArrangementModifier.SYNCHRONIZED,

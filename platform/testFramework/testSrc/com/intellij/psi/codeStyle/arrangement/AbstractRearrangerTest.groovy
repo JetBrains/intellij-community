@@ -15,23 +15,27 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
-import com.intellij.lang.java.JavaLanguage
+import com.intellij.lang.Language
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType
+import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
 /**
  * @author Denis Zhdanov
  * @since 7/20/12 2:54 PM
  */
-abstract class AbstractRearrangerTest extends LightCodeInsightFixtureTestCase {
+abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTestCase {
   
-  def FileType fileType
+  FileType fileType
+  Language language;
   
   @Override
   protected void setUp() {
@@ -44,7 +48,22 @@ abstract class AbstractRearrangerTest extends LightCodeInsightFixtureTestCase {
     CodeStyleSettingsManager.getInstance(myFixture.project).dropTemporarySettings()
     super.tearDown()
   }
-
+  
+  @NotNull
+  protected ArrangementAtomMatchCondition atom(@NotNull Object condition) {
+    def type;
+    if (condition in ArrangementEntryType) {
+      type = ArrangementSettingType.TYPE;
+    }
+    else if (condition in ArrangementModifier) {
+      type = ArrangementSettingType.MODIFIER
+    }
+    else {
+      throw new IllegalArgumentException("Unexpected condition of type '${condition.class}': $condition")
+    }
+    new ArrangementAtomMatchCondition(type, condition)
+  }
+  
   protected void doTest(@NotNull String initial,
                         @NotNull String expected,
                         @NotNull List<ArrangementRule> rules,
@@ -52,18 +71,20 @@ abstract class AbstractRearrangerTest extends LightCodeInsightFixtureTestCase {
   {
     def (String textToUse, List<TextRange> rangesToUse) = parseRanges(initial)
     if (rangesToUse && ranges) {
-      fail("Duplicate ranges info detected: explicitly given: $ranges, derived from markup: $rangesToUse. Text:\n$initial")
+      junit.framework.Assert.fail(
+      "Duplicate ranges info detected: explicitly given: $ranges, derived from markup: $rangesToUse. Text:\n$initial"
+      )
     }
     if (!rangesToUse) {
       rangesToUse = ranges ?: [TextRange.from(0, initial.length())]
     }
     
     myFixture.configureByText(fileType, textToUse)
-    def settings = CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(JavaLanguage.INSTANCE)
+    def settings = CodeStyleSettingsManager.getInstance(myFixture.project).currentSettings.getCommonSettings(language)
     settings.arrangementRules = rules
     ArrangementEngine engine = ServiceManager.getService(myFixture.project, ArrangementEngine)
     engine.arrange(myFixture.file, rangesToUse);
-    assertEquals(expected, myFixture.editor.document.text);
+    junit.framework.Assert.assertEquals(expected, myFixture.editor.document.text);
   }
   
   @NotNull

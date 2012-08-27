@@ -27,5 +27,5 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
  */
 public enum ArrangementEntryType {
   
-  CLASS, FIELD, METHOD
+  CLASS, FIELD, METHOD, ENUM, INTERFACE
 }

@@ -78,9 +78,7 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
@@ -293,6 +291,16 @@ public class FileStructurePopup implements Disposable {
     }
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
+    SwingUtilities.windowForComponent(myPopup.getContent()).addWindowFocusListener(new WindowFocusListener() {
+      @Override
+      public void windowGainedFocus(WindowEvent e) {
+      }
+
+      @Override
+      public void windowLostFocus(WindowEvent e) {
+        myPopup.cancel();
+      }
+    });
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
@@ -572,6 +580,13 @@ public class FileStructurePopup implements Disposable {
           return myTreeExpander;
         }
         return null;
+      }
+    });
+
+    panel.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        myPopup.cancel();
       }
     });
 

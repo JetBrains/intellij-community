@@ -16,8 +16,8 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.match.serialization.DefaultArrangementEntryMatcherSerializer;
-import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
+import com.intellij.psi.codeStyle.arrangement.match.DefaultArrangementEntryMatcherSerializer;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -58,9 +58,9 @@ public class DefaultArrangementRuleSerializer implements ArrangementRuleSerializ
     }
 
     Element sortElement = element.getChild(SORT_TYPE_ELEMENT_NAME);
-    ArrangementEntrySortType sortType = ArrangementEntrySortType.NO_SORT;
+    ArrangementEntryOrderType sortType = ArrangementEntryOrderType.KEEP;
     if (sortElement != null) {
-      sortType = ArrangementEntrySortType.valueOf(sortElement.getText());
+      sortType = ArrangementEntryOrderType.valueOf(sortElement.getText());
     }
 
     return new ArrangementRule(matcher, sortType);
