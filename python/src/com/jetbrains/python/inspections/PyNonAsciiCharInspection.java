@@ -76,7 +76,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
 
     @Override
     public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
-      checkString(node, node.getStringValue());
+      checkString(node, node.getText());
     }
   }
 
