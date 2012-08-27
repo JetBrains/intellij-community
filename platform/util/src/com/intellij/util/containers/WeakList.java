@@ -71,6 +71,48 @@ public class WeakList<T> extends UnsafeWeakList<T> {
     }
   }
 
+  @Override
+  public T set(int index, T element) {
+    synchronized (myArray) {
+      return super.set(index, element);
+    }
+  }
+
+  @Override
+  public int indexOf(Object o) {
+    synchronized (myArray) {
+      return super.indexOf(o);
+    }
+  }
+
+  @Override
+  public int lastIndexOf(Object o) {
+    synchronized (myArray) {
+      return super.lastIndexOf(o);
+    }
+  }
+
+  @Override
+  public void clear() {
+    synchronized (myArray) {
+      super.clear();
+    }
+  }
+
+  @Override
+  protected void removeRange(int fromIndex, int toIndex) {
+    synchronized (myArray) {
+      super.removeRange(fromIndex, toIndex);
+    }
+  }
+
+  @Override
+  public boolean remove(Object o) {
+    synchronized (myArray) {
+      return super.remove(o);
+    }
+  }
+
   public T remove(int index) {
     synchronized (myArray) {
       return super.remove(index);
