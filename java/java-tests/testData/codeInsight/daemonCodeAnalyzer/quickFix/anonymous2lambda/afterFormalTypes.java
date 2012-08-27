@@ -1,4 +1,5 @@
 // "Replace with lambda" "true"
+import java.util.*;
 class Test2 {
 
     interface I<X> {
