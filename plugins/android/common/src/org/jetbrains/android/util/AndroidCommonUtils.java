@@ -435,8 +435,14 @@ public class AndroidCommonUtils {
     if (propFile.exists() && propFile.isFile()) {
       final Map<String, String> map =
         ProjectProperties.parsePropertyFile(new BufferingFileWrapper(propFile), new MessageBuildingSdkLog());
-      final String revision = map.get("Pkg.Revision");
+      String revision = map.get("Pkg.Revision");
+
       if (revision != null) {
+        final int dot = revision.indexOf('.');
+        if (dot > 0) {
+          revision = revision.substring(0, dot);
+        }
+
         try {
           revisionNumber = Integer.parseInt(revision);
         }
