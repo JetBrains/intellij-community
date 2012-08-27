@@ -48,6 +48,7 @@ class ToolSelectDialog extends DialogWrapper {
     if(actionIdToSelect != null){
       myToolsPanel.selectTool(actionIdToSelect);
     }
+    setTitle(ToolsBundle.message("tools.dialog.title"));
   }
 
   @Override
@@ -78,5 +79,10 @@ class ToolSelectDialog extends DialogWrapper {
 
   boolean isModified() {
     return myToolsPanel.isModified();
+  }
+
+  @Override
+  protected String getDimensionServiceKey() {
+    return "com.intellij.tools.ToolSelectDialog.dimensionServiceKey";
   }
 }
