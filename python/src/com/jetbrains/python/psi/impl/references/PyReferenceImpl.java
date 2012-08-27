@@ -215,7 +215,10 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
         final ScopeOwner owner = ScopeUtil.getScopeOwner(uexpr);
         if (owner != null) {
           final Scope scope = ControlFlowCache.getScope(owner);
-          if (owner == originalOwner && !scope.isGlobal(referencedName)) {
+          if (uexpr == originalOwner && originalOwner instanceof PyClass) {
+            uexpr = null;
+          }
+          else if (owner == originalOwner && !scope.isGlobal(referencedName)) {
             final ResolveResultList latest = resolveToLatestDefs(owner, myElement, referencedName);
             if (!latest.isEmpty()) {
               return latest;
