@@ -188,7 +188,8 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "public class Foo<T, U> {\n" +
     "  int[] X = new int[]{1, 3, 5, 6, 7, 87, 1213, 2};\n" +
     "\n" +
-    "  public void foo(int x, int y) {\n" +
+    "  public void foo(int x, int y) {" +
+    "    Runnable r = () -> {};\n" +
     "    for (int i = 0; i < x; i++) {\n" +
     "      y += (y ^ 0x123) << 2;\n" +
     "    }\n" +
