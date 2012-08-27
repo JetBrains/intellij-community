@@ -92,7 +92,7 @@ public class RedundantLambdaParameterTypeInspection extends BaseJavaLocalInspect
 
                 for (PsiTypeParameter parameter : typeParameters) {
                   final PsiType psiType = substitutor.substitute(parameter);
-                  if (psiType == null || LambdaUtil.dependsOnTypeParams(psiType, expression)) return;
+                  if (psiType == null || LambdaUtil.dependsOnTypeParams(psiType, expression, parameter)) return;
                 }
               }
             }

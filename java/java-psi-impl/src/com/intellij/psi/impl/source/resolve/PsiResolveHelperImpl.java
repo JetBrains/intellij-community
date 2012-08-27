@@ -892,7 +892,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
             }
             final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
             if (method == null || methodParamsDependOnTypeParams((PsiLambdaExpression)expression, method.getParameterList().getParameters(), 
-                                                                 substitutor, typeParameter)) {
+                                                                 PsiUtil.resolveGenericsClassInType(functionalInterfaceType).getSubstitutor(), typeParameter)) {
               return getFailedInferenceConstraint(typeParameter);
             }
           }
