@@ -183,9 +183,12 @@ public class PyTypeParser {
             final PyQualifiedName importSourceQName = fromImportStatement.getImportSourceQName();
             if (importSourceQName != null) {
               String qName = importSourceQName.toString() + "." + visibleName;
-              final PyType pyType = getTypeFromQName(anchor, qName, whole, types, fullRanges, offset);
-              if (pyType != null)
+              final HashMap<TextRange, PyType> unusedRanges = new HashMap<TextRange, PyType>();
+              final PyType pyType = getTypeFromQName(anchor, qName, whole, unusedRanges, fullRanges, offset);
+              if (pyType != null) {
+                types.put(whole, pyType);
                 return pyType;
+              }
             }
           }
         }
