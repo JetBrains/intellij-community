@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -27,7 +28,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -35,6 +35,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -84,6 +85,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public static final String INSTALL = "install";
   public static final String UNINSTALL = "uninstall";
   public static final String UNTAR = "untar";
+
+  // Bundled package management tools
+  public static final String DISTRIBUTE = "distribute-0.6.27";
+  public static final String PIP = "pip-1.1";
 
   private List<PyPackage> myPackagesCache = null;
   private PyExternalProcessException myExceptionCache = null;
@@ -267,25 +272,16 @@ public class PyPackageManagerImpl extends PyPackageManager {
         application.runWriteAction(new Runnable() {
           @Override
           public void run() {
-            syncFiles(mySdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+            final VirtualFile[] files = mySdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+            for (VirtualFile file : files) {
+              file.refresh(true, true);
+            }
           }
         });
         PythonSdkType.getInstance().setupSdkPaths(mySdk);
         clearCaches();
       }
     });
-  }
-
-  private void syncFiles(VirtualFile[] files) {
-    // Similar to LocalFileSystemImpl.syncFiles(), VirtualFile.refresh() doesn't run update index tasks immediately, so we get stale virtual
-    // files when we want to bind a stub to an AST. Another option is to use VirtualFileManager.refreshWithoutFileWatcher(), but it takes
-    // more time to refresh the whole local file system
-    for (VirtualFile root : files) {
-      if (root instanceof NewVirtualFile && root.getFileSystem() instanceof LocalFileSystem) {
-        ((NewVirtualFile)root).markDirtyRecursively();
-      }
-    }
-    LocalFileSystem.getInstance().refreshFiles(Arrays.asList(files), false, true, null);
   }
 
   private void installManagement(String name) throws PyExternalProcessException {
@@ -474,14 +470,40 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @NotNull
   public String createVirtualEnv(@NotNull String destinationDir, boolean useGlobalSite) throws PyExternalProcessException {
-    List<String> args = new ArrayList<String>();
-    if (useGlobalSite) args.add("--system-site-packages");
-    args.addAll(list("--never-download", "--distribute", destinationDir));
+    final List<String> args = new ArrayList<String>();
+    final boolean usePyVenv = PythonSdkType.getLanguageLevelForSdk(mySdk).isAtLeast(LanguageLevel.PYTHON33);
+    if (usePyVenv) {
+      args.add("pyvenv");
+      if (useGlobalSite) {
+        args.add("--system-site-packages");
+      }
+      args.add(destinationDir);
+      runPythonHelper(PACKAGING_TOOL, args);
+    }
+    else {
+      if (useGlobalSite) {
+        args.add("--system-site-packages");
+      }
+      args.addAll(list("--never-download", "--distribute", destinationDir));
+      runPythonHelper(VIRTUALENV, args);
+    }
 
-    runPythonHelper(VIRTUALENV, args);
     final String binary = PythonSdkType.getPythonExecutable(destinationDir);
     final String binaryFallback = destinationDir + File.separator + "bin" + File.separator + "python";
-    return (binary != null) ? binary : binaryFallback;
+    final String path = (binary != null) ? binary : binaryFallback;
+
+    if (usePyVenv) {
+      // TODO: Still no 'packaging' and 'pysetup3' for Python 3.3rc1, see PEP 405
+      final VirtualFile binaryFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+      if (binaryFile != null) {
+        final ProjectJdkImpl tmpSdk = new ProjectJdkImpl("", PythonSdkType.getInstance());
+        tmpSdk.setHomePath(path);
+        final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManagers.getInstance().forSdk(tmpSdk);
+        manager.installManagement(DISTRIBUTE);
+        manager.installManagement(PIP);
+      }
+    }
+    return path;
   }
 
   public static void deleteVirtualEnv(@NotNull String sdkHome) throws PyExternalProcessException {

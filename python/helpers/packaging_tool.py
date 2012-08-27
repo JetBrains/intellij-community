@@ -1,5 +1,6 @@
 import sys
 import traceback
+import getopt
 
 ERROR_WRONG_USAGE = 1
 ERROR_NO_PIP = 2
@@ -17,7 +18,7 @@ def exit(retcode):
 
 
 def usage():
-    sys.stderr.write('Usage: packaging_tool.py <list|install|uninstall>\n')
+    sys.stderr.write('Usage: packaging_tool.py <list|install|uninstall|pyvenv>\n')
     sys.stderr.flush()
     exit(ERROR_WRONG_USAGE)
 
@@ -57,6 +58,14 @@ def do_uninstall(pkgs):
     except ImportError:
         error_no_pip()
     return pip.main(['uninstall', '-y'] + pkgs)
+
+
+def do_pyvenv(path, system_site_packages):
+    try:
+        import venv
+    except ImportError:
+        error("Standard Python 'venv' module not found", ERROR_EXCEPTION)
+    venv.create(path, system_site_packages=system_site_packages)
 
 
 def untarDirectory(name):
@@ -124,6 +133,16 @@ def main():
                 usage()
             pkgs = sys.argv[2:]
             retcode = do_uninstall(pkgs)
+        elif cmd == 'pyvenv':
+            opts, args = getopt.getopt(sys.argv[2:], '', ['system-site-packages'])
+            if len(args) != 1:
+                usage()
+            path = args[0]
+            system_site_packages = False
+            for opt, arg in opts:
+                if opt == '--system-site-packages':
+                    system_site_packages = True
+            do_pyvenv(path, system_site_packages)
         else:
             usage()
     except Exception:
