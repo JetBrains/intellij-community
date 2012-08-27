@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class DiffOptionsPanel implements OptionsPanel {
   private final ColorAndFontOptions myOptions;
@@ -120,7 +117,8 @@ public class DiffOptionsPanel implements OptionsPanel {
   public void updateOptionsList() {
     myOptionsModel.clear();
     myDescriptions.clear();
-    HashMap<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.assignKeys(TextDiffType.MERGE_TYPES.iterator(), TextDiffType.ATTRIBUTES_KEY);
+    Map<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.newMapFromValues(TextDiffType.MERGE_TYPES.iterator(),
+                                                                                     TextDiffType.ATTRIBUTES_KEY);
     for (int i = 0; i < myOptions.getCurrentDescriptions().length; i++) {
       EditorSchemeAttributeDescriptor description = myOptions.getCurrentDescriptions()[i];
       TextAttributesKey type = TextAttributesKey.find(description.getType());
@@ -131,7 +129,6 @@ public class DiffOptionsPanel implements OptionsPanel {
       }
     }
     ListScrollingUtil.ensureSelectionExists(myOptionsList);
-
   }
 
   public Runnable showOption(final String option) {
@@ -161,8 +158,9 @@ public class DiffOptionsPanel implements OptionsPanel {
   }
 
   public Set<String> processListOptions() {
-    HashSet<String> result = new HashSet<String>();
-    HashMap<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.assignKeys(TextDiffType.MERGE_TYPES.iterator(), TextDiffType.ATTRIBUTES_KEY);
+    Set<String> result = ContainerUtil.newHashSet();
+    Map<TextAttributesKey, TextDiffType> typesByKey = ContainerUtil.newMapFromValues(TextDiffType.MERGE_TYPES.iterator(),
+                                                                                     TextDiffType.ATTRIBUTES_KEY);
     for (int i = 0; i < myOptions.getCurrentDescriptions().length; i++) {
       EditorSchemeAttributeDescriptor description = myOptions.getCurrentDescriptions()[i];
       TextAttributesKey type = TextAttributesKey.find(description.getType());
@@ -171,7 +169,6 @@ public class DiffOptionsPanel implements OptionsPanel {
         result.add(type.getExternalName());
       }
     }
-
 
     return result;
   }

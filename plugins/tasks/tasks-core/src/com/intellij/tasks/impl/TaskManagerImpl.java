@@ -256,7 +256,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public List<Task> getIssues(String query, boolean forceRequest) {
     List<Task> tasks = getIssuesFromRepositories(query, 50, 0, forceRequest);
     if (tasks == null) return getCachedIssues();
-    myIssueCache.putAll(ContainerUtil.assignKeys(tasks.iterator(), KEY_CONVERTOR));
+    myIssueCache.putAll(ContainerUtil.newMapFromValues(tasks.iterator(), KEY_CONVERTOR));
     return tasks;
   }
 
