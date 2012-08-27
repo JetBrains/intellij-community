@@ -151,18 +151,16 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
     private String myArtifactId;
     private String myVersion;
     private String myType;
-    private String myLibraryName;
     private String myScope;
 
     public MavenDependencyInfo() {
     }
 
-    public MavenDependencyInfo(@NotNull MavenId mavenId, @NotNull String type, @NotNull String scope, @NotNull String libraryName) {
+    public MavenDependencyInfo(@NotNull MavenId mavenId, @NotNull String type, @NotNull String scope) {
       myGroupId = mavenId.getGroupId();
       myArtifactId = mavenId.getArtifactId();
       myVersion = mavenId.getVersion();
       myType = type;
-      myLibraryName = libraryName;
       myScope = scope;
     }
 
@@ -180,10 +178,6 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
 
     public String getType() {
       return myType;
-    }
-
-    public String getLibraryName() {
-      return myLibraryName;
     }
 
     public String getScope() {
@@ -204,10 +198,6 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
 
     public void setType(String type) {
       myType = type;
-    }
-
-    public void setLibraryName(String libraryName) {
-      myLibraryName = libraryName;
     }
 
     public void setScope(String scope) {
