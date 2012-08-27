@@ -12,7 +12,9 @@ import com.intellij.util.Processor;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.sdk.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,10 +63,13 @@ public class PyPackagingTest extends PyTestCase {
       public boolean process(Sdk sdk) {
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
-          final String venvSdkHome = ((PyPackageManagerImpl) PyPackageManagerImpl.getInstance(sdk)).createVirtualEnv(tempDir.toString(), false);
+          final File venvDir = new File(tempDir, "venv");
+          final String venvSdkHome = ((PyPackageManagerImpl) PyPackageManagerImpl.getInstance(sdk)).createVirtualEnv(venvDir.toString(),
+                                                                                                                     false);
           final Sdk venvSdk = createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
           assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
+          assertInstanceOf(PythonSdkFlavor.getPlatformIndependentFlavor(venvSdk.getHomePath()), VirtualEnvSdkFlavor.class);
           final List<PyPackage> packages = ((PyPackageManagerImpl) PyPackageManagerImpl.getInstance(venvSdk)).getPackages();
           final PyPackage distribute = findPackage("distribute", packages);
           assertNotNull(distribute);
@@ -92,7 +97,8 @@ public class PyPackagingTest extends PyTestCase {
       public boolean process(final Sdk sdk) {
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
-          final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).createVirtualEnv(tempDir.getPath(), false);
+          final File venvDir = new File(tempDir, "venv");
+          final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).createVirtualEnv(venvDir.getPath(), false);
           final Sdk venvSdk = createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
           final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(venvSdk);
