@@ -523,6 +523,7 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
                   }
                   tag.add(XmlElementFactory.getInstance(myPsiManager.getProject()).createTagFromText(
                     createAnnotationTag(annotationFQName, values)));
+                  commitChanges(xmlFile);
                   return;
                 }
               }
