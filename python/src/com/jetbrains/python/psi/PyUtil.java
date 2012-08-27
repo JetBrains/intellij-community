@@ -648,6 +648,9 @@ public class PyUtil {
     if (turnDirIntoInit(directory) != null) {
       return true;
     }
+    if (LanguageLevel.forFile(directory.getVirtualFile()).isAtLeast(LanguageLevel.PYTHON33)) {
+      return true;
+    }
     return hasNamespacePackageFile(directory);
   }
 
