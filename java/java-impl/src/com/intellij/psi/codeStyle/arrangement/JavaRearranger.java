@@ -68,6 +68,43 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
   }
 
+  private static final List<ArrangementRule<StdArrangementEntryMatcher>> DEFAULT_RULES =
+    new ArrayList<ArrangementRule<StdArrangementEntryMatcher>>();
+  static {
+    ArrangementModifier[] visibility = { PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE };
+    for (ArrangementModifier modifier : visibility) {
+      and(FIELD, STATIC, FINAL, modifier);
+    }
+    for (ArrangementModifier modifier : visibility) {
+      and(FIELD, STATIC, modifier);
+    }
+    for (ArrangementModifier modifier : visibility) {
+      and(FIELD, FINAL, modifier);
+    }
+    for (ArrangementModifier modifier : visibility) {
+      and(FIELD, modifier);
+    }
+    and(METHOD);
+    and(ENUM);
+    and(INTERFACE);
+    and(CLASS);
+  }
+
+  private static void and(@NotNull Object ... conditions) {
+    if (conditions.length == 1) {
+      DEFAULT_RULES.add(new ArrangementRule<StdArrangementEntryMatcher>(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
+        ArrangementUtil.parseType(conditions[0]), conditions[0]
+      ))));
+      return;
+    }
+    
+    ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
+    for (Object condition : conditions) {
+      composite.addOperand(new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition));
+    }
+    DEFAULT_RULES.add(new ArrangementRule<StdArrangementEntryMatcher>(new StdArrangementEntryMatcher(composite)));
+  }
+
   @NotNull
   private static Set<ArrangementModifier> concat(@NotNull Set<ArrangementModifier> base, ArrangementModifier... modifiers) {
     EnumSet<ArrangementModifier> result = EnumSet.copyOf(base);
@@ -174,7 +211,6 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
   @Nullable
   @Override
   public List<ArrangementRule<StdArrangementEntryMatcher>> getDefaultRules() {
-    // TODO den implement 
-    return null;
+    return DEFAULT_RULES;
   }
 }

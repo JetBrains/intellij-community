@@ -181,22 +181,10 @@ public class ArrangementRuleTree {
       }
     });
     
-    map(rules);
-
-    expandAll(myTree, new TreePath(myRoot));
+    setRules(rules);
+    
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
-
-    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
-      LOG.info("Arrangement tree is constructed. Models:");
-      myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
-        @Override
-        public boolean execute(ArrangementRuleEditingModelImpl model) {
-          LOG.info(String.format("  row %d, model '%s'", model.getRow(), model.getRule())); 
-          return true;
-        }
-      });
-    }
   }
 
   private void selectPreviousRule() {
@@ -376,6 +364,30 @@ public class ArrangementRuleTree {
       result.add(myModels.get(row).getRule());
     }
     return result;
+  }
+
+  public void setRules(@NotNull List<ArrangementRule<StdArrangementEntryMatcher>> rules) {
+    myRenderers.clear();
+    myModels.clear();
+    while (myRoot.getChildCount() > 0)
+    myTreeModel.removeNodeFromParent(myRoot.getFirstChild());
+    map(rules);
+    expandAll(myTree, new TreePath(myRoot));
+
+    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
+      LOG.info("Arrangement tree is refreshed. Given rules:");
+      for (ArrangementRule<StdArrangementEntryMatcher> rule : rules) {
+        LOG.info("  " + rule.toString());
+      }
+      LOG.info("Following models have been built:");
+      myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
+        @Override
+        public boolean execute(ArrangementRuleEditingModelImpl model) {
+          LOG.info(String.format("  row %d, model '%s'", model.getRow(), model.getRule()));
+          return true;
+        }
+      });
+    }
   }
   
   @NotNull

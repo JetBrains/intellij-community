@@ -57,6 +57,29 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
     return myDelegate.isMatched(entry);
   }
 
+  @Override
+  public int hashCode() {
+    return myCondition.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    StdArrangementEntryMatcher matcher = (StdArrangementEntryMatcher)o;
+    return myCondition.equals(matcher.myCondition);
+  }
+
+  @Override
+  public String toString() {
+    return myCondition.toString();
+  }
+  
   @NotNull
   private static ArrangementEntryMatcher doBuildMatcher(@NotNull ArrangementMatchCondition condition) {
     MyVisitor visitor = new MyVisitor();

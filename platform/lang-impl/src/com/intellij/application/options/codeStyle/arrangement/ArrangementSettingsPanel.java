@@ -188,24 +188,24 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   @SuppressWarnings("unchecked")
   @NotNull
   private List<ArrangementRule<StdArrangementEntryMatcher>> getRules(@NotNull CodeStyleSettings settings) {
-    List<ArrangementRule<StdArrangementEntryMatcher>> result = Collections.emptyList();
-    
     List<ArrangementRule<?>> storedRules = settings.getCommonSettings(myLanguage).getArrangementRules();
     if (storedRules.isEmpty()) {
       List<ArrangementRule<StdArrangementEntryMatcher>> defaultRules = mySettingsAware.getDefaultRules();
       if (defaultRules != null) {
-        result = defaultRules;
+        return defaultRules;
       }
     }
     else {
       // We use unchecked cast here in assumption that current rearranger is based on standard settings if it uses standard
       // settings-based rule editor.
       // Note: unchecked cast for the whole collection doesn't work here (compiler error).
+      List<ArrangementRule<StdArrangementEntryMatcher>> result = new ArrayList<ArrangementRule<StdArrangementEntryMatcher>>();
       for (ArrangementRule<?> rule : storedRules) {
         result.add((ArrangementRule<StdArrangementEntryMatcher>)rule);
       }
+      return result;
     }
-    return result;
+    return Collections.emptyList();
   }
 
   private static void setupKeyboardActions(@NotNull ActionManager actionManager, @NotNull Tree treeComponent) {
@@ -231,18 +231,18 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  public boolean isModified(CodeStyleSettings settings) {
-    return getRules(settings).equals(myRuleTree.getRules());
+  public boolean isModified(@NotNull CodeStyleSettings settings) {
+    return !getRules(settings).equals(myRuleTree.getRules());
   }
 
   @Override
-  public void apply(CodeStyleSettings settings) {
+  public void apply(@NotNull CodeStyleSettings settings) {
     settings.getCommonSettings(myLanguage).setArrangementRules(myRuleTree.getRules()); 
   }
 
   @Override
-  protected void resetImpl(CodeStyleSettings settings) {
-    // TODO den implement 
+  protected void resetImpl(@NotNull CodeStyleSettings settings) {
+    myRuleTree.setRules(getRules(settings)); 
   }
 
   @Override
