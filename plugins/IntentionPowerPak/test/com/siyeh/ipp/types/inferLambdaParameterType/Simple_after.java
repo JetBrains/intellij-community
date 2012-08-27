@@ -1,5 +1,5 @@
 class X {
   {
-    Comparable<String> c = (String o)-> 1;
+    Comparable<String> c = (String o) -> 1;
   }
 }

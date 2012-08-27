@@ -4,7 +4,7 @@ interface SAM<X> {
 
 class Foo {  
     void test() {
-        SAM<Integer> c = (i, j)->i + j;
+        SAM<Integer> c = (i, j) -> i + j;
         m(c);
     }
     void m(SAM<Integer> s) { }

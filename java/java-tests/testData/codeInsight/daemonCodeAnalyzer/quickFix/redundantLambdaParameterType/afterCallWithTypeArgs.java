@@ -11,6 +11,6 @@ class Test2 {
     static <T> I<T> bar(I<T> i){return i;}
 
     {
-        Test2.<String>bar(y-> y.t);
+        Test2.<String>bar(y -> y.t);
     }
 }

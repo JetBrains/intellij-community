@@ -9,7 +9,7 @@ class Test2 {
     static <T> I<T> bar(I<T> i){return i;}
  
     {
-        bar((List<String> list)->{
+        bar((List<String> list) -> {
             return null;  //To change body of implemented methods use File | Settings | File Templates.
         });
     }

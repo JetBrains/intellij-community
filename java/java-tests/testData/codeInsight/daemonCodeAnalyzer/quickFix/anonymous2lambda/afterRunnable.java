@@ -1,7 +1,7 @@
 // "Replace with lambda" "true"
 class Test {
   {
-    Runnable r = ()->{
+    Runnable r = () -> {
         System.out.println("");
     };
   }
