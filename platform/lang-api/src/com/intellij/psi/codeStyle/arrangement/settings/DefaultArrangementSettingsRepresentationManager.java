@@ -45,6 +45,9 @@ public class DefaultArrangementSettingsRepresentationManager implements Arrangem
       // Other common modifiers.
       ArrangementModifier.STATIC, ArrangementModifier.FINAL,
       
+      // Semi-common modifiers.
+      ArrangementModifier.ABSTRACT,
+      
       // Method-specific modifiers.
       ArrangementModifier.SYNCHRONIZED,
       
