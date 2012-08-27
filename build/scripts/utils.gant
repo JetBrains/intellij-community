@@ -71,7 +71,7 @@ binding.setVariable("isDefined", {String key ->
     this[key]
     return true
   }
-  catch (MissingPropertyException mpe) {
+  catch (MissingPropertyException ignored) {
     return false
   }
 })
@@ -80,7 +80,7 @@ private String require(String key) {
   try {
     this[key]
   }
-  catch (MissingPropertyException mpe) {
+  catch (MissingPropertyException ignored) {
     projectBuilder.error("Property $key is required")
   }
 }
@@ -89,7 +89,7 @@ private String require(String key, String defaultValue) {
   try {
     this[key]
   }
-  catch (MissingPropertyException mpe) {
+  catch (MissingPropertyException ignored) {
     projectBuilder.info("$key is not defined. Defaulting to $defaultValue")
     this[key] = defaultValue
   }
@@ -121,7 +121,7 @@ binding.setVariable("loadProject", {
 })
 
 boolean hasSourceRoots(Module module) {
-  !module.sourceRoots.isEmpty()
+  return !module.sourceRoots.isEmpty()
 }
 
 binding.setVariable("findModule", {String name ->
@@ -575,12 +575,12 @@ private String readIdeaProperties(Map args) {
   StringBuilder buff = new StringBuilder()
   ideaProperties.each { key, value ->
     if (value != null) {
-      buff.append(
+      String string =
 """
         <key>$key</key>
         <string>$value</string>
 """
-      )
+      buff.append(string)
     }
   }
   return buff.toString()
