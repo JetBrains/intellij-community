@@ -68,35 +68,46 @@ import java.util.StringTokenizer;
  */
 public class HtmlUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.xml.util.HtmlUtil");
-  
+
   @NonNls private static final String JSFC = "jsfc";
   @NonNls private static final String CHARSET_PREFIX = "charset=";
   @NonNls private static final String HTML5_DATA_ATTR_PREFIX = "data-";
 
-  public static final String[] CONTENT_TYPES = {"application/activemessage", "application/andrew-inset", "application/applefile", "application/atomicmail", "application/dca-rft", "application/dec-dx", "application/mac-binhex40"
-            , "application/mac-compactpro", "application/macwriteii", "application/msword", "application/news-message-id", "application/news-transmission", "application/octet-stream"
-            , "application/oda", "application/pdf", "application/postscript", "application/powerpoint", "application/remote-printing", "application/rtf"
-            , "application/slate", "application/wita", "application/wordperfect5.1", "application/x-bcpio", "application/x-cdlink", "application/x-compress"
-            , "application/x-cpio", "application/x-csh", "application/x-director", "application/x-dvi", "application/x-gtar", "application/x-gzip"
-            , "application/x-hdf", "application/x-httpd-cgi", "application/x-koan", "application/x-latex", "application/x-mif", "application/x-netcdf"
-            , "application/x-sh", "application/x-shar", "application/x-stuffit", "application/x-sv4cpio", "application/x-sv4crc", "application/x-tar"
-            , "application/x-tcl", "application/x-tex", "application/x-texinfo", "application/x-troff", "application/x-troff-man", "application/x-troff-me"
-            , "application/x-troff-ms", "application/x-ustar", "application/x-wais-source", "application/zip", "audio/basic", "audio/mpeg"
-            , "audio/x-aiff", "audio/x-pn-realaudio", "audio/x-pn-realaudio-plugin", "audio/x-realaudio", "audio/x-wav", "chemical/x-pdb"
-            , "image/gif", "image/ief", "image/jpeg", "image/png", "image/tiff", "image/x-cmu-raster"
-            , "image/x-portable-anymap", "image/x-portable-bitmap", "image/x-portable-graymap", "image/x-portable-pixmap", "image/x-rgb", "image/x-xbitmap"
-            , "image/x-xpixmap", "image/x-xwindowdump", "message/external-body", "message/news", "message/partial", "message/rfc822"
-            , "multipart/alternative", "multipart/appledouble", "multipart/digest", "multipart/mixed", "multipart/parallel", "text/html"
-            , "text/plain", "text/richtext", "text/tab-separated-values", "text/x-setext", "text/x-sgml", "video/mpeg"
-            , "video/quicktime", "video/x-msvideo", "video/x-sgi-movie", "x-conference/x-cooltalk", "x-world/x-vrml"};
+  public static final String[] CONTENT_TYPES =
+    {"application/activemessage", "application/andrew-inset", "application/applefile", "application/atomicmail", "application/dca-rft",
+      "application/dec-dx", "application/mac-binhex40"
+      , "application/mac-compactpro", "application/macwriteii", "application/msword", "application/news-message-id",
+      "application/news-transmission", "application/octet-stream"
+      , "application/oda", "application/pdf", "application/postscript", "application/powerpoint", "application/remote-printing",
+      "application/rtf"
+      , "application/slate", "application/wita", "application/wordperfect5.1", "application/x-bcpio", "application/x-cdlink",
+      "application/x-compress"
+      , "application/x-cpio", "application/x-csh", "application/x-director", "application/x-dvi", "application/x-gtar", "application/x-gzip"
+      , "application/x-hdf", "application/x-httpd-cgi", "application/x-koan", "application/x-latex", "application/x-mif",
+      "application/x-netcdf"
+      , "application/x-sh", "application/x-shar", "application/x-stuffit", "application/x-sv4cpio", "application/x-sv4crc",
+      "application/x-tar"
+      , "application/x-tcl", "application/x-tex", "application/x-texinfo", "application/x-troff", "application/x-troff-man",
+      "application/x-troff-me"
+      , "application/x-troff-ms", "application/x-ustar", "application/x-wais-source", "application/zip", "audio/basic", "audio/mpeg"
+      , "audio/x-aiff", "audio/x-pn-realaudio", "audio/x-pn-realaudio-plugin", "audio/x-realaudio", "audio/x-wav", "chemical/x-pdb"
+      , "image/gif", "image/ief", "image/jpeg", "image/png", "image/tiff", "image/x-cmu-raster"
+      , "image/x-portable-anymap", "image/x-portable-bitmap", "image/x-portable-graymap", "image/x-portable-pixmap", "image/x-rgb",
+      "image/x-xbitmap"
+      , "image/x-xpixmap", "image/x-xwindowdump", "message/external-body", "message/news", "message/partial", "message/rfc822"
+      , "multipart/alternative", "multipart/appledouble", "multipart/digest", "multipart/mixed", "multipart/parallel", "text/html"
+      , "text/plain", "text/richtext", "text/tab-separated-values", "text/x-setext", "text/x-sgml", "video/mpeg"
+      , "video/quicktime", "video/x-msvideo", "video/x-sgi-movie", "x-conference/x-cooltalk", "x-world/x-vrml"};
   @NonNls public static final String LINK = "link";
 
   @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
-  private HtmlUtil() {}
+  private HtmlUtil() {
+  }
+
   @NonNls private static final String[] EMPTY_TAGS = {
-    "base","hr","meta","link","frame","br","basefont","param","img","area","input","isindex","col", /*html 5*/ "source","wbr"
+    "base", "hr", "meta", "link", "frame", "br", "basefont", "param", "img", "area", "input", "isindex", "col", /*html 5*/ "source", "wbr"
   };
   private static final Set<String> EMPTY_TAGS_MAP = new THashSet<String>();
   @NonNls private static final String[] OPTIONAL_END_TAGS = {
@@ -107,23 +118,24 @@ public class HtmlUtil {
   };
   private static final Set<String> OPTIONAL_END_TAGS_MAP = new THashSet<String>();
 
-  @NonNls private static final String[] BLOCK_TAGS = { "p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
-   "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
-   // nonexplicitly specified
-   "map",
-   // flow elements
-   "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe","comment","nobr"
+  @NonNls private static final String[] BLOCK_TAGS = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
+    "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
+    // nonexplicitly specified
+    "map",
+    // flow elements
+    "body", "object", "applet", "ins", "del", "dd", "li", "button", "th", "td", "iframe", "comment", "nobr"
   };
 
   // flow elements are block or inline, so they shuld not close <p> for example
-  @NonNls private static final String[] POSSIBLY_INLINE_TAGS = { "object", "applet", "ins", "del", "button", "nobr" };
+  @NonNls private static final String[] POSSIBLY_INLINE_TAGS = {"object", "applet", "ins", "del", "button", "nobr"};
 
   private static final Set<String> BLOCK_TAGS_MAP = new THashSet<String>();
 
-  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = { "p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt" };
+  @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "dt"};
   private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<String>();
 
-  @NonNls private static final String[] EMPTY_ATTRS = { "nowrap", "compact", "disabled", "readonly", "selected", "multiple", "nohref", "ismap", "declare", "noshade", "checked" };
+  @NonNls private static final String[] EMPTY_ATTRS =
+    {"nowrap", "compact", "disabled", "readonly", "selected", "multiple", "nohref", "ismap", "declare", "noshade", "checked"};
   private static final Set<String> EMPTY_ATTRS_MAP = new THashSet<String>();
 
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new THashSet<String>();
@@ -146,8 +158,8 @@ public class HtmlUtil {
 
   public static boolean isSingleHtmlTag(String tagName) {
     return EMPTY_TAGS_MAP.contains(tagName.toLowerCase());
-
   }
+
   public static boolean isSingleHtmlTagL(String tagName) {
     return EMPTY_TAGS_MAP.contains(tagName);
   }
@@ -193,7 +205,7 @@ public class HtmlUtil {
     if (name != null && isOptionalEndForHtmlTag(name)) {
       PsiElement parent = element.getParent();
 
-      if (parent!=null) {
+      if (parent != null) {
         // we need grand parent since completion already uses parent's descriptor
         parent = parent.getParent();
       }
@@ -201,7 +213,7 @@ public class HtmlUtil {
       if (parent instanceof HtmlTag) {
         final XmlElementDescriptor parentDescriptor = ((HtmlTag)parent).getDescriptor();
 
-        if (parentDescriptor!=descriptor && parentDescriptor!=null) {
+        if (parentDescriptor != descriptor && parentDescriptor != null) {
           for (final XmlElementDescriptor elementsDescriptor : parentDescriptor.getElementsDescriptors((XmlTag)parent)) {
             if (isHtmlBlockTag(elementsDescriptor.getName())) {
               variants.add(elementsDescriptor);
@@ -232,11 +244,11 @@ public class HtmlUtil {
     String entitiesString = getEntitiesString(context, XmlEntitiesInspection.UNKNOWN_ATTRIBUTE);
     if (entitiesString == null) return XmlAttributeDescriptor.EMPTY;
 
-    StringTokenizer tokenizer = new StringTokenizer(entitiesString,",");
+    StringTokenizer tokenizer = new StringTokenizer(entitiesString, ",");
     XmlAttributeDescriptor[] descriptors = new XmlAttributeDescriptor[tokenizer.countTokens()];
     int index = 0;
 
-    while(tokenizer.hasMoreElements()) {
+    while (tokenizer.hasMoreElements()) {
       final String customName = tokenizer.nextToken();
       if (customName.length() == 0) continue;
 
@@ -262,11 +274,11 @@ public class HtmlUtil {
     XmlElementDescriptor[] descriptors = new XmlElementDescriptor[tokenizer.countTokens()];
     int index = 0;
 
-    while(tokenizer.hasMoreElements()) {
+    while (tokenizer.hasMoreElements()) {
       final String tagName = tokenizer.nextToken();
       if (tagName.length() == 0) continue;
 
-      descriptors[index++] = new XmlElementDescriptorImpl(context instanceof XmlTag ? (XmlTag)context:null) {
+      descriptors[index++] = new XmlElementDescriptorImpl(context instanceof XmlTag ? (XmlTag)context : null) {
         public String getName(PsiElement context) {
           return tagName;
         }
@@ -291,19 +303,21 @@ public class HtmlUtil {
 
     final InspectionProfile profile = InspectionProjectProfileManager.getInstance(context.getProject()).getInspectionProfile();
 
-    switch(type) {
+    switch (type) {
       case XmlEntitiesInspection.UNKNOWN_TAG:
-        LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlUnknownTagInspection.TAG_SHORT_NAME,
-                                                                                                    containingFile);
-        HtmlUnknownTagInspection unknownTagInspection = wrapper != null ? (HtmlUnknownTagInspection) wrapper.getTool() : null;
+        LocalInspectionToolWrapper wrapper = (LocalInspectionToolWrapper)profile.getInspectionTool(HtmlUnknownTagInspection.TAG_SHORT_NAME,
+                                                                                                   containingFile);
+        HtmlUnknownTagInspection unknownTagInspection = wrapper != null ? (HtmlUnknownTagInspection)wrapper.getTool() : null;
         if (unknownTagInspection != null) {
           return unknownTagInspection.getAdditionalEntries();
         }
         break;
       case XmlEntitiesInspection.UNKNOWN_ATTRIBUTE:
-        LocalInspectionToolWrapper wrapper1 = (LocalInspectionToolWrapper) profile.getInspectionTool(HtmlUnknownAttributeInspection.ATTRIBUTE_SHORT_NAME,
-                                                                                                     containingFile);
-        HtmlUnknownAttributeInspection unknownAttributeInspection = wrapper1 != null ? (HtmlUnknownAttributeInspection) wrapper1.getTool() : null;
+        LocalInspectionToolWrapper wrapper1 =
+          (LocalInspectionToolWrapper)profile.getInspectionTool(HtmlUnknownAttributeInspection.ATTRIBUTE_SHORT_NAME,
+                                                                containingFile);
+        HtmlUnknownAttributeInspection unknownAttributeInspection =
+          wrapper1 != null ? (HtmlUnknownAttributeInspection)wrapper1.getTool() : null;
         if (unknownAttributeInspection != null) {
           return unknownAttributeInspection.getAdditionalEntries();
         }
@@ -314,8 +328,8 @@ public class HtmlUtil {
   }
 
   public static XmlAttributeDescriptor[] appendHtmlSpecificAttributeCompletions(final XmlTag declarationTag,
-                                                                            XmlAttributeDescriptor[] descriptors,
-                                                                            final XmlAttributeImpl context) {
+                                                                                XmlAttributeDescriptor[] descriptors,
+                                                                                final XmlAttributeImpl context) {
     if (declarationTag instanceof HtmlTag) {
       descriptors = ArrayUtil.mergeArrays(
         descriptors,
@@ -355,7 +369,7 @@ public class HtmlUtil {
     }
 
     final PsiFile htmlFile = doc.getContainingFile();
-    
+
     final String htmlFileFullName;
     if (htmlFile != null) {
       final VirtualFile vFile = htmlFile.getVirtualFile();
@@ -372,7 +386,8 @@ public class HtmlUtil {
 
     if (doctype == null) {
       LOG.debug("DOCTYPE for " + htmlFileFullName + " is null");
-      return Html5SchemaProvider.HTML5_SCHEMA_LOCATION.equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(doc.getProject()));
+      return Html5SchemaProvider.HTML5_SCHEMA_LOCATION
+        .equals(ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(doc.getProject()));
     }
 
     final boolean html5Doctype = isHtml5Doctype(doctype);
@@ -412,7 +427,7 @@ public class HtmlUtil {
   }
 
   public static void processLinks(@NotNull final XmlFile xhtmlFile,
-                                   @NotNull Processor<XmlTag> tagProcessor) {
+                                  @NotNull Processor<XmlTag> tagProcessor) {
     final XmlDocument doc = getRealXmlDocument(xhtmlFile.getDocument());
     if (doc == null) return;
 
@@ -421,7 +436,8 @@ public class HtmlUtil {
 
     if (LINK.equalsIgnoreCase(rootTag.getName())) {
       tagProcessor.process(rootTag);
-    } else {
+    }
+    else {
       findLinkStylesheets(rootTag, tagProcessor);
     }
   }
@@ -448,7 +464,7 @@ public class HtmlUtil {
           if (injectedDocument != null) {
             final XmlTag rootTag = injectedDocument.getRootTag();
             if (rootTag != null) {
-              for(PsiElement element = rootTag; element != null; element = element.getNextSibling()) {
+              for (PsiElement element = rootTag; element != null; element = element.getNextSibling()) {
                 if (element instanceof XmlTag) {
                   final XmlTag tag = (XmlTag)element;
                   String tagName = tag.getLocalName();
@@ -488,6 +504,7 @@ public class HtmlUtil {
   private static class TerminateException extends RuntimeException {
     private static final TerminateException INSTANCE = new TerminateException();
   }
+
   public static Charset detectCharsetFromMetaHttpEquiv(@NotNull String content) {
     final Ref<String> charsetNameRef = new Ref<String>();
     try {
@@ -495,7 +512,10 @@ public class HtmlUtil {
         @NonNls final Set<String> inTag = new THashSet<String>();
         boolean metHttpEquiv = false;
 
-        public void doctype(@Nullable final CharSequence publicId, @Nullable final CharSequence systemId, final int startOffset, final int endOffset) {
+        public void doctype(@Nullable final CharSequence publicId,
+                            @Nullable final CharSequence systemId,
+                            final int startOffset,
+                            final int endOffset) {
         }
 
         public ProcessingOrder startTag(final CharSequence localName, final String namespace, final int startoffset, final int endoffset,
@@ -531,6 +551,7 @@ public class HtmlUtil {
         }
 
         private String contentAttributeValue;
+
         public void attribute(final CharSequence localName, final CharSequence v, final int startoffset, final int endoffset) {
           @NonNls final String name = localName.toString().toLowerCase();
           if (inTag.contains("meta")) {
@@ -555,7 +576,7 @@ public class HtmlUtil {
       });
     }
     catch (TerminateException e) {
-     //ignore
+      //ignore
     }
     catch (Exception e) {
       // some weird things can happen, like unbalanaced tree

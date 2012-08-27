@@ -19,6 +19,7 @@ package com.intellij.xml.util;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
+import com.intellij.codeInsight.dataflow.map.MapSemilattice;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.*;
@@ -28,13 +29,17 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
+import com.intellij.util.containers.HashMap;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+
+import java.util.Map;
 
 /**
  * @author Maxim Mossienko
@@ -47,22 +52,58 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
-      @Override public void visitXmlElement(final XmlElement element) {
-        if (HtmlUtil.isHtml5Context(element)) {
+
+      private Map<PsiFile, Boolean> myDoctypeMap = new HashMap<PsiFile, Boolean>();
+
+      @Override
+      public void visitXmlElement(final XmlElement element) {
+        if (isHtml5Doctype(element)) {
           return;
         }
-        
+
         if (element instanceof XmlElementContentSpec ||
             element instanceof XmlEntityRef
-           ) {
+          ) {
           doCheckRefs(element, holder);
         }
+      }
+
+      private boolean isHtml5Doctype(XmlElement element) {
+        if (HtmlUtil.isHtml5Context(element)) {
+          return true;
+        }
+
+        PsiFile file = element.getContainingFile();
+        if (file instanceof XmlFile) {
+          if (!myDoctypeMap.containsKey(file)) {
+            myDoctypeMap.put(file, computeHtml5Doctype((XmlFile)file));
+          }
+          return myDoctypeMap.get(file);
+        }
+        return false;
+      }
+
+      private Boolean computeHtml5Doctype(XmlFile file) {
+        XmlDoctype doctype = null;
+        //Search for doctypes from providers
+        for (HtmlDoctypeProvider provider : HtmlDoctypeProvider.EP_NAME.getExtensions()) {
+          doctype = provider.getDoctype(file);
+          if (doctype != null) {
+            break;
+          }
+        }
+
+        if (doctype != null && HtmlUtil.isHtml5Doctype(doctype)) {
+          return true;
+        }
+
+        return false;
       }
     };
   }
 
   private static void doCheckRefs(final XmlElement element, final ProblemsHolder holder) {
-    for(PsiReference ref:element.getReferences()) {
+    for (PsiReference ref : element.getReferences()) {
       ProgressManager.checkCanceled();
       if (XmlHighlightVisitor.hasBadResolve(ref, true)) {
         if (ref.getElement() instanceof XmlElementContentSpec) {
@@ -101,10 +142,9 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
     private final String myReference;
 
     public AddDtdDeclarationFix(
-      @PropertyKey(resourceBundle=XmlBundle.PATH_TO_BUNDLE) String messageKey,
+      @PropertyKey(resourceBundle = XmlBundle.PATH_TO_BUNDLE) String messageKey,
       @NotNull String elementDeclarationName,
-      @NotNull PsiReference reference)
-    {
+      @NotNull PsiReference reference) {
       myMessageKey = messageKey;
       myElementDeclarationName = elementDeclarationName;
       myReference = reference.getCanonicalText();
@@ -130,50 +170,52 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
 
       final int UNDEFINED_OFFSET = -1;
       int anchorOffset = UNDEFINED_OFFSET;
-      PsiElement anchor = PsiTreeUtil.getParentOfType(element, XmlElementDecl.class, XmlAttlistDecl.class, XmlEntityDecl.class, XmlConditionalSection.class);
+      PsiElement anchor =
+        PsiTreeUtil.getParentOfType(element, XmlElementDecl.class, XmlAttlistDecl.class, XmlEntityDecl.class, XmlConditionalSection.class);
       if (anchor != null) anchorOffset = anchor.getTextRange().getStartOffset();
 
       if (anchorOffset == UNDEFINED_OFFSET && containingFile.getLanguage() == XMLLanguage.INSTANCE) {
         XmlFile file = (XmlFile)containingFile;
         final XmlProlog prolog = file.getDocument().getProlog();
         assert prolog != null;
-        
+
         final XmlDoctype doctype = prolog.getDoctype();
         final XmlMarkupDecl markupDecl;
 
         if (doctype != null) {
           markupDecl = doctype.getMarkupDecl();
-        } else {
+        }
+        else {
           markupDecl = null;
         }
 
         if (doctype == null) {
           final XmlTag rootTag = file.getDocument().getRootTag();
-          prefixToInsert = "<!DOCTYPE " + ((rootTag != null)? rootTag.getName():"null");
+          prefixToInsert = "<!DOCTYPE " + ((rootTag != null) ? rootTag.getName() : "null");
           suffixToInsert = ">\n";
         }
         if (markupDecl == null) {
-          prefixToInsert +=  " [\n";
-          suffixToInsert =  "]" + suffixToInsert;
+          prefixToInsert += " [\n";
+          suffixToInsert = "]" + suffixToInsert;
 
           if (doctype != null) {
             anchorOffset = doctype.getTextRange().getEndOffset() - 1; // just before last '>'
-          } else {
+          }
+          else {
             anchorOffset = prolog.getTextRange().getEndOffset();
           }
         }
-
       }
 
-      if(anchorOffset == UNDEFINED_OFFSET) anchorOffset = element.getTextRange().getStartOffset();
+      if (anchorOffset == UNDEFINED_OFFSET) anchorOffset = element.getTextRange().getStartOffset();
 
       OpenFileDescriptor openDescriptor = new OpenFileDescriptor(project, containingFile.getVirtualFile(), anchorOffset);
       final Editor editor = FileEditorManager.getInstance(project).openTextEditor(openDescriptor, true);
       final TemplateManager templateManager = TemplateManager.getInstance(project);
-      final Template t = templateManager.createTemplate("","");
+      final Template t = templateManager.createTemplate("", "");
 
       if (prefixToInsert.length() > 0) t.addTextSegment(prefixToInsert);
-      t.addTextSegment("<!" + myElementDeclarationName + " " + myReference+ " ");
+      t.addTextSegment("<!" + myElementDeclarationName + " " + myReference + " ");
       t.addEndVariable();
       t.addTextSegment(">\n");
       if (suffixToInsert.length() > 0) t.addTextSegment(suffixToInsert);
