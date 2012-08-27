@@ -144,8 +144,14 @@ public class CompletionLookupArranger extends LookupArranger {
     }
     classifier.addElement(element);
 
-    final String invariant = presentation.getItemText() + "###" + presentation.getTailText() + "###" + presentation.getTypeText();
+    final String invariant = presentation.getItemText() + "###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
     element.putUserData(PRESENTATION_INVARIANT, invariant);
+  }
+
+  @NotNull
+  private static String getTailTextOrSpace(LookupElementPresentation presentation) {
+    String tailText = presentation.getTailText();
+    return tailText == null || tailText.isEmpty() ? " " : tailText;
   }
 
   private static List<LookupElement> sortByPresentation(Iterable<LookupElement> source) {
