@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.ToolWindowFactoryEx;
  * @author yole
  */
 public class ProjectViewToolWindowFactory implements ToolWindowFactoryEx, DumbAware {
+  @Override
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
     ((ProjectViewImpl) ProjectView.getInstance(project)).setupImpl(toolWindow);
   }

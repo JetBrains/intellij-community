@@ -35,31 +35,35 @@ public abstract class AbstractProjectTreeStructure extends ProjectAbstractTreeSt
     return new ProjectViewProjectNode(myProject, this);
   }
 
+  @Override
   public abstract boolean isShowMembers();
 
+  @Override
   public final Object getRootElement() {
     return myRoot;
   }
 
+  @Override
   public final void commit() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
   }
 
+  @Override
   public final boolean hasSomethingToCommit() {
-    if (myProject.isDisposed()) return false;
-    return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
+    return !myProject.isDisposed()
+           && PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
+  @Override
   public boolean isStructureView() {
     return false;
   }
 
+  @Override
   public boolean isAlwaysLeaf(Object element) {
     if (element instanceof ProjectViewNode) {
       return ((ProjectViewNode)element).isAlwaysLeaf();
     }
-    else {
-      return super.isAlwaysLeaf(element);
-    }
+    return super.isAlwaysLeaf(element);
   }
 }

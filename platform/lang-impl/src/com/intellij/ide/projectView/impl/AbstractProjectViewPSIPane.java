@@ -62,6 +62,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     super(project);
   }
 
+  @Override
   public JComponent createComponent() {
     if (myComponent != null) return myComponent;
 
@@ -78,6 +79,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     return myComponent;
   }
 
+  @Override
   public final void dispose() {
     myComponent = null;
     super.dispose();
@@ -97,23 +99,28 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     TreeUtil.installActions(myTree);
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         fireTreeChangeListener();
       }
     });
     myTree.getModel().addTreeModelListener(new TreeModelListener() {
+      @Override
       public void treeNodesChanged(TreeModelEvent e) {
         fireTreeChangeListener();
       }
 
+      @Override
       public void treeNodesInserted(TreeModelEvent e) {
         fireTreeChangeListener();
       }
 
+      @Override
       public void treeNodesRemoved(TreeModelEvent e) {
         fireTreeChangeListener();
       }
 
+      @Override
       public void treeStructureChanged(TreeModelEvent e) {
         fireTreeChangeListener();
       }
@@ -122,6 +129,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     new MySpeedSearch(myTree);
 
     myTree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (KeyEvent.VK_ENTER == e.getKeyCode()) {
 
@@ -147,6 +155,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
   }
 
+  @Override
   public final ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
     final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
     final ArrayList<Object> selectionPaths = new ArrayList<Object>();
@@ -155,6 +164,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     if (restoreExpandedPaths) {
       TreeBuilderUtil.storePaths(getTreeBuilder(), (DefaultMutableTreeNode)myTree.getModel().getRoot(), pathsToExpand, selectionPaths, true);
       afterUpdate = new Runnable() {
+        @Override
         public void run() {
           if (myTree != null && getTreeBuilder() != null && !getTreeBuilder().isDisposed()) {
             myTree.setSelectionPaths(new TreePath[0]);
@@ -166,6 +176,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     }
     else {
       afterUpdate = new Runnable() {
+        @Override
         public void run() {
           cb.setDone();
         }
@@ -178,6 +189,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     return cb;
   }
 
+  @Override
   public void select(Object element, VirtualFile file, boolean requestFocus) {
     selectCB(element, file, requestFocus);
   }
@@ -192,6 +204,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   @NotNull
   protected BaseProjectTreeBuilder createBuilder(DefaultTreeModel treeModel) {
     return new ProjectTreeBuilder(myProject, myTree, treeModel, null, (ProjectAbstractTreeStructureBase)myTreeStructure) {
+      @Override
       protected AbstractTreeUpdater createUpdater() {
         return createTreeUpdater(this);
       }
@@ -210,6 +223,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
       super(tree);
     }
 
+    @Override
     protected boolean isMatchingElement(Object element, String pattern) {
       Object userObject = ((DefaultMutableTreeNode)((TreePath)element).getLastPathComponent()).getUserObject();
       if (userObject instanceof PsiDirectoryNode) {

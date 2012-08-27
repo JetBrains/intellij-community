@@ -62,6 +62,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     return !PlatformUtils.isCidr();
   }
 
+  @Override
   protected void updateImpl(PresentationData data) {
     final Project project = getProject();
     final PsiDirectory psiDirectory = getValue();
@@ -151,10 +152,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     }
   }
 
+  @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     return ProjectViewDirectoryHelper.getInstance(myProject).getDirectoryChildren(getValue(), getSettings(), true);
   }
 
+  @Override
   @SuppressWarnings("deprecation")
   public String getTestPresentation() {
     return "PsiDirectory: " + getValue().getName();
@@ -164,6 +167,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     return ProjectViewDirectoryHelper.getInstance(getProject()).isShowFQName(getSettings(), getParentValue(), getValue());
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     final PsiDirectory value = getValue();
     if (value == null) {
@@ -184,12 +188,14 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     return !fileIndex.isIgnored(file);
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     PsiDirectory directory = getValue();
     if (directory == null) return null;
     return directory.getVirtualFile();
   }
 
+  @Override
   public boolean canRepresent(final Object element) {
     if (super.canRepresent(element)) return true;
     PsiDirectory directory = getValue();
@@ -197,6 +203,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     return ProjectViewDirectoryHelper.getInstance(getProject()).canRepresent(element, directory);
   }
 
+  @Override
   public boolean canNavigate() {
     VirtualFile file = getVirtualFile();
     Project project = getProject();
@@ -207,10 +214,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
                             (ProjectRootsUtil.isLibraryRoot(file, project) && service.canOpenModuleLibrarySettings()));
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return false;
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     Module module = ModuleUtil.findModuleForPsiElement(getValue());
     if (module != null) {
@@ -250,10 +259,12 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     return null;
   }
 
+  @Override
   public int getWeight() {
     return isFQNameShown() ? 70 : 0;
   }
 
+  @Override
   public String getTitle() {
     final PsiDirectory directory = getValue();
     if (directory != null) {
@@ -297,11 +308,13 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     return null;
   }
 
+  @Override
   public String getQualifiedNameSortKey() {
     final PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(getProject());
     return factory.getQualifiedName(getValue(), true);
   }
 
+  @Override
   public int getTypeSortWeight(final boolean sortByType) {
     return 3;
   }

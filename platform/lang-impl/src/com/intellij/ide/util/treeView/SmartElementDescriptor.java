@@ -42,6 +42,7 @@ public class SmartElementDescriptor extends NodeDescriptor{
     mySmartPointer = SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(element);
   }
 
+  @Override
   public Object getElement() {
     return myElement;
   }
@@ -55,6 +56,7 @@ public class SmartElementDescriptor extends NodeDescriptor{
   }
 
   // Should be called in atomic action
+  @Override
   public boolean update() {
     myElement = mySmartPointer.getElement();
     if (myElement == null) return true;

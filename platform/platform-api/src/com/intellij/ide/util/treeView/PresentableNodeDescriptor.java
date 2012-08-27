@@ -33,14 +33,14 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     super(project, parentDescriptor);
   }
 
+  @Override
   public final boolean update() {
     if (shouldUpdateData()) {
       PresentationData before = getPresentation().clone();
       PresentationData updated = getUpdatedPresentation();
-      return shouldApply() ? apply(updated, before) : false;
-    } else {
-      return false;
+      return shouldApply() && apply(updated, before);
     }
+    return false;
   }
 
   protected final boolean apply(PresentationData presentation) {
@@ -52,7 +52,8 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     if (desc instanceof PresentableNodeDescriptor) {
       PresentableNodeDescriptor pnd = (PresentableNodeDescriptor)desc;
       apply(pnd.getPresentation());
-    } else {
+    }
+    else {
       super.applyFrom(desc);
     }
   }
@@ -61,7 +62,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     myIcon = presentation.getIcon(false);
     myName = presentation.getPresentableText();
     myColor = presentation.getForcedTextForeground();
-    boolean updated = before != null ? !presentation.equals(before) : true;
+    boolean updated = before == null || !presentation.equals(before);
 
     if (myUpdatedPresentation == null) {
       myUpdatedPresentation = createPresentation();
@@ -120,7 +121,8 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     PresentationData result;
     if (myUpdatedPresentation == null) {
       result = getTemplatePresentation();
-    } else {
+    }
+    else {
       result = myUpdatedPresentation;
     }
     return result;
@@ -219,15 +221,14 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   }
 
   public String getName() {
-    if (getPresentation().getColoredText().size() > 0) {
+    if (!getPresentation().getColoredText().isEmpty()) {
       StringBuilder result = new StringBuilder("");
       for (ColoredFragment each : getPresentation().getColoredText()) {
         result.append(each.getText());
       }
       return result.toString();
-    } else {
-      return myName;
     }
+    return myName;
   }
 
 }

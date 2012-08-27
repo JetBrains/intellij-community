@@ -34,22 +34,27 @@ public class SmartTreeStructure extends AbstractTreeStructure {
     myProject = project;
   }
 
+  @Override
   public void commit() {
   }
 
+  @Override
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
     return (AbstractTreeNode)element;
   }
 
+  @Override
   public Object[] getChildElements(Object element) {
     return ((AbstractTreeNode)element).getChildren().toArray();
   }
 
+  @Override
   public Object getParentElement(Object element) {
     return ((AbstractTreeNode)element).getParent();
   }
 
+  @Override
   public Object getRootElement() {
     if (myRootElementWrapper == null){
       myRootElementWrapper = createTree();
@@ -66,6 +71,7 @@ public class SmartTreeStructure extends AbstractTreeStructure {
     return ((AbstractTreeNode)element).isAlwaysLeaf();
   }
 
+  @Override
   public boolean hasSomethingToCommit() {
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }

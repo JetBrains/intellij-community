@@ -36,6 +36,7 @@ public class PsiFileUrl extends AbstractUrl {
     super(url, null, ELEMENT_TYPE);
   }
 
+  @Override
   public Object[] createPath(final Project project) {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
     if (file == null || !file.isValid()){
@@ -44,10 +45,12 @@ public class PsiFileUrl extends AbstractUrl {
     return new Object[]{PsiManager.getInstance(project).findFile(file)};
   }
 
+  @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
       return new PsiFileUrl(url);
   }
 
+  @Override
   public AbstractUrl createUrlByElement(Object element) {
     if (element instanceof PsiFile) {
       VirtualFile file = ((PsiFile)element).getVirtualFile();

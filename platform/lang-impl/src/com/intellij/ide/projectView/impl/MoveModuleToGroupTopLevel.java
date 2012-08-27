@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class MoveModuleToGroupTopLevel extends ActionGroup {
+  @Override
   public void update(AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -40,6 +41,7 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
     e.getPresentation().setVisible(active);
   }
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) {

@@ -50,19 +50,23 @@ import org.jetbrains.annotations.Nullable;
 public class RenameModuleHandler implements RenameHandler, TitledHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.projectView.actions.RenameModuleHandler");
 
+  @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     return module != null;
   }
 
+  @Override
   public boolean isRenaming(DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     LOG.assertTrue(false);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, @NotNull DataContext dataContext) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     LOG.assertTrue(module != null);
@@ -74,6 +78,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
                              new MyInputValidator(project, module));
   }
 
+  @Override
   public String getActionTitle() {
     return RefactoringBundle.message("rename.module.title");
   }
@@ -86,18 +91,22 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
       myModule = module;
     }
 
+    @Override
     public boolean checkInput(String inputString) {
       return inputString != null && inputString.length() > 0;
     }
 
+    @Override
     public boolean canClose(final String inputString) {
       final String oldName = myModule.getName();
       final ModifiableModuleModel modifiableModel = renameModule(inputString);
       if (modifiableModel == null) return false;
       final Ref<Boolean> success = Ref.create(Boolean.TRUE);
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        @Override
         public void run() {
           UndoableAction action = new BasicUndoableAction() {
+            @Override
             public void undo() throws UnexpectedUndoException {
               final ModifiableModuleModel modifiableModel = renameModule(oldName);
               if (modifiableModel != null) {
@@ -115,6 +124,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
           };
           UndoManager.getInstance(myProject).undoableActionPerformed(action);
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               modifiableModel.commit();
             }

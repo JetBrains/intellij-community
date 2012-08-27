@@ -34,6 +34,7 @@ public class NamedLibraryUrl extends AbstractUrl {
     super(url, moduleName, ELEMENT_TYPE);
   }
 
+  @Override
   public Object[] createPath(Project project) {
     final Module module = moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null;
     if (module == null) return null;
@@ -45,10 +46,12 @@ public class NamedLibraryUrl extends AbstractUrl {
     return null;
   }
 
+  @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
       return new NamedLibraryUrl(url, moduleName);
   }
 
+  @Override
   public AbstractUrl createUrlByElement(Object element) {
     if (element instanceof NamedLibraryElement) {
       NamedLibraryElement libraryElement = (NamedLibraryElement)element;

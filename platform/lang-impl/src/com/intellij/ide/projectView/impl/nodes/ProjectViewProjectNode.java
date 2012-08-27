@@ -43,6 +43,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     super(project, project, viewSettings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     List<VirtualFile> topLevelContentRoots = ProjectViewDirectoryHelper.getInstance(myProject).getTopLevelRoots();
@@ -98,6 +99,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     }
 
     Collections.sort(roots, new java.util.Comparator<VirtualFile>() {
+      @Override
       public int compare(VirtualFile o1, VirtualFile o2) {
         return o1.getPath().compareTo(o2.getPath());
       }
@@ -124,6 +126,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return reducedRoots;
   }
 
+  @Override
   protected AbstractTreeNode createModuleGroup(final Module module)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
     final VirtualFile[] roots = ModuleRootManager.getInstance(module).getContentRoots();
@@ -137,6 +140,7 @@ public class ProjectViewProjectNode extends AbstractProjectNode {
     return createTreeNode(ProjectViewModuleNode.class, getProject(), module, getSettings());
   }
 
+  @Override
   protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
     return createTreeNode(ProjectViewModuleGroupNode.class, getProject(), moduleGroup, getSettings());

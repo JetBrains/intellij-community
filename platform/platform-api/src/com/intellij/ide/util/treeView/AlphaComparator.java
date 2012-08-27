@@ -25,6 +25,7 @@ public class AlphaComparator implements Comparator<NodeDescriptor>{
   protected AlphaComparator() {
   }
 
+  @Override
   public int compare(NodeDescriptor nodeDescriptor1, NodeDescriptor nodeDescriptor2) {
     int weight1 = nodeDescriptor1.getWeight();
     int weight2 = nodeDescriptor2.getWeight();

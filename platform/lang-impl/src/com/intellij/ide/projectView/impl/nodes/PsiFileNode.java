@@ -48,6 +48,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
     super(project, value, viewSettings);
   }
 
+  @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     VirtualFile jarRoot = getJarRoot();
     if (jarRoot != null) {
@@ -65,12 +66,14 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
     return file != null && file.isValid() && file.getFileType() instanceof ArchiveFileType;
   }
 
+  @Override
   protected void updateImpl(PresentationData data) {
     final PsiFile value = getValue();
     data.setPresentableText(value.getName());
     data.setIcon(value.getIcon(Iconable.ICON_FLAG_READ_STATUS));
   }
 
+  @Override
   public VirtualFile getVirtualFile() {
     PsiFile value = getValue();
     return value != null ? value.getVirtualFile() : null;
@@ -122,6 +125,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
     return null;
   }
 
+  @Override
   public int getWeight() {
     return 20;
   }
@@ -140,6 +144,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
     return true;
   }
 
+  @Override
   public Comparable getTypeSortKey() {
     String extension = extension(getValue());
     return extension == null ? null : new ExtensionSortKey(extension);
@@ -157,6 +162,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
       myExtension = extension;
     }
 
+    @Override
     public int compareTo(final Object o) {
       if (!(o instanceof ExtensionSortKey)) return 0;
       ExtensionSortKey rhs = (ExtensionSortKey) o;
@@ -170,6 +176,7 @@ public class PsiFileNode extends BasePsiNode<PsiFile> implements NavigatableWith
     return file != null && file.getFileType() == StdFileTypes.JAVA;
   }
 
+  @Override
   public boolean canRepresent(final Object element) {
     return super.canRepresent(element) || getValue() != null && getValue().getVirtualFile() == element;
   }

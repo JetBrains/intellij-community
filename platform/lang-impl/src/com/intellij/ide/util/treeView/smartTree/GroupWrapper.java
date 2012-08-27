@@ -27,16 +27,19 @@ public class GroupWrapper extends CachingChildrenTreeNode<Group> {
     clearChildren();
   }
 
+  @Override
   public void copyFromNewInstance(final CachingChildrenTreeNode newInstance) {
     clearChildren();
     setChildren(newInstance.getChildren());
     synchronizeChildren();
   }
 
+  @Override
   public void update(PresentationData presentation) {
     presentation.updateFrom(getValue().getPresentation());
   }
 
+  @Override
   public void initChildren() {
     clearChildren();
     Collection<TreeElement> children = getValue().getChildren();
@@ -46,6 +49,7 @@ public class GroupWrapper extends CachingChildrenTreeNode<Group> {
     }
   }
 
+  @Override
   protected void performTreeActions() {
     filterChildren(myTreeModel.getFilters());
     groupChildren(myTreeModel.getGroupers());

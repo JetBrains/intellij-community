@@ -27,6 +27,7 @@ public abstract class BasePsiNode <T extends PsiElement> extends AbstractPsiBase
     super(project, value, viewSettings);
   }
 
+  @Override
   @Nullable
   protected PsiElement extractPsiFromValue() {
     return getValue();

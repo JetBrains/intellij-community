@@ -45,8 +45,8 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   Throwable myCancelRequest;
   boolean myReadyRequest;
 
-  private boolean myYieldingUiBuild;
-  private boolean myBgStructureBuilding;
+  private final boolean myYieldingUiBuild;
+  private final boolean myBgStructureBuilding;
   protected Set<Object> myForegroundLoadingNodes = new HashSet<Object>();
 
   private boolean myPassThroughMode;
@@ -97,7 +97,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     boolean success = new WaitFor(60000) {
       @Override
       protected boolean condition() {
-        final boolean[] ready = new boolean[]{false};
+        final boolean[] ready = {false};
         invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
@@ -107,7 +107,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
               return;
             }
 
-            ready[0] = (myCancelRequest != null || myReadyRequest) || (condition.value(null) && (ui.isReady()));
+            ready[0] = myCancelRequest != null || myReadyRequest || condition.value(null) && ui.isReady();
           }
         });
 
@@ -177,10 +177,6 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       super(tree, treeModel, treeStructure, comparator, updateIfInactive);
     }
 
-    public BaseTreeBuilder() {
-    }
-
-
     @Override
     protected final boolean updateNodeDescriptor(NodeDescriptor descriptor) {
       checkThread(descriptor.getElement());
@@ -188,16 +184,14 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
       int delay = getNodeDescriptorUpdateDelay();
       if (delay > 0) {
         try {
-          Thread.currentThread().sleep(delay);
+          Thread.sleep(delay);
         }
         catch (InterruptedException e) {
           e.printStackTrace();
         }
       }
 
-      if (getUi() == null) return false;
-
-      return super.updateNodeDescriptor(descriptor);
+      return getUi() != null && super.updateNodeDescriptor(descriptor);
     }
 
     @Override
@@ -446,7 +440,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }, new Condition() {
       @Override
       public boolean value(Object o) {
-        return done.get() || (canBeInterrupted && getBuilder().getUi().isCancelledReady());
+        return done.get() || canBeInterrupted && getBuilder().getUi().isCancelledReady();
       }
     });
   }

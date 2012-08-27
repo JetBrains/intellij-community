@@ -173,6 +173,7 @@ public abstract class NodeDescriptor<E> {
         myDelegate.incStamp();
       }
 
+      @Override
       public int compare(T o1, T o2) {
         return myDelegate.compare(o1, o2);
       }

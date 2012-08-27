@@ -77,15 +77,18 @@ public abstract class AbstractProjectNode extends ProjectViewNode<Project> {
   protected abstract AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
     throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException;
 
+  @Override
   public void update(PresentationData presentation) {
     presentation.setIcon(PlatformIcons.PROJECT_ICON);
     presentation.setPresentableText(getProject().getName());
   }
 
+  @Override
   public String getTestPresentation() {
     return "Project";
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     ProjectFileIndex index = ProjectRootManager.getInstance(getProject()).getFileIndex();
     final VirtualFile baseDir = getProject().getBaseDir();

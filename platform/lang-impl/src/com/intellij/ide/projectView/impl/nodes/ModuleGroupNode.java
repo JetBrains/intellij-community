@@ -49,6 +49,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
                                                                       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
   protected abstract ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup);
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
@@ -82,37 +83,45 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return result;
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     return someChildContainsFile(file, false);
   }
 
+  @Override
   public void update(PresentationData presentation) {
     final String[] groupPath = getValue().getGroupPath();
     presentation.setPresentableText(groupPath[groupPath.length-1]);
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
+  @Override
   public String getTestPresentation() {
     return "Group: " + getValue();
   }
 
+  @Override
   public String getToolTip() {
     return IdeBundle.message("tooltip.module.group");
   }
 
+  @Override
   public int getWeight() {
     return 0;
   }
 
+  @Override
   public int getTypeSortWeight(final boolean sortByType) {
     return 1;
   }
 
+  @Override
   public boolean canDrop(TreeNode[] sourceNodes) {
     final List<Module> modules = extractModules(sourceNodes);
     return !modules.isEmpty();
   }
 
+  @Override
   public void drop(TreeNode[] sourceNodes, DataContext dataContext) {
     final List<Module> modules = extractModules(sourceNodes);
     MoveModulesToGroupAction.doMove(modules.toArray(new Module[modules.size()]), getValue(), null);

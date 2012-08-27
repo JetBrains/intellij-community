@@ -42,6 +42,7 @@ public class GroupByTypeComparator implements Comparator<NodeDescriptor> {
     myForceSortByType = forceSortByType;
   }
 
+  @Override
   public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
     if (!isSortByType() && descriptor1 instanceof ProjectViewNode && ((ProjectViewNode) descriptor1).isSortByFirstChild()) {
       final Collection<AbstractTreeNode> children = ((ProjectViewNode)descriptor1).getChildren();

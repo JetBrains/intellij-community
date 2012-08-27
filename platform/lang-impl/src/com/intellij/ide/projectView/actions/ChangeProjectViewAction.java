@@ -26,6 +26,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 
 public final class ChangeProjectViewAction extends AnAction {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
@@ -35,6 +36,7 @@ public final class ChangeProjectViewAction extends AnAction {
     projectView.changeView();
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());

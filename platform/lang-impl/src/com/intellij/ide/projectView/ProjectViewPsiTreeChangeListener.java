@@ -44,18 +44,21 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
 
   protected abstract DefaultMutableTreeNode getRootNode();
 
+  @Override
   public final void childRemoved(@NotNull PsiTreeChangeEvent event) {
     PsiElement child = event.getOldChild();
     if (child instanceof PsiWhiteSpace) return; //optimization
     childrenChanged(event.getParent(), true);
   }
 
+  @Override
   public final void childAdded(@NotNull PsiTreeChangeEvent event) {
     PsiElement child = event.getNewChild();
     if (child instanceof PsiWhiteSpace) return; //optimization
     childrenChanged(event.getParent(), true);
   }
 
+  @Override
   public final void childReplaced(@NotNull PsiTreeChangeEvent event) {
     PsiElement oldChild = event.getOldChild();
     PsiElement newChild = event.getNewChild();
@@ -63,11 +66,13 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     childrenChanged(event.getParent(), true);
   }
 
+  @Override
   public final void childMoved(@NotNull PsiTreeChangeEvent event) {
     childrenChanged(event.getOldParent(), false);
     childrenChanged(event.getNewParent(), true);
   }
 
+  @Override
   public final void childrenChanged(@NotNull PsiTreeChangeEvent event) {
     childrenChanged(event.getParent(), true);
   }
@@ -105,6 +110,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
     }
   }
 
+  @Override
   public void propertyChanged(@NotNull PsiTreeChangeEvent event) {
     String propertyName = event.getPropertyName();
     PsiElement element = event.getElement();

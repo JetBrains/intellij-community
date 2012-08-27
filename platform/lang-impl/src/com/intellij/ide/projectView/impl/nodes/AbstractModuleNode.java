@@ -38,6 +38,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
     super(project, module, viewSettings);
   }
 
+  @Override
   public void update(PresentationData presentation) {
     if (getValue().isDisposed()) {
       setValue(null);
@@ -56,6 +57,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
   }
 
 
+  @Override
   public String getTestPresentation() {
     return "Module";
   }
@@ -84,11 +86,13 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
     return false;
   }
 
+  @Override
   public String getToolTip() {
     final Module module = getValue();
     return ModuleType.get(module).getName();
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     ProjectSettingsService.getInstance(myProject).openModuleSettings(getValue());
   }
@@ -98,6 +102,7 @@ public abstract class AbstractModuleNode extends ProjectViewNode<Module> impleme
     return "Open Module Settings";
   }
 
+  @Override
   public boolean canNavigate() {
     return ProjectSettingsService.getInstance(myProject).canOpenModuleSettings();
   }
