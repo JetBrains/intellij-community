@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -27,9 +28,9 @@ import java.util.*;
 public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
   @NotNull private final Set<ArrangementEntryMatcher> myMatchers = new HashSet<ArrangementEntryMatcher>();
-  @NotNull private final Operator myOperator;
+  @NotNull private final ArrangementOperator myOperator;
 
-  public CompositeArrangementEntryMatcher(@NotNull Operator operator, @NotNull ArrangementEntryMatcher... matchers) {
+  public CompositeArrangementEntryMatcher(@NotNull ArrangementOperator operator, @NotNull ArrangementEntryMatcher... matchers) {
     myOperator = operator;
     myMatchers.addAll(Arrays.asList(matchers));
   }
@@ -38,18 +39,18 @@ public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     for (ArrangementEntryMatcher matcher : myMatchers) {
       boolean matched = matcher.isMatched(entry);
-      if (matched && myOperator == Operator.OR) {
+      if (matched && myOperator == ArrangementOperator.OR) {
         return true;
       }
-      else if (!matched && myOperator == Operator.AND) {
+      else if (!matched && myOperator == ArrangementOperator.AND) {
         return false;
       }
     }
-    return myOperator == Operator.AND;
+    return myOperator == ArrangementOperator.AND;
   }
 
   @NotNull
-  public Operator getOperator() {
+  public ArrangementOperator getOperator() {
     return myOperator;
   }
 
@@ -84,8 +85,6 @@ public class CompositeArrangementEntryMatcher implements ArrangementEntryMatcher
 
   @Override
   public String toString() {
-    return String.format("%s of those: %s", myOperator == Operator.AND ? "all" : "any", myMatchers);
+    return String.format("%s of those: %s", myOperator == ArrangementOperator.AND ? "all" : "any", myMatchers);
   }
-
-  public enum Operator {AND, OR}
 }

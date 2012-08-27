@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.match.serialization;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.CompositeArrangementEntryMatcher;
 import com.intellij.util.containers.ClassMap;
@@ -111,7 +112,7 @@ public class DefaultArrangementEntryMatcherSerializer {
     @NotNull
     @Override
     public Element serialize(@NotNull CompositeArrangementEntryMatcher matcher) {
-      ArrangementEntryMatcherSerializationTag tag = matcher.getOperator() == CompositeArrangementEntryMatcher.Operator.AND
+      ArrangementEntryMatcherSerializationTag tag = matcher.getOperator() == ArrangementOperator.AND
                                                     ? ArrangementEntryMatcherSerializationTag.AND
                                                     : ArrangementEntryMatcherSerializationTag.OR; 
       Element result = new Element(tag.toString());
@@ -127,9 +128,9 @@ public class DefaultArrangementEntryMatcherSerializer {
     @NotNull
     @Override
     public CompositeArrangementEntryMatcher deserialize(@NotNull Element element) throws IllegalArgumentException {
-      CompositeArrangementEntryMatcher.Operator operator = ArrangementEntryMatcherSerializationTag.OR.toString().equals(element.getName())
-                                                    ? CompositeArrangementEntryMatcher.Operator.OR 
-                                                    : CompositeArrangementEntryMatcher.Operator.AND;
+      ArrangementOperator operator = ArrangementEntryMatcherSerializationTag.OR.toString().equals(element.getName())
+                                                    ? ArrangementOperator.OR 
+                                                    : ArrangementOperator.AND;
 
       CompositeArrangementEntryMatcher result = null;
       for (Object o : element.getChildren()) {

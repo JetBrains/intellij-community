@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.match;
-
-import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Set;
+package com.intellij.psi.codeStyle.arrangement;
 
 /**
  * @author Denis Zhdanov
- * @since 7/17/12 8:57 PM
+ * @since 8/27/12 10:30 AM
  */
-public interface ModifierAwareArrangementEntry extends ArrangementEntry {
-  
-  @NotNull
-  Set<ArrangementModifier> getModifiers();
+public enum ArrangementOperator {
+  AND, OR
 }

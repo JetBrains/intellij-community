@@ -16,13 +16,16 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -41,21 +44,7 @@ public class StandardArrangementEntryMatcher implements ArrangementEntryMatcher 
 
   public StandardArrangementEntryMatcher(@NotNull ArrangementMatchCondition condition) {
     myCondition = condition;
-    MyVisitor visitor = new MyVisitor();
-    condition.invite(visitor);
-    if (visitor.modifiers.isEmpty()) {
-      myDelegate = new ByTypeArrangementEntryMatcher(visitor.types);
-    }
-    else if (visitor.types.isEmpty()) {
-      myDelegate = new ByModifierArrangementEntryMatcher(visitor.modifiers);
-    }
-    else {
-      myDelegate = new CompositeArrangementEntryMatcher(
-        CompositeArrangementEntryMatcher.Operator.AND,
-        new ByTypeArrangementEntryMatcher(visitor.types),
-        new ByModifierArrangementEntryMatcher(visitor.modifiers)
-      );
-    }
+    myDelegate = doBuildMatcher(condition);
   }
 
   @NotNull
@@ -68,27 +57,72 @@ public class StandardArrangementEntryMatcher implements ArrangementEntryMatcher 
     return myDelegate.isMatched(entry);
   }
 
+  @NotNull
+  private static ArrangementEntryMatcher doBuildMatcher(@NotNull ArrangementMatchCondition condition) {
+    MyVisitor visitor = new MyVisitor();
+    condition.invite(visitor);
+    return visitor.getMatcher();
+  }
+
   private static class MyVisitor implements ArrangementMatchConditionVisitor {
 
-    @NotNull Set<ArrangementEntryType> types     = EnumSet.noneOf(ArrangementEntryType.class);
-    @NotNull Set<ArrangementModifier>  modifiers = EnumSet.noneOf(ArrangementModifier.class);
+    @NotNull private final List<ArrangementEntryMatcher> myMatchers  = new ArrayList<ArrangementEntryMatcher>();
+    @NotNull private final Set<ArrangementEntryType>     myTypes     = EnumSet.noneOf(ArrangementEntryType.class);
+    @NotNull private final Set<ArrangementModifier>      myModifiers = EnumSet.noneOf(ArrangementModifier.class);
+
+    private ArrangementOperator myOperator;
+    private boolean             nestedComposite;
 
     @Override
     public void visit(@NotNull ArrangementAtomMatchCondition condition) {
       switch (condition.getType()) {
         case TYPE:
-          types.add((ArrangementEntryType)condition.getValue());
+          myTypes.add((ArrangementEntryType)condition.getValue());
           break;
         case MODIFIER:
-          modifiers.add((ArrangementModifier)condition.getValue());
+          myModifiers.add((ArrangementModifier)condition.getValue());
       }
     }
 
     @Override
     public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
-      for (ArrangementMatchCondition c : condition.getOperands()) {
-        c.invite(this);
-      } 
+      if (!nestedComposite) {
+        myOperator = condition.getOperator();
+        nestedComposite = true;
+        for (ArrangementMatchCondition c : condition.getOperands()) {
+          c.invite(this);
+        }
+      }
+      else {
+        myMatchers.add(doBuildMatcher(condition));
+      }
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @NotNull
+    public ArrangementEntryMatcher getMatcher() {
+      ByTypeArrangementEntryMatcher byType = myTypes.isEmpty() ? null : new ByTypeArrangementEntryMatcher(myTypes);
+      ByModifierArrangementEntryMatcher byModifiers = myModifiers.isEmpty() ? null : new ByModifierArrangementEntryMatcher(myModifiers);
+      assert byType != null || byModifiers != null || (myOperator != null && !myMatchers.isEmpty());
+      if (myMatchers.isEmpty() && (byType == null ^ byModifiers == null)) {
+        return byModifiers == null ? byType : byModifiers;
+      }
+      else if (myMatchers.size() == 1) {
+        return myMatchers.get(0);
+      }
+      else {
+        CompositeArrangementEntryMatcher result = new CompositeArrangementEntryMatcher(myOperator);
+        for (ArrangementEntryMatcher matcher : myMatchers) {
+          result.addMatcher(matcher);
+        }
+        if (byType != null) {
+          result.addMatcher(byType);
+        }
+        if (byModifiers != null) {
+          result.addMatcher(byModifiers);
+        }
+        return result;
+      }
     }
   }
 }

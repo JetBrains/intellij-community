@@ -49,7 +49,7 @@ public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     if (entry instanceof TypeAwareArrangementEntry) {
-      return myTypes.contains(((TypeAwareArrangementEntry)(entry)).getType());
+      return ((TypeAwareArrangementEntry)entry).getTypes().containsAll(myTypes);
     }
     return false;
   }

@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.ModifierAwareArrangementEntry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

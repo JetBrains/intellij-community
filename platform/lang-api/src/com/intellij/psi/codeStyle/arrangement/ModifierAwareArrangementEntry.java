@@ -15,22 +15,18 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
+import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 /**
- * Stands for the {@link ArrangementEntry} which provides information about its type.
- * <p/>
- * Implementations of this interface are not obliged to be thread-safe.
- * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:17 AM
+ * @since 7/17/12 8:57 PM
  */
-public interface TypeAwareArrangementEntry extends ArrangementEntry {
+public interface ModifierAwareArrangementEntry extends ArrangementEntry {
   
   @NotNull
-  Set<ArrangementEntryType> getTypes();
+  Set<ArrangementModifier> getModifiers();
 }

@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="projectModel-api" exported="" />
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
   </component>
 </module>
 

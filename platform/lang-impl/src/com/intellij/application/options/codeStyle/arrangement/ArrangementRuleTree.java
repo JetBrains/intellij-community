@@ -18,6 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -179,18 +180,18 @@ public class ArrangementRuleTree {
     });
     
     List<ArrangementMatchCondition> rules = new ArrayList<ArrangementMatchCondition>();
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC))
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC))
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL)));
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND)
+    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
                 .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
     map(rules);
@@ -546,7 +547,7 @@ public class ArrangementRuleTree {
     final ArrangementTreeNode anchor = activeModel == null ? null : activeModel.getBottomMost();
     doClearSelection();
     Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myModelBuilder.build(
-      new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND), myTree, myRoot, anchor, myGrouper
+      new ArrangementCompositeMatchCondition(ArrangementOperator.AND), myTree, myRoot, anchor, myGrouper
     );
     processRowChanges(pair.second);
     myModels.put(pair.first.getRow(), pair.first);

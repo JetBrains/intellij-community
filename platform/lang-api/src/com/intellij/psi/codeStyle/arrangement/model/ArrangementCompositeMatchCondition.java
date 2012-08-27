@@ -16,6 +16,7 @@
 package com.intellij.psi.codeStyle.arrangement.model;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,9 +33,9 @@ import java.util.Set;
 public class ArrangementCompositeMatchCondition implements ArrangementMatchCondition {
 
   @NotNull private final Set<ArrangementMatchCondition> myOperands = new HashSet<ArrangementMatchCondition>();
-  @NotNull private final Operator myOperator;
-
-  public ArrangementCompositeMatchCondition(@NotNull Operator operator) {
+  @NotNull private final ArrangementOperator myOperator;
+  
+  public ArrangementCompositeMatchCondition(@NotNull ArrangementOperator operator) {
     myOperator = operator;
   }
 
@@ -49,7 +50,7 @@ public class ArrangementCompositeMatchCondition implements ArrangementMatchCondi
   }
 
   @NotNull
-  public Operator getOperator() {
+  public ArrangementOperator getOperator() {
     return myOperator;
   }
 
@@ -98,10 +99,6 @@ public class ArrangementCompositeMatchCondition implements ArrangementMatchCondi
 
   @Override
   public String toString() {
-    return String.format("(%s)", StringUtil.join(myOperands, myOperator == Operator.AND ? " and " : " or "));
-  }
-
-  public enum Operator {
-    AND, OR
+    return String.format("(%s)", StringUtil.join(myOperands, myOperator == ArrangementOperator.AND ? " and " : " or "));
   }
 }

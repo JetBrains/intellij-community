@@ -19,7 +19,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
-import com.intellij.psi.codeStyle.arrangement.match.ModifierAwareArrangementEntry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +35,8 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
 
   private final Set<ArrangementModifier> myModifiers = EnumSet.noneOf(ArrangementModifier.class);
 
-  @NotNull private final  ArrangementEntryType myType;
-  @Nullable private final String               myName;
+  @NotNull private final  Set<ArrangementEntryType> myTypes;
+  @Nullable private final String                    myName;
 
   public JavaElementArrangementEntry(@Nullable ArrangementEntry parent,
                                      @NotNull TextRange range,
@@ -56,7 +55,7 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
                                      boolean canBeArranged)
   {
     super(parent, startOffset, endOffset, canBeArranged);
-    myType = type;
+    myTypes = EnumSet.of(type);
     myName = name;
   }
 
@@ -78,16 +77,16 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
 
   @NotNull
   @Override
-  public ArrangementEntryType getType() {
-    return myType;
+  public Set<ArrangementEntryType> getTypes() {
+    return myTypes;
   }
 
   @Override
   public String toString() {
     return String.format(
       "[%d; %d): %s %s %s",
-      getStartOffset(), getEndOffset(), StringUtil.join(myModifiers, " ").toLowerCase(), myType.toString().toLowerCase(),
-      myName == null ? "<no name>" : myName
+      getStartOffset(), getEndOffset(), StringUtil.join(myModifiers, " ").toLowerCase(),
+      myTypes.iterator().next().toString().toLowerCase(), myName == null ? "<no name>" : myName
     );
   }
 }

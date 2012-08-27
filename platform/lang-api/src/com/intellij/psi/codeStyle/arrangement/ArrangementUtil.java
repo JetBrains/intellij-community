@@ -115,7 +115,7 @@ public class ArrangementUtil {
 
   @NotNull
   public static ArrangementMatchCondition and(@NotNull ArrangementMatchCondition... nodes) {
-    final ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(ArrangementCompositeMatchCondition.Operator.AND);
+    final ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
     final ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition node) {
@@ -124,7 +124,7 @@ public class ArrangementUtil {
 
       @Override
       public void visit(@NotNull ArrangementCompositeMatchCondition node) {
-        if (node.getOperator() == ArrangementCompositeMatchCondition.Operator.AND) {
+        if (node.getOperator() == ArrangementOperator.AND) {
           for (ArrangementMatchCondition operand : node.getOperands()) {
             operand.invite(this);
           }
@@ -143,20 +143,18 @@ public class ArrangementUtil {
   // TODO den remove
   @NotNull
   public static ArrangementEntryMatcher or(@NotNull ArrangementEntryMatcher... matchers) {
-    return combine(CompositeArrangementEntryMatcher.Operator.OR, matchers);
+    return combine(ArrangementOperator.OR, matchers);
   }
 
   // TODO den remove
   @NotNull
   public static ArrangementEntryMatcher and(@NotNull ArrangementEntryMatcher... matchers) {
-    return combine(CompositeArrangementEntryMatcher.Operator.AND, matchers);
+    return combine(ArrangementOperator.AND, matchers);
   }
 
   // TODO den remove
   @NotNull
-  private static ArrangementEntryMatcher combine(@NotNull CompositeArrangementEntryMatcher.Operator operator,
-                                                 @NotNull ArrangementEntryMatcher... matchers)
-  {
+  private static ArrangementEntryMatcher combine(@NotNull ArrangementOperator operator, @NotNull ArrangementEntryMatcher... matchers) {
     CompositeArrangementEntryMatcher composite = null;
     for (ArrangementEntryMatcher matcher : matchers) {
       if (matcher instanceof CompositeArrangementEntryMatcher && ((CompositeArrangementEntryMatcher)(matcher)).getOperator() == operator) {
