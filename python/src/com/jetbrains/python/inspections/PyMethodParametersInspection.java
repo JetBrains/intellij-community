@@ -83,7 +83,7 @@ public class PyMethodParametersInspection extends PyInspection {
       if (flags != null) {
         PyParameterList plist = node.getParameterList();
         PyParameter[] params = plist.getParameters();
-        final String method_name = node.getName();
+        final String methodName = node.getName();
         final String CLS = "cls"; // TODO: move to style settings
         final String MCS = "mcs"; // as per pylint inspection C0203
         if (params.length == 0) { // fix: add
@@ -138,27 +138,30 @@ public class PyMethodParametersInspection extends PyInspection {
               return;
             }
             if (flags.isMetaclassMethod()) {
-              String expected_name;
+              if (flags.isStaticMethod() && !PyNames.NEW.equals(methodName)) {
+                return;
+              }
+              String expectedName;
               String alternativeName = null;
-              if (PyNames.NEW.equals(method_name) || flags.isClassMethod()) {
-                expected_name = MCS;
+              if (PyNames.NEW.equals(methodName) || flags.isClassMethod()) {
+                expectedName = MCS;
               }
               else if (flags.isSpecialMetaclassMethod()) {
-                expected_name = CLS;
+                expectedName = CLS;
               }
               else {
-                expected_name = PyNames.CANONICAL_SELF;
+                expectedName = PyNames.CANONICAL_SELF;
                 alternativeName = CLS;
               }
-              if (!expected_name.equals(pname) && (alternativeName == null || !alternativeName.equals(pname))) {
+              if (!expectedName.equals(pname) && (alternativeName == null || !alternativeName.equals(pname))) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyBundle.message("INSP.usually.named.$0", expected_name),
-                  new RenameParameterQuickFix(expected_name)
+                  PyBundle.message("INSP.usually.named.$0", expectedName),
+                  new RenameParameterQuickFix(expectedName)
                 );
               }
             }
-            else if (flags.isClassMethod() || PyNames.NEW.equals(method_name)) {
+            else if (flags.isClassMethod() || PyNames.NEW.equals(methodName)) {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class PyDefaultLiveTemplatesProvider implements DefaultLiveTemplatesProvider {
   private static final @NonNls String[] DEFAULT_TEMPLATES = new String[]{
-    "/liveTemplates/Django"
+    "/liveTemplates/Django", "/liveTemplates/Python"
   };
 
   public String[] getDefaultLiveTemplateFiles() {

@@ -4,6 +4,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.cython.psi.CythonClass;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
 
@@ -47,6 +48,9 @@ public class HighlightingAnnotator extends PyAnnotator {
     if (cls != null && index == 0) {
       if (cls instanceof CythonClass && ((CythonClass)cls).isCppClass()) {
         return false;
+      }
+      if (PyNames.NEW.equals(function.getName())) {
+        return true;
       }
       final PyFunction.Modifier modifier = function.getModifier();
       if (modifier != PyFunction.Modifier.CLASSMETHOD && modifier != PyFunction.Modifier.STATICMETHOD) {

@@ -40,8 +40,6 @@ public class PyPackagesPanel extends JPanel {
   public static final String INSTALL_DISTRIBUTE = "installDistribute";
   public static final String INSTALL_PIP = "installPip";
   public static final String CREATE_VENV = "createVEnv";
-  private static final String DISTRIBUTE = "distribute-0.6.27";
-  private static final String PIP = "pip-1.1";
 
   private final JButton myInstallButton;
   private final JButton myUninstallButton;
@@ -149,7 +147,7 @@ public class PyPackagesPanel extends JPanel {
       public void run() {
         final Sdk sdk = mySelectedSdk;
         if (sdk != null) {
-          installManagementTool(sdk, DISTRIBUTE);
+          installManagementTool(sdk, PyPackageManagerImpl.DISTRIBUTE);
         }
       }
     });
@@ -158,7 +156,7 @@ public class PyPackagesPanel extends JPanel {
       public void run() {
         final Sdk sdk = mySelectedSdk;
         if (sdk != null) {
-          installManagementTool(sdk, PIP);
+          installManagementTool(sdk, PyPackageManagerImpl.PIP);
         }
       }
     });
@@ -441,6 +439,7 @@ public class PyPackagesPanel extends JPanel {
               final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
               boolean allowCreateVirtualEnv =
                 !(PythonSdkType.isRemote(selectedSdk) || flavor instanceof IronPythonSdkFlavor) &&
+                !PythonSdkType.isVirtualEnv(selectedSdk) &&
                 myNotificationArea.hasLinkHandler(CREATE_VENV);
               final String createVirtualEnvLink = "<a href=\"" + CREATE_VENV + "\">create new VirtualEnv</a>";
               myNotificationArea.hide();
