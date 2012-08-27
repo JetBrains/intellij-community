@@ -897,7 +897,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @NotNull
   public static <T> Collection<T> subtract(@NotNull Collection<T> from, @NotNull Collection<T> what) {
-    final Set<T> set = newHashSet();
+    final Set<T> set = newHashSet(from);
     set.removeAll(what);
     return set;
   }
