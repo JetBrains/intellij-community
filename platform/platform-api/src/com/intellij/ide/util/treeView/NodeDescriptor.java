@@ -63,6 +63,22 @@ public abstract class NodeDescriptor<E> {
     return myName;
   }
 
+  /**
+   Use #getIcon() instead
+   */
+  @Deprecated
+  public final Icon getOpenIcon() {
+    return getIcon();
+  }
+
+  /**
+   Use #getIcon() instead
+   */
+  @Deprecated
+  public final Icon getClosedIcon() {
+    return getIcon();
+  }
+
   public final Icon getIcon() {
     return myIcon;
   }
