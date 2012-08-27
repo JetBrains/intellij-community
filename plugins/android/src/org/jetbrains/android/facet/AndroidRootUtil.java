@@ -34,6 +34,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.OrderedSet;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
+import org.jetbrains.android.compiler.AndroidDexCompiler;
 import org.jetbrains.android.maven.AndroidMavenUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkAdditionalData;
@@ -278,8 +279,10 @@ public class AndroidRootUtil {
               VirtualFile classDir = extension.getCompilerOutputPath();
 
               if (libraryProject) {
-                if (classDir != null) {
-                  final VirtualFile packedClassesJar = classDir.findChild(AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
+                final VirtualFile tmpArtifactsDir = AndroidDexCompiler.getOutputDirectoryForDex(depModule);
+
+                if (tmpArtifactsDir != null) {
+                  final VirtualFile packedClassesJar = tmpArtifactsDir.findChild(AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
                   if (packedClassesJar != null) {
                     outputDirs.add(packedClassesJar);
                   }
