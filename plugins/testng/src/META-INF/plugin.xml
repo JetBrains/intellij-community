@@ -37,6 +37,9 @@
                        groupName="TestNG" enabledByDefault="true" level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.AssertEqualsBetweenInconvertibleTypesTestNGInspection"/>
       <localInspection language="JAVA" shortName="ExpectedExceptionNeverThrownTestNG" displayName="Expected exception never thrown in test method body"
                        groupName="TestNG" enabledByDefault="false" level="WARNING" implementationClass="com.theoryinpractice.testng.inspection.ExpectedExceptionNeverThrownTestNGInspection"/>
+      <localInspection language="JAVA" suppressId="MessageMissingOnTestNGAssertion" shortName="AssertsWithoutMessagesTestNG"
+                       displayName="Message missing on TestNG assertion" groupName="TestNG" enabledByDefault="false" level="WARNING"
+                       implementationClass="com.theoryinpractice.testng.inspection.AssertsWithoutMessagesTestNGInspection"/>
 
       <intentionAction>
           <className>com.theoryinpractice.testng.intention.TestNGOrderEntryFix</className>
