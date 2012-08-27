@@ -434,9 +434,9 @@ public class CompilerManagerImpl extends CompilerManager {
   }
   
   private class ListenerNotificator implements CompileStatusNotification {
-    private final CompileStatusNotification myDelegate;
+    private final @Nullable CompileStatusNotification myDelegate;
 
-    private ListenerNotificator(CompileStatusNotification delegate) {
+    private ListenerNotificator(@Nullable CompileStatusNotification delegate) {
       myDelegate = delegate;
     }
 

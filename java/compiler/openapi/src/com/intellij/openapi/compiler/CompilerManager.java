@@ -176,7 +176,7 @@ public abstract class CompilerManager {
    * @param scope             a scope to be compiled
    * @param callback          a notification callback, or null if no notifications needed
    */
-  public abstract void compile(@NotNull CompileScope scope, CompileStatusNotification callback);
+  public abstract void compile(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
 
   /**
    * Compile all modified files and all files that depend on them all over the project.
