@@ -569,6 +569,7 @@
     <xml.zenCodingGenerator implementation="com.jetbrains.django.lang.template.DjangoTemplateZenCodingGenerator"/>
 
     <xml.elementDescriptorProvider implementation="com.jetbrains.django.lang.template.DjangoTemplateDescriptorProvider"/>
+    <xml.util.htmlDoctypeProvider implementation="com.jetbrains.django.lang.template.DjangoHtmlDoctypeProvider"/>
 
     <completion.contributor language="DjangoTemplate"
                             implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCompletionContributor"/>
