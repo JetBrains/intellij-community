@@ -39,6 +39,7 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
   private final Set<PsiNamedElement> myToUnpluralize = new HashSet<PsiNamedElement>();
 
   public AutomaticVariableRenamer(PsiClass aClass, String newClassName, Collection<UsageInfo> usages) {
+    final String oldClassName = aClass.getName();
     for (final UsageInfo info : usages) {
       final PsiElement element = info.getElement();
       if (!(element instanceof PsiJavaCodeReferenceElement)) continue;
@@ -46,23 +47,23 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
       if (statement != null) {
         for(PsiElement declaredElement: statement.getDeclaredElements()) {
           if (declaredElement instanceof PsiVariable) {
-            checkRenameVariable(element, (PsiVariable) declaredElement);
+            checkRenameVariable(element, (PsiVariable) declaredElement, oldClassName);
           }
         }
       }
       else {
         PsiVariable variable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
         if (variable != null) {
-          checkRenameVariable(element, variable);
+          checkRenameVariable(element, variable, oldClassName);
           if (variable instanceof PsiField) {
             for(PsiField field: getFieldsInSameDeclaration((PsiField) variable)) {
-              checkRenameVariable(element, field);
+              checkRenameVariable(element, field, oldClassName);
             }
           }
         }
       }
     }
-    suggestAllNames(aClass.getName(), newClassName);
+    suggestAllNames(oldClassName, newClassName);
   }
 
   private static List<PsiField> getFieldsInSameDeclaration(final PsiField variable) {
@@ -81,11 +82,13 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
     return result;
   }
 
-  private void checkRenameVariable(final PsiElement element, final PsiVariable variable) {
+  private void checkRenameVariable(final PsiElement element, final PsiVariable variable, final String oldClassName) {
     final PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement == null) return;
     final PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
     if (ref == null) return;
+    final String variableName = variable.getName();
+    if (variableName != null && !StringUtil.containsIgnoreCase(variableName, oldClassName)) return;
     if (ref.equals(element)) {
       myElements.add(variable);
       if (variable.getType() instanceof PsiArrayType) {
