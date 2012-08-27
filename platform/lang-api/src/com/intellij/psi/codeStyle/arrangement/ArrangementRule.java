@@ -16,7 +16,9 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.sort.ArrangementEntrySortType;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -31,14 +33,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ArrangementRule {
 
-  @NotNull private final ArrangementEntryMatcher  myMatcher;
-  @NotNull private final ArrangementEntrySortType mySortType;
+  @NotNull private final ArrangementEntryMatcher   myMatcher;
+  @NotNull private final ArrangementEntryOrderType mySortType;
 
-  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher) {
-    this(matcher, ArrangementEntrySortType.NO_SORT);
+  public ArrangementRule(@NotNull ArrangementMatchCondition condition) {
+    this(new StdArrangementEntryMatcher(condition));
   }
 
-  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher, @NotNull ArrangementEntrySortType type) {
+  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher) {
+    this(matcher, ArrangementEntryOrderType.KEEP);
+  }
+
+  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher, @NotNull ArrangementEntryOrderType type) {
     myMatcher = matcher;
     mySortType = type;
   }
@@ -49,7 +55,7 @@ public class ArrangementRule {
   }
 
   @NotNull
-  public ArrangementEntrySortType getSorter() {
+  public ArrangementEntryOrderType getSorter() {
     return mySortType;
   }
 

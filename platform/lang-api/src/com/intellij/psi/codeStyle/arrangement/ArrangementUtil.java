@@ -18,11 +18,10 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.match.CompositeArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,8 +110,6 @@ public class ArrangementUtil {
   }
   //endregion
 
-  //region Rule composition
-
   @NotNull
   public static ArrangementMatchCondition and(@NotNull ArrangementMatchCondition... nodes) {
     final ArrangementCompositeMatchCondition result = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
@@ -139,42 +136,6 @@ public class ArrangementUtil {
     }
     return result.getOperands().size() == 1 ? result.getOperands().iterator().next() : result;
   }
-  
-  // TODO den remove
-  @NotNull
-  public static ArrangementEntryMatcher or(@NotNull ArrangementEntryMatcher... matchers) {
-    return combine(ArrangementOperator.OR, matchers);
-  }
-
-  // TODO den remove
-  @NotNull
-  public static ArrangementEntryMatcher and(@NotNull ArrangementEntryMatcher... matchers) {
-    return combine(ArrangementOperator.AND, matchers);
-  }
-
-  // TODO den remove
-  @NotNull
-  private static ArrangementEntryMatcher combine(@NotNull ArrangementOperator operator, @NotNull ArrangementEntryMatcher... matchers) {
-    CompositeArrangementEntryMatcher composite = null;
-    for (ArrangementEntryMatcher matcher : matchers) {
-      if (matcher instanceof CompositeArrangementEntryMatcher && ((CompositeArrangementEntryMatcher)(matcher)).getOperator() == operator) {
-        composite = (CompositeArrangementEntryMatcher)matcher;
-        break;
-      }
-    }
-
-    if (composite == null) {
-      return new CompositeArrangementEntryMatcher(operator, matchers);
-    }
-
-    for (ArrangementEntryMatcher matcher : matchers) {
-      if (matcher != composite) {
-        composite.addMatcher(matcher);
-      }
-    }
-    return composite;
-  }
-  //endregion
 
   //region ArrangementEntry
 

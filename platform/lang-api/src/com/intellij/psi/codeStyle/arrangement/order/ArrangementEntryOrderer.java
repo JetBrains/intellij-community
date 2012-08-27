@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.sort;
+package com.intellij.psi.codeStyle.arrangement.order;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Defines a contract for a strategy that knows how to sort {@link ArrangementEntry arrangement entries}
+ * Defines a contract for a strategy that knows how to order {@link ArrangementEntry arrangement entries}
  * {@link ArrangementEntryMatcher#isMatched(ArrangementEntry) matched} against the same rule using particular
- * {@link ArrangementEntrySortType sort type}.
+ * {@link ArrangementEntryOrderType order type}.
  * <p/>
  * Implementations of this interface are expected to provide correct {@link #equals(Object)} & {@link #hashCode()} implementations.
  * <p/>
@@ -33,12 +33,12 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 7/18/12 12:41 PM
  */
-public interface ArrangementEntrySorter {
+public interface ArrangementEntryOrderer {
   
   /**
    * Asks to sort given entries matched against the current rule. Given list defines a default order to be used.
    *
    * @param entries  entries matched against the current rule
    */
-  void sort(@NotNull List<? extends ArrangementEntry> entries);
+  void order(@NotNull List<? extends ArrangementEntry> entries);
 }

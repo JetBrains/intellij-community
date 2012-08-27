@@ -37,12 +37,12 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 8/26/12 11:07 PM
  */
-public class StandardArrangementEntryMatcher implements ArrangementEntryMatcher {
+public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
 
   @NotNull private final ArrangementMatchCondition myCondition;
   @NotNull private final ArrangementEntryMatcher   myDelegate;
 
-  public StandardArrangementEntryMatcher(@NotNull ArrangementMatchCondition condition) {
+  public StdArrangementEntryMatcher(@NotNull ArrangementMatchCondition condition) {
     myCondition = condition;
     myDelegate = doBuildMatcher(condition);
   }

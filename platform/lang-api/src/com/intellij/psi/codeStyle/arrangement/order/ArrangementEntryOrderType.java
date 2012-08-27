@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.match.serialization;
-
-import org.jetbrains.annotations.NotNull;
+package com.intellij.psi.codeStyle.arrangement.order;
 
 /**
  * @author Denis Zhdanov
- * @since 7/19/12 12:45 PM
+ * @since 7/19/12 6:24 PM
  */
-public enum ArrangementEntryMatcherSerializationTag {
+public enum ArrangementEntryOrderType {
   
-  TYPE, MODIFIER, OR, AND, NAME
+  KEEP, BY_NAME
 }
