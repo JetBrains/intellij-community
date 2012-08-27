@@ -489,7 +489,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
               reportError(message, apklibModuleName);
             }
             else {
-              LOG.info(message);
+              LOG.debug(message);
             }
           }
         }
