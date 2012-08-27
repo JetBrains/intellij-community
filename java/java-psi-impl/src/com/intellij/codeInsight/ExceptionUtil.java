@@ -524,6 +524,9 @@ public class ExceptionUtil {
       // like in void f() throws XXX { new AA(methodThrowingXXX()) { ... }; }
       return parent instanceof PsiAnonymousClass && isHandled(parent, exceptionType, topElement);
     }
+    else if (parent instanceof PsiLambdaExpression) {
+      return true;
+    }
     else if (parent instanceof PsiClassInitializer) {
       if (((PsiClassInitializer)parent).hasModifierProperty(PsiModifier.STATIC)) return false;
       // anonymous class initializers can throw any exceptions
