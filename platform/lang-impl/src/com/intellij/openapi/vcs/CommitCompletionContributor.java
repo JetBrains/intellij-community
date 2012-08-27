@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs;
 import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -28,6 +29,7 @@ import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.TextFieldWithAutoCompletionListProvider;
 
 /**
  * @author Dmitry Avdeev
@@ -45,13 +47,15 @@ public class CommitCompletionContributor extends CompletionContributor {
         if (parameters.getInvocationCount() > 0) {
           ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dataContext);
           if (lists != null) {
-            CompletionResultSet insensitive = result.caseInsensitive();
+            String prefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters);
+            CompletionResultSet insensitive = result.caseInsensitive().withPrefixMatcher(new CamelHumpMatcher(prefix));
             for (ChangeList list : lists) {
               for (Change change : list.getChanges()) {
                 VirtualFile virtualFile = change.getVirtualFile();
                 if (virtualFile != null) {
-                  insensitive.addElement(LookupElementBuilder.create(virtualFile.getName()).
-                    withIcon(VirtualFilePresentation.getIcon(virtualFile)));
+                  LookupElementBuilder element = LookupElementBuilder.create(virtualFile.getName()).
+                    withIcon(VirtualFilePresentation.getIcon(virtualFile));
+                  insensitive.addElement(element);
                 }
               }
             }

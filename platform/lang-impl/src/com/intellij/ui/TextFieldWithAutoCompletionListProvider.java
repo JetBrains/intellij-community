@@ -129,6 +129,10 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
 
   @Nullable
   public String getPrefix(@NotNull final CompletionParameters parameters) {
+    return getCompletionPrefix(parameters);
+  }
+
+  public static String getCompletionPrefix(CompletionParameters parameters) {
     String text = parameters.getOriginalFile().getText();
     int i = text.lastIndexOf(' ', parameters.getOffset() - 1) + 1;
     return text.substring(i, parameters.getOffset());
