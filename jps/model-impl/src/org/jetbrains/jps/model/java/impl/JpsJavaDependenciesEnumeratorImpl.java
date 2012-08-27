@@ -4,6 +4,7 @@ import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.module.JpsSdkDependency;
 import org.jetbrains.jps.model.module.impl.JpsDependenciesEnumeratorBase;
 
 import java.util.Collection;
@@ -75,7 +76,7 @@ public class JpsJavaDependenciesEnumeratorImpl extends JpsDependenciesEnumerator
 
   @Override
   protected boolean shouldProcess(JpsModule module, JpsDependencyElement element) {
-    boolean exported = false;
+    boolean exported = !(element instanceof JpsSdkDependency);
     JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getDependencyExtension(element);
     if (extension != null) {
       exported = extension.isExported();

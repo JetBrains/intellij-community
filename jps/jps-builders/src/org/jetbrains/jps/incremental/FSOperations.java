@@ -99,27 +99,7 @@ public class FSOperations {
   }
 
   private static Set<JpsModule> getDependentModulesRecursively(final JpsModule module, final JpsJavaClasspathKind kind) {
-    final Set<JpsModule> result = new HashSet<JpsModule>();
-
-    new Object() {
-      final Set<JpsModule> processed = new HashSet<JpsModule>();
-
-      void traverse(JpsModule module, JpsJavaClasspathKind kind, Collection<JpsModule> result, boolean exportedOnly) {
-        if (processed.add(module)) {
-          for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module, kind, exportedOnly)) {
-            if (item instanceof JpsModuleSourceDependency) {
-              result.add(module);
-            }
-            else if (item instanceof JpsModuleDependency) {
-              traverse(((JpsModuleDependency)item).getModule(), kind, result, true);
-            }
-          }
-        }
-      }
-
-    }.traverse(module, kind, result, false);
-
-    return result;
+    return JpsJavaExtensionService.dependencies(module).includedIn(kind).recursively().exportedOnly().getModules();
   }
 
   public static void processFilesToRecompile(CompileContext context, ModuleChunk chunk, FileProcessor processor) throws IOException {
