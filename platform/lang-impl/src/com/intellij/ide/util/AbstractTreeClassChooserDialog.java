@@ -46,6 +46,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
+import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,6 +66,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> extends DialogWrapper implements TreeChooser<T> {
   private Tree myTree;
@@ -74,7 +76,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   private TabbedPaneWrapper myTabbedPane;
   private ChooseByNamePanel myGotoByNamePanel;
   private final GlobalSearchScope myScope;
-  @NotNull private final Filter<T> myClassFilter;
+  @NotNull private final Filter<Object> myClassFilter;
   private final T myBaseClass;
   private T myInitialClass;
   private final boolean myIsShowMembers;
@@ -90,7 +92,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   public AbstractTreeClassChooserDialog(String title,
                                         Project project,
                                         GlobalSearchScope scope,
-                                        @Nullable Filter<T> classFilter,
+                                        @Nullable Filter<Object> classFilter,
                                         @Nullable T initialClass) {
     this(title, project, scope, classFilter, null, initialClass, false);
   }
@@ -98,7 +100,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   public AbstractTreeClassChooserDialog(String title,
                                         Project project,
                                         GlobalSearchScope scope,
-                                        @Nullable Filter<T> classFilter,
+                                        @Nullable Filter<Object> classFilter,
                                         T baseClass,
                                         @Nullable T initialClass,
                                         boolean isShowMembers) {
@@ -222,6 +224,13 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
         }
       }
 
+      @NotNull
+      @Override
+      protected Set<Object> filter(@NotNull Set<Object> elements) {
+        return doFilter(elements);
+      }
+
+      @Override
       protected void initUI(ChooseByNamePopupComponent.Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
         super.initUI(callback, modalityState, allowMultipleSelection);
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
@@ -257,6 +266,16 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     );
 
     return myTabbedPane.getComponent();
+  }
+
+  private Set<Object> doFilter(Set<Object> elements) {
+    Set<Object> result = new HashSet<Object>();
+    for (Object o : elements) {
+      if (getFilter().isAccepted(o)) {
+        result.add(o);
+      }
+    }
+    return result;
   }
 
   protected ChooseByNameModel createChooseByNameModel() {
@@ -389,7 +408,7 @@ abstract public class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   @NotNull
-  protected Filter<T> getFilter() {
+  protected Filter<Object> getFilter() {
     return myClassFilter;
   }
 

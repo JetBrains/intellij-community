@@ -174,7 +174,11 @@ public abstract class ChooseByNameBase {
    * @param initialText  initial text which will be in the lookup text field
    * @param initialIndex
    */
-  protected ChooseByNameBase(Project project, ChooseByNameModel model, ChooseByNameItemProvider provider, String initialText, final int initialIndex) {
+  protected ChooseByNameBase(Project project,
+                             ChooseByNameModel model,
+                             ChooseByNameItemProvider provider,
+                             String initialText,
+                             final int initialIndex) {
     myProject = project;
     myModel = model;
     myInitialText = initialText;
@@ -354,7 +358,11 @@ public abstract class ChooseByNameBase {
     myCardContainer.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 4));  // space between checkbox and filter/show all in view buttons
 
     final String checkBoxName = myModel.getCheckBoxName();
-    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName + (myCheckBoxShortcut != null ? " (" + KeymapUtil.getShortcutsText(myCheckBoxShortcut.getShortcuts()) + ")" : "") : "");
+    myCheckBox = new JCheckBox(checkBoxName != null ? checkBoxName +
+                                                      (myCheckBoxShortcut != null ? " (" +
+                                                                                    KeymapUtil
+                                                                                      .getShortcutsText(myCheckBoxShortcut.getShortcuts()) +
+                                                                                    ")" : "") : "");
     myCheckBox.setAlignmentX(SwingConstants.RIGHT);
 
     if (!SystemInfo.isMac) {
@@ -383,10 +391,10 @@ public abstract class ChooseByNameBase {
 
 
     final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new ShowFindUsagesAction(){
+    group.add(new ShowFindUsagesAction() {
       @Override
       public PsiElement[][] getElements() {
-        if (myListModel == null) return new PsiElement[][] {PsiElement.EMPTY_ARRAY, PsiElement.EMPTY_ARRAY};
+        if (myListModel == null) return new PsiElement[][]{PsiElement.EMPTY_ARRAY, PsiElement.EMPTY_ARRAY};
         final Object[] objects = myListModel.toArray();
         final List<PsiElement> prefixMatchElements = new ArrayList<PsiElement>(objects.length);
         final List<PsiElement> nonPrefixMatchElements = new ArrayList<PsiElement>(objects.length);
@@ -405,7 +413,8 @@ public abstract class ChooseByNameBase {
             curElements = nonPrefixMatchElements;
           }
         }
-        return new PsiElement[][]{PsiUtilCore.toPsiElementArray(prefixMatchElements), PsiUtilCore.toPsiElementArray(nonPrefixMatchElements)};
+        return new PsiElement[][]{PsiUtilCore.toPsiElementArray(prefixMatchElements),
+          PsiUtilCore.toPsiElementArray(nonPrefixMatchElements)};
       }
     });
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, group, true);
@@ -453,7 +462,7 @@ public abstract class ChooseByNameBase {
 
     if (checkBoxName != null) {
       if (myCheckBox != null && myCheckBoxShortcut != null) {
-        new AnAction("change goto check box", null ,null) {
+        new AnAction("change goto check box", null, null) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             myCheckBox.setSelected(!myCheckBox.isSelected());
@@ -618,7 +627,6 @@ public abstract class ChooseByNameBase {
             }
             else {
               doClose(true);
-
             }
           }
           return true;
@@ -801,6 +809,12 @@ public abstract class ChooseByNameBase {
 
   public String[] getNames(boolean checkboxState) {
     return checkboxState ? myNames[1] : myNames[0];
+  }
+
+
+  @NotNull
+  protected Set<Object> filter(@NotNull Set<Object> elements) {
+    return elements;
   }
 
   protected abstract boolean isCheckboxVisible();
@@ -1056,7 +1070,7 @@ public abstract class ChooseByNameBase {
     }
 
     if (bestPosition < count - 1 && myListModel.getElementAt(bestPosition) == NON_PREFIX_SEPARATOR) {
-      bestPosition ++;
+      bestPosition++;
     }
 
     return bestPosition;
@@ -1256,7 +1270,8 @@ public abstract class ChooseByNameBase {
         if (myDropdownPopup != null && myDropdownPopup.isVisible()) {
           sink.put(key, myDropdownPopup);
         }
-      } else if (LangDataKeys.PARENT_POPUP.equals(key)) {
+      }
+      else if (LangDataKeys.PARENT_POPUP.equals(key)) {
         if (myTextPopup != null && myTextPopup.isVisible()) {
           sink.put(key, myTextPopup);
         }
@@ -1480,7 +1495,7 @@ public abstract class ChooseByNameBase {
       }
       showCard(cardToShow, 0);
 
-      myElements = elements;
+      myElements = filter(elements);
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
@@ -1597,8 +1612,9 @@ public abstract class ChooseByNameBase {
         final LinkedHashSet<Object> prefixMatchElementsArray = new LinkedHashSet<Object>();
         final LinkedHashSet<Object> nonPrefixMatchElementsArray = new LinkedHashSet<Object>();
         hideHint();
-        ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true){
+        ProgressManager.getInstance().run(new Task.Modal(myProject, prefixPattern, true) {
           private ChooseByNameBase.CalcElementsThread myCalcElementsThread;
+
           @Override
           public void run(@NotNull final ProgressIndicator indicator) {
             ensureNamesLoaded(checkboxState);
@@ -1664,18 +1680,22 @@ public abstract class ChooseByNameBase {
             }
           }
         });
-      } else {
+      }
+      else {
         hideHint();
         showUsageView(targets, usages, presentation);
       }
     }
 
-    private void fillUsages(Collection<Object> matchElementsArray, List<Usage> usages, List<PsiElement> targets, final boolean separateGroup) {
+    private void fillUsages(Collection<Object> matchElementsArray,
+                            List<Usage> usages,
+                            List<PsiElement> targets,
+                            final boolean separateGroup) {
       for (Object o : matchElementsArray) {
         if (o instanceof PsiElement) {
           PsiElement element = (PsiElement)o;
           if (element.getTextRange() != null) {
-            usages.add(new UsageInfo2UsageAdapter(new UsageInfo(element){
+            usages.add(new UsageInfo2UsageAdapter(new UsageInfo(element) {
               @Override
               public boolean isDynamicUsage() {
                 return separateGroup || super.isDynamicUsage();
@@ -1694,7 +1714,8 @@ public abstract class ChooseByNameBase {
                                @NotNull UsageViewPresentation presentation) {
       UsageViewManager
         .getInstance(myProject).showUsages(targets.isEmpty() ? UsageTarget.EMPTY_ARRAY
-                                                             : PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets)),
+                                                             : PsiElement2UsageTargetAdapter
+                                             .convert(PsiUtilCore.toPsiElementArray(targets)),
                                            usages.toArray(new Usage[usages.size()]), presentation);
     }
 
