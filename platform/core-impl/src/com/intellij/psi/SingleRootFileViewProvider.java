@@ -109,7 +109,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
       fileType = FileTypeRegistry.getInstance().detectFileTypeFromContent(file);
     }
     if (fileType.isBinary()) return Language.ANY;
-    if (isTooLarge(file)) return PlainTextLanguage.INSTANCE;
+    if (isTooLargeForIntelligence(file)) return PlainTextLanguage.INSTANCE;
 
     if (fileType instanceof LanguageFileType) {
       return LanguageSubstitutors.INSTANCE.substituteLanguage(((LanguageFileType)fileType).getLanguage(), file, project);
@@ -266,7 +266,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     if (fileType.isBinary() || file.isSpecialFile()) {
       return new PsiBinaryFileImpl((PsiManagerImpl)getManager(), this);
     }
-    if (!isTooLarge(file)) {
+    if (!isTooLargeForIntelligence(file)) {
       final PsiFile psiFile = createFile(getBaseLanguage());
       if (psiFile != null) return psiFile;
     }
@@ -278,7 +278,13 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     return new PsiPlainTextFileImpl(this);
   }
 
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   public static boolean isTooLarge(@NotNull VirtualFile vFile) {
+    return isTooLargeForIntelligence(vFile);
+  }
+
+  public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile) {
     if (!checkFileSizeLimit(vFile)) return false;
     return fileSizeIsGreaterThan(vFile, PersistentFSConstants.getMaxIntellisenseFileSize());
   }
@@ -295,7 +301,7 @@ public class SingleRootFileViewProvider extends UserDataHolderBase implements Fi
     vFile.putUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
   }
 
-  public static boolean isTooLarge(@NotNull VirtualFile vFile, final long contentSize) {
+  public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile, final long contentSize) {
     if (!checkFileSizeLimit(vFile)) return false;
     return contentSize > PersistentFSConstants.getMaxIntellisenseFileSize();
   }
