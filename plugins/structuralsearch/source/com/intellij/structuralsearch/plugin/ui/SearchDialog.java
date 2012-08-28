@@ -5,7 +5,6 @@ import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindProgressIndicator;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -39,6 +38,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.NavigateSearchResultsDial
 import com.intellij.structuralsearch.plugin.ui.actions.DoSearchAction;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparatorWithMnemonic;
 import com.intellij.usages.*;
 import com.intellij.util.Alarm;
@@ -304,6 +304,8 @@ public class SearchDialog extends DialogWrapper implements ConfigurationCreator 
     );
 
     jLabel.setLabelFor(fileTypes);
+    jLabel2.setLabelFor(contexts);
+    jLabel3.setLabelFor(dialects);
 
     detectFileTypeAndDialect();
 
