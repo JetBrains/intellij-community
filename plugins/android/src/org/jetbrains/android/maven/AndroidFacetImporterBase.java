@@ -210,34 +210,53 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         final String apklibModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(depArtifact.getMavenId());
         Module apklibModule = moduleModel.findModuleByName(apklibModuleName);
         
-        if (apklibModule == null || apklibModule.getUserData(MODULE_IMPORTED) == null) {
+        if ((apklibModule == null || apklibModule.getUserData(MODULE_IMPORTED) == null) &&
+            MavenConstants.SCOPE_COMPILE.equals(depArtifact.getScope())) {
           apklibModule =
             importExternalApklibArtifact(project, rootModelAdapter, apklibModule, modelsProvider, mavenProject, mavenTree, depArtifact,
                                          moduleModel, mavenProject2ModuleName);
           if (apklibModule != null) {
             apklibModule.putUserData(MODULE_IMPORTED, Boolean.TRUE);
+            final Module finalGenModule = apklibModule;
+
+            tasks.add(new MavenProjectsProcessorTask() {
+              @Override
+              public void perform(Project project,
+                                  MavenEmbeddersManager embeddersManager,
+                                  MavenConsole console,
+                                  MavenProgressIndicator indicator)
+                throws MavenProcessCanceledException {
+                finalGenModule.putUserData(MODULE_IMPORTED, null);
+              }
+            });
           }
         }
 
-        if (apklibModule != null) {
-          final Module finalGenModule = apklibModule;
-          tasks.add(new MavenProjectsProcessorTask() {
-            @Override
-            public void perform(Project project,
-                                MavenEmbeddersManager embeddersManager,
-                                MavenConsole console,
-                                MavenProgressIndicator indicator)
-              throws MavenProcessCanceledException {
-              finalGenModule.putUserData(MODULE_IMPORTED, null);
-            }
-          });
-        }
-
         if (ArrayUtil.find(rootModel.getDependencyModuleNames(), apklibModuleName) < 0) {
-          addCompileModuleDependency(modelsProvider, rootModel, apklibModuleName);
+          final DependencyScope scope = getApklibModuleDependencyScope(depArtifact);
+
+          if (scope != null) {
+            addModuleDependency(modelsProvider, rootModel, apklibModuleName, scope);
+          }
         }
       }
     }
+  }
+
+  @Nullable
+  private static DependencyScope getApklibModuleDependencyScope(@NotNull MavenArtifact apklibArtifact) {
+    final String scope = apklibArtifact.getScope();
+
+    if (MavenConstants.SCOPE_COMPILE.equals(scope)) {
+      return DependencyScope.COMPILE;
+    }
+    else if (MavenConstants.SCOPE_PROVIDEED.equals(scope)) {
+      return DependencyScope.PROVIDED;
+    }
+    else if (MavenConstants.SCOPE_TEST.equals(scope)) {
+      return DependencyScope.TEST;
+    }
+    return null;
   }
 
   private static void removeExtApklibDependencies(ModifiableRootModel modifiableRootModel) {
@@ -268,9 +287,10 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     return false;
   }
 
-  private static void addCompileModuleDependency(@NotNull MavenModifiableModelsProvider modelsProvider,
-                                                 @NotNull ModifiableRootModel rootModel,
-                                                 @NotNull final String moduleName) {
+  private static void addModuleDependency(@NotNull MavenModifiableModelsProvider modelsProvider,
+                                          @NotNull ModifiableRootModel rootModel,
+                                          @NotNull final String moduleName,
+                                          @NotNull DependencyScope compile) {
     if (findModuleDependency(rootModel, moduleName) != null) {
       return;
     }
@@ -280,7 +300,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     final ModuleOrderEntry entry = module != null
                                    ? rootModel.addModuleOrderEntry(module)
                                    : rootModel.addInvalidModuleEntry(moduleName);
-    entry.setScope(DependencyScope.COMPILE);
+    entry.setScope(compile);
   }
 
   private static ModuleOrderEntry findModuleDependency(ModifiableRootModel rootModel, final String moduleName) {
@@ -452,19 +472,20 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         final String type = depArtifactInfo.getType();
         final String scope = depArtifactInfo.getScope();
 
-        if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(type)) {
+        if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(type) &&
+            MavenConstants.SCOPE_COMPILE.equals(scope)) {
           final MavenProject depProject = mavenTree.findProject(depMavenId);
 
           if (depProject != null) {
             final String depModuleName = mavenProject2ModuleName.get(depProject);
 
             if (depModuleName != null) {
-              addCompileModuleDependency(modelsProvider, apklibModuleModel, depModuleName);
+              addModuleDependency(modelsProvider, apklibModuleModel, depModuleName, DependencyScope.COMPILE);
             }
           }
           else {
             final String depApklibGenModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(depMavenId);
-            addCompileModuleDependency(modelsProvider, apklibModuleModel, depApklibGenModuleName);
+            addModuleDependency(modelsProvider, apklibModuleModel, depApklibGenModuleName, DependencyScope.COMPILE);
           }
         }
         else {
@@ -581,7 +602,8 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       final MavenProjectsManager mavenProjectsManager = MavenProjectsManager.getInstance(project);
 
       if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(depArtifact.getType()) &&
-          mavenProjectsManager.findProject(depArtifact) == null) {
+          mavenProjectsManager.findProject(depArtifact) == null &&
+          MavenConstants.SCOPE_COMPILE.equals(depArtifact.getScope())) {
 
         doResolveApklibArtifact(project, depArtifact, embedder, mavenProjectsManager, mavenProject.getName());
       }
