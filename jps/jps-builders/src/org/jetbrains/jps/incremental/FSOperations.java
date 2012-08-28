@@ -47,22 +47,22 @@ public class FSOperations {
     final RootDescriptor rd = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, file);
     if (rd != null) {
       final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.registerDeleted(rd.module, file, rd.isTestRoot, pd.timestamps.getStorage());
+      pd.fsState.registerDeleted(rd.target, file, pd.timestamps.getStorage());
     }
   }
 
   public static void markDirty(CompileContext context, final ModuleChunk chunk) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     pd.fsState.clearContextRoundData(context);
-    final Set<JpsModule> modules = chunk.getModules();
-    for (JpsModule module : modules) {
-      markDirtyFiles(context, module, pd.timestamps.getStorage(), true, context.isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
+    for (RealModuleBuildTarget target : chunk.getTargets()) {
+      markDirtyFiles(context, target, pd.timestamps.getStorage(), true, context.isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
     }
   }
 
   public static void markDirtyRecursively(CompileContext context, ModuleChunk chunk) throws IOException {
-    final Set<JpsModule> modules = chunk.getModules();
-    final Set<JpsModule> dirtyModules = new HashSet<JpsModule>(modules);
+    Set<JpsModule> modules = chunk.getModules();
+    Set<RealModuleBuildTarget> targets = chunk.getTargets();
+    final Set<RealModuleBuildTarget> dirtyTargets = new HashSet<RealModuleBuildTarget>(targets);
 
     // now mark all modules that depend on dirty modules
     final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(context.isCompilingTests());
@@ -78,7 +78,7 @@ public class FSOperations {
         for (final JpsModule module : moduleChunk.getModules()) {
           final Set<JpsModule> deps = getDependentModulesRecursively(module, classpathKind);
           if (Utils.intersects(deps, modules)) {
-            dirtyModules.addAll(moduleChunk.getModules());
+            dirtyTargets.addAll(moduleChunk.getTargets());
             break;
           }
         }
@@ -86,14 +86,14 @@ public class FSOperations {
     }
 
     final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
-    for (JpsModule module : dirtyModules) {
-      markDirtyFiles(context, module, timestamps, true, context.isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
+    for (RealModuleBuildTarget target : dirtyTargets) {
+      markDirtyFiles(context, target, timestamps, true, context.isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
     }
 
     if (context.isMake()) {
       // mark as non-incremental only the module that triggered non-incremental change
-      for (JpsModule module : modules) {
-        context.markNonIncremental(module);
+      for (RealModuleBuildTarget target : targets) {
+        context.markNonIncremental(target);
       }
     }
   }
@@ -125,23 +125,23 @@ public class FSOperations {
                                              final Condition<JpsModule> moduleFilter,
                                              final FileProcessor processor) throws IOException {
     final BuildFSState fsState = context.getProjectDescriptor().fsState;
-    for (JpsModule module : chunk.getModules()) {
-      if (moduleFilter.value(module)) {
-        fsState.processFilesToRecompile(context, module, processor);
+    for (RealModuleBuildTarget target : chunk.getTargets()) {
+      if (moduleFilter.value(target.getModule())) {
+        fsState.processFilesToRecompile(context, target, processor);
       }
     }
   }
 
   static void markDirtyFiles(CompileContext context,
-                             JpsModule module,
+                             RealModuleBuildTarget target,
                              final Timestamps tsStorage,
                              final boolean forceMarkDirty,
                              @NotNull final DirtyMarkScope scope,
                              @Nullable final Set<File> currentFiles) throws IOException {
     final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
-    final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(module));
+    final Set<File> excludes = new HashSet<File>(rootsIndex.getModuleExcludes(target.getModule()));
     final Collection<RootDescriptor> roots = new ArrayList<RootDescriptor>();
-    for (RootDescriptor rd : rootsIndex.getModuleRoots(context, module.getName())) {
+    for (RootDescriptor rd : rootsIndex.getModuleRoots(context, target.getModuleName())) {
       roots.add(rd);
     }
     for (RootDescriptor rd : roots) {

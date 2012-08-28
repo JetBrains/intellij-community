@@ -19,7 +19,7 @@ import java.util.*;
  *         Date: 10/20/11
  */
 public class Utils {
-  public static final Key<Map<String, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
+  public static final Key<Map<ModuleBuildTarget, Collection<String>>> REMOVED_SOURCES_KEY = Key.create("_removed_sources_");
   public static final Key<Boolean> PROCEED_ON_ERROR_KEY = Key.create("_proceed_on_error_");
   public static final Key<Boolean> ERRORS_DETECTED_KEY = Key.create("_errors_detected_");
   private static volatile File ourSystemRoot = new File(System.getProperty("user.home"), ".idea-build");
@@ -133,7 +133,7 @@ public class Utils {
   }
 
   public static boolean hasRemovedSources(CompileContext context) {
-    final Map<String, Collection<String>> removed = REMOVED_SOURCES_KEY.get(context);
+    final Map<ModuleBuildTarget, Collection<String>> removed = REMOVED_SOURCES_KEY.get(context);
     return removed != null && !removed.isEmpty();
   }
 

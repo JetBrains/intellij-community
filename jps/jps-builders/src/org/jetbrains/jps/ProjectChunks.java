@@ -24,9 +24,11 @@ public class ProjectChunks {
   private final Map<JpsModule, ModuleChunk> mapping = new HashMap<JpsModule, ModuleChunk>();
   private final JpsJavaClasspathKind classpathKind;
   private final JpsProject project;
+  private final boolean myTest;
 
-  public ProjectChunks(JpsProject project, JpsJavaClasspathKind classpathKind) {
-    this.classpathKind = classpathKind;
+  public ProjectChunks(JpsProject project, boolean test) {
+    myTest = test;
+    this.classpathKind = JpsJavaClasspathKind.compile(test);
     this.project = project;
   }
 
@@ -73,7 +75,7 @@ public class ProjectChunks {
           final JpsModule node = builder.getNodeByTNumber(myTNumber + j);
           chunkNodes.add(node);
         }
-        chunks.add(new ModuleChunk(chunkNodes));
+        chunks.add(new ModuleChunk(chunkNodes, myTest));
 
         myTNumber += size;
         return true;

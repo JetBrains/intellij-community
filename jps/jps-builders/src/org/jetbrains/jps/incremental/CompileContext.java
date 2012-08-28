@@ -39,7 +39,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
   AnnotationProcessingProfile getAnnotationProcessingProfile(JpsModule module);
 
 
-  boolean shouldDifferentiate(ModuleChunk chunk, boolean forTests);
+  boolean shouldDifferentiate(ModuleChunk chunk);
 
   CanceledStatus getCancelStatus();
 
@@ -55,7 +55,7 @@ public interface CompileContext extends UserDataHolder, MessageHandler {
 
   long getCompilationStartStamp();
 
-  void markNonIncremental(JpsModule module);
+  void markNonIncremental(RealModuleBuildTarget target);
 
-  void clearNonIncrementalMark(JpsModule module);
+  void clearNonIncrementalMark(RealModuleBuildTarget target);
 }

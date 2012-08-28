@@ -80,7 +80,7 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
 
   private ModuleChunk createChunk(String moduleName) {
     def module = myJpsProject.modules.find {it.name == moduleName}
-    return new ModuleChunk([module] as Set)
+    return new ModuleChunk([module] as Set, false)
   }
 
   private def assertClasspath(List<String> expected, List<String> classpath) {

@@ -2,6 +2,8 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.Project;
+import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -15,7 +17,7 @@ import java.util.Set;
  *         Date: 9/17/11
  */
 public class ModulesScope extends CompileScope {
-  private final Set<String> myModules;
+  private final Set<BuildTarget> myTargets;
 
   public ModulesScope(Project project,
                       JpsProject jpsProject,
@@ -24,22 +26,24 @@ public class ModulesScope extends CompileScope {
                       boolean isForcedCompilation,
                       boolean includeTests) {
     super(project, jpsProject, artifacts, isForcedCompilation, includeTests);
-    myModules = new HashSet<String>();
+    myTargets = new HashSet<BuildTarget>();
     for (JpsModule module : modules) {
-      myModules.add(module.getName());
+      myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+      if (includeTests) {
+        myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.TEST));
+      }
     }
   }
 
-  public boolean isRecompilationForced(@NotNull String moduleName) {
-    return myForcedCompilation &&
-           isAffected(moduleName);
+  public boolean isRecompilationForced(@NotNull BuildTarget target) {
+    return myForcedCompilation && isAffected(target);
   }
 
-  public boolean isAffected(@NotNull String moduleName) {
-    return myModules.contains(moduleName);
+  public boolean isAffected(@NotNull BuildTarget target) {
+    return myTargets.contains(target);
   }
 
-  public boolean isAffected(String moduleName, @NotNull File file) {
+  public boolean isAffected(BuildTarget target, @NotNull File file) {
     return true; // for speed reasons
   }
 

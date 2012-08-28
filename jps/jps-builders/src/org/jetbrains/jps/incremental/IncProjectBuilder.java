@@ -23,7 +23,6 @@ import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.java.JavaBuilderLogger;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.*;
-import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -81,8 +80,8 @@ public class IncProjectBuilder {
     myBuilderParams = builderParams;
     myCancelStatus = cs;
     myConstantSearch = constantSearch;
-    myProductionChunks = new ProjectChunks(pd.jpsProject, JpsJavaClasspathKind.PRODUCTION_COMPILE);
-    myTestChunks = new ProjectChunks(pd.jpsProject, JpsJavaClasspathKind.TEST_COMPILE);
+    myProductionChunks = new ProjectChunks(pd.jpsProject, false);
+    myTestChunks = new ProjectChunks(pd.jpsProject, true);
     myTotalModulesWork = (float)pd.rootsIndex.getTotalModuleCount() * 2;  /* multiply by 2 to reflect production and test sources */
     myTotalModuleLevelBuilderCount = builderRegistry.getModuleLevelBuilderCount();
   }
@@ -565,15 +564,14 @@ public class IncProjectBuilder {
 
           try {
             // restore deleted paths that were not procesesd by 'integrate'
-            final Map<String, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+            final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
             if (map != null) {
-              final boolean forTests = context.isCompilingTests();
-              for (Map.Entry<String, Collection<String>> entry : map.entrySet()) {
-                final String moduleName = entry.getKey();
+              for (Map.Entry<ModuleBuildTarget, Collection<String>> entry : map.entrySet()) {
+                final ModuleBuildTarget target = entry.getKey();
                 final Collection<String> paths = entry.getValue();
                 if (paths != null) {
                   for (String path : paths) {
-                    myProjectDescriptor.fsState.registerDeleted(moduleName, new File(path), forTests, null);
+                    myProjectDescriptor.fsState.registerDeleted(target, new File(path), null);
                   }
                 }
               }
@@ -640,17 +638,16 @@ public class IncProjectBuilder {
   private void processDeletedPaths(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     try {
       // cleanup outputs
-      final Map<String, Collection<String>> removedSources = new HashMap<String, Collection<String>>();
+      final Map<ModuleBuildTarget, Collection<String>> removedSources = new HashMap<ModuleBuildTarget, Collection<String>>();
 
-      for (JpsModule module : chunk.getModules()) {
-        final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(module.getName(),
-                                                                                                    context.isCompilingTests());
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        final Collection<String> deletedPaths = myProjectDescriptor.fsState.getAndClearDeletedPaths(target);
         if (deletedPaths.isEmpty()) {
           continue;
         }
-        removedSources.put(module.getName(), deletedPaths);
+        removedSources.put(target, deletedPaths);
 
-        final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), context.isCompilingTests());
+        final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(), context.isCompilingTests());
         // actually delete outputs associated with removed paths
         for (String deletedSource : deletedPaths) {
           // deleting outputs corresponding to non-existing source
@@ -691,9 +688,9 @@ public class IncProjectBuilder {
         }
       }
       if (!removedSources.isEmpty()) {
-        final Map<String, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
+        final Map<ModuleBuildTarget, Collection<String>> existing = Utils.REMOVED_SOURCES_KEY.get(context);
         if (existing != null) {
-          for (Map.Entry<String, Collection<String>> entry : existing.entrySet()) {
+          for (Map.Entry<ModuleBuildTarget, Collection<String>> entry : existing.entrySet()) {
             final Collection<String> paths = removedSources.get(entry.getKey());
             if (paths != null) {
               paths.addAll(entry.getValue());
@@ -905,16 +902,16 @@ public class IncProjectBuilder {
 
     if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
       boolean marked = false;
-      for (JpsModule module : chunk.getModules()) {
+      for (RealModuleBuildTarget target : chunk.getTargets()) {
         if (context.isMake()) {
           // ensure non-incremental flag cleared
-          context.clearNonIncrementalMark(module);
+          context.clearNonIncrementalMark(target);
         }
         if (context.isProjectRebuild()) {
-          fsState.markInitialScanPerformed(module.getName(), context.isCompilingTests());
+          fsState.markInitialScanPerformed(target);
         }
         final Timestamps timestamps = pd.timestamps.getStorage();
-        final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, module);
+        final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, target.getModuleName());
         for (RootDescriptor rd : roots) {
           if (context.isCompilingTests() ? rd.isTestRoot : !rd.isTestRoot) {
             marked |= fsState.markAllUpToDate(context.getScope(), rd, timestamps, context.getCompilationStartStamp());
@@ -931,38 +928,38 @@ public class IncProjectBuilder {
   private static void ensureFSStateInitialized(CompileContext context, ModuleChunk chunk) throws IOException {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     final Timestamps timestamps = pd.timestamps.getStorage();
-    for (JpsModule module : chunk.getModules()) {
+    for (RealModuleBuildTarget target : chunk.getTargets()) {
       if (context.isProjectRebuild()) {
-        FSOperations.markDirtyFiles(context, module, timestamps, true,
+        FSOperations.markDirtyFiles(context, target, timestamps, true,
                                     context.isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, null);
-        updateOutputRootsLayout(context, module);
+        updateOutputRootsLayout(context, target);
       }
       else {
         if (context.isMake()) {
-          if (pd.fsState.markInitialScanPerformed(module.getName(), context.isCompilingTests())) {
-            initModuleFSState(context, module);
-            updateOutputRootsLayout(context, module);
+          if (pd.fsState.markInitialScanPerformed(target)) {
+            initModuleFSState(context, target);
+            updateOutputRootsLayout(context, target);
           }
         }
         else {
           // forced compilation mode
-          if (context.getScope().isRecompilationForced(module.getName())) {
-            FSOperations.markDirtyFiles(context, module, timestamps, true,
+          if (context.getScope().isRecompilationForced(target)) {
+            FSOperations.markDirtyFiles(context, target, timestamps, true,
                                         context.isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION,
                                         null);
-            updateOutputRootsLayout(context, module);
+            updateOutputRootsLayout(context, target);
           }
         }
       }
     }
   }
 
-  private static void initModuleFSState(CompileContext context, JpsModule module) throws IOException {
+  private static void initModuleFSState(CompileContext context, RealModuleBuildTarget target) throws IOException {
     boolean forceMarkDirty = false;
-    final File currentOutput = context.getProjectPaths().getModuleOutputDir(module, context.isCompilingTests());
+    final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
     final ProjectDescriptor pd = context.getProjectDescriptor();
     if (currentOutput != null) {
-      Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(module.getName());
+      Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
       if (outputsPair != null) {
         final String previousPath = context.isCompilingTests() ? outputsPair.second : outputsPair.first;
         forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
@@ -974,29 +971,29 @@ public class IncProjectBuilder {
 
     final Timestamps timestamps = pd.timestamps.getStorage();
     final HashSet<File> currentFiles = new HashSet<File>();
-    FSOperations.markDirtyFiles(context, module, timestamps, forceMarkDirty, context.isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, currentFiles);
+    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, context.isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, currentFiles);
 
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;
-    fsState.clearDeletedPaths(module.getName(), context.isCompilingTests());
-    final SourceToOutputMapping sourceToOutputMap = pd.dataManager.getSourceToOutputMap(module.getName(), context.isCompilingTests());
+    fsState.clearDeletedPaths(target);
+    final SourceToOutputMapping sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target.getModuleName(), target.isTests());
     for (final Iterator<String> it = sourceToOutputMap.getKeysIterator(); it.hasNext();) {
       final String path = it.next();
       // can check if the file exists
       final File file = new File(path);
       if (!currentFiles.contains(file)) {
-        fsState.registerDeleted(module.getName(), file, context.isCompilingTests(), timestamps);
+        fsState.registerDeleted(target, file, timestamps);
       }
     }
   }
 
-  private static void updateOutputRootsLayout(CompileContext context, JpsModule module) throws IOException {
-    final File currentOutput = context.getProjectPaths().getModuleOutputDir(module, context.isCompilingTests());
+  private static void updateOutputRootsLayout(CompileContext context, RealModuleBuildTarget target) throws IOException {
+    final File currentOutput = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
     if (currentOutput == null) {
       return;
     }
     final ModuleOutputRootsLayout outputRootsLayout = context.getProjectDescriptor().dataManager.getOutputRootsLayout();
-    Pair<String, String> outputsPair = outputRootsLayout.getState(module.getName());
+    Pair<String, String> outputsPair = outputRootsLayout.getState(target.getModuleName());
     // update data
     final String productionPath;
     final String testPath;
@@ -1008,7 +1005,7 @@ public class IncProjectBuilder {
       productionPath = FileUtil.toSystemIndependentName(currentOutput.getPath());
       testPath = outputsPair != null? outputsPair.second : "";
     }
-    outputRootsLayout.update(module.getName(), Pair.create(productionPath, testPath));
+    outputRootsLayout.update(target.getModuleName(), Pair.create(productionPath, testPath));
   }
 
   private static class ChunkGroup {

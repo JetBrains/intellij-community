@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.*;
 import org.jetbrains.jps.api.CanceledStatus;
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.FileDeletedEvent;
@@ -29,7 +30,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private final ProjectChunks myTestChunks;
   private final MessageHandler myDelegateMessageHandler;
   private volatile boolean myCompilingTests = false;
-  private final Set<Pair<JpsModule, FSOperations.DirtyMarkScope>> myNonIncrementalModules = new HashSet<Pair<JpsModule, FSOperations.DirtyMarkScope>>();
+  private final Set<ModuleBuildTarget> myNonIncrementalModules = new HashSet<ModuleBuildTarget>();
 
   private final ProjectPaths myProjectPaths;
   private final long myCompilationStartStamp;
@@ -140,22 +141,21 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void markNonIncremental(JpsModule module) {
+  public void markNonIncremental(RealModuleBuildTarget target) {
     if (!isCompilingTests()) {
-      myNonIncrementalModules.add(new Pair<JpsModule, FSOperations.DirtyMarkScope>(module, FSOperations.DirtyMarkScope.PRODUCTION));
+      myNonIncrementalModules.add(new RealModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.PRODUCTION));
     }
-    myNonIncrementalModules.add(new Pair<JpsModule, FSOperations.DirtyMarkScope>(module, FSOperations.DirtyMarkScope.TESTS));
+    myNonIncrementalModules.add(new RealModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.TEST));
   }
 
   @Override
-  public boolean shouldDifferentiate(ModuleChunk chunk, boolean forTests) {
+  public boolean shouldDifferentiate(ModuleChunk chunk) {
     if (!isMake()) {
       // the check makes sense only in make mode
       return true;
     }
-    final FSOperations.DirtyMarkScope dirtyScope = forTests ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION;
-    for (JpsModule module : chunk.getModules()) {
-      if (myNonIncrementalModules.contains(new Pair<JpsModule, FSOperations.DirtyMarkScope>(module, dirtyScope))) {
+    for (ModuleBuildTarget target : chunk.getTargets()) {
+      if (myNonIncrementalModules.contains(target)) {
         return false;
       }
     }
@@ -184,11 +184,8 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void clearNonIncrementalMark(JpsModule module) {
-    final Pair<JpsModule, FSOperations.DirtyMarkScope> pair =
-      new Pair<JpsModule, FSOperations.DirtyMarkScope>(module, isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS
-                                                                               : FSOperations.DirtyMarkScope.PRODUCTION);
-    myNonIncrementalModules.remove(pair);
+  public void clearNonIncrementalMark(RealModuleBuildTarget target) {
+    myNonIncrementalModules.remove(target);
   }
 
   @Override

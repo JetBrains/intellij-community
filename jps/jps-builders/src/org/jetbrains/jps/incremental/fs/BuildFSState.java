@@ -8,10 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.CompilerExcludes;
 import org.jetbrains.jps.ModuleChunk;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.CompileScope;
-import org.jetbrains.jps.incremental.FileProcessor;
-import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.artifacts.ArtifactFilesDelta;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
@@ -45,8 +42,8 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public boolean markInitialScanPerformed(String moduleName, boolean forTests) {
-    return myAlwaysScanFS || super.markInitialScanPerformed(moduleName, forTests);
+  public boolean markInitialScanPerformed(ModuleBuildTarget target) {
+    return myAlwaysScanFS || super.markInitialScanPerformed(target);
   }
 
   @Override
@@ -55,12 +52,12 @@ public class BuildFSState extends FSState {
   }
 
   @Override
-  public Map<File, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, final String moduleName, boolean forTests) {
+  public Map<File, Set<File>> getSourcesToRecompile(@NotNull CompileContext context, ModuleBuildTarget target) {
     final FilesDelta lastRoundDelta = getRoundDelta(LAST_ROUND_DELTA_KEY, context);
     if (lastRoundDelta != null) {
       return lastRoundDelta.getSourcesToRecompile();
     }
-    return super.getSourcesToRecompile(context, moduleName, forTests);
+    return super.getSourcesToRecompile(context, target);
   }
 
   public Map<Integer, Set<String>> getFilesToRecompile(String artifactName) {
@@ -103,8 +100,7 @@ public class BuildFSState extends FSState {
   public void clearAll() {
     clearContextRoundData(null);
     clearContextChunk(null);
-    myInitialProductionScanPerformed.clear();
-    myInitialTestsScanPerformed.clear();
+    myInitialScanPerformed.clear();
     super.clearAll();
   }
 
@@ -130,22 +126,21 @@ public class BuildFSState extends FSState {
     setRoundDelta(CURRENT_ROUND_DELTA_KEY, context, new FilesDelta());
   }
 
-  public boolean processFilesToRecompile(CompileContext context, final JpsModule module, final FileProcessor processor) throws IOException {
-    final String moduleName = module.getName();
-    final Map<File, Set<File>> data = getSourcesToRecompile(context, moduleName, context.isCompilingTests());
+  public boolean processFilesToRecompile(CompileContext context, final RealModuleBuildTarget target, final FileProcessor processor) throws IOException {
+    final Map<File, Set<File>> data = getSourcesToRecompile(context, target);
     final CompilerExcludes excludes = context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes();
     final CompileScope scope = context.getScope();
     synchronized (data) {
       for (Map.Entry<File, Set<File>> entry : data.entrySet()) {
         final String root = FileUtil.toSystemIndependentName(entry.getKey().getPath());
         for (File file : entry.getValue()) {
-          if (!scope.isAffected(moduleName, file)) {
+          if (!scope.isAffected(target, file)) {
             continue;
           }
           if (excludes.isExcluded(file)) {
             continue;
           }
-          if (!processor.apply(module, file, root)) {
+          if (!processor.apply(target.getModule(), file, root)) {
             return false;
           }
         }
@@ -159,13 +154,13 @@ public class BuildFSState extends FSState {
    */
   public boolean markAllUpToDate(CompileScope scope, final RootDescriptor rd, final Timestamps stamps, final long compilationStartStamp) throws IOException {
     boolean marked = false;
-    final FilesDelta delta = getDelta(rd.module, rd.isTestRoot);
+    final FilesDelta delta = getDelta(rd.target);
     final Set<File> files = delta.clearRecompile(rd.root);
     if (files != null) {
       final CompilerExcludes excludes = scope.getProject().getCompilerConfiguration().getExcludes();
       for (File file : files) {
         if (!excludes.isExcluded(file)) {
-          if (scope.isAffected(rd.module, file)) {
+          if (scope.isAffected(rd.target, file)) {
             final long stamp = FileSystemUtil.lastModified(file);
             if (!rd.isGeneratedSources && stamp > compilationStartStamp) {
               // if the file was modified after the compilation had started,

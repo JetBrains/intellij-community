@@ -75,7 +75,7 @@ public abstract class ModuleLevelBuilder extends Builder {
       final Mappings globalMappings = context.getProjectDescriptor().dataManager.getMappings();
 
       if (!context.isProjectRebuild()) {
-        if (context.shouldDifferentiate(chunk, context.isCompilingTests())) {
+        if (context.shouldDifferentiate(chunk)) {
           context.processMessage(new ProgressMessage("Checking dependencies"));
           final Set<File> allCompiledFiles = getAllCompiledFilesContainer(context);
           final Set<File> allAffectedFiles = getAllAffectedFilesContainer(context);
@@ -227,13 +227,13 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   private static Set<String> getRemovedPaths(CompileContext context, ModuleChunk chunk) {
-    final Map<String, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
     if (map == null) {
       return Collections.emptySet();
     }
     final Set<String> removed = new HashSet<String>();
-    for (JpsModule module : chunk.getModules()) {
-      final Collection<String> modulePaths = map.get(module.getName());
+    for (ModuleBuildTarget target : chunk.getTargets()) {
+      final Collection<String> modulePaths = map.get(target);
       if (modulePaths != null) {
         removed.addAll(modulePaths);
       }
@@ -242,12 +242,12 @@ public abstract class ModuleLevelBuilder extends Builder {
   }
 
   private static void dropRemovedPaths(CompileContext context, ModuleChunk chunk) throws IOException {
-    final Map<String, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    final Map<ModuleBuildTarget, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
     if (map != null) {
-      for (JpsModule module : chunk.getModules()) {
-        final Collection<String> paths = map.remove(module.getName());
+      for (ModuleBuildTarget target : chunk.getTargets()) {
+        final Collection<String> paths = map.remove(target);
         if (paths != null) {
-          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(),
+          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(),
                                                                                                                 context.isCompilingTests());
           for (String path : paths) {
             storage.remove(path);

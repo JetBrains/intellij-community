@@ -16,6 +16,7 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.fs.FSState;
 import org.jetbrains.jps.incremental.fs.RootDescriptor;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.Timestamps;
@@ -238,7 +239,7 @@ final class BuildSession implements Runnable, CanceledStatus {
           if (Utils.IS_TEST_MODE) {
             LOG.info("Applying deleted path from fs event: " + file.getPath());
           }
-          pd.fsState.registerDeleted(rd.module, file, rd.isTestRoot, timestamps);
+          pd.fsState.registerDeleted(rd.target, file, timestamps);
         }
         else if (Utils.IS_TEST_MODE) {
           LOG.info("Skipping deleted path: " + file.getPath());
@@ -288,6 +289,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
       final DataOutputStream out = new DataOutputStream(bytes);
       try {
+        out.writeInt(FSState.VERSION);
         out.writeLong(lastEventOrdinal);
         state.save(out);
       }
@@ -335,14 +337,18 @@ final class BuildSession implements Runnable, CanceledStatus {
 
       final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
       try {
-        final long savedOrdinal = in.readLong();
-        if (initialEvent != null && (savedOrdinal + 1L == initialEvent.getOrdinal())) {
-          fsState.load(in);
-          myLastEventOrdinal = savedOrdinal;
-          shouldApplyEvent = true;
-          //applyFSEvent(pd, initialEvent);
+        int version = in.readInt();
+        if (version == FSState.VERSION) {
+          final long savedOrdinal = in.readLong();
+          if (initialEvent != null && (savedOrdinal + 1L == initialEvent.getOrdinal())) {
+            fsState.load(in);
+            myLastEventOrdinal = savedOrdinal;
+            shouldApplyEvent = true;
+            //applyFSEvent(pd, initialEvent);
+          }
         }
-        else {
+
+        if (!shouldApplyEvent) {
           // either the first start or some events were lost, forcing scan
           fsState.clearAll();
           myLastEventOrdinal = initialEvent != null? initialEvent.getOrdinal() : 0L;
