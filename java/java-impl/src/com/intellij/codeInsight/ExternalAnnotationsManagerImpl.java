@@ -319,14 +319,19 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     new WriteCommandAction(project) {
       @Override
       protected void run(final Result result) throws Throwable {
-        XmlFile annotationsXml = existingXml != null ? existingXml : createAnnotationsXml(root, packageName);
-        if (annotationsXml != null) {
-          annotationFiles.add(annotationsXml);
-          myExternalAnnotations.put(getFQN(packageName, fromFile), annotationFiles);
-          annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value);
+        if (existingXml != null) {
+          annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value);
         }
         else {
-          notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+          XmlFile newXml = createAnnotationsXml(root, packageName);
+          if (newXml == null) {
+            notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+          }
+          else {
+            annotationFiles.add(newXml);
+            myExternalAnnotations.put(getFQN(packageName, fromFile), annotationFiles);
+            annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value);
+          }
         }
       }
     }.execute();
