@@ -306,29 +306,24 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
                                   @NotNull final String annotationFQName,
                                   @NotNull final PsiFile fromFile,
                                   final PsiNameValuePair[] value) {
-    final XmlFile[] annotationsXml = new XmlFile[1];
     List<XmlFile> xmlFiles = findExternalAnnotationsXmlFiles(listOwner);
-    if (xmlFiles != null) {
-      annotationsXml[0] = findXmlFileInRoot(xmlFiles, root);
-      if (annotationsXml[0] != null && !CodeInsightUtilBase.preparePsiElementForWrite(annotationsXml[0])) {
-        notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
-        return;
-      }
-    } else {
-      xmlFiles = new ArrayList<XmlFile>();
+
+    final XmlFile existingXml = findXmlFileInRoot(xmlFiles, root);
+    if (existingXml != null && !CodeInsightUtilBase.preparePsiElementForWrite(existingXml)) {
+      notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+      return;
     }
 
-    final List<PsiFile> annotationFiles = new ArrayList<PsiFile>(xmlFiles);
+    final List<PsiFile> annotationFiles = xmlFiles == null ? new ArrayList<PsiFile>() : new ArrayList<PsiFile>(xmlFiles);
+
     new WriteCommandAction(project) {
       @Override
       protected void run(final Result result) throws Throwable {
-        if (annotationsXml[0] == null) {
-          annotationsXml[0] = createAnnotationsXml(root, packageName);
-        }
-        if (annotationsXml[0] != null) {
-          annotationFiles.add(annotationsXml[0]);
+        XmlFile annotationsXml = existingXml != null ? existingXml : createAnnotationsXml(root, packageName);
+        if (annotationsXml != null) {
+          annotationFiles.add(annotationsXml);
           myExternalAnnotations.put(getFQN(packageName, fromFile), annotationFiles);
-          annotateExternally(listOwner, annotationFQName, annotationsXml[0], fromFile, value);
+          annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value);
         }
         else {
           notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
