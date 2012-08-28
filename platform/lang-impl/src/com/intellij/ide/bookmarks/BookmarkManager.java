@@ -143,6 +143,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
 
+  @NotNull
   public List<Bookmark> getValidBookmarks() {
     List<Bookmark> answer = new ArrayList<Bookmark>();
     for (Bookmark bookmark : myBookmarks) {
@@ -258,6 +259,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     Collections.reverse(reversed);
 
     for (Bookmark bookmark : reversed) {
+      if (!bookmark.isValid()) continue;
       Element bookmarkElement = new Element("bookmark");
 
       bookmarkElement.setAttribute("url", bookmark.getFile().getUrl());
@@ -286,7 +288,8 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
    *
    * @return bookmark list after moving
    */
-  public List<Bookmark> moveBookmarkUp(Bookmark bookmark) {
+  @NotNull
+  public List<Bookmark> moveBookmarkUp(@NotNull Bookmark bookmark) {
     int index = myBookmarks.indexOf(bookmark);
     if (index > 0) {
       Collections.swap(myBookmarks, index, index - 1);
@@ -301,7 +304,8 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
    *
    * @return bookmark list after moving
    */
-  public List<Bookmark> moveBookmarkDown(Bookmark bookmark) {
+  @NotNull
+  public List<Bookmark> moveBookmarkDown(@NotNull Bookmark bookmark) {
     int index = myBookmarks.indexOf(bookmark);
     if (index < myBookmarks.size() - 1) {
       Collections.swap(myBookmarks, index, index + 1);
@@ -311,7 +315,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   @Nullable
-  public Bookmark getNextBookmark(Editor editor, boolean isWrapped) {
+  public Bookmark getNextBookmark(@NotNull Editor editor, boolean isWrapped) {
     Bookmark[] bookmarksForDocument = getBookmarksForDocument(editor.getDocument());
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     for (Bookmark bookmark : bookmarksForDocument) {
@@ -324,7 +328,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
   }
 
   @Nullable
-  public Bookmark getPreviousBookmark(Editor editor, boolean isWrapped) {
+  public Bookmark getPreviousBookmark(@NotNull Editor editor, boolean isWrapped) {
     Bookmark[] bookmarksForDocument = getBookmarksForDocument(editor.getDocument());
     int lineNumber = editor.getCaretModel().getLogicalPosition().line;
     for (int i = bookmarksForDocument.length - 1; i >= 0; i--) {
@@ -337,7 +341,8 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
     return null;
   }
 
-  private Bookmark[] getBookmarksForDocument(Document document) {
+  @NotNull
+  private Bookmark[] getBookmarksForDocument(@NotNull Document document) {
     ArrayList<Bookmark> answer = new ArrayList<Bookmark>();
     for (Bookmark bookmark : getValidBookmarks()) {
       if (document.equals(bookmark.getDocument())) {
