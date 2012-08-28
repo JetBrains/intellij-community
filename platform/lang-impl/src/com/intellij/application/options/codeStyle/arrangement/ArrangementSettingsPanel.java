@@ -42,6 +42,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -90,7 +93,8 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     myRuleTree = new ArrangementRuleTree(getRules(settings), grouper, displayManager);
     final Tree treeComponent = myRuleTree.getTreeComponent();
     actionToolbar.setTargetComponent(treeComponent);
-    myContent.add(new JBScrollPane(treeComponent), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
+    JBScrollPane scrollPane = new JBScrollPane(treeComponent);
+    myContent.add(scrollPane, new GridBag().weightx(1).weighty(1).fillCell().coverLine());
     CustomizationUtil.installPopupHandler(
       treeComponent, ArrangementConstants.ACTION_GROUP_RULE_EDITOR_CONTEXT_MENU, ArrangementConstants.RULE_EDITOR_PLACE
     );
@@ -106,6 +110,71 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     linkTreeAndEditor(editorPane, ruleEditor, resetEditor);
     setupRuleManagementActions(treeComponent, editorPane, ruleEditor, resetEditor);
     setupKeyboardActions(actionManager, treeComponent);
+
+    setupScrollingHelper(treeComponent, scrollPane, editorPane);
+  }
+
+  /**
+   * The general idea is to configure UI in a way that it automatically changes tree viewport 'y' coordinate in order to make
+   * target rule visible on rule editor opening.
+   * <p/>
+   * Example: target rule is located at the bottom of the tree, so, it's closed by the rule editor when it's open.
+   * 
+   * @param treeComponent  target tree
+   * @param scrollPane     scroll panel which holds given tree
+   * @param editorPane     editor component
+   */
+  private void setupScrollingHelper(@NotNull final Tree treeComponent,
+                                    @NotNull JBScrollPane scrollPane,
+                                    @NotNull final JXTaskPane editorPane)
+  {
+    final JViewport viewport = scrollPane.getViewport();
+    viewport.addChangeListener(new ChangeListener() {
+
+      private boolean mySkip;
+      private int myYToRestore;
+
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        if (mySkip) {
+          return;
+        }
+        myYToRestore = -1;
+        if (editorPane.isCollapsed()) {
+          if (myYToRestore >= 0) {
+            scroll(myYToRestore);
+            myYToRestore = -1;
+          }
+        }
+        else {
+          myYToRestore = -1;
+          ArrangementRuleEditingModelImpl model = myRuleTree.getActiveModel();
+          if (model != null) {
+            Rectangle bounds = treeComponent.getPathBounds(new TreePath(model.getBottomMost().getPath()));
+            if (bounds != null) {
+              myYToRestore = bounds.y;
+              Rectangle viewRect = viewport.getViewRect();
+              if (bounds.y < viewRect.y) {
+                scroll(bounds.y);
+              }
+              else if (bounds.y + bounds.height >= viewRect.y + viewRect.height) {
+                scroll(bounds.y + bounds.height - viewRect.height);
+              }
+            }
+          }
+        }
+      }
+
+      private void scroll(int y) {
+        mySkip = true;
+        try {
+          viewport.setViewPosition(new Point(0, y));
+        }
+        finally {
+          mySkip = false;
+        }
+      }
+    });
   }
 
   private void linkTreeAndEditor(@NotNull final JXTaskPane editorPane,
@@ -210,7 +279,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   private static void setupKeyboardActions(@NotNull ActionManager actionManager, @NotNull Tree treeComponent) {
     List<AnAction> keyboardActions = new ArrayList<AnAction>();
-    
+
     AnAction newRuleAction = new AddArrangementRuleAction();
     newRuleAction.copyFrom(actionManager.getAction("Arrangement.Rule.Add"));
     newRuleAction.registerCustomShortcutSet(CommonShortcuts.ENTER, treeComponent);
@@ -220,7 +289,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     removeRuleAction.copyFrom(actionManager.getAction("Arrangement.Rule.Remove"));
     removeRuleAction.registerCustomShortcutSet(CommonShortcuts.DELETE, treeComponent);
     keyboardActions.add(removeRuleAction);
-    
+
     treeComponent.putClientProperty(AnAction.ourClientProperty, keyboardActions);
   }
 
@@ -237,12 +306,12 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @Override
   public void apply(@NotNull CodeStyleSettings settings) {
-    settings.getCommonSettings(myLanguage).setArrangementRules(myRuleTree.getRules()); 
+    settings.getCommonSettings(myLanguage).setArrangementRules(myRuleTree.getRules());
   }
 
   @Override
   protected void resetImpl(@NotNull CodeStyleSettings settings) {
-    myRuleTree.setRules(getRules(settings)); 
+    myRuleTree.setRules(getRules(settings));
   }
 
   @Override
