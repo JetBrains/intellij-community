@@ -709,7 +709,7 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     return false;
   }
 
-  protected static class OverrideableSpace extends TailTypeDecorator<LookupElement> {
+  public static class OverrideableSpace extends TailTypeDecorator<LookupElement> {
     private final TailType myTail;
 
     public OverrideableSpace(LookupElement keyword, TailType tail) {
