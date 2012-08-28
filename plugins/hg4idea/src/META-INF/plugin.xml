@@ -49,6 +49,11 @@
       <action id="hg4idea.tag" class="org.zmlx.hg4idea.action.HgCreateTagAction"/>
       <action id="hg4idea.switch" class="org.zmlx.hg4idea.action.HgSwitchWorkingDirectoryAction"/>
       <action id="hg4idea.resolve.mark" class="org.zmlx.hg4idea.action.HgMarkResolved"/>
+      <separator/>
+
+      <action id="hg4idea.branch" class="org.zmlx.hg4idea.action.HgCreateBranchAction"/>
+
+      <!--<action id="hg4idea.branch" class="org.zmlx.hg4idea.action."/>-->
 
       <add-to-group group-id="VcsGroup" anchor="last"/>
       <add-to-group group-id="VcsGlobalGroup" anchor="after" relative-to-action="Vcs.Specific"/>
@@ -57,7 +62,7 @@
   </actions>
 
   <resource-bundle>org.zmlx.hg4idea.HgVcsMessages</resource-bundle>
-  
+
   <change-notes>
   <![CDATA[
   <h3>Changes in 0.6.16-luciad.9-9.0.2</h3>
@@ -98,7 +103,7 @@
   <h3>Changes in 0.6.14-luciad.3-9.0.1</h3>
   <ul>
     <li>[bugfix] committing a merge no longer complains about ignored files
-    <li>[enhancement] 'Add to VCS' action is now available in right-click of files (merged from upstream) 
+    <li>[enhancement] 'Add to VCS' action is now available in right-click of files (merged from upstream)
   </ul>
   <h3>Changes from the regular hg4idea</h3>
   <ul>

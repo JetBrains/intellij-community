@@ -55,6 +55,9 @@ public class HgPushCommand {
 
   public void execute(final HgCommandResultHandler resultHandler) {
     final List<String> arguments = new LinkedList<String>();
+
+    arguments.add("--new-branch");
+
     if (StringUtils.isNotBlank(myRevision)) {
       arguments.add("-r");
       arguments.add(myRevision);

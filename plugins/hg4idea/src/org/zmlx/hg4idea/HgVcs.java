@@ -133,6 +133,10 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     return HgVcsMessages.message("hg4idea.mercurial");
   }
 
+  public HgCurrentBranchStatus getCurrentBranchStatus() {
+    return hgCurrentBranchStatus;
+  }
+
   public Configurable getConfigurable() {
     return new HgProjectConfigurable(projectSettings);
   }
