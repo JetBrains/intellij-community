@@ -36,10 +36,16 @@ import com.intellij.util.xml.stubs.model.Foo;
  */
 public abstract class DomStubTest extends LightCodeInsightFixtureTestCase {
 
-  private static final DomFileDescription<Foo> DOM_FILE_DESCRIPTION = new DomFileDescription<Foo>(Foo.class, "foo") {
+  private static final String HTTP_FOO_DTD = "http://foo.dtd";
+  private static final DomFileDescription<Foo> DOM_FILE_DESCRIPTION = new DomFileDescription<Foo>(Foo.class, "foo", HTTP_FOO_DTD) {
     @Override
     public boolean hasStubs() {
       return true;
+    }
+
+    @Override
+    protected void initializeFileDescription() {
+      registerNamespacePolicy("foo", HTTP_FOO_DTD);
     }
   };
 
