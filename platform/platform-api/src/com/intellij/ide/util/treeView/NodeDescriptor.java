@@ -27,7 +27,13 @@ public abstract class NodeDescriptor<E> {
   private final NodeDescriptor myParentDescriptor;
 
   protected String myName;
-  protected Icon myIcon;
+  protected Icon myClosedIcon;
+
+  /**
+   * Unused. It's there only for API compatibility.
+   */
+  @Deprecated
+  protected Icon myOpenIcon;
   protected Color myColor;
 
   private int myIndex = -1;
@@ -80,7 +86,7 @@ public abstract class NodeDescriptor<E> {
   }
 
   public final Icon getIcon() {
-    return myIcon;
+    return myClosedIcon;
   }
 
   public final Color getColor() {
@@ -130,9 +136,13 @@ public abstract class NodeDescriptor<E> {
   }
 
   public void applyFrom(NodeDescriptor desc) {
-    myIcon = desc.myIcon;
+    setIcon(desc.getIcon());
     myName = desc.myName;
     myColor = desc.myColor;
+  }
+
+  public void setIcon(Icon closedIcon) {
+    myClosedIcon = closedIcon;
   }
 
   public abstract static class NodeComparator<T extends NodeDescriptor> implements Comparator<T> {

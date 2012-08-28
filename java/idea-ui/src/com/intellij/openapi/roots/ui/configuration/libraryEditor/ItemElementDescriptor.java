@@ -37,7 +37,7 @@ class ItemElementDescriptor extends NodeDescriptor<ItemElement> {
       myElement = element;
       final String url = element.getUrl();
       myName = getPresentablePath(url).replace('/', File.separatorChar);
-      myIcon = getIconForUrl(url, element.isValid(), element.isJarDirectory());
+      setIcon(getIconForUrl(url, element.isValid(), element.isJarDirectory()));
     }
 
     public boolean update() {

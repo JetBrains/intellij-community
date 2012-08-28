@@ -123,7 +123,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
         newIcon = icon;
       }
 
-      myIcon = newIcon;
+      setIcon(newIcon);
     }
 
     final CompositeAppearance oldText = myHighlightedText;

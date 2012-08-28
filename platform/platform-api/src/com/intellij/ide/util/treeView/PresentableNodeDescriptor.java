@@ -59,7 +59,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
   }
 
   protected final boolean apply(PresentationData presentation, @Nullable PresentationData before) {
-    myIcon = presentation.getIcon(false);
+    setIcon(presentation.getIcon(false));
     myName = presentation.getPresentableText();
     myColor = presentation.getForcedTextForeground();
     boolean updated = before == null || !presentation.equals(before);

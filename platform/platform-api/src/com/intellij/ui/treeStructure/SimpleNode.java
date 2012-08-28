@@ -93,7 +93,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
 
     Color oldColor = myColor;
     String oldName = myName;
-    Icon oldIcon = myIcon;
+    Icon oldIcon = getIcon();
     List<ColoredFragment> oldFragments = new ArrayList<ColoredFragment>(presentation.getColoredText());
 
     myColor = UIUtil.getTreeTextForeground();
@@ -104,11 +104,11 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
     myName = getName();
     presentation.setPresentableText(myName);
 
-    presentation.setChanged(!Comparing.equal(new Object[]{myIcon, myName, oldFragments, myColor},
+    presentation.setChanged(!Comparing.equal(new Object[]{getIcon(), myName, oldFragments, myColor},
                                              new Object[]{oldIcon, oldName, oldFragments, oldColor}));
 
     presentation.setForcedTextForeground(myColor);
-    presentation.setIcon(myIcon);
+    presentation.setIcon(getIcon());
   }
 
   protected void updateFileStatus() {
@@ -241,7 +241,7 @@ public abstract class SimpleNode extends PresentableNodeDescriptor implements Co
    * or update presentation dynamically by defining {@link #update(com.intellij.ide.projectView.PresentationData)}
    */
   public void setUniformIcon(Icon aIcon) {
-    myIcon = aIcon;
+    setIcon(aIcon);
   }
 
   /**
