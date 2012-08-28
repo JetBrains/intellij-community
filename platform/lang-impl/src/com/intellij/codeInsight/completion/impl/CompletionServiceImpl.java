@@ -279,13 +279,7 @@ public class CompletionServiceImpl extends CompletionService{
   }
 
   public static boolean isStartMatch(LookupElement element, Lookup lookup) {
-    PrefixMatcher itemMatcher = getItemMatcher(element, lookup);
-    for (String ls : element.getAllLookupStrings()) {
-      if (itemMatcher.isStartMatch(ls)) {
-        return true;
-      }
-    }
-    return false;
+    return getItemMatcher(element, lookup).isStartMatch(element);
   }
 
   private static PrefixMatcher getItemMatcher(LookupElement element, Lookup lookup) {

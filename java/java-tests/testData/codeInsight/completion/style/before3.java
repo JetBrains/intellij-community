@@ -5,6 +5,6 @@ class A{
   {
    int aaa = 0;
 
-   foo(a<caret>
+   foo(aa<caret>
   }
 }

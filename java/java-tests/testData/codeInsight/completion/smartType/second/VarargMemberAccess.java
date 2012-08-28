@@ -1,5 +1,5 @@
 class Goo {
-    void foo(boolean... ls) {
-        boolean a = l<caret>
+    void foo(boolean... los) {
+        boolean a = los<caret>
     }
 }

@@ -30,7 +30,7 @@ import javax.swing.*;
  */
 public class TracRepositoryType extends BaseRepositoryType<TracRepository> {
 
-  private static final Icon ICON = IconLoader.getIcon("/com/intellij/tasks/trac/trac.png");
+  private static final Icon ICON = IconLoader.getIcon("/icons/trac.png");
 
   @NotNull
   @Override

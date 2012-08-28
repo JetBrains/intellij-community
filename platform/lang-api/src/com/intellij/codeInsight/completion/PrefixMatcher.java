@@ -23,6 +23,15 @@ public abstract class PrefixMatcher {
     return false;
   }
 
+  public boolean isStartMatch(LookupElement element) {
+    for (String s : element.getAllLookupStrings()) {
+      if (isStartMatch(s)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isStartMatch(String name) {
     return prefixMatches(name);
   }

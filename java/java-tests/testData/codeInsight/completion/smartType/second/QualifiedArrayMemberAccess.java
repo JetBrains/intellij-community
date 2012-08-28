@@ -3,6 +3,6 @@ class Goo {
 
     {
 
-        boolean a = this.a<caret>
+        boolean a = this.ar<caret>
     }
 }

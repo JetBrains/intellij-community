@@ -39,6 +39,10 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     MODIFIERS.put(PsiModifier.PACKAGE_LOCAL, ArrangementModifier.PACKAGE_PRIVATE);
     MODIFIERS.put(PsiModifier.STATIC, ArrangementModifier.STATIC);
     MODIFIERS.put(PsiModifier.FINAL, ArrangementModifier.FINAL);
+    MODIFIERS.put(PsiModifier.TRANSIENT, ArrangementModifier.TRANSIENT);
+    MODIFIERS.put(PsiModifier.VOLATILE, ArrangementModifier.VOLATILE);
+    MODIFIERS.put(PsiModifier.SYNCHRONIZED, ArrangementModifier.SYNCHRONIZED);
+    MODIFIERS.put(PsiModifier.ABSTRACT, ArrangementModifier.ABSTRACT);
   }
 
   private final Stack<JavaElementArrangementEntry> myStack = new Stack<JavaElementArrangementEntry>();
@@ -58,7 +62,14 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
 
   @Override
   public void visitClass(PsiClass aClass) {
-    JavaElementArrangementEntry entry = createNewEntry(aClass.getTextRange(), ArrangementEntryType.CLASS, aClass.getName(), true);
+    ArrangementEntryType type = ArrangementEntryType.CLASS;
+    if (aClass.isEnum()) {
+      type = ArrangementEntryType.ENUM;
+    }
+    else if (aClass.isInterface()) {
+      type = ArrangementEntryType.INTERFACE;
+    }
+    JavaElementArrangementEntry entry = createNewEntry(aClass.getTextRange(), type, aClass.getName(), true);
     processEntry(entry, aClass, aClass);
   }
 
@@ -182,6 +193,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     return myStack.isEmpty() ? null : myStack.peek();
   }
 
+  @SuppressWarnings("MagicConstant")
   private static void parseModifiers(@Nullable PsiModifierList modifierList, @NotNull JavaElementArrangementEntry entry) {
     if (modifierList == null) {
       return;

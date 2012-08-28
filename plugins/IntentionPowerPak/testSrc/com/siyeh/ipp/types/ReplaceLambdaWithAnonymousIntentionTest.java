@@ -31,6 +31,10 @@ public class ReplaceLambdaWithAnonymousIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testRenameParams() {
+    doTest();
+  }
+
   public void testInsertFinal() {
     doTest();
   }

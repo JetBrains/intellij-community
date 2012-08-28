@@ -4,6 +4,6 @@ class A<T>{
   void put(T str);
 
   {
-    new A<String>().put(new A<String>().g<caret>)
+    new A<String>().put(new A<String>().ge<caret>)
   }
 }

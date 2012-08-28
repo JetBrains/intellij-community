@@ -12,7 +12,7 @@ import javax.swing.*;
  */
 public class MantisRepositoryType extends BaseRepositoryType<MantisRepository> {
   
-  private static final Icon ICON = IconLoader.getIcon("/com/intellij/tasks/mantis/mantis.png");
+  private static final Icon ICON = IconLoader.getIcon("/icons/mantis.png");
 
   @NotNull
   @Override

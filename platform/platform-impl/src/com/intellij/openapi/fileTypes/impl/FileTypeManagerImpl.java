@@ -283,6 +283,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     for (final StandardFileType pair : myStandardFileTypes.values()) {
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers);
     }
+    // Resolve unresolved mappings initialized before certain plugin initialized.
+    for (final StandardFileType pair : myStandardFileTypes.values()) {
+      bindUnresolvedMappings(pair.fileType);
+    }
     if (loadAllFileTypes()) {
       restoreStandardFileExtensions();
     }
@@ -841,7 +845,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
       mySpecialFileTypes.add((FileTypeIdentifiableByVirtualFile)fileType);
     }
 
-    // Resolve unresolved mappings initialized before certain plugin initialized.
+  }
+
+  private void bindUnresolvedMappings(FileType fileType) {
     for (FileNameMatcher matcher : new THashSet<FileNameMatcher>(myUnresolvedMappings.keySet())) {
       String name = myUnresolvedMappings.get(matcher);
       if (Comparing.equal(name, fileType.getName())) {

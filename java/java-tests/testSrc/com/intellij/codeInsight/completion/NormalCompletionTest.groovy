@@ -589,7 +589,7 @@ public class ListUtils {
 
   public void testFillCommonPrefixOnSecondCompletion() throws Throwable {
     configureByFile(getTestName(false) + ".java");
-    type('g');
+    type('ge');
     complete();
     checkResult()
     assertStringItems("getBar", "getFoo", "getClass");

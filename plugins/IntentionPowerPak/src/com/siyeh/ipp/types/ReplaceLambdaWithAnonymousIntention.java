@@ -51,6 +51,7 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
   protected void processIntention(Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(element, PsiLambdaExpression.class);
     LOG.assertTrue(lambdaExpression != null);
+    final PsiParameter[] paramListCopy = ((PsiParameterList)lambdaExpression.getParameterList().copy()).getParameters();
     PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
     LOG.assertTrue(functionalInterfaceType != null);
     functionalInterfaceType = GenericsUtil.eliminateWildcards(functionalInterfaceType);
@@ -69,6 +70,14 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     final List<PsiGenerationInfo<PsiMethod>> infos = OverrideImplementUtil.overrideOrImplement(anonymousClass, method);
     if (infos != null && infos.size() == 1) {
       final PsiMethod member = infos.get(0).getPsiMember();
+      final PsiParameter[] parameters = member.getParameterList().getParameters();
+      for (int i = 0; i < parameters.length; i++) {
+        final PsiParameter parameter = parameters[i];
+        final String lambdaParamName = paramListCopy[i].getName();
+        if (lambdaParamName != null) {
+          parameter.setName(lambdaParamName);
+        }
+      }
       PsiCodeBlock codeBlock = member.getBody();
       LOG.assertTrue(codeBlock != null);
       codeBlock = (PsiCodeBlock)codeBlock.replace(psiElementFactory.createCodeBlockFromText(blockText, null));

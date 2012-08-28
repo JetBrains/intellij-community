@@ -85,10 +85,14 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         processMappingFailed(event);
       }
       else if (!ourOomOccured) {
-        MessagePool.getInstance().addIdeFatalMessage(event);
+        MessagePool messagePool = MessagePool.getInstance();
+        LogMessage message = messagePool.addIdeFatalMessage(event);
+        if (message != null && ApplicationManager.getApplication() != null) {
+          notifyUi(messagePool, message);
+        }
       }
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       //noinspection InstanceofCatchParameter
       if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.MessagePool") ||
           e instanceof NullPointerException && ApplicationManager.getApplication() == null) {
@@ -97,6 +101,10 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       }
       e.printStackTrace();
     }
+  }
+
+  private static void notifyUi(MessagePool messagePool, LogMessage message) {
+    ErrorNotifier.notifyUi(message, messagePool);
   }
 
   private static boolean isOOMError(Throwable throwable) {

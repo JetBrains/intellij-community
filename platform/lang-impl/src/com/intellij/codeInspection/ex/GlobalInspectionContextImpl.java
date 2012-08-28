@@ -582,7 +582,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile != null) {
           incrementJobDoneAmount(LOCAL_ANALYSIS, ProjectUtil.calcRelativeToProjectPath(virtualFile, myProject));
-          if (SingleRootFileViewProvider.isTooLarge(virtualFile)) return;
+          if (SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile)) return;
           if (localScopeFiles != null && !localScopeFiles.add(virtualFile)) return;
         }
 
