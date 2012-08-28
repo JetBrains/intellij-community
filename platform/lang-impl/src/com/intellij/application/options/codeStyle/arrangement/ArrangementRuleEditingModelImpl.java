@@ -112,6 +112,10 @@ public class ArrangementRuleEditingModelImpl implements ArrangementRuleEditingMo
     return myRow;
   }
 
+  public void setRow(int row) {
+    myRow = row;
+  }
+
   @NotNull
   public ArrangementTreeNode getTopMost() {
     return myTopMost;

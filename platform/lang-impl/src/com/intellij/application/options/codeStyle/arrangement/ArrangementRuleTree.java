@@ -508,11 +508,10 @@ public class ArrangementRuleTree {
         ArrangementRuleEditingModelImpl m = myModels.remove(oldRow);
         if (m != null) {
           changedModelMappings.put(newRow, m);
+          m.setRow(newRow);
         }
         return true;
       }
-
-      
     });
     putAll(changedModelMappings, myModels);
 
