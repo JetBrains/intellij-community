@@ -19,12 +19,9 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalInspectionToolSession;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -88,8 +85,12 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
-    checkAnnotationsJarAttached(session);
     return new JavaElementVisitor() {
+      @Override
+      public void visitJavaFile(PsiJavaFile file) {
+        checkAnnotationsJarAttached(file, holder);
+      }
+
       @Override
       public void visitCallExpression(PsiCallExpression callExpression) {
         checkCall(callExpression, holder);
@@ -156,8 +157,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     };
   }
 
-  private static void checkAnnotationsJarAttached(@NotNull LocalInspectionToolSession session) {
-    PsiFile file = session.getFile();
+  private static void checkAnnotationsJarAttached(@NotNull PsiFile file, @NotNull ProblemsHolder holder) {
     final Project project = file.getProject();
     PsiClass event = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
     if (event == null) return; // no jdk to attach
@@ -177,24 +177,36 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
       }
     }
     if (jdk == null) return; // no jdk to attach
+    final Sdk finalJdk = jdk;
 
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      final Sdk finalJdk = jdk;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          ApplicationManager.getApplication().runWriteAction(new Runnable() {
-            @Override
-            public void run() {
-              attachJdkAnnotations(finalJdk);
-            }
-          });
-        }
-      }, ModalityState.NON_MODAL, project.getDisposed());
-    }
+    String path = finalJdk.getHomePath();
+    String text = "No annotations attached to the JDK " + finalJdk.getName() + (path == null ? "" : " (" + FileUtil.toSystemDependentName(path) + ")");
+    holder.registerProblem(file, text, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new LocalQuickFix() {
+      @NotNull
+      @Override
+      public String getName() {
+        return "Attach annotations to the JDK";
+      }
+
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return getName();
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            attachJdkAnnotations(finalJdk);
+          }
+        });
+      }
+    });
   }
 
-  private static void attachJdkAnnotations(Sdk jdk) {
+  private static void attachJdkAnnotations(@NotNull Sdk jdk) {
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     // community idea under idea
     VirtualFile root = lfs.findFileByPath(FileUtil.toSystemIndependentName(PathManager.getHomePath()) + "/java/jdkAnnotations");
@@ -282,7 +294,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     }
     @Override
     public int hashCode() {
-      int result = values != null ? Arrays.hashCode(values) : 0;
+      int result = Arrays.hashCode(values);
       result = 31 * result + (canBeOred ? 1 : 0);
       return result;
     }

@@ -60,6 +60,8 @@ public interface BusyObject {
     protected void onReadyWasSent() {
     }
 
+    @Override
+    @NotNull
     public final ActionCallback getReady(@NotNull Object requestor) {
       if (isReady()) {
         return new ActionCallback.Done();
@@ -69,6 +71,7 @@ public interface BusyObject {
       }
     }
 
+    @NotNull
     private ActionCallback addReadyCallback(Object requestor) {
       synchronized (myReadyCallbacks) {
         ActionCallback cb = myReadyCallbacks.get(requestor);
@@ -117,6 +120,7 @@ public interface BusyObject {
         myBusyCount.addAndGet(1);
         ActionCallback cb = runnable.run();
         cb.doWhenProcessed(new Runnable() {
+          @Override
           public void run() {
             myBusyCount.addAndGet(-1);
             if (isReady()) {

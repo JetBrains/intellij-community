@@ -49,7 +49,7 @@ public class ArrangementNodeDisplayManager {
                                        @NotNull ArrangementStandardSettingsRepresentationAware representationManager)
   {
     myRepresentationManager = representationManager;
-    Map<ArrangementSettingType, Collection<?>> map = ArrangementConfigUtil.buildAvailableOptions(filter, null);
+    Map<ArrangementSettingType, Collection<?>> map = ArrangementConfigUtil.buildAvailableConditions(filter, null);
     for (Map.Entry<ArrangementSettingType, Collection<?>> entry : map.entrySet()) {
       myMaxWidths.put(entry.getKey(), maxWidth(entry.getValue()));
     }

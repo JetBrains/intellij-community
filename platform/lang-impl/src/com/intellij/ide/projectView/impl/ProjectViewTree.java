@@ -67,6 +67,7 @@ public abstract class ProjectViewTree extends JBTreeWithHintProvider {
     return myProject;
   }
 
+  @Override
   public final int getToggleClickCount() {
     final DefaultMutableTreeNode selectedNode = getSelectedNode();
     if (selectedNode != null) {

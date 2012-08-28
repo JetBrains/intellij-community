@@ -32,6 +32,7 @@ public class MoveModulesOutsideGroupAction extends AnAction {
     super(IdeBundle.message("action.move.module.outside.any.group"));
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);

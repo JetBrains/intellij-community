@@ -217,14 +217,19 @@ class AndroidJpsUtil {
   public static void processClasspath(@NotNull CompileContext context,
                                       @NotNull JpsModule module,
                                       @NotNull AndroidDependencyProcessor processor) {
-    processClasspath(context, module, processor, new HashSet<String>(), false);
+    // In a module imported from Maven dependencies are transitive, so we don't need to traverse all dependency tree
+    // and compute all jars referred by library modules. Moreover it would be incorrect,
+    // because Maven has dependency resolving algorithm based on versioning
+    final boolean recursive = isMavenizedModule(module);
+    processClasspath(context, module, processor, new HashSet<String>(), false, recursive);
   }
 
   private static void processClasspath(@NotNull CompileContext context,
                                        @NotNull final JpsModule module,
                                        @NotNull final AndroidDependencyProcessor processor,
                                        @NotNull final Set<String> visitedModules,
-                                       final boolean exportedLibrariesOnly) {
+                                       final boolean exportedLibrariesOnly,
+                                       final boolean recursive) {
     if (!visitedModules.add(module.getName())) {
       return;
     }
@@ -283,7 +288,9 @@ class AndroidJpsUtil {
           // do not support android-app->android-app compile dependencies
           processor.processJavaModuleOutputDirectory(depClassDir);
         }
-        processClasspath(context, depModule, processor, visitedModules, !depLibrary || exportedLibrariesOnly);
+        if (recursive) {
+          processClasspath(context, depModule, processor, visitedModules, !depLibrary || exportedLibrariesOnly, recursive);
+        }
       }
     }
   }

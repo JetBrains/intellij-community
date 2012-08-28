@@ -37,7 +37,7 @@ public class TreeState implements JDOMExternalizable {
   @NonNls private static final String PATH = "PATH";
   @NonNls private static final String PATH_ELEMENT = "PATH_ELEMENT";
   @NonNls private static final String USER_OBJECT = "USER_OBJECT";
-  public static final String CALLBACK = "Callback";
+  @NonNls public static final String CALLBACK = "Callback";
 
   static class PathElement implements JDOMExternalizable {
     public String myItemId;
@@ -73,11 +73,13 @@ public class TreeState implements JDOMExternalizable {
       return myUserObject != null && myUserObject.equals(object);
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
       myUserObject = element.getAttributeValue(USER_OBJECT);
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
       if (myUserObject instanceof String){
@@ -100,6 +102,7 @@ public class TreeState implements JDOMExternalizable {
     this(new ArrayList<List<PathElement>>(), new ArrayList<List<PathElement>>());
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myExpandedPaths.clear();
     final List paths = element.getChildren(PATH);
@@ -125,6 +128,7 @@ public class TreeState implements JDOMExternalizable {
     return new TreeState(createExpandedPaths(tree, treeNode), createSelectedPaths(tree, treeNode));
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     for (List<PathElement> path : myExpandedPaths) {
       final Element pathElement = new Element(PATH);
@@ -242,8 +246,10 @@ public class TreeState implements JDOMExternalizable {
 
   private void applyExpanded(final TreeFacade tree, final Object root) {
     tree.getIntialized().doWhenDone(new Runnable() {
+      @Override
       public void run() {
         tree.batch(new Progressive() {
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             _applyExpanded(tree, root, indicator);
           }
@@ -325,9 +331,11 @@ public class TreeState implements JDOMExternalizable {
 
   }
 
-  private TreeNode requestedExpand;
-
-  private  boolean applyTo(final int positionInPath, final List<PathElement> path, final Object root, final TreeFacade tree, final ProgressIndicator indicator) {
+  private static boolean applyTo(final int positionInPath,
+                                 final List<PathElement> path,
+                                 final Object root,
+                                 final TreeFacade tree,
+                                 final ProgressIndicator indicator) {
     if (!(root instanceof DefaultMutableTreeNode)) return false;
 
     final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)root;
@@ -343,6 +351,7 @@ public class TreeState implements JDOMExternalizable {
     }
 
     tree.expand(treeNode).doWhenDone(new Runnable() {
+      @Override
       public void run() {
         indicator.checkCanceled();
 
@@ -406,11 +415,13 @@ public class TreeState implements JDOMExternalizable {
       myTree = tree;
     }
 
+    @Override
     public ActionCallback expand(DefaultMutableTreeNode node) {
       myTree.expandPath(new TreePath(node.getPath()));
       return new ActionCallback.Done();
     }
 
+    @Override
     public ActionCallback getIntialized() {
       final WeakReference<ActionCallback> ref = (WeakReference<ActionCallback>)myTree.getClientProperty(CALLBACK);
       if (ref != null) {
@@ -420,6 +431,7 @@ public class TreeState implements JDOMExternalizable {
       return new ActionCallback.Done();
     }
 
+    @Override
     public void batch(Progressive progressive) {
       progressive.run(new EmptyProgressIndicator());
     }
@@ -433,14 +445,17 @@ public class TreeState implements JDOMExternalizable {
       myBuilder = builder;
     }
 
+    @Override
     public ActionCallback getIntialized() {
       return myBuilder.getReady(this);
     }
 
+    @Override
     public void batch(Progressive progressive) {
       myBuilder.batch(progressive);
     }
 
+    @Override
     public ActionCallback expand(DefaultMutableTreeNode node) {
       final Object userObject = node.getUserObject();
       if (!(userObject instanceof NodeDescriptor)) return new ActionCallback.Rejected();
@@ -452,6 +467,7 @@ public class TreeState implements JDOMExternalizable {
       final ActionCallback result = new ActionCallback();
 
       myBuilder.expand(element, new Runnable() {
+        @Override
         public void run() {
           result.setDone();
         }

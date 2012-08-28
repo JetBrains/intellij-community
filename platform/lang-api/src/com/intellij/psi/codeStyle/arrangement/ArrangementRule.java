@@ -16,8 +16,6 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,20 +31,18 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ArrangementRule {
 
-  @NotNull private final ArrangementEntryMatcher   myMatcher;
-  @NotNull private final ArrangementEntryOrderType mySortType;
+  @NotNull public static final ArrangementEntryOrderType DEFAULT_ORDER_TYPE = ArrangementEntryOrderType.KEEP;
 
-  public ArrangementRule(@NotNull ArrangementMatchCondition condition) {
-    this(new StdArrangementEntryMatcher(condition));
-  }
+  @NotNull private final ArrangementEntryMatcher   myMatcher;
+  @NotNull private final ArrangementEntryOrderType myOrderType;
 
   public ArrangementRule(@NotNull ArrangementEntryMatcher matcher) {
-    this(matcher, ArrangementEntryOrderType.KEEP);
+    this(matcher, DEFAULT_ORDER_TYPE);
   }
 
   public ArrangementRule(@NotNull ArrangementEntryMatcher matcher, @NotNull ArrangementEntryOrderType type) {
     myMatcher = matcher;
-    mySortType = type;
+    myOrderType = type;
   }
 
   @NotNull
@@ -55,14 +51,14 @@ public class ArrangementRule {
   }
 
   @NotNull
-  public ArrangementEntryOrderType getSorter() {
-    return mySortType;
+  public ArrangementEntryOrderType getOrderType() {
+    return myOrderType;
   }
 
   @Override
   public int hashCode() {
     int result = myMatcher.hashCode();
-    result = 31 * result + mySortType.hashCode();
+    result = 31 * result + myOrderType.hashCode();
     return result;
   }
 
@@ -72,11 +68,11 @@ public class ArrangementRule {
     if (o == null || getClass() != o.getClass()) return false;
 
     ArrangementRule that = (ArrangementRule)o;
-    return mySortType == that.mySortType && myMatcher.equals(that.myMatcher);
+    return myOrderType == that.myOrderType && myMatcher.equals(that.myMatcher);
   }
 
   @Override
   public String toString() {
-    return String.format("matcher: %s, sort type: %s", myMatcher, mySortType);
+    return String.format("matcher: %s, sort type: %s", myMatcher, myOrderType);
   }
 }

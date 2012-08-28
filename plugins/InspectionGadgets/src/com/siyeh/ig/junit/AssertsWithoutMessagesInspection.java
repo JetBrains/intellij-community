@@ -58,13 +58,15 @@ public class AssertsWithoutMessagesInspection extends BaseInspection {
     @NonNls private static final Set<String> s_assertMethods = new HashSet<String>(8);
 
     static {
-      s_assertMethods.add("assertTrue");
-      s_assertMethods.add("assertFalse");
+      s_assertMethods.add("assertArrayEquals");
       s_assertMethods.add("assertEquals");
-      s_assertMethods.add("assertNull");
+      s_assertMethods.add("assertFalse");
       s_assertMethods.add("assertNotNull");
-      s_assertMethods.add("assertSame");
       s_assertMethods.add("assertNotSame");
+      s_assertMethods.add("assertNull");
+      s_assertMethods.add("assertSame");
+      s_assertMethods.add("assertThat");
+      s_assertMethods.add("assertTrue");
       s_assertMethods.add("fail");
     }
 

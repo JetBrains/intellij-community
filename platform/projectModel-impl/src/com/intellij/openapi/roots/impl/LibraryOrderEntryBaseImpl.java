@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,9 +65,11 @@ abstract class LibraryOrderEntryBaseImpl extends OrderEntryBaseImpl implements L
 
   public VirtualFile[] getRootFiles(@NotNull OrderRootType type) {
     RootProvider rootProvider = getRootProvider();
-    return rootProvider == null ? VirtualFile.EMPTY_ARRAY : filterDirectories(rootProvider.getFiles(type));
+    return rootProvider != null ? rootProvider.getFiles(type) : VirtualFile.EMPTY_ARRAY;
   }
 
+  /** @deprecated has no sense (to remove in IDEA 13) */
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
   protected VirtualFile[] filterDirectories(@NotNull VirtualFile[] files) {
     List<VirtualFile> filtered = ContainerUtil.mapNotNull(files, new NullableFunction<VirtualFile, VirtualFile>() {
       @Override

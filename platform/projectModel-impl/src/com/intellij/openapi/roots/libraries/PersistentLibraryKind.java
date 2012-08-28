@@ -23,23 +23,27 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public abstract class PersistentLibraryKind<P extends LibraryProperties> extends LibraryKind {
-  private final boolean myFileBased;
-
   /**
-   * @param kindId must be unique among all {@link com.intellij.openapi.roots.libraries.LibraryType} and {@link com.intellij.openapi.roots.libraries.LibraryPresentationProvider} implementations
-   * @param based
+   * @param kindId must be unique among all {@link com.intellij.openapi.roots.libraries.LibraryType} and
+   *               {@link com.intellij.openapi.roots.libraries.LibraryPresentationProvider} implementations.
    */
+  public PersistentLibraryKind(@NotNull @NonNls String kindId) {
+    super(kindId);
+  }
+
+  /** @deprecated 'fileBased' has no sense, use {@linkplain #PersistentLibraryKind(String)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedParameters")
   public PersistentLibraryKind(@NotNull @NonNls String kindId, boolean fileBased) {
     super(kindId);
-    myFileBased = fileBased;
   }
 
   @NotNull
   public abstract P createDefaultProperties();
 
-
+  /** @deprecated has no sense (to remove in IDEA 13) */
+  @SuppressWarnings({"UnusedDeclaration", "MethodMayBeStatic"})
   public boolean isFileBased() {
-    return myFileBased;
+    return false;
   }
 
   public OrderRootType[] getAdditionalRootTypes() {

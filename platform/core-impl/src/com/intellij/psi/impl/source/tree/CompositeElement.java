@@ -32,7 +32,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLock;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
-import com.intellij.psi.impl.source.*;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.DummyHolderElement;
+import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -102,9 +105,19 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public void clearCaches() {
+    assertThreading();
+    myCachedLength = NOT_CACHED;
+
+    myModificationsCount++;
+    myHC = -1;
+
+    clearRelativeOffsets(rawFirstChild());
+  }
+
+  public void assertThreading() {
     if (ASSERT_THREADING) {
       boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() ||
-                   Thread.holdsLock(START_OFFSET_LOCK) ||
+                   //Thread.holdsLock(START_OFFSET_LOCK) ||
                    isNonPhysicalOrInjected();
       if (!ok) {
         FileElement fileElement;
@@ -122,12 +135,6 @@ public class CompositeElement extends TreeElement {
         );
       }
     }
-    myCachedLength = NOT_CACHED;
-
-    myModificationsCount++;
-    myHC = -1;
-
-    clearRelativeOffsets(rawFirstChild());
   }
 
   private boolean isNonPhysicalOrInjected() {

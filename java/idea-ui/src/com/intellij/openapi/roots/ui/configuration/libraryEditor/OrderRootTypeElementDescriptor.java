@@ -26,7 +26,7 @@ public class OrderRootTypeElementDescriptor extends NodeDescriptor<OrderRootType
                                         OrderRootTypeElement element, String text, Icon icon) {
     super(null, parentDescriptor);
     myElement = element;
-    myIcon = icon;
+    setIcon(icon);
     myName = text;
   }
 

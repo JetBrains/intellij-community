@@ -37,7 +37,7 @@ import java.util.Set;
 public abstract class RenameJavaMemberProcessor extends RenamePsiElementProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.RenameJavaMemberProcessor");
 
-  protected static void qualifyMember(PsiMember member, PsiElement occurence, String newName) throws IncorrectOperationException {
+  public static void qualifyMember(PsiMember member, PsiElement occurence, String newName) throws IncorrectOperationException {
     qualifyMember(occurence, newName, member.getContainingClass(), member.hasModifierProperty(PsiModifier.STATIC));
   }
 

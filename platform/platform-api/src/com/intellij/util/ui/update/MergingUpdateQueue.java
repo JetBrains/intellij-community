@@ -111,7 +111,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
 
-  protected Alarm createAlarm(Alarm.ThreadToUse thread, Disposable parent) {
+  protected Alarm createAlarm(@NotNull Alarm.ThreadToUse thread, Disposable parent) {
     return new Alarm(thread, parent);
   }
 

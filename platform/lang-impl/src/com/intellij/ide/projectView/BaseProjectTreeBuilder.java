@@ -81,14 +81,17 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       final VirtualFile finalVFile = vFile;
       final FocusRequestor focusRequestor = IdeFocusManager.getInstance(myProject).getFurtherRequestor();
       batch(new Progressive() {
+        @Override
         public void run(@NotNull ProgressIndicator indicator) {
           final Ref<Object> target = new Ref<Object>();
           _select(value, finalVFile, false, Conditions.<AbstractTreeNode>alwaysTrue(), cb, indicator, target, focusRequestor, false);
           cb.doWhenDone(new Runnable() {
+            @Override
             public void run() {
               result.setDone(target.get());
             }
           }).doWhenRejected(new Runnable() {
+            @Override
             public void run() {
               result.setRejected();
             }
@@ -102,14 +105,17 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
 
+  @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     return ((AbstractTreeNode)nodeDescriptor).isAlwaysShowPlus();
   }
 
+  @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getParentDescriptor() == null || ((AbstractTreeNode)nodeDescriptor).isAlwaysExpand();
   }
 
+  @Override
   protected final void expandNodeChildren(final DefaultMutableTreeNode node) {
     final NodeDescriptor userObject = (NodeDescriptor)node.getUserObject();
     if (userObject == null) return;
@@ -185,8 +191,10 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     UiActivityMonitor.getInstance().addActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"), getUpdater().getModalityState());
     cancelUpdate().doWhenDone(new Runnable() {
+      @Override
       public void run() {
         batch(new Progressive() {
+          @Override
           public void run(@NotNull ProgressIndicator indicator) {
             _select(element, file, requestFocus, nonStopCondition, result, indicator, null, requestor, false);
             UiActivityMonitor.getInstance().removeActivity(myProject, new UiActivity.AsyncBgOperation("projectViewSelect"));
@@ -212,6 +220,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     final AbstractTreeNode alreadySelected = alreadySelectedNode(element);
 
     final Runnable onDone = new Runnable() {
+      @Override
       public void run() {
         if (requestFocus && virtualSelectTarget == null && getUi().isReady()) {
           focusRequestor.requestFocus(getTree(), true);
@@ -222,6 +231,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     };
 
     final Condition<AbstractTreeNode> condition = new Condition<AbstractTreeNode>() {
+      @Override
       public boolean value(AbstractTreeNode abstractTreeNode) {
         if (result.isProcessed()) return false;
         return nonStopCondition.value(abstractTreeNode);
@@ -231,6 +241,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (alreadySelected == null) {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator, virtualSelectTarget)
         .doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+          @Override
           public void run(AbstractTreeNode node) {
             if (virtualSelectTarget == null) {
               select(node, onDone);
@@ -294,6 +305,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     if (root.canRepresent(element)) {
       if (target == null) {
         expand(root, new Runnable() {
+          @Override
           public void run() {
             async.setDone(root);
           }
@@ -313,6 +325,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     if (target == null) {
       expand(root, new Runnable() {
+        @Override
         public void run() {
           indicator.checkCanceled();
 
@@ -342,6 +355,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
         }
 
         yield(new Runnable() {
+          @Override
           public void run() {
             if (isDisposed()) return;
             expandChild(kids, 0, nonStopCondition, file, element, async, indicator, target);
@@ -371,12 +385,14 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
 
     if (nonStopCondition.value(eachKid)) {
       expandPathTo(file, eachKid, element, nonStopCondition, indicator, virtualSelectTarget).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+        @Override
         public void run(AbstractTreeNode abstractTreeNode) {
           indicator.checkCanceled();
 
           async.setDone(abstractTreeNode);
         }
       }).doWhenRejected(new Runnable() {
+        @Override
         public void run() {
           indicator.checkCanceled();
 
@@ -391,6 +407,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
+  @Override
   protected boolean validateNode(final Object child) {
     if (child == null) {
       return false;
@@ -402,6 +419,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
     return true;
   }
 
+  @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();

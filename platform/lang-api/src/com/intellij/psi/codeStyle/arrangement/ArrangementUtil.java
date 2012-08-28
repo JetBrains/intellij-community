@@ -18,10 +18,9 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.model.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -211,4 +210,19 @@ public class ArrangementUtil {
     return TextRange.create(startOffsetToUse, endOffsetToUse);
   }
   //endregion
+  
+  @NotNull
+  public static ArrangementSettingType parseType(@NotNull Object condition) throws IllegalArgumentException {
+    if (condition instanceof ArrangementEntryType) {
+      return ArrangementSettingType.TYPE;
+    }
+    else if (condition instanceof ArrangementModifier) {
+      return ArrangementSettingType.MODIFIER;
+    }
+    else {
+      throw new IllegalArgumentException(String.format(
+        "Can't parse type for the given condition of class '%s': %s", condition.getClass(), condition
+      ));
+    }
+  }
 }

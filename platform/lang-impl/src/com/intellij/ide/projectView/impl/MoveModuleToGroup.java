@@ -41,6 +41,7 @@ public class MoveModuleToGroup extends ActionGroup {
     setPopup(true);
   }
 
+  @Override
   public void update(AnActionEvent e){
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -51,12 +52,14 @@ public class MoveModuleToGroup extends ActionGroup {
     presentation.setText(myModuleGroup.presentableText());
   }
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
 
     List<ModuleGroup> children = new ArrayList<ModuleGroup>(myModuleGroup.childGroups(e.getDataContext()));
     Collections.sort ( children, new Comparator<ModuleGroup>() {
+      @Override
       public int compare(final ModuleGroup moduleGroup1, final ModuleGroup moduleGroup2) {
         assert moduleGroup1.getGroupPath().length == moduleGroup2.getGroupPath().length;
         return moduleGroup1.toString().compareToIgnoreCase(moduleGroup2.toString());

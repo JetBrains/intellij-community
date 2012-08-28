@@ -38,6 +38,7 @@ public abstract class FavoritesToolbarButtonAction extends AnActionButton implem
     super(name, icon);
     myBuilder = builder;
     mySettings = FavoritesManager.getInstance(project).getViewSettings();
+    setContextComponent(myBuilder.getTree());
     Disposer.register(project, new Disposable() {
       @Override
       public void dispose() {

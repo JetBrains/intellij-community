@@ -45,6 +45,7 @@ public class DirectoryUrl extends AbstractUrl {
     return new DirectoryUrl(virtualFile.getUrl(), module != null ? module.getName() : null);
   }
 
+  @Override
   public Object[] createPath(final Project project) {
     if (moduleName != null) {
       final Module module = ApplicationManager.getApplication().runReadAction(new Computable<Module>() {
@@ -70,10 +71,12 @@ public class DirectoryUrl extends AbstractUrl {
     return new Object[]{directory};
   }
 
+  @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
       return new DirectoryUrl(url, moduleName);
   }
 
+  @Override
   public AbstractUrl createUrlByElement(Object element) {
     if (element instanceof PsiDirectory) {
       return create((PsiDirectory)element);

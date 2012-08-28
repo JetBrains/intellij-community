@@ -41,14 +41,17 @@ public class ActionPresentationData implements ActionPresentation {
     myIcon = icon;
   }
 
+  @Override
   public String getText() {
     return myText;
   }
 
+  @Override
   public String getDescription() {
     return myDescription;
   }
 
+  @Override
   public Icon getIcon() {
     return myIcon;
   }

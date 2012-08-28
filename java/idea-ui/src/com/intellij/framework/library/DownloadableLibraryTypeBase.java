@@ -34,7 +34,7 @@ public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryTyp
                                         @NotNull String groupId,
                                         @NotNull Icon icon,
                                         @NotNull URL... localUrls) {
-    super(new PersistentLibraryKind<LibraryVersionProperties>(libraryTypeId, false) {
+    super(new PersistentLibraryKind<LibraryVersionProperties>(libraryTypeId) {
       @NotNull
       @Override
       public LibraryVersionProperties createDefaultProperties() {

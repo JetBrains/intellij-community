@@ -438,6 +438,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(createFilteringPanel(), null)
             .setRequestFocus(true)
             .setTitle(KeyMapBundle.message("filter.settings.popup.title"))
+            .setCancelKeyEnabled(false)
             .setMovable(true)
             .createPopup();
         }

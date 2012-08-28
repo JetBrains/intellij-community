@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: cdr
- * Date: Aug 30, 2002
- */
-package com.intellij.ide.util.treeView;
-
-import java.util.Comparator;
-
-public class IndexComparator implements Comparator<NodeDescriptor> {
-  public static final IndexComparator INSTANCE = new IndexComparator();
-
-  private IndexComparator() {}
-
-  @Override
-  public int compare(NodeDescriptor nodeDescriptor1, NodeDescriptor nodeDescriptor2) {
-    return nodeDescriptor1.getIndex() - nodeDescriptor2.getIndex();
-  }
+class Test1 {
+    class A {
+        int a;
+    }
+    class B extends A {
+        B(int a) {
+            this.a = a;
+        }
+    }
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.roots;
+package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -25,8 +25,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.roots.impl.DirectoryIndex;
-import com.intellij.openapi.roots.impl.DirectoryInfo;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -38,7 +36,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+
+import static java.util.Collections.singletonList;
 
 @PlatformTestCase.WrapInCommand
 public class DirectoryIndexImplTest extends IdeaTestCase {
@@ -57,6 +60,9 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   private VirtualFile myTestSrc1;
   private VirtualFile myPack1Dir;
   private VirtualFile myPack2Dir;
+  private VirtualFile myFileLibDir;
+  private VirtualFile myFileLibSrc;
+  private VirtualFile myFileLibCls;
   private VirtualFile myLibDir;
   private VirtualFile myLibSrcDir;
   private VirtualFile myLibClsDir;
@@ -75,10 +81,11 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
       @Override
       public void run() {
         try {
-          myRootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
-          assertNotNull(myRootVFile);
           /*
             root
+                lib
+                    file.src
+                    file.cls
                 module1
                     src1
                         pack1
@@ -95,16 +102,21 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
                 out
                     module1
           */
+          myRootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
+          assertNotNull(myRootVFile);
 
+          myFileLibDir = myRootVFile.createChildDirectory(DirectoryIndexImplTest.this, "lib");
+          myFileLibSrc = myFileLibDir.createChildData(DirectoryIndexImplTest.this, "file.src");
+          myFileLibCls = myFileLibDir.createChildData(DirectoryIndexImplTest.this, "file.cls");
           myModule1Dir = myRootVFile.createChildDirectory(DirectoryIndexImplTest.this, "module1");
           mySrcDir1 = myModule1Dir.createChildDirectory(DirectoryIndexImplTest.this, "src1");
           myPack1Dir = mySrcDir1.createChildDirectory(DirectoryIndexImplTest.this, "pack1");
           myTestSrc1 = mySrcDir1.createChildDirectory(DirectoryIndexImplTest.this, "testSrc");
           myPack2Dir = myTestSrc1.createChildDirectory(DirectoryIndexImplTest.this, "pack2");
+
           myLibDir = myModule1Dir.createChildDirectory(DirectoryIndexImplTest.this, "lib");
           myLibSrcDir = myLibDir.createChildDirectory(DirectoryIndexImplTest.this, "src");
           myLibClsDir = myLibDir.createChildDirectory(DirectoryIndexImplTest.this, "cls");
-
           myModule2Dir = myModule1Dir.createChildDirectory(DirectoryIndexImplTest.this, "module2");
           mySrcDir2 = myModule2Dir.createChildDirectory(DirectoryIndexImplTest.this, "src2");
           myCvsDir = mySrcDir2.createChildDirectory(DirectoryIndexImplTest.this, "CVS");
@@ -116,6 +128,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
           myModule1OutputDir = myOutputDir.createChildDirectory(DirectoryIndexImplTest.this, "module1");
 
           getCompilerProjectExtension().setCompilerOutputUrl(myOutputDir.getUrl());
+          ModuleManager moduleManager = ModuleManager.getInstance(myProject);
 
           // fill roots of module1
           {
@@ -123,9 +136,9 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
             PsiTestUtil.addContentRoot(myModule, myModule1Dir);
             PsiTestUtil.addSourceRoot(myModule, mySrcDir1);
             PsiTestUtil.addSourceRoot(myModule, myTestSrc1, true);
+            ModuleRootModificationUtil.addModuleLibrary(myModule, "lib.js",
+                                                        singletonList(myFileLibCls.getUrl()), singletonList(myFileLibSrc.getUrl()));
           }
-
-          ModuleManager moduleManager = ModuleManager.getInstance(myProject);
 
           // fill roots of module2
           {
@@ -135,8 +148,8 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
             PsiTestUtil.addContentRoot(myModule2, myModule2Dir);
             PsiTestUtil.addSourceRoot(myModule2, mySrcDir2);
             PsiTestUtil.addExcludedRoot(myModule2, myExcludeDir);
-            ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib", Collections.singletonList(myLibClsDir.getUrl()),
-                                                        Collections.singletonList(myLibSrcDir.getUrl()));
+            ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib",
+                                                        singletonList(myLibClsDir.getUrl()), singletonList(myLibSrcDir.getUrl()));
           }
 
           // fill roots of module3
@@ -166,28 +179,32 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   public void testDirInfos() {
     checkInfoNull(myRootVFile);
 
-    checkInfo(myModule1Dir, myModule, false, false, false, false, null, new Module[]{});
-    checkInfo(mySrcDir1, myModule, true, false, false, false, "", new Module[]{myModule});
-    checkInfo(myPack1Dir, myModule, true, false, false, false, "pack1", new Module[]{myModule});
-    checkInfo(myTestSrc1, myModule, true, true, false, false, "", new Module[]{myModule});
-    checkInfo(myPack2Dir, myModule, true, true, false, false, "pack2", new Module[]{myModule});
-    checkInfo(myLibDir, myModule, false, false, false, false, null, new Module[]{});
+    // beware: files in directory index
+    checkInfo(myFileLibSrc, null, false, false, false, true, "");
+    checkInfo(myFileLibCls, null, false, false, true, false, "");
 
-    checkInfo(myLibSrcDir, myModule, false, false, false, true, "", new Module[]{myModule2});
-    checkInfo(myLibClsDir, myModule, false, false, true, false, "", new Module[]{myModule2});
+    checkInfo(myModule1Dir, myModule, false, false, false, false, null);
+    checkInfo(mySrcDir1, myModule, true, false, false, false, "", myModule);
+    checkInfo(myPack1Dir, myModule, true, false, false, false, "pack1", myModule);
+    checkInfo(myTestSrc1, myModule, true, true, false, false, "", myModule);
+    checkInfo(myPack2Dir, myModule, true, true, false, false, "pack2", myModule);
 
-    checkInfo(myModule2Dir, myModule2, false, false, false, false, null, new Module[]{});
-    checkInfo(mySrcDir2, myModule2, true, false, false, false, "", new Module[]{myModule2, myModule3});
+    checkInfo(myLibDir, myModule, false, false, false, false, null);
+    checkInfo(myLibSrcDir, myModule, false, false, false, true, "", myModule2);
+    checkInfo(myLibClsDir, myModule, false, false, true, false, "", myModule2);
+
+    checkInfo(myModule2Dir, myModule2, false, false, false, false, null);
+    checkInfo(mySrcDir2, myModule2, true, false, false, false, "", myModule2, myModule3);
     checkInfoNull(myCvsDir);
     checkInfoNull(myExcludeDir);
 
-    checkInfo(myModule3Dir, myModule3, false, false, false, false, null, new Module[]{});
+    checkInfo(myModule3Dir, myModule3, false, false, false, false, null);
   }
 
   public void testDirsByPackageName() {
-    checkPackage(new VirtualFile[]{mySrcDir1, myTestSrc1, myLibSrcDir, myLibClsDir, mySrcDir2}, "");
-    checkPackage(new VirtualFile[]{myPack1Dir}, "pack1");
-    checkPackage(new VirtualFile[]{myPack2Dir}, "pack2");
+    checkPackage("", myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myLibSrcDir, myLibClsDir, mySrcDir2);
+    checkPackage("pack1", myPack1Dir);
+    checkPackage("pack2", myPack2Dir);
   }
 
   public void testCreateDir() throws Exception {
@@ -312,8 +329,8 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
 
     myIndex.checkConsistency();
 
-    checkInfo(myModule2Dir, myModule2, false, false, false, false, null, new Module[]{});
-    checkInfo(mySrcDir2, myModule2, true, false, false, false, "", new Module[]{myModule2, myModule3});
+    checkInfo(myModule2Dir, myModule2, false, false, false, false, null);
+    checkInfo(mySrcDir2, myModule2, true, false, false, false, "", myModule2, myModule3);
   }
 
   public void testResettingProjectOutputPath() throws Exception {
@@ -466,8 +483,8 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
 
     myIndex.checkConsistency();
 
-    checkInfo(myModule1Dir, myModule, false, false, true, false, "", new Module[]{myModule});
-    checkInfo(mySrcDir1, myModule, true, false, true, false, "", new Module[]{myModule});
+    checkInfo(myModule1Dir, myModule, false, false, true, false, "", myModule);
+    checkInfo(mySrcDir1, myModule, true, false, true, false, "", myModule);
   }
 
 
@@ -479,13 +496,13 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
   }
 
   private void checkInfo(VirtualFile dir,
-                         Module module,
+                         @Nullable Module module,
                          boolean isInModuleSource,
                          boolean isTestSource,
                          boolean isInLibrary,
                          boolean isInLibrarySource,
                          @Nullable String packageName,
-                         Module[] modulesOfOrderEntries) {
+                         Module... modulesOfOrderEntries) {
     DirectoryInfo info = myIndex.getInfoForDirectory(dir);
     assertNotNull(info);
     assertEquals(module, info.module);
@@ -495,7 +512,9 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     assertEquals(isInLibrarySource, info.isInLibrarySource);
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-    assertEquals(packageName, fileIndex.getPackageNameByDirectory(dir));
+    if (dir.isDirectory()) {
+      assertEquals(packageName, fileIndex.getPackageNameByDirectory(dir));
+    }
 
     assertEquals(modulesOfOrderEntries.length, info.getOrderEntries().size());
     for (Module aModule : modulesOfOrderEntries) {
@@ -515,7 +534,7 @@ public class DirectoryIndexImplTest extends IdeaTestCase {
     assertNull(info);
   }
 
-  private void checkPackage(VirtualFile[] expectedDirs, String packageName) {
+  private void checkPackage(String packageName, VirtualFile... expectedDirs) {
     VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, true).toArray(VirtualFile.EMPTY_ARRAY);
     assertNotNull(actualDirs);
     HashSet<VirtualFile> set1 = new HashSet<VirtualFile>();

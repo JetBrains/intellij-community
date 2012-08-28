@@ -68,6 +68,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   protected abstract Collection<AbstractTreeNode> getChildrenImpl();
   protected abstract void updateImpl(final PresentationData data);
 
+  @Override
   @NotNull
   public final Collection<AbstractTreeNode> getChildren() {
     final PsiElement psiElement = extractPsiFromValue();
@@ -83,6 +84,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     return children != null ? children : Collections.<AbstractTreeNode>emptyList();
   }
 
+  @Override
   public boolean isValid() {
     final PsiElement psiElement = extractPsiFromValue();
     return psiElement != null && psiElement.isValid();
@@ -103,6 +105,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
   }
 
 
+  @Override
   public FileStatus getFileStatus() {
     VirtualFile file = getVirtualFileForValue();
     if (file == null) {
@@ -124,6 +127,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
 
   // Should be called in atomic action
 
+  @Override
   public void update(final PresentationData data) {
     AccessToken token = ReadAction.start();
     try {
@@ -176,6 +180,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     return false;
   }
 
+  @Override
   public boolean contains(@NotNull final VirtualFile file) {
     final PsiElement psiElement = extractPsiFromValue();
     if (psiElement == null || !psiElement.isValid()) {
@@ -196,6 +201,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     return (psiElement instanceof NavigationItem) ? (NavigationItem) psiElement : null;
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     if (canNavigate()) {
       if (requestFocus) {
@@ -207,11 +213,13 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
     }
   }
 
+  @Override
   public boolean canNavigate() {
     final NavigationItem item = getNavigationItem();
     return item != null && item.canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     final NavigationItem item = getNavigationItem();
     return item != null && item.canNavigateToSource();

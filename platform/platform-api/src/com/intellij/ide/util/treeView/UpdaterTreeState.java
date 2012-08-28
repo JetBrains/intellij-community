@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -32,7 +33,6 @@ public class UpdaterTreeState {
   private final AbstractTreeUi myUi;
   protected WeakHashMap<Object, Object> myToSelect = new WeakHashMap<Object, Object>();
   protected WeakHashMap<Object, Condition> myAdjustedSelection = new WeakHashMap<Object, Condition>();
-  protected WeakHashMap<Object, Object> myDisposedElements = new WeakHashMap<Object, Object>();
   protected WeakHashMap<Object, Object> myToExpand = new WeakHashMap<Object, Object>();
   private int myProcessingCount;
 
@@ -169,8 +169,10 @@ public class UpdaterTreeState {
     final Set<Object> originallySelected = myUi.getSelectedElements();
 
     myUi._select(toSelect, new Runnable() {
+      @Override
       public void run() {
         processUnsuccessfulSelections(toSelect, new Function<Object, Object>() {
+          @Override
           public Object fun(final Object o) {
             if (myUi.getTree().isRootVisible() || !myUi.getTreeStructure().getRootElement().equals(o)) {
               addSelection(o);
@@ -180,8 +182,10 @@ public class UpdaterTreeState {
         }, originallySelected);
 
         processAjusted(adjusted, originallySelected).doWhenDone(new Runnable() {
+          @Override
           public void run() {
             myUi.expand(toExpand, new Runnable() {
+              @Override
               public void run() {
                 myUi.clearUpdaterState();
                 setProcessingNow(false);
@@ -224,17 +228,17 @@ public class UpdaterTreeState {
     final Set<Object> selected = myUi.getSelectedElements();
 
     boolean wasFullyRejected = false;
-    if (toSelect.length > 0 && selected.size() > 0 && !originallySelected.containsAll(selected)) {
+    if (toSelect.length > 0 && !selected.isEmpty() && !originallySelected.containsAll(selected)) {
       final Set<Object> successfulSelections = new HashSet<Object>();
       ContainerUtil.addAll(successfulSelections, toSelect);
 
       successfulSelections.retainAll(selected);
-      wasFullyRejected = successfulSelections.size() == 0;
-    } else if (selected.size() == 0 && originallySelected.size() == 0) {
+      wasFullyRejected = successfulSelections.isEmpty();
+    } else if (selected.isEmpty() && originallySelected.isEmpty()) {
       wasFullyRejected = true;
     }
 
-    if (wasFullyRejected && selected.size() > 0) return;
+    if (wasFullyRejected && !selected.isEmpty()) return;
 
     for (Object eachToSelect : toSelect) {
       if (!selected.contains(eachToSelect)) {
@@ -249,15 +253,15 @@ public class UpdaterTreeState {
     final Set<Object> allSelected = myUi.getSelectedElements();
 
     Set<Object> toSelect = new HashSet<Object>();
-    for (Object each : adjusted.keySet()) {
-      if (adjusted.get(each).value(each)) continue;
+    for (Map.Entry<Object, Condition> entry : adjusted.entrySet()) {
+      if (entry.getValue().value(entry.getKey())) continue;
 
       for (final Object eachSelected : allSelected) {
-        if (isParentOrSame(each, eachSelected)) continue;
-        toSelect.add(each);
+        if (isParentOrSame(entry.getKey(), eachSelected)) continue;
+        toSelect.add(entry.getKey());
       }
-      if (allSelected.size() == 0) {
-        toSelect.add(each);
+      if (allSelected.isEmpty()) {
+        toSelect.add(entry.getKey());
       }
     }
 
@@ -265,9 +269,11 @@ public class UpdaterTreeState {
 
     if (newSelection.length > 0) {
       myUi._select(newSelection, new Runnable() {
+        @Override
         public void run() {
           final Set<Object> hangByParent = new HashSet<Object> ();
           processUnsuccessfulSelections(newSelection, new Function<Object, Object>() {
+            @Override
             public Object fun(final Object o) {
               if (myUi.isInStructure(o) && !adjusted.get(o).value(o)) {
                 hangByParent.add(o);
@@ -289,14 +295,14 @@ public class UpdaterTreeState {
   }
 
   private ActionCallback processHangByParent(Set<Object> elements) {
-    if (elements.size() == 0) return new ActionCallback.Done();
+    if (elements.isEmpty()) return new ActionCallback.Done();
 
     ActionCallback result = new ActionCallback(elements.size());
-    for (Iterator<Object> iterator = elements.iterator(); iterator.hasNext();) {
-      Object hangElement = iterator.next();
+    for (Object hangElement : elements) {
       if (!myAdjustmentCause2Adjustment.containsKey(hangElement)) {
         processHangByParent(hangElement).notify(result);
-      } else {
+      }
+      else {
         result.setDone();
       }
     }
@@ -318,6 +324,7 @@ public class UpdaterTreeState {
         callback.setDone();
       } else {
        myUi.select(nextElement, new Runnable() {
+          @Override
           public void run() {
             processNextHang(nextElement, callback);
           }
@@ -356,9 +363,12 @@ public class UpdaterTreeState {
     }
   }
 
+  @NonNls
   @Override
   public String toString() {
-    return "UpdaterState toSelect" + Arrays.asList(myToSelect) + " toExpand=" + Arrays.asList(myToExpand) + " processingNow=" + isProcessingNow() + " canRun=" + myCanRunRestore;
+    return "UpdaterState toSelect" +
+           myToSelect + " toExpand=" +
+           myToExpand + " processingNow=" + isProcessingNow() + " canRun=" + myCanRunRestore;
   }
 
   public void setProcessingNow(boolean processingNow) {

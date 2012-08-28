@@ -65,7 +65,7 @@ public class DefaultArrangementEntryMatcherSerializer {
 
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
-  public ArrangementEntryMatcher deserialize(@NotNull Element matcherElement) {
+  public StdArrangementEntryMatcher deserialize(@NotNull Element matcherElement) {
     ArrangementMatchCondition condition = deserializeCondition(matcherElement);
     return condition == null ? null : new StdArrangementEntryMatcher(condition);
   }

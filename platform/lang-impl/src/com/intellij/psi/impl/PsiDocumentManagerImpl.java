@@ -85,46 +85,44 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
                                 @NotNull SmartPointerManager smartPointerManager,
                                 @NotNull EditorFactory editorFactory,
                                 @NotNull MessageBus bus,
-                                @NotNull final DocumentCommitThread documentCommitThread) {
+                                @NonNls @NotNull final DocumentCommitThread documentCommitThread) {
     myProject = project;
     myPsiManager = psiManager;
     myDocumentCommitThread = documentCommitThread;
     mySmartPointerManager = (SmartPointerManagerImpl)smartPointerManager;
     mySynchronizer = new PsiToDocumentSynchronizer(this, bus);
-    if (true || !project.isDefault()) {
-      myPsiManager.addPsiTreeChangeListener(mySynchronizer);
-      editorFactory.getEventMulticaster().addDocumentListener(this, myProject);
-      bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
-        @Override
-        public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
-          PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-            @Override
-            public PsiFile compute() {
-              return getCachedPsiFile(virtualFile);
-            }
-          });
-          fireDocumentCreated(document, psiFile);
-        }
-      });
-      bus.connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
-        @Override
-        public void updateFinished(@NotNull Document doc) {
-          documentCommitThread.queueCommit(project, doc, "Bulk update finished");
-        }
-      });
-      ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
-        @Override
-        public void beforeWriteActionStart(Object action) {
-          documentCommitThread.disable("Write action started: "+ action);
-        }
+    myPsiManager.addPsiTreeChangeListener(mySynchronizer);
+    editorFactory.getEventMulticaster().addDocumentListener(this, myProject);
+    bus.connect().subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+      @Override
+      public void fileContentLoaded(@NotNull final VirtualFile virtualFile, @NotNull Document document) {
+        PsiFile psiFile = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
+          @Override
+          public PsiFile compute() {
+            return getCachedPsiFile(virtualFile);
+          }
+        });
+        fireDocumentCreated(document, psiFile);
+      }
+    });
+    bus.connect().subscribe(DocumentBulkUpdateListener.TOPIC, new DocumentBulkUpdateListener.Adapter() {
+      @Override
+      public void updateFinished(@NotNull Document doc) {
+        documentCommitThread.queueCommit(project, doc, "Bulk update finished");
+      }
+    });
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+      @Override
+      public void beforeWriteActionStart(Object action) {
+        documentCommitThread.disable("Write action started: "+ action);
+      }
 
-        @Override
-        public void writeActionFinished(Object action) {
-          documentCommitThread.enable("Write action finished: "+action);
-        }
-      }, myProject);
-      documentCommitThread.enable("project open");
-    }
+      @Override
+      public void writeActionFinished(Object action) {
+        documentCommitThread.enable("Write action finished: "+action);
+      }
+    }, myProject);
+    documentCommitThread.enable("project open");
   }
 
   @Override
@@ -267,6 +265,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   private final Map<Object, Runnable> actionsWhenAllDocumentsAreCommitted = new LinkedHashMap<Object, Runnable>(); //accessed from EDT only
   private static final Object PERFORM_ALWAYS_KEY = new Object(){
     @Override
+    @NonNls
     public String toString() {
       return "PERFORM_ALWAYS";
     }
@@ -304,7 +303,10 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
 
   /**
    * Cancel previously registered action and schedules (new) action to be executed when all documents are committed.
-   *  @param key the (unique) name of the action. This action will overwrite any action which was registered under this key earlier.
+   *  @param key the (unique) id of the action.
+   *  @param action The action to be executed after automatic commit.
+   *                This action will overwrite any action which was registered under this key earlier.
+   *                The action will be executed in EDT.
    *  @return true if action has been run immediately, or false if action was scheduled for execution later.
    */
   public boolean cancelAndRunWhenAllCommitted(@NonNls @NotNull Object key, @NotNull final Runnable action) {

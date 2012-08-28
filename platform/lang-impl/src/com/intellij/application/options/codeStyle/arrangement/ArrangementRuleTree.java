@@ -18,13 +18,10 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.codeStyle.arrangement.ArrangementOperator;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
@@ -42,6 +39,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.List;
 
@@ -79,7 +77,10 @@ public class ArrangementRuleTree {
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
-  public ArrangementRuleTree(@NotNull ArrangementConditionsGrouper grouper, @NotNull ArrangementNodeDisplayManager displayManager) {
+  public ArrangementRuleTree(@NotNull List<StdArrangementRule> rules,
+                             @NotNull ArrangementConditionsGrouper grouper,
+                             @NotNull ArrangementNodeDisplayManager displayManager)
+  {
     myGrouper = grouper;
     myFactory = new ArrangementNodeComponentFactory(displayManager, new Consumer<ArrangementAtomMatchCondition>() {
       @Override
@@ -179,37 +180,10 @@ public class ArrangementRuleTree {
       }
     });
     
-    List<ArrangementMatchCondition> rules = new ArrayList<ArrangementMatchCondition>();
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.STATIC))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.FINAL)));
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC)));
-    rules.add(new ArrangementCompositeMatchCondition(ArrangementOperator.AND)
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.METHOD))
-                .addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PRIVATE)));
-    map(rules);
-
-    expandAll(myTree, new TreePath(myRoot));
+    setRules(rules);
+    
     myTree.setShowsRootHandles(false);
     myTree.setCellRenderer(new MyCellRenderer());
-
-    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
-      LOG.info("Arrangement tree is constructed. Models:");
-      myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
-        @Override
-        public boolean execute(ArrangementRuleEditingModelImpl model) {
-          LOG.info(String.format("  row %d, model '%s'", model.getRow(), model.getMatchCondition())); 
-          return true;
-        }
-      });
-    }
   }
 
   private void selectPreviousRule() {
@@ -335,9 +309,9 @@ public class ArrangementRuleTree {
     tree.expandPath(parent);
   }
 
-  private void map(@NotNull List<ArrangementMatchCondition> matchConditions) {
-    for (ArrangementMatchCondition matchCondition : matchConditions) {
-      Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(matchCondition, myTree, myRoot, null, myGrouper);
+  private void map(@NotNull List<StdArrangementRule> rules) {
+    for (StdArrangementRule rule : rules) {
+      Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(rule, myTree, myRoot, null, myGrouper);
       myModels.put(pair.first.getRow(), pair.first);
       pair.first.addListener(myModelChangeListener);
     }
@@ -377,6 +351,44 @@ public class ArrangementRuleTree {
     return myTree;
   }
 
+  /**
+   * @return    rules configured at the current tree at the moment
+   */
+  @NotNull
+  public List<StdArrangementRule> getRules() {
+    int[] rows = myModels.keys();
+    Arrays.sort(rows);
+    List<StdArrangementRule> result = new ArrayList<StdArrangementRule>();
+    for (int row : rows) {
+      result.add(myModels.get(row).getRule());
+    }
+    return result;
+  }
+
+  public void setRules(@NotNull List<StdArrangementRule> rules) {
+    myRenderers.clear();
+    myModels.clear();
+    while (myRoot.getChildCount() > 0)
+    myTreeModel.removeNodeFromParent(myRoot.getFirstChild());
+    map(rules);
+    expandAll(myTree, new TreePath(myRoot));
+
+    if (ArrangementConstants.LOG_RULE_MODIFICATION) {
+      LOG.info("Arrangement tree is refreshed. Given rules:");
+      for (StdArrangementRule rule : rules) {
+        LOG.info("  " + rule.toString());
+      }
+      LOG.info("Following models have been built:");
+      myModels.forEachValue(new TObjectProcedure<ArrangementRuleEditingModelImpl>() {
+        @Override
+        public boolean execute(ArrangementRuleEditingModelImpl model) {
+          LOG.info(String.format("  row %d, model '%s'", model.getRow(), model.getRule()));
+          return true;
+        }
+      });
+    }
+  }
+  
   @NotNull
   private ArrangementNodeComponent getNodeComponentAt(int row, @NotNull ArrangementMatchCondition condition) {
     ArrangementNodeComponent result = myRenderers.get(row);
@@ -547,7 +559,7 @@ public class ArrangementRuleTree {
     final ArrangementTreeNode anchor = activeModel == null ? null : activeModel.getBottomMost();
     doClearSelection();
     Pair<ArrangementRuleEditingModelImpl,TIntIntHashMap> pair = myModelBuilder.build(
-      new ArrangementCompositeMatchCondition(ArrangementOperator.AND), myTree, myRoot, anchor, myGrouper
+      ArrangementRuleEditingModel.EMPTY_RULE, myTree, myRoot, anchor, myGrouper
     );
     processRowChanges(pair.second);
     myModels.put(pair.first.getRow(), pair.first);
@@ -690,7 +702,7 @@ public class ArrangementRuleTree {
       boolean emptyRuleRemoved = false;
       for (Object value : values) {
         ArrangementRuleEditingModelImpl model = (ArrangementRuleEditingModelImpl)value;
-        if (model != null && model != activeModel && isEmptyCondition(model.getMatchCondition())) {
+        if (model != null && model != activeModel && model.getRule() == ArrangementRuleEditingModel.EMPTY_RULE) {
           model.destroy();
           emptyRuleRemoved = true;
         }
@@ -702,7 +714,7 @@ public class ArrangementRuleTree {
 
       for (Object value : myModels.getValues()) {
         ArrangementRuleEditingModelImpl model = (ArrangementRuleEditingModelImpl)value;
-        if (activeModel.getMatchCondition().equals(model.getMatchCondition())) {
+        if (activeModel.getRule().equals(model.getRule())) {
           mySelectionModel.setSelectionPath(new TreePath(activeModel.getBottomMost().getPath()));
         }
       }

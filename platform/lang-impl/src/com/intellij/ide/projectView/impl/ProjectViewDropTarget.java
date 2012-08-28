@@ -232,10 +232,12 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   public abstract class MoveCopyDropHandler implements DropHandler {
+    @Override
     public boolean isValidSource(@NotNull final TreeNode[] sourceNodes, TreeNode targetNode) {
       return canDrop(sourceNodes, targetNode);
     }
 
+    @Override
     public boolean isValidTarget(@NotNull final TreeNode[] sourceNodes, final @NotNull TreeNode targetNode) {
       return canDrop(sourceNodes, targetNode);
     }
@@ -279,6 +281,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   private class MoveDropHandler extends MoveCopyDropHandler {
+    @Override
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       if (targetNode instanceof DefaultMutableTreeNode) {
         final Object userObject = ((DefaultMutableTreeNode)targetNode).getUserObject();
@@ -293,6 +296,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
               MoveHandler.canMove(sourceElements, targetElement));
     }
 
+    @Override
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
       if (targetNode instanceof DefaultMutableTreeNode) {
         final Object userObject = ((DefaultMutableTreeNode)targetNode).getUserObject();
@@ -311,6 +315,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       final Module module = getModule(targetNode);
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       getActionHandler().invoke(myProject, sourceElements, new DataContext() {
+        @Override
         @Nullable
         public Object getData(@NonNls String dataId) {
           if (LangDataKeys.TARGET_MODULE.is(dataId)) {
@@ -330,15 +335,18 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       return RefactoringActionHandlerFactory.getInstance().createMoveHandler();
     }
 
+    @Override
     public boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode) {
       return sourceNode.getParent() == targetNode || MoveHandler.isMoveRedundant(getPsiElement(sourceNode), getPsiElement(targetNode));
     }
 
+    @Override
     public boolean shouldDelegateToParent(TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
       final PsiElement psiElement = getPsiElement(targetNode);
       return !MoveHandler.isValidTarget(psiElement, getPsiElements(sourceNodes));
     }
 
+    @Override
     public void doDropFiles(List<File> fileList, TreeNode targetNode) {
       final PsiFileSystemItem[] sourceFileArray = getPsiFiles(fileList);
 
@@ -355,6 +363,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
   }
 
   private class CopyDropHandler extends MoveCopyDropHandler {
+    @Override
     protected boolean canDrop(@NotNull final TreeNode[] sourceNodes, @Nullable final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       final PsiElement targetElement = getPsiElement(targetNode);
@@ -365,6 +374,7 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       return isTargetAcceptable && CopyHandler.canCopy(sourceElements);
     }
 
+    @Override
     public void doDrop(@NotNull final TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
       final PsiElement[] sourceElements = getPsiElements(sourceNodes);
       doDrop(targetNode, sourceElements);
@@ -389,15 +399,18 @@ class ProjectViewDropTarget implements DnDNativeTarget {
       CopyHandler.doCopy(sourceElements, psiDirectory);
     }
 
+    @Override
     public boolean isDropRedundant(@NotNull TreeNode sourceNode, @NotNull TreeNode targetNode) {
       return false;
     }
 
+    @Override
     public boolean shouldDelegateToParent(TreeNode[] sourceNodes, @NotNull final TreeNode targetNode) {
       final PsiElement psiElement = getPsiElement(targetNode);
       return psiElement == null || (!(psiElement instanceof PsiDirectoryContainer) && !(psiElement instanceof PsiDirectory));
     }
 
+    @Override
     public void doDropFiles(List<File> fileList, TreeNode targetNode) {
       final PsiFileSystemItem[] sourceFileArray = getPsiFiles(fileList);
       doDrop(targetNode, sourceFileArray);

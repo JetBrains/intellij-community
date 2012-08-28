@@ -262,7 +262,16 @@ public class LambdaUtil {
   public static boolean dependsOnTypeParams(PsiType type,
                                             PsiLambdaExpression expr,
                                             PsiTypeParameter param2Check) {
-    final TypeParamsChecker visitor = new TypeParamsChecker(expr);
+    return depends(type, param2Check, new TypeParamsChecker(expr));
+  }
+
+  public static boolean dependsOnTypeParams(PsiType type,
+                                            PsiClass aClass,
+                                            PsiMethod aMethod) {
+    return depends(type, null, new TypeParamsChecker(aMethod, aClass));
+  }
+
+  private static boolean depends(PsiType type, PsiTypeParameter param2Check, TypeParamsChecker visitor) {
     if (!visitor.startedInference()) return false;
     final Boolean accept = type.accept(visitor);
     if (param2Check != null) {
@@ -328,8 +337,8 @@ public class LambdaUtil {
         }
 
         final PsiElement gParent = expressionList.getParent();
-        if (gParent instanceof PsiMethodCallExpression) {
-          final PsiMethodCallExpression contextCall = (PsiMethodCallExpression)gParent;
+        if (gParent instanceof PsiCallExpression) {
+          final PsiCallExpression contextCall = (PsiCallExpression)gParent;
           final JavaResolveResult resolveResult = contextCall.resolveMethodGenerics();
           final PsiElement resolve = resolveResult.getElement();
           if (resolve instanceof PsiMethod) {
@@ -402,6 +411,11 @@ public class LambdaUtil {
     private PsiMethod myMethod;
     private final PsiClass myClass;
     private final Set<PsiTypeParameter> myUsedTypeParams = new HashSet<PsiTypeParameter>(); 
+
+    private TypeParamsChecker(PsiMethod method, PsiClass aClass) {
+      myMethod = method;
+      myClass = aClass;
+    }
 
     public TypeParamsChecker(PsiLambdaExpression expression) {
       myClass = PsiUtil.resolveGenericsClassInType(getFunctionalInterfaceType(expression, false)).getElement();

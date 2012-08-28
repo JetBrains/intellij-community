@@ -45,8 +45,10 @@ public interface Sorter extends TreeAction {
    * The default sorter which sorts the tree nodes alphabetically.
    */
   Sorter ALPHA_SORTER = new Sorter() {
+    @Override
     public Comparator getComparator() {
       return new Comparator() {
+        @Override
         public int compare(Object o1, Object o2) {
           String s1 = SorterUtil.getStringPresentation(o1);
           String s2 = SorterUtil.getStringPresentation(o2);
@@ -55,6 +57,7 @@ public interface Sorter extends TreeAction {
       };
     }
 
+    @Override
     public boolean isVisible() {
       return true;
     }
@@ -63,6 +66,7 @@ public interface Sorter extends TreeAction {
       return getName();
     }
 
+    @Override
     @NotNull
     public ActionPresentation getPresentation() {
       return new ActionPresentationData(IdeBundle.message("action.sort.alphabetically"),
@@ -70,6 +74,7 @@ public interface Sorter extends TreeAction {
                                         AllIcons.ObjectBrowser.Sorted);
     }
 
+    @Override
     @NotNull
     public String getName() {
       return ALPHA_SORTER_ID;

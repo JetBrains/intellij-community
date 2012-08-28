@@ -44,6 +44,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     super(project, value, viewSettings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     final List<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
@@ -51,6 +52,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     return children;
   }
 
+  @Override
   public String getTestPresentation() {
     return "Library: " + getValue().getName();
   }
@@ -64,10 +66,12 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     return sdkType.getIcon();
   }
 
+  @Override
   public String getName() {
     return getValue().getName();
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     return orderEntryContainsFile(getValue().getOrderEntry(), file);
   }
@@ -89,6 +93,7 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     return false;
   }
 
+  @Override
   public void update(PresentationData presentation) {
     presentation.setPresentableText(getValue().getName());
     final OrderEntry orderEntry = getValue().getOrderEntry();
@@ -110,10 +115,12 @@ public class NamedLibraryElementNode extends ProjectViewNode<NamedLibraryElement
     }
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     ProjectSettingsService.getInstance(myProject).openLibraryOrSdkSettings(getValue().getOrderEntry());
   }
 
+  @Override
   public boolean canNavigate() {
     return ProjectSettingsService.getInstance(myProject).canOpenLibraryOrSdkSettings(getValue().getOrderEntry());
   }

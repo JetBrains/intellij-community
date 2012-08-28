@@ -4,6 +4,6 @@ class X {
   }
 
   {
-    I<String> c = (String o1, String o2)-> {};
+    I<String> c = (String o1, String o2) -> {};
   }
 }

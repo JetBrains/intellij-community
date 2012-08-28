@@ -34,7 +34,7 @@ import java.awt.*;
 import java.util.List;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
-
+  @Override
   public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     Color color = null;
     NodeDescriptor descriptor = null;
@@ -54,7 +54,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       final PresentationData presentation = node.getPresentation();
 
       final List<PresentableNodeDescriptor.ColoredFragment> coloredText = presentation.getColoredText();
-      if (coloredText.size() == 0) {
+      if (coloredText.isEmpty()) {
         String text = tree.convertValueToText(value.toString(), selected, expanded, leaf, row, hasFocus);
         SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(node, presentation.getForcedTextForeground() != null ? presentation.getForcedTextForeground() : color);
         doAppend(text, simpleTextAttributes, selected);
@@ -66,7 +66,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       }
 
       final String location = presentation.getLocationString();
-      if (location != null && location.length() > 0) {
+      if (location != null && !location.isEmpty()) {
         doAppend(" (" + location + ")", SimpleTextAttributes.GRAY_ATTRIBUTES, selected);
       }
 

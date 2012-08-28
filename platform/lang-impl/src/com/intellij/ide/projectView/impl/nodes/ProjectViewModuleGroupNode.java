@@ -55,6 +55,7 @@ public class ProjectViewModuleGroupNode extends ModuleGroupNode {
     return createTreeNode(ProjectViewModuleNode.class, getProject(), module, getSettings());
   }
 
+  @Override
   protected ModuleGroupNode createModuleGroupNode(ModuleGroup moduleGroup) {
     return new ProjectViewModuleGroupNode(getProject(), moduleGroup, getSettings());
   }

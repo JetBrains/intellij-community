@@ -36,6 +36,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
     myTreeModel = treeModel;
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ensureChildrenAreInitialized();
@@ -70,6 +71,7 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
       mySorters = sorters;
     }
 
+    @Override
     public int compare(final CachingChildrenTreeNode o1, final CachingChildrenTreeNode o2) {
       final Object value1 = o1.getValue();
       final Object value2 = o2.getValue();
@@ -229,14 +231,17 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
 
   protected abstract void initChildren();
 
+  @Override
   public void navigate(final boolean requestFocus) {
     ((Navigatable)getValue()).navigate(requestFocus);
   }
 
+  @Override
   public boolean canNavigate() {
     return getValue() instanceof Navigatable && ((Navigatable)getValue()).canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return getValue() instanceof Navigatable && ((Navigatable)getValue()).canNavigateToSource();
   }

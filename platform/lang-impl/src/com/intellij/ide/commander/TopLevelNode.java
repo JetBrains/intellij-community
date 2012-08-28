@@ -33,7 +33,7 @@ public class TopLevelNode extends AbstractTreeNode {
   public TopLevelNode(Project project, Object value) {
     super(project, value);
     myName = "[ .. ]";
-    myIcon = AllIcons.Nodes.UpLevel;
+    setIcon(AllIcons.Nodes.UpLevel);
   }
 
   @NotNull

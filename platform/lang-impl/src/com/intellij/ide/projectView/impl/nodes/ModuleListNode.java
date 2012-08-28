@@ -41,6 +41,7 @@ public class ModuleListNode extends ProjectViewNode<Module> {
     this(project, (Module)value, viewSettings);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     Module module = getValue();
@@ -60,14 +61,17 @@ public class ModuleListNode extends ProjectViewNode<Module> {
   }
 
 
+  @Override
   public String getTestPresentation() {
     return "Modules";
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     return someChildContainsFile(file);
   }
 
+  @Override
   public void update(PresentationData presentation) {
     presentation.setPresentableText("Module Dependencies");
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);

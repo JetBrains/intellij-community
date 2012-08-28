@@ -21,6 +21,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
 import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
@@ -65,6 +66,42 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     MODIFIERS_BY_TYPE.put(CLASS, concat(commonModifiers, ABSTRACT));
     MODIFIERS_BY_TYPE.put(METHOD, concat(commonModifiers, SYNCHRONIZED, ABSTRACT));
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
+  }
+
+  private static final List<StdArrangementRule> DEFAULT_RULES = new ArrayList<StdArrangementRule>(); 
+  static {
+    ArrangementModifier[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
+    for (ArrangementModifier modifier : visibility) {
+      and(FIELD, STATIC, FINAL, modifier);
+    }
+    for (ArrangementModifier modifier : visibility) {
+      and(FIELD, STATIC, modifier);
+    }
+    for (ArrangementModifier modifier : visibility) {
+      and(FIELD, FINAL, modifier);
+    }
+    for (ArrangementModifier modifier : visibility) {
+      and(FIELD, modifier);
+    }
+    and(METHOD);
+    and(ENUM);
+    and(INTERFACE);
+    and(CLASS);
+  }
+
+  private static void and(@NotNull Object... conditions) {
+    if (conditions.length == 1) {
+      DEFAULT_RULES.add(new StdArrangementRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
+        ArrangementUtil.parseType(conditions[0]), conditions[0]
+      ))));
+      return;
+    }
+
+    ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
+    for (Object condition : conditions) {
+      composite.addOperand(new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition));
+    }
+    DEFAULT_RULES.add(new StdArrangementRule(new StdArrangementEntryMatcher(composite)));
   }
 
   @NotNull
@@ -168,5 +205,11 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       }
     }); 
     return result.get();
+  }
+
+  @Nullable
+  @Override
+  public List<StdArrangementRule> getDefaultRules() {
+    return DEFAULT_RULES;
   }
 }

@@ -31,6 +31,7 @@ public abstract class ProjectAbstractTreeStructureBase extends AbstractTreeStruc
     super(project);
   }
 
+  @Override
   public List<TreeStructureProvider> getProviders() {
     if (myProviders == null) {
       final TreeStructureProvider[] providers = Extensions.getExtensions(TreeStructureProvider.EP_NAME, myProject);
