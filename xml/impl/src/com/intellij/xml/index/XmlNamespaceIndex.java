@@ -176,7 +176,7 @@ public class XmlNamespaceIndex extends XmlIndex<XsdNamespaceBuilder> {
   @Nullable
   public static XmlFile guessDtd(String dtdUri, @NotNull PsiFile baseFile) {
 
-    if (!dtdUri.endsWith(".dtd")) return null;
+    if (!dtdUri.endsWith(".dtd") || DumbService.isDumb(baseFile.getProject())) return null;
 
     String dtdFileName = new File(dtdUri).getName();
     List<IndexedRelevantResource<String, XsdNamespaceBuilder>>
