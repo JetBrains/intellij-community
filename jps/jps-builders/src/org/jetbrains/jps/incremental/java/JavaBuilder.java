@@ -97,14 +97,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
         if (srcFile != null && content != null) {
           final String outputPath = FileUtil.toSystemIndependentName(out.getFile().getPath());
           final String sourcePath = FileUtil.toSystemIndependentName(srcFile.getPath());
-          final RootDescriptor moduleAndRoot = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, srcFile);
+          final RootDescriptor rootDescriptor = context.getProjectDescriptor().rootsIndex.getModuleAndRoot(context, srcFile);
           final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
           boolean isTemp = false;
-          if (moduleAndRoot != null) {
-            isTemp = moduleAndRoot.isTemp;
+          if (rootDescriptor != null) {
+            isTemp = rootDescriptor.isTemp;
             if (!isTemp) {
               try {
-                dataManager.getSourceToOutputMap(moduleAndRoot.module, context.isCompilingTests()).appendData(sourcePath, outputPath);
+                dataManager.getSourceToOutputMap(rootDescriptor.module, context.isCompilingTests()).appendData(sourcePath, outputPath);
               }
               catch (Exception e) {
                 context.processMessage(new CompilerMessage(BUILDER_NAME, e));
@@ -277,9 +277,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final boolean addNotNullAssertions = pd.project.getCompilerConfiguration().isAddNotNullAssertions();
 
     final Collection<File> classpath =
-      paths.getCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
+      paths.getCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
     final Collection<File> platformCp =
-      paths.getPlatformCompilationClasspath(chunk, context.isCompilingTests(), false/*context.isProjectRebuild()*/);
+      paths.getPlatformCompilationClasspath(chunk, false/*context.isProjectRebuild()*/);
 
     // begin compilation round
     final DiagnosticSink diagnosticSink = new DiagnosticSink(context);
@@ -305,7 +305,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final int filesCount = files.size();
         boolean compiledOk = true;
         if (filesCount > 0) {
-          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (context.isCompilingTests() ? " (tests)" : ""));
+          LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.isTests() ? " (tests)" : ""));
           if (LOG.isDebugEnabled()) {
             LOG.debug(" classpath for " + chunkName + ":");
             for (File file : classpath) {
@@ -322,7 +322,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         context.checkCanceled();
 
         if (!forms.isEmpty() || addNotNullAssertions) {
-          final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, context.isCompilingTests());
+          final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk, chunk.isTests());
           final InstrumentationClassFinder finder = createInstrumentationClassFinder(platformCp, classpath, chunkSourcePath, outputSink);
 
           try {
@@ -330,7 +330,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
               try {
                 context.processMessage(new ProgressMessage("Instrumenting forms [" + chunkName + "]"));
                 instrumentForms(context, chunk, chunkSourcePath, finder, forms, outputSink);
-                if (pd.project.getUiDesignerConfiguration().isCopyFormsRuntimeToOutput() && !context.isCompilingTests()) {
+                if (pd.project.getUiDesignerConfiguration().isCopyFormsRuntimeToOutput() && !chunk.isTests()) {
                   for (JpsModule module : chunk.getModules()) {
                     final File outputDir = paths.getModuleOutputDir(module, false);
                     if (outputDir != null) {
@@ -719,7 +719,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       }
 
       final File srcOutput = context.getProjectPaths()
-        .getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), context.isCompilingTests(),
+        .getAnnotationProcessorGeneratedSourcesOutputDir(chunk.getModules().iterator().next(), chunk.isTests(),
                                                          profile.getGeneratedSourcesDirName());
       if (srcOutput != null) {
         srcOutput.mkdirs();
@@ -846,15 +846,14 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static Map<File, Set<File>> buildOutputDirectoriesMap(CompileContext context, ModuleChunk chunk) {
     final Map<File, Set<File>> map = new LinkedHashMap<File, Set<File>>();
-    final boolean compilingTests = context.isCompilingTests();
-    for (JpsModule module : chunk.getModules()) {
-      final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(module, compilingTests);
+    for (RealModuleBuildTarget target : chunk.getTargets()) {
+      final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(target.getModule(), target.isTests());
       if (outputDir == null) {
         continue;
       }
       final Set<File> roots = new LinkedHashSet<File>();
-      for (RootDescriptor descriptor : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, module)) {
-        if (descriptor.isTestRoot == compilingTests) {
+      for (RootDescriptor descriptor : context.getProjectDescriptor().rootsIndex.getModuleRoots(context, target.getModule())) {
+        if (descriptor.isTestRoot == target.isTests()) {
           roots.add(descriptor.root);
         }
       }
@@ -920,7 +919,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     final MyNestedFormLoader nestedFormsLoader =
-      new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk, context.isCompilingTests()));
+      new MyNestedFormLoader(chunkSourcePath, ProjectPaths.getOutputPathsWithDependents(chunk, chunk.isTests()));
 
     for (File formFile : formsToInstrument) {
       final LwRootContainer rootContainer;

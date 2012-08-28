@@ -55,7 +55,7 @@ public class FSOperations {
     final ProjectDescriptor pd = context.getProjectDescriptor();
     pd.fsState.clearContextRoundData(context);
     for (RealModuleBuildTarget target : chunk.getTargets()) {
-      markDirtyFiles(context, target, pd.timestamps.getStorage(), true, context.isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
+      markDirtyFiles(context, target, pd.timestamps.getStorage(), true, target.isTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.PRODUCTION, null);
     }
   }
 
@@ -65,8 +65,8 @@ public class FSOperations {
     final Set<RealModuleBuildTarget> dirtyTargets = new HashSet<RealModuleBuildTarget>(targets);
 
     // now mark all modules that depend on dirty modules
-    final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(context.isCompilingTests());
-    final ProjectChunks chunks = context.isCompilingTests()? context.getTestChunks() : context.getProductionChunks();
+    final JpsJavaClasspathKind classpathKind = JpsJavaClasspathKind.compile(chunk.isTests());
+    final ProjectChunks chunks = chunk.isTests()? context.getTestChunks() : context.getProductionChunks();
     boolean found = false;
     for (ModuleChunk moduleChunk : chunks.getChunkList()) {
       if (!found) {
@@ -87,7 +87,7 @@ public class FSOperations {
 
     final Timestamps timestamps = context.getProjectDescriptor().timestamps.getStorage();
     for (RealModuleBuildTarget target : dirtyTargets) {
-      markDirtyFiles(context, target, timestamps, true, context.isCompilingTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
+      markDirtyFiles(context, target, timestamps, true, target.isTests() ? DirtyMarkScope.TESTS : DirtyMarkScope.BOTH, null);
     }
 
     if (context.isMake()) {

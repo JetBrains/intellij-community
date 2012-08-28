@@ -493,7 +493,7 @@ public class IncProjectBuilder {
             _buildChunk(context, scope, chunk);
           }
           finally {
-            pd.dataManager.closeSourceToOutputStorages(Collections.singleton(chunk), context.isCompilingTests());
+            pd.dataManager.closeSourceToOutputStorages(Collections.singleton(chunk), chunk.isTests());
             pd.dataManager.flush(true);
           }
         }
@@ -584,11 +584,10 @@ public class IncProjectBuilder {
           Utils.REMOVED_SOURCES_KEY.set(context, null);
 
           if (doneSomething && GENERATE_CLASSPATH_INDEX) {
-            final boolean forTests = context.isCompilingTests();
             final Future<?> future = SharedThreadPool.getInstance().executeOnPooledThread(new Runnable() {
               @Override
               public void run() {
-                createClasspathIndex(chunk, forTests);
+                createClasspathIndex(chunk);
               }
             });
             myAsyncTasks.add(future);
@@ -598,10 +597,10 @@ public class IncProjectBuilder {
     }
   }
 
-  private static void createClasspathIndex(final ModuleChunk chunk, boolean forTests) {
+  private static void createClasspathIndex(final ModuleChunk chunk) {
     final Set<File> outputPaths = new LinkedHashSet<File>();
-    for (JpsModule module : chunk.getModules()) {
-      final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(module, forTests);
+    for (RealModuleBuildTarget target : chunk.getTargets()) {
+      final File outputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(target.getModule(), target.isTests());
       if (outputDir != null) {
         outputPaths.add(outputDir);
       }
@@ -647,7 +646,7 @@ public class IncProjectBuilder {
         }
         removedSources.put(target, deletedPaths);
 
-        final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(), context.isCompilingTests());
+        final SourceToOutputMapping sourceToOutputStorage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(), target.isTests());
         // actually delete outputs associated with removed paths
         for (String deletedSource : deletedPaths) {
           // deleting outputs corresponding to non-existing source
@@ -797,7 +796,7 @@ public class IncProjectBuilder {
 
   private static void syncOutputFiles(final CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
-    final boolean compilingTests = context.isCompilingTests();
+    final boolean compilingTests = chunk.isTests();
     try {
       final Collection<String> allOutputs = new LinkedList<String>();
 
@@ -913,7 +912,7 @@ public class IncProjectBuilder {
         final Timestamps timestamps = pd.timestamps.getStorage();
         final List<RootDescriptor> roots = pd.rootsIndex.getModuleRoots(context, target.getModuleName());
         for (RootDescriptor rd : roots) {
-          if (context.isCompilingTests() ? rd.isTestRoot : !rd.isTestRoot) {
+          if (target.isTests() ? rd.isTestRoot : !rd.isTestRoot) {
             marked |= fsState.markAllUpToDate(context.getScope(), rd, timestamps, context.getCompilationStartStamp());
           }
         }
@@ -931,7 +930,7 @@ public class IncProjectBuilder {
     for (RealModuleBuildTarget target : chunk.getTargets()) {
       if (context.isProjectRebuild()) {
         FSOperations.markDirtyFiles(context, target, timestamps, true,
-                                    context.isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, null);
+                                    target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, null);
         updateOutputRootsLayout(context, target);
       }
       else {
@@ -945,7 +944,7 @@ public class IncProjectBuilder {
           // forced compilation mode
           if (context.getScope().isRecompilationForced(target)) {
             FSOperations.markDirtyFiles(context, target, timestamps, true,
-                                        context.isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION,
+                                        target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION,
                                         null);
             updateOutputRootsLayout(context, target);
           }
@@ -961,7 +960,7 @@ public class IncProjectBuilder {
     if (currentOutput != null) {
       Pair<String, String> outputsPair = pd.dataManager.getOutputRootsLayout().getState(target.getModuleName());
       if (outputsPair != null) {
-        final String previousPath = context.isCompilingTests() ? outputsPair.second : outputsPair.first;
+        final String previousPath = target.isTests() ? outputsPair.second : outputsPair.first;
         forceMarkDirty = StringUtil.isEmpty(previousPath) || !FileUtil.filesEqual(currentOutput, new File(previousPath));
       }
       else {
@@ -971,7 +970,7 @@ public class IncProjectBuilder {
 
     final Timestamps timestamps = pd.timestamps.getStorage();
     final HashSet<File> currentFiles = new HashSet<File>();
-    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, context.isCompilingTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, currentFiles);
+    FSOperations.markDirtyFiles(context, target, timestamps, forceMarkDirty, target.isTests() ? FSOperations.DirtyMarkScope.TESTS : FSOperations.DirtyMarkScope.PRODUCTION, currentFiles);
 
     // handle deleted paths
     final BuildFSState fsState = pd.fsState;
@@ -997,7 +996,7 @@ public class IncProjectBuilder {
     // update data
     final String productionPath;
     final String testPath;
-    if (context.isCompilingTests()) {
+    if (target.isTests()) {
       productionPath = outputsPair != null? outputsPair.first : "";
       testPath = FileUtil.toSystemIndependentName(currentOutput.getPath());
     }

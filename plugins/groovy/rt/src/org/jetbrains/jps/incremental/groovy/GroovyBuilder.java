@@ -121,7 +121,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
         final ModuleRootsIndex rootsIndex = context.getProjectDescriptor().rootsIndex;
         for (JpsModule module : generationOutputs.keySet()) {
           File root = new File(generationOutputs.get(module));
-          rootsIndex.associateRoot(context, root, module, context.isCompilingTests());
+          rootsIndex.associateRoot(context, root, module, chunk.isTests());
         }
       }
 
@@ -171,15 +171,15 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   @Nullable private static Map<JpsModule, String> getCanonicalModuleOutputs(CompileContext context, ModuleChunk chunk) {
     Map<JpsModule, String> finalOutputs = new HashMap<JpsModule, String>();
-    for (JpsModule module : chunk.getModules()) {
-      File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(module, context.isCompilingTests());
+    for (RealModuleBuildTarget target : chunk.getTargets()) {
+      File moduleOutputDir = context.getProjectPaths().getModuleOutputDir(target.getModule(), target.isTests());
       if (moduleOutputDir == null) {
-        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory not specified for module " + module.getName()));
+        context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, "Output directory not specified for module " + target.getModuleName()));
         return null;
       }
       String moduleOutputPath = FileUtil.toCanonicalPath(moduleOutputDir.getPath());
       assert moduleOutputPath != null;
-      finalOutputs.put(module, moduleOutputPath.endsWith("/") ? moduleOutputPath : moduleOutputPath + "/");
+      finalOutputs.put(target.getModule(), moduleOutputPath.endsWith("/") ? moduleOutputPath : moduleOutputPath + "/");
     }
     return finalOutputs;
   }
@@ -275,10 +275,10 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     // IMPORTANT! must be the first in classpath
     cp.add(ClasspathBootstrap.getResourcePath(GroovyCompilerWrapper.class).getPath());
 
-    for (File file : context.getProjectPaths().getClasspathFiles(chunk, JpsJavaClasspathKind.compile(context.isCompilingTests()), false)) {
+    for (File file : context.getProjectPaths().getClasspathFiles(chunk, JpsJavaClasspathKind.compile(chunk.isTests()), false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
     }
-    for (File file : context.getProjectPaths().getClasspathFiles(chunk, JpsJavaClasspathKind.runtime(context.isCompilingTests()), false)) {
+    for (File file : context.getProjectPaths().getClasspathFiles(chunk, JpsJavaClasspathKind.runtime(chunk.isTests()), false)) {
       cp.add(FileUtil.toCanonicalPath(file.getPath()));
     }
     return new ArrayList<String>(cp);
@@ -290,9 +290,9 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   private static Map<String, String> buildClassToSourceMap(ModuleChunk chunk, CompileContext context, Set<String> toCompilePaths, Map<JpsModule, String> finalOutputs) throws IOException {
     final Map<String, String> class2Src = new HashMap<String, String>();
-    for (JpsModule module : chunk.getModules()) {
-      String moduleOutputPath = finalOutputs.get(module);
-      final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(module.getName(), context.isCompilingTests());
+    for (RealModuleBuildTarget target : chunk.getTargets()) {
+      String moduleOutputPath = finalOutputs.get(target.getModule());
+      final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target.getModuleName(), target.isTests());
       for (String src : srcToOut.getKeys()) {
         if (!toCompilePaths.contains(src) && isGroovyFile(src) &&
             !context.getProjectDescriptor().project.getCompilerConfiguration().getExcludes().isExcluded(new File(src))) {

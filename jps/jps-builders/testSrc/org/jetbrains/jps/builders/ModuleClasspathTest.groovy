@@ -56,9 +56,9 @@ public class ModuleClasspathTest extends JpsRebuildTestCase {
   public void testCompilationClasspath() {
     ModuleChunk chunk = createChunk('main')
     assertClasspath(["util/lib/exported.jar", "out/production/util", "/jdk.jar"],
-            ProjectPaths.getPathsList(getProjectPaths().getPlatformCompilationClasspath(chunk, false, true)))
+            ProjectPaths.getPathsList(getProjectPaths().getPlatformCompilationClasspath(chunk, true)))
     assertClasspath(["main/lib/service.jar"],
-            ProjectPaths.getPathsList(getProjectPaths().getCompilationClasspath(chunk, false, true)))
+            ProjectPaths.getPathsList(getProjectPaths().getCompilationClasspath(chunk, true)))
   }
 
   public void testProjectClasspath() {

@@ -30,7 +30,7 @@ public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
 
   @Override
   public ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
+    if (chunk.isTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
       return ExitCode.NOTHING_DONE;
     }
 

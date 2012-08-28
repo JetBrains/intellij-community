@@ -72,7 +72,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   @Override
   public ModuleLevelBuilder.ExitCode build(CompileContext context, ModuleChunk chunk) throws ProjectBuildException {
-    if (context.isCompilingTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
+    if (chunk.isTests() || !AndroidJpsUtil.containsAndroidFacet(chunk)) {
       return ExitCode.NOTHING_DONE;
     }
 

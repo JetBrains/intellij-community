@@ -23,10 +23,12 @@ public class ModuleChunk {
     }
   };
   private Set<JpsModule> myModules;
+  private final boolean myTests;
   private Set<RealModuleBuildTarget> myTargets;
 
   public ModuleChunk(Set<JpsModule> modules, boolean tests) {
     myModules = modules;
+    myTests = tests;
     myTargets = new LinkedHashSet<RealModuleBuildTarget>();
     for (JpsModule module : modules) {
       myTargets.add(new RealModuleBuildTarget(module, JavaModuleBuildTargetType.getInstance(tests)));
@@ -40,6 +42,10 @@ public class ModuleChunk {
 
   public Set<JpsModule> getModules() {
     return myModules;
+  }
+
+  public boolean isTests() {
+    return myTests;
   }
 
   public Set<RealModuleBuildTarget> getTargets() {

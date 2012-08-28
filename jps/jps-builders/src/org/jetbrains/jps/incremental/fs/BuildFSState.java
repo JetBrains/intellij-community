@@ -13,12 +13,10 @@ import org.jetbrains.jps.incremental.artifacts.ArtifactFilesDelta;
 import org.jetbrains.jps.incremental.artifacts.ArtifactSourceTimestampStorage;
 import org.jetbrains.jps.incremental.artifacts.instructions.ArtifactRootDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
-import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,8 +26,7 @@ import java.util.Set;
  */
 public class BuildFSState extends FSState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.fs.BuildFSState");
-
-  private static final Key<Set<String>> CONTEXT_MODULES_KEY = Key.create("_fssfate_context_modules_");
+  private static final Key<Set<RealModuleBuildTarget>> CONTEXT_TARGETS_KEY = Key.create("_fssfate_context_modules_");
   private static final Key<FilesDelta> CURRENT_ROUND_DELTA_KEY = Key.create("_current_round_delta_");
   private static final Key<FilesDelta> LAST_ROUND_DELTA_KEY = Key.create("_last_round_delta_");
 
@@ -67,20 +64,18 @@ public class BuildFSState extends FSState {
   @Override
   public boolean markDirty(@Nullable CompileContext context, File file, final RootDescriptor rd, @Nullable Timestamps tsStorage) throws IOException {
     final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
-    if (roundDelta != null) {
-      if (isInCurrentContextModules(context, rd)) {
-        roundDelta.markRecompile(rd.root, file);
-      }
+    if (roundDelta != null && isInCurrentContextTargets(context, rd)) {
+      roundDelta.markRecompile(rd.root, file);
     }
     return super.markDirty(context, file, rd, tsStorage);
   }
 
-  private static boolean isInCurrentContextModules(CompileContext context, RootDescriptor rd) {
+  private static boolean isInCurrentContextTargets(CompileContext context, RootDescriptor rd) {
     if (context == null) {
       return false;
     }
-    Set<String> modules = CONTEXT_MODULES_KEY.get(context, Collections.<String>emptySet());
-    return modules.contains(rd.module) && rd.isTestRoot == context.isCompilingTests();
+    Set<? extends ModuleBuildTarget> targets = CONTEXT_TARGETS_KEY.get(context, Collections.<RealModuleBuildTarget>emptySet());
+    return targets.contains(rd.target);
   }
 
   @Override
@@ -89,7 +84,7 @@ public class BuildFSState extends FSState {
     if (marked) {
       final FilesDelta roundDelta = getRoundDelta(CURRENT_ROUND_DELTA_KEY, context);
       if (roundDelta != null) {
-        if (isInCurrentContextModules(context, rd)) {
+        if (isInCurrentContextTargets(context, rd)) {
           roundDelta.markRecompile(rd.root, file);
         }
       }
@@ -110,15 +105,11 @@ public class BuildFSState extends FSState {
   }
 
   public void clearContextChunk(@Nullable CompileContext context) {
-    setContextModules(context, null);
+    setContextTargets(context, null);
   }
 
   public void beforeChunkBuildStart(@NotNull CompileContext context, ModuleChunk chunk) {
-    final Set<String> contextModules = new HashSet<String>();
-    for (JpsModule module : chunk.getModules()) {
-      contextModules.add(module.getName());
-    }
-    setContextModules(context, contextModules);
+    setContextTargets(context, chunk.getTargets());
   }
 
   public void beforeNextRoundStart(@NotNull CompileContext context, ModuleChunk chunk) {
@@ -206,9 +197,9 @@ public class BuildFSState extends FSState {
     return marked;
   }
 
-  private static void setContextModules(@Nullable CompileContext context, @Nullable Set<String> modules) {
+  private static void setContextTargets(@Nullable CompileContext context, @Nullable Set<RealModuleBuildTarget> targets) {
     if (context != null) {
-      CONTEXT_MODULES_KEY.set(context, modules);
+      CONTEXT_TARGETS_KEY.set(context, targets);
     }
   }
 
