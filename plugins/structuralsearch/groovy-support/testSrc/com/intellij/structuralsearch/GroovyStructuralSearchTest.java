@@ -100,6 +100,31 @@ public class GroovyStructuralSearchTest extends StructuralSearchTestCase {
               "}", 1, 0);
   }
 
+  public void test5() {
+    String s = "class A {\n" +
+               "  def f = {\n" +
+               "    println('Hello1')\n" +
+               "    println('Hello2')\n" +
+               "  }\n" +
+               "  def f1 = {\n" +
+               "    println('Hello')\n" +
+               "  }\n" +
+               "}";
+    doTest(s, "def $name$ = {\n" +
+              "  '_T+\n" +
+              "}", 0, 0);
+    final String old = options.getPatternContext();
+    try {
+      options.setPatternContext(GroovyStructuralSearchProfile.CLASS_CONTEXT);
+      doTest(s, "def $name$ = {\n" +
+                    "  '_T+\n" +
+                    "}", 2, 2);
+    }
+    finally {
+      options.setPatternContext(old);
+    }
+  }
+
   private void doTest(String source,
                       String pattern,
                       int expectedOccurences,
