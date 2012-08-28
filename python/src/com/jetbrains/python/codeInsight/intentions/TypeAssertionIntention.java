@@ -99,7 +99,7 @@ public class TypeAssertionIntention implements IntentionAction {
           if (document.getLineNumber(statementList.getTextOffset()) ==
               document.getLineNumber(statementListParent.getTextOffset())) {
             final String substring =
-              TextRange.create(statementListParent.getTextOffset(), statementList.getTextOffset()).substring(document.getText());
+              TextRange.create(statementListParent.getTextRange().getStartOffset(), statementList.getTextOffset()).substring(document.getText());
             final PyStatement foo =
               elementGenerator.createFromText(LanguageLevel.forElement(problemElement), PyStatement.class, substring + "\n\t" +
                                              text + "\n\t" + statementList.getText());
