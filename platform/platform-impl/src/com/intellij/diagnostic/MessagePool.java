@@ -16,20 +16,13 @@
 package com.intellij.diagnostic;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.notification.*;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import org.apache.log4j.Category;
 import org.apache.log4j.Priority;
 import org.apache.log4j.spi.LoggingEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -37,9 +30,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class MessagePool {
-  private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("IDE Fatal Errors");
-
-
   private static final int MAX_POOL_SIZE_FOR_FATALS = 100;
 
   private final List<AbstractMessage> myIdeFatals = new ArrayList<AbstractMessage>();
@@ -62,65 +52,21 @@ public class MessagePool {
     return MessagePoolHolder.ourInstance;
   }
 
-  public void addIdeFatalMessage(final IdeaLoggingEvent aEvent) {
+  @Nullable
+  public LogMessage addIdeFatalMessage(final IdeaLoggingEvent aEvent) {
     Object data = aEvent.getData();
     final LogMessage message = data instanceof LogMessage ? (LogMessage)data : new LogMessage(aEvent);
     if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
       if (myFatalsGrouper.addToGroup(message)) {
-        String title = "<a href='xxx'>" + getTitle(message) + "</a>";
-        String notificationText = getNotificationText(message);
-        Notification notification =
-          new Notification(NOTIFICATION_GROUP.getDisplayId(), title, notificationText, NotificationType.ERROR, new NotificationListener() {
-            @Override
-            public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-              Object source = event.getSource();
-              if (source instanceof Component) {
-                Window window = SwingUtilities.getWindowAncestor((Component)source);
-                if (window instanceof IdeFrame) {
-                  StatusBarWidget widget = ((IdeStatusBarImpl)((IdeFrame)window).getStatusBar()).getWidget(IdeMessagePanel.FATAL_ERROR);
-                  if (widget instanceof IdeMessagePanel) {
-                    ((IdeMessagePanel)widget).openFatals(message);
-                  }
-                }
-              }
-            }
-          }) {
-            @Override
-            public void expire() {
-              super.expire();
-              if (!message.isRead()) {
-                message.setRead(true);
-              }
-              notifyListenersRead();
-            }
-          };
-        notification.notify(null);
-        message.setNotification(notification);
+        return message;
       }
     } else if (myIdeFatals.size() == MAX_POOL_SIZE_FOR_FATALS) {
       String msg = DiagnosticBundle.message("error.monitor.too.many.errors");
-      myFatalsGrouper.addToGroup(new LogMessage(new LoggingEvent(msg, Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException())));
-      NOTIFICATION_GROUP.createNotification(msg, NotificationType.ERROR).notify(null);
+      LogMessage tooMany = new LogMessage(new LoggingEvent(msg, Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException()));
+      myFatalsGrouper.addToGroup(tooMany);
+      return tooMany;
     }
-  }
-
-  private static String getNotificationText(LogMessage message) {
-    String text = message.getMessage();
-    if (message instanceof LogMessageEx) {
-      String result = ((LogMessageEx)message).getNotificationText();
-      if (result != null) {
-        text = StringUtil.stripHtml(result, false);
-      }
-    }
-    return text;
-  }
-
-  private static String getTitle(LogMessage message) {
-    if (message instanceof LogMessageEx) {
-      return ((LogMessageEx)message).getTitle();
-    }
-    Throwable throwable = message.getThrowable();
-    return throwable == null ? "IDE Fatal Error" : throwable.getClass().getSimpleName();
+    return null;
   }
 
   public boolean hasUnreadMessages() {
@@ -176,7 +122,7 @@ public class MessagePool {
     }
   }
 
-  private void notifyListenersRead() {
+  void notifyListenersRead() {
     final MessagePoolListener[] messagePoolListeners = myListeners.toArray(new MessagePoolListener[myListeners.size()]);
     for (MessagePoolListener messagePoolListener : messagePoolListeners) {
       messagePoolListener.entryWasRead();
