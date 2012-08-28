@@ -95,7 +95,7 @@ public class TypeAssertionIntention implements IntentionAction {
         final Document document = editor.getDocument();
 
         if (statementList != null) {
-          PsiElement statementListParent = statementList.getParent();
+          PsiElement statementListParent = PsiTreeUtil.getParentOfType(statementList, PyStatement.class);
           if (document.getLineNumber(statementList.getTextOffset()) ==
               document.getLineNumber(statementListParent.getTextOffset())) {
             final String substring =
@@ -105,7 +105,6 @@ public class TypeAssertionIntention implements IntentionAction {
                                              text + "\n\t" + statementList.getText());
 
             statementListParent = statementListParent.replace(foo);
-            statementListParent = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(statementListParent);
             statementList = PsiTreeUtil.findChildOfType(statementListParent, PyStatementList.class);
             element = statementList.getStatements()[0];
           }

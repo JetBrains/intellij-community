@@ -361,23 +361,6 @@ public class PyUtil {
     return superClasses;
   }
 
-  /**
-   * Finds the first identifier AST node under target element, and returns its text.
-   *
-   * @param target
-   * @return identifier text, or null.
-   */
-  public static
-  @Nullable
-  String getIdentifier(PsiElement target) {
-    ASTNode node = target.getNode();
-    if (node != null) {
-      ASTNode ident_node = node.findChildByType(PyTokenTypes.IDENTIFIER);
-      if (ident_node != null) return ident_node.getText();
-    }
-    return null;
-  }
-
 
   // TODO: move to a more proper place?
 
@@ -392,16 +375,16 @@ public class PyUtil {
     if (ref != null) {
       PyExpression qualifier = ref.getQualifier();
       if (qualifier != null) {
-        String attr_name = getIdentifier(ref);
-        if ("__class__".equals(attr_name)) {
-          PyType qual_type = context.getType(qualifier);
-          if (qual_type instanceof PyClassType) {
-            return new PyClassTypeImpl(((PyClassType)qual_type).getPyClass(), true); // always as class, never instance
+        String attr_name = ref.getReferencedName();
+        if (PyNames.CLASS.equals(attr_name)) {
+          PyType qualifierType = context.getType(qualifier);
+          if (qualifierType instanceof PyClassType) {
+            return new PyClassTypeImpl(((PyClassType)qualifierType).getPyClass(), true); // always as class, never instance
           }
         }
-        else if ("__dict__".equals(attr_name)) {
-          PyType qual_type = context.getType(qualifier);
-          if (qual_type instanceof PyClassType && ((PyClassType)qual_type).isDefinition()) {
+        else if (PyNames.DICT.equals(attr_name)) {
+          PyType qualifierType = context.getType(qualifier);
+          if (qualifierType instanceof PyClassType && ((PyClassType)qualifierType).isDefinition()) {
             return PyBuiltinCache.getInstance(ref).getDictType();
           }
         }

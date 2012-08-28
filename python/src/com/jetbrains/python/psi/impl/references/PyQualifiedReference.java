@@ -238,7 +238,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   @NotNull
   @Override
   public Object[] getVariants() {
-    PyExpression qualifier = myElement.getQualifier();
+    PyExpression qualifier = CompletionUtil.getOriginalOrSelf(myElement.getQualifier());
     assert qualifier != null;
     final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
 
