@@ -88,7 +88,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         MessagePool.getInstance().addIdeFatalMessage(event);
       }
     }
-    catch (Exception e) {
+    catch (Throwable e) {
       //noinspection InstanceofCatchParameter
       if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.MessagePool") ||
           e instanceof NullPointerException && ApplicationManager.getApplication() == null) {
