@@ -127,8 +127,8 @@ public class ArrangementRuleTree {
         }
         try {
           super.processMouseEvent(e);
-          if (mySkipSelectionChange) {
-            notifySelectionListeners(getActiveModel());
+          if (mySkipSelectionChange && getActiveModel() == null) {
+            notifySelectionListeners(null);
           }
         }
         finally {
