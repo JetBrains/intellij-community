@@ -591,6 +591,10 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
+  public void testDunderClass() {  // PY-7327
+    doTest();
+  }
+
   public void testAsInWith() {  // PY-3701
     setLanguageLevel(LanguageLevel.PYTHON27);
     assertTrue(doTestByText("with foo <caret>").contains("as"));
