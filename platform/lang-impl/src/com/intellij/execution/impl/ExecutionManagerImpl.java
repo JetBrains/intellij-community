@@ -322,8 +322,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   private void forgetRunContentDescriptor(RunContentDescriptor runContentDescriptor) {
     for (Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor> trinity : myRunningConfigurations) {
       if (trinity.getFirst() == runContentDescriptor) {
-        //runContentDescriptor.dispose();
-        myRunningConfigurations.remove(trinity);
+        Disposer.dispose(runContentDescriptor);
         return;
       }
     }
