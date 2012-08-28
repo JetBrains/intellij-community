@@ -88,6 +88,8 @@
     <declarationRangeHandler key="com.jetbrains.python.psi.PyFunction"
                              implementationClass="com.jetbrains.python.codeInsight.PyDeclarationRangeHandler"/>
 
+    <targetElementEvaluator language="Python" implementationClass="com.jetbrains.python.codeInsight.PyTargetElementEvaluator"/>
+
     <!-- Run/Debug -->
     <applicationService serviceInterface="com.jetbrains.python.run.PyRunConfigurationFactory"
                         serviceImplementation="com.jetbrains.python.run.PyRunConfigurationFactoryImpl"/>
@@ -569,6 +571,7 @@
     <xml.zenCodingGenerator implementation="com.jetbrains.django.lang.template.DjangoTemplateZenCodingGenerator"/>
 
     <xml.elementDescriptorProvider implementation="com.jetbrains.django.lang.template.DjangoTemplateDescriptorProvider"/>
+    <xml.util.htmlDoctypeProvider implementation="com.jetbrains.django.lang.template.DjangoHtmlDoctypeProvider"/>
 
     <completion.contributor language="DjangoTemplate"
                             implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCompletionContributor"/>

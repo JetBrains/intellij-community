@@ -112,19 +112,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   @Override
   public boolean isValidSdkPath(@NotNull File file) {
     if (!super.isValidSdkPath(file)) return false;
-    File bin = file.getParentFile();
-    if (bin != null) {
-      File[] children = bin.listFiles();
-      if (children != null) {
-        for (File f : children) {
-          //is it good enough to determine virtual env?
-          if (f.getName().equals("activate_this.py")) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
+    return PythonSdkType.getVirtualEnvRoot(file.getPath()) != null;
   }
 
   @Override
