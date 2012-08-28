@@ -21,9 +21,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.Collection;
+import java.util.LinkedHashSet;
 
 import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.and;
@@ -38,17 +38,23 @@ public class NullSmartCompletionContributor extends CompletionContributor{
                                                       not(psiElement().afterLeaf("."))), new ExpectedTypeBasedCompletionProvider() {
       protected void addCompletions(final CompletionParameters parameters,
                                     final CompletionResultSet result, final Collection<ExpectedTypeInfo> infos) {
-        final boolean empty = result.runRemainingContributors(parameters, true).isEmpty();
+        if (!StringUtil.startsWithChar(result.getPrefixMatcher().getPrefix(), 'n')) {
+          return;
+        }
 
-        @NonNls final String prefix = result.getPrefixMatcher().getPrefix();
-        if (empty && StringUtil.startsWithChar(prefix, 'n')) {
-          for (final ExpectedTypeInfo info : infos) {
-            if (!(info.getType() instanceof PsiPrimitiveType)) {
-              final LookupItem item = (LookupItem)BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
-              item.setAttribute(LookupItem.TYPE, PsiType.NULL);
-              result.addElement(JavaSmartCompletionContributor.decorate(item, infos));
-              return;
-            }
+        LinkedHashSet<CompletionResult> results = result.runRemainingContributors(parameters, true);
+        for (CompletionResult completionResult : results) {
+          if (completionResult.isStartMatch()) {
+            return;
+          }
+        }
+
+        for (final ExpectedTypeInfo info : infos) {
+          if (!(info.getType() instanceof PsiPrimitiveType)) {
+            final LookupItem item = (LookupItem)BasicExpressionCompletionContributor.createKeywordLookupItem(parameters.getPosition(), PsiKeyword.NULL);
+            item.setAttribute(LookupItem.TYPE, PsiType.NULL);
+            result.addElement(JavaSmartCompletionContributor.decorate(item, infos));
+            return;
           }
         }
       }

@@ -147,7 +147,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
   }
   private static boolean hasStartMatches(Set<LookupElement> set, PrefixMatcher matcher) {
     for (LookupElement lookupElement : set) {
-      if (hasStartMatches(matcher, lookupElement.getAllLookupStrings())) {
+      if (matcher.isStartMatch(lookupElement)) {
         return true;
       }
     }

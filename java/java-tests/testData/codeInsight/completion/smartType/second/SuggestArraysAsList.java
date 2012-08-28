@@ -4,7 +4,7 @@ class Foo {
 
   {
     Foo[] foos;
-    Collection<Foo> c = f<caret>
+    Collection<Foo> c = foo<caret>
   }
 
 }

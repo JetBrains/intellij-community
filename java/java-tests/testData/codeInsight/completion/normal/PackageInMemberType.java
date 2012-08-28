@@ -1,3 +1,3 @@
 class Foo {
-  java.l<caret>
+  java.la<caret>
 }
