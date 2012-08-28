@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -25,6 +26,8 @@ import java.util.*;
 * @author irengrig
 */
 public class FileWatchRequestModifier implements Runnable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.impl.projectlevelman.FileWatchRequestModifier");
+
   private final Project myProject;
   private final NewMappings myNewMappings;
   private final Map<VcsDirectoryMapping, LocalFileSystem.WatchRequest> myDirectoryMappingWatches;
@@ -66,7 +69,13 @@ public class FileWatchRequestModifier implements Runnable {
 
     final Set<LocalFileSystem.WatchRequest> requests = myLfs.replaceWatchedRoots(toRemove, toAdd.keySet(), null);
     for (LocalFileSystem.WatchRequest request : requests) {
-      myDirectoryMappingWatches.put(toAdd.get(request.getRootPath()), request);
+      final VcsDirectoryMapping mapping = toAdd.get(request.getRootPath());
+      if (mapping != null) {
+        myDirectoryMappingWatches.put(mapping, request);
+      }
+      else {
+        LOG.error("root=" + request.getRootPath() + " toAdd=" + toAdd.keySet());
+      }
     }
   }
 }
