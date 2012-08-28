@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -481,10 +482,15 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   @NotNull
   @Override
   public PsiReference getReference() {
+    return getReference(PyResolveContext.defaultContext());
+  }
+
+  @NotNull
+  public PsiPolyVariantReference getReference(final PyResolveContext resolveContext) {
     if (getQualifier() != null) {
-      return new PyQualifiedReference(this, PyResolveContext.defaultContext());
+      return new PyQualifiedReference(this, resolveContext);
     }
-    return new PyTargetReference(this, PyResolveContext.defaultContext());
+    return new PyTargetReference(this, resolveContext);
   }
 
   @NotNull

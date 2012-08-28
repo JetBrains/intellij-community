@@ -1,6 +1,9 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,4 +30,7 @@ public interface PyQualifiedExpression extends PyExpression {
    */
   @Nullable
   ASTNode getNameElement();
+
+  @NotNull
+  PsiPolyVariantReference getReference(PyResolveContext resolveContext);
 }
