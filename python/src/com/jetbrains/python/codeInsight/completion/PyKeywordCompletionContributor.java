@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.*;
@@ -229,12 +230,13 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
          psiElement().withElementType(PyTokenTypes.DOT))
       ).inside(PyFromImportStatement.class);
 
-  private static final PsiElementPattern.Capture<PsiElement> IN_WITH_AFTER_REF =
-    psiElement().afterLeaf(psiElement()
-      .withElementType(PyTokenTypes.IDENTIFIER)
-      .inside(PyReferenceExpression.class)
-      .inside(PyWithStatement.class)
-    );
+  public static final ElementPattern<PsiElement> IN_WITH_AFTER_REF =
+    psiElement().afterLeaf(psiElement().inside(psiElement(PyWithItem.class).with(new PatternCondition<PyWithItem>("withoutAsKeyword") {
+      @Override
+      public boolean accepts(@NotNull PyWithItem item, ProcessingContext context) {
+        return item.getNode().findChildByType(PyTokenTypes.AS_KEYWORD) == null;
+      }
+    })));
 
   private static final PsiElementPattern.Capture<PsiElement> IN_EXCEPT_AFTER_REF =
     psiElement().afterLeaf(psiElement()
