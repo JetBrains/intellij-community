@@ -24,6 +24,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
+import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 
 /**
@@ -94,7 +95,12 @@ public class CompressionUtil {
   }
 
   public static Object compressCharSequence(CharSequence string) {
-    if (!ourCanUseSnappy || string.length() < STRING_COMPRESSION_THRESHOLD) return string;
+    if (!ourCanUseSnappy || string.length() < STRING_COMPRESSION_THRESHOLD) {
+      if (string instanceof CharBuffer && ((CharBuffer)string).capacity() > STRING_COMPRESSION_THRESHOLD) {
+        string = string.toString();   // shrink to size
+      }
+      return string;
+    }
     try {
       return Snappy.compress(string.toString(), Charset.defaultCharset());
     } catch (IOException ex) {
