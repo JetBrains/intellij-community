@@ -49,8 +49,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyMethodParametersInspection() {
-    LocalInspectionTool inspection = new PyMethodParametersInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyMethodParametersInspection.class);
   }
 
   public void testPyNestedDecoratorsInspection() {

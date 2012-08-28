@@ -523,12 +523,14 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testTypeMembers() {  // PY-5311
-    myFixture.configureByText(PythonFileType.INSTANCE, "a = 'string'\n" +
-                                                       "a.<caret>");
+    assertFalse(doTestByText("a = 'string'\n" +
+                             "a.<caret>").contains("mro"));
+  }
 
+  private List<String> doTestByText(String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
     myFixture.completeBasic();
-    final List<String> strings = myFixture.getLookupElementStrings();
-    assertFalse(strings.contains("mro"));
+    return myFixture.getLookupElementStrings();
   }
 
   public void testDunderAllReference() {  // PY-5502
@@ -587,5 +589,17 @@ public class PythonCompletionTest extends PyTestCase {
 
   public void testUnknownNewReturnType() {  // PY-6671
     doTest();
+  }
+
+  public void testAsInWith() {  // PY-3701
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    assertTrue(doTestByText("with foo <caret>").contains("as"));
+  }
+
+  public void testAsInExcept() {  // PY-1846
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    assertTrue(doTestByText("try:\n" +
+                            "    pass\n" +
+                            "except IOError <caret>").contains("as"));
   }
 }

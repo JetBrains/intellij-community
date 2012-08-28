@@ -236,6 +236,13 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       .inside(PyWithStatement.class)
     );
 
+  private static final PsiElementPattern.Capture<PsiElement> IN_EXCEPT_AFTER_REF =
+    psiElement().afterLeaf(psiElement()
+                             .withElementType(PyTokenTypes.IDENTIFIER)
+                             .inside(PyReferenceExpression.class)
+                             .inside(PyExceptPart.class)
+    );
+
   private static final PsiElementPattern.Capture<PsiElement> IN_COND_STMT =
     psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyConditionalStatementPart.class)));
 
@@ -526,7 +533,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     extend(
       CompletionType.BASIC, psiElement()
       .withLanguage(PythonLanguage.getInstance())
-      .andOr(IN_IMPORT_AFTER_REF, IN_WITH_AFTER_REF)
+      .andOr(IN_IMPORT_AFTER_REF, IN_WITH_AFTER_REF, IN_EXCEPT_AFTER_REF)
       .andNot(AFTER_QUALIFIER)
       ,
       new PyKeywordCompletionProvider("as")

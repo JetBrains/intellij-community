@@ -404,6 +404,29 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo");
   }
 
+  // PY-7156
+  public void testPython33NamespacePackage() {
+    setLanguageLevel(LanguageLevel.PYTHON33);
+    try {
+      final PsiElement element = doResolve();
+      assertInstanceOf(element, PyImportedModule.class);
+      final PyImportedModule module = (PyImportedModule)element;
+      assertEquals("p1", module.getImportedPrefix().toString());
+    } finally {
+      setLanguageLevel(null);
+    }
+  }
+
+  // PY-7156
+  public void testFromPython33NamespacePackageImport() {
+    setLanguageLevel(LanguageLevel.PYTHON33);
+    try {
+      assertResolvesTo(PyFunction.class, "foo");
+    } finally {
+      setLanguageLevel(null);
+    }
+  }
+
   private void prepareTestDirectory() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");

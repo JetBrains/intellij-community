@@ -181,7 +181,6 @@ public class PyPackagesPanel extends JPanel {
         final int[] rows = myPackagesTable.getSelectedRows();
         final Sdk selectedSdk = mySelectedSdk;
         if (selectedSdk != null) {
-          final List<PyRequirement> requirements = new ArrayList<PyRequirement>();
           for (int row : rows) {
             final Object pyPackage = myPackagesTableModel.getValueAt(row, 0);
             if (pyPackage instanceof PyPackage) {
@@ -193,10 +192,10 @@ public class PyPackagesPanel extends JPanel {
                 public void handleResult(Object result, URL url, String method) {
                   final List<String> releases = (List<String>)result;
                   PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
-                  if (releases.isEmpty() ||
-                      PyRequirement.VERSION_COMPARATOR.compare((String)currentVersion, releases.get(0)) < 0) {
-                    requirements.add(new PyRequirement(packageName));
-                  }
+                  if (!releases.isEmpty() &&
+                      PyRequirement.VERSION_COMPARATOR.compare((String)currentVersion, releases.get(0)) >= 0)
+                    return;
+
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
                     @Override
                     public void run() {
@@ -225,7 +224,7 @@ public class PyPackagesPanel extends JPanel {
                             }
                           }
                         });
-                      ui.install(requirements, Collections.singletonList("-U"));
+                      ui.install(Collections.singletonList(new PyRequirement(packageName)), Collections.singletonList("-U"));
                       myUpgradeButton.setEnabled(false);
                     }
                   }, ModalityState.any());

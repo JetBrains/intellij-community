@@ -44,7 +44,7 @@ public class TypeAssertionIntention implements IntentionAction {
     PyExpression problemElement =
       PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset()-1), PyQualifiedExpression.class);
     if (problemElement == null) return false;
-    if (problemElement instanceof PyQualifiedExpression && ((PyQualifiedExpression)problemElement).getReferencedName() == null) {
+    if (problemElement instanceof PyQualifiedExpression) {
       final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
       if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
         problemElement = qualifier;
@@ -54,6 +54,7 @@ public class TypeAssertionIntention implements IntentionAction {
     if (problemElement.getParent() instanceof PyCallExpression ||
         PsiTreeUtil.getParentOfType(problemElement, PyListCompExpression.class) != null ||
         PsiTreeUtil.getParentOfType(problemElement, PyLambdaExpression.class) != null ||
+        PsiTreeUtil.getParentOfType(problemElement, PyGeneratorExpression.class) != null ||
         (reference != null && reference.resolve() == null)) {
       return false;
     }
