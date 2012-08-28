@@ -285,13 +285,10 @@ public class ExternalAnnotationsManagerImpl extends BaseExternalAnnotationsManag
     final XmlFile[] annotationsXml = new XmlFile[1];
     List<XmlFile> xmlFiles = findExternalAnnotationsXmlFiles(listOwner);
     if (xmlFiles != null) {
-      for (XmlFile xmlFile : xmlFiles) {
-        final VirtualFile vXmlFile = xmlFile.getVirtualFile();
-        assert vXmlFile != null;
-        if (VfsUtilCore.isAncestor(root, vXmlFile, false)) {
-          annotationsXml[0] = xmlFile;
-          if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFile)) return;
-        }
+      annotationsXml[0] = findXmlFileInRoot(xmlFiles, root);
+      if (annotationsXml[0] != null && !CodeInsightUtilBase.preparePsiElementForWrite(annotationsXml[0])) {
+        notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+        return;
       }
     } else {
       xmlFiles = new ArrayList<XmlFile>();
