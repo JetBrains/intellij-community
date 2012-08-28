@@ -40,19 +40,23 @@ public class PyTypeParser {
   public static ParseResult parse(@Nullable PsiElement anchor, @NotNull String type) {
     final Map<TextRange, PyType> types = new HashMap<TextRange, PyType>();
     final Map<PyType, TextRange> fullRanges = new HashMap<PyType, TextRange>();
-    final PyType t = parse(anchor, type, types, fullRanges, 0);
-    return new ParseResult(t, types, fullRanges);
+    final Map<PyType, PyImportElement> imports = new HashMap<PyType, PyImportElement>();
+    final PyType t = parse(anchor, type, types, fullRanges, imports, 0);
+    return new ParseResult(t, types, fullRanges, imports);
   }
 
   public static class ParseResult {
     @Nullable private PyType myType;
     @NotNull private Map<TextRange, PyType> myTypes;
     @NotNull private Map<PyType, TextRange> myFullRanges;
+    @NotNull private final Map<PyType, PyImportElement> myImports;
 
-    ParseResult(@Nullable PyType type, @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType, TextRange> fullRanges) {
+    ParseResult(@Nullable PyType type, @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType, TextRange> fullRanges,
+                @NotNull Map<PyType, PyImportElement> imports) {
       myType = type;
       myTypes = types;
       myFullRanges = fullRanges;
+      myImports = imports;
     }
 
     @Nullable
@@ -69,11 +73,16 @@ public class PyTypeParser {
     public Map<PyType, TextRange> getFullRanges() {
       return myFullRanges;
     }
+
+    @NotNull
+    public Map<PyType, PyImportElement> getImports() {
+      return myImports;
+    }
   }
 
   @Nullable
   private static PyType parse(@Nullable PsiElement anchor, @NotNull String type, @NotNull Map<TextRange, PyType> types,
-                              @NotNull Map<PyType, TextRange> fullRanges, int offset) {
+                              @NotNull Map<PyType, TextRange> fullRanges, @NotNull Map<PyType, PyImportElement> imports, int offset) {
     if (anchor == null || !anchor.isValid()) {
       return null;
     }
@@ -87,10 +96,10 @@ public class PyTypeParser {
       return t;
     }
     if (type.startsWith("(") && type.endsWith(")")) {
-      return parseTupleType(anchor, type.substring(1, type.length() - 1), types, fullRanges, offset + 1);
+      return parseTupleType(anchor, type.substring(1, type.length() - 1), types, fullRanges, imports, offset + 1);
     }
     if (type.contains(" or ")) {
-      return parseUnionType(anchor, type, types, fullRanges, offset);
+      return parseUnionType(anchor, type, types, fullRanges, imports, offset);
     }
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(anchor);
     if (type.equals("unknown")) {
@@ -132,7 +141,7 @@ public class PyTypeParser {
       return t;
     }
     if (type.startsWith("dict from")) {
-      return parseDictFromToType(anchor, type, types, fullRanges, offset);
+      return parseDictFromToType(anchor, type, types, fullRanges, imports, offset);
     }
     if (type.equals("integer") || (type.equals("long") && LanguageLevel.forElement(anchor).isPy3K())) {
       final PyType t = builtinCache.getIntType();
@@ -144,8 +153,8 @@ public class PyTypeParser {
     }
     final Matcher m = PARAMETRIZED_CLASS.matcher(type);
     if (m.matches()) {
-      final PyType objType = parseObjectType(anchor, m.group(1), builtinCache, types, fullRanges, offset + m.start(1));
-      final PyType elementType = parse(anchor, m.group(2), types, fullRanges, offset + m.start(2));
+      final PyType objType = parseObjectType(anchor, m.group(1), builtinCache, types, fullRanges, imports, offset + m.start(1));
+      final PyType elementType = parse(anchor, m.group(2), types, fullRanges, imports, offset + m.start(2));
       if (objType != null) {
         if (objType instanceof PyClassType && elementType != null) {
           return new PyCollectionTypeImpl(((PyClassType)objType).getPyClass(), false, elementType);
@@ -153,12 +162,13 @@ public class PyTypeParser {
         return objType;
       }
     }
-    return parseObjectType(anchor, type, builtinCache, types, fullRanges, offset);
+    return parseObjectType(anchor, type, builtinCache, types, fullRanges, imports, offset);
   }
 
   @Nullable
   private static PyType parseObjectType(@NotNull PsiElement anchor, @NotNull String type, @NotNull PyBuiltinCache builtinCache,
-                                        @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType, TextRange> fullRanges, int offset) {
+                                        @NotNull Map<TextRange, PyType> types, @NotNull Map<PyType, TextRange> fullRanges,
+                                        @NotNull Map<PyType, PyImportElement> imports, int offset) {
     final TextRange whole = new TextRange(offset, offset + type.length());
     final PyClassType classType = builtinCache.getObjectType(type);
     if (classType != null) {
@@ -187,6 +197,7 @@ public class PyTypeParser {
               final PyType pyType = getTypeFromQName(anchor, qName, whole, unusedRanges, fullRanges, offset);
               if (pyType != null) {
                 types.put(whole, pyType);
+                imports.put(pyType, element);
                 return pyType;
               }
             }
@@ -268,24 +279,26 @@ public class PyTypeParser {
 
   @Nullable
   private static PyType parseTupleType(@NotNull PsiElement anchor, @NotNull String elementTypeNames, @NotNull Map<TextRange, PyType> types,
-                                       @NotNull Map<PyType, TextRange> fullRanges, int offset) {
+                                       @NotNull Map<PyType, TextRange> fullRanges, @NotNull Map<PyType, PyImportElement> imports,
+                                       int offset) {
     final List<TextRange> ranges = splitRanges(elementTypeNames, ",");
     final List<PyType> elementTypes = new ArrayList<PyType>();
     for (TextRange range : ranges) {
-      elementTypes.add(parse(anchor, range.substring(elementTypeNames), types, fullRanges, offset + range.getStartOffset()));
+      elementTypes.add(parse(anchor, range.substring(elementTypeNames), types, fullRanges, imports, offset + range.getStartOffset()));
     }
     return PyTupleType.create(anchor, elementTypes.toArray(new PyType[elementTypes.size()]));
   }
 
   @Nullable
   private static PyType parseDictFromToType(@NotNull PsiElement anchor, @NotNull String type, @NotNull Map<TextRange, PyType> types,
-                                            @NotNull Map<PyType, TextRange> fullRanges, int offset) {
+                                            @NotNull Map<PyType, TextRange> fullRanges, @NotNull Map<PyType, PyImportElement> imports,
+                                            int offset) {
     final Matcher m = DICT_TYPE.matcher(type);
     PyClassType dict = PyBuiltinCache.getInstance(anchor).getDictType();
     if (dict != null) {
       if (m.matches()) {
-        PyType from = parse(anchor, m.group(1), types, fullRanges, offset + m.start(1));
-        PyType to = parse(anchor, m.group(2), types, fullRanges, offset + m.start(2));
+        PyType from = parse(anchor, m.group(1), types, fullRanges, imports, offset + m.start(1));
+        PyType to = parse(anchor, m.group(2), types, fullRanges, imports, offset + m.start(2));
         final PyType p = PyTupleType.create(anchor, new PyType[] {from, to});
         return new PyCollectionTypeImpl(dict.getPyClass(), false, p);
       }
@@ -296,11 +309,12 @@ public class PyTypeParser {
 
   @Nullable
   private static PyType parseUnionType(@NotNull PsiElement anchor, @NotNull String type, @NotNull Map<TextRange, PyType> types,
-                                       @NotNull Map<PyType, TextRange> fullRanges, int offset) {
+                                       @NotNull Map<PyType, TextRange> fullRanges, @NotNull Map<PyType, PyImportElement> imports,
+                                       int offset) {
     final List<TextRange> ranges = splitRanges(type, " or ");
     PyType result = null;
     for (TextRange range : ranges) {
-      final PyType t = parse(anchor, range.substring(type), types, fullRanges, offset + range.getStartOffset());
+      final PyType t = parse(anchor, range.substring(type), types, fullRanges, imports, offset + range.getStartOffset());
       result = (result == null) ? t : PyUnionType.union(result, t);
     }
     return result;

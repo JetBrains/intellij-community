@@ -6,27 +6,33 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * User : catherine
  */
-public class DocStringTypeReference extends PsiReferenceBase<PsiElement> {
-  private PyType myType;
-  private TextRange myFullRange;
+public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiElement> {
+  @Nullable private PyType myType;
+  @NotNull private TextRange myFullRange;
+  @Nullable private final PyImportElement myImportElement;
 
-  public DocStringTypeReference(PsiElement element, TextRange range, TextRange fullRange, @Nullable PyType type) {
+  public DocStringTypeReference(PsiElement element, TextRange range, @NotNull TextRange fullRange, @Nullable PyType type,
+                                @Nullable PyImportElement importElement) {
     super(element, range);
     myFullRange = fullRange;
     myType = type;
+    myImportElement = importElement;
   }
 
   @Override
@@ -49,7 +55,7 @@ public class DocStringTypeReference extends PsiReferenceBase<PsiElement> {
   }
 
   public boolean isSoft() {
-    return true;
+    return false;
   }
 
   @Override
@@ -68,16 +74,28 @@ public class DocStringTypeReference extends PsiReferenceBase<PsiElement> {
     return super.isReferenceTo(element);
   }
 
-  @Nullable
-  public PsiElement resolve() {
+  @NotNull
+  @Override
+  public ResolveResult[] multiResolve(boolean incompleteCode) {
+    PsiElement result = null;
+    final ResolveResultList results = new ResolveResultList();
     if (myType instanceof PyClassType) {
-      return ((PyClassType)myType).getPyClass();
+      result = ((PyClassType)myType).getPyClass();
     }
-    if (myType instanceof PyImportedModuleType) {
-      final PyImportedModule module = ((PyImportedModuleType)myType).getImportedModule();
-      return module.resolve();
+    else if (myType instanceof PyImportedModuleType) {
+      result = ((PyImportedModuleType)myType).getImportedModule().resolve();
     }
-    return null;
+    if (result != null) {
+      if (myImportElement != null) {
+        results.add(new ImportedResolveResult(result,
+                                              RatedResolveResult.RATE_NORMAL,
+                                              Collections.<PsiElement>singletonList(myImportElement)));
+      }
+      else {
+        results.poke(result, RatedResolveResult.RATE_NORMAL);
+      }
+    }
+    return results.toArray(new ResolveResult[0]);
   }
 
   @NotNull
