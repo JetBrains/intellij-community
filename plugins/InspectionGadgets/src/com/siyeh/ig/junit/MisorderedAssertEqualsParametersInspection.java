@@ -56,6 +56,7 @@ public class MisorderedAssertEqualsParametersInspection extends BaseInspection {
 
   private static class FlipParametersFix extends InspectionGadgetsFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionGadgetsBundle.message("misordered.assert.equals.parameters.flip.quickfix");
@@ -78,20 +79,18 @@ public class MisorderedAssertEqualsParametersInspection extends BaseInspection {
       final PsiType stringType =
         PsiType.getJavaLangString(psiManager, scope);
       final PsiType parameterType1 = parameters[0].getType();
-      final int expectedPosition;
-      final int actualPosition;
-      if (parameterType1.equals(stringType) && parameters.length > 2) {
-        expectedPosition = 1;
-        actualPosition = 2;
-      }
-      else {
-        expectedPosition = 0;
-        actualPosition = 1;
-      }
       final PsiExpressionList argumentList = callExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
-      final PsiExpression expectedArgument = arguments[expectedPosition];
-      final PsiExpression actualArgument = arguments[actualPosition];
+      final PsiExpression actualArgument;
+      final PsiExpression expectedArgument;
+      if (parameterType1.equals(stringType) && parameters.length > 2) {
+        expectedArgument = arguments[1];
+        actualArgument = arguments[2];
+      }
+      else {
+        expectedArgument = arguments[0];
+        actualArgument = arguments[1];
+      }
       final String actualArgumentText = actualArgument.getText();
       final String expectedArgumentText = expectedArgument.getText();
       replaceExpression(expectedArgument, actualArgumentText);
@@ -123,33 +122,26 @@ public class MisorderedAssertEqualsParametersInspection extends BaseInspection {
           !InheritanceUtil.isInheritor(containingClass, "org.junit.Assert")) {
         return;
       }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() == 0) {
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length < 2) {
         return;
       }
       final PsiManager psiManager = expression.getManager();
       final Project project = psiManager.getProject();
       final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
       final PsiType stringType = PsiType.getJavaLangString(psiManager, scope);
-      final PsiParameter[] parameters = parameterList.getParameters();
-      final PsiType parameterType1 = parameters[0].getType();
-      final int expectedPosition;
-      final int actualPosition;
-      if (parameterType1.equals(stringType) && parameters.length > 2) {
-        expectedPosition = 1;
-        actualPosition = 2;
+      final PsiType argumentType1 = arguments[0].getType();
+      final PsiExpression expectedArgument;
+      final PsiExpression actualArgument;
+      if (stringType.equals(argumentType1) && arguments.length > 2) {
+        expectedArgument = arguments[1];
+        actualArgument = arguments[2];
       }
       else {
-        expectedPosition = 0;
-        actualPosition = 1;
+        expectedArgument = arguments[0];
+        actualArgument = arguments[1];
       }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] arguments = argumentList.getExpressions();
-      if (actualPosition >= arguments.length) {
-        return;
-      }
-      final PsiExpression expectedArgument = arguments[expectedPosition];
-      final PsiExpression actualArgument = arguments[actualPosition];
       if (expectedArgument == null || actualArgument == null) {
         return;
       }
