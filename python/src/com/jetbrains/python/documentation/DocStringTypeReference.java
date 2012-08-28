@@ -35,6 +35,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     myImportElement = importElement;
   }
 
+  @Nullable
   @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     if (element.equals(resolve())) {
