@@ -2004,6 +2004,9 @@ public class StringUtil extends StringUtilRt {
     for (int i = 0; i < name.length(); i++) {
       final char ch = name.charAt(i);
       if (Character.isLetterOrDigit(ch)) {
+        if (result.length() == 0 && !Character.isJavaIdentifierStart(ch)) {
+          result.append("_");
+        }
         result.append(ch);
       }
     }

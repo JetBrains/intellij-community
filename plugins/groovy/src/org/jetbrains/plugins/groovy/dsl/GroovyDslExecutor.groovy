@@ -42,7 +42,7 @@ public class GroovyDslExecutor {
     myFileName = fileName
 
     def shell = new GroovyShell()
-    def script = shell.parse(text, fileName)
+    def script = shell.parse(text, StringUtil.sanitizeJavaIdentifier(fileName))
 
     def mc = new ExpandoMetaClass(script.class, false)
 
