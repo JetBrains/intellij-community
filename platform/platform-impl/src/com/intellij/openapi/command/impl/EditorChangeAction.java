@@ -26,10 +26,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NonNls;
 
+import static com.intellij.util.CompressionUtil.compressCharSequence;
+import static com.intellij.util.CompressionUtil.uncompressCharSequence;
+
 public class EditorChangeAction extends BasicUndoableAction {
   private final int myOffset;
-  private final CharSequence myOldString;
-  private final CharSequence myNewString;
+  private final Object myOldString;
+  private final Object myNewString;
   private final long myOldTimeStamp;
   private final long myNewTimeStamp;
 
@@ -45,8 +48,8 @@ public class EditorChangeAction extends BasicUndoableAction {
     super(document);
 
     myOffset = offset;
-    myOldString = oldString == null ? "" : oldString;
-    myNewString = newString == null ? "" : newString;
+    myOldString = oldString == null ? "" : compressCharSequence(oldString);
+    myNewString = newString == null ? "" : compressCharSequence(newString);
     myOldTimeStamp = oldTimeStamp;
     myNewTimeStamp = document.getModificationStamp();
   }
@@ -65,13 +68,13 @@ public class EditorChangeAction extends BasicUndoableAction {
   }
 
   public void performUndo() {
-    exchangeStrings(myNewString, myOldString);
+    exchangeStrings(uncompressCharSequence(myNewString), uncompressCharSequence(myOldString));
   }
 
   public void redo() {
     DocumentUndoProvider.startDocumentUndo(getDocument());
     try {
-      exchangeStrings(myOldString, myNewString);
+      exchangeStrings(uncompressCharSequence(myOldString), uncompressCharSequence(myNewString));
     }
     finally {
       DocumentUndoProvider.finishDocumentUndo(getDocument());

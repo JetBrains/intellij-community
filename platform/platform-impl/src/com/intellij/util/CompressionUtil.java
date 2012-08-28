@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.indexing;
+package com.intellij.util;
 
 import com.intellij.idea.StartupUtil;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -24,11 +24,12 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
+import java.nio.charset.Charset;
 
 /**
  * @author Maxim.Mossienko
  */
-public class IOUtils {
+public class CompressionUtil {
   private static final boolean ourCanUseSnappy;
 
   static {
@@ -77,6 +78,28 @@ public class IOUtils {
     } else {
       if (!ourCanUseSnappy) throw new IOException("Can not read compressed data");
       return Snappy.uncompress(bytes);
+    }
+  }
+
+  private static final int STRING_COMPRESSION_THRESHOLD = 1024;
+
+  public static CharSequence uncompressCharSequence(Object string) {
+    if (string instanceof CharSequence) return (CharSequence)string;
+    byte[] b = (byte[])string;
+    try {
+      return Snappy.uncompressString(b, Charset.defaultCharset());
+    } catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
+  }
+
+  public static Object compressCharSequence(CharSequence string) {
+    if (!ourCanUseSnappy || string.length() < STRING_COMPRESSION_THRESHOLD) return string;
+    try {
+      return Snappy.compress(string.toString(), Charset.defaultCharset());
+    } catch (IOException ex) {
+      ex.printStackTrace();
+      return string;
     }
   }
 }
