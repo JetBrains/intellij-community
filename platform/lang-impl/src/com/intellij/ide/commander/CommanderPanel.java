@@ -186,7 +186,7 @@ public class CommanderPanel extends JPanel {
     return myEnableSearchHighlighting;
   }
 
-  void addHistoryListener(@NotNull CommanderHistoryListener listener) {
+  public void addHistoryListener(@NotNull CommanderHistoryListener listener) {
     myHistoryListeners.add(listener);
   }
 
