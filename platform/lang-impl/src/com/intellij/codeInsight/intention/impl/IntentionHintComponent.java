@@ -23,6 +23,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.PriorityQuestionAction;
 import com.intellij.codeInsight.hint.ScrollAwareHint;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
@@ -571,7 +572,7 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
   }
 
-  public static class EditIntentionSettingsAction implements IntentionAction {
+  public static class EditIntentionSettingsAction implements IntentionAction, HighPriorityAction {
     private String myFamilyName;
 
     public EditIntentionSettingsAction(IntentionAction action) {
