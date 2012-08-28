@@ -79,15 +79,15 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
   }
 
   @Nullable
-  private static Filter<PsiClass> createFilter(@Nullable final ClassFilter classFilter) {
+  private static Filter<Object> createFilter(@Nullable final ClassFilter classFilter) {
     if (classFilter == null) {
       return null;
     }
     else {
-      return new Filter<PsiClass>() {
+      return new Filter<Object>() {
         @Override
-        public boolean isAccepted(PsiClass element) {
-          return classFilter.isAccepted(element);
+        public boolean isAccepted(Object element) {
+          return element instanceof PsiClass && classFilter.isAccepted((PsiClass)element);
         }
       };
     }
