@@ -161,7 +161,7 @@ public class MockVirtualFile extends VirtualFile {
 
   @Override
   public long getLength() {
-    throw new UnsupportedOperationException("Method getLength is not yet implemented in " + getClass().getName());
+    return myText.length();
   }
 
   @Override
