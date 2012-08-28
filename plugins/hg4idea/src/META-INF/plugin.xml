@@ -52,6 +52,7 @@
       <separator/>
 
       <action id="hg4idea.branch" class="org.zmlx.hg4idea.action.HgCreateBranchAction"/>
+      <action id="hg4idea.branch.close" class="org.zmlx.hg4idea.action.HgCloseBranchAction"/>
 
       <!--<action id="hg4idea.branch" class="org.zmlx.hg4idea.action."/>-->
 
