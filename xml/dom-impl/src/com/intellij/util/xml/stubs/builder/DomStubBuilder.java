@@ -29,8 +29,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.stubs.FileStub;
 
-import java.io.ByteArrayInputStream;
-
 /**
  * @author Dmitry Avdeev
  *         Date: 8/2/12
@@ -62,7 +60,7 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
       DomFileElement<? extends DomElement> fileElement = manager.getFileElement(xmlFile);
       if (fileElement == null || !fileElement.getFileDescription().hasStubs()) return null;
 
-      XmlFileHeader header = NanoXmlUtil.parseHeader(new ByteArrayInputStream(content));
+      XmlFileHeader header = DomService.getInstance().getXmlFileHeader(xmlFile);
       if (header.getRootTagLocalName() == null) {
         LOG.error("null root tag for " + fileElement + " for " + file);
       }

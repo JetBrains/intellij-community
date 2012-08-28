@@ -65,7 +65,7 @@ public class DomServiceImpl extends DomService {
   };
 
   @NotNull
-  private static XmlFileHeader calcXmlFileHeader(final PsiFile file) {
+  private static XmlFileHeader calcXmlFileHeader(final XmlFile file) {
 
     if (!DomStubBuilder.isStubBuilding(file) && file.getFileType() == XmlFileType.INSTANCE) {
       VirtualFile virtualFile = file.getVirtualFile();
@@ -77,38 +77,35 @@ public class DomServiceImpl extends DomService {
       }
     }
 
-    if (file instanceof XmlFile && file.getNode().isParsed()) {
-      final XmlDocument document = ((XmlFile)file).getDocument();
-      if (document != null) {
-        String publicId = null;
-        String systemId = null;
-        final XmlProlog prolog = document.getProlog();
-        if (prolog != null) {
-          final XmlDoctype doctype = prolog.getDoctype();
-          if (doctype != null) {
-            publicId = doctype.getPublicId();
-            systemId = doctype.getSystemId();
-            if (systemId == null) {
-              systemId = doctype.getDtdUri();
-            }
-          }
-        }
-
-        final XmlTag tag = document.getRootTag();
-        if (tag != null) {
-          String localName = tag.getLocalName();
-          if (StringUtil.isNotEmpty(localName)) {
-            if (tag.getPrevSibling() instanceof PsiErrorElement) {
-              return XmlFileHeader.EMPTY;
-            }
-
-            String psiNs = tag.getNamespace();
-            return new XmlFileHeader(localName, psiNs == XmlUtil.EMPTY_URI || Comparing.equal(psiNs, systemId) ? null : psiNs, publicId,
-                                     systemId);
+    final XmlDocument document = file.getDocument();
+    if (document != null) {
+      String publicId = null;
+      String systemId = null;
+      final XmlProlog prolog = document.getProlog();
+      if (prolog != null) {
+        final XmlDoctype doctype = prolog.getDoctype();
+        if (doctype != null) {
+          publicId = doctype.getPublicId();
+          systemId = doctype.getSystemId();
+          if (systemId == null) {
+            systemId = doctype.getDtdUri();
           }
         }
       }
-      return XmlFileHeader.EMPTY;
+
+      final XmlTag tag = document.getRootTag();
+      if (tag != null) {
+        String localName = tag.getLocalName();
+        if (StringUtil.isNotEmpty(localName)) {
+          if (tag.getPrevSibling() instanceof PsiErrorElement) {
+            return XmlFileHeader.EMPTY;
+          }
+
+          String psiNs = tag.getNamespace();
+          return new XmlFileHeader(localName, psiNs == XmlUtil.EMPTY_URI || Comparing.equal(psiNs, systemId) ? null : psiNs, publicId,
+                                   systemId);
+        }
+      }
     }
 
     if (!file.isValid()) return XmlFileHeader.EMPTY;

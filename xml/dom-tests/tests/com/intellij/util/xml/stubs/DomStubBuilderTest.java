@@ -49,6 +49,11 @@ public class DomStubBuilderTest extends DomStubTest {
                                   "    Element:bar\n");
   }
 
+  public void testNullTag() throws Exception {
+    doBuilderTest("nullTag.xml", "File:foo\n" +
+                                 "  Element:foo\n");
+  }
+
   public static class TestExtender extends DomExtender<Bar> {
 
     @Override
