@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,12 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.libraries.*;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -44,15 +45,11 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
   @NonNls private static final String LEVEL_ATTR = "level";
   private final MyOrderEntryLibraryTableListener myLibraryListener = new MyOrderEntryLibraryTableListener();
   @NonNls private static final String EXPORTED_ATTR = "exported";
-  private PersistentLibraryKind myLibraryKind;
 
   LibraryOrderEntryImpl(@NotNull Library library, @NotNull RootModelImpl rootModel, @NotNull ProjectRootManagerImpl projectRootManager) {
     super(rootModel, projectRootManager);
     LOG.assertTrue(library.getTable() != null);
     myLibrary = library;
-    if (myLibrary instanceof LibraryEx) {
-      myLibraryKind = ((LibraryEx)myLibrary).getKind();
-    }
     addListeners();
     init();
   }
@@ -79,7 +76,6 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     }
     else {
       myLibrary = that.myLibrary;
-      myLibraryKind = that.myLibraryKind;
     }
     myExported = that.myExported;
     myScope = that.myScope;
@@ -109,9 +105,6 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
       myLibraryName = null;
       myLibraryLevel = null;
       myLibrary = library;
-      if (library instanceof LibraryEx) {
-        myLibraryKind = ((LibraryEx)library).getKind();
-      }
     }
   }
 
@@ -251,9 +244,6 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
         myLibrary = newLibrary;
         myLibraryName = null;
         myLibraryLevel = null;
-        if (newLibrary instanceof LibraryEx && myLibraryKind == null) {
-          myLibraryKind = ((LibraryEx)newLibrary).getKind();
-        }
         updateFromRootProviderAndSubscribe();
       }
     }
@@ -290,13 +280,5 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     @Override
     public void afterLibraryRemoved(Library library) {
     }
-  }
-
-  @Override
-  protected VirtualFile[] filterDirectories(@NotNull VirtualFile[] files) {
-    if (myLibraryKind != null && myLibraryKind.isFileBased()) {
-      return files;
-    }
-    return super.filterDirectories(files);
   }
 }
