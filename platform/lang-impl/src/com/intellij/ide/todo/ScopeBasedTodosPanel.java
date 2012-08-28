@@ -21,13 +21,13 @@
 package com.intellij.ide.todo;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
@@ -43,23 +43,30 @@ public class ScopeBasedTodosPanel extends TodoPanel {
   private static final String SELECTED_SCOPE = "TODO_SCOPE";
   private final Alarm myAlarm;
   private JComboBox myScopes;
+  private final NamedScopesHolder.ScopeListener myScopeListener;
+  private final NamedScopeManager myNamedScopeManager;
+  private final DependencyValidationManager myValidationManager;
 
-  public ScopeBasedTodosPanel(Project project, TodoPanelSettings settings, Content content){
+  public ScopeBasedTodosPanel(final Project project, TodoPanelSettings settings, Content content){
     super(project,settings,false,content);
     myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD, project);
-    NamedScope[] scopes = DependencyValidationManager.getInstance(project).getScopes();
-    scopes = ArrayUtil.mergeArrays(scopes, NamedScopeManager.getInstance(project).getScopes());
-    scopes = NonProjectFilesScope.removeFromList(scopes);
-    myScopes.setModel(new DefaultComboBoxModel(scopes));
     final String scopeName = PropertiesComponent.getInstance(project).getValue(SELECTED_SCOPE);
-    if (scopeName != null) {
-      for (NamedScope scope : scopes) {
-        if (Comparing.strEqual(scopeName, scope.getName())) {
-          myScopes.setSelectedItem(scope);
-          break;
-        }
+    rebuildModel(project, scopeName);
+
+    myScopeListener = new NamedScopesHolder.ScopeListener() {
+      @Override
+      public void scopesChanged() {
+        final NamedScope scope = (NamedScope)myScopes.getSelectedItem();
+        rebuildModel(project, scope != null ? scope.getName() : null);
       }
-    }
+    };
+
+    myNamedScopeManager = NamedScopeManager.getInstance(project);
+    myNamedScopeManager.addScopeListener(myScopeListener);
+
+    myValidationManager = DependencyValidationManager.getInstance(project);
+    myValidationManager.addScopeListener(myScopeListener);
+
     myScopes.setRenderer(new ListCellRendererWrapper<NamedScope>(myScopes){
       @Override
       public void customize(JList list, NamedScope value, int index, boolean selected, boolean hasFocus) {
@@ -77,6 +84,28 @@ public class ScopeBasedTodosPanel extends TodoPanel {
       }
     });
     rebuildWithAlarm(myAlarm);
+  }
+
+  @Override
+  public void dispose() {
+    myNamedScopeManager.removeScopeListener(myScopeListener);
+    myValidationManager.removeScopeListener(myScopeListener);
+    super.dispose();
+  }
+
+  private void rebuildModel(Project project, String scopeName) {
+    NamedScope[] scopes = DependencyValidationManager.getInstance(project).getScopes();
+    scopes = ArrayUtil.mergeArrays(scopes, NamedScopeManager.getInstance(project).getScopes());
+    scopes = NonProjectFilesScope.removeFromList(scopes);
+    myScopes.setModel(new DefaultComboBoxModel(scopes));
+    if (scopeName != null) {
+      for (NamedScope scope : scopes) {
+        if (Comparing.strEqual(scopeName, scope.getName())) {
+          myScopes.setSelectedItem(scope);
+          break;
+        }
+      }
+    }
   }
 
   @Override
