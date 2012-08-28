@@ -15,8 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
@@ -31,20 +30,23 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
 * @author nik
 */
 abstract class CodeStyleManagerRunnable<T> {
-  protected CodeStyleSettings mySettings;
-  protected CommonCodeStyleSettings.IndentOptions myIndentOptions;
-  protected FormattingModel myModel;
-  protected TextRange mySignificantRange;
-  private final CodeStyleManagerImpl myCodeStyleManager;
+  protected              CodeStyleSettings                     mySettings;
+  protected              CommonCodeStyleSettings.IndentOptions myIndentOptions;
+  protected              FormattingModel                       myModel;
+  protected              TextRange                             mySignificantRange;
+  private final          CodeStyleManagerImpl                  myCodeStyleManager;
+  @NotNull private final FormattingMode                        myMode;
 
-  CodeStyleManagerRunnable(CodeStyleManagerImpl codeStyleManager) {
+  CodeStyleManagerRunnable(CodeStyleManagerImpl codeStyleManager, @NotNull FormattingMode mode) {
     myCodeStyleManager = codeStyleManager;
+    myMode = mode;
   }
 
   public T perform(PsiFile file, int offset, @Nullable TextRange range, T defaultValue) {
@@ -91,7 +93,7 @@ abstract class CodeStyleManagerRunnable<T> {
       mySettings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
       myIndentOptions = mySettings.getIndentOptions(file.getFileType());
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
-      myModel = builder.createModel(file, mySettings);
+      myModel = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);
 
       if (document != null && useDocumentBaseFormattingModel()) {
         myModel = new DocumentBasedFormattingModel(myModel.getRootBlock(), document, myCodeStyleManager.getProject(), mySettings, file.getFileType(), file);

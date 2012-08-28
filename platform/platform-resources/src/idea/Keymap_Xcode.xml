@@ -11,6 +11,7 @@
 
     <action id="EditorBackSpace">
       <keyboard-shortcut first-keystroke="BACK_SPACE"/>
+      <keyboard-shortcut first-keystroke="shift BACK_SPACE"/>
     </action>
 
     <action id="SafeDelete">
@@ -196,7 +197,6 @@
       <mouse-shortcut keystroke="button2" />
       <keyboard-shortcut first-keystroke="control B" />
     </action>
-    <action id="GotoFile" />
     <action id="GotoImplementation">
       <mouse-shortcut keystroke="meta alt button1" />
       <keyboard-shortcut first-keystroke="control alt B" />
@@ -209,6 +209,12 @@
     </action>
     <action id="GotoPreviousError">
       <keyboard-shortcut first-keystroke="shift meta QUOTE" />
+    </action>
+    <action id="GotoClass">
+      <keyboard-shortcut first-keystroke="meta O" />
+    </action>
+    <action id="GotoFile">
+      <keyboard-shortcut first-keystroke="meta alt O" />
     </action>
     <action id="GotoSymbol">
       <keyboard-shortcut first-keystroke="shift meta O" />
@@ -318,7 +324,6 @@
     <action id="FileChooser.NewFolder">
       <keyboard-shortcut first-keystroke="alt INSERT" />
     </action>
-    <action id="GotoClass" />
     <action id="NewElement">
       <keyboard-shortcut first-keystroke="control ENTER" />
       <keyboard-shortcut first-keystroke="meta N" />

@@ -194,7 +194,7 @@ public class GitHistoryUtils {
       return null;
     }
     final List<Change> changes = record.parseChanges(project, root);
-    boolean exists = ! FileStatus.DELETED.equals(changes.get(0).getFileStatus());
+    boolean exists = changes.isEmpty() || !FileStatus.DELETED.equals(changes.get(0).getFileStatus());
     record.setUsedHandler(h);
     return new ItemLatestState(new GitRevisionNumber(record.getHash(), record.getDate()), exists, false);
   }
@@ -320,15 +320,15 @@ public class GitHistoryUtils {
   public static void history(final Project project, FilePath path, @Nullable VirtualFile root, final Consumer<GitFileRevision> consumer,
                              final Consumer<VcsException> exceptionConsumer, String... parameters) throws VcsException {
     // adjust path using change manager
-    path = getLastCommitName(project, path);
-    final VirtualFile finalRoot = (root == null ? GitUtil.getGitRoot(path) : root);
+    final FilePath filePath = getLastCommitName(project, path);
+    final VirtualFile finalRoot = (root == null ? GitUtil.getGitRoot(filePath) : root);
     final GitLogParser logParser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
                                                     HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_EMAIL, COMMITTER_NAME, COMMITTER_EMAIL, PARENTS,
                                                     SUBJECT, BODY, RAW_BODY, AUTHOR_TIME);
 
     final AtomicReference<String> firstCommit = new AtomicReference<String>("HEAD");
     final AtomicReference<String> firstCommitParent = new AtomicReference<String>("HEAD");
-    final AtomicReference<FilePath> currentPath = new AtomicReference<FilePath>(path);
+    final AtomicReference<FilePath> currentPath = new AtomicReference<FilePath>(filePath);
     final AtomicReference<GitLineHandler> logHandler = new AtomicReference<GitLineHandler>();
     final AtomicBoolean skipFurtherOutput = new AtomicBoolean();
 
@@ -375,7 +375,7 @@ public class GitHistoryUtils {
             // can safely be empty, for example, for simple merge commits that don't change anything.
             return;
           }
-          if (statusInfos.get(0).getType() == GitChangeType.ADDED) {
+          if (statusInfos.get(0).getType() == GitChangeType.ADDED && !filePath.isDirectory()) {
             skipFurtherOutput.set(true);
           }
         }

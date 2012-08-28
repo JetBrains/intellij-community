@@ -100,7 +100,7 @@ public class CodeFormatterFacade {
       }
 
       //final SmartPsiElementPointer pointer = SmartPointerManager.getInstance(psiElement.getProject()).createSmartPsiElementPointer(psiElement);
-      final FormattingModel model = builder.createModel(elementToFormat, mySettings);
+      final FormattingModel model = CoreFormatterUtil.buildModel(builder, elementToFormat, mySettings, FormattingMode.REFORMAT);
       if (file.getTextLength() > 0) {
         try {
           FormatterEx.getInstanceEx().format(
@@ -193,7 +193,7 @@ public class CodeFormatterFacade {
             return;
           }
 
-          final FormattingModel originalModel = builder.createModel(file, mySettings);
+          final FormattingModel originalModel = CoreFormatterUtil.buildModel(builder, file, mySettings, FormattingMode.REFORMAT);
           final FormattingModel model = new DocumentBasedFormattingModel(originalModel.getRootBlock(),
                                                                          document,
                                                                          project, mySettings, file.getFileType(), file);
@@ -337,10 +337,12 @@ public class CodeFormatterFacade {
         }
       }
 
+      boolean wrapLine = false; 
       int preferredWrapPosition = Integer.MAX_VALUE;
       if (!hasTabs) {
         if (Math.min(endLineOffset, endOffsetToUse) - startLineOffset > mySettings.RIGHT_MARGIN) {
           preferredWrapPosition = startLineOffset + mySettings.RIGHT_MARGIN - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
+          wrapLine = true;
         }
       }
       else if (canOptimize) {
@@ -355,7 +357,11 @@ public class CodeFormatterFacade {
           if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
               && (Math.min(endLineOffset, endOffsetToUse) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
           {
+            // Remember preferred position.
             preferredWrapPosition = i - 1;
+          }
+          if (width + symbolWidth >= mySettings.RIGHT_MARGIN) {
+            wrapLine = true;
             break;
           }
           width += symbolWidth;
@@ -383,13 +389,16 @@ public class CodeFormatterFacade {
               && (Math.min(endLineOffset, endOffsetToUse) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
           {
             preferredWrapPosition = i - 1;
+          }
+          if (width + symbolWidth >= mySettings.RIGHT_MARGIN) {
+            wrapLine = true;
             break;
           }
           x = newX;
           width += symbolWidth;
         }
       }
-      if (preferredWrapPosition >= endLineOffset) {
+      if (!wrapLine || preferredWrapPosition >= endLineOffset) {
         continue;
       }
       if (preferredWrapPosition >= endOffsetToUse) {

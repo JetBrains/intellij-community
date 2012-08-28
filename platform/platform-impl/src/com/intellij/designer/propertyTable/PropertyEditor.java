@@ -40,6 +40,11 @@ public abstract class PropertyEditor {
     return null;
   }
 
+  // is called when uer press a edit shortcut (F2). Editors may need to some actions, e.g. combobox should show popup.
+  public void activate() {
+  }
+
+  @Nullable
   public abstract Object getValue() throws Exception;
 
   public abstract void updateUI();

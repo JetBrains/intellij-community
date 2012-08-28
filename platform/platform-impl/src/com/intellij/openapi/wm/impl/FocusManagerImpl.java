@@ -474,6 +474,7 @@ public class FocusManagerImpl extends IdeFocusManager implements Disposable {
   }
 
   private void restartIdleAlarm() {
+    if (!ApplicationManager.getApplication().isActive()) return;
     myIdleAlarm.cancelAllRequests();
     myIdleAlarm.addRequest(new IdleRunnable(), Registry.intValue("actionSystem.focusIdleTimeout"));
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.codeInspection.internal;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.QueryExecutorBase;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -26,7 +25,6 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.QueryExecutor;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,7 +32,6 @@ import java.util.Map;
 
 public class UndesirableClassUsageInspection extends InternalInspection {
   private static final Map<String, String> CLASSES = new THashMap<String, String>();
-
   static {
     CLASSES.put(JList.class.getName(), JBList.class.getName());
     CLASSES.put(JTable.class.getName(), JBTable.class.getName());
@@ -43,22 +40,8 @@ public class UndesirableClassUsageInspection extends InternalInspection {
     CLASSES.put(QueryExecutor.class.getName(), QueryExecutorBase.class.getName());
   }
 
-  @Nls
   @NotNull
-  @Override
-  public String getDisplayName() {
-    return "Undesirable Class Usage";
-  }
-
-  @NotNull
-  @Override
-  public String getShortName() {
-    return "UndesirableClassUsage";
-  }
-
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) return new JavaElementVisitor() {};
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitNewExpression(PsiNewExpression expression) {

@@ -305,7 +305,7 @@ public class FileReferenceSet {
   }
 
   @Nullable
-  private PsiFile getContainingFile() {
+  protected PsiFile getContainingFile() {
     final PsiFile file = InjectedLanguageUtil.getTopLevelFile(myElement.getContainingFile());
     if (file == null) {
       LOG.error("Invalid element: " + myElement);

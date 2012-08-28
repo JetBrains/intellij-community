@@ -53,14 +53,7 @@ public abstract class LanguageFileType implements FileType{
   }
 
   @Override
-  public final boolean isReadOnly() {
-    return isSystem();
-  }
-
-  /**
-   * System file types cannot be editor and are not shown in the interface
-   */
-  protected boolean isSystem() {
+  public boolean isReadOnly() {
     return false;
   }
 

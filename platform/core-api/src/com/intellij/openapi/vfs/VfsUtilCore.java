@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.vfs;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Function;
@@ -26,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class VfsUtilCore {
   /**
@@ -170,30 +170,35 @@ public class VfsUtilCore {
     return stream;
   }
 
+  @SuppressWarnings("UnsafeVfsRecursion")
   public static void visitChildrenRecursively(@NotNull VirtualFile file, @NotNull VirtualFileVisitor visitor) {
-    visitChildrenRecursively(file, visitor, null);
+    if (!visitor.visitFile(file)) return;
+
+    VirtualFile[] children = null;
+
+    AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
+    try {
+      if (!file.isValid()) return;
+      if (!file.isSymLink() || visitor.followSymLinks() && !isInvalidLink(file)) {
+        children = file.getChildren();
+      }
+    }
+    finally {
+      token.finish();
+    }
+
+    if (children != null) {
+      for (VirtualFile child : children) {
+        visitChildrenRecursively(child, visitor);
+      }
+    }
+
+    visitor.afterChildrenVisited(file);
   }
 
-  private static void visitChildrenRecursively(@NotNull VirtualFile file,
-                                               @NotNull VirtualFileVisitor visitor,
-                                               @Nullable Set<VirtualFile> visitedSymLinks) {
-    if (!file.isValid()) return;
-    if (!visitor.visitFile(file)) return;
-    if (file.isSymLink()) {
-      if (!visitor.followSymLinks()) return;
-      if (visitedSymLinks == null) {
-        visitedSymLinks = new HashSet<VirtualFile>();
-      }
-      if (!visitedSymLinks.add(file)) {
-        visitor.afterChildrenVisited(file);
-        return;
-      }
-    }
-    VirtualFile[] children = file.getChildren();
-    for (VirtualFile child : children) {
-      visitChildrenRecursively(child, visitor, visitedSymLinks);
-    }
-    visitor.afterChildrenVisited(file);
+  private static boolean isInvalidLink(@NotNull VirtualFile link) {
+    final VirtualFile target = link.getCanonicalFile();
+    return target == null || target == link || isAncestor(target, link, true);
   }
 
   @NotNull

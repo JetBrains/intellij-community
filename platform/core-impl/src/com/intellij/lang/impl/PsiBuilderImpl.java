@@ -665,6 +665,7 @@ public class PsiBuilderImpl extends UserDataHolderBase implements PsiBuilder, AS
   }
 
   @Override
+  @Nullable
   public IElementType getTokenType() {
     if (eof()) return null;
 

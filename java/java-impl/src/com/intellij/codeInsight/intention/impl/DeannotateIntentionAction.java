@@ -39,6 +39,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class DeannotateIntentionAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + DeannotateIntentionAction.class.getName());
   private String myAnnotationName = null;
@@ -59,12 +61,15 @@ public class DeannotateIntentionAction implements IntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiModifierListOwner listOwner = getContainer(editor, file);
     if (listOwner != null) {
-      final PsiAnnotation[] annotations = ExternalAnnotationsManager.getInstance(project).findExternalAnnotations(listOwner);
+      final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(project);
+      final PsiAnnotation[] annotations = externalAnnotationsManager.findExternalAnnotations(listOwner);
       if (annotations != null && annotations.length > 0) {
         if (annotations.length == 1) {
           myAnnotationName = annotations[0].getQualifiedName();
         }
-        final VirtualFile virtualFile = annotations[0].getContainingFile().getVirtualFile();
+        final List<PsiFile> files = externalAnnotationsManager.findExternalAnnotationsFiles(listOwner);
+        if (files == null || files.isEmpty()) return false;
+        final VirtualFile virtualFile = files.get(0).getVirtualFile();
         return virtualFile != null && (virtualFile.isWritable() || virtualFile.isInLocalFileSystem());
       }
     }

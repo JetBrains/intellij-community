@@ -15,11 +15,11 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -28,7 +28,10 @@ import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Commands to get revision numbers. These are: parents, id, tip.
@@ -142,16 +145,17 @@ public class HgWorkingCopyRevisionsCommand {
 
     final List<String> lines = result.getOutputLines();
     if (lines != null && !lines.isEmpty()) {
-      String[] parts = StringUtils.split(lines.get(0), ' ');
-      String changesets = parts[0];
-      String revisions = parts[1];
-      if (parts.length >= 2) {
+      List<String> parts = StringUtil.split(lines.get(0), " ");
+      String changesets = parts.get(0);
+      String revisions = parts.get(1);
+      if (parts.size() >= 2) {
         if (changesets.indexOf('+') != changesets.lastIndexOf('+')) {
           // in the case of unresolved merge we have 2 revisions at once, both current, so with "+"
           // 9f2e6c02913c+b311eb4eb004+ 186+183+
-          String[] chsets = StringUtils.split(changesets, "+");
-          String[] revs = StringUtils.split(revisions, "+");
-          return Pair.create(HgRevisionNumber.getInstance(revs[0] + "+", chsets[0] + "+"), HgRevisionNumber.getInstance(revs[1] + "+", chsets[1] + "+"));
+          List<String> chsets = StringUtil.split(changesets, "+");
+          List<String> revs = StringUtil.split(revisions, "+");
+          return Pair.create(HgRevisionNumber.getInstance(revs.get(0) + "+", chsets.get(0) + "+"),
+                             HgRevisionNumber.getInstance(revs.get(1) + "+", chsets.get(1) + "+"));
         } else {
           return Pair.create(HgRevisionNumber.getInstance(revisions, changesets), null);
         }
@@ -208,12 +212,12 @@ public class HgWorkingCopyRevisionsCommand {
 
     final List<HgRevisionNumber> revisions = new ArrayList<HgRevisionNumber>(lines.size());
     for(String line: lines) {
-      final String[] parts = StringUtils.split(line, HgChangesetUtil.ITEM_SEPARATOR);
-      if (parts.length < 2) {
+      final List<String> parts = StringUtil.split(line, HgChangesetUtil.ITEM_SEPARATOR);
+      if (parts.size() < 2) {
         LOG.error("getRevisions output parse error in line [" + line + "]\n All lines: \n" + lines);
         continue;
       }
-      revisions.add(HgRevisionNumber.getInstance(parts[0], parts[1]));
+      revisions.add(HgRevisionNumber.getInstance(parts.get(0), parts.get(1)));
     }
     
     return revisions;

@@ -19,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -101,6 +102,12 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
       }
     });
+  }
+
+  // since set to null during dispose and we have background processes
+  private SvnConfiguration getConfig() {
+    if (myConfig == null) throw new ProcessCanceledException();
+    return myConfig;
   }
 
   public void setArtificialSaving(boolean artificialSaving) {
@@ -329,7 +336,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
     String proxyHost = getServersPropertyIdea(host, "http-proxy-host");
     if ((proxyHost == null) || "".equals(proxyHost.trim())) {
-      if (myConfig.isIsUseDefaultProxy()) {
+      if (getConfig().isIsUseDefaultProxy()) {
         // ! use common proxy if it is set
         final HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
         final String ideaWideProxyHost = httpConfigurable.PROXY_HOST;
@@ -456,7 +463,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
         return DEFAULT_READ_TIMEOUT;
     }
     if (SVN_SSH.equals(protocol)) {
-      return (int) myConfig.mySSHReadTimeout;
+      return (int) getConfig().mySSHReadTimeout;
     }
     return 0;
   }
@@ -465,7 +472,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
   public int getConnectTimeout(SVNRepository repository) {
     String protocol = repository.getLocation().getProtocol();
     if (SVN_SSH.equals(protocol)) {
-      return (int) myConfig.mySSHConnectionTimeout;
+      return (int) getConfig().mySSHConnectionTimeout;
     }
     final int connectTimeout = super.getConnectTimeout(repository);
     if ((HTTP.equals(protocol) || HTTPS.equals(protocol)) && (connectTimeout <= 0)) {

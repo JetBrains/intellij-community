@@ -46,16 +46,16 @@ public class XmlFoldingSettings implements PersistentStateComponent<XmlFoldingSe
     COLLAPSE_XML_TAGS = value;
   }
 
-  public boolean isCollapseXmlAttributes() {
-    return COLLAPSE_XML_ATTRIBUTES;
+  public boolean isCollapseHtmlStyleAttribute() {
+    return COLLAPSE_HTML_STYLE_ATTRIBUTE;
   }
 
-  public void setCollapseStyleAttribute(boolean value) {
-    this.COLLAPSE_XML_ATTRIBUTES = value;
+  public void setCollapseHtmlStyleAttribute(boolean value) {
+    this.COLLAPSE_HTML_STYLE_ATTRIBUTE = value;
   }
 
   @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_TAGS = false;
-  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_XML_ATTRIBUTES = true;
+  @SuppressWarnings({"WeakerAccess"}) public boolean COLLAPSE_HTML_STYLE_ATTRIBUTE = true;
 
   @NotNull
   public File[] getExportFiles() {

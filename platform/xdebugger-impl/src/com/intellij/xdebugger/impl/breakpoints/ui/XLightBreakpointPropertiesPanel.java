@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
@@ -28,6 +29,8 @@ import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -131,6 +134,16 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
       myCustomPropertiesPanelWrapper.add(customPropertiesPanel.getComponent(), BorderLayout.CENTER);
       myCustomPanels.add(customPropertiesPanel);
     }
+
+    myMainPanel.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusGained(FocusEvent event) {
+        if (myConditionComboBox != null) {
+          IdeFocusManager.findInstance().requestFocus(myConditionComboBox.getComponent(), false);
+        }
+      }
+    });
+
   }
 
   public void saveProperties() {
@@ -142,7 +155,9 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
       final String text = myConditionComboBox.getText();
       final String condition = StringUtil.isEmptyOrSpaces(text) ? null : text;
       myBreakpoint.setCondition(condition);
-      myConditionComboBox.saveTextInHistory();
+      if (condition != null) {
+        myConditionComboBox.saveTextInHistory();
+      }
     }
 
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {

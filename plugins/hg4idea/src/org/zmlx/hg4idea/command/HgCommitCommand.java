@@ -15,10 +15,10 @@ package org.zmlx.hg4idea.command;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgVcs;
@@ -57,7 +57,7 @@ public class HgCommitCommand {
   }
 
   public void execute() throws HgCommandException, VcsException {
-    if (StringUtils.isBlank(myMessage)) {
+    if (StringUtil.isEmptyOrSpaces(myMessage)) {
       throw new HgCommandException(HgVcsMessages.message("hg4idea.commit.error.messageEmpty"));
     }
     List<String> parameters = new LinkedList<String>();

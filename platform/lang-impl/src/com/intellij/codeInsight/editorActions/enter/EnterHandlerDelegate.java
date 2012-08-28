@@ -32,7 +32,7 @@ public interface EnterHandlerDelegate {
   ExtensionPointName<EnterHandlerDelegate> EP_NAME = ExtensionPointName.create("com.intellij.enterHandlerDelegate");
 
   enum Result {
-    Default, Continue, DefaultForceIndent, Stop
+    Default, Continue, DefaultForceIndent, DefaultSkipIndent, Stop
   }
 
   Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffset,

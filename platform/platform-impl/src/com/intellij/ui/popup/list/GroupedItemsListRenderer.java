@@ -36,8 +36,8 @@ public class GroupedItemsListRenderer extends GroupedElementsRenderer.List imple
   }
 
 
-  public GroupedItemsListRenderer(ListItemDescriptor aPopup) {
-    myDescriptor = aPopup;
+  public GroupedItemsListRenderer(ListItemDescriptor descriptor) {
+    myDescriptor = descriptor;
   }
 
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {

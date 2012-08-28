@@ -19,8 +19,8 @@ import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.MasterKeyPasswordSafe;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcsUtil.AuthDialog;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgGlobalSettings;
 import org.zmlx.hg4idea.HgVcs;
@@ -128,18 +128,18 @@ class HgCommandAuthenticator {
 
       final HgGlobalSettings hgGlobalSettings = vcs.getGlobalSettings();
       @Nullable String rememberedLoginsForUrl = null;
-      if (!StringUtils.isBlank(myURL)) {
+      if (!StringUtil.isEmptyOrSpaces(myURL)) {
         rememberedLoginsForUrl = hgGlobalSettings.getRememberedUserName(stripSchemaFromUrl(myURL));
       }
 
       String login = myProposedLogin;
-      if (StringUtils.isBlank(login)) {
+      if (StringUtil.isEmptyOrSpaces(login)) {
         // find the last used login
         login = rememberedLoginsForUrl;
       }
 
       String password = null;
-      if (!StringUtils.isBlank(login) && myURL != null) {
+      if (!StringUtil.isEmptyOrSpaces(login) && myURL != null) {
         // if we've logged in with this login, search for password
         final String key = keyForUrlAndLogin(myURL, login);
         try {
@@ -160,7 +160,8 @@ class HgCommandAuthenticator {
       }
 
       // don't show dialog if we don't have to (both fields are known)
-      if (!StringUtils.isBlank(password) && !StringUtils.isBlank(login)) {
+      if (!StringUtil.isEmptyOrSpaces(
+        password) && !StringUtil.isEmptyOrSpaces(login)) {
         myUserName = login;
         myPassword = password;
         ok = true;

@@ -15,19 +15,25 @@
  */
 package com.intellij.openapi.ui.popup;
 
+import org.jetbrains.annotations.Nullable;
+
 import javax.swing.*;
 
 /**
  * @author kir
  */
 public interface ListItemDescriptor {
+  @Nullable
   String getTextFor(Object value);
 
+  @Nullable
   String getTooltipFor(Object value);
 
+  @Nullable
   Icon getIconFor(Object value);
 
   boolean hasSeparatorAboveOf(Object value);
 
+  @Nullable
   String getCaptionAboveOf(Object value);
 }

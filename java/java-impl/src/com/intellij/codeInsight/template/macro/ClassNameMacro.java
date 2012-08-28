@@ -17,7 +17,6 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,14 +31,9 @@ public class ClassNameMacro extends Macro {
   }
 
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
-    Project project = context.getProject();
     int templateStartOffset = context.getTemplateStartOffset();
     int offset = templateStartOffset > 0 ? context.getTemplateStartOffset() - 1 : context.getTemplateStartOffset();
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
-    PsiElement place = file.findElementAt(offset);
+    PsiElement place = context.getPsiElementAtStartOffset();
     PsiClass aClass = null;
 
     while(place != null){

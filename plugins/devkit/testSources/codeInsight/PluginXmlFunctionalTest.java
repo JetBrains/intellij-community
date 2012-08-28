@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.jetbrains.idea.devkit.codeInsight;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInspection.internal.InternalInspectionToolsProvider;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -28,11 +28,12 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.usageView.UsageViewNodeTextLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DeprecatedClassUsageInspection;
 import org.jetbrains.idea.devkit.inspections.*;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author peter
@@ -179,15 +180,14 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting(true, true, true);
   }
 
-  static Class[] getInspectionClasses() {
-    Class[] result = {
+  static Collection<Class<? extends LocalInspectionTool>> getInspectionClasses() {
+    return Arrays.<Class<? extends LocalInspectionTool>>asList(
       //RegistrationProblemsInspection.class,
       PluginXmlDomInspection.class,
       ComponentNotRegisteredInspection.class,
       InspectionDescriptionNotFoundInspection.class,
       IntentionDescriptionNotFoundInspection.class,
       InspectionMappingConsistencyInspection.class
-    };
-    return ArrayUtil.mergeArrays(result, InternalInspectionToolsProvider.getPublicClasses());
+    );
   }
 }

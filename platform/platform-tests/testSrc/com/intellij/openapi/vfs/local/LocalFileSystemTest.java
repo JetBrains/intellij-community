@@ -234,9 +234,11 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
       final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(targetFile);
       assertNotNull(file);
       file.setBinaryContent("hello".getBytes(), 0, 0, requestor);
+      assertTrue(file.getLength() > 0);
 
       final VirtualFile check = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(hardLinkFile);
       assertNotNull(check);
+      assertEquals(file.getLength(), check.getLength());
       assertEquals("hello", VfsUtilCore.loadText(check));
     }
     finally {

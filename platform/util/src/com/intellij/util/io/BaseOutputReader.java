@@ -33,6 +33,7 @@ public abstract class BaseOutputReader {
   protected volatile boolean isStopped = false;
 
   private final char[] myBuffer = new char[8192];
+  private final StringBuilder myTextBuffer = new StringBuilder();
   private boolean skipLF = false;
 
   private Future<?> myFinishedFuture = null;
@@ -78,7 +79,8 @@ public abstract class BaseOutputReader {
 
   protected synchronized boolean readAvailable() throws IOException {
     char[] buffer = myBuffer;
-    StringBuilder token = new StringBuilder();
+    StringBuilder token = myTextBuffer;
+    token.setLength(0);
 
     boolean read = false;
     while (myReader.ready()) {

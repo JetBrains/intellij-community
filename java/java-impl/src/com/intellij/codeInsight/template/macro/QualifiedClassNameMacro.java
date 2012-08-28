@@ -17,8 +17,10 @@ package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.*;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiTypeParameter;
 import org.jetbrains.annotations.NotNull;
 
 public class QualifiedClassNameMacro extends Macro {
@@ -32,14 +34,7 @@ public class QualifiedClassNameMacro extends Macro {
   }
 
   public Result calculateResult(@NotNull Expression[] params, final ExpressionContext context) {
-    Project project = context.getProject();
-    int templateStartOffset = context.getTemplateStartOffset();
-    final int offset = templateStartOffset > 0 ? context.getTemplateStartOffset() - 1 : context.getTemplateStartOffset();
-
-    PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(context.getEditor().getDocument());
-    PsiElement place = file.findElementAt(offset);
+    PsiElement place = context.getPsiElementAtStartOffset();
     while(place != null){
       if (place instanceof PsiClass && !(place instanceof PsiAnonymousClass) && !(place instanceof PsiTypeParameter)){
         final PsiClass psiClass = ((PsiClass)place);

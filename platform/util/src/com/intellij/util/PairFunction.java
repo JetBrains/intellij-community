@@ -20,8 +20,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public interface PairFunction<T, V, U> {
+public interface PairFunction<Arg1, Arg2, ResultType> {
   @Nullable
-  U fun(T t, V v);
+  ResultType fun(Arg1 t, Arg2 v);
 
 }

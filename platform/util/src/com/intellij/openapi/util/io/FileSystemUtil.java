@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -458,7 +459,17 @@ public class FileSystemUtil {
 
     @Override
     public String resolveSymLink(@NotNull final String path) throws Exception {
-      return new File(path).getCanonicalPath();
+      try {
+        return new File(path).getCanonicalPath();
+      }
+      catch (IOException e) {
+        final String message = e.getMessage();
+        if (message != null && message.toLowerCase().contains("too many levels of symbolic links")) {
+          LOG.debug(e);
+          return null;
+        }
+        throw e;
+      }
     }
 
     @Override

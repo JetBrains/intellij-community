@@ -112,7 +112,7 @@ public class RefreshWorker {
           for (VirtualFile child : file.getChildren()) {
             if (!deletedNames.contains(child.getName())) {
               final FileAttributes childAttributes = fs.getAttributes(child);
-              if (attributes != null) {
+              if (childAttributes != null) {
                 checkAndScheduleChildRefresh(file, child, childAttributes);
               }
               else {

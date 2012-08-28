@@ -2299,29 +2299,31 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
-  private static void iterateRecursively(@Nullable final VirtualFile root, @NotNull final ContentIterator processor, @Nullable ProgressIndicator indicator) {
-    if (root != null) {
-      if (indicator != null) {
-        indicator.checkCanceled();
-        indicator.setText2(root.getPresentableUrl());
-      }
-
-      if (root.isDirectory()) {
-        for (VirtualFile file : root.getChildren()) {
-          if (file.isDirectory()) {
-            iterateRecursively(file, processor, indicator);
-          }
-          else {
-            processor.processFile(file);
-          }
-        }
-      }
-      else {
-        processor.processFile(root);
-      }
+  private static void iterateRecursively(@Nullable final VirtualFile root,
+                                         @NotNull final ContentIterator processor,
+                                         @Nullable final ProgressIndicator indicator) {
+    if (root == null) {
+      return;
     }
+
+    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
+      @Override
+      public boolean visitFile(@NotNull VirtualFile file) {
+        if (indicator != null) {
+          indicator.checkCanceled();
+          indicator.setText2(root.getPresentableUrl());
+        }
+
+        if (!file.isDirectory()) {
+          processor.processFile(file);
+        }
+
+        return true;
+      }
+    });
   }
 
+  @SuppressWarnings({"SynchronizeOnThis", "WhileLoopSpinsOnField"})
   private static class StorageGuard {
     private int myHolds = 0;
 
@@ -2349,8 +2351,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           try {
             wait();
           }
-          catch (InterruptedException ignored) {
-          }
+          catch (InterruptedException ignored) { }
         }
         myHolds++;
         return myTrueHolder;
@@ -2360,8 +2361,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           try {
             wait();
           }
-          catch (InterruptedException ignored) {
-          }
+          catch (InterruptedException ignored) { }
         }
         myHolds--;
         return myFalseHolder;
@@ -2369,11 +2369,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     private synchronized void leave(boolean mode) {
-      myHolds += mode? -1 : 1;
+      myHolds += mode ? -1 : 1;
       if (myHolds == 0) {
         notifyAll();
       }
     }
-
   }
 }

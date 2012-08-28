@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -251,10 +252,15 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public void enableInspections(final Class<? extends LocalInspectionTool>... inspections) {
+    enableInspections(Arrays.asList(inspections));
+  }
+
+  @Override
+  public void enableInspections(@NotNull final Collection<Class<? extends LocalInspectionTool>> inspections) {
     final ArrayList<LocalInspectionTool> tools = new ArrayList<LocalInspectionTool>();
-    for (Class clazz : inspections) {
+    for (Class<? extends LocalInspectionTool> clazz : inspections) {
       try {
-        LocalInspectionTool inspection = (LocalInspectionTool)clazz.getConstructor().newInstance();
+        LocalInspectionTool inspection = clazz.getConstructor().newInstance();
         tools.add(inspection);
       }
       catch (Exception e) {
@@ -616,6 +622,16 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         return lookupItem.getLookupString();
       }
     });
+  }
+
+  @Override
+  public void finishLookup() {
+    CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
+      @Override
+      public void run() {
+        ((LookupImpl)LookupManager.getActiveLookup(getEditor())).finishLookup(Lookup.NORMAL_SELECT_CHAR);
+      }
+    }, null, null);
   }
 
   @Override
@@ -1288,7 +1304,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           myEditor.getCaretModel().moveToOffset(offset);
         }
         if (loader.selStartMarker != null && loader.selEndMarker != null) {
-          myEditor.getSelectionModel().setSelection(loader.selStartMarker.getStartOffset(), loader.selEndMarker.getStartOffset());
+          int start = loader.selStartMarker.getStartOffset();
+          int end = loader.selEndMarker.getStartOffset();
+          if (loader.blockSelection) {
+            myEditor.getSelectionModel().setBlockSelection(myEditor.offsetToLogicalPosition(start), myEditor.offsetToLogicalPosition(end));
+          }
+          else {
+            myEditor.getSelectionModel().setSelection(start, end);
+          }
         }
 
         Module module = getModule();
@@ -1508,6 +1531,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     final RangeMarker caretMarker;
     final RangeMarker selStartMarker;
     final RangeMarker selEndMarker;
+    final boolean blockSelection;
 
     static SelectionAndCaretMarkupLoader fromFile(String path, Project project) throws IOException {
       return new SelectionAndCaretMarkupLoader(StringUtil.convertLineSeparators(FileUtil.loadFile(new File(path))),
@@ -1535,22 +1559,32 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int caretIndex = fileText.indexOf(CARET_MARKER);
       int selStartIndex = fileText.indexOf(SELECTION_START_MARKER);
       int selEndIndex = fileText.indexOf(SELECTION_END_MARKER);
+      int blockStartIndex = fileText.indexOf(BLOCK_START_MARKER);
+      int blockEndIndex = fileText.indexOf(BLOCK_END_MARKER);
 
-      caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex) : null;
-      selStartMarker = selStartIndex >= 0 ? document.createRangeMarker(selStartIndex, selStartIndex) : null;
-      selEndMarker = selEndIndex >= 0 ? document.createRangeMarker(selEndIndex, selEndIndex) : null;
+      caretMarker = caretIndex >= 0 ? document.createRangeMarker(caretIndex, caretIndex + CARET_MARKER.length()) : null;
+      if (selStartIndex >= 0 || selEndIndex >= 0) {
+        blockSelection = false;
+        selStartMarker = selStartIndex >= 0? document.createRangeMarker(selStartIndex, selStartIndex + SELECTION_START_MARKER.length()) : null;
+        selEndMarker = selEndIndex >= 0? document.createRangeMarker(selEndIndex, selEndIndex + SELECTION_END_MARKER.length()) : null;
+      }
+      else {
+        selStartMarker = blockStartIndex >= 0 ? document.createRangeMarker(blockStartIndex, blockStartIndex + BLOCK_START_MARKER.length()) : null;
+        selEndMarker = blockEndIndex >= 0 ? document.createRangeMarker(blockEndIndex, blockEndIndex + BLOCK_END_MARKER.length()) : null;
+        blockSelection = selStartMarker != null || selEndMarker != null;
+      }
 
       new WriteCommandAction(project) {
         @Override
         protected void run(Result result) throws Exception {
           if (caretMarker != null) {
-            document.deleteString(caretMarker.getStartOffset(), caretMarker.getStartOffset() + CARET_MARKER.length());
+            document.deleteString(caretMarker.getStartOffset(), caretMarker.getEndOffset());
           }
           if (selStartMarker != null) {
-            document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getStartOffset() + SELECTION_START_MARKER.length());
+            document.deleteString(selStartMarker.getStartOffset(), selStartMarker.getEndOffset());
           }
           if (selEndMarker != null) {
-            document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getStartOffset() + SELECTION_END_MARKER.length());
+            document.deleteString(selEndMarker.getStartOffset(), selEndMarker.getEndOffset());
           }
         }
       }.execute();
@@ -1624,11 +1658,24 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       int selEndLine = StringUtil.offsetToLineNumber(loader.newFileText, loader.selEndMarker.getEndOffset());
       int selEndCol = loader.selEndMarker.getEndOffset() - StringUtil.lineColToOffset(loader.newFileText, selEndLine, 0);
 
-      final int selStartLineActual = StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionStart());
-      final int selStartColActual = myEditor.getSelectionModel().getSelectionStart() - StringUtil.lineColToOffset(loader.newFileText, selStartLineActual, 0);
+      int selectionStart;
+      int selectionEnd;
+      if (myEditor.getSelectionModel().hasBlockSelection()) {
+        int[] starts = myEditor.getSelectionModel().getBlockSelectionStarts();
+        int[] ends = myEditor.getSelectionModel().getBlockSelectionEnds();
+        selectionStart = starts[starts.length-1];
+        selectionEnd = ends[ends.length-1];
+      }
+      else {
+        selectionStart = myEditor.getSelectionModel().getSelectionStart();
+        selectionEnd = myEditor.getSelectionModel().getSelectionEnd();
+      }
 
-      final int selEndLineActual = StringUtil.offsetToLineNumber(loader.newFileText, myEditor.getSelectionModel().getSelectionEnd());
-      final int selEndColActual = myEditor.getSelectionModel().getSelectionEnd() - StringUtil.lineColToOffset(loader.newFileText, selEndLineActual, 0);
+      final int selStartLineActual = StringUtil.offsetToLineNumber(loader.newFileText, selectionStart);
+      final int selStartColActual = selectionStart - StringUtil.lineColToOffset(loader.newFileText, selStartLineActual, 0);
+
+      final int selEndLineActual = StringUtil.offsetToLineNumber(loader.newFileText, selectionEnd);
+      final int selEndColActual = selectionEnd - StringUtil.lineColToOffset(loader.newFileText, selEndLineActual, 0);
 
       final boolean selectionEquals = selStartCol == selStartColActual &&
                                       selStartLine == selStartLineActual &&

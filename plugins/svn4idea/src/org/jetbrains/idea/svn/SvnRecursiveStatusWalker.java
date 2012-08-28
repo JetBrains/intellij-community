@@ -15,7 +15,10 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FilePathImpl;
@@ -214,7 +217,17 @@ public class SvnRecursiveStatusWalker {
       checkIfCopyRootWasReported();
 
       final VirtualFile vFile = getVirtualFile(ioFile);
-      if ((vFile != null) && myPartner.isExcluded(vFile)) return;
+      if (vFile != null) {
+        final Boolean excluded = ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+          @Override
+          public Boolean compute() {
+            if (myProject.isDisposed()) return null;
+            return myPartner.isExcluded(vFile);
+          }
+        });
+        if (Boolean.TRUE.equals(excluded)) return;
+      }
+      if (myProject.isDisposed()) throw new ProcessCanceledException();
 
       if ((vFile != null) && (SvnVcs.svnStatusIsUnversioned(status))) {
         if (vFile.isDirectory()) {

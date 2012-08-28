@@ -84,10 +84,16 @@ public abstract class WindowManager {
 
   /**
    * Get the status bar for the component, it may be either the main status bar or the status bar for an undocked window
-   * @param c
-   * @return
+   * @param c a component
+   * @return status bar
+   * 
+   * @deprecated use getStatusBar(Component, Project)
    */
   public abstract StatusBar getStatusBar(@NotNull Component c);
+
+  public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
+    return null;
+  }
 
   public abstract JFrame getFrame(@Nullable Project project);
 

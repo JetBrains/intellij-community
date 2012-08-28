@@ -39,7 +39,7 @@ public class EmptyDiffViewer implements DiffViewer {
 
   @Override
   public JComponent getComponent() {
-    final JLabel label = new JLabel(DiffBundle.message("diff.contents.have.differences.only.in.line.separators.message.text"));
+    final JLabel label = new JLabel(DiffBundle.message("diff.contents.are.identical.message.text"));
     label.setForeground(UIUtil.getInactiveTextColor());
     final JPanel wrapper = new JPanel(new GridBagLayout());
     wrapper.add(label, new GridBagConstraints(0,0,1,1,0,0,GridBagConstraints.CENTER, GridBagConstraints.NONE,

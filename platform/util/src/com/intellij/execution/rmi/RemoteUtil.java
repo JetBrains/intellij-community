@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.rmi.Remote;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
@@ -96,14 +96,7 @@ public class RemoteUtil {
             return executeWithClassLoader(new ThrowableComputable<Object, Exception>() {
               public Object compute() throws Exception {
                 try {
-                  final Object result = method.invoke(remote, args);
-                  if (result instanceof Remote) {
-                    if (result instanceof RemoteCastable) {
-                      return castToLocal(result, tryFixReturnType(result, method.getReturnType(), classLoader));
-                    }
-                    return substituteClassLoader(result, classLoader);
-                  }
-                  return result;
+                  return handleRemoteResult(method.invoke(remote, args), method.getReturnType(), classLoader, true);
                 }
                 catch (InvocationTargetException e) {
                   Throwable cause = e.getCause();
@@ -119,6 +112,36 @@ public class RemoteUtil {
         return (T)proxy;
       }
     }, classLoader);
+  }
+
+  public static <T> T handleRemoteResult(Object value, Class<T> clazz, Object requestor) throws Exception {
+    return RemoteUtil.<T>handleRemoteResult(value, clazz, requestor.getClass().getClassLoader(), false);
+  }
+
+  private static <T> T handleRemoteResult(Object value, Class<?> methodReturnType, ClassLoader classLoader, boolean substituteClassLoader) throws Exception {
+    Object result;
+    if (value instanceof Remote) {
+      if (value instanceof RemoteCastable) {
+        result = castToLocal(value, tryFixReturnType(value, methodReturnType, classLoader));
+      }
+      else {
+        result = substituteClassLoader? substituteClassLoader(value, classLoader) : value;
+      }
+    }
+    else if (value instanceof List && methodReturnType.isInterface()) {
+      result = Arrays.asList((Object[])handleRemoteResult(((List)value).toArray(), Object.class, classLoader, substituteClassLoader));
+    }
+    else if (value instanceof Object[]) {
+      Object[] array = (Object[])value;
+      for (int i = 0; i < array.length; i++) {
+         array[i] = handleRemoteResult(array[i], Object.class, classLoader, substituteClassLoader);
+      }
+      result = array;
+    }
+    else {
+      result = value;
+    }
+    return (T)result;
   }
 
   private static boolean canThrow(Throwable cause, Method method) {
@@ -180,11 +203,7 @@ public class RemoteUtil {
         Method m = ourRemoteToLocalMap.get(Pair.<Class<?>, Class<?>>create(myRemote.getClass(), myClazz)).get(method);
         if (m == null) throw new NoSuchMethodError(method.getName() + " in " + myRemote.getClass());
         try {
-          Object result = m.invoke(myRemote, args);
-          if (result instanceof Remote) {
-            return castToLocal(result, tryFixReturnType(result, method.getReturnType(), myLoader));
-          }
-          return result;
+          return handleRemoteResult(m.invoke(myRemote, args), method.getReturnType(), myLoader, false);
         }
         catch (InvocationTargetException e) {
           Throwable cause = e.getCause();

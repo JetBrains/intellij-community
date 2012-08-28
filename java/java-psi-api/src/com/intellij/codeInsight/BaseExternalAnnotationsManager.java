@@ -205,8 +205,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   @NotNull
   protected abstract List<VirtualFile> getExternalAnnotationsRoots(@NotNull VirtualFile libraryFile);
 
+  @Override
   @Nullable
-  protected List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
+  public List<PsiFile> findExternalAnnotationsFiles(@NotNull PsiModifierListOwner listOwner) {
     final PsiFile containingFile = listOwner.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
       return null;

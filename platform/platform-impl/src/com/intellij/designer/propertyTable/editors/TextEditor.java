@@ -20,6 +20,7 @@ import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.InplaceContext;
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +34,7 @@ import java.awt.event.ActionListener;
  * @author Alexander Lobas
  */
 public class TextEditor extends PropertyEditor {
-  protected final JTextField myTextField = new JTextField();
+  protected final JBTextField myTextField = new JBTextField();
 
   public TextEditor() {
     myTextField.addActionListener(new ActionListener() {
@@ -56,7 +57,8 @@ public class TextEditor extends PropertyEditor {
   public JComponent getComponent(@Nullable PropertiesContainer container,
                                  @Nullable PropertyContext context, Object value,
                                  @Nullable InplaceContext inplaceContext) {
-    setEditorValue(value);
+    setEditorValue(container, value);
+
     if (inplaceContext == null) {
       myTextField.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
     }
@@ -79,7 +81,7 @@ public class TextEditor extends PropertyEditor {
     return myTextField.getText();
   }
 
-  protected void setEditorValue(Object value) {
+  protected void setEditorValue(@Nullable PropertiesContainer container, @Nullable Object value) {
     myTextField.setText(value == null ? "" : value.toString());
   }
 

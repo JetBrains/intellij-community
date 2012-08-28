@@ -81,6 +81,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
       .setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
+          if (myTable.isEditing()) {
+            myTable.getCellEditor().stopCellEditing();
+            return;
+          }
           doEdit();
         }
       })
@@ -143,7 +147,9 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
       }
     };
 
-    myTable = new JBTable(myTableModel);
+    myTable = createTable();
+    myTable.setModel(myTableModel);
+    myTable.setShowColumns(false);
     myTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     myTable.setStriped(true);
     new DoubleClickListener() {
@@ -153,6 +159,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
         return true;
       }
     }.installOn(myTable);
+  }
+
+  protected JBTable createTable() {
+    return new JBTable();
   }
 
   protected JButton[] createButtons(){
@@ -180,6 +190,10 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   }
   
   protected void doRemove() {
+    if (myTable.isEditing()) {
+      myTable.getCellEditor().stopCellEditing();
+    }
+
     final int[] selected = myTable.getSelectedRows();
     if (selected == null || selected.length == 0) return;
     for (int i = selected.length - 1; i >= 0; i--) {
@@ -230,6 +244,7 @@ public abstract class AddEditRemovePanel<T> extends PanelWithButtons implements 
   public abstract static class TableModel<T> {
 
     public abstract int getColumnCount();
+    @Nullable
     public abstract String getColumnName(int columnIndex);
     public abstract Object getField(T o, int columnIndex);
 

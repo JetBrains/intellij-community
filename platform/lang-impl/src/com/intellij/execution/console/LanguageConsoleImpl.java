@@ -106,7 +106,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private final AtomicBoolean myForceScrollToEnd = new AtomicBoolean(false);
   private final MergingUpdateQueue myUpdateQueue;
   private Runnable myUiUpdateRunnable;
-  private ActionGroup myFullEditorActions;
 
   private boolean myShowSeparatorLine = true;
 
@@ -177,12 +176,12 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     setPromptInner(myPrompt);
   }
 
-  public void setFullEditorMode(boolean fullEditorMode) {
-    if (isFullEditorMode() == fullEditorMode) return;
+  public void setConsoleEditorEnabled(boolean consoleEditorEnabled) {
+    if (isConsoleEditorEnabled() == consoleEditorEnabled) return;
     final VirtualFile virtualFile = myFile.getVirtualFile();
     assert virtualFile != null;
     final FileEditorManagerEx fileManager = FileEditorManagerEx.getInstanceEx(getProject());
-    if (!fullEditorMode) {
+    if (consoleEditorEnabled) {
       fileManager.closeFile(virtualFile);
       myPanel.removeAll();
       myPanel.add(myHistoryViewer.getComponent());
@@ -205,15 +204,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
     if (editorWindow != null) {
       editorWindow.setFilePinned(myFile.getVirtualFile(), true);
-    }
-  }
-
-  public void setFullEditorActions(ActionGroup actionGroup) {
-    myFullEditorActions = actionGroup;
-    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
-      if (editor.getDocument() == myEditorDocument) {
-        configureFullEditor(editor);
-      }
     }
   }
 
@@ -263,7 +253,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
     myHistoryViewer.getContentComponent().addKeyListener(new KeyAdapter() {
       public void keyTyped(KeyEvent event) {
-        if (!isFullEditorMode() && UIUtil.isReallyTypedEvent(event)) {
+        if (isConsoleEditorEnabled() && UIUtil.isReallyTypedEvent(event)) {
           myConsoleEditor.getContentComponent().requestFocus();
           myConsoleEditor.processKeyTyped(event);
         }
@@ -275,8 +265,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleEditor.getComponent());
   }
 
-  public boolean isFullEditorMode() {
-    return myPanel.getComponentCount() == 1;
+  private boolean isConsoleEditorEnabled() {
+    return myPanel.getComponentCount() > 1;
   }
 
   protected AnAction[] createActions() {
@@ -541,7 +531,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myUpdateQueue.queue(new Update("UpdateUi") {
       public void run() {
         if (Disposer.isDisposed(LanguageConsoleImpl.this)) return;
-        if (!isFullEditorMode()) {
+        if (isConsoleEditorEnabled()) {
           myPanel.revalidate();
           myPanel.repaint();
         }
@@ -580,27 +570,24 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myProject.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void fileOpened(FileEditorManager source, VirtualFile file) {
-        if (!Comparing.equal(file, myFile.getVirtualFile())) return;
-        if (myConsoleEditor != null) {
-          Editor selectedTextEditor = source.getSelectedTextEditor();
-          for (FileEditor fileEditor : source.getAllEditors(file)) {
-            if (!(fileEditor instanceof TextEditor)) continue;
-            final Editor editor = ((TextEditor)fileEditor).getEditor();
-            configureFullEditor(editor);
-            setConsoleFilePinned((FileEditorManagerEx)source, editor);
-            ((EditorEx)editor).addFocusListener(myFocusListener);
-            if (selectedTextEditor == editor) { // already focused
-              myCurrentEditor = editor;
-            }
-            EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
-            editor.getCaretModel().addCaretListener(new CaretListener() {
-              public void caretPositionChanged(CaretEvent e) {
-                queueUiUpdate(false);
-              }
-            });
+        if (!Comparing.equal(file, myFile.getVirtualFile()) || myConsoleEditor == null) return;
+        Editor selectedTextEditor = source.getSelectedTextEditor();
+        for (FileEditor fileEditor : source.getAllEditors(file)) {
+          if (!(fileEditor instanceof TextEditor)) continue;
+          final Editor editor = ((TextEditor)fileEditor).getEditor();
+          setConsoleFilePinned((FileEditorManagerEx)source, editor);
+          ((EditorEx)editor).addFocusListener(myFocusListener);
+          if (selectedTextEditor == editor) { // already focused
+            myCurrentEditor = editor;
           }
-          queueUiUpdate(false);
+          EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
+          editor.getCaretModel().addCaretListener(new CaretListener() {
+            public void caretPositionChanged(CaretEvent e) {
+              queueUiUpdate(false);
+            }
+          });
         }
+        queueUiUpdate(false);
       }
 
       @Override
@@ -634,7 +621,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     if (prevFile != null) {
       final FileEditorManagerEx editorManager = FileEditorManagerEx.getInstanceEx(getProject());
       final VirtualFile file = prevFile.getVirtualFile();
-      boolean openEditor = isFullEditorMode();
+      boolean openEditor = !isConsoleEditorEnabled();
       if (file != null && openEditor) {
         final FileEditor prevEditor = editorManager.getSelectedEditor(file);
         final boolean focusEditor;
@@ -652,19 +639,6 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         editorManager.openTextEditor(new OpenFileDescriptor(getProject(), newVFile, offset), focusEditor);
       }
     }
-  }
-
-  private void configureFullEditor(final Editor editor) {
-    if (editor == null || myFullEditorActions == null || editor == myConsoleEditor) return;
-    final JPanel header = new EditorHeaderComponent();
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, myFullEditorActions, true);
-    actionToolbar.setTargetComponent(editor.getContentComponent());
-    JComponent component = actionToolbar.getComponent();
-    component.setOpaque(false);
-    header.add(component, BorderLayout.EAST);
-    editor.putUserData(EditorImpl.PERMANENT_HEADER, header);
-    editor.setHeaderComponent(header);
-    editor.getSettings().setLineMarkerAreaShown(false);
   }
 
   public void setInputText(final String query) {

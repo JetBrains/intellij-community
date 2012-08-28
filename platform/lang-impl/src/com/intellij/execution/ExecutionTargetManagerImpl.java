@@ -128,6 +128,7 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
   private void updateActiveTarget(@Nullable RunnerAndConfigurationSettings settings, @Nullable ExecutionTarget toSelect) {
     List<ExecutionTarget> suitable = settings == null ? Collections.singletonList(DefaultExecutionTarget.INSTANCE)
                                                       : getTargetsFor(settings);
+    ExecutionTarget toNotify = null;
     synchronized (myActiveTargetLock) {
       if (toSelect == null) toSelect = myActiveTarget;
 
@@ -143,18 +144,25 @@ public class ExecutionTargetManagerImpl extends ExecutionTargetManager implement
           }
         }
       }
-      doSetActiveTarget(index >= 0 ? suitable.get(index) : ContainerUtil.getFirstItem(suitable, DefaultExecutionTarget.INSTANCE));
+      toNotify =
+        doSetActiveTarget(index >= 0 ? suitable.get(index) : ContainerUtil.getFirstItem(suitable, DefaultExecutionTarget.INSTANCE));
+    }
+
+    if (toNotify != null) {
+      myProject.getMessageBus().syncPublisher(TOPIC).activeTargetChanged(toNotify);
     }
   }
 
-  private void doSetActiveTarget(@NotNull ExecutionTarget newTarget) {
+  @Nullable
+  private ExecutionTarget doSetActiveTarget(@NotNull ExecutionTarget newTarget) {
     mySavedActiveTargetId = null;
 
     ExecutionTarget prev = myActiveTarget;
     myActiveTarget = newTarget;
     if (prev != null && !prev.equals(myActiveTarget)) {
-      myProject.getMessageBus().syncPublisher(TOPIC).activeTargetChanged(myActiveTarget);
+      return myActiveTarget;
     }
+    return null;
   }
 
   @NotNull

@@ -149,7 +149,12 @@ public class XmlBlock extends AbstractXmlBlock {
     return result;
   }
 
-  private static void createLeafBlocks(ASTNode node, List<Block> result) {
+  private void createLeafBlocks(ASTNode node, List<Block> result) {
+    if (node instanceof OuterLanguageElement) {
+      processChild(result, node, null, null, null);
+      return;
+    }
+
     ASTNode child = node.getFirstChildNode();
     if (child == null && !(node instanceof PsiWhiteSpace) && node.getElementType() != TokenType.ERROR_ELEMENT) {
       result.add(new ReadOnlyBlock(node));
@@ -163,6 +168,9 @@ public class XmlBlock extends AbstractXmlBlock {
 
 
   private static boolean containsOuterLanguageElement(ASTNode node) {
+    if (node instanceof OuterLanguageElement) {
+      return true;
+    }
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
       if (child instanceof OuterLanguageElement) {

@@ -13,7 +13,7 @@
 package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.project.Project;
-import org.apache.commons.lang.StringUtils;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -55,7 +55,7 @@ public class HgCatCommand {
     final List<String> arguments = new LinkedList<String>();
     if (vcsRevisionNumber != null) {
       arguments.add("--rev");
-      if (StringUtils.isNotBlank(vcsRevisionNumber.getChangeset())) {
+      if (!StringUtil.isEmptyOrSpaces(vcsRevisionNumber.getChangeset())) {
         arguments.add(vcsRevisionNumber.getChangeset());
       } else {
         arguments.add(vcsRevisionNumber.getRevision());

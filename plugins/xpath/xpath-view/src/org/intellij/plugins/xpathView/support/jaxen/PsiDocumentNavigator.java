@@ -198,8 +198,10 @@ public class PsiDocumentNavigator extends DefaultNavigator {
         final XmlTag context = (XmlTag)element;
         final String namespaceUri = context.getNamespace();
         if (!MyPsiUtil.isInDeclaredNamespace(context, namespaceUri, context.getNamespacePrefix())) {
-            LOG.info("getElementNamespaceUri: not returning implicit namespace uri: " + namespaceUri);
-            return "";
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("getElementNamespaceUri: not returning implicit namespace uri: " + namespaceUri);
+          }
+          return "";
         }
         if (LOG.isDebugEnabled()) {
             LOG.debug("enter: getElementNamespaceUri: " + namespaceUri);

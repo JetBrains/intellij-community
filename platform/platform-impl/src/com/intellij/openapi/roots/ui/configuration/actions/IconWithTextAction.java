@@ -27,8 +27,6 @@ import javax.swing.*;
 
 public abstract class IconWithTextAction extends AnAction implements CustomComponentAction {
 
-  private JComponent myCustomComponent;
-
   protected IconWithTextAction() {
   }
 
@@ -41,7 +39,7 @@ public abstract class IconWithTextAction extends AnAction implements CustomCompo
   }
 
   public JComponent createCustomComponent(final Presentation presentation) {
-    return myCustomComponent == null ? myCustomComponent = createCustomComponentImpl(this, presentation) : myCustomComponent;
+    return createCustomComponentImpl(this, presentation);
   }
 
   public static JComponent createCustomComponentImpl(final AnAction action, final Presentation presentation) {

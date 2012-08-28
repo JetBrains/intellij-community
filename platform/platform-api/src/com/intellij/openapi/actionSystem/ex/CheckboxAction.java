@@ -18,6 +18,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -27,7 +28,6 @@ import java.awt.event.ActionListener;
  * @author max
  */
 public abstract class CheckboxAction extends ToggleAction implements CustomComponentAction {
-  private JCheckBox myCheckBox;
 
   protected CheckboxAction() {}
 
@@ -35,38 +35,43 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     super(text);
   }
 
-  public JCheckBox getCheckBox() {
-    return myCheckBox;
-  }
-
   protected CheckboxAction(final String text, final String description, final Icon icon) {
     super(text, description, icon);
   }
 
   public JComponent createCustomComponent(Presentation presentation) {
-    myCheckBox = new JCheckBox(presentation.getText());
-    myCheckBox.setOpaque(false);
-    myCheckBox.setToolTipText(presentation.getDescription());
-    myCheckBox.setMnemonic(presentation.getMnemonic());
-    myCheckBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
+    // this component cannot be stored right here because of action system architecture:
+    // one action can be shown on multiple toolbars simultaneously
+    JCheckBox checkBox = new JCheckBox(presentation.getText());
+    checkBox.setOpaque(false);
+    checkBox.setToolTipText(presentation.getDescription());
+    checkBox.setMnemonic(presentation.getMnemonic());
+    checkBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
 
-    myCheckBox.addActionListener(new ActionListener() {
+    checkBox.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
-        CheckboxAction.this.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(myCheckBox),
+        JCheckBox checkBox = (JCheckBox)e.getSource();
+        ActionToolbar actionToolbar = UIUtil.getParentOfType(ActionToolbar.class, checkBox);
+        DataContext dataContext =
+          actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext(checkBox);
+        CheckboxAction.this.actionPerformed(new AnActionEvent(null, dataContext,
                                                               ActionPlaces.UNKNOWN, CheckboxAction.this.getTemplatePresentation(),
                                                               ActionManager.getInstance(), 0));
       }
     });
 
-    return myCheckBox;
+    return checkBox;
   }
 
   public void update(final AnActionEvent e) {
     super.update(e);
-    if (myCheckBox != null) {
-      myCheckBox.setSelected(((Boolean)e.getPresentation().getClientProperty(SELECTED_PROPERTY)).booleanValue());
-      myCheckBox.setEnabled(e.getPresentation().isEnabled());
-      myCheckBox.setVisible(e.getPresentation().isVisible());
+    Object property = e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+    if (property instanceof JCheckBox) {
+      JCheckBox checkBox = (JCheckBox)property;
+
+      checkBox.setSelected(Boolean.TRUE.equals(e.getPresentation().getClientProperty(SELECTED_PROPERTY)));
+      checkBox.setEnabled(e.getPresentation().isEnabled());
+      checkBox.setVisible(e.getPresentation().isVisible());
     }
   }
 }

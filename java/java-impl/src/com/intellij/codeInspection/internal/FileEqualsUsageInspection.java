@@ -17,31 +17,16 @@ package com.intellij.codeInspection.internal;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class FileEqualsUsageInspection extends InternalInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return "File.equals()/hashCode()/compareTo() Usage";
-  }
+  private static final String MESSAGE =
+    "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on MacOS. " +
+    "Please use FileUtil.filesEquals/fileHashCode/compareFiles instead";
 
   @NotNull
-  @Override
-  public String getShortName() {
-    return "FileEqualsUsage";
-  }
-
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!ApplicationManagerEx.getApplicationEx().isInternal()) {
-      return new JavaElementVisitor() {
-      };
-    }
+  public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -55,11 +40,9 @@ public class FileEqualsUsageInspection extends InternalInspection {
         if (clazz == null) return;
 
         String methodName = method.getName();
-        if (CommonClassNames.JAVA_IO_FILE.equals(clazz.getQualifiedName())
-            && ("equals".equals(methodName) || "compareTo".equals(methodName) || "hashCode".equals(methodName))) {
-          holder.registerProblem(methodExpression,
-                                 "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on MacOS. Use FileUtil.filesEquals/fileHashCode/compareFiles instead",
-                                 ProblemHighlightType.LIKE_DEPRECATED);
+        if (CommonClassNames.JAVA_IO_FILE.equals(clazz.getQualifiedName()) &&
+            ("equals".equals(methodName) || "compareTo".equals(methodName) || "hashCode".equals(methodName))) {
+          holder.registerProblem(methodExpression, MESSAGE, ProblemHighlightType.LIKE_DEPRECATED);
         }
       }
     };

@@ -34,13 +34,14 @@ public abstract class StatusText {
 
   @Nullable
   private Component myOwner;
+  private Component myMouseTarget;
   private final MouseMotionListener myMouseMotionListener;
   private final ClickListener myClickListener;
 
   private boolean myIsDefaultText;
 
   private String myText = "";
-  private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
+  protected final SimpleColoredComponent myComponent = new SimpleColoredComponent();
   private final ArrayList<ActionListener> myClickListeners = new ArrayList<ActionListener>();
 
   protected StatusText(JComponent owner) {
@@ -67,10 +68,10 @@ public abstract class StatusText {
       @Override
       public void mouseMoved(final MouseEvent e) {
         if (findActionListenerAt(e.getPoint()) != null) {
-          myOwner.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          myMouseTarget.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
         else {
-          myOwner.setCursor(Cursor.getDefaultCursor());
+          myMouseTarget.setCursor(Cursor.getDefaultCursor());
         }
       }
     };
@@ -82,24 +83,31 @@ public abstract class StatusText {
   }
 
   public void attachTo(@Nullable Component owner) {
-    if (myOwner != null) {
-      myClickListener.uninstall(myOwner);
-      myOwner.removeMouseMotionListener(myMouseMotionListener);
+    attachTo(owner, owner);
+  }
+
+  public void attachTo(@Nullable Component owner, @Nullable Component mouseTarget) {
+    if (myMouseTarget != null) {
+      myClickListener.uninstall(myMouseTarget);
+      myMouseTarget.removeMouseMotionListener(myMouseMotionListener);
     }
 
     myOwner = owner;
+    myMouseTarget = mouseTarget;
 
-    if (myOwner != null) {
-      myClickListener.installOn(myOwner);
-      myOwner.addMouseMotionListener(myMouseMotionListener);
+    if (myMouseTarget != null) {
+      myClickListener.installOn(myMouseTarget);
+      myMouseTarget.addMouseMotionListener(myMouseMotionListener);
     }
   }
 
   protected abstract boolean isStatusVisible();
 
   @Nullable
-  private ActionListener findActionListenerAt(final Point point) {
+  private ActionListener findActionListenerAt(Point point) {
     if (!isStatusVisible()) return null;
+
+    point = SwingUtilities.convertPoint(myMouseTarget, point, myOwner);
 
     Rectangle b = getTextComponentBound();
     if (b.contains(point)) {
@@ -111,7 +119,7 @@ public abstract class StatusText {
     return null;
   }
 
-  private Rectangle getTextComponentBound() {
+  protected Rectangle getTextComponentBound() {
     Rectangle ownerRec = myOwner == null ? new Rectangle(0, 0, 0, 0) : myOwner.getBounds();
 
     Dimension size = myComponent.getPreferredSize();
@@ -171,6 +179,11 @@ public abstract class StatusText {
     Graphics2D g2 = (Graphics2D)g.create(b.x, b.y, b.width, b.height);
     myComponent.paint(g2);
     g2.dispose();
+  }
+
+  @NotNull
+  public SimpleColoredComponent getComponent() {
+    return myComponent;
   }
 
   public Dimension getPreferredSize() {

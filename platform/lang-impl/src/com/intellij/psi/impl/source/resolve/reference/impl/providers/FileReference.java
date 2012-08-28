@@ -152,6 +152,9 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
         innerResolveInContext(referenceText, context, result, caseSensitive);
       }
     }
+    if (contexts.size() == 0 && isAllowedEmptyPath(referenceText)) {
+      result.add(new PsiElementResolveResult(getElement().getContainingFile()));
+    }
     final int resultCount = result.size();
     return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
   }

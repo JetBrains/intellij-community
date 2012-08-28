@@ -121,8 +121,11 @@
                   interface="com.intellij.ide.structureView.StructureViewExtension"/>
   <extensionPoint name="lang.ast.factory"
                   beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
   <extensionPoint name="lang.formatter" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  <extensionPoint name="lang.formatter.restriction" interface="com.intellij.lang.LanguageFormattingRestriction"/>
   <extensionPoint name="lang.importOptimizer" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+
   <extensionPoint name="lang.rearranger" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.surroundDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
   <extensionPoint name="lang.unwrapDescriptor" beanClass="com.intellij.lang.LanguageExtensionPoint"/>

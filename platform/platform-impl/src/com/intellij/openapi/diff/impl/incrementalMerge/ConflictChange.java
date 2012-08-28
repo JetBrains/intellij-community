@@ -96,7 +96,9 @@ class ConflictChange extends Change implements DiffRangeMarker.RangeInvalidListe
   private void updateOtherSideOnConflictApply() {
     int startOffset = myConflict.getRange().getEndOffset();
     TextRange emptyRange = new TextRange(startOffset, startOffset);
-    myConflict = myConflict.deriveSideForNotAppliedChange(emptyRange, null, this);
+    ConflictChange leftChange = isBranch(myOriginalSide.getFragmentSide()) ? null : this;
+    ConflictChange rightChange = isBranch(myOriginalSide.getFragmentSide()) ? this : null;
+    myConflict = myConflict.deriveSideForNotAppliedChange(emptyRange, leftChange, rightChange);
     myOriginalSide.getHighlighterHolder().updateHighlighter(myOriginalSide, myType);
     myConflict.getHighlighterHolder().updateHighlighter(myConflict, myType);
     myChangeList.fireOnChangeApplied();

@@ -20,10 +20,18 @@ import com.intellij.openapi.actionSystem.Presentation;
 import javax.swing.*;
 
 public interface CustomComponentAction {
+
+  String CUSTOM_COMPONENT_PROPERTY = "customComponent";
+
   /**
    * @return custom JComponent that represents action in UI.
    * You (as a client/implementor) or this interface do not allow to invoke
    * this method directly. Only action system can invoke it!
+   * <br/>
+   * <br/>
+   * The component should not be stored in the action instance because it may
+   * be shown on several toolbars simultaneously. CustomComponentAction.CUSTOM_COMPONENT_PROPERTY
+   * can be used to retrieve current component from a Presentation in AnAction#update() method.
    */
   JComponent createCustomComponent(Presentation presentation);
 }
