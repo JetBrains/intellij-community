@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.DefaultArrangementEntryMatcherSerializer;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -30,22 +30,21 @@ public class DefaultArrangementRuleSerializer implements ArrangementRuleSerializ
 
   public static final ArrangementRuleSerializer INSTANCE = new DefaultArrangementRuleSerializer();
 
-  @NotNull @NonNls private static final String RULE_ELEMENT_NAME      = "rule";
-  @NotNull @NonNls private static final String MATCHER_ELEMENT_NAME   = "match";
-  @NotNull @NonNls private static final String SORT_TYPE_ELEMENT_NAME = "sort";
+  @NotNull @NonNls private static final String RULE_ELEMENT_NAME       = "rule";
+  @NotNull @NonNls private static final String MATCHER_ELEMENT_NAME    = "match";
+  @NotNull @NonNls private static final String ORDER_TYPE_ELEMENT_NAME = "order";
 
   @NotNull private final DefaultArrangementEntryMatcherSerializer myMatcherSerializer = new DefaultArrangementEntryMatcherSerializer();
 
-
   @Nullable
   @Override
-  public ArrangementRule deserialize(@NotNull Element element) {
+  public StdArrangementRule deserialize(@NotNull Element element) {
     Element matcherElement = element.getChild(MATCHER_ELEMENT_NAME);
     if (matcherElement == null) {
       return null;
     }
 
-    ArrangementEntryMatcher matcher = null;
+    StdArrangementEntryMatcher matcher = null;
     for (Object o : matcherElement.getChildren()) {
       matcher = myMatcherSerializer.deserialize((Element)o);
       if (matcher != null) {
@@ -57,13 +56,13 @@ public class DefaultArrangementRuleSerializer implements ArrangementRuleSerializ
       return null;
     }
 
-    Element sortElement = element.getChild(SORT_TYPE_ELEMENT_NAME);
-    ArrangementEntryOrderType sortType = ArrangementEntryOrderType.KEEP;
-    if (sortElement != null) {
-      sortType = ArrangementEntryOrderType.valueOf(sortElement.getText());
+    Element orderTypeElement = element.getChild(ORDER_TYPE_ELEMENT_NAME);
+    ArrangementEntryOrderType orderType = ArrangementRule.DEFAULT_ORDER_TYPE;
+    if (orderTypeElement != null) {
+      orderType = ArrangementEntryOrderType.valueOf(orderTypeElement.getText());
     }
 
-    return new ArrangementRule(matcher, sortType);
+    return new StdArrangementRule(matcher, orderType);
   }
 
   @Nullable
@@ -76,7 +75,9 @@ public class DefaultArrangementRuleSerializer implements ArrangementRuleSerializ
     
     Element result = new Element(RULE_ELEMENT_NAME);
     result.addContent(new Element(MATCHER_ELEMENT_NAME).addContent(matcherElement));
-    result.addContent(new Element(SORT_TYPE_ELEMENT_NAME).setText(rule.getOrderType().toString()));
+    if (rule.getOrderType() != ArrangementRule.DEFAULT_ORDER_TYPE) {
+      result.addContent(new Element(ORDER_TYPE_ELEMENT_NAME).setText(rule.getOrderType().toString()));
+    }
     return result;
   }
 }

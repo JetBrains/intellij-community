@@ -28,36 +28,37 @@ import org.jetbrains.annotations.NotNull;
  * 
  * @author Denis Zhdanov
  * @since 7/17/12 11:07 AM
- * @param <M>   {@link ArrangementEntryMatcher matcher} type
  */
-public class ArrangementRule<M extends ArrangementEntryMatcher> {
+public class ArrangementRule {
 
-  @NotNull private final M                         myMatcher;
-  @NotNull private final ArrangementEntryOrderType mySortType;
+  @NotNull public static final ArrangementEntryOrderType DEFAULT_ORDER_TYPE = ArrangementEntryOrderType.KEEP;
 
-  public ArrangementRule(@NotNull M matcher) {
-    this(matcher, ArrangementEntryOrderType.KEEP);
+  @NotNull private final ArrangementEntryMatcher   myMatcher;
+  @NotNull private final ArrangementEntryOrderType myOrderType;
+
+  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher) {
+    this(matcher, DEFAULT_ORDER_TYPE);
   }
 
-  public ArrangementRule(@NotNull M matcher, @NotNull ArrangementEntryOrderType type) {
+  public ArrangementRule(@NotNull ArrangementEntryMatcher matcher, @NotNull ArrangementEntryOrderType type) {
     myMatcher = matcher;
-    mySortType = type;
+    myOrderType = type;
   }
 
   @NotNull
-  public M getMatcher() {
+  public ArrangementEntryMatcher getMatcher() {
     return myMatcher;
   }
 
   @NotNull
   public ArrangementEntryOrderType getOrderType() {
-    return mySortType;
+    return myOrderType;
   }
 
   @Override
   public int hashCode() {
     int result = myMatcher.hashCode();
-    result = 31 * result + mySortType.hashCode();
+    result = 31 * result + myOrderType.hashCode();
     return result;
   }
 
@@ -67,11 +68,11 @@ public class ArrangementRule<M extends ArrangementEntryMatcher> {
     if (o == null || getClass() != o.getClass()) return false;
 
     ArrangementRule that = (ArrangementRule)o;
-    return mySortType == that.mySortType && myMatcher.equals(that.myMatcher);
+    return myOrderType == that.myOrderType && myMatcher.equals(that.myMatcher);
   }
 
   @Override
   public String toString() {
-    return String.format("matcher: %s, sort type: %s", myMatcher, mySortType);
+    return String.format("matcher: %s, sort type: %s", myMatcher, myOrderType);
   }
 }

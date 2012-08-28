@@ -68,10 +68,9 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
   }
 
-  private static final List<ArrangementRule<StdArrangementEntryMatcher>> DEFAULT_RULES =
-    new ArrayList<ArrangementRule<StdArrangementEntryMatcher>>();
+  private static final List<StdArrangementRule> DEFAULT_RULES = new ArrayList<StdArrangementRule>(); 
   static {
-    ArrangementModifier[] visibility = { PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE };
+    ArrangementModifier[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
     for (ArrangementModifier modifier : visibility) {
       and(FIELD, STATIC, FINAL, modifier);
     }
@@ -90,19 +89,19 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     and(CLASS);
   }
 
-  private static void and(@NotNull Object ... conditions) {
+  private static void and(@NotNull Object... conditions) {
     if (conditions.length == 1) {
-      DEFAULT_RULES.add(new ArrangementRule<StdArrangementEntryMatcher>(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
+      DEFAULT_RULES.add(new StdArrangementRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
         ArrangementUtil.parseType(conditions[0]), conditions[0]
       ))));
       return;
     }
-    
+
     ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition(ArrangementOperator.AND);
     for (Object condition : conditions) {
       composite.addOperand(new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition));
     }
-    DEFAULT_RULES.add(new ArrangementRule<StdArrangementEntryMatcher>(new StdArrangementEntryMatcher(composite)));
+    DEFAULT_RULES.add(new StdArrangementRule(new StdArrangementEntryMatcher(composite)));
   }
 
   @NotNull
@@ -210,7 +209,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
 
   @Nullable
   @Override
-  public List<ArrangementRule<StdArrangementEntryMatcher>> getDefaultRules() {
+  public List<StdArrangementRule> getDefaultRules() {
     return DEFAULT_RULES;
   }
 }

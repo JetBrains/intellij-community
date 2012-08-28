@@ -51,8 +51,8 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
     super.tearDown()
   }
 
-  protected ArrangementRule<StdArrangementEntryMatcher> rule(@NotNull ArrangementMatchCondition condition) {
-    new ArrangementRule<StdArrangementEntryMatcher>(new StdArrangementEntryMatcher(condition))
+  protected StdArrangementRule rule(@NotNull ArrangementMatchCondition condition) {
+    new StdArrangementRule(new StdArrangementEntryMatcher(condition))
   }
   
   @NotNull

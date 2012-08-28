@@ -29,7 +29,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.settings.*;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -187,10 +187,10 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
   @SuppressWarnings("unchecked")
   @NotNull
-  private List<ArrangementRule<StdArrangementEntryMatcher>> getRules(@NotNull CodeStyleSettings settings) {
-    List<ArrangementRule<?>> storedRules = settings.getCommonSettings(myLanguage).getArrangementRules();
+  private List<StdArrangementRule> getRules(@NotNull CodeStyleSettings settings) {
+    List<ArrangementRule> storedRules = settings.getCommonSettings(myLanguage).getArrangementRules();
     if (storedRules.isEmpty()) {
-      List<ArrangementRule<StdArrangementEntryMatcher>> defaultRules = mySettingsAware.getDefaultRules();
+      List<StdArrangementRule> defaultRules = mySettingsAware.getDefaultRules();
       if (defaultRules != null) {
         return defaultRules;
       }
@@ -199,9 +199,9 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
       // We use unchecked cast here in assumption that current rearranger is based on standard settings if it uses standard
       // settings-based rule editor.
       // Note: unchecked cast for the whole collection doesn't work here (compiler error).
-      List<ArrangementRule<StdArrangementEntryMatcher>> result = new ArrayList<ArrangementRule<StdArrangementEntryMatcher>>();
-      for (ArrangementRule<?> rule : storedRules) {
-        result.add((ArrangementRule<StdArrangementEntryMatcher>)rule);
+      List<StdArrangementRule> result = new ArrayList<StdArrangementRule>();
+      for (ArrangementRule rule : storedRules) {
+        result.add((StdArrangementRule)rule);
       }
       return result;
     }

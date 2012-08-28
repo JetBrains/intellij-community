@@ -46,7 +46,8 @@ public class CommonCodeStyleSettings {
   
   @NonNls private static final String ARRANGEMENT_ELEMENT_NAME = "arrangementRules";
   
-  private final List<ArrangementRule<?>> myArrangementRules = new ArrayList<ArrangementRule<?>>();
+  private final List<ArrangementRule> myArrangementRules
+    = new ArrayList<ArrangementRule>();
   private final Language          myLanguage;
   private CodeStyleSettings myRootSettings;
   private IndentOptions     myIndentOptions;
@@ -123,15 +124,16 @@ public class CommonCodeStyleSettings {
   }
 
   @NotNull
-  public List<ArrangementRule<?>> getArrangementRules() {
+  public List<ArrangementRule> getArrangementRules() {
     return myArrangementRules;
   }
 
-  public <T extends ArrangementEntryMatcher> void setArrangementRules(@NotNull List<ArrangementRule<T>> rules) {
+  public void setArrangementRules(@NotNull List<? extends ArrangementRule> rules) {
     myArrangementRules.clear();
     myArrangementRules.addAll(rules);
   }
 
+  @SuppressWarnings("unchecked")
   public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);
@@ -139,6 +141,9 @@ public class CommonCodeStyleSettings {
     if (myIndentOptions != null) {
       IndentOptions targetIndentOptions = commonSettings.initIndentOptions();
       targetIndentOptions.copyFrom(myIndentOptions);
+    }
+    if (!myArrangementRules.isEmpty()) {
+      rootSettings.setArrangementRules(getArrangementRules());
     }
     return commonSettings;
   }

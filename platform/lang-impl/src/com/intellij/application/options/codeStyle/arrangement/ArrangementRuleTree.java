@@ -18,8 +18,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.codeStyle.arrangement.ArrangementRule;
-import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
+import com.intellij.psi.codeStyle.arrangement.StdArrangementRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
@@ -78,7 +77,7 @@ public class ArrangementRuleTree {
   private boolean myExplicitSelectionChange;
   private boolean mySkipSelectionChange;
 
-  public ArrangementRuleTree(@NotNull List<ArrangementRule<StdArrangementEntryMatcher>> rules,
+  public ArrangementRuleTree(@NotNull List<StdArrangementRule> rules,
                              @NotNull ArrangementConditionsGrouper grouper,
                              @NotNull ArrangementNodeDisplayManager displayManager)
   {
@@ -310,8 +309,8 @@ public class ArrangementRuleTree {
     tree.expandPath(parent);
   }
 
-  private void map(@NotNull List<ArrangementRule<StdArrangementEntryMatcher>> rules) {
-    for (ArrangementRule<StdArrangementEntryMatcher> rule : rules) {
+  private void map(@NotNull List<StdArrangementRule> rules) {
+    for (StdArrangementRule rule : rules) {
       Pair<ArrangementRuleEditingModelImpl, TIntIntHashMap> pair = myModelBuilder.build(rule, myTree, myRoot, null, myGrouper);
       myModels.put(pair.first.getRow(), pair.first);
       pair.first.addListener(myModelChangeListener);
@@ -356,17 +355,17 @@ public class ArrangementRuleTree {
    * @return    rules configured at the current tree at the moment
    */
   @NotNull
-  public List<ArrangementRule<StdArrangementEntryMatcher>> getRules() {
+  public List<StdArrangementRule> getRules() {
     int[] rows = myModels.keys();
     Arrays.sort(rows);
-    List<ArrangementRule<StdArrangementEntryMatcher>> result = new ArrayList<ArrangementRule<StdArrangementEntryMatcher>>();
+    List<StdArrangementRule> result = new ArrayList<StdArrangementRule>();
     for (int row : rows) {
       result.add(myModels.get(row).getRule());
     }
     return result;
   }
 
-  public void setRules(@NotNull List<ArrangementRule<StdArrangementEntryMatcher>> rules) {
+  public void setRules(@NotNull List<StdArrangementRule> rules) {
     myRenderers.clear();
     myModels.clear();
     while (myRoot.getChildCount() > 0)
@@ -376,7 +375,7 @@ public class ArrangementRuleTree {
 
     if (ArrangementConstants.LOG_RULE_MODIFICATION) {
       LOG.info("Arrangement tree is refreshed. Given rules:");
-      for (ArrangementRule<StdArrangementEntryMatcher> rule : rules) {
+      for (StdArrangementRule rule : rules) {
         LOG.info("  " + rule.toString());
       }
       LOG.info("Following models have been built:");
