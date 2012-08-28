@@ -20,7 +20,7 @@ public class PyClassTreeChooserDialog extends AbstractTreeClassChooserDialog<PyC
   public PyClassTreeChooserDialog(String title,
                                   Project project,
                                   GlobalSearchScope scope,
-                                  @Nullable Filter<PyClass> classFilter, @Nullable PyClass initialClass) {
+                                  @Nullable Filter<Object> classFilter, @Nullable PyClass initialClass) {
     super(title, project, scope, classFilter, initialClass);
   }
 

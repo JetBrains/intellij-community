@@ -82,10 +82,16 @@ public class PyExceptionBreakpointType
     return null;
   }
 
-  private static class PyExceptionCachingFilter implements AbstractTreeClassChooserDialog.Filter<PyClass> {
+  private static class PyExceptionCachingFilter implements AbstractTreeClassChooserDialog.Filter<Object> {
     private final HashMap<Integer, Pair<WeakReference<PyClass>, Boolean>> processedElements = Maps.newHashMap();
 
-    public boolean isAccepted(@NotNull final PyClass pyClass) {
+    public boolean isAccepted(@NotNull final Object element) {
+      if (!(element instanceof PyClass)) {
+        return false;
+      }
+
+      PyClass pyClass = (PyClass)element;
+
       final VirtualFile virtualFile = pyClass.getContainingFile().getVirtualFile();
       if (virtualFile == null) {
         return false;
