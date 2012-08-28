@@ -653,7 +653,7 @@ public class ArrangementRuleTree {
 
     @Override
     public void beforeModelDestroy(@NotNull ArrangementRuleEditingModelImpl model) {
-      mySelectedRowToRestore = model.getRow();
+      mySelectedRowToRestore = myTree.getRowForPath(new TreePath(model.getTopMost().getPath()));
       for (ArrangementTreeNode node = model.getBottomMost(); node != null; node = node.getParent()) {
         int row = myTree.getRowForPath(new TreePath(node.getPath()));
         myRenderers.remove(row);
