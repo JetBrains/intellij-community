@@ -37,7 +37,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.FilterComponent;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NonNls;
@@ -50,8 +49,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -77,12 +78,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private final boolean myBuildInActions;
   private LogFilterModel myModel;
 
-  @Nullable
-  private final File myFile;
-  @Nullable
-  private final Charset myCharset;
-  private long myOldLength = 0;
-
   private final List<LogConsoleListener> myListeners = new ArrayList<LogConsoleListener>();
 
   private FilterComponent myFilter = new FilterComponent("LOG_FILTER_HISTORY", 5) {
@@ -101,16 +96,8 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private JPanel myTextFilterWrapper;
 
   public LogConsoleBase(Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
-    this(project, null, null, reader, title, buildInActions, model);
-  }
-
-  public LogConsoleBase(Project project, @Nullable File file, @Nullable Charset charset, @Nullable Reader reader,
-                        String title, final boolean buildInActions, LogFilterModel model)
-  {
     super(new BorderLayout());
     myProject = project;
-    myFile = file;
-    myCharset = charset;
     myTitle = title;
     myModel = model;
     myReaderThread = new ReaderThread(reader);
@@ -119,41 +106,6 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
     myModel.addFilterListener(this);
-  }
-
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public LogConsoleBase(Project project,
-                        File file,
-                        @NotNull Charset charset,
-                        long skippedContents,
-                        String title,
-                        boolean buildInActions,
-                        LogFilterModel model)
-  {
-    this(project, file, charset, getReader(file, charset, skippedContents), title, buildInActions, model);
-  }
-
-  @Nullable
-  private static Reader getReader(File file, @NotNull final Charset charset, long skippedContents) {
-    Reader reader = null;
-    try {
-      try {
-        final FileInputStream inputStream = new FileInputStream(file);
-        reader = new BufferedReader(new InputStreamReader(inputStream, charset));
-        if (file.length() >= skippedContents) { //do not skip forward
-          inputStream.skip(skippedContents);
-        }
-      }
-      catch (FileNotFoundException e) {
-        if (FileUtil.createIfDoesntExist(file)) {
-          reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
-        }
-      }
-    }
-    catch (Throwable e) {
-      reader = null;
-    }
-    return reader;
   }
 
   public void setFilterModel(LogFilterModel model) {
@@ -174,6 +126,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   public void setContentPreprocessor(final LogContentPreprocessor contentPreprocessor) {
     myContentPreprocessor = contentPreprocessor;
+  }
+
+  @Nullable
+  protected BufferedReader updateReaderIfNeeded(@Nullable BufferedReader reader) throws IOException {
+    return reader;
   }
 
   @SuppressWarnings({"NonStaticInitializer"})
@@ -586,7 +543,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  protected class ReaderThread implements Runnable {
+  private class ReaderThread implements Runnable {
     private BufferedReader myReader;
     private boolean myRunning = false;
     private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.OWN_THREAD, LogConsoleBase.this);
@@ -602,14 +559,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
           if (myRunning) {
             try {
 
-              if (myFile != null) {
-                final long length = myFile.length();
-                if (length < myOldLength) {
-                  myReader.close();
-                  myReader = new BufferedReader(new InputStreamReader(new FileInputStream(myFile), myCharset));
-                }
-                myOldLength = length;
-              }
+              myReader = updateReaderIfNeeded(myReader);
 
               int i = 0;
               while (i++ < 1000) {
