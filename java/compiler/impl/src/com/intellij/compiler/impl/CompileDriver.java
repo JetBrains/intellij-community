@@ -453,7 +453,6 @@ public class CompileDriver {
     return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), moduleNames, artifactNames, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
       public void sessionTerminated() {
-        notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
       }
 
       @Override
@@ -587,12 +586,16 @@ public class CompileDriver {
             }
             return;
           }
-          final long start = System.currentTimeMillis();
           try {
             LOG.info("COMPILATION STARTED (BUILD PROCESS)");
             if (message != null) {
               compileContext.addMessage(message);
             }
+            if (!executeCompileTasks(compileContext, true)) {
+              COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
+              return;
+            }
+
             final Collection<String> paths = fetchFiles(compileContext);
             final List<Module> modules = paths.isEmpty() && !isRebuild && !allProjectModulesAffected(compileContext)? Arrays.asList(compileContext.getCompileScope().getAffectedModules()) : Collections.<Module>emptyList();
             final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(myProject, compileContext.getCompileScope(), true);
@@ -603,33 +606,35 @@ public class CompileDriver {
                   future.cancel(false);
                 }
               }
-            }
-            else {
-              callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
+              if (!executeCompileTasks(compileContext, false)) {
+                COMPILE_SERVER_BUILD_STATUS.set(compileContext, ExitStatus.CANCELLED);
+                return;
+              }
             }
           }
           catch (Throwable e) {
             LOG.error(e); // todo
-            callback.finished(false, compileContext.getMessageCount(CompilerMessageCategory.ERROR), compileContext.getMessageCount(CompilerMessageCategory.WARNING), compileContext);
           }
           finally {
-            final long finish = System.currentTimeMillis();
+            final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
             CompilerUtil.logDuration(
               "\tCOMPILATION FINISHED (BUILD PROCESS); Errors: " +
               compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
               "; warnings: " +
               compileContext.getMessageCount(CompilerMessageCategory.WARNING),
-              finish - start
+              duration
             );
 
             CompilerCacheManager.getInstance(myProject).flushCaches();
 
-            // todo: need this for tests; should be removed later
-            final Set<File> outputs = new HashSet<File>();
-            for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
-              outputs.add(new File(path));
+            if (ApplicationManager.getApplication().isUnitTestMode()) {
+              // need this for tests only;
+              final Set<File> outputs = new HashSet<File>();
+              for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
+                outputs.add(new File(path));
+              }
+              CompilerUtil.refreshIOFiles(outputs);
             }
-            CompilerUtil.refreshIOFiles(outputs);
           }
         }
       };
@@ -643,7 +648,6 @@ public class CompileDriver {
             }
             return;
           }
-          long start = System.currentTimeMillis();
           try {
             if (myProject.isDisposed()) {
               return;
@@ -656,14 +660,6 @@ public class CompileDriver {
             doCompile(compileContext, isRebuild, forceCompile, callback, checkCachesVersion);
           }
           finally {
-            final long finish = System.currentTimeMillis();
-            CompilerUtil.logDuration(
-              "\tCOMPILATION FINISHED; Errors: " +
-              compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
-              "; warnings: " +
-              compileContext.getMessageCount(CompilerMessageCategory.WARNING),
-              finish - start
-            );
             CompilerCacheManager.getInstance(myProject).flushCaches();
             FileUtil.delete(CompilerPaths.getRebuildMarkerFile(myProject));
           }
@@ -727,7 +723,7 @@ public class CompileDriver {
                          final boolean checkCachesVersion) {
     ExitStatus status = ExitStatus.ERRORS;
     boolean wereExceptions = false;
-    final long vfsTimestamp = ((PersistentFS)ManagingFS.getInstance()).getCreationTimestamp();
+    final long vfsTimestamp = (ManagingFS.getInstance()).getCreationTimestamp();
     try {
       if (checkCachesVersion) {
         checkCachesVersion(compileContext, vfsTimestamp);
@@ -765,7 +761,6 @@ public class CompileDriver {
     }
     finally {
       dropDependencyCache(compileContext);
-      final ExitStatus _status = status;
       if (compileContext.isRebuildRequested()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
@@ -778,13 +773,20 @@ public class CompileDriver {
         if (!myProject.isDisposed()) {
           writeStatus(new CompileStatus(CompilerConfigurationImpl.DEPENDENCY_FORMAT_VERSION, wereExceptions, vfsTimestamp), compileContext);
         }
-        notifyCompilationCompleted(compileContext, callback, _status);
+        final long duration = notifyCompilationCompleted(compileContext, callback, status);
+        CompilerUtil.logDuration(
+          "\tCOMPILATION FINISHED; Errors: " +
+          compileContext.getMessageCount(CompilerMessageCategory.ERROR) +
+          "; warnings: " +
+          compileContext.getMessageCount(CompilerMessageCategory.WARNING),
+          duration
+        );
       }
     }
   }
 
   /** @noinspection SSBasedInspection*/
-  private void notifyCompilationCompleted(final CompileContextImpl compileContext, final CompileStatusNotification callback, final ExitStatus _status) {
+  private long notifyCompilationCompleted(final CompileContextImpl compileContext, final CompileStatusNotification callback, final ExitStatus _status) {
     final long duration = System.currentTimeMillis() - compileContext.getStartCompilationStamp();
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
@@ -812,6 +814,7 @@ public class CompileDriver {
         }
       }
     });
+    return duration;
   }
 
   private void checkCachesVersion(final CompileContextImpl compileContext, final long currentVFSTimestamp) {
