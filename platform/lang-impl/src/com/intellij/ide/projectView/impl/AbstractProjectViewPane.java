@@ -37,10 +37,9 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.*;
@@ -51,7 +50,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionCache;
@@ -76,7 +75,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-
 public abstract class AbstractProjectViewPane implements DataProvider, Disposable, BusyObject {
   public static ExtensionPointName<AbstractProjectViewPane> EP_NAME = ExtensionPointName.create("com.intellij.projectViewPane");
 
@@ -95,23 +93,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   private DnDSource myDragSource;
   private DnDManager myDndManager;
 
-  private WolfTheProblemSolver.ProblemListener myProblemListener = new WolfTheProblemSolver.ProblemListener() {
-    @Override
-    public void problemsAppeared(VirtualFile file) {
-      queueUpdateByProblem();
-    }
-
-    @Override
-    public void problemsChanged(VirtualFile file) {
-      queueUpdateByProblem();
-    }
-
-    @Override
-    public void problemsDisappeared(VirtualFile file) {
-      queueUpdateByProblem();
-    }
-  };
-
   private void queueUpdateByProblem() {
     if (Registry.is("projectView.showHierarchyErrors")) {
       if (myTreeBuilder != null) {
@@ -122,14 +103,30 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected AbstractProjectViewPane(Project project) {
     myProject = project;
-    WolfTheProblemSolver.getInstance(project).addProblemListener(myProblemListener, this);
+    WolfTheProblemSolver.ProblemListener problemListener = new WolfTheProblemSolver.ProblemListener() {
+      @Override
+      public void problemsAppeared(@NotNull VirtualFile file) {
+        queueUpdateByProblem();
+      }
+
+      @Override
+      public void problemsChanged(@NotNull VirtualFile file) {
+        queueUpdateByProblem();
+      }
+
+      @Override
+      public void problemsDisappeared(@NotNull VirtualFile file) {
+        queueUpdateByProblem();
+      }
+    };
+    WolfTheProblemSolver.getInstance(project).addProblemListener(problemListener, this);
   }
 
   protected final void fireTreeChangeListener() {
     if (myTreeChangeListener != null) myTreeChangeListener.run();
   }
 
-  public final void setTreeChangeListener(Runnable listener) {
+  public final void setTreeChangeListener(@NotNull Runnable listener) {
     myTreeChangeListener = listener;
   }
 
@@ -342,7 +339,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         psiElements.add(psiElement);
       }
     }
-    return PsiUtilBase.toPsiElementArray(psiElements);
+    return PsiUtilCore.toPsiElementArray(psiElements);
   }
 
   @Nullable
@@ -360,7 +357,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   protected Module getNodeModule(@Nullable final Object element) {
     if (element instanceof PsiElement) {
       PsiElement psiElement = (PsiElement)element;
-      return ModuleUtil.findModuleForPsiElement(psiElement);
+      return ModuleUtilCore.findModuleForPsiElement(psiElement);
     }
     return null;
   }
@@ -538,10 +535,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   // Drag'n'Drop stuff
 
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.projectView.ProjectViewImpl");
-
-
-
   @Nullable
   public static PsiElement[] getTransferedPsiElements(Transferable transferable) {
     try {
@@ -606,7 +599,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       final Object[] elements = getSelectedElements();
       final PsiElement[] psiElements = getSelectedPSIElements();
       DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-      return (psiElements.length > 0) || canDragElements(elements, dataContext, action.getActionId());
+      return psiElements.length > 0 || canDragElements(elements, dataContext, action.getActionId());
     }
 
     @Override
@@ -670,10 +663,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         return true;
       }
     }
-    if (dragAction == DnDConstants.ACTION_MOVE) {
-      return MoveHandler.canMove(dataContext);
-    }
-    return false;
+    return dragAction == DnDConstants.ACTION_MOVE && MoveHandler.canMove(dataContext);
   }
 
   @Override

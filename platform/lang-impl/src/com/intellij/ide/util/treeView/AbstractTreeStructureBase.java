@@ -27,15 +27,13 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
-  protected final Project myProject;
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.treeView.AbstractTreeStructureBase");
-
+  protected final Project myProject;
 
   protected AbstractTreeStructureBase(Project project) {
     myProject = project;
@@ -47,7 +45,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     AbstractTreeNode<?> treeNode = (AbstractTreeNode)element;
     Collection<? extends AbstractTreeNode> elements = treeNode.getChildren();
      List<TreeStructureProvider> providers = getProvidersDumbAware();
-    if (providers != null && !providers.isEmpty()) {
+    if (!providers.isEmpty()) {
       ViewSettings settings = treeNode instanceof ProjectViewNode ? ((ProjectViewNode) treeNode).getSettings() : ViewSettings.DEFAULT;
       for (TreeStructureProvider provider : providers) {
         try {
@@ -95,7 +93,7 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
   @Nullable
   public Object getDataFromProviders(@NotNull List<AbstractTreeNode> selectedNodes, final String dataId) {
     final List<TreeStructureProvider> providers = getProvidersDumbAware();
-    if (providers != null) {
+    if (!providers.isEmpty()) {
       for (TreeStructureProvider treeStructureProvider : providers) {
         final Object fromProvider = treeStructureProvider.getData(selectedNodes, dataId);
         if (fromProvider != null) {
@@ -106,14 +104,15 @@ public abstract class AbstractTreeStructureBase extends AbstractTreeStructure {
     return null;
   }
 
+  @NotNull
   private List<TreeStructureProvider> getProvidersDumbAware() {
     if (myProject == null) {
-      return new ArrayList<TreeStructureProvider>();
+      return Collections.emptyList();
     }
 
     final List<TreeStructureProvider> providers = getProviders();
     if (providers == null) {
-      return null;
+      return Collections.emptyList();
     }
 
     return DumbService.getInstance(myProject).filterByDumbAwareness(providers);
