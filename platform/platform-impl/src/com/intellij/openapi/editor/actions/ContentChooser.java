@@ -17,18 +17,26 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -38,21 +46,21 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
-
-  private static final Icon textIcon = AllIcons.FileTypes.Text;
-
-  private JList myList;
   private List<Data> myAllContents;
-
   private Editor myViewer;
+
   private final boolean myUseIdeaEditor;
 
-  private Splitter mySplitter;
+  private final JList myList;
+  private final Splitter mySplitter;
   private final Project myProject;
   private final boolean myAllowMultipleSelections;
+  private final Alarm myUpdateAlarm;
+  private Icon myListEntryIcon = AllIcons.FileTypes.Text;
 
   public ContentChooser(Project project, String title, boolean useIdeaEditor) {
     this(project, title, useIdeaEditor, false);
@@ -63,11 +71,22 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myProject = project;
     myUseIdeaEditor = useIdeaEditor;
     myAllowMultipleSelections = allowMultipleSelections;
+    myUpdateAlarm = new Alarm(getDisposable());
+    mySplitter = new Splitter(true, 0.3f);
+    myList = new JBList();
 
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
 
     init();
+  }
+
+  public void setContentIcon(@Nullable Icon icon) {
+    myListEntryIcon = icon;
+  }
+
+  public void setSplitterOrientation(boolean vertical) {
+    mySplitter.setOrientation(vertical);
   }
 
   @Override
@@ -77,10 +96,17 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    myList = new JBList();
-    final int selectionMode = myAllowMultipleSelections ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION 
+    final int selectionMode = myAllowMultipleSelections ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
                                                         : ListSelectionModel.SINGLE_SELECTION;
     myList.setSelectionMode(selectionMode);
+    if (myUseIdeaEditor) {
+      EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+      myList.setFont(scheme.getFont(EditorFontType.PLAIN));
+      Color fg = ObjectUtils.chooseNotNull(scheme.getDefaultForeground(), UIUtil.getListForeground());
+      Color bg = ObjectUtils.chooseNotNull(scheme.getDefaultBackground(), UIUtil.getListBackground());
+      myList.setForeground(fg);
+      myList.setBackground(bg);
+    }
 
     rebuildListContent();
 
@@ -94,11 +120,6 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
 
     myList.setCellRenderer(new MyListCellRenderer());
-
-    if (myAllContents.size() > 0) {
-      myList.setSelectedIndex(0);
-    }
-
     myList.addKeyListener(new KeyAdapter() {
       @Override
       public void keyReleased(KeyEvent e) {
@@ -134,19 +155,31 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       }
     });
 
-    mySplitter = new Splitter(true);
     mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myList));
     mySplitter.setSecondComponent(new JPanel());
-    updateViewerForSelection();
 
+    ListScrollingUtil.installActions(myList);
+    ListScrollingUtil.ensureSelectionExists(myList);
+    updateViewerForSelection();
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        updateViewerForSelection();
+        myUpdateAlarm.cancelAllRequests();
+        myUpdateAlarm.addRequest(new Runnable() {
+          @Override
+          public void run() {
+            updateViewerForSelection();
+          }
+        }, 100);
       }
     });
 
     mySplitter.setPreferredSize(new Dimension(500, 500));
+
+    SplitterProportionsData d = new SplitterProportionsDataImpl();
+    d.externalizeToDimensionService(getClass().getName());
+    d.restoreSplitterProportions(mySplitter);
+
     new ListSpeedSearch(myList);
 
     return mySplitter;
@@ -156,7 +189,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   @Override
   protected String getDimensionServiceKey() {
-    return "#com.intellij.openapi.editor.actions.MultiplePasteAction.Chooser";
+    return getClass().getName(); // store different values for multi-paste, history and commit messages
   }
 
   private void updateViewerForSelection() {
@@ -172,14 +205,10 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
 
     if (myUseIdeaEditor) {
-      Document doc = EditorFactory.getInstance().createDocument(fullString);
-      myViewer = EditorFactory.getInstance().createViewer(doc, myProject);
-      myViewer.getComponent().setPreferredSize(new Dimension(300, 500));
-      myViewer.getSettings().setFoldingOutlineShown(false);
-      myViewer.getSettings().setLineNumbersShown(false);
-      myViewer.getSettings().setLineMarkerAreaShown(false);
-      myViewer.getSettings().setIndentGuidesShown(false);
-      mySplitter.setSecondComponent(myViewer.getComponent());
+      myViewer = createIdeaEditor(fullString);
+      JComponent component = myViewer.getComponent();
+      component.setPreferredSize(new Dimension(300, 500));
+      mySplitter.setSecondComponent(component);
     } else {
       final JTextArea textArea = new JTextArea(fullString);
       textArea.setRows(3);
@@ -193,9 +222,24 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     mySplitter.revalidate();
   }
 
+  protected Editor createIdeaEditor(String text) {
+    Document doc = EditorFactory.getInstance().createDocument(text);
+    Editor editor = EditorFactory.getInstance().createViewer(doc, myProject);
+    editor.getSettings().setFoldingOutlineShown(false);
+    editor.getSettings().setLineNumbersShown(false);
+    editor.getSettings().setLineMarkerAreaShown(false);
+    editor.getSettings().setIndentGuidesShown(false);
+    return editor;
+  }
+
   @Override
   public void dispose() {
     super.dispose();
+
+    SplitterProportionsData d = new SplitterProportionsDataImpl();
+    d.externalizeToDimensionService(getClass().getName());
+    d.saveSplitterProportions(mySplitter);
+
     if (myViewer != null) {
       EditorFactory.getInstance().releaseEditor(myViewer);
       myViewer = null;
@@ -244,6 +288,12 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     return myList.getSelectedIndex();
   }
   
+  public void setSelectedIndex(int index) {
+    myList.setSelectedIndex(index);
+    ListScrollingUtil.ensureIndexIsVisible(myList, index, 0);
+    updateViewerForSelection();
+  }
+
   @NotNull
   public int[] getSelectedIndices() {
     return myList.getSelectedIndices();
@@ -263,7 +313,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     return result;
   }
   
-  private static class MyListCellRenderer extends ColoredListCellRenderer {
+  private class MyListCellRenderer extends ColoredListCellRenderer {
     @Override
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       // Fix GTK background
@@ -271,11 +321,23 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         final Color background = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
         UIUtil.changeBackGround(this, background);
       }
-      setIcon(textIcon);
-      if (index <= 9) {
-        append(String.valueOf((index + 1) % 10) + "  ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      setIcon(myListEntryIcon);
+      if (myUseIdeaEditor) {
+        int max = list.getModel().getSize();
+        String indexString = String.valueOf(index + 1);
+        int count = String.valueOf(max).length() - indexString.length();
+        char[] spaces = new char[count];
+        Arrays.fill(spaces, ' ');
+        String prefix = indexString + new String(spaces) + "  ";
+        append(prefix, SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
-      append((String) value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      String text = (String)value;
+
+      FontMetrics metrics = list.getFontMetrics(list.getFont());
+      int charWidth = metrics.charWidth('m');
+      int maxLength = list.getParent().getParent().getWidth() * 3 / charWidth / 2;
+      text = StringUtil.first(text, maxLength, true); // do not paint long strings
+      append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 }

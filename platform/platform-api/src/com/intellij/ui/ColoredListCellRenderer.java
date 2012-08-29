@@ -19,8 +19,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 
 /**
@@ -29,25 +27,27 @@ import java.awt.*;
  *
  * @author Vladimir Kondratyev
  */
-public abstract class ColoredListCellRenderer extends SimpleColoredComponent implements ListCellRenderer{
+public abstract class ColoredListCellRenderer extends SimpleColoredComponent implements ListCellRenderer {
   protected boolean mySelected;
+  protected Color myForeground;
+  protected Color mySelectionForeground;
 
-  public ColoredListCellRenderer(){
+  public ColoredListCellRenderer() {
     setFocusBorderAroundIcon(true);
     getIpad().left = UIUtil.getListCellHPadding();
     getIpad().right = UIUtil.getListCellHPadding();
   }
 
-  public Component getListCellRendererComponent(
-    final JList list,
-    final Object value,
-    final int index,
-    final boolean selected,
-    final boolean hasFocus
-  ){
+  public Component getListCellRendererComponent(JList list,
+                                                Object value,
+                                                int index,
+                                                boolean selected,
+                                                boolean hasFocus) {
     clear();
 
-    mySelected=selected;
+    mySelected = selected;
+    myForeground = list.getForeground();
+    mySelectionForeground = list.getSelectionForeground();
     if (UIUtil.isWinLafOnVista()) {
       // the system draws a gradient background on the combobox selected item - don't overdraw it with our solid background
       if (index == -1) {
@@ -60,17 +60,12 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
       }
     }
     else {
-      if(selected){
-        setBackground(list.getSelectionBackground());
-      }else{
-        setBackground(null);
-      }
+      setBackground(selected ? list.getSelectionBackground() : null);
     }
 
     setPaintFocusBorder(hasFocus);
 
     customizeCellRenderer(list, value, index, selected, hasFocus);
-
     return this;
   }
 
@@ -78,16 +73,12 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
-  public final void append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
-    if(mySelected) {
-      super.append(
-        fragment,
-        new SimpleTextAttributes(
-          attributes.getStyle(), UIUtil.getListSelectionForeground()
-        ), isMainText);
+  public final void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
+    if (mySelected) {
+      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), mySelectionForeground), isMainText);
     }
     else if (attributes.getFgColor() == null) {
-      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getListForeground()), isMainText);
+      super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), myForeground), isMainText);
     }
     else {
       super.append(fragment, attributes, isMainText);
@@ -98,23 +89,17 @@ public abstract class ColoredListCellRenderer extends SimpleColoredComponent imp
     // There is a bug in BasicComboPopup. It does not add renderer into CellRendererPane,
     // so font can be null here.
 
-    final Font oldFont = getFont();
-    if(oldFont == null){
+    Font oldFont = getFont();
+    if (oldFont == null) {
       setFont(UIUtil.getListFont());
     }
-    final Dimension result = super.getPreferredSize();
-    if(oldFont == null){
+    Dimension result = super.getPreferredSize();
+    if (oldFont == null) {
       setFont(null);
     }
 
     return result;
   }
 
-  protected abstract void customizeCellRenderer(
-    JList list,
-    Object value,
-    int index,
-    boolean selected,
-    boolean hasFocus
-  );
+  protected abstract void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus);
 }
