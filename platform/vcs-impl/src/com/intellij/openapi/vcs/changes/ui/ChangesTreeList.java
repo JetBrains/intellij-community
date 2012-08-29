@@ -110,7 +110,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
     final int checkboxWidth = new JCheckBox().getPreferredSize().width;
     myTree = new MyTree(project, checkboxWidth);
-
+    myTree.setHorizontalAutoScrollingEnabled(false);
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.setOpaque(false);
