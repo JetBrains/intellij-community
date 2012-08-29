@@ -138,6 +138,8 @@ public class CompletionLookupArranger extends LookupArranger {
 
   @Override
   public void addElement(Lookup lookup, LookupElement element, LookupElementPresentation presentation) {
+    StatisticsWeigher.clearBaseStatisticsInfo(element);
+
     final String invariant = presentation.getItemText() + "###" + getTailTextOrSpace(presentation) + "###" + presentation.getTypeText();
     element.putUserData(PRESENTATION_INVARIANT, invariant);
 
@@ -366,18 +368,15 @@ public class CompletionLookupArranger extends LookupArranger {
     return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
   }
 
-  public static StatisticsUpdate collectStatisticChanges(CompletionProgressIndicator indicator, LookupElement item) {
+  public static StatisticsUpdate collectStatisticChanges(LookupElement item, final Lookup lookup) {
     applyLastCompletionStatisticsUpdate();
 
-    CompletionLocation location = new CompletionLocation(indicator.getParameters());
-    final StatisticsInfo main = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
-
-    final List<StatisticsInfo> toIncrement = new ArrayList<StatisticsInfo>();
-    if (main != null && main != StatisticsInfo.EMPTY) {
-      toIncrement.addAll(StatisticsWeigher.composeStatsWithPrefix(main, location, item));
+    final StatisticsInfo base = StatisticsWeigher.getBaseStatisticsInfo(item, null);
+    if (base == StatisticsInfo.EMPTY) {
+      return new StatisticsUpdate(Collections.<StatisticsInfo>emptyList());
     }
 
-    StatisticsUpdate update = new StatisticsUpdate(toIncrement);
+    StatisticsUpdate update = new StatisticsUpdate(StatisticsWeigher.composeStatsWithPrefix(base, lookup.itemPattern(item)));
     ourPendingUpdate = update;
     Disposer.register(update, new Disposable() {
       @Override

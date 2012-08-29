@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,14 +33,14 @@ import java.util.List;
 */
 public class StatisticsWeigher extends CompletionWeigher {
   private static final StatisticsManager ourStatManager = StatisticsManager.getInstance();
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.StatisticsWeigher.LookupStatisticsWeigher");
+  private static final Key<StatisticsInfo> BASE_STATISTICS_INFO = Key.create("Base statistics info");
 
   public Comparable weigh(@NotNull final LookupElement item, @NotNull final CompletionLocation location) {
     throw new UnsupportedOperationException();
   }
 
   public static class LookupStatisticsWeigher extends LookupElementWeigher {
-    private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.StatisticsWeigher.LookupStatisticsWeigher");
-    private static final Key<StatisticsInfo> BASE_INFO = Key.create("Base statistics info");
     private final CompletionLocation myLocation;
 
     public LookupStatisticsWeigher(CompletionLocation location) {
@@ -49,38 +50,45 @@ public class StatisticsWeigher extends CompletionWeigher {
 
     @Override
     public Integer weigh(@NotNull LookupElement item) {
-      final StatisticsInfo info = getBaseStatisticsInfo(item);
+      final StatisticsInfo info = getBaseStatisticsInfo(item, myLocation);
       if (info == StatisticsInfo.EMPTY) {
         return 0;
       }
       int max = 0;
-      for (StatisticsInfo statisticsInfo : composeStatsWithPrefix(info, myLocation, item)) {
+      for (StatisticsInfo statisticsInfo : composeStatsWithPrefix(info, myLocation.getCompletionParameters().getLookup().itemPattern(item))) {
         max = Math.max(max, ourStatManager.getUseCount(statisticsInfo));
       }
       return max;
     }
 
-    @NotNull
-    private StatisticsInfo getBaseStatisticsInfo(LookupElement item) {
-      StatisticsInfo info = BASE_INFO.get(item);
-      if (info == null) {
-        BASE_INFO.set(item, info = calcBaseInfo(item));
-      }
-      return info;
-    }
-
-    @NotNull
-    private StatisticsInfo calcBaseInfo(LookupElement item) {
-      if (!ApplicationManager.getApplication().isUnitTestMode()) {
-        LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
-      }
-      StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, myLocation);
-      return info == null ? StatisticsInfo.EMPTY : info;
-    }
   }
 
-  public static List<StatisticsInfo> composeStatsWithPrefix(StatisticsInfo info, CompletionLocation location, LookupElement item) {
-    String fullPrefix = location.getCompletionParameters().getLookup().itemPattern(item);
+  public static void clearBaseStatisticsInfo(LookupElement item) {
+    item.putUserData(BASE_STATISTICS_INFO, null);
+  }
+
+  @NotNull
+  public static StatisticsInfo getBaseStatisticsInfo(LookupElement item, @Nullable CompletionLocation location) {
+    StatisticsInfo info = BASE_STATISTICS_INFO.get(item);
+    if (info == null) {
+      if (location == null) {
+        return StatisticsInfo.EMPTY;
+      }
+      BASE_STATISTICS_INFO.set(item, info = calcBaseInfo(item, location));
+    }
+    return info;
+  }
+
+  @NotNull
+  private static StatisticsInfo calcBaseInfo(LookupElement item, @NotNull CompletionLocation location) {
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
+    }
+    StatisticsInfo info = StatisticsManager.serialize(CompletionService.STATISTICS_KEY, item, location);
+    return info == null ? StatisticsInfo.EMPTY : info;
+  }
+
+  public static List<StatisticsInfo> composeStatsWithPrefix(StatisticsInfo info, final String fullPrefix) {
     ArrayList<StatisticsInfo> infos = new ArrayList<StatisticsInfo>(fullPrefix.length() + 1);
     infos.add(info);
     for (int i = 1; i <= fullPrefix.length(); i++) {

@@ -593,7 +593,8 @@ public class CodeCompletionHandlerBase {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
     }
 
-    final CompletionLookupArranger.StatisticsUpdate update = CompletionLookupArranger.collectStatisticChanges(indicator, item);
+    final CompletionLookupArranger.StatisticsUpdate update =
+      CompletionLookupArranger.collectStatisticChanges(item, indicator.getParameters().getLookup());
 
     final Editor editor = indicator.getEditor();
 
