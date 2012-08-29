@@ -17,6 +17,7 @@ package com.intellij.execution.console;
 
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.process.ConsoleHistoryModel;
+import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -26,17 +27,26 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoConstants;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.ContentChooser;
+import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.SyntaxHighlighter;
+import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SafeFileOutputStream;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
@@ -218,9 +228,12 @@ public class ConsoleHistoryController {
   private static void cleanupOldFiles(final File dir) {
     final long keep2weeks = 2 * 1000L * 60 * 60 * 24 * 7;
     final long curTime = System.currentTimeMillis();
-    for (File file : dir.listFiles()) {
-      if (file.isFile() && file.getName().endsWith(".hist.xml") && curTime - file.lastModified() > keep2weeks) {
-        file.delete();
+    File[] files = dir.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.isFile() && file.getName().endsWith(".hist.xml") && curTime - file.lastModified() > keep2weeks) {
+          file.delete();
+        }
       }
     }
   }
@@ -246,19 +259,46 @@ public class ConsoleHistoryController {
         if (storeUserText) {
           myUserValue = document.getText();
         }
+        String text = StringUtil.notNullize(command);
+        int offset;
         if (regularMode) {
-          document.setText(StringUtil.notNullize(command));
+          if (myMultiline) {
+            if (text.isEmpty()) return;
+            int selectionStart = editor.getSelectionModel().getSelectionStart();
+            int selectionEnd = editor.getSelectionModel().getSelectionEnd();
+            int caretOffset = editor.getCaretModel().getOffset();
+            int line = document.getLineNumber(caretOffset);
+            int lineStartOffset = document.getLineStartOffset(line);
+            if (selectionStart == lineStartOffset) document.deleteString(selectionStart, selectionEnd);
+            String trimmedLine = document.getText(new TextRange(lineStartOffset, document.getLineEndOffset(line))).trim();
+            if (StringUtil.findFirst(trimmedLine, new CharFilter() {
+              @Override
+              public boolean accept(char ch) {
+                return ch =='\'' || ch == '\"' || ch == '_' || Character.isLetterOrDigit(ch);
+              }
+            }) > -1) {
+              text += "\n";
+            }
+            document.insertString(lineStartOffset, text);
+            offset = lineStartOffset;
+            editor.getSelectionModel().setSelection(lineStartOffset, lineStartOffset + text.length());
+          }
+          else {
+            document.setText(text);
+            offset = document.getTextLength();
+          }
         }
         else {
+          offset = 0;
           try {
             document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-            document.setText(StringUtil.notNullize(command));
+            document.setText(text);
           }
           finally {
             document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
           }
         }
-        editor.getCaretModel().moveToOffset(regularMode? document.getTextLength() : 0);
+        editor.getCaretModel().moveToOffset(offset);
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
     }.execute();
@@ -276,15 +316,14 @@ public class ConsoleHistoryController {
     @Override
     public void actionPerformed(final AnActionEvent e) {
       final String command;
-      command = myNext ? myModel.getHistoryNext() : StringUtil.notNullize(myModel.getHistoryPrev(), StringUtil.notNullize(myUserValue));
+      command = myNext ? myModel.getHistoryNext() : StringUtil.notNullize(myModel.getHistoryPrev(), myMultiline? "" : StringUtil.notNullize(myUserValue));
       setConsoleText(command, myNext && myModel.getHistoryCursor() == 0, true);
     }
 
     @Override
     public void update(final AnActionEvent e) {
       super.update(e);
-      final boolean hasStuff = myModel.hasHistory(myNext);
-      e.getPresentation().setEnabled(hasStuff && (myMultiline || canMoveInEditor(myNext)));
+      e.getPresentation().setEnabled(myMultiline || canMoveInEditor(myNext));
     }
   }
 
@@ -358,23 +397,51 @@ public class ConsoleHistoryController {
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), myConsole.getTitle(), true) {
+      final ContentChooser<String> chooser = new ContentChooser<String>(myConsole.getProject(), myConsole.getTitle() + " History", true) {
 
         @Override
-        protected void removeContentAt(final String content) {
+        protected void removeContentAt(String content) {
           myModel.removeFromHistory(content);
         }
 
         @Override
-        protected String getStringRepresentationFor(final String content) {
+        protected String getStringRepresentationFor(String content) {
           return content;
         }
 
         @Override
         protected List<String> getContents() {
-          return myModel.getHistory();
+          List<String> history = myModel.getHistory();
+          return ContainerUtil.reverse(history);
+        }
+
+        @Override
+        protected Editor createIdeaEditor(String text) {
+          PsiFile consoleFile = myConsole.getFile();
+          Language language = consoleFile.getLanguage();
+          Project project = consoleFile.getProject();
+
+          PsiFile psiFile = PsiFileFactory.getInstance(project).createFileFromText(
+            "a."+consoleFile.getFileType().getDefaultExtension(),
+            language,
+            StringUtil.convertLineSeparators(new String(text)), false, true);
+          VirtualFile virtualFile = psiFile.getViewProvider().getVirtualFile();
+          if (virtualFile instanceof LightVirtualFile) ((LightVirtualFile)virtualFile).setWritable(false);
+          Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+          EditorFactory editorFactory = EditorFactory.getInstance();
+          EditorEx editor = (EditorEx)editorFactory.createViewer(document, project);
+          editor.getSettings().setFoldingOutlineShown(false);
+          editor.getSettings().setLineMarkerAreaShown(false);
+          editor.getSettings().setIndentGuidesShown(false);
+
+          SyntaxHighlighter highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, psiFile.getViewProvider().getVirtualFile());
+          editor.setHighlighter(new LexerEditorHighlighter(highlighter, editor.getColorsScheme()));
+          return editor;
         }
       };
+      chooser.setContentIcon(null);
+      chooser.setSplitterOrientation(false);
+      chooser.setSelectedIndex(Math.min(myModel.getHistorySize() - myModel.getHistoryCursor() - 1, myModel.getHistorySize() - 1));
       chooser.show();
       if (chooser.isOK()) {
         setConsoleText(myModel.getHistory().get(chooser.getSelectedIndex()), false, true);
