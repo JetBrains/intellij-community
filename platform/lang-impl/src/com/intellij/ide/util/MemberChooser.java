@@ -32,6 +32,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
@@ -327,7 +328,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
         String text = lastPathComponent.getDelegate().getText();
         if (text != null) {
           int i = text.indexOf(':');
-          if (i >= 0) {
+          if (i >= 0 && !PlatformUtils.isCidr()) { // In AppCode colons can occur in the method selectors and matching should work after them
             text = text.substring(0, i);
           }
           i = text.indexOf('(');
