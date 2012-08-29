@@ -399,18 +399,15 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(getElement());
-    if (manipulator != null) {
-      myFileReferenceSet.setElement(manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName));
-      //Correct ranges
-      int delta = newElementName.length() - myRange.getLength();
-      myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
-      FileReference[] references = myFileReferenceSet.getAllReferences();
-      for (int idx = myIndex + 1; idx < references.length; idx++) {
-        references[idx].myRange = references[idx].myRange.shiftRight(delta);
-      }
-      return myFileReferenceSet.getElement();
+    myFileReferenceSet.setElement(manipulator.handleContentChange(getElement(), getRangeInElement(), newElementName));
+    //Correct ranges
+    int delta = newElementName.length() - myRange.getLength();
+    myRange = new TextRange(getRangeInElement().getStartOffset(), getRangeInElement().getStartOffset() + newElementName.length());
+    FileReference[] references = myFileReferenceSet.getAllReferences();
+    for (int idx = myIndex + 1; idx < references.length; idx++) {
+      references[idx].myRange = references[idx].myRange.shiftRight(delta);
     }
-    throw new IncorrectOperationException("Manipulator for this element is not defined: " + getElement());
+    return myFileReferenceSet.getElement();
   }
 
   public PsiElement bindToElement(@NotNull final PsiElement element, final boolean absolute) throws IncorrectOperationException {
