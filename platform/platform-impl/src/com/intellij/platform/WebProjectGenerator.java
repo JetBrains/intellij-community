@@ -41,7 +41,7 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
   public abstract String getName();
 
   @Override
-  @Nullable
+  @NotNull
   public final T showGenerationSettings(VirtualFile baseDir) throws ProcessCanceledException {
     GeneratorPeer<T> peer = createPeer();
     DialogWrapper dialog = new MyDialogWrapper(peer);
@@ -53,7 +53,7 @@ public abstract class WebProjectGenerator<T> implements DirectoryProjectGenerato
   }
 
   @Override
-  public abstract void generateProject(Project project, VirtualFile baseDir, T settings, Module module);
+  public abstract void generateProject(@NotNull Project project, @NotNull VirtualFile baseDir, @NotNull T settings, @NotNull Module module);
 
   /**
    * Always returns {@link ValidationResult#OK}.
