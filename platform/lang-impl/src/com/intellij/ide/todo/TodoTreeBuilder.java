@@ -131,6 +131,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener);
   }
 
+  @Override
   public final void dispose() {
     FileStatusManager.getInstance(myProject).removeFileStatusListener(myFileStatusListener);
     super.dispose();
@@ -148,6 +149,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       myUpdatable = updatable;
       if (updatable) {
         DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+          @Override
           public void run() {
             updateTree(false);
           }
@@ -156,8 +158,10 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
+  @NotNull
   protected abstract TodoTreeStructure createTreeStructure();
 
+  @Override
   protected boolean validateNode(final Object child) {
     if (child instanceof ProjectViewNode) {
       final ProjectViewNode projectViewNode = (ProjectViewNode)child;
@@ -173,6 +177,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     return (TodoTreeStructure)getTreeStructure();
   }
 
+  @Override
   protected final AbstractTreeUpdater createUpdater() {
     return new AbstractTreeUpdater(this) {
       @Override
@@ -180,6 +185,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         if (!myDirtyFileSet.isEmpty()) { // suppress redundant cache validations
           final AsyncResult callback = new AsyncResult();
           DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
+            @Override
             public void run() {
               try {
                 validateCache();
@@ -209,10 +215,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   public Iterator<PsiFile> getAllFiles() {
     final Iterator<VirtualFile> iterator = myFileTree.getFileIterator();
     return new Iterator<PsiFile>() {
+      @Override
       public boolean hasNext() {
         return iterator.hasNext();
       }
 
+      @Override
       @Nullable public PsiFile next() {
         VirtualFile vFile = iterator.next();
         if (vFile == null || !vFile.isValid()) {
@@ -225,6 +233,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
         return psiFile;
       }
 
+      @Override
       public void remove() {
         throw new IllegalArgumentException();
       }
@@ -389,10 +398,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     // Now myDirtyFileSet should be empty
   }
 
+  @Override
   protected boolean isAutoExpandNode(NodeDescriptor descriptor) {
     return getTodoTreeStructure().isAutoExpandNode(descriptor);
   }
 
+  @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     final Object element= nodeDescriptor.getElement();
     if (element instanceof TodoItemNode){
@@ -648,6 +659,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     return myFileTree.isDirectoryEmpty(psiDirectory.getVirtualFile());
   }
 
+  @Override
   @NotNull
   protected ProgressIndicator createProgressIndicator() {
     return new StatusBarProgress();
@@ -656,6 +668,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   private static final class MyComparator implements Comparator<NodeDescriptor> {
     public static final Comparator<NodeDescriptor> ourInstance = new MyComparator();
 
+    @Override
     public int compare(NodeDescriptor descriptor1, NodeDescriptor descriptor2) {
       int weight1 = descriptor1.getWeight();
       int weight2 = descriptor2.getWeight();
@@ -669,6 +682,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   private final class MyPsiTreeChangeListener extends PsiTreeChangeAdapter {
+    @Override
     public void childAdded(@NotNull PsiTreeChangeEvent e) {
       // If local modification
       if (e.getFile() != null) {
@@ -686,6 +700,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       updateTree(true);
     }
 
+    @Override
     public void beforeChildRemoval(@NotNull PsiTreeChangeEvent e) {
       // If local midification
       final PsiFile file = e.getFile();
@@ -722,6 +737,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       }
     }
 
+    @Override
     public void childMoved(@NotNull PsiTreeChangeEvent e) {
       if (e.getFile() != null) { // local change
         markFileAsDirty(e.getFile());
@@ -755,6 +771,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       }
     }
 
+    @Override
     public void childReplaced(@NotNull PsiTreeChangeEvent e) {
       if (e.getFile() != null) {
         markFileAsDirty(e.getFile());
@@ -762,6 +779,7 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       }
     }
 
+    @Override
     public void childrenChanged(@NotNull PsiTreeChangeEvent e) {
       if (e.getFile() != null) {
         markFileAsDirty(e.getFile());
@@ -769,11 +787,13 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
       }
     }
 
+    @Override
     public void propertyChanged(@NotNull PsiTreeChangeEvent e) {
       String propertyName = e.getPropertyName();
       if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) { // rebuild all tree when source roots were changed
         getUpdater().runBeforeUpdate(
           new Runnable() {
+            @Override
             public void run() {
               DumbService.getInstance(myProject).runWhenSmart(new Runnable() {
                 @Override
@@ -811,10 +831,12 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
   }
 
   private final class MyFileStatusListener implements FileStatusListener {
+    @Override
     public void fileStatusesChanged() {
       updateTree(true);
     }
 
+    @Override
     public void fileStatusChanged(@NotNull VirtualFile virtualFile) {
       PsiFile psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
       if (psiFile != null && canContainTodoItems(psiFile)) {

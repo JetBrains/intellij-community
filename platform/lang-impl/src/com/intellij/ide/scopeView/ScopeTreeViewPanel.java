@@ -851,11 +851,11 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
   }
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
-    public void problemsAppeared(VirtualFile file) {
+    public void problemsAppeared(@NotNull VirtualFile file) {
       addNode(file, DefaultScopesProvider.getInstance(myProject).getProblemsScope().getName());
     }
 
-    public void problemsDisappeared(VirtualFile file) {
+    public void problemsDisappeared(@NotNull VirtualFile file) {
       removeNode(file, DefaultScopesProvider.getInstance(myProject).getProblemsScope().getName());
     }
   }

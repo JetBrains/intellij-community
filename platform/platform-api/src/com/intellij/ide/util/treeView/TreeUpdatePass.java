@@ -50,6 +50,7 @@ public class TreeUpdatePass {
     return myUpdateChildren;
   }
 
+  @NotNull
   public DefaultMutableTreeNode getNode() {
     return myNode;
   }

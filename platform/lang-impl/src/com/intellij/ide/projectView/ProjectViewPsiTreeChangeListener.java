@@ -17,7 +17,6 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,12 +27,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.tree.DefaultMutableTreeNode;
 
 public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
-  private final FileTypeManager myFileTypeManager;
   private final PsiModificationTracker myModificationTracker;
   private long myOutOfCodeBlockModificationCount;
 
-  protected ProjectViewPsiTreeChangeListener(Project project) {
-    myFileTypeManager = FileTypeManager.getInstance();
+  protected ProjectViewPsiTreeChangeListener(@NotNull Project project) {
     myModificationTracker = PsiManager.getInstance(project).getModificationTracker();
     myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
   }
@@ -89,7 +86,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       myOutOfCodeBlockModificationCount = newModificationCount;
     }
 
-    while(true){
+    while (true) {
       if (parent == null) break;
       if (parent instanceof PsiFile) {
         VirtualFile virtualFile = ((PsiFile)parent).getVirtualFile();
@@ -100,12 +97,11 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
         }
       }
 
-      if (getUpdater().addSubtreeToUpdateByElement(parent)){
+      if (getUpdater().addSubtreeToUpdateByElement(parent)) {
         break;
       }
 
-      if (parent instanceof PsiFile ||
-          parent instanceof PsiDirectory) break;
+      if (parent instanceof PsiFile || parent instanceof PsiDirectory) break;
       parent = parent.getParent();
     }
   }

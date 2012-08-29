@@ -188,10 +188,10 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void restartTimer() {
-    _restart(myMergingTimeSpan);
+    restart(myMergingTimeSpan);
   }
 
-  private void _restart(final int mergingTimeSpan) {
+  private void restart(final int mergingTimeSpan) {
     if (!myActive) return;
 
     clearWaiter();
@@ -280,11 +280,11 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return mySuspended;
   }
 
-  private static boolean isExpired(Update each) {
+  private static boolean isExpired(@NotNull Update each) {
     return each.isDisposed() || each.isExpired();
   }
 
-  protected void execute(final Update[] update) {
+  protected void execute(@NotNull Update[] update) {
     for (final Update each : update) {
       if (isExpired(each)) {
         each.setRejected();
@@ -305,7 +305,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
-  private void execute(final Update each) {
+  private void execute(@NotNull Update each) {
     if (myDisposed) {
       each.setRejected();
     }
@@ -314,7 +314,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
-  public void queue(final Update update) {
+  public void queue(@NotNull final Update update) {
     if (myDisposed) return;
 
     if (myTrackUiActivity) {
@@ -351,7 +351,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     }
   }
 
-  private boolean eatThisOrOthers(Update update) {
+  private boolean eatThisOrOthers(@NotNull Update update) {
     if (myScheduledUpdates.containsKey(update)) {
       return false;
     }
@@ -369,11 +369,11 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return false;
   }
 
-  public final void run(Update update) {
+  public final void run(@NotNull Update update) {
     execute(new Update[]{update});
   }
 
-  private void put(Update update) {
+  private void put(@NotNull Update update) {
     final Update existing = myScheduledUpdates.remove(update);
     if (existing != null && existing != update) {
       existing.setProcessed();
@@ -415,7 +415,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     return ModalityState.stateForComponent(myModalityStateComponent);
   }
 
-  public void setActivationComponent(JComponent c) {
+  public void setActivationComponent(@NotNull JComponent c) {
     if (myUiNotifyConnector != null) {
       Disposer.dispose(myUiNotifyConnector);
     }
@@ -437,7 +437,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   public void sendFlush() {
-    _restart(0);
+    restart(0);
   }
 
   public boolean isFlushing() {
@@ -464,6 +464,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
     UiActivityMonitor.getInstance().removeActivity(getActivityId());    
   }
 
+  @NotNull
   protected UiActivity getActivityId() {
     if (myUiActivity == null) {
       myUiActivity = new UiActivity.AsyncBgOperation("UpdateQueue:" + myName + hashCode());

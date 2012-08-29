@@ -6,6 +6,7 @@ package com.intellij.util.ui.update;
 
 import com.intellij.testFramework.FlyIdeaTestCase;
 import com.intellij.util.WaitFor;
+import org.jetbrains.annotations.NotNull;
 
 public class MergingUpdateQueueTest extends FlyIdeaTestCase {
   public void testOnShowNotify() throws Exception {
@@ -267,7 +268,7 @@ public class MergingUpdateQueueTest extends FlyIdeaTestCase {
     }
 
     @Override
-    protected void execute(final Update[] update) {
+    protected void execute(@NotNull final Update[] update) {
       super.execute(update);
       myExecuted = true;
     }

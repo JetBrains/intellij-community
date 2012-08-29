@@ -1335,11 +1335,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
             if (event.getID() == WindowEvent.WINDOW_OPENED ||event.getID() == WindowEvent.WINDOW_ACTIVATED) {
               if (!result.isProcessed()) {
                 final WindowEvent we = (WindowEvent)event;
-                IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(new Runnable() {
-                  public void run() {
-                    result.setDone();
-                  }
-                });
+                IdeFocusManager.findInstanceByComponent(we.getWindow()).doWhenFocusSettlesDown(result.createSetDoneRunnable());
               }
             }
           }

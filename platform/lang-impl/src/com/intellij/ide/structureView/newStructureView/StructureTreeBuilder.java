@@ -197,6 +197,7 @@ public class StructureTreeBuilder extends AbstractTreeBuilder {
     getUpdater().addSubtreeToUpdate(getRootNode());
   }
 
+  @NotNull
   protected final AbstractTreeNode createSearchingTreeNodeWrapper() {
     return new StructureViewComponent.StructureViewTreeElementWrapper(null,null, null);
   }

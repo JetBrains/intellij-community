@@ -231,12 +231,12 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   }
 
   @Override
-  public void problemsAppeared(VirtualFile file) {
+  public void problemsAppeared(@NotNull VirtualFile file) {
     updateModel();
   }
 
   @Override
-  public void problemsDisappeared(VirtualFile file) {
+  public void problemsDisappeared(@NotNull VirtualFile file) {
     updateModel();
   }
 

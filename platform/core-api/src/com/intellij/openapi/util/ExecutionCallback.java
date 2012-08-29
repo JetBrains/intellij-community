@@ -16,12 +16,13 @@
 package com.intellij.openapi.util;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExecutionCallback {
+class ExecutionCallback {
   private final Executed myExecuted;
   private List<Runnable> myRunnables;
 
@@ -55,12 +56,7 @@ public class ExecutionCallback {
   }
 
   final void notifyWhenExecuted(final ActionCallback child) {
-    doWhenExecuted(new Runnable() {
-      @Override
-      public void run() {
-        child.setDone();
-      }
-    });
+    doWhenExecuted(child.createSetDoneRunnable());
   }
 
   private void callback() {
@@ -87,8 +83,8 @@ public class ExecutionCallback {
   }
 
   private static class Executed {
-    int myCurrentCount;
-    int myCountToExecution;
+    private int myCurrentCount;
+    private final int myCountToExecution;
 
     Executed(final int countToExecution) {
       myCountToExecution = countToExecution;
@@ -102,10 +98,10 @@ public class ExecutionCallback {
       return myCurrentCount >= myCountToExecution;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "current=" + myCurrentCount + " countToExecution=" + myCountToExecution;
     }
   }
-
 }

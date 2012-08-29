@@ -432,11 +432,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
         }
       }
 
-      myDialog.getFocusManager().doWhenFocusSettlesDown(new Runnable() {
-        public void run() {
-          result.setDone();
-        }
-      });
+      myDialog.getFocusManager().doWhenFocusSettlesDown(result.createSetDoneRunnable());
     }
 
     return result;

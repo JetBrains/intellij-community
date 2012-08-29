@@ -15,23 +15,27 @@
  */
 package com.intellij.openapi.util;
 
-public class AsyncResult<T> extends ActionCallback {
+import org.jetbrains.annotations.NotNull;
 
+public class AsyncResult<T> extends ActionCallback {
   private T myResult;
 
+  @NotNull
   public AsyncResult<T> setDone(T result) {
     myResult = result;
-    super.setDone();
+    setDone();
     return this;
   }
 
+  @NotNull
   public AsyncResult<T> setRejected(T result) {
     myResult = result;
-    super.setRejected();
+    setRejected();
     return this;
   }
 
-  public AsyncResult<T> doWhenDone(final Handler<T> handler) {
+  @NotNull
+  public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(new Runnable() {
       public void run() {
         handler.run(myResult);
@@ -40,7 +44,8 @@ public class AsyncResult<T> extends ActionCallback {
     return this;
   }
 
-  public AsyncResult<T> doWhenRejected(final Handler<T> handler) {
+  @NotNull
+  public AsyncResult<T> doWhenRejected(@NotNull final Handler<T> handler) {
     doWhenRejected(new Runnable() {
       public void run() {
         handler.run(myResult);
@@ -53,7 +58,7 @@ public class AsyncResult<T> extends ActionCallback {
     return myResult;
   }
 
-  public static interface Handler<T> {
+  public interface Handler<T> {
     void run(T t);
   }
 
@@ -72,5 +77,4 @@ public class AsyncResult<T> extends ActionCallback {
       setRejected(value);
     }
   }
-
 }

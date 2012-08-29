@@ -35,6 +35,7 @@ import java.awt.*;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
 abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
@@ -67,7 +68,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void doAndWaitForBuilder(final Runnable runnable, final Condition condition) throws Exception {
-    final Ref<Boolean> started = new Ref<Boolean>();
+    final AtomicBoolean started = new AtomicBoolean();
     invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -178,7 +179,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }
 
     @Override
-    protected final boolean updateNodeDescriptor(NodeDescriptor descriptor) {
+    protected final boolean updateNodeDescriptor(@NotNull NodeDescriptor descriptor) {
       checkThread(descriptor.getElement());
 
       int delay = getNodeDescriptorUpdateDelay();
@@ -216,12 +217,12 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }
 
     @Override
-    protected void updateAfterLoadedInBackground(Runnable runnable) {
+    protected void updateAfterLoadedInBackground(@NotNull Runnable runnable) {
       _updateAfterLoadedInBackground(runnable);
     }
 
     @Override
-    protected void runBackgroundLoading(Runnable runnable) {
+    protected void runBackgroundLoading(@NotNull Runnable runnable) {
       _runBackgroundLoading(runnable);
     }
 
@@ -237,6 +238,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
     }
 
 
+    @NotNull
     @Override
     protected AbstractTreeUi createUi() {
       return _createUi();
@@ -426,7 +428,7 @@ abstract class BaseTreeTestCase<StructureElement> extends FlyIdeaTestCase {
   }
 
   void select(final Object[] elements, final boolean addToSelection, final boolean canBeInterrupted) throws Exception {
-    final Ref<Boolean> done = new Ref<Boolean>(false);
+    final AtomicBoolean done = new AtomicBoolean();
     doAndWaitForBuilder(new Runnable() {
       @Override
       public void run() {

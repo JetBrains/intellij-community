@@ -19,9 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -46,11 +44,7 @@ public class AlphaNumericTypeCommand extends TypeCommand {
       public void run() {
         TypingTarget typingTarget = findTarget(context);
         if (typingTarget != null) {
-          typingTarget.type(text).doWhenDone(new Runnable() {
-            public void run() {
-              result.setDone();
-            }
-          }).doWhenRejected(new Runnable() {
+          typingTarget.type(text).doWhenDone(result.createSetDoneRunnable()).doWhenRejected(new Runnable() {
             public void run() {
               typeByRobot(context.getRobot(), text).notify(result);
             }

@@ -20,6 +20,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -29,6 +30,7 @@ public class ChangeListTodosTreeBuilder extends TodoTreeBuilder{
     super(tree,treeModel,project);
   }
 
+  @NotNull
   protected TodoTreeStructure createTreeStructure(){
     return new ChangeListTodosTreeStructure(myProject);
   }

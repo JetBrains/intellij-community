@@ -125,12 +125,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
       @Override
       public void run() {
         if (myRefilterQueue == null || now) {
-          refilterNow(preferredSelection, adjustSelection).doWhenDone(new Runnable() {
-            @Override
-            public void run() {
-              callback.setDone();
-            }
-          });
+          refilterNow(preferredSelection, adjustSelection).doWhenDone(callback.createSetDoneRunnable());
         }
         else {
           myRefilterQueue.queue(new Update(this) {
@@ -213,12 +208,7 @@ public class FilteringTreeBuilder extends AbstractTreeBuilder {
           result.setDone();
         }
       }
-    }).doWhenRejected(new Runnable() {
-      @Override
-      public void run() {
-        result.setRejected();
-      }
-    });
+    }).doWhenRejected(result.createSetRejectedRunnable());
 
     return result;
   }

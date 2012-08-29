@@ -82,12 +82,7 @@ public class EditorPlaybackCall {
         bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
           @Override
           public void daemonFinished() {
-            context.flushAwtAndRunInEdt(new Runnable() {
-              @Override
-              public void run() {
-                result.setDone();
-              }
-            });
+            context.flushAwtAndRunInEdt(result.createSetDoneRunnable());
           }
 
           @Override

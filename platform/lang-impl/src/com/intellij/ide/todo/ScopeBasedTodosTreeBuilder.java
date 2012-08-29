@@ -20,6 +20,7 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -32,6 +33,7 @@ public class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder{
     myScopes = scopes;
   }
 
+  @NotNull
   protected TodoTreeStructure createTreeStructure(){
     return new ScopeBasedTodosTreeStructure(myProject, myScopes);
   }

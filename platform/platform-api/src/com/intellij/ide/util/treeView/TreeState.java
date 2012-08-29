@@ -466,12 +466,7 @@ public class TreeState implements JDOMExternalizable {
 
       final ActionCallback result = new ActionCallback();
 
-      myBuilder.expand(element, new Runnable() {
-        @Override
-        public void run() {
-          result.setDone();
-        }
-      });
+      myBuilder.expand(element, result.createSetDoneRunnable());
 
       return result;
     }

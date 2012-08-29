@@ -151,15 +151,15 @@ public class PsiAwareFileEditorManagerImpl extends FileEditorManagerImpl {
   }
 
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
-    public void problemsAppeared(final VirtualFile file) {
+    public void problemsAppeared(@NotNull final VirtualFile file) {
       updateFile(file);
     }
 
-    public void problemsDisappeared(VirtualFile file) {
+    public void problemsDisappeared(@NotNull VirtualFile file) {
       updateFile(file);
     }
 
-    public void problemsChanged(VirtualFile file) {
+    public void problemsChanged(@NotNull VirtualFile file) {
       updateFile(file);
     }
 

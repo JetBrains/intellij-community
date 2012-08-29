@@ -1235,12 +1235,7 @@ public class AbstractPopup implements JBPopup {
       Runnable runFinal = new Runnable() {
         @Override
         public void run() {
-          SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              typeaheadDone.setDone();
-            }
-          });
+          SwingUtilities.invokeLater(typeaheadDone.createSetDoneRunnable());
           myFinalRunnable.run();
           myFinalRunnable = null;
         }

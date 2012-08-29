@@ -63,28 +63,28 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   private boolean myFiltersLoaded = false;
   private final ProblemListener fireProblemListeners = new ProblemListener() {
     @Override
-    public void problemsAppeared(VirtualFile file) {
+    public void problemsAppeared(@NotNull VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsAppeared(file);
       }
     }
 
     @Override
-    public void problemsChanged(VirtualFile file) {
+    public void problemsChanged(@NotNull VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsChanged(file);
       }
     }
 
     @Override
-    public void problemsDisappeared(VirtualFile file) {
+    public void problemsDisappeared(@NotNull VirtualFile file) {
       for (final ProblemListener problemListener : myProblemListeners) {
         problemListener.problemsDisappeared(file);
       }
     }
   };
 
-  private void doRemove(VirtualFile problemFile) {
+  private void doRemove(@NotNull VirtualFile problemFile) {
     ProblemFileInfo old;
     synchronized (myProblems) {
       old = myProblems.remove(problemFile);

@@ -61,12 +61,12 @@ public class VcsEventWatcher extends AbstractProjectComponent {
   }
   private class MyProblemListener extends WolfTheProblemSolver.ProblemListener {
     @Override
-    public void problemsAppeared(final VirtualFile file) {
+    public void problemsAppeared(@NotNull final VirtualFile file) {
       ChangesViewManager.getInstance(myProject).refreshChangesViewNodeAsync(file);
     }
 
     @Override
-    public void problemsDisappeared(VirtualFile file) {
+    public void problemsDisappeared(@NotNull VirtualFile file) {
       ChangesViewManager.getInstance(myProject).refreshChangesViewNodeAsync(file);
     }
   }

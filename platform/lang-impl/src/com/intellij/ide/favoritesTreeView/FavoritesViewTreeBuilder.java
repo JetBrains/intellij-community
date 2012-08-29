@@ -57,7 +57,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
   private final CopyPasteUtil.DefaultCopyPasteListener myCopyPasteListener;
   private final FavoritesListener myFavoritesListener;
 
-  public FavoritesViewTreeBuilder(Project project,
+  public FavoritesViewTreeBuilder(@NotNull Project project,
                                   JTree tree,
                                   DefaultTreeModel treeModel,
                                   ProjectAbstractTreeStructureBase treeStructure) {
@@ -68,18 +68,22 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
           new FavoritesComparator(ProjectView.getInstance(project), FavoritesProjectViewPane.ID));
     final MessageBusConnection bus = myProject.getMessageBus().connect(this);
     myPsiTreeChangeListener = new ProjectViewPsiTreeChangeListener(myProject) {
+      @Override
       protected DefaultMutableTreeNode getRootNode() {
         return FavoritesViewTreeBuilder.this.getRootNode();
       }
 
+      @Override
       protected AbstractTreeUpdater getUpdater() {
         return FavoritesViewTreeBuilder.this.getUpdater();
       }
 
+      @Override
       protected boolean isFlattenPackages() {
         return getStructure().isFlattenPackages();
       }
 
+      @Override
       protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
         if (findNodeByElement(parent) == null){
           queueUpdate(true);
@@ -89,6 +93,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
       }
     };
     bus.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         queueUpdate(true);
       }
@@ -100,16 +105,19 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     CopyPasteManager.getInstance().addContentChangedListener(myCopyPasteListener);
 
     myFavoritesListener = new FavoritesListener() {
+      @Override
       public void rootsChanged(String listName) {
         //if (myListName.equals(listName)) { //todo[kb]: add optimizations?
           updateFromRoot();
         //}
       }
 
+      @Override
       public void listAdded(String listName) {
         updateFromRoot();
       }
 
+      @Override
       public void listRemoved(String listName) {
         updateFromRoot();
       }
@@ -131,10 +139,12 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     return (AbstractTreeNode)rootElement;
   }
 
+  @Override
   public void updateFromRoot() {
     updateFromRootCB();
   }
 
+  @Override
   @NotNull
   public ActionCallback updateFromRootCB() {
     getStructure().rootsChanged();
@@ -143,6 +153,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     return super.updateFromRootCB();
   }
 
+  @NotNull
+  @Override
   public ActionCallback select(Object element, VirtualFile file, boolean requestFocus) {
     final DefaultMutableTreeNode node = findSmartFirstLevelNodeByElement(element);
     if (node != null){
@@ -165,6 +177,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     return null;
   }
 
+  @Override
   protected Object findNodeByElement(Object element) {
     final Object node = findSmartFirstLevelNodeByElement(element);
     if (node != null) return node;
@@ -195,6 +208,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     return null;
   }
 
+  @Override
   public final void dispose() {
     super.dispose();
     FavoritesManager.getInstance(myProject).removeFavoritesListener(myFavoritesListener);
@@ -204,20 +218,24 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     CopyPasteManager.getInstance().removeContentChangedListener(myCopyPasteListener);
   }
 
+  @Override
   protected boolean isAlwaysShowPlus(NodeDescriptor nodeDescriptor) {
     final Object[] childElements = getStructure().getChildElements(nodeDescriptor);
     return childElements != null && childElements.length > 0;
   }
 
+  @Override
   protected boolean isAutoExpandNode(NodeDescriptor nodeDescriptor) {
     return nodeDescriptor.getParentDescriptor() == null;
   }
 
   private final class MyFileStatusListener implements FileStatusListener {
+    @Override
     public void fileStatusesChanged() {
       queueUpdateFrom(getRootNode(), false);
     }
 
+    @Override
     public void fileStatusChanged(@NotNull VirtualFile vFile) {
       PsiElement element;
       PsiManager psiManager = PsiManager.getInstance(myProject);
