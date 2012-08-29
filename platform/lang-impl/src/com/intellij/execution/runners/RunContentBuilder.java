@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import java.io.File;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -168,8 +169,8 @@ public class RunContentBuilder implements LogConsoleManager, Disposable  {
   }
 
   @Override
-  public void addLogConsole(final String name, final String path, final long skippedContent) {
-    final LogConsoleImpl log = new LogConsoleImpl(myProject, new File(path), skippedContent, name, false){
+  public void addLogConsole(final String name, final String path, @NotNull Charset charset, final long skippedContent) {
+    final LogConsoleImpl log = new LogConsoleImpl(myProject, new File(path), charset, skippedContent, name, false){
       @Override
       public boolean isActive() {
         final Content content = myUi.findContent(path);

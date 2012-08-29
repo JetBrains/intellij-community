@@ -17,9 +17,11 @@
 package com.intellij.diagnostic.logging;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.charset.Charset;
 
 /**
  * User: anna
@@ -28,8 +30,8 @@ import java.io.File;
 public abstract class LogConsoleImpl extends LogConsoleBase {
   private final String myPath;
 
-  public LogConsoleImpl(Project project, File file, long skippedContents, String title, final boolean buildInActions) {
-    super(project, file, skippedContents, title, buildInActions, new DefaultLogFilterModel(project));
+  public LogConsoleImpl(Project project, File file, @NotNull Charset charset, long skippedContents, String title, final boolean buildInActions) {
+    super(project, file, charset, skippedContents, title, buildInActions, new DefaultLogFilterModel(project));
     myPath = file.getAbsolutePath();
   }
 

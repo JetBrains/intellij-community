@@ -51,6 +51,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -75,8 +76,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private ActionGroup myActions;
   private final boolean myBuildInActions;
   private LogFilterModel myModel;
-  
-  private File myFile;
+
+  @Nullable
+  private final File myFile;
+  @Nullable
+  private final Charset myCharset;
   private long myOldLength = 0;
 
   private final List<LogConsoleListener> myListeners = new ArrayList<LogConsoleListener>();
@@ -97,13 +101,16 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   private JPanel myTextFilterWrapper;
 
   public LogConsoleBase(Project project, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
-    this(project, null, reader, title, buildInActions, model);
+    this(project, null, null, reader, title, buildInActions, model);
   }
 
-  public LogConsoleBase(Project project, File file, @Nullable Reader reader, String title, final boolean buildInActions, LogFilterModel model) {
+  public LogConsoleBase(Project project, @Nullable File file, @Nullable Charset charset, @Nullable Reader reader,
+                        String title, final boolean buildInActions, LogFilterModel model)
+  {
     super(new BorderLayout());
     myProject = project;
     myFile = file;
+    myCharset = charset;
     myTitle = title;
     myModel = model;
     myReaderThread = new ReaderThread(reader);
@@ -115,40 +122,31 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public LogConsoleBase(Project project, File file, long skippedContents, String title, boolean buildInActions, LogFilterModel model) {
-    this(project, file, getReader(file, skippedContents), title, buildInActions, model);
-  }
-
-  public LogConsoleBase(Project project, Reader reader, long skippedContents, String title, boolean buildInActions, LogFilterModel model) {
-    this(project, getReader(reader, skippedContents), title, buildInActions, model);
-  }
-
-  @Nullable
-  private static Reader getReader(Reader reader, long skippedContents) {
-    reader = new BufferedReader(reader);
-    try {
-      reader.skip(skippedContents);
-    }
-    catch (IOException e) {
-      reader = null;
-    }
-    return reader;
+  public LogConsoleBase(Project project,
+                        File file,
+                        @NotNull Charset charset,
+                        long skippedContents,
+                        String title,
+                        boolean buildInActions,
+                        LogFilterModel model)
+  {
+    this(project, file, charset, getReader(file, charset, skippedContents), title, buildInActions, model);
   }
 
   @Nullable
-  private static Reader getReader(File file, long skippedContents) {
+  private static Reader getReader(File file, @NotNull final Charset charset, long skippedContents) {
     Reader reader = null;
     try {
       try {
         final FileInputStream inputStream = new FileInputStream(file);
-        reader = new BufferedReader(new InputStreamReader(inputStream));
+        reader = new BufferedReader(new InputStreamReader(inputStream, charset));
         if (file.length() >= skippedContents) { //do not skip forward
           inputStream.skip(skippedContents);
         }
       }
       catch (FileNotFoundException e) {
         if (FileUtil.createIfDoesntExist(file)) {
-          reader = new BufferedReader(new FileReader(file));
+          reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), charset));
         }
       }
     }
@@ -605,10 +603,10 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
             try {
 
               if (myFile != null) {
-                long length = myFile.length();
+                final long length = myFile.length();
                 if (length < myOldLength) {
                   myReader.close();
-                  myReader = new BufferedReader(new FileReader(myFile));
+                  myReader = new BufferedReader(new InputStreamReader(new FileInputStream(myFile), myCharset));
                 }
                 myOldLength = length;
               }
