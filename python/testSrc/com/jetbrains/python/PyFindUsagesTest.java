@@ -1,7 +1,11 @@
 package com.jetbrains.python;
 
+import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.*;
 
@@ -110,5 +114,27 @@ public class PyFindUsagesTest extends PyTestCase {
     assertUsages(usages, "MyClass.<caret>testMethod",
                  "<caret>testMethod = staticmethod(testMethod)",
                  "testMethod = staticmethod(<caret>testMethod)");
+  }
+
+  // PY-7348
+  public void testNamespacePackageUsages() {
+    setLanguageLevel(LanguageLevel.PYTHON33);
+    try {
+      final Collection<UsageInfo> usages = findMultiFileUsages("a.py");
+      assertEquals(3, usages.size());
+    } finally {
+      setLanguageLevel(null);
+    }
+  }
+
+  private Collection<UsageInfo> findMultiFileUsages(String filename) {
+    final String testName = getTestName(false);
+    myFixture.copyDirectoryToProject("findUsages/" + testName, "");
+    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
+    myFixture.configureFromTempProjectFile(filename);
+    final int flags = TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED;
+    final PsiElement element = TargetElementUtilBase.findTargetElement(myFixture.getEditor(), flags);
+    assertNotNull(element);
+    return myFixture.findUsages(element);
   }
 }

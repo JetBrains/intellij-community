@@ -8,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyDocStringOwner;
+import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import com.jetbrains.python.psi.types.PyType;
@@ -85,7 +86,7 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
     final PyTypeParser.ParseResult parseResult = PyTypeParser.parse(anchor, s.toString());
     final Map<TextRange, PyType> types = parseResult.getTypes();
     if (types.isEmpty()) {
-      result.add(new DocStringTypeReference(anchor, s.getTextRange().shiftRight(offset), s.getTextRange().shiftRight(offset), null));
+      result.add(new DocStringTypeReference(anchor, s.getTextRange().shiftRight(offset), s.getTextRange().shiftRight(offset), null, null));
     }
     offset = s.getTextRange().getStartOffset() + offset;
     final Map<PyType, TextRange> fullRanges = parseResult.getFullRanges();
@@ -93,7 +94,8 @@ public class DocStringReferenceProvider extends PsiReferenceProvider {
       final PyType t = pair.getValue();
       final TextRange range = pair.getKey().shiftRight(offset);
       final TextRange fullRange = fullRanges.containsKey(t) ? fullRanges.get(t).shiftRight(offset) : range;
-      result.add(new DocStringTypeReference(anchor, range, fullRange, t));
+      final PyImportElement importElement = parseResult.getImports().get(t);
+      result.add(new DocStringTypeReference(anchor, range, fullRange, t, importElement));
     }
     return result;
   }

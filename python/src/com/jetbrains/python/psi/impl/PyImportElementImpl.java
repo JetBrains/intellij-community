@@ -4,7 +4,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.stubs.IStubElementType;
@@ -202,11 +201,7 @@ public class PyImportElementImpl extends PyBaseElementImpl<PyImportElementStub> 
       }
       if (qName.getComponentCount() == 1) {
         if (resolveImportElement) {
-          final PsiElement element = ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(name));
-          if (element instanceof PsiDirectory) {
-            return createImportedModule(name);
-          }
-          return element;
+          return ResolveImportUtil.resolveImportElement(this, PyQualifiedName.fromComponents(name));
         }
         return this;
       }

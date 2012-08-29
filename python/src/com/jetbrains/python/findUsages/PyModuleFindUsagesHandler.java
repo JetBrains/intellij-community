@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyModuleFindUsagesHandler extends FindUsagesHandler {
   private final PsiFileSystemItem myElement;
 
-  protected PyModuleFindUsagesHandler(@NotNull PyFile file) {
+  protected PyModuleFindUsagesHandler(@NotNull PsiFileSystemItem file) {
     super(file);
     final PsiElement e = PyUtil.turnInitIntoDir(file);
     myElement = e instanceof PsiFileSystemItem ? (PsiFileSystemItem)e : file;

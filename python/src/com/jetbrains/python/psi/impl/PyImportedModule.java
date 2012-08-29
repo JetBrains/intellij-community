@@ -134,7 +134,9 @@ public class PyImportedModule extends LightElement implements NameDefiner {
 
   @Nullable
   private static PsiElement resolve(PyImportElement importElement, @NotNull final PyQualifiedName prefix) {
-    return PyUtil.turnDirIntoInit(ResolveImportUtil.resolveImportElement(importElement, prefix));
+    final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement, prefix);
+    final PsiElement packageInit = PyUtil.turnDirIntoInit(resolved);
+    return packageInit != null ? packageInit : resolved;
   }
 
   public boolean isAncestorOf(PyImportedModule other) {
