@@ -535,11 +535,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
   protected PsiElement rename(final String newName) throws IncorrectOperationException {
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
-    final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(getElement());
+    PsiElement element = getElement();
+    final ElementManipulator<PsiElement> manipulator = CachingReference.getManipulator(element);
     if (manipulator == null) {
-      throw new IncorrectOperationException("Manipulator not defined for: " + getElement());
+      throw new IncorrectOperationException("Manipulator not defined for: " + element + " of class " + element.getClass());
     }
-    return manipulator.handleContentChange(getElement(), range, newName);
+    return manipulator.handleContentChange(element, range, newName);
   }
 
   @Override
