@@ -319,6 +319,10 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       LOG.error("getManager() == null!");
       return JavaResolveResult.EMPTY_ARRAY;
     }
+    if (!isValid()) {
+      LOG.error("invalid!");
+      return JavaResolveResult.EMPTY_ARRAY;
+    }
     ResolveResult[] results = ResolveCache.getInstance(getProject()).resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
