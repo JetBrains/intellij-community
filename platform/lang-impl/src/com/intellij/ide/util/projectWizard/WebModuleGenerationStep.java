@@ -46,6 +46,7 @@ import java.util.Map;
  */
 public class WebModuleGenerationStep extends ModuleWizardStep {
 
+  private final Project myProject;
   private final ModuleBuilder myModuleBuilder;
   private final Icon myIcon;
   private final String myHelpId;
@@ -54,7 +55,11 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
   private WebProjectGenerator myCurrentGenerator;
   private JPanel myRightPanel;
 
-  public WebModuleGenerationStep(ModuleBuilder moduleBuilder, @NotNull Icon icon, @NotNull String helpId) {
+  public WebModuleGenerationStep(@Nullable Project project,
+                                 @NotNull ModuleBuilder moduleBuilder,
+                                 @NotNull Icon icon,
+                                 @NotNull String helpId) {
+    myProject = project;
     myModuleBuilder = moduleBuilder;
     myIcon = icon;
     myHelpId = helpId;
@@ -71,7 +76,7 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
   @NotNull
   private JComponent createComponent() {
     JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
-    final JList generatorList = new JBList();
+    final JBList generatorList = new JBList();
 
     DirectoryProjectGenerator[] generators = Extensions.getExtensions(DirectoryProjectGenerator.EP_NAME);
     DefaultListModel listModel = new DefaultListModel();
@@ -85,6 +90,7 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
     }
     generatorList.setModel(listModel);
     generatorList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    generatorList.getExpandableItemsHandler().setEnabled(false);
     generatorList.setCellRenderer(new ListCellRendererWrapper<DirectoryProjectGenerator>(generatorList.getCellRenderer()) {
       @Override
       public void customize(JList list,
@@ -211,7 +217,7 @@ public class WebModuleGenerationStep extends ModuleWizardStep {
       moduleDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
     }
     if (moduleDir != null && moduleDir.isValid()) {
-      generator.generateProject(null, moduleDir, settings, null);
+      generator.generateProject(myProject, moduleDir, settings, null);
     }
   }
 
